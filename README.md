@@ -1,1 +1,88 @@
-# swingers
+# SWINGERS
+
+A local-competition physics party game in the spirit of **Heave Ho** — up to 4
+players on Xbox controllers race grabby round robots across 8 boards of
+platforms, ropes, spinners, balloons, moving ferries and spikes. Pure
+HTML5/canvas + [Matter.js](https://brm.io/matter-js/) (vendored), no build
+step.
+
+## Run it
+
+Any static file server works (ES modules need http, not `file://`):
+
+```bash
+python3 -m http.server 8123      # then open http://localhost:8123
+# or: npx serve
+```
+
+Connect controllers, press **A** to join, **START** to race.
+
+## Controls (Xbox layout)
+
+| Input | Action |
+| --- | --- |
+| **Left stick** | left arm — point it where you want the hand |
+| **Right stick** | right arm (one stick steers both arms if the other is idle) |
+| **LT / LB (hold)** | close left hand — latches onto anything it touches |
+| **RT / RB (hold)** | close right hand |
+| **B** | punch — knocks nearby players flying and breaks their grip |
+| **START** | pause (X restart board, BACK quit to lobby) |
+
+Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
+**LShift/Q** + **RShift/E** = grabs, **Space** = punch, **Enter** = A,
+**Esc** = START, **1/2** = pick a face. Dev keys: **R** restart board,
+**N** skip board, **M** mute.
+
+### How movement works (the whole game)
+
+Your robot is a ball with two arms. While a hand is latched, the stick points
+where you want your **hands relative to your body** — so hanging from a
+ledge and pushing the stick *down past your hand* flips you up on top;
+alternating left/right pumps a pendulum swing. Release the trigger at the top
+of the arc to fling. Arms are stiff: you can also do handstands and shove
+yourself off floors and walls with open hands. Grab opponents to drag them
+off ledges; punch (grab a ⭐ glove for a super punch) to send them flying.
+
+## The race
+
+Everyone spawns together; first to the **GOAL** ring scores 5, then 3/2/1.
+Once someone finishes the rest have 15 seconds. Spikes/lava/falling = respawn
+at the start (costs time, not points). Most points after board 8 wins.
+
+Boards: Grab School → The Wall → Monkey Bars → Rope Chasm → Spin Cycle →
+Balloon Ascent → Lava Ferry → The Gauntlet.
+
+## Customizing
+
+**Head sprites** — heads are placeholder solid circles with faces. Drop a PNG
+in `assets/heads/` and register it in `src/main.js`:
+
+```js
+import { registerSpriteHead } from './heads.js';
+registerSpriteHead('assets/heads/mine.png', 'mine');
+```
+
+It appears in the lobby face picker and is drawn scaled to the body circle.
+
+**Boards** — `src/levels.js` is plain data (centers + sizes, y grows down):
+`solids` (add `deadly: true` for spikes, `grab: false` for slippery),
+`ropes`, `balloons`, `movers`, `spinners`, `powerups`, `texts`. Rules of
+thumb: a standing robot latches ~120 px above the ground it stands on and
+~90 px around its body while hanging; keep climbs under that and make bigger
+leaps swing-assisted.
+
+**Feel** — every physics constant (arm force, grab range, punch power,
+respawn timing...) lives in `CFG` at the top of `src/player.js`.
+
+## Code map
+
+| File | What's in it |
+| --- | --- |
+| `src/player.js` | the control system: arms, latching, swing motor, punch |
+| `src/level.js` | builds/updates/draws boards (ropes, balloons, movers...) |
+| `src/levels.js` | the 8 board definitions (data only) |
+| `src/game.js` | lobby → countdown → race → results → podium, HUD |
+| `src/input.js` | Gamepad API + keyboard as identical virtual controllers |
+| `src/heads.js` | head styles + future sprite registry |
+| `src/particles.js`, `src/audio.js`, `src/util.js`, `src/main.js` | fx, synth sfx, helpers, boot |
+| `lib/matter.min.js` | vendored Matter.js 0.20.0 (MIT) |
