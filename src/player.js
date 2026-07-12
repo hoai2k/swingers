@@ -1,29 +1,37 @@
-// The player: a round robot head with two grabby robot arms.
+// The player: a round robot with two articulated, physically simulated arms.
 //
-// Control model (the heart of the game):
-//  - Each arm aims where its stick points (left stick -> left arm, right
-//    stick -> right arm). If only one stick is used, both arms follow it
-//    with a small spread, like Heave Ho.
-//  - Holding LT/RT closes that hand; a closed hand latches onto anything
-//    grabbable it touches.
-//  - While latched the arm is a stiff robot limb: a rope constraint keeps the
-//    body within arm's length, a slack-spring extends the arm when compressed
-//    (so you can do handstands / push yourself off walls), and the stick
-//    drives a tangential "motor" that swings the body around the grip point.
-//    The convention is Heave Ho's: the stick points where you want your
-//    HANDS relative to your BODY, so hanging from a ceiling and holding
-//    left swings your body right, and holding down flips you up over a ledge.
-//  - Release the trigger mid-swing to fling.
-//  - B: punch — knocks nearby players flying and breaks their grip.
-//    Grabbing a power-up glove turns your next punch into a super punch.
+// This models Heave Ho's character physics as closely as possible:
+//
+//  - Each arm is a real physics chain: 4 rigid segments pinned end-to-end
+//    from a shoulder on the SIDE of the body to a hand body at the tip.
+//    Arms drape, lag, whip and rest on the ground like noodles.
+//  - The stick is a positional SERVO, and magnitude matters: the hand is
+//    driven toward  stick × armReach  relative to the body, with a capped
+//    muscle force. Half-deflection = half-extended arm.
+//  - Holding LT/RT closes that hand; a closed hand that touches anything
+//    grabbable gets pinned to it (a real revolute constraint).
+//  - While a hand is pinned, the SAME servo acts in reverse on the body:
+//    the body is driven toward  grip − stick × armReach. Everything in
+//    Heave Ho falls out of this one rule — pumping a swing, holding your
+//    body out horizontally, pull-ups (partial stick deflection shortens
+//    your radius), flipping over a ledge by pushing the stick "past" your
+//    hand, and handstands.
+//  - Free hands physically push off floors and walls (the muscle force on
+//    a blocked hand reacts on the body), so hops, crawls and wall shoves
+//    are emergent rather than scripted. There is NO direct air control.
+//  - Left and right arms are distinct: separate shoulders, mirrored claws
+//    (left gripper has 2 prongs, right has 3).
+//
+// A conservative rope-clamp keeps chains from overstretching under extreme
+// loads; it only engages beyond full arm extension.
 
-import { clamp, lerp, angDiff, angApproach, TAU } from './util.js';
+import { clamp, lerp, angDiff, TAU } from './util.js';
 import { drawHead } from './heads.js';
 import { sfx } from './audio.js';
 
 const M = window.Matter;
 
-export const CAT = { SOLID: 0x0001, PLAYER: 0x0002, ROPE: 0x0004, BALLOON: 0x0008 };
+export const CAT = { SOLID: 0x0001, PLAYER: 0x0002, ROPE: 0x0004, BALLOON: 0x0008, ARM: 0x0010, HAND: 0x0020 };
 
 export const PLAYER_COLORS = [
   { main: '#ff5d6c', dark: '#b03544', name: 'RED' },
@@ -34,25 +42,40 @@ export const PLAYER_COLORS = [
 
 export const CFG = {
   radius: 21,
-  armLength: 66,        // grip anchor to body-center, fully extended
   density: 0.0016,
   friction: 0.45,
   frictionStatic: 0.7,
   frictionAir: 0.012,
   restitution: 0.05,
-  grabRange: 26,        // how far from the hand tip a latch can reach
-  armForce: 3.0,        // tangential swing motor, in multiples of body weight
-  extendForce: 1.7,     // max radial push when the arm is compressed (x weight)
-  handPush: 1.6,        // free hands shoving off surfaces (x weight)
-  airForce: 0.5,        // airborne drift (x weight)
-  rollSpin: 0.0045,     // angular velocity added per tick from stick when free
-  maxSpeed: 26,         // px per tick (~1560 px/s) hard cap, prevents tunneling
+  // arm rig
+  segCount: 4,
+  segLen: 17,
+  segThick: 7,
+  segDensity: 0.0009,
+  segFrictionAir: 0.03,
+  handRadius: 7.5,
+  handDensity: 0.0012,
+  shoulderFrac: 0.85,   // shoulder distance from center, in body radii
+  spread: 0.25,         // per-arm angular offset when one stick drives both
+  // muscle servo — forces in multiples of body weight
+  muscleGrab: 3.0,      // cap while that hand is gripping (drives the body)
+  muscleFree: 1.0,      // cap while the hand is free (drives the hand)
+  satDist: 26,          // position error (px) at which the muscle saturates
+  dampGrab: 0.045,      // velocity damping, ×weight per px/tick
+  dampFree: 0.035,
+  rollAssist: 0.006,    // tiny hidden roll torque from the stick (playability)
+  grabAssist: 18,       // how close a closed hand must be to latch
+  maxSpeed: 26,         // px/tick hard cap on the body (anti-tunneling)
+  maxHandSpeed: 30,
   punchCooldown: 1.4,
   punchRadius: 100, punchKick: 11, punchSelf: 3.5,
   superRadius: 175, superKick: 19, superSelf: 6,
   respawnDelay: 1.2,
   protectTime: 1.5,
 };
+
+// shoulder→hand length at full extension
+export const ARM_REACH = CFG.segCount * CFG.segLen + 6;
 
 // ---------------------------------------------------------------------------
 // geometry helpers
@@ -118,6 +141,12 @@ export function closestPointOnBody(body, p) {
   return best;
 }
 
+function capMag(v, max) {
+  const m = Math.hypot(v.x, v.y);
+  if (m <= max || m === 0) return v;
+  return { x: (v.x / m) * max, y: (v.y / m) * max };
+}
+
 // ---------------------------------------------------------------------------
 
 export class Player {
@@ -129,10 +158,7 @@ export class Player {
     this.name = 'P' + (slot + 1);
     this.score = 0;
     this.body = null;
-    this.arms = [
-      { side: -1, angle: Math.PI / 2 + 0.4, grab: null, src: null, trig: 0, reach: 0.94 },
-      { side: 1, angle: Math.PI / 2 - 0.4, grab: null, src: null, trig: 0, reach: 0.94 },
-    ];
+    this.arms = [];
     this.resetMatchStats();
   }
 
@@ -141,8 +167,9 @@ export class Player {
     this.deaths = 0;
   }
 
-  // Called at the start of every level.
+  // Called at the start of every level (and on respawn).
   spawn(engine, x, y) {
+    this.engine = engine;
     this.state = 'alive';
     this.finishOrder = -1;
     this.finishTime = 0;
@@ -154,7 +181,13 @@ export class Player {
     this.superPunch = false;
     this.face = 1;
     this.spawnPoint = { x, y };
-    for (const a of this.arms) { a.grab = null; a.angle = Math.PI / 2 + a.side * 0.4; }
+    this.buildRig(x, y);
+  }
+
+  buildRig(x, y) {
+    const group = -(this.slot + 1);   // player never collides with itself
+    const bodies = [], joints = [];
+
     this.body = M.Bodies.circle(x, y, CFG.radius, {
       density: CFG.density,
       friction: CFG.friction,
@@ -162,37 +195,120 @@ export class Player {
       frictionAir: CFG.frictionAir,
       restitution: CFG.restitution,
       label: 'player' + this.slot,
-      collisionFilter: { category: CAT.PLAYER, mask: CAT.SOLID | CAT.PLAYER | CAT.BALLOON },
+      collisionFilter: { group, category: CAT.PLAYER, mask: CAT.SOLID | CAT.PLAYER | CAT.BALLOON | CAT.HAND },
       plugin: { hh: { type: 'player', player: this, grab: true } },
     });
-    M.Composite.add(engine.world, this.body);
+    bodies.push(this.body);
+
+    this.arms = [];
+    for (const side of [-1, 1]) {
+      const shoulderLocal = { x: side * CFG.radius * CFG.shoulderFrac, y: 0 };
+      const sx = x + shoulderLocal.x, sy = y;
+      const segs = [];
+      const armJoints = [];
+      for (let i = 0; i < CFG.segCount; i++) {
+        // built FOLDED at the shoulder (it unfurls under gravity) — building
+        // extended could embed the hand inside a floor or wall
+        const seg = M.Bodies.rectangle(sx, sy + 2 + i * 2, CFG.segLen, CFG.segThick, {
+          angle: Math.PI / 2,
+          density: CFG.segDensity,
+          friction: 0.2,
+          frictionAir: CFG.segFrictionAir,
+          restitution: 0,
+          collisionFilter: { group, category: CAT.ARM, mask: CAT.SOLID },
+          plugin: { hh: { type: 'arm', player: this, grab: false } },
+        });
+        segs.push(seg);
+        armJoints.push(M.Constraint.create({
+          bodyA: i === 0 ? this.body : segs[i - 1],
+          pointA: i === 0 ? { ...shoulderLocal } : { x: CFG.segLen / 2, y: 0 },
+          bodyB: seg,
+          pointB: { x: -CFG.segLen / 2, y: 0 },
+          length: 0,
+          stiffness: 1,
+        }));
+      }
+      const hand = M.Bodies.circle(sx, sy + 12, CFG.handRadius, {
+        density: CFG.handDensity,
+        friction: 0.4,
+        frictionAir: 0.02,
+        restitution: 0,
+        collisionFilter: { group, category: CAT.HAND, mask: CAT.SOLID | CAT.PLAYER | CAT.BALLOON },
+        plugin: { hh: { type: 'hand', player: this, grab: true } },
+      });
+      armJoints.push(M.Constraint.create({
+        bodyA: segs[CFG.segCount - 1],
+        pointA: { x: CFG.segLen / 2, y: 0 },
+        bodyB: hand,
+        pointB: { x: 0, y: 0 },
+        length: 0,
+        stiffness: 1,
+      }));
+      bodies.push(...segs, hand);
+      joints.push(...armJoints);
+      this.arms.push({
+        side, shoulderLocal, segs, hand,
+        joints: armJoints,
+        grab: null, trig: 0, src: null, spreadRot: 0,
+      });
+    }
+
+    this.rigBodies = bodies;
+    this.rigJoints = joints;
+    M.Composite.add(this.engine.world, [...bodies, ...joints]);
+  }
+
+  removeRig() {
+    for (const arm of this.arms) this.releaseArm(arm);
+    this.body.plugin.hh.removed = true;
+    for (const arm of this.arms) arm.hand.plugin.hh.removed = true;
+    M.Composite.remove(this.engine.world, this.rigJoints);
+    M.Composite.remove(this.engine.world, this.rigBodies);
   }
 
   weight(g) {
     return this.body.mass * g.engine.gravity.y * g.engine.gravity.scale;
   }
 
-  releaseArm(arm) { arm.grab = null; }
+  // Move the whole rig (debug / tests). Arms are folded against the body so
+  // they can't arrive embedded in a floor or wall — they unfurl on their own.
+  teleport(x, y) {
+    M.Body.setPosition(this.body, { x, y });
+    M.Body.setVelocity(this.body, { x: 0, y: 0 });
+    M.Body.setAngularVelocity(this.body, 0);
+    for (const arm of this.arms) {
+      const sh = this.shoulderWorld(arm);
+      arm.segs.forEach((seg, i) => {
+        M.Body.setPosition(seg, { x: sh.x, y: sh.y + 2 + i * 2 });
+        M.Body.setAngle(seg, Math.PI / 2);
+        M.Body.setVelocity(seg, { x: 0, y: 0 });
+        M.Body.setAngularVelocity(seg, 0);
+      });
+      M.Body.setPosition(arm.hand, { x: sh.x, y: sh.y + 12 });
+      M.Body.setVelocity(arm.hand, { x: 0, y: 0 });
+      M.Body.setAngularVelocity(arm.hand, 0);
+    }
+  }
 
-  releaseAll() { for (const a of this.arms) a.grab = null; }
+  shoulderWorld(arm) { return localToWorld(this.body, arm.shoulderLocal); }
+
+  anchorWorld(grab) { return localToWorld(grab.body, grab.local); }
+
+  releaseArm(arm) {
+    if (!arm.grab) return;
+    M.Composite.remove(this.engine.world, arm.grab.constraint);
+    arm.grab = null;
+  }
+
+  releaseAll() { for (const a of this.arms) this.releaseArm(a); }
 
   // Other players letting go of me (I died / finished / got super-punched).
   static breakGrabsOn(target, players) {
     for (const p of players) {
       for (const a of p.arms) {
-        if (a.grab && a.grab.body === target.body) a.grab = null;
+        if (a.grab && a.grab.body.plugin.hh.player === target) p.releaseArm(a);
       }
     }
-  }
-
-  anchorWorld(grab) { return localToWorld(grab.body, grab.local); }
-
-  handPos(arm) {
-    if (arm.grab) return this.anchorWorld(arm.grab);
-    return {
-      x: this.body.position.x + Math.cos(arm.angle) * CFG.armLength * arm.reach,
-      y: this.body.position.y + Math.sin(arm.angle) * CFG.armLength * arm.reach,
-    };
   }
 
   // ------------------------------------------------------------------ update
@@ -208,133 +324,134 @@ export class Player {
     const W = this.weight(g);
     const controls = g.controlsEnabled();
 
-    // --- decide which stick drives which arm (shared-stick spread like Heave Ho)
+    // --- which stick drives which arm (one stick drives both, like Heave Ho)
     const lAct = ctrl.l.mag > 0.01, rAct = ctrl.r.mag > 0.01;
     let srcL = null, srcR = null, spread = 0;
     if (lAct && rAct) { srcL = ctrl.l; srcR = ctrl.r; }
-    else if (lAct) { srcL = srcR = ctrl.l; spread = 0.26; }
-    else if (rAct) { srcL = srcR = ctrl.r; spread = 0.26; }
+    else if (lAct) { srcL = srcR = ctrl.l; spread = CFG.spread; }
+    else if (rAct) { srcL = srcR = ctrl.r; spread = CFG.spread; }
+
+    // punching thrusts both hands along the aim for a moment
+    this.punchFx = Math.max(0, this.punchFx - dt);
+    if (this.punchFx > 0) {
+      const p = { x: Math.cos(this.punchAngle), y: Math.sin(this.punchAngle), mag: 1 };
+      srcL = srcR = p;
+      spread = 0.1;
+    }
+
     this.arms[0].src = controls ? srcL : null;
     this.arms[1].src = controls ? srcR : null;
+    this.arms[0].spreadRot = -spread;
+    this.arms[1].spreadRot = spread;
     this.arms[0].trig = controls ? ctrl.lt : 0;
     this.arms[1].trig = controls ? ctrl.rt : 0;
     const move = controls ? (srcL || srcR) : null;
     if (move && Math.abs(move.x) > 0.3) this.face = Math.sign(move.x);
 
-    let anyGrab = false;
-
     for (const arm of this.arms) {
       const src = arm.src;
+
+      // target hand offset relative to the body: stick vector × reach.
+      // MAGNITUDE MATTERS: a half-tilted stick half-extends the arm, which is
+      // what makes pull-ups possible while gripping.
+      let T = null;
+      if (src) {
+        const c = Math.cos(arm.spreadRot), s = Math.sin(arm.spreadRot);
+        T = {
+          x: (src.x * c - src.y * s) * ARM_REACH,
+          y: (src.x * s + src.y * c) * ARM_REACH,
+        };
+      }
+
+      const sh = this.shoulderWorld(arm);
+
       if (arm.grab) {
-        // Grabbed body vanished (balloon popped, player died...)?
-        if (arm.grab.body.plugin.hh.removed) { arm.grab = null; continue; }
-        if (arm.trig < 0.25) { arm.grab = null; continue; }
-        anyGrab = true;
+        if (arm.grab.body.plugin.hh.removed) { this.releaseArm(arm); continue; }
+        if (arm.trig < 0.25) { this.releaseArm(arm); continue; }
 
-        const P = this.anchorWorld(arm.grab);
-        const dx = A.position.x - P.x, dy = A.position.y - P.y;
-        const d = Math.hypot(dx, dy) || 0.001;
-        const n = { x: dx / d, y: dy / d };           // grip -> body
-        arm.angle = Math.atan2(-dy, -dx);             // arm points body -> hand
-        const B = arm.grab.body;
-        const dynB = !B.isStatic;
-
-        if (src && src.mag > 0.02) {
-          // Tangential motor: rotate body around the grip so the arm points
-          // along the stick.
-          const sm = Math.hypot(src.x, src.y) || 1;
-          const wantX = -src.x / sm, wantY = -src.y / sm;    // desired n
-          const cross = n.x * wantY - n.y * wantX;
-          const dot = n.x * wantX + n.y * wantY;
-          const dAng = Math.atan2(cross, dot);
-          // Near 180° the rotation direction is ambiguous — keep whatever
-          // swing momentum exists rather than always picking the same side.
-          let dir = Math.sign(dAng || 1);
-          if (Math.abs(dAng) > 2.6) {
-            const vt = -A.velocity.x * n.y + A.velocity.y * n.x;
-            if (Math.abs(vt) > 0.4) dir = Math.sign(vt);
-          }
-          const f = CFG.armForce * W * src.mag * clamp(Math.abs(dAng) / 0.55, 0, 1) * dir;
-          const fx = -n.y * f, fy = n.x * f;
-          M.Body.applyForce(A, A.position, { x: fx, y: fy });
-          if (dynB) M.Body.applyForce(B, P, { x: -fx, y: -fy });
+        if (T) {
+          // Servo in reverse: drive the BODY so the grip sits at the stick
+          // offset from it. desired shoulder = grip − T.
+          const B = arm.grab.body;
+          const anchor = this.anchorWorld(arm.grab);
+          const err = { x: anchor.x - T.x - sh.x, y: anchor.y - T.y - sh.y };
+          let F = capMag({
+            x: err.x * (CFG.muscleGrab * W / CFG.satDist),
+            y: err.y * (CFG.muscleGrab * W / CFG.satDist),
+          }, CFG.muscleGrab * W);
+          const vB = velocityAtPoint(B, anchor);
+          F = capMag({
+            x: F.x - (A.velocity.x - vB.x) * CFG.dampGrab * W,
+            y: F.y - (A.velocity.y - vB.y) * CFG.dampGrab * W,
+          }, CFG.muscleGrab * W * 1.25);
+          M.Body.applyForce(A, sh, F);
+          if (!B.isStatic) M.Body.applyForce(B, anchor, { x: -F.x, y: -F.y });
         }
-
-        // Slack spring: stiff robot arm pushes back to full extension when
-        // compressed (handstands, vaulting off walls).
-        if (d < CFG.armLength * 0.98) {
-          const compress = (CFG.armLength - d) / CFG.armLength;
-          const f = Math.min(CFG.extendForce, compress * 7) * W;
-          M.Body.applyForce(A, A.position, { x: n.x * f, y: n.y * f });
-          if (dynB) M.Body.applyForce(B, P, { x: -n.x * f, y: -n.y * f });
-          // damp radial bounce
-          const vr = A.velocity.x * n.x + A.velocity.y * n.y;
-          M.Body.setVelocity(A, { x: A.velocity.x - n.x * vr * 0.08, y: A.velocity.y - n.y * vr * 0.08 });
-        }
+        // stick neutral while gripping = dangle from the grip
       } else {
-        // Free arm: aim at the stick (or dangle), push off surfaces, latch.
-        let target, rate;
-        if (this.punchFx > 0) {
-          target = this.punchAngle; rate = 40;
-        } else if (src) {
-          target = Math.atan2(src.y, src.x) + arm.side * spread; rate = 18;
-        } else {
-          target = Math.PI / 2 + arm.side * 0.42; rate = 5;
+        if (T) {
+          // Drive the free hand toward the target. The equal-and-opposite
+          // reaction on the body is what makes pushing off floors/walls,
+          // flail-hops and arm-swimming work.
+          const hand = arm.hand;
+          const desired = { x: sh.x + T.x, y: sh.y + T.y };
+          const err = { x: desired.x - hand.position.x, y: desired.y - hand.position.y };
+          let F = capMag({
+            x: err.x * (CFG.muscleFree * W / CFG.satDist),
+            y: err.y * (CFG.muscleFree * W / CFG.satDist),
+          }, CFG.muscleFree * W);
+          F = capMag({
+            x: F.x - (hand.velocity.x - A.velocity.x) * CFG.dampFree * W,
+            y: F.y - (hand.velocity.y - A.velocity.y) * CFG.dampFree * W,
+          }, CFG.muscleFree * W * 1.3);
+          M.Body.applyForce(hand, hand.position, F);
+          M.Body.applyForce(A, A.position, { x: -F.x, y: -F.y });
         }
-        arm.angle = angApproach(arm.angle, target, rate * dt);
-        arm.reach = lerp(arm.reach, arm.trig > 0.25 ? 1.0 : 0.94, 12 * dt);
-
-        const hx = A.position.x + Math.cos(arm.angle) * CFG.armLength * arm.reach;
-        const hy = A.position.y + Math.sin(arm.angle) * CFG.armLength * arm.reach;
-
-        // Shove off any solid surface the open hand is touching (lets you
-        // hop, crawl and kip up off the floor).
-        if (src && src.mag > 0.3 && Math.abs(angDiff(arm.angle, target)) < 0.7) {
-          const touching = M.Query.point(g.level.pushables, { x: hx, y: hy });
-          if (touching.length) {
-            const f = CFG.handPush * W * src.mag;
-            M.Body.applyForce(A, A.position, { x: -Math.cos(arm.angle) * f, y: -Math.sin(arm.angle) * f });
-          }
-        }
-
-        // Closed hand latches onto anything grabbable it touches.
-        if (arm.trig > 0.3 && controls) this.tryLatch(arm, hx, hy, g);
+        // closed hand latches onto anything grabbable it touches
+        if (arm.trig > 0.3 && controls) this.tryLatch(arm, g);
       }
     }
 
-    // --- free-body control: air drift + rolling
-    if (!anyGrab && move) {
-      M.Body.applyForce(A, A.position, { x: move.x * CFG.airForce * W, y: 0 });
-      const spin = clamp(A.angularVelocity + move.x * CFG.rollSpin, -0.7, 0.7);
-      M.Body.setAngularVelocity(A, spin);
+    // tiny hidden roll assist (Heave Ho-style games are unplayable without a
+    // whisper of it) + mild spin damping so heads don't rotate forever
+    if (move) {
+      M.Body.setAngularVelocity(A, clamp(A.angularVelocity + move.x * CFG.rollAssist, -0.7, 0.7));
     }
-    // mild spin damping so heads don't rotate forever
-    M.Body.setAngularVelocity(A, A.angularVelocity * 0.995);
+    M.Body.setAngularVelocity(A, A.angularVelocity * 0.99);
 
     // --- punch
     this.punchCd = Math.max(0, this.punchCd - dt);
-    this.punchFx = Math.max(0, this.punchFx - dt);
     if (controls && ctrl.pressed.b && this.punchCd <= 0) this.doPunch(move, g);
   }
 
-  tryLatch(arm, hx, hy, g) {
-    const R = CFG.grabRange;
+  tryLatch(arm, g) {
+    const hand = arm.hand;
+    const hx = hand.position.x, hy = hand.position.y;
+    const R = CFG.grabAssist;
     const candidates = g.grabCandidates(this);
     const near = M.Query.region(candidates, {
-      min: { x: hx - R, y: hy - R }, max: { x: hx + R, y: hy + R },
+      min: { x: hx - R - 8, y: hy - R - 8 }, max: { x: hx + R + 8, y: hy + R + 8 },
     });
     let best = null, bestD = Infinity, bestPt = null;
     for (const b of near) {
-      if (b === this.body) continue;
       const hh = b.plugin.hh;
       if (!hh || !hh.grab || hh.removed) continue;
+      if (hh.player === this) continue;                 // never grab yourself
       const pt = closestPointOnBody(b, { x: hx, y: hy });
       const d = Math.hypot(pt.x - hx, pt.y - hy);
       if (d < R && d < bestD) { bestD = d; best = b; bestPt = pt; }
     }
     if (best) {
-      arm.grab = { body: best, local: worldToLocal(best, bestPt) };
-      arm.angle = Math.atan2(bestPt.y - this.body.position.y, bestPt.x - this.body.position.x);
+      const constraint = M.Constraint.create({
+        bodyA: hand,
+        pointA: { x: 0, y: 0 },
+        bodyB: best,
+        pointB: worldToLocal(best, bestPt),
+        length: 0,
+        stiffness: 1,
+      });
+      M.Composite.add(this.engine.world, constraint);
+      arm.grab = { body: best, local: worldToLocal(best, bestPt), constraint };
       g.particles.dust(bestPt.x, bestPt.y, 4);
       sfx.grab();
     }
@@ -390,36 +507,45 @@ export class Player {
     if (isSuper) sfx.superPunch(); else sfx.punch();
   }
 
-  // Enforce the arm-length rope for every latched arm. Runs after the physics
-  // step, a few iterations so both arms + partner constraints settle.
+  // Safety clamps, run after the physics step:
+  //  - the body can't drift beyond full arm extension from an active grip
+  //  - free hands can't overstretch their chain
   solveGrabs() {
     const A = this.body;
+    const maxReach = CFG.radius * CFG.shoulderFrac + ARM_REACH + 8;
     for (const arm of this.arms) {
-      if (!arm.grab) continue;
-      const B = arm.grab.body;
-      if (B.plugin.hh.removed) { arm.grab = null; continue; }
-      const P = this.anchorWorld(arm.grab);
-      const dx = A.position.x - P.x, dy = A.position.y - P.y;
-      const d = Math.hypot(dx, dy) || 0.001;
-      if (d <= CFG.armLength) continue;
-      const n = { x: dx / d, y: dy / d };
-      const err = d - CFG.armLength;
-      const invA = 1 / A.mass;
-      const invB = B.isStatic ? 0 : 1 / B.mass;
-      const k = 1 / (invA + invB);
-
-      // position correction (keeps velocity: setPosition without updateVelocity)
-      const corr = Math.min(err, 14) * 0.6;
-      M.Body.setPosition(A, { x: A.position.x - n.x * corr * invA * k, y: A.position.y - n.y * corr * invA * k });
-      if (invB) M.Body.setPosition(B, { x: B.position.x + n.x * corr * invB * k, y: B.position.y + n.y * corr * invB * k });
-
-      // kill separating radial velocity
-      const vB = velocityAtPoint(B, P);
-      const rvx = A.velocity.x - vB.x, rvy = A.velocity.y - vB.y;
-      const vr = rvx * n.x + rvy * n.y;
-      if (vr > 0) {
-        M.Body.setVelocity(A, { x: A.velocity.x - n.x * vr * invA * k, y: A.velocity.y - n.y * vr * invA * k });
-        if (invB) M.Body.setVelocity(B, { x: B.velocity.x + n.x * vr * invB * k, y: B.velocity.y + n.y * vr * invB * k });
+      if (arm.grab) {
+        const B = arm.grab.body;
+        if (B.plugin.hh.removed) { this.releaseArm(arm); continue; }
+        const P = this.anchorWorld(arm.grab);
+        const dx = A.position.x - P.x, dy = A.position.y - P.y;
+        const d = Math.hypot(dx, dy) || 0.001;
+        if (d <= maxReach) continue;
+        const n = { x: dx / d, y: dy / d };
+        const err = d - maxReach;
+        const invA = 1 / A.mass;
+        const invB = B.isStatic ? 0 : 1 / B.mass;
+        const k = 1 / (invA + invB);
+        const corr = Math.min(err, 14) * 0.6;
+        M.Body.setPosition(A, { x: A.position.x - n.x * corr * invA * k, y: A.position.y - n.y * corr * invA * k });
+        if (invB) M.Body.setPosition(B, { x: B.position.x + n.x * corr * invB * k, y: B.position.y + n.y * corr * invB * k });
+        const vB = velocityAtPoint(B, P);
+        const rvx = A.velocity.x - vB.x, rvy = A.velocity.y - vB.y;
+        const vr = rvx * n.x + rvy * n.y;
+        if (vr > 0) {
+          M.Body.setVelocity(A, { x: A.velocity.x - n.x * vr * invA * k, y: A.velocity.y - n.y * vr * invA * k });
+          if (invB) M.Body.setVelocity(B, { x: B.velocity.x + n.x * vr * invB * k, y: B.velocity.y + n.y * vr * invB * k });
+        }
+      } else {
+        // free-chain guard
+        const sh = this.shoulderWorld(arm);
+        const hand = arm.hand;
+        const dx = hand.position.x - sh.x, dy = hand.position.y - sh.y;
+        const d = Math.hypot(dx, dy);
+        const lim = ARM_REACH * 1.35;
+        if (d > lim) {
+          M.Body.setPosition(hand, { x: sh.x + (dx / d) * lim, y: sh.y + (dy / d) * lim });
+        }
       }
     }
   }
@@ -430,6 +556,13 @@ export class Player {
     if (s > CFG.maxSpeed) {
       M.Body.setVelocity(this.body, { x: (v.x / s) * CFG.maxSpeed, y: (v.y / s) * CFG.maxSpeed });
     }
+    for (const arm of this.arms) {
+      const hv = arm.hand.velocity;
+      const hs = Math.hypot(hv.x, hv.y);
+      if (hs > CFG.maxHandSpeed) {
+        M.Body.setVelocity(arm.hand, { x: (hv.x / hs) * CFG.maxHandSpeed, y: (hv.y / hs) * CFG.maxHandSpeed });
+      }
+    }
   }
 
   die(g) {
@@ -437,11 +570,9 @@ export class Player {
     this.state = 'dead';
     this.deaths++;
     this.respawnAt = g.time + CFG.respawnDelay;
-    this.releaseAll();
     Player.breakGrabsOn(this, g.players);
-    this.body.plugin.hh.removed = true;
-    M.Composite.remove(g.engine.world, this.body);
     g.particles.burst(this.body.position.x, this.body.position.y, this.color.main, 22, 380);
+    this.removeRig();
     g.addShake(6);
     sfx.death();
   }
@@ -449,14 +580,7 @@ export class Player {
   respawn(g) {
     this.state = 'alive';
     this.protectUntil = g.time + CFG.protectTime;
-    const b = this.body;
-    b.plugin.hh.removed = false;
-    M.Body.setPosition(b, { x: this.spawnPoint.x, y: this.spawnPoint.y });
-    M.Body.setVelocity(b, { x: 0, y: 0 });
-    M.Body.setAngularVelocity(b, 0);
-    M.Body.setAngle(b, 0);
-    M.Composite.add(g.engine.world, b);
-    for (const a of this.arms) { a.grab = null; a.angle = Math.PI / 2 + a.side * 0.4; }
+    this.buildRig(this.spawnPoint.x, this.spawnPoint.y);
   }
 
   finish(g) {
@@ -464,10 +588,8 @@ export class Player {
     this.state = 'finished';
     this.finishOrder = g.finishCounter++;
     this.finishTime = g.raceTime;
-    this.releaseAll();
     Player.breakGrabsOn(this, g.players);
-    this.body.plugin.hh.removed = true;
-    M.Composite.remove(g.engine.world, this.body);
+    this.removeRig();
     g.particles.confetti(g.level.goal.x, g.level.goal.y, 44);
     sfx.finish();
   }
@@ -483,15 +605,14 @@ export class Player {
 
     for (const arm of this.arms) this.drawArm(ctx, arm);
 
-    // gaze follows the stick, else velocity
+    // gaze follows the stick, else velocity; the face rotates with the body
     const move = this.arms[0].src || this.arms[1].src;
-    let look = { x: 0, y: 0 };
+    let look;
     if (move) look = { x: move.x, y: move.y };
     else look = { x: clamp(A.velocity.x / 12, -1, 1), y: clamp(A.velocity.y / 12, -1, 1) };
-    const tilt = clamp(A.angularVelocity * 2.2, -0.3, 0.3);
-    drawHead(ctx, A.position.x, A.position.y, CFG.radius, this.color, this.headStyle, look, tilt);
+    drawHead(ctx, A.position.x, A.position.y, CFG.radius, this.color, this.headStyle, look, A.angle);
 
-    // name tag + super-punch marker
+    // name tag + super-punch marker (upright, above the body)
     ctx.globalAlpha = flicker ? 0.35 : 0.85;
     ctx.fillStyle = this.color.main;
     ctx.font = 'bold 13px system-ui, sans-serif';
@@ -507,61 +628,72 @@ export class Player {
   }
 
   drawArm(ctx, arm) {
-    const A = this.body;
-    const hand = this.handPos(arm);
-    const dirA = Math.atan2(hand.y - A.position.y, hand.x - A.position.x);
-    const shoulder = {
-      x: A.position.x + Math.cos(dirA + arm.side * 0.55) * CFG.radius * 0.8,
-      y: A.position.y + Math.sin(dirA + arm.side * 0.55) * CFG.radius * 0.8,
-    };
-    // two-segment IK elbow
-    const mx = (shoulder.x + hand.x) / 2, my = (shoulder.y + hand.y) / 2;
-    const dx = hand.x - shoulder.x, dy = hand.y - shoulder.y;
-    const d = Math.hypot(dx, dy) || 0.001;
-    const seg = Math.max(d / 2 + 0.5, 42);
-    const bulge = Math.sqrt(Math.max(0, seg * seg - (d / 2) ** 2));
-    const elbow = { x: mx + (-dy / d) * bulge * arm.side, y: my + (dx / d) * bulge * arm.side };
-
     ctx.lineCap = 'round';
-    // upper arm + forearm, metal
-    for (const [p1, p2, w] of [[shoulder, elbow, 11], [elbow, hand, 9]]) {
-      ctx.strokeStyle = '#565d70';
+
+    // segmented metal chain, drawn from each segment's real physics transform
+    const joints = [this.shoulderWorld(arm)];
+    for (let i = 0; i < arm.segs.length; i++) {
+      const seg = arm.segs[i];
+      const c = Math.cos(seg.angle), s = Math.sin(seg.angle);
+      const hl = CFG.segLen / 2;
+      const a = { x: seg.position.x - c * hl, y: seg.position.y - s * hl };
+      const b = { x: seg.position.x + c * hl, y: seg.position.y + s * hl };
+      const w = 11 - i * 0.8;
+      ctx.strokeStyle = arm.side < 0 ? '#4e5568' : '#565d70';
       ctx.lineWidth = w;
-      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-      ctx.strokeStyle = '#9aa3ba';
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.strokeStyle = arm.side < 0 ? '#8e97ad' : '#9aa3ba';
       ctx.lineWidth = w - 5;
-      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      joints.push(b);
     }
-    // joints
-    for (const [p, r] of [[shoulder, 6], [elbow, 5]]) {
+    // joint bolts
+    for (let i = 0; i < joints.length - 1; i++) {
+      const p = joints[i];
+      const r = i === 0 ? 6 : 4.5 - i * 0.3;
       ctx.fillStyle = '#3c4252';
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.fill();
       ctx.fillStyle = '#b8c0d4';
       ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.4, 0, TAU); ctx.fill();
     }
+    // shoulder accent in player color
+    const sh = joints[0];
+    ctx.strokeStyle = this.color.main;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sh.x, sh.y, 7, 0, TAU); ctx.stroke();
 
-    // gripper hand
-    const handAng = Math.atan2(hand.y - elbow.y, hand.x - elbow.x);
+    // gripper hand at the physical hand body. Left = 2 prongs, right = 3.
+    const hand = arm.hand;
+    const last = arm.segs[arm.segs.length - 1];
+    const handAng = Math.atan2(hand.position.y - last.position.y, hand.position.x - last.position.x);
     const closed = !!arm.grab || arm.trig > 0.3;
-    const open = closed ? 0.28 : 0.85;
     ctx.save();
-    ctx.translate(hand.x, hand.y);
+    ctx.translate(hand.position.x, hand.position.y);
     ctx.rotate(handAng);
     // wrist ring in player color
     ctx.strokeStyle = this.color.main;
     ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(-7, 0, 6, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-8, 0, 6, 0, TAU); ctx.stroke();
     // palm
     ctx.fillStyle = '#7c8499';
-    ctx.beginPath(); ctx.arc(0, 0, 6.5, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, CFG.handRadius - 1, 0, TAU); ctx.fill();
     ctx.strokeStyle = '#3c4252'; ctx.lineWidth = 2; ctx.stroke();
     // claw prongs
     ctx.strokeStyle = '#c3cadd';
     ctx.lineWidth = 5;
+    const open = closed ? 0.28 : 0.85;
     for (const s of [-1, 1]) {
       ctx.beginPath();
       ctx.moveTo(2, s * 6);
       ctx.quadraticCurveTo(9 + Math.cos(open) * 4, s * (6 + Math.sin(open) * 9), 13, s * (closed ? 2.5 : 9));
+      ctx.stroke();
+    }
+    if (arm.side > 0) {
+      // right hand's short middle prong
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(3, 0);
+      ctx.lineTo(closed ? 10 : 8, 0);
       ctx.stroke();
     }
     ctx.restore();

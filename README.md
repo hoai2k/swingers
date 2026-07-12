@@ -35,13 +35,25 @@ Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
 
 ### How movement works (the whole game)
 
-Your robot is a ball with two arms. While a hand is latched, the stick points
-where you want your **hands relative to your body** — so hanging from a
-ledge and pushing the stick *down past your hand* flips you up on top;
-alternating left/right pumps a pendulum swing. Release the trigger at the top
-of the arc to fling. Arms are stiff: you can also do handstands and shove
-yourself off floors and walls with open hands. Grab opponents to drag them
-off ledges; punch (grab a ⭐ glove for a super punch) to send them flying.
+Your robot is a ball with two physically simulated noodle arms (4 jointed
+segments each, left and right attached at opposite shoulders). The stick is a
+positional servo and **magnitude matters**: it points where you want your
+hands relative to your body, and a half-tilted stick half-extends the arm.
+Everything follows from that one rule, exactly like Heave Ho:
+
+- hanging + stick sideways pumps a swing; hold it to raise your body out
+  horizontally and keep it there
+- ease the stick toward your grip to do a **pull-up** (shorter radius)
+- push the stick *down past your hand* to flip up over a ledge
+- press open hands into floors/walls and the reaction shoves your body —
+  hops, crawls, handstands and wall-vaults are emergent, not scripted
+- release the trigger at the top of the arc to fling; grips are pin joints
+  so momentum carries perfectly
+
+Hands stick to the first thing they touch while the trigger is held —
+including other players' bodies and hands (human chains work). Punch (B)
+knocks players flying and breaks their grip; grab a ⭐ glove for a super
+punch.
 
 ## The race
 

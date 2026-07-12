@@ -79,6 +79,15 @@ export class Input {
     }
     if (this.keyboardSeen) out.push(this.keyboardState());
 
+    // Test hook: merge a mocked source (lets headless tests provide analog
+    // stick values the keyboard can't produce).
+    if (this.mock) {
+      const i = out.findIndex((s) => s.id === this.mock.id);
+      const base = i >= 0 ? out[i] : { ...NEUTRAL, id: this.mock.id };
+      const merged = { ...base, ...this.mock };
+      if (i >= 0) out[i] = merged; else out.push(merged);
+    }
+
     // Edge detection.
     for (const s of out) {
       const raw = {

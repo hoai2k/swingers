@@ -70,9 +70,9 @@ export class Game {
 
   startLevel() {
     this.engine = M.Engine.create({
-      positionIterations: 8,
-      velocityIterations: 6,
-      constraintIterations: 4,
+      positionIterations: 10,
+      velocityIterations: 8,
+      constraintIterations: 6,
     });
     this.engine.gravity.y = 1.08;
     this.level = new Level(LEVELS[this.levelIndex], this.engine);
@@ -134,7 +134,10 @@ export class Game {
   grabCandidates(me) {
     const arr = this.level.grabbables();
     for (const p of this.players) {
-      if (p !== me && p.state === 'alive') arr.push(p.body);
+      if (p !== me && p.state === 'alive') {
+        arr.push(p.body);
+        for (const a of p.arms) arr.push(a.hand);   // hand-to-hand chains!
+      }
     }
     return arr;
   }
@@ -545,21 +548,33 @@ export class Game {
         const src = this.input.get(slot.sourceId);
         const cxp = x + cardW / 2, cyp = y0 + cardH * 0.42;
         const r = cardW * 0.21;
-        // waving preview arms driven by the sticks
+        // waving segmented preview arms driven by the sticks
         if (src) {
-          ctx.strokeStyle = '#9aa3ba';
-          ctx.lineWidth = 7;
           ctx.lineCap = 'round';
           const armDef = [
             [src.l.mag ? src.l : { x: -0.5, y: 0.9 }, -1],
             [src.r.mag ? src.r : (src.l.mag ? src.l : { x: 0.5, y: 0.9 }), 1],
           ];
           for (const [v, side] of armDef) {
-            const a = Math.atan2(v.y, v.x) + (v.mag ? side * 0.15 : 0);
-            ctx.beginPath();
-            ctx.moveTo(cxp + Math.cos(a + side * 0.5) * r * 0.7, cyp + Math.sin(a + side * 0.5) * r * 0.7);
-            ctx.lineTo(cxp + Math.cos(a) * r * 2.1, cyp + Math.sin(a) * r * 2.1);
-            ctx.stroke();
+            const a = Math.atan2(v.y, v.x) + (v.mag ? side * 0.2 : 0);
+            let px2 = cxp + Math.cos(a + side * 0.9) * r * 0.85;
+            let py2 = cyp + Math.sin(a + side * 0.9) * r * 0.85;
+            const segLen = r * 0.55;
+            for (let sgi = 0; sgi < 4; sgi++) {
+              const wob = Math.sin(this.time * 5 + sgi * 1.3 + i) * 0.16 * (sgi + 1) * (v.mag ? 0.4 : 1);
+              const sa = a + wob + side * (v.mag ? 0 : 0.15) * sgi;
+              const nx = px2 + Math.cos(sa) * segLen;
+              const ny = py2 + Math.sin(sa) * segLen;
+              ctx.strokeStyle = '#565d70';
+              ctx.lineWidth = 8 - sgi;
+              ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(nx, ny); ctx.stroke();
+              ctx.strokeStyle = '#9aa3ba';
+              ctx.lineWidth = 4 - sgi * 0.5;
+              ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(nx, ny); ctx.stroke();
+              px2 = nx; py2 = ny;
+            }
+            ctx.fillStyle = '#c3cadd';
+            ctx.beginPath(); ctx.arc(px2, py2, 4.5, 0, TAU); ctx.fill();
           }
         }
         const look = src && src.l.mag ? { x: src.l.x, y: src.l.y } : { x: 0, y: 0 };

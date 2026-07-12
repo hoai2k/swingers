@@ -96,12 +96,13 @@ face('shades', (ctx, r, look) => {
   ctx.beginPath(); ctx.moveTo(-r * 0.2, r * 0.42); ctx.lineTo(r * 0.25, r * 0.38); ctx.stroke();
 });
 
-// Draw a full head (solid circle body + face or sprite).
-export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 }, tilt = 0) {
+// Draw a full head (solid circle body + face or sprite). `rot` is the body's
+// physics angle — the face rotates with the ball, Heave Ho style.
+export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 }, rot = 0) {
   const style = HEAD_STYLES[((styleIndex % HEAD_STYLES.length) + HEAD_STYLES.length) % HEAD_STYLES.length];
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(clamp(tilt, -0.35, 0.35));
+  ctx.rotate(rot);
   if (style.img && style.img.complete && style.img.naturalWidth) {
     ctx.drawImage(style.img, -r, -r, r * 2, r * 2);
   } else {

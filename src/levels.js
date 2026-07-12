@@ -100,9 +100,9 @@ export const LEVELS = [
       S(800, 890, 880, 60, { deadly: true }), // spike chasm floor
     ],
     ropes: [
-      { x: 450, y: 120, len: 440 },
-      { x: 730, y: 120, len: 400 },
-      { x: 1010, y: 120, len: 400 },
+      { x: 450, y: 120, len: 470 },
+      { x: 730, y: 120, len: 430 },
+      { x: 1010, y: 120, len: 430 },
     ],
     powerups: [{ x: 780, y: 560 }],
   },
@@ -123,8 +123,8 @@ export const LEVELS = [
       S(1120, 880, 920, 40, { deadly: true }), // spikes under everything else
     ],
     spinners: [
-      { x: 620, y: 540, len: 300, speed: 1.6 },
-      { x: 1150, y: 280, len: 280, speed: -1.9 },
+      { x: 620, y: 540, len: 300, speed: 2.0 },
+      { x: 1150, y: 280, len: 280, speed: -2.2 },
     ],
     powerups: [{ x: 940, y: 330 }],
   },
@@ -201,7 +201,7 @@ export const LEVELS = [
       { x: 520, y: 140, len: 420 },
       { x: 800, y: 140, len: 420 },
     ],
-    spinners: [{ x: 1680, y: 420, len: 280, speed: 1.8 }],
+    spinners: [{ x: 1680, y: 420, len: 280, speed: 2.1 }],
     powerups: [{ x: 800, y: 560 }, { x: 1330, y: 400 }],
   },
 ];

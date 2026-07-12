@@ -20,7 +20,9 @@ const M = window.Matter;
 
 const BALLOON_R = 24;
 const BALLOON_COLORS = ['#ff8fb3', '#8fd0ff', '#fff09e', '#b9f0b0'];
-const REF_PLAYER_MASS = Math.PI * 21 * 21 * 0.0016; // must match player CFG
+// Full player mass including both physical arm chains (body ~2.2 + arms ~1.3);
+// balloon buoyancy is budgeted against this so one robot rises, two sink.
+const REF_PLAYER_MASS = 3.5;
 const POWERUP_RESPAWN = 9;
 const BALLOON_RESPAWN = 3.5;
 
