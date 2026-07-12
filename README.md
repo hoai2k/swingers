@@ -41,8 +41,11 @@ positional servo and **magnitude matters**: it points where you want your
 hands relative to your body, and a half-tilted stick half-extends the arm.
 Everything follows from that one rule, exactly like Heave Ho:
 
-- hanging + stick sideways pumps a swing; hold it to raise your body out
-  horizontally and keep it there
+- hanging + stick sideways swings you hard: dead hang to horizontal in about
+  a quarter second, and you can hold there
+- **windmill**: roll the stick in circles while gripping a bar, corner or
+  rope and your body whips around the grip, building big fling speed
+  (the grip motor tracks your stick even when it laps ahead of your body)
 - ease the stick toward your grip to do a **pull-up** (shorter radius)
 - push the stick *down past your hand* to flip up over a ledge
 - press open hands into floors/walls and the reaction shoves your body —

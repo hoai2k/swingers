@@ -46,27 +46,30 @@ export const CFG = {
   friction: 0.45,
   frictionStatic: 0.7,
   frictionAir: 0.012,
-  restitution: 0.05,
+  restitution: 0.18,    // bodies boing a little off surfaces
   // arm rig
   segCount: 4,
   segLen: 17,
   segThick: 7,
   segDensity: 0.0009,
-  segFrictionAir: 0.03,
+  segFrictionAir: 0.02,
   handRadius: 7.5,
   handDensity: 0.0012,
   shoulderFrac: 0.85,   // shoulder distance from center, in body radii
   spread: 0.25,         // per-arm angular offset when one stick drives both
+  stickGain: 1.25,      // stick response: full arm extension by ~80% deflection
   // muscle servo — forces in multiples of body weight
-  muscleGrab: 3.0,      // cap while that hand is gripping (drives the body)
-  muscleFree: 1.0,      // cap while the hand is free (drives the hand)
-  satDist: 26,          // position error (px) at which the muscle saturates
-  dampGrab: 0.045,      // velocity damping, ×weight per px/tick
-  dampFree: 0.035,
+  muscleGrab: 3.6,      // cap while that hand is gripping (drives the body)
+  muscleFree: 1.6,      // cap while the hand is free (drives the hand)
+  satDist: 22,          // position error (px) at which the muscle saturates
+  satAng: 0.55,         // angular error (rad) at which the swing motor saturates
+  dampTan: 0.012,       // tangential damping while gripping (low: windmills live)
+  dampRad: 0.08,        // radial damping while gripping (kills rubber-banding)
+  dampFree: 0.04,
   rollAssist: 0.006,    // tiny hidden roll torque from the stick (playability)
   grabAssist: 18,       // how close a closed hand must be to latch
-  maxSpeed: 26,         // px/tick hard cap on the body (anti-tunneling)
-  maxHandSpeed: 30,
+  maxSpeed: 28,         // px/tick hard cap on the body (anti-tunneling)
+  maxHandSpeed: 34,
   punchCooldown: 1.4,
   punchRadius: 100, punchKick: 11, punchSelf: 3.5,
   superRadius: 175, superKick: 19, superSelf: 6,
@@ -298,6 +301,7 @@ export class Player {
     if (!arm.grab) return;
     M.Composite.remove(this.engine.world, arm.grab.constraint);
     arm.grab = null;
+    arm.gripDrive = null;
   }
 
   releaseAll() { for (const a of this.arms) this.releaseArm(a); }
@@ -351,15 +355,20 @@ export class Player {
     for (const arm of this.arms) {
       const src = arm.src;
 
-      // target hand offset relative to the body: stick vector × reach.
-      // MAGNITUDE MATTERS: a half-tilted stick half-extends the arm, which is
-      // what makes pull-ups possible while gripping.
+      // Target hand offset relative to the body: stick vector × reach.
+      // MAGNITUDE MATTERS (easing the stick toward a grip reels you in for a
+      // pull-up), but the response curve reaches full extension by ~80%
+      // deflection so arms feel crisp, like Heave Ho.
       let T = null;
       if (src) {
+        const gx = src.x * CFG.stickGain, gy = src.y * CFG.stickGain;
+        const gm = Math.hypot(gx, gy);
+        const k = gm > 1 ? 1 / gm : 1;
         const c = Math.cos(arm.spreadRot), s = Math.sin(arm.spreadRot);
+        const tx = gx * k, ty = gy * k;
         T = {
-          x: (src.x * c - src.y * s) * ARM_REACH,
-          y: (src.x * s + src.y * c) * ARM_REACH,
+          x: (tx * c - ty * s) * ARM_REACH,
+          y: (tx * s + ty * c) * ARM_REACH,
         };
       }
 
@@ -370,25 +379,74 @@ export class Player {
         if (arm.trig < 0.25) { this.releaseArm(arm); continue; }
 
         if (T) {
-          // Servo in reverse: drive the BODY so the grip sits at the stick
-          // offset from it. desired shoulder = grip − T.
+          // The gripping arm is torque + length control around the pivot,
+          // like a real limb — NOT a point-chasing spring (that pulls along
+          // the chord when you windmill and never builds orbital speed).
+          //   tangential: full-strength motor rotating the body around the
+          //     grip until the arm points along the stick
+          //   radial: proportional control of arm length toward |T|
+          //     (easing the stick toward the grip reels you in — pull-ups)
+          // Control frame is anchored at the BODY CENTER: the shoulder orbits
+          // the center as the body spins, and controlling from it feeds
+          // torque back into the frame and destabilizes windmills.
           const B = arm.grab.body;
           const anchor = this.anchorWorld(arm.grab);
-          const err = { x: anchor.x - T.x - sh.x, y: anchor.y - T.y - sh.y };
-          let F = capMag({
-            x: err.x * (CFG.muscleGrab * W / CFG.satDist),
-            y: err.y * (CFG.muscleGrab * W / CFG.satDist),
-          }, CFG.muscleGrab * W);
+          const rx = A.position.x - anchor.x, ry = A.position.y - anchor.y;
+          const rd = Math.hypot(rx, ry) || 0.001;
+          const u = { x: rx / rd, y: ry / rd };          // grip -> body
+          const tx = -u.y, ty = u.x;                     // tangent (+CCW)
+
+          // desired radial direction is opposite the stick; desired radius is
+          // the stick extension plus the shoulder offset
+          const Tm = Math.hypot(T.x, T.y) || 0.001;
+          const radTarget = Tm + CFG.radius * CFG.shoulderFrac;
+          const wx = -T.x / Tm, wy = -T.y / Tm;
+          const wantAng = Math.atan2(wy, wx);
+          const bodyAng = Math.atan2(u.y, u.x);
+
+          // Track the angular error CONTINUOUSLY (unwrapped) while driven:
+          // when a windmilling stick gets more than half a turn ahead, a
+          // shortest-path error would flip sign and brake the swing. The
+          // accumulated error knows the target is "ahead", keeps pulling
+          // forward, and is capped just past a half-turn of extra lead so a
+          // wedged arm un-winds quickly when the player reverses.
+          if (!arm.gripDrive) {
+            const c0 = u.x * wy - u.y * wx, d0 = u.x * wx + u.y * wy;
+            arm.gripDrive = { err: Math.atan2(c0, d0), prevWant: wantAng, prevBody: bodyAng };
+          } else {
+            const gd = arm.gripDrive;
+            gd.err += angDiff(gd.prevWant, wantAng) - angDiff(gd.prevBody, bodyAng);
+            gd.err = clamp(gd.err, -4.5, 4.5);
+            gd.prevWant = wantAng;
+            gd.prevBody = bodyAng;
+          }
+          const angErr = arm.gripDrive.err;
+
           const vB = velocityAtPoint(B, anchor);
-          F = capMag({
-            x: F.x - (A.velocity.x - vB.x) * CFG.dampGrab * W,
-            y: F.y - (A.velocity.y - vB.y) * CFG.dampGrab * W,
-          }, CFG.muscleGrab * W * 1.25);
-          M.Body.applyForce(A, sh, F);
+          const rvx = A.velocity.x - vB.x, rvy = A.velocity.y - vB.y;
+          const vt = rvx * tx + rvy * ty;
+          const vr = rvx * u.x + rvy * u.y;
+
+          // right at 180° the direction is ambiguous — keep swing momentum
+          let dir = Math.sign(angErr || 1);
+          if (Math.abs(angErr) > 2.4 && Math.abs(angErr) < Math.PI + 0.3 && Math.abs(vt) > 0.25) {
+            dir = Math.sign(vt);
+          }
+
+          const Ft = CFG.muscleGrab * W * clamp(Math.abs(angErr) / CFG.satAng, 0, 1) * dir
+                   - vt * CFG.dampTan * W;
+          const radCap = CFG.muscleGrab * W * 0.9;
+          const Fr = clamp((radTarget - rd) * (CFG.muscleGrab * W / CFG.satDist), -radCap, radCap)
+                   - vr * CFG.dampRad * W;
+
+          const F = capMag({ x: u.x * Fr + tx * Ft, y: u.y * Fr + ty * Ft }, CFG.muscleGrab * W * 1.4);
+          M.Body.applyForce(A, A.position, F);
           if (!B.isStatic) M.Body.applyForce(B, anchor, { x: -F.x, y: -F.y });
+        } else {
+          arm.gripDrive = null;   // stick neutral while gripping = dangle
         }
-        // stick neutral while gripping = dangle from the grip
       } else {
+        arm.gripDrive = null;
         if (T) {
           // Drive the free hand toward the target. The equal-and-opposite
           // reaction on the body is what makes pushing off floors/walls,

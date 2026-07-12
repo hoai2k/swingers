@@ -74,7 +74,8 @@ export class Game {
       velocityIterations: 8,
       constraintIterations: 6,
     });
-    this.engine.gravity.y = 1.08;
+    this.engine.gravity.y = 1.18;   // punchy Heave Ho pace; muscle forces are
+                                    // specified in body-weights so they scale
     this.level = new Level(LEVELS[this.levelIndex], this.engine);
     this.particles.clear();
     const s = this.level.spawn;
