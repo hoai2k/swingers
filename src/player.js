@@ -68,7 +68,9 @@ export const CFG = {
   dampTan: 0.012,       // tangential damping while gripping (low: windmills live)
   dampRad: 0.08,        // radial damping while gripping (kills rubber-banding)
   dampFree: 0.04,
-  rollAssist: 0.006,    // tiny hidden roll torque from the stick (playability)
+  rollAssist: 0.009,    // tiny hidden roll torque from the stick (playability;
+                        // strong enough to un-chock a body resting on its own
+                        // wedged arm)
   grabAssist: 18,       // how close a closed hand must be to latch
   maxSpeed: 28,         // px/tick hard cap on the body (anti-tunneling)
   maxHandSpeed: 34,
@@ -391,8 +393,6 @@ export class Player {
         };
       }
 
-      const sh = this.shoulderWorld(arm);
-
       if (arm.grab) {
         if (arm.grab.body.plugin.hh.removed) { this.releaseArm(arm); continue; }
         if (arm.trig < 0.25) { this.releaseArm(arm); continue; }
@@ -426,6 +426,11 @@ export class Player {
           const wantAng = Math.atan2(wy, wx);
           const bodyAng = Math.atan2(u.y, u.x);
 
+          const vB = velocityAtPoint(B, anchor);
+          const rvx = A.velocity.x - vB.x, rvy = A.velocity.y - vB.y;
+          const vt = rvx * tx + rvy * ty;
+          const vr = rvx * u.x + rvy * u.y;
+
           // Track the angular error CONTINUOUSLY (unwrapped) while driven:
           // when a windmilling stick gets more than half a turn ahead, a
           // shortest-path error would flip sign and brake the swing. The
@@ -442,26 +447,32 @@ export class Player {
             gd.prevWant = wantAng;
             gd.prevBody = bodyAng;
           }
+          // The unwrap only matters while a swing is chasing a leading
+          // stick. With no real swing, snap back to the shortest path —
+          // otherwise an instant stick FLIP (e.g. down to up) reads as
+          // "target went half a turn around", parking the error near ±2π
+          // where every motor gates off: a total-paralysis deadlock.
+          if (Math.abs(vt) < 1.2) {
+            const gd = arm.gripDrive;
+            while (gd.err > Math.PI) gd.err -= 2 * Math.PI;
+            while (gd.err < -Math.PI) gd.err += 2 * Math.PI;
+          }
           const angErr = arm.gripDrive.err;
 
-          const vB = velocityAtPoint(B, anchor);
-          const rvx = A.velocity.x - vB.x, rvy = A.velocity.y - vB.y;
-          const vt = rvx * tx + rvy * ty;
-          const vr = rvx * u.x + rvy * u.y;
-
           // Near 180° (pressing straight toward/through the anchor) the
-          // rotation direction is ambiguous. If a swing exists, keep its
-          // momentum (windmills). If hanging still, fade the tangential
-          // motor out and let the RADIAL control reel the body straight in
-          // — that's a clean chin-up instead of a sideways thrash.
+          // rotation direction is ambiguous:
+          //  - a REAL swing (serious tangential speed) keeps its momentum,
+          //    so windmills never brake at the crossing
+          //  - a REEL-IN intent (radial target well inside the current
+          //    radius, i.e. a chin-up) fades the rotation motor and lets
+          //    the radial control pull the body straight in
+          //  - otherwise (full-extension press past the anchor, e.g.
+          //    flipping over a ledge from rest) keep full torque
           let dir = Math.sign(angErr || 1);
           let tanScale = clamp(Math.abs(angErr) / CFG.satAng, 0, 1);
           if (Math.abs(angErr) > 2.6) {
-            // a REAL swing (windmill) carries serious tangential speed —
-            // gentle dangling sway shouldn't count, or chin-ups turn into
-            // sideways thrashing
             if (Math.abs(vt) > 1.2) dir = Math.sign(vt);
-            else tanScale *= clamp((Math.PI - Math.abs(angErr)) / 0.5, 0, 1);
+            else if (radTarget < rd - 8) tanScale *= clamp((Math.PI - Math.abs(angErr)) / 0.5, 0, 1);
           }
 
           const Ft = CFG.muscleGrab * W * tanScale * dir
@@ -488,8 +499,15 @@ export class Player {
           // Drive the free hand toward the target. The equal-and-opposite
           // reaction on the body is what makes pushing off floors/walls,
           // flail-hops and arm-swimming work.
+          // Target is based on the body CENTER (not the shoulder, which
+          // rotates with the body — aim must stay world-absolute even while
+          // tumbling), with a world-space lateral spread so the two hands
+          // sit side by side instead of overlapping.
           const hand = arm.hand;
-          const desired = { x: sh.x + T.x, y: sh.y + T.y };
+          const Tm2 = Math.hypot(T.x, T.y) || 1;
+          const offX = arm.side * (-T.y / Tm2) * 14;
+          const offY = arm.side * (T.x / Tm2) * 14;
+          const desired = { x: A.position.x + T.x + offX, y: A.position.y + T.y + offY };
           const err = { x: desired.x - hand.position.x, y: desired.y - hand.position.y };
           let F = capMag({
             x: err.x * (CFG.muscleFree * W / CFG.satDist),
