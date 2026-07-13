@@ -36,22 +36,29 @@ Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
 ### How movement works (the whole game)
 
 Your robot is a ball with two physically simulated noodle arms (4 jointed
-segments each, left and right attached at opposite shoulders). The stick is a
-positional servo and **magnitude matters**: it points where you want your
-hands relative to your body, and a half-tilted stick half-extends the arm.
-Everything follows from that one rule, exactly like Heave Ho:
+segments each, left and right attached at opposite shoulders). Free arms
+point along the stick (magnitude matters — a half-tilted stick half-extends
+the arm). The moment a hand grips, **the stick steers your body: push where
+you want to go**, and the free hand points the same way, leading to the
+next hold. Everything follows from that, exactly like Heave Ho:
 
-- hanging + stick sideways swings you hard: dead hang to horizontal in about
-  a quarter second, and you can hold there
+- hanging + stick sideways swings you that way, hard: dead hang to
+  horizontal in about a quarter second, and you can hold there
 - **windmill**: roll the stick in circles while gripping a bar, corner or
   rope and your body whips around the grip, building big fling speed
   (the grip motor tracks your stick even when it laps ahead of your body)
-- ease the stick toward your grip to do a **pull-up** (shorter radius)
-- push the stick *down past your hand* to flip up over a ledge
+- **monkey bars / climbing**: hold the travel direction and alternate the
+  triggers — your body swings ahead while the free hand lands on the next
+  hold
+- grip the floor and push up = one-arm handstand; ease the stick gently
+  toward a hanging grip = **chin-up**
+- grab a ledge and push up-toward it to climb over
 - press open hands into floors/walls and the reaction shoves your body —
-  hops, crawls, handstands and wall-vaults are emergent, not scripted
+  hops, crawls and wall-vaults are emergent, not scripted
 - release the trigger at the top of the arc to fling; grips are pin joints
   so momentum carries perfectly
+- riding a balloon? relax the stick and hang — climbing above your own
+  balloon just presses it down
 
 Hands stick to the first thing they touch while the trigger is held —
 including other players' bodies and hands (human chains work). Punch (B)

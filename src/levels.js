@@ -58,7 +58,7 @@ export const LEVELS = [
       S(1420, 330, 320, 36),              // goal tower
     ],
     powerups: [{ x: 1000, y: 180 }],
-    texts: [{ x: 460, y: 180, text: 'PRESS THE STICK PAST YOUR HAND TO CLIMB OVER' }],
+    texts: [{ x: 460, y: 180, text: 'GRAB A LEDGE AND PUSH WHERE YOU WANT TO GO' }],
   },
 
   // --------------------------------------------------------- 3. monkey bars

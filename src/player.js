@@ -10,12 +10,14 @@
 //    muscle force. Half-deflection = half-extended arm.
 //  - Holding LT/RT closes that hand; a closed hand that touches anything
 //    grabbable gets pinned to it (a real revolute constraint).
-//  - While a hand is pinned, the SAME servo acts in reverse on the body:
-//    the body is driven toward  grip − stick × armReach. Everything in
-//    Heave Ho falls out of this one rule — pumping a swing, holding your
-//    body out horizontally, pull-ups (partial stick deflection shortens
-//    your radius), flipping over a ledge by pushing the stick "past" your
-//    hand, and handstands.
+//  - While a hand is pinned, the stick STEERS THE BODY around the grip:
+//    the body is driven toward  grip + stick × armReach — push where you
+//    want to go, and the free hand points the same way, leading to the
+//    next hold. Everything falls out of this one rule: swing pumping,
+//    windmilling, holding horizontal, chin-ups (partial deflection),
+//    climbing over ledges (push up-toward the ledge), handstands (grip
+//    the floor and push up), and hold-direction + alternate-trigger
+//    monkey-bar traversal.
 //  - Free hands physically push off floors and walls (the muscle force on
 //    a blocked hand reacts on the body), so hops, crawls and wall shoves
 //    are emergent rather than scripted. There is NO direct air control.
@@ -396,11 +398,14 @@ export class Player {
           const u = { x: rx / rd, y: ry / rd };          // grip -> body
           const tx = -u.y, ty = u.x;                     // tangent (+CCW)
 
-          // desired radial direction is opposite the stick; desired radius is
-          // the stick extension plus the shoulder offset
+          // While gripping, the stick steers the BODY: desired radial
+          // direction is ALONG the stick ("push where you want to go" —
+          // free arms meanwhile lead the same way, which is what makes
+          // hold-a-direction + alternate-triggers climbing and monkey-bar
+          // traversal flow). Desired radius = stick extension + shoulder.
           const Tm = Math.hypot(T.x, T.y) || 0.001;
           const radTarget = Tm + CFG.radius * CFG.shoulderFrac;
-          const wx = -T.x / Tm, wy = -T.y / Tm;
+          const wx = T.x / Tm, wy = T.y / Tm;
           const wantAng = Math.atan2(wy, wx);
           const bodyAng = Math.atan2(u.y, u.x);
 
@@ -427,13 +432,19 @@ export class Player {
           const vt = rvx * tx + rvy * ty;
           const vr = rvx * u.x + rvy * u.y;
 
-          // right at 180° the direction is ambiguous — keep swing momentum
+          // Near 180° (pressing straight toward/through the anchor) the
+          // rotation direction is ambiguous. If a swing exists, keep its
+          // momentum (windmills). If hanging still, fade the tangential
+          // motor out and let the RADIAL control reel the body straight in
+          // — that's a clean chin-up instead of a sideways thrash.
           let dir = Math.sign(angErr || 1);
-          if (Math.abs(angErr) > 2.4 && Math.abs(angErr) < Math.PI + 0.3 && Math.abs(vt) > 0.25) {
-            dir = Math.sign(vt);
+          let tanScale = clamp(Math.abs(angErr) / CFG.satAng, 0, 1);
+          if (Math.abs(angErr) > 2.6) {
+            if (Math.abs(vt) > 0.25) dir = Math.sign(vt);
+            else tanScale *= clamp((Math.PI - Math.abs(angErr)) / 0.5, 0, 1);
           }
 
-          const Ft = CFG.muscleGrab * W * clamp(Math.abs(angErr) / CFG.satAng, 0, 1) * dir
+          const Ft = CFG.muscleGrab * W * tanScale * dir
                    - vt * CFG.dampTan * W;
           const radCap = CFG.muscleGrab * W * 0.9;
           const Fr = clamp((radTarget - rd) * (CFG.muscleGrab * W / CFG.satDist), -radCap, radCap)
