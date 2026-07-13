@@ -1,7 +1,7 @@
 # SWINGERS
 
 A local-competition physics party game in the spirit of **Heave Ho** — up to 4
-players on Xbox controllers race grabby round robots across 8 boards of
+players on Xbox controllers race grabby round robots across 30 boards of
 platforms, ropes, spinners, balloons, moving ferries and spikes. Pure
 HTML5/canvas + [Matter.js](https://brm.io/matter-js/) (vendored), no build
 step.
@@ -15,7 +15,12 @@ python3 -m http.server 8123      # then open http://localhost:8123
 # or: npx serve
 ```
 
-Connect controllers, press **A** to join, **START** to race.
+Connect controllers and press **A** to join — you spawn straight into the
+lobby **playground** (a live practice arena with a bar, rope, balloon and
+climbing tower). Hit the **PLAY** button (or START) to open the board list:
+**30 boards, 10 each of Easy / Medium / Hard**, organized in columns —
+browse with stick/dpad, pick with A, or just click one. Races return to the
+board list; session scores and best times persist.
 
 ## Controls (Xbox layout)
 
@@ -69,10 +74,18 @@ punch.
 
 Everyone spawns together; first to the **GOAL** ring scores 5, then 3/2/1.
 Once someone finishes the rest have 15 seconds. Spikes/lava/falling = respawn
-at the start (costs time, not points). Most points after board 8 wins.
+at the start (costs time, not points).
 
-Boards: Grab School → The Wall → Monkey Bars → Rope Chasm → Spin Cycle →
-Balloon Ascent → Lava Ferry → The Gauntlet.
+The 30 boards follow Heave Ho's design language: single-screen rooms with
+the goal visible from spawn, one gimmick per room, and hazards that frame
+the route. **Easy** teaches one mechanic with safe floors (Grab School,
+Stepping Stones, Rope Garden, Gentle Spin...). **Medium** adds spikes and
+combinations (Monkey Bars, Pendulum Alley, Balloon Chimney, Windmill
+Pass...). **Hard** demands chained techniques over mostly-lethal ground
+(Spike Ceiling, Spinner Gauntlet, Clock Tower, Razor Run, Summit...).
+Every board carries an authored solution route checked against measured
+physics reach envelopes (see the design rules atop `src/levels.js`), so
+every board is completable.
 
 ## Customizing
 
@@ -102,7 +115,7 @@ respawn timing...) lives in `CFG` at the top of `src/player.js`.
 | --- | --- |
 | `src/player.js` | the control system: arms, latching, swing motor, punch |
 | `src/level.js` | builds/updates/draws boards (ropes, balloons, movers...) |
-| `src/levels.js` | the 8 board definitions (data only) |
+| `src/levels.js` | the practice playground + 30 board definitions (data only) |
 | `src/game.js` | lobby → countdown → race → results → podium, HUD |
 | `src/input.js` | Gamepad API + keyboard as identical virtual controllers |
 | `src/heads.js` | head styles + future sprite registry |

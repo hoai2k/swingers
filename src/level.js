@@ -242,7 +242,7 @@ export class Level {
       ctx.fillText(t.text, t.x, t.y);
     }
 
-    this.drawGoal(ctx);
+    if (this.goal) this.drawGoal(ctx);
 
     // ropes
     for (const r of this.ropes) {

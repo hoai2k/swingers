@@ -1,12 +1,16 @@
-// Game orchestration: lobby -> countdown -> race -> round results -> podium.
-// Local competition: everyone races to the goal ring; finish order scores
-// 5/3/2/1 points, most points after the last board wins.
+// Game orchestration.
+//
+// Flow: LOBBY (a live practice playground — join, warm up, press PLAY)
+//   -> SELECT (30 boards organized by difficulty)
+//   -> countdown -> race -> results -> back to SELECT.
+// Races score 5/3/2/1 by finish order; scores and best times persist for
+// the session.
 
 import { Input, NEUTRAL } from './input.js';
 import { Player, PLAYER_COLORS, CFG, CAT } from './player.js';
 import { HEAD_STYLES, drawHead } from './heads.js';
 import { Level } from './level.js';
-import { LEVELS } from './levels.js';
+import { LEVELS, PRACTICE } from './levels.js';
 import { Particles } from './particles.js';
 import { sfx } from './audio.js';
 import { clamp, lerp, TAU, roundRectPath } from './util.js';
@@ -15,6 +19,11 @@ const M = window.Matter;
 
 const FINISH_WINDOW = 15;          // seconds others get once someone finishes
 const POINTS = [5, 3, 2, 1];
+const DIFFS = [
+  { key: 'easy', label: 'EASY', color: '#5fe08b' },
+  { key: 'medium', label: 'MEDIUM', color: '#ffd94d' },
+  { key: 'hard', label: 'HARD', color: '#ff5d6c' },
+];
 
 export class Game {
   constructor(canvas) {
@@ -23,13 +32,13 @@ export class Game {
     this.input = new Input();
     this.input.attach(window);
 
-    this.state = 'lobby';
     this.roster = [null, null, null, null];   // {sourceId, headStyle}
     this.players = [];
     this.engine = null;
     this.level = null;
     this.levelIndex = 0;
     this.particles = new Particles();
+    this.LEVELS = LEVELS;
 
     this.time = 0;
     this.raceTime = 0;
@@ -40,8 +49,15 @@ export class Game {
     this.roundResults = null;
     this.roundEndT = 0;
     this.shake = 0;
+    this.best = {};                            // board name -> best time (s)
 
-    // clickable on-screen buttons (pause / fullscreen), rebuilt every frame
+    // level select grid
+    this.grid = DIFFS.map((d) => LEVELS.map((lv, i) => (lv.diff === d.key ? i : -1)).filter((i) => i >= 0));
+    this.sel = { col: 0, row: 0 };
+    this.selMoveAt = 0;
+    this.selRects = [];
+
+    // clickable on-screen buttons, rebuilt every frame
     this.buttons = [];
     canvas.addEventListener('pointerdown', (e) => {
       const x = e.offsetX, y = e.offsetY;
@@ -49,7 +65,17 @@ export class Game {
         if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
           if (b.id === 'pause') this.togglePause();
           else if (b.id === 'fs') this.toggleFullscreen();
+          else if (b.id === 'play') this.openSelect();
+          else if (b.id === 'back') this.backToLobby();
           return;
+        }
+      }
+      if (this.state === 'select') {
+        for (const r of this.selRects) {
+          if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+            this.chooseLevel(r.index);
+            return;
+          }
         }
       }
     });
@@ -65,34 +91,45 @@ export class Game {
         if (e.code === 'KeyR') this.startLevel();       // restart board
       }
     });
-  }
 
-  togglePause() {
-    if (this.state === 'play') { this.state = 'pause'; sfx.uiTick(); }
-    else if (this.state === 'pause') { this.state = 'play'; sfx.uiTick(); }
-  }
-
-  toggleFullscreen() {
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    } else {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
+    this.state = 'lobby';
+    this.buildLobby();
   }
 
   // ------------------------------------------------------------- game flow
 
-  beginMatch() {
-    this.players = [];
-    for (let i = 0; i < 4; i++) {
-      if (!this.roster[i]) continue;
-      const p = new Player(i, this.roster[i].sourceId, this.roster[i].headStyle);
-      this.players.push(p);
-    }
-    if (!this.players.length) return;
-    this.levelIndex = 0;
-    this.startLevel();
+  buildLobby() {
+    this.engine = M.Engine.create({
+      positionIterations: 10,
+      velocityIterations: 8,
+      constraintIterations: 6,
+    });
+    this.engine.gravity.y = 1.18;
+    this.level = new Level(PRACTICE, this.engine);
+    this.particles.clear();
+    this.shake = 0;
+    // respawn any already-joined players into the playground
+    this.players.forEach((p, i) => {
+      p.spawn(this.engine, PRACTICE.spawn.x + i * 50, PRACTICE.spawn.y);
+    });
+    this.state = 'lobby';
+  }
+
+  backToLobby() {
+    if (this.state === 'lobby') return;
+    this.buildLobby();
+  }
+
+  openSelect() {
+    if (this.state !== 'lobby' || !this.players.length) return;
+    this.state = 'select';
     sfx.go();
+  }
+
+  chooseLevel(index) {
+    this.levelIndex = index;
+    sfx.join();
+    this.startLevel();
   }
 
   startLevel() {
@@ -128,6 +165,10 @@ export class Game {
     }).map((p) => {
       const pts = p.finishOrder >= 0 ? (POINTS[p.finishOrder] || 1) : 0;
       p.score += pts;
+      if (p.finishOrder >= 0) {
+        const name = LEVELS[this.levelIndex].name;
+        if (!(name in this.best) || p.finishTime < this.best[name]) this.best[name] = p.finishTime;
+      }
       return { p, pts, finished: p.finishOrder >= 0, time: p.finishTime };
     });
     this.roundResults = rows;
@@ -135,25 +176,25 @@ export class Game {
     this.state = 'roundEnd';
   }
 
-  nextLevel() {
-    this.levelIndex++;
-    if (this.levelIndex >= LEVELS.length) this.state = 'podium';
-    else this.startLevel();
-  }
-
   skipLevel() {
     this.levelIndex = (this.levelIndex + 1) % LEVELS.length;
     this.startLevel();
   }
 
-  toLobby() {
-    this.state = 'lobby';
-    this.engine = null;
-    this.level = null;
-    this.players = [];
+  togglePause() {
+    if (this.state === 'play') { this.state = 'pause'; sfx.uiTick(); }
+    else if (this.state === 'pause') { this.state = 'play'; sfx.uiTick(); }
   }
 
-  controlsEnabled() { return this.state === 'play'; }
+  toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }
+
+  controlsEnabled() { return this.state === 'play' || this.state === 'lobby'; }
 
   addShake(n) { this.shake = Math.min(20, this.shake + n); }
 
@@ -170,6 +211,10 @@ export class Game {
     return arr;
   }
 
+  isJoined(sourceId) {
+    return this.roster.some((r) => r && r.sourceId === sourceId);
+  }
+
   // ------------------------------------------------------------------ step
 
   step(dt) {
@@ -178,7 +223,8 @@ export class Game {
     if (this.input.anyActivity) sfx.ensure();
 
     switch (this.state) {
-      case 'lobby': this.lobbyStep(states); break;
+      case 'lobby': this.lobbyStep(states, dt); break;
+      case 'select': this.selectStep(states); break;
 
       case 'countdown': {
         this.physicsStep(dt);
@@ -193,8 +239,6 @@ export class Game {
         this.goFlash = Math.max(0, this.goFlash - dt);
         this.raceTime += dt;
         this.physicsStep(dt);
-
-        // finish window countdown once somebody is home
         if (this.firstFinish !== null &&
             this.raceTime - this.firstFinish >= FINISH_WINDOW) {
           this.endRound();
@@ -211,7 +255,7 @@ export class Game {
           if (!this.isJoined(s.id)) continue;
           if (s.pressed.start) this.state = 'play';
           else if (s.pressed.x) this.startLevel();
-          else if (s.pressed.back) this.toLobby();
+          else if (s.pressed.back) this.backToLobby();
         }
         break;
       }
@@ -221,18 +265,80 @@ export class Game {
         this.particles.update(dt);
         if (this.roundEndT > 0.8) {
           for (const s of states) {
-            if ((s.pressed.a || s.pressed.start) && this.isJoined(s.id)) { this.nextLevel(); break; }
+            if ((s.pressed.a || s.pressed.start) && this.isJoined(s.id)) { this.state = 'select'; break; }
           }
         }
         break;
       }
+    }
+  }
 
-      case 'podium': {
-        for (const s of states) {
-          if ((s.pressed.a || s.pressed.start) && this.isJoined(s.id)) { this.toLobby(); break; }
+  lobbyStep(states, dt) {
+    for (const s of states) {
+      const slotIdx = this.roster.findIndex((r) => r && r.sourceId === s.id);
+      if (slotIdx === -1) {
+        if (s.pressed.a) {
+          const free = this.roster.findIndex((r) => !r);
+          if (free !== -1) {
+            this.roster[free] = { sourceId: s.id, headStyle: free % HEAD_STYLES.length };
+            const p = new Player(free, s.id, free % HEAD_STYLES.length);
+            p.spawn(this.engine, PRACTICE.spawn.x + free * 50, PRACTICE.spawn.y - 40);
+            this.players.push(p);
+            this.players.sort((a, b) => a.slot - b.slot);
+            sfx.join();
+          }
         }
-        break;
+      } else {
+        const slot = this.roster[slotIdx];
+        const player = this.players.find((p) => p.slot === slotIdx);
+        if (s.pressed.back) {
+          // leave: remove the robot from the playground
+          if (player) {
+            Player.breakGrabsOn(player, this.players);
+            if (player.state === 'alive') player.removeRig();
+            this.players = this.players.filter((p) => p !== player);
+          }
+          this.roster[slotIdx] = null;
+          sfx.leave();
+          continue;
+        }
+        if (s.pressed.dl) { slot.headStyle = (slot.headStyle + HEAD_STYLES.length - 1) % HEAD_STYLES.length; sfx.uiTick(); }
+        if (s.pressed.dr) { slot.headStyle = (slot.headStyle + 1) % HEAD_STYLES.length; sfx.uiTick(); }
+        if (player) player.headStyle = slot.headStyle;
+        if (s.pressed.start) { this.openSelect(); return; }
       }
+    }
+    this.physicsStep(dt);
+  }
+
+  selectStep(states) {
+    const rows = () => this.grid[this.sel.col].length;
+    for (const s of states) {
+      if (!this.isJoined(s.id)) continue;
+      let mx = 0, my = 0;
+      if (s.pressed.dl) mx = -1;
+      else if (s.pressed.dr) mx = 1;
+      else if (s.pressed.du) my = -1;
+      else if (s.pressed.dd) my = 1;
+      else if (this.time - this.selMoveAt > 0.22) {
+        const v = s.l.mag > 0.55 ? s.l : (s.r.mag > 0.55 ? s.r : null);
+        if (v) {
+          if (Math.abs(v.x) > Math.abs(v.y)) mx = Math.sign(v.x);
+          else my = Math.sign(v.y);
+        }
+      }
+      if (mx || my) {
+        this.selMoveAt = this.time;
+        this.sel.col = (this.sel.col + mx + 3) % 3;
+        this.sel.row = clamp(this.sel.row, 0, rows() - 1);
+        this.sel.row = (this.sel.row + my + rows()) % rows();
+        sfx.uiTick();
+      }
+      if (s.pressed.a || s.pressed.start) {
+        this.chooseLevel(this.grid[this.sel.col][this.sel.row]);
+        return;
+      }
+      if (s.pressed.b || s.pressed.back) { this.backToLobby(); return; }
     }
   }
 
@@ -271,7 +377,7 @@ export class Game {
 
       // goal
       const goal = this.level.goal;
-      if (Math.hypot(pos.x - goal.x, pos.y - goal.y) < goal.r + 10) {
+      if (goal && Math.hypot(pos.x - goal.x, pos.y - goal.y) < goal.r + 10) {
         p.finish(this);
         if (this.firstFinish === null) this.firstFinish = this.raceTime;
         if (this.players.every((q) => q.state === 'finished')) { this.endRound(); return; }
@@ -280,33 +386,6 @@ export class Game {
 
     this.particles.update(dt);
     this.shake = Math.max(0, this.shake - 60 * dt);
-  }
-
-  // ----------------------------------------------------------------- lobby
-
-  isJoined(sourceId) {
-    return this.roster.some((r) => r && r.sourceId === sourceId);
-  }
-
-  lobbyStep(states) {
-    for (const s of states) {
-      const slotIdx = this.roster.findIndex((r) => r && r.sourceId === s.id);
-      if (slotIdx === -1) {
-        if (s.pressed.a) {
-          const free = this.roster.findIndex((r) => !r);
-          if (free !== -1) {
-            this.roster[free] = { sourceId: s.id, headStyle: free % HEAD_STYLES.length };
-            sfx.join();
-          }
-        }
-      } else {
-        const slot = this.roster[slotIdx];
-        if (s.pressed.b || s.pressed.back) { this.roster[slotIdx] = null; sfx.leave(); continue; }
-        if (s.pressed.dl) { slot.headStyle = (slot.headStyle + HEAD_STYLES.length - 1) % HEAD_STYLES.length; sfx.uiTick(); }
-        if (s.pressed.dr) { slot.headStyle = (slot.headStyle + 1) % HEAD_STYLES.length; sfx.uiTick(); }
-        if (s.pressed.start) { this.beginMatch(); return; }
-      }
-    }
   }
 
   // ------------------------------------------------------------------ draw
@@ -322,8 +401,11 @@ export class Game {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    if (this.state === 'lobby') { this.drawLobby(ctx, cw, ch); this.drawButtons(ctx, cw, false); return; }
-    if (this.state === 'podium') { this.drawPodium(ctx, cw, ch); this.drawButtons(ctx, cw, false); return; }
+    if (this.state === 'select') {
+      this.drawSelect(ctx, cw, ch);
+      this.drawButtons(ctx, cw, false);
+      return;
+    }
     if (!this.level) return;
 
     this.level.drawBackground(ctx, cw, ch);
@@ -345,7 +427,8 @@ export class Game {
     this.particles.draw(ctx);
     ctx.restore();
 
-    this.drawHud(ctx, cw, ch);
+    if (this.state === 'lobby') this.drawLobbyOverlay(ctx, cw, ch);
+    else this.drawHud(ctx, cw, ch);
 
     if (this.state === 'countdown') this.drawCountdown(ctx, cw, ch);
     if (this.goFlash > 0) this.drawGo(ctx, cw, ch);
@@ -357,7 +440,8 @@ export class Game {
   }
 
   drawButtons(ctx, cw, withPause) {
-    this.buttons = [];
+    // the PLAY button only exists on the lobby overlay
+    this.buttons = this.state === 'lobby' ? this.buttons.filter((b) => b.id === 'play') : [];
     const s = 34, m = 14, gap = 8, y = 12;
     const drawBtn = (x, id, icon) => {
       this.buttons.push({ id, x, y, w: s, h: s });
@@ -373,7 +457,6 @@ export class Game {
     };
     let x = cw - m - s;
     drawBtn(x, 'fs', (cx, cy) => {
-      // fullscreen corner brackets
       const r = 7, l = 5;
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
@@ -405,6 +488,7 @@ export class Game {
 
   drawFinishedAtGoal(ctx) {
     const goal = this.level.goal;
+    if (!goal) return;
     for (const p of this.players) {
       if (p.state !== 'finished') continue;
       const bob = Math.sin(this.time * 4 + p.slot) * 6;
@@ -419,16 +503,21 @@ export class Game {
   }
 
   drawHud(ctx, cw, ch) {
-    // level name (top-left)
+    const lv = LEVELS[this.levelIndex];
+    const diff = DIFFS.find((d) => d.key === lv.diff);
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = diff ? diff.color : 'rgba(255,255,255,0.55)';
     ctx.font = 'bold 15px system-ui, sans-serif';
-    ctx.fillText(`BOARD ${this.levelIndex + 1}/${LEVELS.length}`, 16, 26);
+    ctx.fillText(diff ? diff.label : '', 16, 26);
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.font = '900 21px system-ui, sans-serif';
-    ctx.fillText(LEVELS[this.levelIndex].name, 16, 50);
+    ctx.fillText(lv.name, 16, 50);
+    if (this.best[lv.name] !== undefined) {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.fillText(`best ${this.best[lv.name].toFixed(2)}s`, 16, 70);
+    }
 
-    // race clock / finish window (top-center)
     ctx.textAlign = 'center';
     if (this.firstFinish !== null && this.state === 'play') {
       const left = Math.max(0, FINISH_WINDOW - (this.raceTime - this.firstFinish));
@@ -461,6 +550,143 @@ export class Game {
     }
   }
 
+  drawLobbyOverlay(ctx, cw, ch) {
+    // title
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd94d';
+    ctx.font = `900 ${Math.min(64, cw * 0.06)}px system-ui, sans-serif`;
+    ctx.fillText('SWINGERS', cw / 2, 58);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.fillText('a grabby robot party game', cw / 2, 80);
+
+    // slot chips
+    const chipW = Math.min(190, cw / 4 - 20), chipH = 44;
+    const total = chipW * 4 + 12 * 3;
+    let x = cw / 2 - total / 2;
+    for (let i = 0; i < 4; i++) {
+      const slot = this.roster[i];
+      roundRectPath(ctx, x, 96, chipW, chipH, 12);
+      ctx.fillStyle = slot ? 'rgba(10,12,24,0.6)' : 'rgba(10,12,24,0.3)';
+      ctx.fill();
+      ctx.strokeStyle = slot ? PLAYER_COLORS[i].main : 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      if (slot) {
+        drawHead(ctx, x + 24, 96 + chipH / 2, 14, PLAYER_COLORS[i], slot.headStyle, { x: 0, y: 0 }, 0);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.fillText(`P${i + 1}  ◀ ${HEAD_STYLES[slot.headStyle].name} ▶`, x + 24 + (chipW - 34) / 2, 96 + 28);
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(this.time * 3 + i) * 0.12})`;
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.fillText('press A to join', x + chipW / 2, 96 + 28);
+      }
+      x += chipW + 12;
+    }
+
+    // PLAY button
+    const anyJoined = this.players.length > 0;
+    const bw = 220, bh = 62;
+    const bx = cw / 2 - bw / 2, by = ch - bh - 26;
+    this.buttons = this.buttons.filter((b) => b.id !== 'play');
+    if (anyJoined) {
+      this.buttons.push({ id: 'play', x: bx, y: by, w: bw, h: bh });
+      const pulse = 1 + Math.sin(this.time * 4) * 0.02;
+      ctx.save();
+      ctx.translate(cw / 2, by + bh / 2);
+      ctx.scale(pulse, pulse);
+      roundRectPath(ctx, -bw / 2, -bh / 2, bw, bh, 18);
+      ctx.fillStyle = '#ffd94d';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#221c08';
+      ctx.font = '900 30px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('▶  PLAY', 0, 11);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText('or press START', cw / 2, by - 10);
+    } else {
+      ctx.fillStyle = `rgba(255,255,255,${0.5 + Math.sin(this.time * 3) * 0.2})`;
+      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.fillText('press A on a controller — or Enter for keyboard', cw / 2, ch - 52);
+    }
+
+    // controls legend
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ face  •  BACK leave  •  F fullscreen', cw / 2, ch - 8);
+  }
+
+  drawSelect(ctx, cw, ch) {
+    const grad = ctx.createLinearGradient(0, 0, 0, ch);
+    grad.addColorStop(0, '#141830');
+    grad.addColorStop(1, '#233054');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd94d';
+    ctx.font = `900 ${Math.min(44, cw * 0.045)}px system-ui, sans-serif`;
+    ctx.fillText('CHOOSE A BOARD', cw / 2, 52);
+
+    // session scores
+    ctx.font = 'bold 15px system-ui, sans-serif';
+    let sx = cw / 2 - (this.players.length - 1) * 60;
+    for (const p of this.players) {
+      ctx.fillStyle = p.color.main;
+      ctx.fillText(`${p.name} ${p.score}`, sx, 78);
+      sx += 120;
+    }
+
+    this.selRects = [];
+    const colW = Math.min(300, (cw - 80) / 3);
+    const rowH = Math.min(46, (ch - 200) / 10);
+    const x0 = cw / 2 - colW * 1.5 - 20;
+    const y0 = 116;
+    DIFFS.forEach((d, ci) => {
+      const cx = x0 + ci * (colW + 20);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = d.color;
+      ctx.font = '900 22px system-ui, sans-serif';
+      ctx.fillText(d.label, cx + colW / 2, y0 - 12);
+      this.grid[ci].forEach((levelIndex, ri) => {
+        const lv = LEVELS[levelIndex];
+        const y = y0 + ri * rowH;
+        const isSel = this.sel.col === ci && this.sel.row === ri;
+        this.selRects.push({ x: cx, y, w: colW, h: rowH - 6, index: levelIndex });
+        roundRectPath(ctx, cx, y, colW, rowH - 6, 10);
+        ctx.fillStyle = isSel ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)';
+        ctx.fill();
+        if (isSel) {
+          ctx.strokeStyle = d.color;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+        ctx.fillStyle = isSel ? '#fff' : 'rgba(255,255,255,0.75)';
+        ctx.font = `bold ${Math.min(15, rowH * 0.38)}px system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText(lv.name, cx + 14, y + rowH / 2 + 4);
+        if (this.best[lv.name] !== undefined) {
+          ctx.textAlign = 'right';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.font = `${Math.min(12, rowH * 0.3)}px system-ui, sans-serif`;
+          ctx.fillText(this.best[lv.name].toFixed(2) + 's', cx + colW - 12, y + rowH / 2 + 4);
+        }
+      });
+    });
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillText('stick / dpad to browse  •  A to race  •  B back to the playground  •  or click a board', cw / 2, ch - 14);
+  }
+
   drawCountdown(ctx, cw, ch) {
     const n = Math.ceil(this.cd);
     const frac = this.cd - Math.floor(this.cd);
@@ -473,7 +699,6 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillText(String(n), 0, 40);
     ctx.restore();
-    // level intro line
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
     ctx.font = 'bold 22px system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -503,7 +728,7 @@ export class Game {
     ctx.fillText('PAUSED', cw / 2, ch * 0.4);
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('START resume    •    X restart board    •    BACK quit to lobby', cw / 2, ch * 0.5);
+    ctx.fillText('START resume    •    X restart board    •    BACK quit to playground', cw / 2, ch * 0.5);
     ctx.font = '15px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.fillText('keyboard: P resume • X restart • Backspace quit • M mute • F fullscreen', cw / 2, ch * 0.56);
@@ -545,153 +770,7 @@ export class Game {
       ctx.textAlign = 'center';
       ctx.fillStyle = `rgba(255,255,255,${0.6 + Math.sin(this.time * 4) * 0.3})`;
       ctx.font = 'bold 20px system-ui, sans-serif';
-      const last = this.levelIndex >= LEVELS.length - 1;
-      ctx.fillText(last ? 'Press A for final results' : 'Press A for the next board', cw / 2, ch * 0.85);
+      ctx.fillText('Press A for the board list', cw / 2, ch * 0.85);
     }
-  }
-
-  drawPodium(ctx, cw, ch) {
-    // simple dark backdrop
-    const grad = ctx.createLinearGradient(0, 0, 0, ch);
-    grad.addColorStop(0, '#141830');
-    grad.addColorStop(1, '#2a2145');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, cw, ch);
-
-    const ranked = [...this.players].sort((a, b) => b.score - a.score || a.deaths - b.deaths);
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd94d';
-    ctx.font = '900 56px system-ui, sans-serif';
-    ctx.fillText('CHAMPION', cw / 2, ch * 0.16);
-    if (ranked[0]) {
-      const champ = ranked[0];
-      const bob = Math.sin(this.time * 3) * 8;
-      drawHead(ctx, cw / 2, ch * 0.32 + bob, 56, champ.color, champ.headStyle, { x: 0, y: -0.2 }, Math.sin(this.time * 5) * 0.15);
-      ctx.fillStyle = '#fff';
-      ctx.font = '900 34px system-ui, sans-serif';
-      ctx.fillText(champ.name, cw / 2, ch * 0.32 + 100);
-      // confetti rain
-      if (Math.random() < 0.15) this.particles.confetti(Math.random() * cw, -10, 6);
-      this.particles.update(1 / 60);
-      this.particles.draw(ctx);
-    }
-    ranked.forEach((p, i) => {
-      const y = ch * 0.55 + i * 44;
-      ctx.font = 'bold 24px system-ui, sans-serif';
-      ctx.fillStyle = p.color.main;
-      ctx.textAlign = 'right';
-      ctx.fillText(p.name, cw / 2 - 30, y);
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${p.score} pts   •   ${p.deaths} splats`, cw / 2 - 10, y);
-    });
-    ctx.textAlign = 'center';
-    ctx.fillStyle = `rgba(255,255,255,${0.6 + Math.sin(this.time * 4) * 0.3})`;
-    ctx.font = 'bold 20px system-ui, sans-serif';
-    ctx.fillText('Press A to return to the lobby', cw / 2, ch * 0.9);
-  }
-
-  drawLobby(ctx, cw, ch) {
-    const grad = ctx.createLinearGradient(0, 0, 0, ch);
-    grad.addColorStop(0, '#141830');
-    grad.addColorStop(1, '#233054');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, cw, ch);
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd94d';
-    ctx.font = `900 ${Math.min(96, cw * 0.08)}px system-ui, sans-serif`;
-    ctx.fillText('SWINGERS', cw / 2, ch * 0.16);
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.font = 'bold 20px system-ui, sans-serif';
-    ctx.fillText('a grabby robot party game — up to 4 players', cw / 2, ch * 0.16 + 34);
-
-    // slot cards
-    const cardW = Math.min(230, cw / 4 - 24), cardH = cardW * 1.15;
-    const total = cardW * 4 + 24 * 3;
-    const x0 = cw / 2 - total / 2;
-    const y0 = ch * 0.3;
-    for (let i = 0; i < 4; i++) {
-      const x = x0 + i * (cardW + 24);
-      const slot = this.roster[i];
-      roundRectPath(ctx, x, y0, cardW, cardH, 18);
-      ctx.fillStyle = slot ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)';
-      ctx.fill();
-      ctx.strokeStyle = slot ? PLAYER_COLORS[i].main : 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.textAlign = 'center';
-      if (slot) {
-        const src = this.input.get(slot.sourceId);
-        const cxp = x + cardW / 2, cyp = y0 + cardH * 0.42;
-        const r = cardW * 0.21;
-        // waving segmented preview arms driven by the sticks
-        if (src) {
-          ctx.lineCap = 'round';
-          const armDef = [
-            [src.l.mag ? src.l : { x: -0.5, y: 0.9 }, -1],
-            [src.r.mag ? src.r : (src.l.mag ? src.l : { x: 0.5, y: 0.9 }), 1],
-          ];
-          for (const [v, side] of armDef) {
-            const a = Math.atan2(v.y, v.x) + (v.mag ? side * 0.2 : 0);
-            let px2 = cxp + Math.cos(a + side * 0.9) * r * 0.85;
-            let py2 = cyp + Math.sin(a + side * 0.9) * r * 0.85;
-            const segLen = r * 0.55;
-            for (let sgi = 0; sgi < 4; sgi++) {
-              const wob = Math.sin(this.time * 5 + sgi * 1.3 + i) * 0.16 * (sgi + 1) * (v.mag ? 0.4 : 1);
-              const sa = a + wob + side * (v.mag ? 0 : 0.15) * sgi;
-              const nx = px2 + Math.cos(sa) * segLen;
-              const ny = py2 + Math.sin(sa) * segLen;
-              ctx.strokeStyle = '#565d70';
-              ctx.lineWidth = 8 - sgi;
-              ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(nx, ny); ctx.stroke();
-              ctx.strokeStyle = '#9aa3ba';
-              ctx.lineWidth = 4 - sgi * 0.5;
-              ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(nx, ny); ctx.stroke();
-              px2 = nx; py2 = ny;
-            }
-            ctx.fillStyle = '#c3cadd';
-            ctx.beginPath(); ctx.arc(px2, py2, 4.5, 0, TAU); ctx.fill();
-          }
-        }
-        const look = src && src.l.mag ? { x: src.l.x, y: src.l.y } : { x: 0, y: 0 };
-        drawHead(ctx, cxp, cyp, r, PLAYER_COLORS[i], slot.headStyle, look, Math.sin(this.time * 2 + i) * 0.08);
-
-        ctx.fillStyle = PLAYER_COLORS[i].main;
-        ctx.font = '900 22px system-ui, sans-serif';
-        ctx.fillText('P' + (i + 1), cxp, y0 + cardH * 0.72);
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.font = 'bold 15px system-ui, sans-serif';
-        const styleName = HEAD_STYLES[slot.headStyle].name;
-        ctx.fillText(`◀ ${styleName} ▶`, cxp, y0 + cardH * 0.82);
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.font = '13px system-ui, sans-serif';
-        ctx.fillText(slot.sourceId === 'keys' ? 'keyboard' : 'controller ' + slot.sourceId.slice(3), cxp, y0 + cardH * 0.92);
-      } else {
-        ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(this.time * 3 + i) * 0.15})`;
-        ctx.font = 'bold 19px system-ui, sans-serif';
-        ctx.fillText('PRESS  A', x + cardW / 2, y0 + cardH * 0.48);
-        ctx.font = '14px system-ui, sans-serif';
-        ctx.fillText('to join', x + cardW / 2, y0 + cardH * 0.56);
-      }
-    }
-
-    // footer: start + controls
-    ctx.textAlign = 'center';
-    const anyJoined = this.roster.some(Boolean);
-    if (anyJoined) {
-      ctx.fillStyle = `rgba(255,217,77,${0.7 + Math.sin(this.time * 5) * 0.3})`;
-      ctx.font = '900 30px system-ui, sans-serif';
-      ctx.fillText('PRESS START (or Esc) TO PLAY', cw / 2, ch * 0.78);
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = 'bold 22px system-ui, sans-serif';
-      ctx.fillText('connect Xbox controllers and press A — or press Enter for keyboard', cw / 2, ch * 0.78);
-    }
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '15px system-ui, sans-serif';
-    ctx.fillText('STICKS wave arms  •  LT / RT grab (hold)  •  B punch  •  ◀ ▶ pick a face  •  B leave', cw / 2, ch * 0.86);
-    ctx.fillText('keyboard: WASD + Arrows = arms  •  Shift-L/Q + Shift-R/E = grab  •  Space = punch  •  Enter = A  •  F fullscreen', cw / 2, ch * 0.9);
   }
 }

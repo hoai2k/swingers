@@ -323,7 +323,7 @@ export class Player {
 
   update(dt, ctrl, g) {
     if (this.state === 'dead') {
-      if (g.time >= this.respawnAt && g.state === 'play') this.respawn(g);
+      if (g.time >= this.respawnAt && (g.state === 'play' || g.state === 'lobby')) this.respawn(g);
       return;
     }
     if (this.state !== 'alive') return;
