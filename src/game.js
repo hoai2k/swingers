@@ -41,16 +41,43 @@ export class Game {
     this.roundEndT = 0;
     this.shake = 0;
 
+    // clickable on-screen buttons (pause / fullscreen), rebuilt every frame
+    this.buttons = [];
+    canvas.addEventListener('pointerdown', (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      for (const b of this.buttons) {
+        if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
+          if (b.id === 'pause') this.togglePause();
+          else if (b.id === 'fs') this.toggleFullscreen();
+          return;
+        }
+      }
+    });
+
     // audio unlock needs a real user gesture; pointer works for pad-only setups
     window.addEventListener('pointerdown', () => sfx.ensure());
     window.addEventListener('keydown', (e) => {
       sfx.ensure();
       if (e.code === 'KeyM') sfx.toggleMute();
+      if (e.code === 'KeyF') this.toggleFullscreen();
       if (this.state === 'play' || this.state === 'pause') {
         if (e.code === 'KeyN') this.skipLevel();        // debug: next board
         if (e.code === 'KeyR') this.startLevel();       // restart board
       }
     });
+  }
+
+  togglePause() {
+    if (this.state === 'play') { this.state = 'pause'; sfx.uiTick(); }
+    else if (this.state === 'pause') { this.state = 'play'; sfx.uiTick(); }
+  }
+
+  toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
   }
 
   // ------------------------------------------------------------- game flow
@@ -295,8 +322,8 @@ export class Game {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    if (this.state === 'lobby') { this.drawLobby(ctx, cw, ch); return; }
-    if (this.state === 'podium') { this.drawPodium(ctx, cw, ch); return; }
+    if (this.state === 'lobby') { this.drawLobby(ctx, cw, ch); this.drawButtons(ctx, cw, false); return; }
+    if (this.state === 'podium') { this.drawPodium(ctx, cw, ch); this.drawButtons(ctx, cw, false); return; }
     if (!this.level) return;
 
     this.level.drawBackground(ctx, cw, ch);
@@ -324,6 +351,56 @@ export class Game {
     if (this.goFlash > 0) this.drawGo(ctx, cw, ch);
     if (this.state === 'pause') this.drawPause(ctx, cw, ch);
     if (this.state === 'roundEnd') this.drawRoundEnd(ctx, cw, ch);
+
+    // buttons last so they sit above the overlays
+    this.drawButtons(ctx, cw, this.state === 'play' || this.state === 'pause');
+  }
+
+  drawButtons(ctx, cw, withPause) {
+    this.buttons = [];
+    const s = 34, m = 14, gap = 8, y = 12;
+    const drawBtn = (x, id, icon) => {
+      this.buttons.push({ id, x, y, w: s, h: s });
+      roundRectPath(ctx, x, y, s, s, 9);
+      ctx.fillStyle = 'rgba(10,12,24,0.55)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      icon(x + s / 2, y + s / 2);
+    };
+    let x = cw - m - s;
+    drawBtn(x, 'fs', (cx, cy) => {
+      // fullscreen corner brackets
+      const r = 7, l = 5;
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        ctx.beginPath();
+        ctx.moveTo(cx + dx * r - dx * l, cy + dy * r);
+        ctx.lineTo(cx + dx * r, cy + dy * r);
+        ctx.lineTo(cx + dx * r, cy + dy * r - dy * l);
+        ctx.stroke();
+      }
+    });
+    if (withPause) {
+      x -= s + gap;
+      drawBtn(x, 'pause', (cx, cy) => {
+        if (this.state === 'pause') {
+          ctx.beginPath();
+          ctx.moveTo(cx - 5, cy - 7);
+          ctx.lineTo(cx + 8, cy);
+          ctx.lineTo(cx - 5, cy + 7);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillRect(cx - 6, cy - 7, 4.5, 14);
+          ctx.fillRect(cx + 1.5, cy - 7, 4.5, 14);
+        }
+      });
+    }
   }
 
   drawFinishedAtGoal(ctx) {
@@ -366,8 +443,8 @@ export class Game {
       ctx.fillText(this.raceTime.toFixed(1), cw / 2, 34);
     }
 
-    // score chips (top-right)
-    let x = cw - 16;
+    // score chips (top-right, left of the pause/fullscreen buttons)
+    let x = cw - 16 - (34 * 2 + 8) - 10;
     for (let i = this.players.length - 1; i >= 0; i--) {
       const p = this.players[i];
       const w = 86;
@@ -429,7 +506,7 @@ export class Game {
     ctx.fillText('START resume    •    X restart board    •    BACK quit to lobby', cw / 2, ch * 0.5);
     ctx.font = '15px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText('keyboard: Esc resume • X restart • Backspace quit • M mute', cw / 2, ch * 0.56);
+    ctx.fillText('keyboard: P resume • X restart • Backspace quit • M mute • F fullscreen', cw / 2, ch * 0.56);
   }
 
   drawRoundEnd(ctx, cw, ch) {
@@ -615,6 +692,6 @@ export class Game {
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.font = '15px system-ui, sans-serif';
     ctx.fillText('STICKS wave arms  •  LT / RT grab (hold)  •  B punch  •  ◀ ▶ pick a face  •  B leave', cw / 2, ch * 0.86);
-    ctx.fillText('keyboard: WASD + Arrows = arms  •  Shift-L/Q + Shift-R/E = grab  •  Space = punch  •  Enter = A', cw / 2, ch * 0.9);
+    ctx.fillText('keyboard: WASD + Arrows = arms  •  Shift-L/Q + Shift-R/E = grab  •  Space = punch  •  Enter = A  •  F fullscreen', cw / 2, ch * 0.9);
   }
 }

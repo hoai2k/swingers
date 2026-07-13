@@ -345,6 +345,22 @@ export class Player {
       spread = 0.1;
     }
 
+    // Body steering while gripping BLENDS every deflected stick (clamped
+    // sum): left stick up + right stick right steers up-right at full
+    // strength no matter which hand is latched. Free arms still aim with
+    // their own stick.
+    let steer = null;
+    if (this.punchFx > 0) steer = srcL;
+    else if (lAct && rAct) {
+      const sx = ctrl.l.x + ctrl.r.x, sy = ctrl.l.y + ctrl.r.y;
+      const m = Math.hypot(sx, sy);
+      if (m > 0.01) {
+        const k = Math.min(1, m) / m;
+        steer = { x: sx * k, y: sy * k, mag: Math.min(1, m) };
+      }
+    } else steer = srcL || srcR;
+    this.steer = controls ? steer : null;
+
     this.arms[0].src = controls ? srcL : null;
     this.arms[1].src = controls ? srcR : null;
     this.arms[0].spreadRot = -spread;
@@ -355,7 +371,8 @@ export class Player {
     if (move && Math.abs(move.x) > 0.3) this.face = Math.sign(move.x);
 
     for (const arm of this.arms) {
-      const src = arm.src;
+      // gripping arms steer by the stick BLEND; free arms aim with their own
+      const src = arm.grab ? this.steer : arm.src;
 
       // Target hand offset relative to the body: stick vector × reach.
       // MAGNITUDE MATTERS (easing the stick toward a grip reels you in for a
@@ -440,15 +457,24 @@ export class Player {
           let dir = Math.sign(angErr || 1);
           let tanScale = clamp(Math.abs(angErr) / CFG.satAng, 0, 1);
           if (Math.abs(angErr) > 2.6) {
-            if (Math.abs(vt) > 0.25) dir = Math.sign(vt);
+            // a REAL swing (windmill) carries serious tangential speed —
+            // gentle dangling sway shouldn't count, or chin-ups turn into
+            // sideways thrashing
+            if (Math.abs(vt) > 1.2) dir = Math.sign(vt);
             else tanScale *= clamp((Math.PI - Math.abs(angErr)) / 0.5, 0, 1);
           }
 
           const Ft = CFG.muscleGrab * W * tanScale * dir
                    - vt * CFG.dampTan * W;
           const radCap = CFG.muscleGrab * W * 0.9;
-          const Fr = clamp((radTarget - rd) * (CFG.muscleGrab * W / CFG.satDist), -radCap, radCap)
-                   - vr * CFG.dampRad * W;
+          let Fr = clamp((radTarget - rd) * (CFG.muscleGrab * W / CFG.satDist), -radCap, radCap);
+          // Only push OUTWARD when roughly pointed at the target — extending
+          // at full force while 90°+ off-angle grinds the body into whatever
+          // is behind it (e.g. the floor at the base of a wall you grabbed).
+          // Full extension within ~45° of the target, none beyond ~110°.
+          // Pulling IN (chin-ups) keeps full authority at any angle.
+          if (Fr > 0) Fr *= clamp((1.9 - Math.abs(angErr)) / 1.2, 0, 1);
+          Fr -= vr * CFG.dampRad * W;
 
           const F = capMag({ x: u.x * Fr + tx * Ft, y: u.y * Fr + ty * Ft }, CFG.muscleGrab * W * 1.4);
           M.Body.applyForce(A, A.position, F);
