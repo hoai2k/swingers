@@ -85,11 +85,15 @@ export class Level {
     const segs = [];
     const composites = [];
     for (let i = 0; i < count; i++) {
+      // Ropes must SWING (it's the marquee mechanic): near-zero air drag and
+      // undamped, fully stiff links keep pendulum energy alive, and each
+      // segment carries a backref to the chain so the grip motor can resolve
+      // swing loads against the anchor (see player.js).
       const seg = M.Bodies.circle(r.x, r.y + spacing * (i + 1), segR, {
         density: 0.002,
-        frictionAir: 0.04,
+        frictionAir: 0.006,
         collisionFilter: { category: CAT.ROPE, mask: CAT.SOLID },
-        plugin: { hh: { type: 'rope', grab: true } },
+        plugin: { hh: { type: 'rope', grab: true, ropeSegs: segs, ropeIndex: i } },
       });
       segs.push(seg);
       composites.push(seg);
@@ -99,8 +103,8 @@ export class Level {
         bodyB: seg,
         pointB: { x: 0, y: 0 },
         length: spacing,
-        stiffness: 0.95,
-        damping: 0.03,
+        stiffness: 1,
+        damping: 0.005,
       });
       composites.push(con);
     }

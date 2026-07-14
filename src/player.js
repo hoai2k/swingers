@@ -489,7 +489,29 @@ export class Player {
 
           const F = capMag({ x: u.x * Fr + tx * Ft, y: u.y * Fr + ty * Ft }, CFG.muscleGrab * W * 1.4);
           M.Body.applyForce(A, A.position, F);
-          if (!B.isStatic) M.Body.applyForce(B, anchor, { x: -F.x, y: -F.y });
+          if (!B.isStatic) {
+            const hh = B.plugin.hh;
+            if (hh.type === 'rope' && hh.ropeSegs) {
+              // Rope swings are THE mechanic, and dumping the whole reaction
+              // on the featherweight grabbed segment cancels them: the push
+              // on the body and the pull on the tail are an internal pair, so
+              // the pendulum as a whole never gains momentum. Physically a
+              // rope transmits tension along itself but resolves bending
+              // loads at its anchor mount — so split the reaction: the
+              // radial (tension) part stays on the grabbed segment (climbing
+              // still tugs the tail), the tangential (bending) part lands on
+              // the topmost segment beside the static anchor, where its
+              // lever arm is tiny. Net effect: steering the body torques the
+              // whole pendulum around the anchor, exactly like Heave Ho.
+              const fr = F.x * u.x + F.y * u.y;
+              const ft = F.x * tx + F.y * ty;
+              M.Body.applyForce(B, anchor, { x: -u.x * fr, y: -u.y * fr });
+              const top = hh.ropeSegs[0];
+              M.Body.applyForce(top, top.position, { x: -tx * ft, y: -ty * ft });
+            } else {
+              M.Body.applyForce(B, anchor, { x: -F.x, y: -F.y });
+            }
+          }
         } else {
           arm.gripDrive = null;   // stick neutral while gripping = dangle
         }
