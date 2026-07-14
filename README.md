@@ -17,10 +17,14 @@ python3 -m http.server 8123      # then open http://localhost:8123
 
 Connect controllers and press **A** to join — you spawn straight into the
 lobby **playground** (a live practice arena with a bar, rope, balloon and
-climbing tower). Hit the **PLAY** button (or START) to open the board list:
-**30 boards, 10 each of Easy / Medium / Hard**, organized in columns —
-browse with stick/dpad, pick with A, or just click one. Races return to the
-board list; session scores and best times persist.
+climbing tower). Pick a mode from the dropdown next to PLAY (or press **Y**):
+**VS** (first to the goal wins the round) or **CO-OP** (the round is only won
+when *everyone* reaches the goal — the team gets congratulated and the team
+clock stops when the last robot gets in). Hit **PLAY** (or START) to open the
+board list: **30 boards, 10 each of Easy / Medium / Hard**, organized in
+columns — browse with stick/dpad, pick with A, or just click one. Races
+return to the board list; session scores persist, and best times are kept
+**separately per mode** for every board.
 
 ## Controls (Xbox layout)
 
@@ -72,9 +76,11 @@ that rivals the ⭐ super glove (which makes any punch huge, instantly).
 
 ## The race
 
-Everyone spawns together; first to the **GOAL** ring **wins the round on the
-spot** (5 pts) and gets their name in lights. Spikes/lava/falling = respawn
-at the start (costs time, not the round — until someone else finishes).
+Everyone spawns together. In **VS**, first to the **GOAL** ring **wins the
+round on the spot** (5 pts) and gets their name in lights. In **CO-OP**, the
+round is won when the whole team is in — everyone scores 5 and the team time
+(last robot in) goes on the board's co-op record. Spikes/lava/falling =
+respawn at the start (costs time, not the round).
 
 The 30 boards follow Heave Ho's design language: single-screen rooms with
 the goal visible from spawn, one gimmick per room, and hazards that frame

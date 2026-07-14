@@ -46,9 +46,12 @@ export class Game {
     this.goFlash = 0;
     this.roundResults = null;
     this.winner = null;
+    this.coopWin = null;                       // team time when a co-op round is won
     this.roundEndT = 0;
     this.shake = 0;
-    this.best = {};                            // board name -> best time (s)
+    this.mode = 'vs';                          // 'vs' | 'coop' (lobby dropdown)
+    this.modeOpen = false;                     // mode dropdown expanded?
+    this.best = { vs: {}, coop: {} };          // mode -> board name -> best time (s)
 
     // level select grid
     this.grid = DIFFS.map((d) => LEVELS.map((lv, i) => (lv.diff === d.key ? i : -1)).filter((i) => i >= 0));
@@ -66,6 +69,12 @@ export class Game {
           else if (b.id === 'fs') this.toggleFullscreen();
           else if (b.id === 'play') this.openSelect();
           else if (b.id === 'back') this.backToLobby();
+          else if (b.id === 'mode') { this.modeOpen = !this.modeOpen; sfx.uiTick(); }
+          else if (b.id === 'mode:vs' || b.id === 'mode:coop') {
+            this.mode = b.id.slice(5);
+            this.modeOpen = false;
+            sfx.uiTick();
+          }
           return;
         }
       }
@@ -121,6 +130,7 @@ export class Game {
 
   openSelect() {
     if (this.state !== 'lobby' || !this.players.length) return;
+    this.modeOpen = false;
     this.state = 'select';
     sfx.go();
   }
@@ -153,29 +163,43 @@ export class Game {
     this.finishCounter = 0;
     this.roundResults = null;
     this.winner = null;
+    this.coopWin = null;
     this.shake = 0;
   }
 
   endRound() {
+    const coop = this.mode === 'coop';
     const rows = [...this.players].sort((a, b) => {
       const ao = a.finishOrder < 0 ? 99 : a.finishOrder;
       const bo = b.finishOrder < 0 ? 99 : b.finishOrder;
       return ao - bo || a.slot - b.slot;
     }).map((p) => {
-      const pts = p.finishOrder >= 0 ? (POINTS[p.finishOrder] || 1) : 0;
+      // VS: winner takes 5. CO-OP: the whole team scores 5 for making it.
+      const pts = p.finishOrder >= 0 ? (coop ? POINTS[0] : (POINTS[p.finishOrder] || 1)) : 0;
       p.score += pts;
-      if (p.finishOrder >= 0) {
-        const name = LEVELS[this.levelIndex].name;
-        if (!(name in this.best) || p.finishTime < this.best[name]) this.best[name] = p.finishTime;
-      }
       return { p, pts, finished: p.finishOrder >= 0, time: p.finishTime };
     });
     this.roundResults = rows;
-    const win = rows[0] && rows[0].finished ? rows[0].p : null;
-    this.winner = win;
-    if (win && this.level.goal) {
+
+    // per-mode best times: VS = the winner's time; CO-OP = when the LAST
+    // robot got in (it's a team clock)
+    const name = LEVELS[this.levelIndex].name;
+    const store = this.best[this.mode];
+    const allIn = rows.length > 0 && rows.every((r) => r.finished);
+    if (coop) {
+      this.winner = null;
+      this.coopWin = allIn ? Math.max(...rows.map((r) => r.time)) : null;
+      if (allIn && (!(name in store) || this.coopWin < store[name])) store[name] = this.coopWin;
+    } else {
+      this.coopWin = null;
+      this.winner = rows[0] && rows[0].finished ? rows[0].p : null;
+      if (this.winner && (!(name in store) || rows[0].time < store[name])) store[name] = rows[0].time;
+    }
+
+    if ((this.winner || this.coopWin !== null) && this.level.goal) {
       const gl = this.level.goal;
-      this.particles.burst(gl.x, gl.y, win.color.main, 26, 340);
+      const color = this.winner ? this.winner.color.main : '#ffd94d';
+      this.particles.burst(gl.x, gl.y, color, 26, 340);
       sfx.go();
     }
     this.roundEndT = 0;
@@ -306,6 +330,7 @@ export class Game {
         if (s.pressed.dl) { slot.headStyle = (slot.headStyle + HEAD_STYLES.length - 1) % HEAD_STYLES.length; sfx.uiTick(); }
         if (s.pressed.dr) { slot.headStyle = (slot.headStyle + 1) % HEAD_STYLES.length; sfx.uiTick(); }
         if (player) player.headStyle = slot.headStyle;
+        if (s.pressed.y) { this.mode = this.mode === 'vs' ? 'coop' : 'vs'; sfx.uiTick(); }
         if (s.pressed.start) { this.openSelect(); return; }
       }
     }
@@ -376,12 +401,15 @@ export class Game {
         }
       }
 
-      // goal — first robot in WINS and the round is over on the spot
+      // goal — VS: first robot in WINS on the spot; CO-OP: the round is
+      // only won when EVERY robot has made it
       const goal = this.level.goal;
       if (goal && Math.hypot(pos.x - goal.x, pos.y - goal.y) < goal.r + 10) {
         p.finish(this);
-        this.endRound();
-        return;
+        if (this.mode !== 'coop' || this.players.every((q) => q.state === 'finished')) {
+          this.endRound();
+          return;
+        }
       }
     }
 
@@ -441,8 +469,10 @@ export class Game {
   }
 
   drawButtons(ctx, cw, withPause) {
-    // the PLAY button only exists on the lobby overlay
-    this.buttons = this.state === 'lobby' ? this.buttons.filter((b) => b.id === 'play') : [];
+    // the PLAY button + mode dropdown only exist on the lobby overlay
+    this.buttons = this.state === 'lobby'
+      ? this.buttons.filter((b) => b.id === 'play' || b.id.startsWith('mode'))
+      : [];
     const s = 34, m = 14, gap = 8, y = 12;
     const drawBtn = (x, id, icon) => {
       this.buttons.push({ id, x, y, w: s, h: s });
@@ -509,14 +539,16 @@ export class Game {
     ctx.textAlign = 'left';
     ctx.fillStyle = diff ? diff.color : 'rgba(255,255,255,0.55)';
     ctx.font = 'bold 15px system-ui, sans-serif';
-    ctx.fillText(diff ? diff.label : '', 16, 26);
+    const diffLabel = diff ? diff.label : '';
+    ctx.fillText(`${diffLabel}  ·  ${this.mode === 'coop' ? 'CO-OP' : 'VS'}`, 16, 26);
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.font = '900 21px system-ui, sans-serif';
     ctx.fillText(lv.name, 16, 50);
-    if (this.best[lv.name] !== undefined) {
+    const bestT = this.best[this.mode][lv.name];
+    if (bestT !== undefined) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = 'bold 13px system-ui, sans-serif';
-      ctx.fillText(`best ${this.best[lv.name].toFixed(2)}s`, 16, 70);
+      ctx.fillText(`best ${bestT.toFixed(2)}s`, 16, 70);
     }
 
     ctx.textAlign = 'center';
@@ -580,11 +612,11 @@ export class Game {
       x += chipW + 12;
     }
 
-    // PLAY button
+    // PLAY button + mode dropdown beside it
     const anyJoined = this.players.length > 0;
     const bw = 220, bh = 62;
     const bx = cw / 2 - bw / 2, by = ch - bh - 26;
-    this.buttons = this.buttons.filter((b) => b.id !== 'play');
+    this.buttons = this.buttons.filter((b) => b.id !== 'play' && !b.id.startsWith('mode'));
     if (anyJoined) {
       this.buttons.push({ id: 'play', x: bx, y: by, w: bw, h: bh });
       const pulse = 1 + Math.sin(this.time * 4) * 0.02;
@@ -605,6 +637,45 @@ export class Game {
       ctx.fillStyle = 'rgba(255,255,255,0.55)';
       ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.fillText('or press START', cw / 2, by - 10);
+
+      // mode dropdown (VS / CO-OP). Opens UPWARD — it lives at the bottom
+      // edge. Options are pushed as regular buttons so clicks route through
+      // the one pointerdown handler; Y on a pad cycles the mode directly.
+      const MODES = [
+        { key: 'vs', label: 'VS' },
+        { key: 'coop', label: 'CO-OP' },
+      ];
+      const mw = 150, mx = bx + bw + 16, mh = bh;
+      this.buttons.push({ id: 'mode', x: mx, y: by, w: mw, h: mh });
+      roundRectPath(ctx, mx, by, mw, mh, 14);
+      ctx.fillStyle = 'rgba(10,12,24,0.6)';
+      ctx.fill();
+      ctx.strokeStyle = this.modeOpen ? '#ffd94d' : 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.fillText('MODE (Y)', mx + mw / 2, by + 17);
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 20px system-ui, sans-serif';
+      ctx.fillText(`${MODES.find((m) => m.key === this.mode).label}  ${this.modeOpen ? '▴' : '▾'}`, mx + mw / 2, by + 44);
+      if (this.modeOpen) {
+        const oh = 44;
+        MODES.forEach((m, i) => {
+          const oy = by - (MODES.length - i) * (oh + 6);
+          this.buttons.push({ id: `mode:${m.key}`, x: mx, y: oy, w: mw, h: oh });
+          roundRectPath(ctx, mx, oy, mw, oh, 12);
+          ctx.fillStyle = m.key === this.mode ? 'rgba(255,217,77,0.9)' : 'rgba(10,12,24,0.85)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = m.key === this.mode ? '#221c08' : '#fff';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText(m.label, mx + mw / 2, oy + 29);
+        });
+      }
     } else {
       ctx.fillStyle = `rgba(255,255,255,${0.5 + Math.sin(this.time * 3) * 0.2})`;
       ctx.font = 'bold 22px system-ui, sans-serif';
@@ -614,7 +685,7 @@ export class Game {
     // controls legend
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '13px system-ui, sans-serif';
-    ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ face  •  BACK leave  •  F fullscreen', cw / 2, ch - 8);
+    ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ face  •  Y mode  •  BACK leave  •  F fullscreen', cw / 2, ch - 8);
   }
 
   drawSelect(ctx, cw, ch) {
@@ -627,7 +698,7 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd94d';
     ctx.font = `900 ${Math.min(44, cw * 0.045)}px system-ui, sans-serif`;
-    ctx.fillText('CHOOSE A BOARD', cw / 2, 52);
+    ctx.fillText(`CHOOSE A BOARD — ${this.mode === 'coop' ? 'CO-OP' : 'VS'}`, cw / 2, 52);
 
     // session scores
     ctx.font = 'bold 15px system-ui, sans-serif';
@@ -666,11 +737,12 @@ export class Game {
         ctx.font = `bold ${Math.min(15, rowH * 0.38)}px system-ui, sans-serif`;
         ctx.textAlign = 'left';
         ctx.fillText(lv.name, cx + 14, y + rowH / 2 + 4);
-        if (this.best[lv.name] !== undefined) {
+        const bt = this.best[this.mode][lv.name];
+        if (bt !== undefined) {
           ctx.textAlign = 'right';
           ctx.fillStyle = 'rgba(255,255,255,0.5)';
           ctx.font = `${Math.min(12, rowH * 0.3)}px system-ui, sans-serif`;
-          ctx.fillText(this.best[lv.name].toFixed(2) + 's', cx + colW - 12, y + rowH / 2 + 4);
+          ctx.fillText(bt.toFixed(2) + 's', cx + colW - 12, y + rowH / 2 + 4);
         }
       });
     });
@@ -731,7 +803,24 @@ export class Game {
   drawRoundEnd(ctx, cw, ch) {
     this.veil(ctx, cw, ch);
     ctx.textAlign = 'center';
-    if (this.winner) {
+    if (this.coopWin !== null) {
+      // co-op: everybody made it — congratulate the whole team
+      const names = (this.roundResults || []).map((r) => r.p.name);
+      const who = names.length > 1
+        ? names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1]
+        : names.join('');
+      const pulse = 1 + Math.sin(this.time * 5) * 0.03;
+      ctx.save();
+      ctx.translate(cw / 2, ch * 0.2 - 16);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = `900 ${names.length > 2 ? 44 : 54}px system-ui, sans-serif`;
+      ctx.fillText(`${who} MADE IT!`, 0, 16);
+      ctx.restore();
+      ctx.fillStyle = '#5fe08b';
+      ctx.font = '900 20px system-ui, sans-serif';
+      ctx.fillText(`TEAM TIME  ${this.coopWin.toFixed(2)}s`, cw / 2, ch * 0.2 + 52);
+    } else if (this.winner) {
       const pulse = 1 + Math.sin(this.time * 5) * 0.03;
       ctx.save();
       ctx.translate(cw / 2, ch * 0.2 - 16);
