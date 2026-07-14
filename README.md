@@ -27,10 +27,10 @@ board list; session scores and best times persist.
 | Input | Action |
 | --- | --- |
 | **Left stick** | left arm — point it where you want the hand |
-| **Right stick** | right arm (one stick steers both arms if the other is idle) |
+| **Right stick** | right arm — each stick drives only its own arm |
 | **LT / LB (hold)** | close left hand — latches onto anything it touches |
 | **RT / RB (hold)** | close right hand |
-| **B** | punch — knocks nearby players flying and breaks their grip |
+| **B** | punch (fires on release) — tap for a quick shove, **hold ~1s to charge** a huge blast; always shakes off anyone holding you |
 | **START** | pause (X restart board, BACK quit to lobby) |
 
 Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
@@ -41,9 +41,9 @@ Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
 ### How movement works (the whole game)
 
 Your robot is a ball with two physically simulated noodle arms (4 jointed
-segments each, left and right attached at opposite shoulders). Free arms
-point along the stick (magnitude matters — a half-tilted stick half-extends
-the arm). The moment a hand grips, **the stick steers your body: push where
+segments each, left and right attached at opposite shoulders). Each free arm
+points along its OWN stick (magnitude matters — a half-tilted stick
+half-extends the arm; an idle stick's arm dangles). The moment a hand grips, **the stick steers your body: push where
 you want to go**, and the free hand points the same way, leading to the
 next hold. Everything follows from that, exactly like Heave Ho:
 
@@ -67,14 +67,14 @@ next hold. Everything follows from that, exactly like Heave Ho:
 
 Hands stick to the first thing they touch while the trigger is held —
 including other players' bodies and hands (human chains work). Punch (B)
-knocks players flying and breaks their grip; grab a ⭐ glove for a super
-punch.
+shoves players flying and breaks their grip — hold it to charge a blast
+that rivals the ⭐ super glove (which makes any punch huge, instantly).
 
 ## The race
 
-Everyone spawns together; first to the **GOAL** ring scores 5, then 3/2/1.
-Once someone finishes the rest have 15 seconds. Spikes/lava/falling = respawn
-at the start (costs time, not points).
+Everyone spawns together; first to the **GOAL** ring **wins the round on the
+spot** (5 pts) and gets their name in lights. Spikes/lava/falling = respawn
+at the start (costs time, not the round — until someone else finishes).
 
 The 30 boards follow Heave Ho's design language: single-screen rooms with
 the goal visible from spawn, one gimmick per room, and hazards that frame

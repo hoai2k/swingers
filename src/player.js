@@ -58,7 +58,6 @@ export const CFG = {
   handRadius: 7.5,
   handDensity: 0.0012,
   shoulderFrac: 0.85,   // shoulder distance from center, in body radii
-  spread: 0.25,         // per-arm angular offset when one stick drives both
   stickGain: 1.25,      // stick response: full arm extension by ~80% deflection
   // muscle servo — forces in multiples of body weight
   muscleGrab: 3.6,      // cap while that hand is gripping (drives the body)
@@ -75,8 +74,9 @@ export const CFG = {
   maxSpeed: 28,         // px/tick hard cap on the body (anti-tunneling)
   maxHandSpeed: 34,
   punchCooldown: 1.4,
-  punchRadius: 100, punchKick: 11, punchSelf: 3.5,
-  superRadius: 175, superKick: 19, superSelf: 6,
+  punchChargeTime: 1.0,  // seconds of holding B for a fully charged blast
+  punchRadius: 100, punchKick: 13, punchSelf: 3.5,
+  superRadius: 175, superKick: 20, superSelf: 6,
   respawnDelay: 1.2,
   protectTime: 1.5,
 };
@@ -185,6 +185,7 @@ export class Player {
     this.punchCd = 0;
     this.punchFx = 0;
     this.punchAngle = 0;
+    this.punchCharge = -1;   // -1 idle; >=0 seconds B has been held
     this.superPunch = false;
     this.face = 1;
     this.spawnPoint = { x, y };
@@ -332,12 +333,13 @@ export class Player {
     const W = this.weight(g);
     const controls = g.controlsEnabled();
 
-    // --- which stick drives which arm (one stick drives both, like Heave Ho)
+    // --- each stick drives its OWN arm (Heave Ho's twin-stick scheme:
+    // left stick = left arm, right stick = right arm; an idle stick's arm
+    // just dangles as a noodle). Body steering while gripping still blends
+    // both sticks, below.
     const lAct = ctrl.l.mag > 0.01, rAct = ctrl.r.mag > 0.01;
-    let srcL = null, srcR = null, spread = 0;
-    if (lAct && rAct) { srcL = ctrl.l; srcR = ctrl.r; }
-    else if (lAct) { srcL = srcR = ctrl.l; spread = CFG.spread; }
-    else if (rAct) { srcL = srcR = ctrl.r; spread = CFG.spread; }
+    let srcL = lAct ? ctrl.l : null, srcR = rAct ? ctrl.r : null;
+    let spread = 0;
 
     // punching thrusts both hands along the aim for a moment
     this.punchFx = Math.max(0, this.punchFx - dt);
@@ -396,6 +398,21 @@ export class Player {
       if (arm.grab) {
         if (arm.grab.body.plugin.hh.removed) { this.releaseArm(arm); continue; }
         if (arm.trig < 0.25) { this.releaseArm(arm); continue; }
+
+        // Matter's constraint solver never rotates anchors on STATIC bodies
+        // (it assumes statics don't spin) — but spinners are statics rotated
+        // via setAngle, so a latched pin would stay at the original WORLD
+        // spot while the blade turns away. Keep the pin riding the surface
+        // by re-aiming its local anchor with the body's current angle.
+        {
+          const Bg = arm.grab.body;
+          if (Bg.isStatic && Bg.angle !== 0) {
+            const gl = arm.grab.local;
+            const cg = Math.cos(Bg.angle), sg = Math.sin(Bg.angle);
+            arm.grab.constraint.pointB.x = gl.x * cg - gl.y * sg;
+            arm.grab.constraint.pointB.y = gl.x * sg + gl.y * cg;
+          }
+        }
 
         if (T) {
           // The gripping arm is torque + length control around the pivot,
@@ -554,9 +571,20 @@ export class Player {
     }
     M.Body.setAngularVelocity(A, A.angularVelocity * 0.99);
 
-    // --- punch
+    // --- punch: tap B for a quick shove, HOLD B to charge a big blast.
+    // The push fires on RELEASE, scaled by how long B was held (Heave Ho's
+    // AoE push, plus the charge-up house rule).
     this.punchCd = Math.max(0, this.punchCd - dt);
-    if (controls && ctrl.pressed.b && this.punchCd <= 0) this.doPunch(move, g);
+    if (controls) {
+      if (ctrl.pressed.b && this.punchCd <= 0 && this.punchCharge < 0) this.punchCharge = 0;
+      if (this.punchCharge >= 0) {
+        if (ctrl.b) this.punchCharge = Math.min(CFG.punchChargeTime, this.punchCharge + dt);
+        else {
+          this.doPunch(move, g, this.punchCharge / CFG.punchChargeTime);
+          this.punchCharge = -1;
+        }
+      }
+    } else this.punchCharge = -1;
   }
 
   tryLatch(arm, g) {
@@ -581,7 +609,13 @@ export class Player {
         bodyA: hand,
         pointA: { x: 0, y: 0 },
         bodyB: best,
-        pointB: worldToLocal(best, bestPt),
+        // For STATIC bodies Matter treats pointB as a plain world offset from
+        // the center (it never rotates static anchors), so give it the world
+        // offset; for dynamic bodies it must be body-local. Spinner grips are
+        // re-aimed every frame in the arm loop to keep riding the blade.
+        pointB: best.isStatic
+          ? { x: bestPt.x - best.position.x, y: bestPt.y - best.position.y }
+          : worldToLocal(best, bestPt),
         length: 0,
         stiffness: 1,
       });
@@ -592,7 +626,10 @@ export class Player {
     }
   }
 
-  doPunch(move, g) {
+  doPunch(move, g, charge = 0) {
+    // t 0..1: how charged the punch is. A ⭐ super glove fires at full charge
+    // with an extra multiplier on top no matter how briefly B was tapped.
+    const t = clamp(charge, 0, 1);
     const isSuper = this.superPunch;
     this.superPunch = false;
     this.punchCd = CFG.punchCooldown;
@@ -603,13 +640,18 @@ export class Player {
     this.punchFx = 0.22;
 
     const A = this.body;
-    const R = isSuper ? CFG.superRadius : CFG.punchRadius;
-    const kick = isSuper ? CFG.superKick : CFG.punchKick;
+    const R = isSuper ? CFG.superRadius : lerp(CFG.punchRadius, CFG.superRadius, t);
+    const kick = isSuper ? CFG.superKick * (1 + 0.35 * t) : lerp(CFG.punchKick, CFG.superKick, t);
+    const selfKick = isSuper ? CFG.superSelf : lerp(CFG.punchSelf, CFG.superSelf, t);
+    const big = isSuper || t > 0.6;
     // small self-lunge
     M.Body.setVelocity(A, {
-      x: A.velocity.x + aim.x * (isSuper ? CFG.superSelf : CFG.punchSelf),
-      y: A.velocity.y + aim.y * (isSuper ? CFG.superSelf : CFG.punchSelf),
+      x: A.velocity.x + aim.x * selfKick,
+      y: A.velocity.y + aim.y * selfKick,
     });
+
+    // Heave Ho's push: anyone holding on to ME lets go, always
+    Player.breakGrabsOn(this, g.players);
 
     for (const p of g.players) {
       if (p === this || p.state !== 'alive') continue;
@@ -623,8 +665,8 @@ export class Player {
         y: B.velocity.y + dir.y * kick - 2,
       });
       p.releaseAll();                                   // knock their grip loose
-      if (isSuper) Player.breakGrabsOn(p, g.players);   // and shake off grapplers
-      g.particles.burst(B.position.x, B.position.y, '#ffffff', 8, 200);
+      if (big) Player.breakGrabsOn(p, g.players);       // and shake off grapplers
+      g.particles.burst(B.position.x, B.position.y, '#ffffff', big ? 14 : 8, 200 + 140 * t);
     }
     for (const bl of g.level.balloons) {
       if (!bl.body || bl.body.plugin.hh.removed) continue;
@@ -637,9 +679,9 @@ export class Player {
       });
     }
 
-    g.particles.ring(A.position.x + aim.x * 30, A.position.y + aim.y * 30, R, isSuper ? '#ffd94d' : '#ffffff');
-    g.addShake(isSuper ? 14 : 5);
-    if (isSuper) sfx.superPunch(); else sfx.punch();
+    g.particles.ring(A.position.x + aim.x * 30, A.position.y + aim.y * 30, R, big ? '#ffd94d' : '#ffffff');
+    g.addShake(isSuper ? 14 : 5 + 8 * t);
+    if (big) sfx.superPunch(); else sfx.punch();
   }
 
   // Safety clamps, run after the physics step:
@@ -758,6 +800,17 @@ export class Player {
       ctx.font = '15px system-ui, sans-serif';
       ctx.fillStyle = '#ffd94d';
       ctx.fillText('★', A.position.x, A.position.y - CFG.radius - 27 + bob);
+    }
+    // charging punch: a ring closes in and burns brighter as it fills
+    if (this.punchCharge >= 0) {
+      const c = Math.min(1, this.punchCharge / CFG.punchChargeTime);
+      const rr = CFG.radius + 26 - c * 18 + Math.sin(t * (8 + c * 18)) * 2;
+      ctx.globalAlpha = 0.35 + c * 0.55;
+      ctx.strokeStyle = c >= 1 ? '#ffd94d' : '#ffffff';
+      ctx.lineWidth = 2 + c * 3;
+      ctx.beginPath();
+      ctx.arc(A.position.x, A.position.y, rr, 0, TAU);
+      ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }

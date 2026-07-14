@@ -3,8 +3,8 @@
 // Flow: LOBBY (a live practice playground — join, warm up, press PLAY)
 //   -> SELECT (30 boards organized by difficulty)
 //   -> countdown -> race -> results -> back to SELECT.
-// Races score 5/3/2/1 by finish order; scores and best times persist for
-// the session.
+// First robot to the goal WINS the round on the spot (5 pts); scores and
+// best times persist for the session.
 
 import { Input, NEUTRAL } from './input.js';
 import { Player, PLAYER_COLORS, CFG, CAT } from './player.js';
@@ -17,7 +17,6 @@ import { clamp, lerp, TAU, roundRectPath } from './util.js';
 
 const M = window.Matter;
 
-const FINISH_WINDOW = 15;          // seconds others get once someone finishes
 const POINTS = [5, 3, 2, 1];
 const DIFFS = [
   { key: 'easy', label: 'EASY', color: '#5fe08b' },
@@ -43,10 +42,10 @@ export class Game {
     this.time = 0;
     this.raceTime = 0;
     this.finishCounter = 0;
-    this.firstFinish = null;
     this.cd = 0;
     this.goFlash = 0;
     this.roundResults = null;
+    this.winner = null;
     this.roundEndT = 0;
     this.shake = 0;
     this.best = {};                            // board name -> best time (s)
@@ -152,8 +151,8 @@ export class Game {
     this.goFlash = 0;
     this.raceTime = 0;
     this.finishCounter = 0;
-    this.firstFinish = null;
     this.roundResults = null;
+    this.winner = null;
     this.shake = 0;
   }
 
@@ -172,6 +171,13 @@ export class Game {
       return { p, pts, finished: p.finishOrder >= 0, time: p.finishTime };
     });
     this.roundResults = rows;
+    const win = rows[0] && rows[0].finished ? rows[0].p : null;
+    this.winner = win;
+    if (win && this.level.goal) {
+      const gl = this.level.goal;
+      this.particles.burst(gl.x, gl.y, win.color.main, 26, 340);
+      sfx.go();
+    }
     this.roundEndT = 0;
     this.state = 'roundEnd';
   }
@@ -239,11 +245,6 @@ export class Game {
         this.goFlash = Math.max(0, this.goFlash - dt);
         this.raceTime += dt;
         this.physicsStep(dt);
-        if (this.firstFinish !== null &&
-            this.raceTime - this.firstFinish >= FINISH_WINDOW) {
-          this.endRound();
-          break;
-        }
         for (const s of states) {
           if (s.pressed.start && this.isJoined(s.id)) { this.state = 'pause'; break; }
         }
@@ -375,12 +376,12 @@ export class Game {
         }
       }
 
-      // goal
+      // goal — first robot in WINS and the round is over on the spot
       const goal = this.level.goal;
       if (goal && Math.hypot(pos.x - goal.x, pos.y - goal.y) < goal.r + 10) {
         p.finish(this);
-        if (this.firstFinish === null) this.firstFinish = this.raceTime;
-        if (this.players.every((q) => q.state === 'finished')) { this.endRound(); return; }
+        this.endRound();
+        return;
       }
     }
 
@@ -519,14 +520,7 @@ export class Game {
     }
 
     ctx.textAlign = 'center';
-    if (this.firstFinish !== null && this.state === 'play') {
-      const left = Math.max(0, FINISH_WINDOW - (this.raceTime - this.firstFinish));
-      ctx.fillStyle = left < 5 ? '#ff5d6c' : '#ffd94d';
-      ctx.font = '900 30px system-ui, sans-serif';
-      ctx.fillText(left.toFixed(1), cw / 2, 38);
-      ctx.font = 'bold 13px system-ui, sans-serif';
-      ctx.fillText('HURRY!', cw / 2, 56);
-    } else if (this.state === 'play') {
+    if (this.state === 'play') {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.font = '900 24px system-ui, sans-serif';
       ctx.fillText(this.raceTime.toFixed(1), cw / 2, 34);
@@ -737,9 +731,20 @@ export class Game {
   drawRoundEnd(ctx, cw, ch) {
     this.veil(ctx, cw, ch);
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd94d';
-    ctx.font = '900 46px system-ui, sans-serif';
-    ctx.fillText('ROUND OVER', cw / 2, ch * 0.2);
+    if (this.winner) {
+      const pulse = 1 + Math.sin(this.time * 5) * 0.03;
+      ctx.save();
+      ctx.translate(cw / 2, ch * 0.2 - 16);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = this.winner.color.main;
+      ctx.font = '900 54px system-ui, sans-serif';
+      ctx.fillText(`${this.winner.name} WINS!`, 0, 16);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = '900 46px system-ui, sans-serif';
+      ctx.fillText('ROUND OVER', cw / 2, ch * 0.2);
+    }
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
     ctx.font = 'bold 18px system-ui, sans-serif';
     ctx.fillText(LEVELS[this.levelIndex].name, cw / 2, ch * 0.2 + 30);
