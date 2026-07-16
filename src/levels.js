@@ -20,9 +20,18 @@ function S(x, y, w, h, opts = {}) {
   return { x, y, w, h, ...opts };
 }
 
-// left + right boundary walls
+// left + right boundary walls (full height)
 function walls(w, h, t = 40) {
   return [S(t / 2, h / 2, t, h), S(w - t / 2, h / 2, t, h)];
+}
+
+// One boundary wall with the y1..y2 span REMOVED. A floor stub and a top
+// piece remain — the wall still frames the room and catches overshoots —
+// but the gap is wider than any grab reach, so the wall can't be climbed
+// from the floor to the decks (no more walk-right-shimmy-up cheese routes).
+// Bodies that fly out through the gap die out-of-bounds like any fall.
+function gapWall(x, h, y1, y2, t = 40) {
+  return [S(x, y1 / 2, t, y1), S(x, (y2 + h) / 2, t, h - y2)];
 }
 
 const PAL = {
@@ -92,7 +101,8 @@ export const LEVELS = [
     spawn: { x: 120, y: 800 },
     goal: { x: 1470, y: 255, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 400, 700),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),
       S(280, 745, 320, 36),
       S(600, 620, 240, 36),
@@ -119,7 +129,12 @@ export const LEVELS = [
     spawn: { x: 600, y: 1200 },
     goal: { x: 600, y: 115, r: 46 },
     solids: [
-      ...walls(1200, 1300),
+      S(20, 250, 40, 500),                 // left wall pieces: platform bands
+      S(20, 935, 40, 130),                 //   stay backed, the spans between
+      S(20, 1270, 40, 60),                 //   them are unclimbable gaps
+      S(1180, 215, 40, 430),               // right wall pieces: same idea
+      S(1180, 865, 40, 130),
+      S(1180, 1235, 40, 130),
       S(600, 1270, 1200, 60),
       S(200, 950, 240, 32),
       S(1000, 880, 240, 32),
@@ -142,7 +157,8 @@ export const LEVELS = [
     spawn: { x: 120, y: 800 },
     goal: { x: 1450, y: 620, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 540, 800),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),               // safe valley floor
       S(300, 780, 220, 160),               // stones (tops ~700)
       S(640, 785, 200, 150),
@@ -162,16 +178,19 @@ export const LEVELS = [
     intro: 'Hand over hand along the holds. The floor below is safe.',
     w: 1600, h: 900, ...PAL.sunset,
     spawn: { x: 150, y: 620 },
-    goal: { x: 1400, y: 600, r: 46 },
+    goal: { x: 1400, y: 545, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 620, 840),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),               // safe floor
       S(270, 700, 500, 44),                // start deck (top 678)
       S(545, 540, 80, 40),                 // holds at 140 spacing (bottoms 560)
       S(685, 540, 80, 40),
       S(825, 540, 80, 40),
       S(965, 540, 80, 40),
-      S(1350, 700, 460, 44),               // landing deck
+      S(1350, 615, 460, 44),               // landing deck (top 593 — high
+                                           // enough that the safe floor can't
+                                           // hop onto it; swing in instead)
     ],
     texts: [{ x: 800, y: 300, text: 'ALTERNATE THE TRIGGERS' }],
     route: [
@@ -179,7 +198,7 @@ export const LEVELS = [
       { move: 'hangReach', x: 685, y: 560 },
       { move: 'hangReach', x: 825, y: 560 },
       { move: 'hangReach', x: 965, y: 560 },
-      { move: 'swingCatch', x: 1160, y: 657, from: { x: 985, y: 630 } },
+      { move: 'swingCatch', x: 1160, y: 572, from: { x: 985, y: 630 } },
     ],
   },
   {
@@ -189,11 +208,13 @@ export const LEVELS = [
     spawn: { x: 150, y: 560 },
     goal: { x: 1430, y: 560, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 620, 850),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),               // safe floor below
       S(240, 640, 440, 44),                // start (top 618)
       S(800, 700, 320, 40),                // mid island (top 680)
-      S(1360, 640, 440, 44),               // goal deck
+      S(1360, 612, 440, 44),               // goal deck (top 590 — swing in;
+                                           // too high to hop from the floor)
     ],
     ropes: [
       { x: 520, y: 120, len: 420 },
@@ -203,18 +224,21 @@ export const LEVELS = [
       { move: 'ropeCatch', x: 520, y: 540, from: { x: 450, y: 597 } },
       { move: 'swingCatch', x: 720, y: 659, from: { x: 560, y: 600 } },
       { move: 'ropeCatch', x: 990, y: 600, from: { x: 940, y: 659 } },
-      { move: 'swingCatch', x: 1180, y: 619, from: { x: 1040, y: 640 } },
+      { move: 'swingCatch', x: 1180, y: 569, from: { x: 1040, y: 640 } },
     ],
   },
   {
     name: 'FERRY RIDE', diff: 'easy',
-    intro: 'All aboard. One slow ferry, no lava — this one is a freebie.',
+    intro: 'All aboard. One slow ferry — stay out of the freezing water.',
     w: 1600, h: 900, ...PAL.frost,
     spawn: { x: 150, y: 560 },
     goal: { x: 1430, y: 560, r: 46 },
     solids: [
-      ...walls(1600, 900),
-      S(800, 880, 1600, 40),               // safe water... floor
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 640, 840),   // right wall: unclimbable gap
+      S(230, 880, 460, 40),                // start-side shore
+      S(1415, 880, 370, 40),               // goal-side shore
+      S(845, 902, 770, 45, { deadly: true }),  // freezing water — ride, don't wade
       S(240, 640, 440, 44),
       S(1360, 640, 440, 44),
     ],
@@ -230,18 +254,18 @@ export const LEVELS = [
     intro: 'Catch a balloon, drift to the high shelf. Take your time.',
     w: 1600, h: 900, ...PAL.sky,
     spawn: { x: 200, y: 800 },
-    goal: { x: 1300, y: 340, r: 46 },
+    goal: { x: 1200, y: 340, r: 46 },
     solids: [
       ...walls(1600, 900),
       S(800, 880, 1600, 40),               // floor (top 860)
-      S(1250, 420, 300, 36),               // goal shelf (top 402)
-      S(1450, 640, 220, 32),               // rest ledge on the way
+      S(1150, 420, 300, 36),               // goal shelf (top 402, off the wall)
+      S(1450, 690, 220, 32),               // rest ledge (dead end from below)
     ],
     balloons: [{ x: 500, y: 760 }, { x: 900, y: 760 }],
     route: [
       { move: 'balloonCatch', x: 500, y: 760, from: { x: 500, y: 839 } },
-      { move: 'ride', x: 1250, y: 470 },
-      { move: 'drop', x: 1300, y: 381 },
+      { move: 'ride', x: 1150, y: 470 },
+      { move: 'drop', x: 1200, y: 381 },
     ],
   },
   {
@@ -251,7 +275,8 @@ export const LEVELS = [
     spawn: { x: 150, y: 620 },
     goal: { x: 1330, y: 430, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 560, 820),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),               // safe floor
       S(280, 700, 520, 50),                // start deck (top 675)
       S(1240, 520, 400, 44),               // landing (top 498)
@@ -269,7 +294,8 @@ export const LEVELS = [
     spawn: { x: 150, y: 800 },
     goal: { x: 1400, y: 290, r: 46 },
     solids: [
-      ...walls(1600, 900),
+      S(20, 450, 40, 900),
+      ...gapWall(1580, 900, 440, 800),   // right wall: unclimbable gap
       S(800, 880, 1600, 40),
       S(280, 760, 300, 34),                // rises of ~95
       S(620, 665, 260, 34),
@@ -792,7 +818,8 @@ export const LEVELS = [
     spawn: { x: 100, y: 620 },
     goal: { x: 1530, y: 620, r: 44 },
     solids: [
-      ...walls(1600, 900),
+      ...gapWall(20, 900, 460, 820),      // left wall: unclimbable gap
+      ...gapWall(1580, 900, 460, 820),   // right wall: unclimbable gap
       S(110, 700, 180, 44),                // start (top 678)
       S(800, 340, 1600, 40),               // ceiling slab
       S(500, 376, 300, 16, { deadly: true, spikeDir: 'down' }),

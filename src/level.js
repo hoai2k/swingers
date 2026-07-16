@@ -74,7 +74,7 @@ export class Level {
       plugin: { hh: { type: deadly ? 'deadly' : 'solid', grab: !deadly && s.grab !== false } },
     });
     M.Composite.add(this.engine.world, body);
-    const rec = { body, w: s.w, h: s.h, deadly, spikeDir: s.spikeDir || 'up', color: s.color };
+    const rec = { body, w: s.w, h: s.h, deadly, spikeDir: s.spikeDir || 'up', color: s.color, slick: !deadly && s.grab === false };
     this.solids.push(rec);
     if (deadly) this.deadlyBodies.push(body);
   }
@@ -270,7 +270,7 @@ export class Level {
     // solids
     for (const s of this.solids) {
       if (s.deadly) this.drawDeadly(ctx, s);
-      else this.drawPlatform(ctx, s.body, s.w, s.h, s.color || this.def.plat);
+      else this.drawPlatform(ctx, s.body, s.w, s.h, s.color || this.def.plat, null, s.slick);
     }
 
     // movers
@@ -359,23 +359,43 @@ export class Level {
     }
   }
 
-  drawPlatform(ctx, body, w, h, color, accent) {
+  drawPlatform(ctx, body, w, h, color, accent, slick) {
     ctx.save();
     ctx.translate(body.position.x, body.position.y);
     ctx.rotate(body.angle);
     roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
     ctx.fillStyle = color;
     ctx.fill();
+    if (slick) {
+      // slippery (ungrabbable): darker, with an icy diagonal sheen — hands
+      // slide right off, and it should read that way
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = 'rgba(8,10,20,0.4)';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      ctx.strokeStyle = 'rgba(210,235,255,0.14)';
+      ctx.lineWidth = 5;
+      const step = 46;
+      for (let d = -h; d < w + h; d += step) {
+        ctx.beginPath();
+        ctx.moveTo(-w / 2 + d, -h / 2);
+        ctx.lineTo(-w / 2 + d - h, h / 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = 3;
     ctx.stroke();
-    // top highlight
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-w / 2 + 7, -h / 2 + 2.5);
-    ctx.lineTo(w / 2 - 7, -h / 2 + 2.5);
-    ctx.stroke();
+    // top highlight (grabbable surfaces only — the gloss reads as grip)
+    if (!slick) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-w / 2 + 7, -h / 2 + 2.5);
+      ctx.lineTo(w / 2 - 7, -h / 2 + 2.5);
+      ctx.stroke();
+    }
     if (accent) {
       // moving platforms get accent side stripes
       ctx.fillStyle = accent;

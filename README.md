@@ -91,7 +91,10 @@ Pass...). **Hard** demands chained techniques over mostly-lethal ground
 (Spike Ceiling, Spinner Gauntlet, Clock Tower, Razor Run, Summit...).
 Every board carries an authored solution route checked against measured
 physics reach envelopes (see the design rules atop `src/levels.js`), so
-every board is completable.
+every board is completable. The reverse is checked too: a reachability
+audit verifies there's no *trivial* path — boundary walls have unclimbable
+gaps where they'd otherwise be free ladders, and safe floors never lead to
+a cheap hop onto the goal.
 
 ## Customizing
 
