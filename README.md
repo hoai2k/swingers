@@ -35,11 +35,13 @@ return to the board list; session scores persist, and best times are kept
 | **LT / LB (hold)** | close left hand — latches onto anything it touches |
 | **RT / RB (hold)** | close right hand |
 | **B** | punch (fires on release) — tap for a quick shove, **hold ~1s to charge** a huge blast; always shakes off anyone holding you |
-| **START** | pause (X restart board, BACK quit to lobby) |
+| **START** | pause — the pause menu has clickable **RESUME / RESTART / QUIT** buttons, or use **A**/**START** resume, **X** restart, **B**/**BACK** quit to the menu |
 
 Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
-**LShift/Q** + **RShift/E** = grabs, **Space** = punch, **Enter** = A,
-**Esc** = START, **1/2** = pick a face. Dev keys: **R** restart board,
+**LShift/Q** + **RShift/E** = grabs, **Space** = punch/B, **Enter** = A,
+**Esc/P** = START, **X** = X, **Backspace** = BACK, **C** = Y (mode),
+**1/2** = pick a face. In the pause menu, **Backspace** (or **Space**)
+quits to the menu, **X** restarts. Dev keys: **R** restart board,
 **N** skip board, **M** mute.
 
 ### How movement works (the whole game)

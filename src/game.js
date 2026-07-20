@@ -69,6 +69,9 @@ export class Game {
           else if (b.id === 'fs') this.toggleFullscreen();
           else if (b.id === 'play') this.openSelect();
           else if (b.id === 'back') this.backToLobby();
+          else if (b.id === 'p_resume') this.togglePause();
+          else if (b.id === 'p_restart') this.startLevel();
+          else if (b.id === 'p_quit') this.backToLobby();
           else if (b.id === 'mode') { this.modeOpen = !this.modeOpen; sfx.uiTick(); }
           else if (b.id === 'mode:vs' || b.id === 'mode:coop') {
             this.mode = b.id.slice(5);
@@ -278,9 +281,11 @@ export class Game {
       case 'pause': {
         for (const s of states) {
           if (!this.isJoined(s.id)) continue;
-          if (s.pressed.start) this.state = 'play';
-          else if (s.pressed.x) this.startLevel();
-          else if (s.pressed.back) this.backToLobby();
+          // resume: START (toggle) or A (confirm the default action)
+          if (s.pressed.start || s.pressed.a) this.togglePause();
+          else if (s.pressed.x) this.startLevel();          // restart board
+          // quit to the lobby: B (universal cancel) or BACK/View
+          else if (s.pressed.b || s.pressed.back) this.backToLobby();
         }
         break;
       }
@@ -432,7 +437,7 @@ export class Game {
 
     if (this.state === 'select') {
       this.drawSelect(ctx, cw, ch);
-      this.drawButtons(ctx, cw, false);
+      this.drawButtons(ctx, cw, ch, false);
       return;
     }
     if (!this.level) return;
@@ -465,10 +470,10 @@ export class Game {
     if (this.state === 'roundEnd') this.drawRoundEnd(ctx, cw, ch);
 
     // buttons last so they sit above the overlays
-    this.drawButtons(ctx, cw, this.state === 'play' || this.state === 'pause');
+    this.drawButtons(ctx, cw, ch, this.state === 'play' || this.state === 'pause');
   }
 
-  drawButtons(ctx, cw, withPause) {
+  drawButtons(ctx, cw, ch, withPause) {
     // the PLAY button + mode dropdown only exist on the lobby overlay
     this.buttons = this.state === 'lobby'
       ? this.buttons.filter((b) => b.id === 'play' || b.id.startsWith('mode'))
@@ -514,6 +519,34 @@ export class Game {
           ctx.fillRect(cx + 1.5, cy - 7, 4.5, 14);
         }
       });
+    }
+
+    // Pause menu: big centered, clickable RESUME / RESTART / QUIT buttons.
+    // (Drawn here, after the reset above, so their hitboxes survive in
+    // this.buttons for the pointer handler.)
+    if (this.state === 'pause') {
+      const bw = Math.min(300, cw * 0.6), bh = 54, g = 14;
+      let by = ch * 0.42;
+      const items = [
+        { id: 'p_resume', label: '▶  RESUME', fill: '#5fe08b', fg: '#0c2417' },
+        { id: 'p_restart', label: '↻  RESTART', fill: 'rgba(255,255,255,0.16)', fg: '#fff' },
+        { id: 'p_quit', label: '✕  QUIT TO MENU', fill: 'rgba(255,255,255,0.16)', fg: '#fff' },
+      ];
+      for (const it of items) {
+        const bx = cw / 2 - bw / 2;
+        this.buttons.push({ id: it.id, x: bx, y: by, w: bw, h: bh });
+        roundRectPath(ctx, bx, by, bw, bh, 12);
+        ctx.fillStyle = it.fill;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = it.fg;
+        ctx.font = '900 22px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(it.label, cw / 2, by + bh / 2 + 8);
+        by += bh + g;
+      }
     }
   }
 
@@ -787,17 +820,18 @@ export class Game {
   }
 
   drawPause(ctx, cw, ch) {
-    this.veil(ctx, cw, ch, 0.55);
+    // Veil + title + input hints. The three clickable RESUME/RESTART/QUIT
+    // buttons are drawn by drawButtons (on top of this veil) so their
+    // hitboxes are registered after the per-frame button reset.
+    this.veil(ctx, cw, ch, 0.62);
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.font = '900 64px system-ui, sans-serif';
-    ctx.fillText('PAUSED', cw / 2, ch * 0.4);
-    ctx.font = 'bold 20px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('START resume    •    X restart board    •    BACK quit to playground', cw / 2, ch * 0.5);
-    ctx.font = '15px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText('keyboard: P resume • X restart • Backspace quit • M mute • F fullscreen', cw / 2, ch * 0.56);
+    ctx.font = '900 52px system-ui, sans-serif';
+    ctx.fillText('PAUSED', cw / 2, ch * 0.28);
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('controller:  A / START resume  •  X restart  •  B / BACK quit', cw / 2, ch * 0.76);
+    ctx.fillText('keyboard:  P resume  •  X restart  •  Backspace quit  •  M mute  •  F fullscreen', cw / 2, ch * 0.76 + 22);
   }
 
   drawRoundEnd(ctx, cw, ch) {
