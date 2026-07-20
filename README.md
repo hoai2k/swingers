@@ -71,9 +71,15 @@ next hold. Everything follows from that, exactly like Heave Ho:
 - riding a balloon? relax the stick and hang — climbing above your own
   balloon just presses it down
 
+Your grippers are color-coded so you always know which is which: the
+**left hand is blue, the right hand is red**.
+
 Hands stick to the first thing they touch while the trigger is held —
-including other players' bodies and hands (human chains work). Punch (B)
-shoves players flying and breaks their grip — hold it to charge a blast
+including other players' bodies and hands (human chains work). Grabbing a
+teammate gives your arm a big strength boost so you can be a **living
+anchor**: hang from a ledge and haul a friend up over a gap, or swing them
+to safety, Heave Ho-style. Punch (B) shoves players flying and, the instant
+you press it, **shakes off anyone gripping you** — hold it to charge a blast
 that rivals the ⭐ super glove (which makes any punch huge, instantly).
 
 ## The race

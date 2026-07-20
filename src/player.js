@@ -61,6 +61,10 @@ export const CFG = {
   stickGain: 1.25,      // stick response: full arm extension by ~80% deflection
   // muscle servo — forces in multiples of body weight
   muscleGrab: 3.6,      // cap while that hand is gripping (drives the body)
+  liftBoost: 3.2,       // extra grip strength when hauling ANOTHER player —
+                        // being a "living anchor" that hoists a friend is a
+                        // core co-op move, so lifting a teammate's full rig
+                        // needs far more than the force that moves your own
   muscleFree: 1.6,      // cap while the hand is free (drives the hand)
   satDist: 22,          // position error (px) at which the muscle saturates
   satAng: 0.55,         // angular error (rad) at which the swing motor saturates
@@ -492,10 +496,16 @@ export class Player {
             else if (radTarget < rd - 8) tanScale *= clamp((Math.PI - Math.abs(angErr)) / 0.5, 0, 1);
           }
 
-          const Ft = CFG.muscleGrab * W * tanScale * dir
+          // Hauling another player's whole rig needs far more force than
+          // moving your own body — grabbing a teammate (their body or hand)
+          // multiplies the muscle so you can hoist them like a winch.
+          const liftGrab = B.plugin.hh.player && B.plugin.hh.player !== this;
+          const gm = CFG.muscleGrab * (liftGrab ? CFG.liftBoost : 1);
+
+          const Ft = gm * W * tanScale * dir
                    - vt * CFG.dampTan * W;
-          const radCap = CFG.muscleGrab * W * 0.9;
-          let Fr = clamp((radTarget - rd) * (CFG.muscleGrab * W / CFG.satDist), -radCap, radCap);
+          const radCap = gm * W * 0.9;
+          let Fr = clamp((radTarget - rd) * (gm * W / CFG.satDist), -radCap, radCap);
           // Only push OUTWARD when roughly pointed at the target — extending
           // at full force while 90°+ off-angle grinds the body into whatever
           // is behind it (e.g. the floor at the base of a wall you grabbed).
@@ -504,7 +514,7 @@ export class Player {
           if (Fr > 0) Fr *= clamp((1.9 - Math.abs(angErr)) / 1.2, 0, 1);
           Fr -= vr * CFG.dampRad * W;
 
-          const F = capMag({ x: u.x * Fr + tx * Ft, y: u.y * Fr + ty * Ft }, CFG.muscleGrab * W * 1.4);
+          const F = capMag({ x: u.x * Fr + tx * Ft, y: u.y * Fr + ty * Ft }, gm * W * 1.4);
           M.Body.applyForce(A, A.position, F);
           if (!B.isStatic) {
             const hh = B.plugin.hh;
@@ -576,7 +586,12 @@ export class Player {
     // AoE push, plus the charge-up house rule).
     this.punchCd = Math.max(0, this.punchCd - dt);
     if (controls) {
-      if (ctrl.pressed.b && this.punchCd <= 0 && this.punchCharge < 0) this.punchCharge = 0;
+      if (ctrl.pressed.b && this.punchCd <= 0 && this.punchCharge < 0) {
+        this.punchCharge = 0;
+        // shake off anyone gripping you the INSTANT B is pressed — you don't
+        // have to wait for the charged blast to escape a grapple
+        Player.breakGrabsOn(this, g.players);
+      }
       if (this.punchCharge >= 0) {
         if (ctrl.b) this.punchCharge = Math.min(CFG.punchChargeTime, this.punchCharge + dt);
         else {
@@ -851,23 +866,28 @@ export class Player {
     ctx.beginPath(); ctx.arc(sh.x, sh.y, 7, 0, TAU); ctx.stroke();
 
     // gripper hand at the physical hand body. Left = 2 prongs, right = 3.
+    // Hands are color-coded so you can always tell which arm is which:
+    // LEFT hand = blue, RIGHT hand = red.
     const hand = arm.hand;
     const last = arm.segs[arm.segs.length - 1];
     const handAng = Math.atan2(hand.position.y - last.position.y, hand.position.x - last.position.x);
     const closed = !!arm.grab || arm.trig > 0.3;
+    const hc = arm.side < 0
+      ? { main: '#3d8bff', light: '#bcd8ff', dark: '#23508f' }    // LEFT = blue
+      : { main: '#ff4d54', light: '#ffc0c3', dark: '#9c2a2f' };   // RIGHT = red
     ctx.save();
     ctx.translate(hand.position.x, hand.position.y);
     ctx.rotate(handAng);
-    // wrist ring in player color
-    ctx.strokeStyle = this.color.main;
+    // wrist ring
+    ctx.strokeStyle = hc.dark;
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(-8, 0, 6, 0, TAU); ctx.stroke();
     // palm
-    ctx.fillStyle = '#7c8499';
+    ctx.fillStyle = hc.main;
     ctx.beginPath(); ctx.arc(0, 0, CFG.handRadius - 1, 0, TAU); ctx.fill();
-    ctx.strokeStyle = '#3c4252'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = hc.dark; ctx.lineWidth = 2; ctx.stroke();
     // claw prongs
-    ctx.strokeStyle = '#c3cadd';
+    ctx.strokeStyle = hc.light;
     ctx.lineWidth = 5;
     const open = closed ? 0.28 : 0.85;
     for (const s of [-1, 1]) {
