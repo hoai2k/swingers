@@ -248,6 +248,28 @@ export class Game {
     return this.roster.some((r) => r && r.sourceId === sourceId);
   }
 
+  // Register a new controller as a player in the given roster slot and spawn
+  // its robot at (x, y). Shared by the lobby and by mid-game join.
+  addPlayer(sourceId, slot, x, y) {
+    this.roster[slot] = { sourceId, headStyle: slot % HEAD_STYLES.length };
+    const p = new Player(slot, sourceId, slot % HEAD_STYLES.length);
+    p.spawn(this.engine, x, y);
+    this.players.push(p);
+    this.players.sort((a, b) => a.slot - b.slot);
+    sfx.join();
+    return p;
+  }
+
+  // Join mid-race (or during the countdown): a new controller drops in at the
+  // level's start, alive and playable right away. Ignored if the lobby is
+  // full (4 players). In co-op the round then waits for them too.
+  joinMidGame(sourceId) {
+    const slot = this.roster.findIndex((r) => !r);
+    if (slot === -1) return null;
+    const s = this.level.spawn;
+    return this.addPlayer(sourceId, slot, s.x + (slot - 1.5) * 40, s.y);
+  }
+
   // ------------------------------------------------------------------ step
 
   step(dt) {
@@ -261,6 +283,10 @@ export class Game {
 
       case 'countdown': {
         this.physicsStep(dt);
+        // a new controller can drop in during the countdown
+        for (const s of states) {
+          if (!this.isJoined(s.id) && (s.pressed.a || s.pressed.start)) this.joinMidGame(s.id);
+        }
         this.cd -= dt;
         const n = Math.ceil(this.cd);
         if (n < this.lastCount && n > 0) { this.lastCount = n; sfx.count(); }
@@ -273,7 +299,13 @@ export class Game {
         this.raceTime += dt;
         this.physicsStep(dt);
         for (const s of states) {
-          if (s.pressed.start && this.isJoined(s.id)) { this.state = 'pause'; break; }
+          if (!this.isJoined(s.id)) {
+            // drop-in: an unjoined controller joins the race with A or START
+            if (s.pressed.a || s.pressed.start) this.joinMidGame(s.id);
+          } else if (s.pressed.start) {
+            this.state = 'pause';
+            break;
+          }
         }
         break;
       }
@@ -309,14 +341,7 @@ export class Game {
       if (slotIdx === -1) {
         if (s.pressed.a) {
           const free = this.roster.findIndex((r) => !r);
-          if (free !== -1) {
-            this.roster[free] = { sourceId: s.id, headStyle: free % HEAD_STYLES.length };
-            const p = new Player(free, s.id, free % HEAD_STYLES.length);
-            p.spawn(this.engine, PRACTICE.spawn.x + free * 50, PRACTICE.spawn.y - 40);
-            this.players.push(p);
-            this.players.sort((a, b) => a.slot - b.slot);
-            sfx.join();
-          }
+          if (free !== -1) this.addPlayer(s.id, free, PRACTICE.spawn.x + free * 50, PRACTICE.spawn.y - 40);
         }
       } else {
         const slot = this.roster[slotIdx];
@@ -589,6 +614,13 @@ export class Game {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.font = '900 24px system-ui, sans-serif';
       ctx.fillText(this.raceTime.toFixed(1), cw / 2, 34);
+    }
+
+    // drop-in hint: while a slot is open, invite spectators to jump in
+    if ((this.state === 'play' || this.state === 'countdown') && this.roster.some((r) => !r)) {
+      ctx.fillStyle = `rgba(255,255,255,${0.32 + Math.sin(this.time * 3) * 0.14})`;
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText('press A to join', cw / 2, ch - 14);
     }
 
     // score chips (top-right, left of the pause/fullscreen buttons)
