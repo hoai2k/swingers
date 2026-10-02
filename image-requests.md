@@ -1,5 +1,11 @@
 # Image requests
 
+All 45 requested PNGs have been generated and saved at the paths below.
+The exact prompts, dimensions, and transparency requirements are recorded in
+`assets/generation.json`. This delivery contains art assets; the backgrounds,
+tiles, and UI still need rendering integration, and heads need registration
+with `registerSpriteHead` before appearing in the lobby picker.
+
 Art that would lift SWINGERS from "flat prototype" to "finished party game".
 Everything below is optional. The game draws everything procedurally today,
 so each image is a drop-in upgrade, not a blocker.

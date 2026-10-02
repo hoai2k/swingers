@@ -1,0 +1,457 @@
+{
+  "generator": "Built-in image_gen",
+  "requests": "../image-requests.md",
+  "assets": [
+    {
+      "path": "assets/bg/meadow.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS game backdrop, opaque PNG, 2400 x 1350, 16:9. Twilight meadow at dusk: rolling blue hills in three receding layers, a few round trees in silhouette at the edges, soft first stars, a warm yellow glow low on the horizon. Clean flat-shaded 2D game background, soft gradients and gentle rim light. Sky #20304f at top to #3a5a8c below, accent #ffd166. Horizon across lower third, detail at edges and bottom. Middle 60% must be open calm low-contrast slightly desaturated sky for gameplay. No text, logos, characters, platforms or UI."
+    },
+    {
+      "path": "assets/bg/cave.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Inside a vast crystal cave: dark violet rock walls framing left and right edges, glowing pink crystals along bottom, faint stalactites at top edge, soft haze in middle. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #191527 to #2f2447, pink #ff9de2. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/sunset.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Sunset over a desert canyon: layered mesa silhouettes in plum and magenta, big hazy orange sun low on right, wispy clouds. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #2b1e3d to #7a3b5e, orange #ffb84d. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/jungle.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Dense jungle at night: hanging vines and giant leaves framing top and sides, misty layered tree silhouettes in deep greens, a few lime fireflies. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #12261e to #1e4d33, lime #b6f26d. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/factory.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Inside huge robot factory: dim gears and pipes in teal-grey silhouettes at edges, distant conveyor gantries, cyan indicator lights and haze. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #1c2226 to #2e3c44, cyan #66e0ff. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/sky.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Bright sky above clouds: fluffy cloud banks bottom and edges, few distant floating islands, pastel blue fading lighter toward horizon, tiny distant pink kites. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #4d8fc4 to #a8d8f0, pink #ff7eb6. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/volcano.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Inside erupting volcano: jagged dark-red rock silhouettes, distant orange lava rivers, drifting embers, hot glow from below. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #26090b to #511217, orange #ffae42. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/night.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Clock-tower city skyline at midnight: tall spires and giant clock face in deep navy silhouette, big pale moon, stars and mint window lights. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #0d1026 to #232a54, mint #9dffb0. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/candy.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Candy land at dusk: lollipop trees, gumdrop hills, swirly cotton candy clouds in purples and pinks, sparkles. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #33203f to #5e2f63, pale pink #ffd1f0. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/frost.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Frozen arctic bay at night: icebergs and snowy cliffs in layered blue silhouettes, soft pale cyan aurora across top, calm icy sea at bottom. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #16283a to #2c4a63, cyan #bdf3ff. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/desert.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Ancient desert ruins at golden hour: crumbling sandstone arches and broken pillars at edges, distant dunes, warm dust in air. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #2a1d1f to #6e4631, gold #ffcf6b. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/bg/storm.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: opaque 2400 x 1350 PNG 16:9 background for SWINGERS. Windy storm front over mountains: dark slate clouds swirling in layers, distant lightning, sideways rain streaks at edges, cool blue grey light. Clean minimal flat-shaded 2D game art, soft gradients, gentle rim light, readable large shapes. Palette sky top to bottom #1a2130 to #46566e, blue #9fe3ff. Horizon band in lower third; detail only at edges and bottom. Middle 60% open quiet low-contrast slightly desaturated for gameplay. No characters, text, logos, UI or foreground platforms."
+    },
+    {
+      "path": "assets/heads/happy.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: Wide grin, round LED eyes. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/visor.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: Sleek visor band with two glowing eye dots. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/grump.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: Furrowed metal brows, flat mouth. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/wink.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: One eye winking, cheeky smile. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/shades.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: Cool sunglasses, smirk. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/screen.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: CRT screen face showing two pixel eyes shaped like upward chevrons ^ ^. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/antenna.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: Little antenna on top, surprised o-shaped mouth. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/heads/cyclops.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: single 512 x 512 transparent PNG robot head sprite for SWINGERS. A round robot head for a 2D party game, perfect circle silhouette nearly filling frame edge to edge with all outline visible, front view, bold dark outline, flat cel shading with one highlight, big expressive face: One big camera-lens eye. White neutral base color, grey shadows, dark navy face features. Clean readable large shapes at small size, soft gradient and gentle rim light, cohesive toy-box aesthetic. Real transparent background, no checkerboard, no body, no lettering. Head must work at any rotation."
+    },
+    {
+      "path": "assets/tiles/lava.png",
+      "size": [
+        1024,
+        256
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 1024 x 256 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Molten lava surface seen from side, bright yellow orange glowing crust exactly at top edge fading to deep red and black below, cracked cooling plates and a few bubbles. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/icewater.png",
+      "size": [
+        1024,
+        256
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 1024 x 256 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Freezing arctic water seen from side, pale cyan foamy surface line exactly at top, floating ice chips, dark blue depths below. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/spikes.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Continuous row of chunky metal spikes pointing upward, bold dark outline, red tipped, cartoon style. Real transparent background outside metal spikes. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Transparent PNG with real alpha outside silhouette, no checkerboard. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_meadow.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view blue-grey stone blocks, distinct short grass along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #4a5d8f. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_cave.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view violet rock, distinct small pink crystals along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #4f3f73. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_sunset.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view plum sandstone, distinct smooth worn edge along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #5d4a7a. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_jungle.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view mossy stone, distinct moss and tiny leaves along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #3a6b45. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_factory.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view riveted steel plates, distinct yellow-black hazard stripe along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #50646e. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_sky.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view white cloud-marble, distinct fluffy cloud puff along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #e8eef5. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_volcano.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view dark basalt with glowing cracks, distinct charred crust along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #6e3b2a. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_night.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view navy brick, distinct stone coping along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #3c477e. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_candy.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view wafer biscuit, distinct pink frosting drip along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #7a4d8a. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_frost.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view packed snow over blue ice, distinct snow cap with icicles below along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #527a99. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_desert.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view cracked sandstone brick, distinct sand dusting along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #8a6748. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/tiles/plat_storm.png",
+      "size": [
+        512,
+        128
+      ],
+      "transparent": false,
+      "seamlessX": true,
+      "prompt": "Use case: stylized-concept. Asset type: 512 x 128 4:1 PNG horizontally repeating seamless game texture for SWINGERS. Seamless horizontal 2D platform material texture. Side view wet slate, distinct dark rain-soaked edge along top 16% (20px of128). Material body fills rest, flat shading bold readable large shapes, color around #5f6f88. Clean 2D flat cel shading with soft gradients, toy box aesthetic. Texture strip fills entire canvas side to side and vertically, orthographic front/side view, absolutely no perspective, isolated platform borders or end caps. Seamless-x: left and right edges connect exactly with matching features, heights and colors. Top rim constant height across width, no background above rim. Opaque edge-to-edge material only, no transparency or background. No text, logos, characters, UI."
+    },
+    {
+      "path": "assets/ui/logo.png",
+      "size": [
+        1600,
+        500
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: logo-brand. Asset type: 1600 x 500 transparent PNG game title. Exact wordmark \"SWINGERS\", spelled S W I N G E R S. Chunky rounded bubble letters in warm yellow #ffd94d, thick dark-purple outline and drop shadow, one letter hanging from a robot claw hand as if being swung, playful party-game style, flat cel shading, soft highlights. Wide horizontal layout, all letters visible, tightly framed with minimal empty margin. Transparent background, no checkerboard, no other text."
+    },
+    {
+      "path": "assets/ui/icon_rope.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a hanging rope with a simple knot. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_wheel.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a spinning bar on central axle with motion arcs. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_balloon.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a single balloon with tied dangling string. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_lift.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a platform with one upward arrow and one downward arrow. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_bounce.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a spring pad with an upward chevron. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_ice.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a simple six-armed snowflake. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_crumble.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: a cracked brick. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/icon_wind.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: one 128 x 128 transparent PNG mechanic icon for SWINGERS board picker. Subject: three curved swoosh lines. Minimal thick white line icon with rounded stroke ends, soft dark drop shadow, simple high contrast silhouette readable at 24px. Centered nearly filling square with breathing room, no lettering, no color accents, no borders or badge, no background; real transparency, no checkerboard. Cohesive clean 2D party game UI."
+    },
+    {
+      "path": "assets/ui/keyart.png",
+      "size": [
+        2400,
+        1350
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 2400 x1350 opaque PNG lobby / board-select key art for SWINGERS. Four round robot heads/body spheres (red #ff5d6c, blue #4da3ff, gold #ffd94d, green #5fe08b) with large expressive faces, no torso or legs, and each exactly two long noodly segmented mechanical arms with claw hands. Grabbing each other, swinging from ropes and spinning bars over a spike pit, one flung through air, joyful chaos. Bright clean 2D flat cel-shaded shapes with soft gradients and gentle rim light, toy-box style. Dark navy background with warm spotlight. Action in bottom two thirds, top third open for title overlay. No text, letters, logos or UI.",
+      "editPrompt": "Edit target: referenced SWINGERS key art. Change only the green robot in upper right: remove its LOWER RIGHT arm and claw (the arm projecting right at face-mouth height), replace that arm's area with matching dark navy background. Preserve its upper right arm and its left arm so it has exactly TWO arms, one on each side. Keep green spherical body/face identical, all three other robots, their poses, scenery, spike pit, ropes, bars, colors, composition and lighting unchanged. No new elements. Output opaque PNG 2400 x1350."
+    }
+  ]
+}
