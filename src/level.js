@@ -30,6 +30,10 @@
 import { clamp, lerp, TAU, hash01, roundRectPath } from './util.js';
 import { CAT } from './player.js';
 import { sfx } from './audio.js';
+import { art, pattern } from './art.js';
+
+const TILE_K = 0.42;        // platform tiles: 512x128 drawn ~215x54 (rim ~9px)
+const TILE_RIM = 128 * TILE_K;
 
 const M = window.Matter;
 
@@ -411,6 +415,23 @@ export class Level {
   // ----------------------------------------------------------------- drawing
 
   drawBackground(ctx, cw, ch) {
+    const img = art('bg:' + this.def.theme);
+    if (img) {
+      // painted backdrop, cover-fit to the whole canvas (letterbox included)
+      // with a slow drift so the room breathes
+      const s = Math.max(cw / img.width, ch / img.height) * 1.04;
+      const dw = img.width * s, dh = img.height * s;
+      const drift = Math.sin(this.time * 0.07) * (dw - cw) * 0.4;
+      ctx.drawImage(img, (cw - dw) / 2 + drift, (ch - dh) / 2, dw, dh);
+      // dim toward the theme's sky color so platforms, hazards and robots
+      // stay the brightest things on screen
+      const dim = ctx.createLinearGradient(0, 0, 0, ch);
+      dim.addColorStop(0, this.def.bg[0] + '8c');
+      dim.addColorStop(1, this.def.bg[0] + '40');
+      ctx.fillStyle = dim;
+      ctx.fillRect(0, 0, cw, ch);
+      return;
+    }
     const grad = ctx.createLinearGradient(0, 0, 0, ch);
     grad.addColorStop(0, this.def.bg[0]);
     grad.addColorStop(1, this.def.bg[1]);
@@ -561,6 +582,26 @@ export class Level {
     }
   }
 
+  // Fill the current local-frame rect with the theme's platform tile: the
+  // tile's top band (rim: grass, snow, frosting...) along the top edge, its
+  // body material repeated below. Returns false if the tile isn't loaded.
+  fillTiled(ctx, w, h) {
+    const key = 'plat:' + this.def.theme;
+    const full = pattern(ctx, key);
+    const body = pattern(ctx, key, [0, 48, 512, 80]);
+    if (!full || !body) return false;
+    const m = new DOMMatrix().translate(-w / 2, -h / 2).scale(TILE_K);
+    full.setTransform(m);
+    ctx.fillStyle = full;
+    ctx.fillRect(-w / 2, -h / 2, w, Math.min(h, TILE_RIM));
+    if (h > TILE_RIM) {
+      body.setTransform(new DOMMatrix().translate(-w / 2, -h / 2 + TILE_RIM).scale(TILE_K));
+      ctx.fillStyle = body;
+      ctx.fillRect(-w / 2, -h / 2 + TILE_RIM, w, h - TILE_RIM);
+    }
+    return true;
+  }
+
   drawPlatform(ctx, body, w, h, color, accent, slick) {
     ctx.save();
     ctx.translate(body.position.x, body.position.y);
@@ -568,14 +609,26 @@ export class Level {
     roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
     ctx.fillStyle = color;
     ctx.fill();
+    let textured = false;
+    if (!slick) {
+      ctx.save();
+      ctx.clip();
+      textured = this.fillTiled(ctx, w, h);
+      ctx.restore();
+      roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
+    }
     if (slick) {
       // slippery (ungrabbable): darker, with an icy diagonal sheen — hands
       // slide right off, and it should read that way
       ctx.save();
       ctx.clip();
-      ctx.fillStyle = 'rgba(8,10,20,0.4)';
+      // glassy pale ice — clearly not the textured, grippable stone
+      const ig = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
+      ig.addColorStop(0, '#d8f3ff');
+      ig.addColorStop(1, '#6fb3d6');
+      ctx.fillStyle = ig;
       ctx.fillRect(-w / 2, -h / 2, w, h);
-      ctx.strokeStyle = 'rgba(210,235,255,0.14)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 5;
       const step = 46;
       for (let d = -h; d < w + h; d += step) {
@@ -592,7 +645,7 @@ export class Level {
     ctx.lineWidth = 3;
     ctx.stroke();
     // top highlight (grabbable surfaces only — the gloss reads as grip)
-    if (!slick) {
+    if (!slick && !textured) {
       ctx.strokeStyle = 'rgba(255,255,255,0.22)';
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -684,6 +737,8 @@ export class Level {
       roundRectPath(ctx, -s.w / 2 + i * bw + 1, -s.h / 2, bw - 2, s.h, 4);
       ctx.fillStyle = s.color || this.def.plat;
       ctx.fill();
+      ctx.save(); ctx.clip(); this.fillTiled(ctx, s.w, s.h); ctx.restore();
+      roundRectPath(ctx, -s.w / 2 + i * bw + 1, -s.h / 2, bw - 2, s.h, 4);
       ctx.fillStyle = `rgba(0,0,0,${0.12 + hash01(i, s.w) * 0.12})`;
       ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,0.4)';
@@ -758,9 +813,20 @@ export class Level {
     ctx.fill();
   }
 
+  // Wide floor hazards on lava / ice boards become liquid; every other
+  // deadly block gets the metal spike strip along its dangerous edge.
   drawDeadly(ctx, s) {
-    const color = this.def.hazard || '#ff4757';
     const b = s.body;
+    const liquid = this.def.theme === 'volcano' ? 'lava' : this.def.theme === 'frost' ? 'icewater' : null;
+    if (liquid && s.spikeDir === 'up' && !b.angle && s.w >= 300 && art(liquid)) {
+      this.drawLiquid(ctx, s, liquid);
+      return;
+    }
+    if (art('spikes')) {
+      this.drawSpikeStrip(ctx, s);
+      return;
+    }
+    const color = this.def.hazard || '#ff4757';
     ctx.save();
     ctx.translate(b.position.x, b.position.y);
     ctx.rotate(b.angle);
@@ -798,6 +864,47 @@ export class Level {
       }
       ctx.fillRect(edge - (sign > 0 ? 4 : 0), -s.h / 2, 4, s.h);
     }
+    ctx.restore();
+  }
+
+  drawLiquid(ctx, s, kind) {
+    const b = s.body;
+    const x0 = b.position.x - s.w / 2, top = b.position.y - s.h / 2;
+    const lava = kind === 'lava';
+    // heat / cold glow rising off the surface
+    const glow = ctx.createLinearGradient(0, top - 120, 0, top);
+    glow.addColorStop(0, lava ? 'rgba(255,110,30,0)' : 'rgba(140,220,255,0)');
+    glow.addColorStop(1, lava ? 'rgba(255,110,30,0.32)' : 'rgba(140,220,255,0.16)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x0, top - 120, s.w, 120);
+    // the texture, scrolling slowly sideways; below it, its own deep color
+    const k = 0.4, th = 256 * k;
+    const p = pattern(ctx, kind);
+    const bob = Math.sin(this.time * 1.6) * 2;
+    p.setTransform(new DOMMatrix().translate(x0 + ((this.time * (lava ? 9 : 16)) % (896 * k)), top - 8 + bob).scale(k));
+    ctx.fillStyle = p;
+    ctx.fillRect(x0, top - 8 + bob, s.w, th);
+    ctx.fillStyle = lava ? '#2a0a06' : '#06233f';
+    ctx.fillRect(x0, top - 8 + bob + th - 1, s.w, Math.max(0, this.h + 200 - (top + th)));
+  }
+
+  drawSpikeStrip(ctx, s) {
+    const b = s.body;
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    ctx.fillStyle = 'rgba(10,8,16,0.75)';
+    ctx.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
+    // rotate so the dangerous edge is "up" in the local frame
+    const rot = { up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2 }[s.spikeDir] || 0;
+    ctx.rotate(rot);
+    const vertical = s.spikeDir === 'left' || s.spikeDir === 'right';
+    const len = vertical ? s.h : s.w, depth = vertical ? s.w : s.h;
+    const H = 30, kx = 0.42, ky = H / 128;
+    const p = pattern(ctx, 'spikes');
+    p.setTransform(new DOMMatrix().translate(-len / 2, -depth / 2 - 16).scale(kx, ky));
+    ctx.fillStyle = p;
+    ctx.fillRect(-len / 2, -depth / 2 - 16, len, H);
     ctx.restore();
   }
 

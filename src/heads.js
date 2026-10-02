@@ -5,6 +5,7 @@
 // up in the lobby picker automatically.
 
 import { clamp, TAU } from './util.js';
+import { art, HEADS } from './art.js';
 
 export const HEAD_STYLES = [];
 
@@ -96,6 +97,46 @@ face('shades', (ctx, r, look) => {
   ctx.beginPath(); ctx.moveTo(-r * 0.2, r * 0.42); ctx.lineTo(r * 0.25, r * 0.38); ctx.stroke();
 });
 
+// The generated heads (assets/heads, see image-requests.md) are the real
+// roster. Each keeps a procedural face as its fallback while the sprite
+// loads (or if it's missing).
+{
+  const proc = new Map(HEAD_STYLES.map((h) => [h.name, h]));
+  const fallback = { screen: 'visor', antenna: 'dot', cyclops: 'dot' };
+  HEAD_STYLES.length = 0;
+  for (const name of HEADS) {
+    const f = proc.get(name) || proc.get(fallback[name]);
+    HEAD_STYLES.push({ name, art: 'head:' + name, draw: f.draw });
+  }
+}
+
+// Sprites are white robots; tint each one to the player's color once and
+// cache it (multiply keeps the dark outline and eyes dark, turns the white
+// shell into the player color).
+const tinted = new Map();
+function tintedHead(img, key, color) {
+  const k = key + color.main;
+  let c = tinted.get(k);
+  if (c) return c;
+  // pre-scaled to 128px with high-quality smoothing: heads are drawn
+  // ~45px tall, and shrinking the 256px art every frame speckles
+  c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const x = c.getContext('2d');
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(img, 0, 0, 128, 128);
+  x.globalCompositeOperation = 'multiply';
+  x.fillStyle = color.main;
+  x.fillRect(0, 0, 128, 128);
+  // bring back some of the white highlights
+  x.globalCompositeOperation = 'soft-light';
+  x.drawImage(img, 0, 0, 128, 128);
+  x.globalCompositeOperation = 'destination-in';
+  x.drawImage(img, 0, 0, 128, 128);
+  tinted.set(k, c);
+  return c;
+}
+
 // Draw a full head (solid circle body + face or sprite). `rot` is the body's
 // physics angle — the face rotates with the ball, Heave Ho style.
 export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 }, rot = 0) {
@@ -103,7 +144,14 @@ export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 },
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rot);
-  if (style.img && style.img.complete && style.img.naturalWidth) {
+  const sprite = style.art ? art(style.art) : null;
+  if (sprite) {
+    // the generated heads have a little transparent margin; draw them a
+    // touch larger so the shell lines up with the physics circle
+    const d = r * 2 * 1.14;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(tintedHead(sprite, style.art, color), -d / 2, -d / 2, d, d);
+  } else if (style.img && style.img.complete && style.img.naturalWidth) {
     ctx.drawImage(style.img, -r, -r, r * 2, r * 2);
   } else {
     ctx.fillStyle = color.main;

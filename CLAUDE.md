@@ -18,4 +18,7 @@
 - `window.__hh` is the live Game; with `__hh.input.mock`, `player.teleport`
   and `__hh.step(1/60)` you can run headless physics probes in Playwright
   to check that a jump, bounce or swing actually lands.
-- Image asset requests for the owner live in `image-requests.md`.
+- Image asset requests for the owner live in `image-requests.md`. Generated
+  originals are in `assets/{bg,heads,tiles,ui}`; after any change there run
+  `python3 tools/build_assets.py` to rebuild the web copies in
+  `assets/web/` that `src/art.js` actually loads.

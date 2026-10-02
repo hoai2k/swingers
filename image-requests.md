@@ -1,10 +1,22 @@
 # Image requests
 
-All 45 requested PNGs have been generated and saved at the paths below.
-The exact prompts, dimensions, and transparency requirements are recorded in
-`assets/generation.json`. This delivery contains art assets; the backgrounds,
-tiles, and UI still need rendering integration, and heads need registration
-with `registerSpriteHead` before appearing in the lobby picker.
+**Status: all 45 delivered and integrated. Nothing needs regenerating.**
+The exact prompts are recorded in `assets/generation.json`. The game loads
+web-ready copies from `assets/web/`. After replacing any original, rebuild
+them with `python3 tools/build_assets.py`. That script also:
+
+- re-encodes the backdrops and key art as 1920×1080 JPGs (about 30 MB of
+  PNG becomes about 3 MB),
+- crossfades the edges of tiles with a visible seam (`plat_candy`,
+  `plat_volcano` and `lava` had one), so you don't need to regenerate those,
+- shrinks heads to 256 px. The heads are tinted per player in code, so keep
+  them white-based.
+
+Where each image is used: backdrops behind every board (dimmed toward the
+theme color), platform tiles on every grippable platform, lava and ice
+water as the floor hazard on volcano and frost boards, the spike strip on
+every other hazard, heads as the 8 lobby faces, the logo in the lobby, the
+key art behind the board list, and the icons on each board row.
 
 Art that would lift SWINGERS from "flat prototype" to "finished party game".
 Everything below is optional. The game draws everything procedurally today,

@@ -110,8 +110,17 @@ a cheap hop onto the goal.
 
 ## Customizing
 
-**Head sprites** — heads are placeholder solid circles with faces. Drop a PNG
-in `assets/heads/` and register it in `src/main.js`:
+**Art** — backdrops, platform tiles, hazards, heads, logo and icons are
+generated images (prompts in `image-requests.md` / `assets/generation.json`).
+Originals live in `assets/{bg,heads,tiles,ui}`; the game loads web-ready
+copies from `assets/web/`, rebuilt with `python3 tools/build_assets.py`
+(needs Pillow). `src/art.js` loads them and every draw call falls back to
+the old procedural look if an image is missing. Each theme in
+`src/levels.js` names its art via `theme`.
+
+**Head sprites** — the 8 generated heads are the lobby faces (white robots,
+tinted to the player color at runtime). To add another, drop a PNG in
+`assets/heads/` and register it in `src/main.js`:
 
 ```js
 import { registerSpriteHead } from './heads.js';

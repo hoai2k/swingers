@@ -13,6 +13,7 @@ import { Level } from './level.js';
 import { LEVELS, PRACTICE } from './levels.js';
 import { Particles } from './particles.js';
 import { sfx } from './audio.js';
+import { art } from './art.js';
 import { clamp, lerp, TAU, roundRectPath } from './util.js';
 
 const M = window.Matter;
@@ -23,6 +24,21 @@ const DIFFS = [
   { key: 'medium', label: 'MEDIUM', color: '#ffd94d' },
   { key: 'hard', label: 'HARD', color: '#ff5d6c' },
 ];
+
+// Which board-select icons a board gets (one per mechanic it uses).
+function mechanicsOf(lv) {
+  const so = lv.solids || [];
+  const out = [];
+  if ((lv.ropes || []).length) out.push('rope');
+  if ((lv.spinners || []).length) out.push('wheel');
+  if ((lv.balloons || []).length) out.push('balloon');
+  if ((lv.movers || []).length) out.push('lift');
+  if (so.some((s) => s.bounce)) out.push('bounce');
+  if (so.some((s) => s.ice)) out.push('ice');
+  if (so.some((s) => s.crumble)) out.push('crumble');
+  if ((lv.winds || []).length) out.push('wind');
+  return out;
+}
 
 export class Game {
   constructor(canvas) {
@@ -642,14 +658,20 @@ export class Game {
   }
 
   drawLobbyOverlay(ctx, cw, ch) {
-    // title
+    // title: the logo when it's loaded, else plain text
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd94d';
-    ctx.font = `900 ${Math.min(64, cw * 0.06)}px system-ui, sans-serif`;
-    ctx.fillText('SWINGERS', cw / 2, 58);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = 'bold 15px system-ui, sans-serif';
-    ctx.fillText('a grabby robot party game', cw / 2, 80);
+    const logo = art('logo');
+    if (logo) {
+      const lh = Math.min(84, ch * 0.12), lw = lh * (logo.width / logo.height);
+      ctx.drawImage(logo, cw / 2 - lw / 2, 4, lw, lh);
+    } else {
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = `900 ${Math.min(64, cw * 0.06)}px system-ui, sans-serif`;
+      ctx.fillText('SWINGERS', cw / 2, 58);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = 'bold 15px system-ui, sans-serif';
+      ctx.fillText('a grabby robot party game', cw / 2, 80);
+    }
 
     // slot chips
     const chipW = Math.min(190, cw / 4 - 20), chipH = 44;
@@ -759,6 +781,14 @@ export class Game {
     grad.addColorStop(1, '#233054');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, cw, ch);
+    const key = art('keyart');
+    if (key) {
+      // key art behind the list, heavily dimmed so the rows stay readable
+      const s = Math.max(cw / key.width, ch / key.height);
+      ctx.drawImage(key, (cw - key.width * s) / 2, (ch - key.height * s) / 2, key.width * s, key.height * s);
+      ctx.fillStyle = 'rgba(12,14,32,0.86)';
+      ctx.fillRect(0, 0, cw, ch);
+    }
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd94d';
@@ -803,12 +833,25 @@ export class Game {
         ctx.textAlign = 'left';
         ctx.fillText(lv.name, cx + 14, y + rowH / 2 + 4);
         const bt = this.best[this.mode][lv.name];
+        let ix = cx + colW - 12;
         if (bt !== undefined) {
           ctx.textAlign = 'right';
           ctx.fillStyle = 'rgba(255,255,255,0.5)';
           ctx.font = `${Math.min(12, rowH * 0.3)}px system-ui, sans-serif`;
-          ctx.fillText(bt.toFixed(2) + 's', cx + colW - 12, y + rowH / 2 + 4);
+          ctx.fillText(bt.toFixed(2) + 's', ix, y + rowH / 2 + 4);
+          ix -= ctx.measureText(bt.toFixed(2) + 's').width + 8;
         }
+        // mechanic icons, right-aligned before the best time
+        const isz = Math.min(20, rowH * 0.48);
+        ctx.globalAlpha = isSel ? 0.95 : 0.55;
+        for (const m of mechanicsOf(lv).reverse()) {
+          const icon = art('icon:' + m);
+          if (!icon) continue;
+          ix -= isz;
+          ctx.drawImage(icon, ix, y + (rowH - 6 - isz) / 2, isz, isz);
+          ix -= 4;
+        }
+        ctx.globalAlpha = 1;
       });
     });
 

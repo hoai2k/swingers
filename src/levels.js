@@ -54,18 +54,18 @@ function gapWall(x, h, y1, y2, t = 40) {
 }
 
 const PAL = {
-  meadow:  { bg: ['#20304f', '#3a5a8c'], plat: '#4a5d8f', accent: '#ffd166' },
-  cave:    { bg: ['#191527', '#2f2447'], plat: '#4f3f73', accent: '#ff9de2' },
-  sunset:  { bg: ['#2b1e3d', '#7a3b5e'], plat: '#5d4a7a', accent: '#ffb84d' },
-  jungle:  { bg: ['#12261e', '#1e4d33'], plat: '#3a6b45', accent: '#b6f26d' },
-  factory: { bg: ['#1c2226', '#2e3c44'], plat: '#50646e', accent: '#66e0ff' },
-  sky:     { bg: ['#4d8fc4', '#a8d8f0'], plat: '#e8eef5', accent: '#ff7eb6' },
-  volcano: { bg: ['#26090b', '#511217'], plat: '#6e3b2a', accent: '#ffae42', hazard: '#ff6b35' },
-  night:   { bg: ['#0d1026', '#232a54'], plat: '#3c477e', accent: '#9dffb0' },
-  candy:   { bg: ['#33203f', '#5e2f63'], plat: '#7a4d8a', accent: '#ffd1f0' },
-  frost:   { bg: ['#16283a', '#2c4a63'], plat: '#527a99', accent: '#bdf3ff' },
-  desert:  { bg: ['#2a1d1f', '#6e4631'], plat: '#8a6748', accent: '#ffcf6b' },
-  storm:   { bg: ['#1a2130', '#46566e'], plat: '#5f6f88', accent: '#9fe3ff' },
+  meadow:  { theme: 'meadow', bg: ['#20304f', '#3a5a8c'], plat: '#4a5d8f', accent: '#ffd166' },
+  cave:    { theme: 'cave', bg: ['#191527', '#2f2447'], plat: '#4f3f73', accent: '#ff9de2' },
+  sunset:  { theme: 'sunset', bg: ['#2b1e3d', '#7a3b5e'], plat: '#5d4a7a', accent: '#ffb84d' },
+  jungle:  { theme: 'jungle', bg: ['#12261e', '#1e4d33'], plat: '#3a6b45', accent: '#b6f26d' },
+  factory: { theme: 'factory', bg: ['#1c2226', '#2e3c44'], plat: '#50646e', accent: '#66e0ff' },
+  sky:     { theme: 'sky', bg: ['#4d8fc4', '#a8d8f0'], plat: '#e8eef5', accent: '#ff7eb6' },
+  volcano: { theme: 'volcano', bg: ['#26090b', '#511217'], plat: '#6e3b2a', accent: '#ffae42', hazard: '#ff6b35' },
+  night:   { theme: 'night', bg: ['#0d1026', '#232a54'], plat: '#3c477e', accent: '#9dffb0' },
+  candy:   { theme: 'candy', bg: ['#33203f', '#5e2f63'], plat: '#7a4d8a', accent: '#ffd1f0' },
+  frost:   { theme: 'frost', bg: ['#16283a', '#2c4a63'], plat: '#527a99', accent: '#bdf3ff' },
+  desert:  { theme: 'desert', bg: ['#2a1d1f', '#6e4631'], plat: '#8a6748', accent: '#ffcf6b' },
+  storm:   { theme: 'storm', bg: ['#1a2130', '#46566e'], plat: '#5f6f88', accent: '#9fe3ff' },
 };
 
 // The lobby playground: join, warm up on one of everything, press PLAY.
