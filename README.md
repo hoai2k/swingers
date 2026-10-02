@@ -92,11 +92,15 @@ respawn at the start (costs time, not the round).
 
 The 30 boards follow Heave Ho's design language: single-screen rooms with
 the goal visible from spawn, one gimmick per room, and hazards that frame
-the route. **Easy** teaches one mechanic with safe floors (Grab School,
-Stepping Stones, Rope Garden, Gentle Spin...). **Medium** adds spikes and
-combinations (Monkey Bars, Pendulum Alley, Balloon Chimney, Windmill
-Pass...). **Hard** demands chained techniques over mostly-lethal ground
-(Spike Ceiling, Spinner Gauntlet, Clock Tower, Razor Run, Summit...).
+the route — and every board has its own challenge (no two boards ask for
+the same thing). **Easy** teaches one mechanic with safe floors (Grab
+School, Stepping Stones, Rope Garden, Gentle Spin, Bounce House's
+trampolines, Slip 'n' Slide's ungrabbable ice...). **Medium** adds spikes
+and twists (Monkey Bars, Lava Lifts, Balloon Chimney, Crumble Bridge, Down
+the Well — climbing *down*...). **Hard** demands chained techniques over
+mostly-lethal ground (Spike Ceiling, Spinner Gauntlet, Balloon Storm's
+gusts, Clock Tower, Updraft's wind vents, Summit...). Long hard boards have
+a **checkpoint flag** — touch it and you respawn there.
 Every board carries an authored solution route checked against measured
 physics reach envelopes (see the design rules atop `src/levels.js`), so
 every board is completable. The reverse is checked too: a reachability
@@ -117,8 +121,11 @@ registerSpriteHead('assets/heads/mine.png', 'mine');
 It appears in the lobby face picker and is drawn scaled to the body circle.
 
 **Boards** — `src/levels.js` is plain data (centers + sizes, y grows down):
-`solids` (add `deadly: true` for spikes, `grab: false` for slippery),
-`ropes`, `balloons`, `movers`, `spinners`, `powerups`, `texts`. Rules of
+`solids` (add `deadly: true` for spikes, `grab: false` for slippery,
+`ice: true` for slick + ungrabbable, `bounce: 16` for a trampoline,
+`crumble: true` for blocks that fall away when touched, `angle` for slopes),
+`ropes`, `balloons`, `movers`, `spinners`, `powerups`, `winds` (gust /
+updraft zones, optionally pulsing), `checkpoints`, `texts`. Rules of
 thumb: a standing robot latches ~120 px above the ground it stands on and
 ~90 px around its body while hanging; keep climbs under that and make bigger
 leaps swing-assisted.

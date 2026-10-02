@@ -9,12 +9,31 @@
 //   rope catch: rope tail within ~95px of the stander's body
 //   spinner catch: tip sweep passes within ~88px
 //   balloon catch: hover home <= ~100px above the stander's body
+//   bounce pad (flat, from standing): bounce 12 -> ~170px rise, 16 -> ~275,
+//     18 -> ~335, 20 -> ~400, 22 -> ~470 (body center); tilted pads keep the
+//     speed but trade height for distance
+//   updraft fy -1.3: ~6 px/tick at the top of a 750px vent; a rider hovers
+//     where the zone ends, so every vent needs a nudge zone or handhold there
 // Each board carries a `route` — the intended solution as typed hops —
-// which the validator checks against these envelopes.
+// which the validator checks against these envelopes. Gimmick hops
+// (bounce, slide, vent, windFling, hangDown, walk) were checked by scripted
+// physics probes instead (teleport + mocked sticks, see main.js __hh).
 //
 // Heave Ho-style structure: single-screen rooms, goal visible from spawn,
 // one gimmick per room (twisted and combined as difficulty rises), cheap
 // deaths, chains optional but helpful.
+//
+// The 30 boards, one distinct challenge each:
+//   EASY    grab+swing, ledge climb, stone flings, hand-over-hand, ropes,
+//           ferry, balloon, spinner, trampolines, ice (grab to brake)
+//   MEDIUM  monkey bars over spikes, spinner launch, timed lava lifts,
+//           over/under, rope chain, precision landings, balloon steering,
+//           wheel-to-bars momentum, crumbling bridge, climbing DOWN
+//   HARD    everything mixed, spike sandwich, long-distance, wheel
+//           hand-offs, balloon gusts, ferry hopping, wheel tower, fling
+//           corridor, wind vents, the summit
+// Long hard boards get a checkpoint flag so a slip costs a section, not
+// the whole board.
 
 function S(x, y, w, h, opts = {}) {
   return { x, y, w, h, ...opts };
@@ -45,6 +64,8 @@ const PAL = {
   night:   { bg: ['#0d1026', '#232a54'], plat: '#3c477e', accent: '#9dffb0' },
   candy:   { bg: ['#33203f', '#5e2f63'], plat: '#7a4d8a', accent: '#ffd1f0' },
   frost:   { bg: ['#16283a', '#2c4a63'], plat: '#527a99', accent: '#bdf3ff' },
+  desert:  { bg: ['#2a1d1f', '#6e4631'], plat: '#8a6748', accent: '#ffcf6b' },
+  storm:   { bg: ['#1a2130', '#46566e'], plat: '#5f6f88', accent: '#9fe3ff' },
 };
 
 // The lobby playground: join, warm up on one of everything, press PLAY.
@@ -250,25 +271,6 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'BALLOON PARK', diff: 'easy',
-    intro: 'Catch a balloon, drift to the high shelf. Take your time.',
-    w: 1600, h: 900, ...PAL.sky,
-    spawn: { x: 200, y: 800 },
-    goal: { x: 1200, y: 340, r: 46 },
-    solids: [
-      ...walls(1600, 900),
-      S(800, 880, 1600, 40),               // floor (top 860)
-      S(1150, 420, 300, 36),               // goal shelf (top 402, off the wall)
-      S(1450, 690, 220, 32),               // rest ledge (dead end from below)
-    ],
-    balloons: [{ x: 500, y: 760 }, { x: 900, y: 760 }],
-    route: [
-      { move: 'balloonCatch', x: 500, y: 760, from: { x: 500, y: 839 } },
-      { move: 'ride', x: 1150, y: 470 },
-      { move: 'drop', x: 1200, y: 381 },
-    ],
-  },
-  {
     name: 'GENTLE SPIN', diff: 'easy',
     intro: 'Catch the slow wheel, ride it around, let go at the top.',
     w: 1600, h: 900, ...PAL.factory,
@@ -288,32 +290,56 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'THE LADDER', diff: 'easy',
-    intro: 'Short hops, small rises. A stroll up the scaffolding.',
+    name: 'BOUNCE HOUSE', diff: 'easy',
+    intro: 'Trampolines! Land on a pad and it flings you along its arrows.',
     w: 1600, h: 900, ...PAL.candy,
     spawn: { x: 150, y: 800 },
-    goal: { x: 1400, y: 290, r: 46 },
+    goal: { x: 1430, y: 235, r: 46 },
     solids: [
       S(20, 450, 40, 900),
-      ...gapWall(1580, 900, 440, 800),   // right wall: unclimbable gap
-      S(800, 880, 1600, 40),
-      S(280, 760, 300, 34),                // rises of ~95
-      S(620, 665, 260, 34),
-      S(300, 570, 260, 34),
-      S(640, 475, 260, 34),
-      S(320, 380, 260, 34),
-      S(660, 340, 260, 34),
-      S(1000, 300, 220, 32),
-      S(1330, 360, 340, 36),
+      ...gapWall(1580, 900, 340, 820),   // right wall: unclimbable gap
+      S(800, 880, 1600, 40),               // safe floor (top 860)
+      S(330, 845, 150, 30, { bounce: 16 }),            // pad 1: straight up
+      S(430, 520, 170, 30),                // ledge you catch at the top
+      S(640, 680, 140, 26, { bounce: 20, angle: 0.35 }), // pad 2: tilted right
+      S(980, 450, 260, 30),                // landing (top 435)
+      S(1190, 478, 120, 24, { bounce: 17, angle: 0.45 }), // pad 3
+      S(1440, 300, 240, 32),               // goal shelf (top 284)
     ],
+    texts: [{ x: 760, y: 170, text: 'BOUNCE UP • GRAB THE LEDGE • CLIMB ON' }],
     route: [
-      { move: 'standLatch', x: 480, y: 682, from: { x: 400, y: 722 } },
-      { move: 'standLatch', x: 430, y: 587, from: { x: 520, y: 627 } },
-      { move: 'standLatch', x: 520, y: 492, from: { x: 420, y: 532 } },
-      { move: 'standLatch', x: 450, y: 397, from: { x: 540, y: 437 } },
-      { move: 'fling', x: 550, y: 306, from: { x: 420, y: 342 } },
-      { move: 'fling', x: 910, y: 268, from: { x: 780, y: 302 } },
-      { move: 'fling', x: 1180, y: 321, from: { x: 1090, y: 262 } },
+      { move: 'bounce', x: 330, y: 534 },
+      { move: 'climb', x: 430, y: 484 },
+      { move: 'bounce', x: 900, y: 414 },
+      { move: 'bounce', x: 1380, y: 263 },
+    ],
+  },
+  {
+    name: "SLIP 'N' SLIDE", diff: 'easy',
+    intro: "Ice can't be grabbed. Grab the rough stuff to stop!",
+    w: 1600, h: 900, ...PAL.frost,
+    spawn: { x: 150, y: 200 },
+    goal: { x: 1510, y: 650, r: 40 },
+    solids: [
+      ...walls(1600, 900),
+      S(800, 885, 1520, 50, { deadly: true }),     // freezing water
+      S(190, 260, 300, 36),                // start deck (top 242)
+      S(580, 362, 520, 28, { ice: true, angle: 0.395 }),  // the big slide
+      S(900, 490, 180, 30),                // rough brake pad (top 475)
+      S(1040, 380, 80, 24),                // rough bars over the water
+      S(1180, 380, 80, 24),
+      S(1320, 380, 80, 24),
+      S(1345, 600, 250, 28, { ice: true, angle: 0.4 }),   // run-out slide
+      S(1490, 720, 140, 40),               // goal deck (top 700)
+    ],
+    texts: [{ x: 800, y: 150, text: "GRAB TO BRAKE — ICE IS TOO SLICK TO HOLD" }],
+    route: [
+      { move: 'slide', x: 900, y: 454 },
+      { move: 'standLatch', x: 1040, y: 392, from: { x: 960, y: 454 } },
+      { move: 'hangReach', x: 1180, y: 392 },
+      { move: 'hangReach', x: 1320, y: 392 },
+      { move: 'drop', x: 1360, y: 560 },
+      { move: 'slide', x: 1500, y: 679 },
     ],
   },
 
@@ -350,31 +376,6 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'ROPE CHASM', diff: 'medium',
-    intro: 'Grab a rope, pump the swing, let go at the top of the arc.',
-    w: 1600, h: 900, ...PAL.jungle,
-    spawn: { x: 120, y: 560 },
-    goal: { x: 1480, y: 560, r: 46 },
-    solids: [
-      ...walls(1600, 900),
-      S(200, 640, 360, 40),
-      S(1420, 640, 320, 40),
-      S(800, 890, 880, 60, { deadly: true }),
-    ],
-    ropes: [
-      { x: 450, y: 120, len: 470 },
-      { x: 730, y: 120, len: 430 },
-      { x: 1010, y: 120, len: 430 },
-    ],
-    powerups: [{ x: 780, y: 560 }],
-    route: [
-      { move: 'ropeCatch', x: 450, y: 590, from: { x: 370, y: 599 } },
-      { move: 'ropeSwing', x: 730, y: 120 },
-      { move: 'ropeSwing', x: 1010, y: 120 },
-      { move: 'swingCatch', x: 1290, y: 619, from: { x: 1080, y: 570 } },
-    ],
-  },
-  {
     name: 'SPIN CYCLE', diff: 'medium',
     intro: 'Grab the spinning bars, ride the momentum, release to launch.',
     w: 1600, h: 900, ...PAL.factory,
@@ -400,30 +401,35 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'LAVA FERRY', diff: 'medium',
-    intro: 'Ride the ferries. The lava is not friendly.',
-    w: 1600, h: 900, ...PAL.volcano,
-    spawn: { x: 120, y: 620 },
-    goal: { x: 1500, y: 405, r: 44 },
+    name: 'LAVA LIFTS', diff: 'medium',
+    intro: 'Lifts rise and sink out of the lava. Step on and off at the right time.',
+    w: 1400, h: 900, ...PAL.volcano,
+    spawn: { x: 120, y: 540 },
+    goal: { x: 1250, y: 330, r: 44 },
     solids: [
-      ...walls(1600, 900),
-      S(160, 700, 280, 40),
-      S(870, 600, 120, 30),
-      S(1480, 480, 200, 36),
-      S(800, 885, 1560, 50, { deadly: true }),
+      ...walls(1400, 900),
+      S(160, 620, 280, 40),                // start (top 600)
+      S(570, 450, 140, 30),                // high ledge (top 435)
+      S(870, 760, 140, 30),                // low ledge, just over the lava (top 745)
+      S(1235, 400, 250, 36),               // goal deck (top 382)
+      S(700, 885, 1360, 50, { deadly: true }),
     ],
     movers: [
-      { w: 150, h: 26, from: [420, 640], to: [720, 640], speed: 110 },
-      { w: 150, h: 26, from: [1010, 540], to: [1330, 540], speed: 130, phase: 1 },
+      { w: 140, h: 26, from: [400, 780], to: [400, 520], speed: 100 },           // up...
+      { w: 140, h: 26, from: [715, 520], to: [715, 780], speed: 100 },           // ...down...
+      { w: 140, h: 26, from: [1015, 780], to: [1015, 420], speed: 110, phase: 0.5 }, // ...UP
     ],
-    powerups: [{ x: 870, y: 520 }],
+    powerups: [{ x: 570, y: 380 }],
     route: [
-      { move: 'mover', x: 420, y: 640, from: { x: 280, y: 659 }, halfw: 75 },
-      { move: 'ride', x: 720, y: 640 },
-      { move: 'drop', x: 870, y: 564 },
-      { move: 'mover', x: 1010, y: 540, from: { x: 910, y: 564 }, halfw: 75 },
-      { move: 'ride', x: 1330, y: 540 },
-      { move: 'standLatch', x: 1400, y: 498, from: { x: 1330, y: 506 } },
+      { move: 'mover', x: 400, y: 600, from: { x: 260, y: 579 }, halfw: 70 },
+      { move: 'ride', x: 400, y: 520 },
+      { move: 'standLatch', x: 500, y: 465, from: { x: 455, y: 486 } },
+      { move: 'drop', x: 715, y: 486 },
+      { move: 'ride', x: 715, y: 780 },
+      { move: 'walk', x: 870, y: 724 },
+      { move: 'mover', x: 1015, y: 780, from: { x: 920, y: 724 }, halfw: 70 },
+      { move: 'ride', x: 1015, y: 420 },
+      { move: 'standLatch', x: 1110, y: 400, from: { x: 1070, y: 386 } },
     ],
   },
   {
@@ -504,30 +510,6 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'COUNTERWEIGHT', diff: 'medium',
-    intro: 'Two ferries, opposite ways. Jump ship mid-crossing.',
-    w: 1600, h: 900, ...PAL.frost,
-    spawn: { x: 120, y: 620 },
-    goal: { x: 1500, y: 440, r: 44 },
-    solids: [
-      ...walls(1600, 900),
-      S(160, 700, 280, 40),                // start (top 680)
-      S(1460, 520, 240, 40),               // goal deck (top 500)
-      S(800, 885, 1560, 50, { deadly: true }),
-    ],
-    movers: [
-      { w: 150, h: 26, from: [400, 640], to: [900, 640], speed: 130 },
-      { w: 150, h: 26, from: [1200, 560], to: [700, 560], speed: 130, phase: 1 },
-    ],
-    route: [
-      { move: 'mover', x: 400, y: 640, from: { x: 280, y: 659 }, halfw: 75 },
-      { move: 'ride', x: 800, y: 640 },
-      { move: 'mover', x: 800, y: 560, from: { x: 800, y: 606 }, halfw: 75 },
-      { move: 'ride', x: 1200, y: 560 },
-      { move: 'drop', x: 1360, y: 479 },
-    ],
-  },
-  {
     name: 'BALLOON CHIMNEY', diff: 'medium',
     intro: 'Steer your balloon through the zigzag. Mind the spiky undersides.',
     w: 1000, h: 1400, ...PAL.candy,
@@ -576,6 +558,73 @@ export const LEVELS = [
       { move: 'swingCatch', x: 1330, y: 478, from: { x: 1190, y: 460 } },
     ],
   },
+  {
+    name: 'CRUMBLE BRIDGE', diff: 'medium',
+    intro: "Old stones crack under you. Don't stop moving!",
+    w: 1600, h: 900, ...PAL.desert,
+    spawn: { x: 140, y: 640 },
+    goal: { x: 1460, y: 580, r: 46 },
+    solids: [
+      ...walls(1600, 900),
+      S(170, 700, 300, 44),                // start (top 678)
+      S(385, 690, 110, 30, { crumble: 0.9 }),   // the crumbling bridge
+      S(495, 690, 110, 30, { crumble: 0.9 }),
+      S(605, 690, 110, 30, { crumble: 0.9 }),
+      S(715, 690, 110, 30, { crumble: 0.9 }),
+      S(860, 690, 140, 44),                // solid rest island (top 668)
+      S(1000, 560, 80, 26, { crumble: 1.3 }),  // crumbling monkey bars
+      S(1140, 560, 80, 26, { crumble: 1.3 }),
+      S(1280, 560, 80, 26, { crumble: 1.3 }),
+      S(1460, 660, 200, 44),               // goal deck (top 638)
+      S(840, 880, 1440, 40, { deadly: true }),
+    ],
+    texts: [{ x: 800, y: 300, text: 'KEEP MOVING — IT GROWS BACK' }],
+    route: [
+      { move: 'walk', x: 860, y: 647 },
+      { move: 'standLatch', x: 1000, y: 573, from: { x: 915, y: 647 } },
+      { move: 'hangReach', x: 1140, y: 573 },
+      { move: 'hangReach', x: 1280, y: 573 },
+      { move: 'swingCatch', x: 1390, y: 638, from: { x: 1300, y: 650 } },
+    ],
+  },
+  {
+    name: 'DOWN THE WELL', diff: 'medium',
+    intro: 'Climb DOWN. Hang, reach below you, then let go up top.',
+    w: 1000, h: 1400, ...PAL.cave,
+    spawn: { x: 120, y: 160 },
+    goal: { x: 690, y: 1245, r: 40 },
+    solids: [
+      S(20, 700, 40, 1400, { ice: true }),   // slick walls: no shimmying down
+      S(980, 700, 40, 1400, { ice: true }),
+      S(190, 220, 300, 36),                // start ledge (top 202)
+      S(410, 340, 80, 24),                 // bars stepping down-right
+      S(500, 470, 80, 24),
+      S(590, 600, 80, 24),
+      S(840, 700, 240, 30),                // rest ledge (top 685) + flag
+      S(650, 850, 80, 24),                 // bars stepping down-left
+      S(560, 980, 80, 24),
+      S(450, 1150, 80, 24),
+      S(560, 1205, 80, 24),                // low bar into the nook
+      S(650, 1110, 220, 30, { deadly: true }),   // spiked lid: no dropping in
+      S(650, 1310, 220, 40),               // goal nook under the lid (top 1290)
+      S(500, 1380, 920, 40, { deadly: true }),   // spiky well floor
+    ],
+    checkpoints: [{ x: 860, y: 664 }],
+    texts: [{ x: 640, y: 150, text: 'REACH DOWN • GRAB • LET GO ABOVE' }],
+    route: [
+      { move: 'hangDown', x: 340, y: 202 },
+      { move: 'hangDown', x: 410, y: 340 },
+      { move: 'hangDown', x: 500, y: 470 },
+      { move: 'hangDown', x: 590, y: 600 },
+      { move: 'swingCatch', x: 720, y: 685, from: { x: 600, y: 690 } },
+      { move: 'hangDown', x: 720, y: 700 },
+      { move: 'hangDown', x: 650, y: 850 },
+      { move: 'hangDown', x: 560, y: 980 },
+      { move: 'hangDown', x: 450, y: 1150 },
+      { move: 'hangReach', x: 560, y: 1217 },
+      { move: 'walk', x: 690, y: 1269 },
+    ],
+  },
 
   // ══════════════════════════════ HARD ══════════════════════════════
   {
@@ -601,6 +650,7 @@ export const LEVELS = [
     ],
     spinners: [{ x: 1620, y: 440, len: 280, speed: 2.1 }],
     powerups: [{ x: 800, y: 560 }, { x: 1330, y: 400 }],
+    checkpoints: [{ x: 1060, y: 603 }],
     route: [
       { move: 'climb', x: 360, y: 619 },
       { move: 'ropeCatch', x: 500, y: 600, from: { x: 420, y: 619 } },
@@ -664,6 +714,7 @@ export const LEVELS = [
       { x: 1560, y: 120, len: 520 },
     ],
     powerups: [{ x: 760, y: 600 }],
+    checkpoints: [{ x: 760, y: 659 }],
     route: [
       { move: 'ropeCatch', x: 400, y: 740, from: { x: 310, y: 754 } },
       { move: 'swingCatch', x: 700, y: 680, from: { x: 480, y: 700 } },
@@ -701,7 +752,7 @@ export const LEVELS = [
   },
   {
     name: 'BALLOON STORM', diff: 'hard',
-    intro: 'A tall shaft of spiky outcrops. Precision ballooning.',
+    intro: 'Storm gusts shove you at the spikes. Wait out the gusts on the ledges!',
     w: 1000, h: 1500, ...PAL.sky,
     spawn: { x: 500, y: 1400 },
     goal: { x: 500, y: 140, r: 46 },
@@ -718,6 +769,14 @@ export const LEVELS = [
       S(500, 220, 280, 40),                // goal shelf (top 200)
     ],
     balloons: [{ x: 300, y: 1330 }, { x: 600, y: 1330 }, { x: 850, y: 1330 }],
+    // storm gusts come in pulses (they flicker just before they blow) and
+    // push toward the outcrop above — shelter on the rest ledges and go in
+    // the lulls
+    winds: [
+      { x: 500, y: 1040, w: 920, h: 170, fx: 0.26, fy: 0, period: 4.5, on: 1.6 },
+      { x: 500, y: 785, w: 920, h: 170, fx: -0.26, fy: 0, period: 4.5, on: 1.6, phase: 1.5 },
+      { x: 500, y: 535, w: 920, h: 170, fx: 0.26, fy: 0, period: 4.5, on: 1.6, phase: 3 },
+    ],
     route: [
       { move: 'balloonCatch', x: 600, y: 1330, from: { x: 600, y: 1419 } },
       { move: 'ride', x: 750, y: 1150 },
@@ -728,62 +787,27 @@ export const LEVELS = [
     ],
   },
   {
-    name: 'FERRY CHAOS', diff: 'hard',
-    intro: 'Fast ferries, tiny islands, lots of lava.',
-    w: 1600, h: 900, ...PAL.volcano,
+    name: 'COUNTERWEIGHT', diff: 'hard',
+    intro: 'Two quick ferries, opposite ways. Jump ship mid-crossing!',
+    w: 1600, h: 900, ...PAL.frost,
     spawn: { x: 120, y: 620 },
-    goal: { x: 1510, y: 350, r: 44 },
+    goal: { x: 1500, y: 440, r: 44 },
     solids: [
       ...walls(1600, 900),
-      S(150, 680, 260, 44),                // start (top 658)
-      S(880, 560, 100, 30),                // island (top 545)
-      S(1480, 440, 180, 40),               // goal deck (top 420)
+      S(160, 700, 280, 40),                // start (top 680)
+      S(1460, 520, 240, 40),               // goal deck (top 500)
       S(800, 885, 1560, 50, { deadly: true }),
     ],
     movers: [
-      { w: 130, h: 26, from: [400, 620], to: [760, 620], speed: 170 },
-      { w: 130, h: 26, from: [1000, 500], to: [1360, 500], speed: 190, phase: 0.7 },
+      { w: 135, h: 26, from: [400, 640], to: [900, 640], speed: 150 },
+      { w: 135, h: 26, from: [1200, 560], to: [700, 560], speed: 150, phase: 1 },
     ],
     route: [
-      { move: 'mover', x: 400, y: 620, from: { x: 270, y: 637 }, halfw: 65 },
-      { move: 'ride', x: 760, y: 620 },
-      { move: 'drop', x: 880, y: 524 },
-      { move: 'mover', x: 1000, y: 500, from: { x: 900, y: 524 }, halfw: 65 },
-      { move: 'ride', x: 1360, y: 500 },
-      { move: 'drop', x: 1440, y: 399 },
-    ],
-  },
-  {
-    name: 'THE SHIMMY', diff: 'hard',
-    intro: 'A long, long ceiling traverse. One tiny island of mercy.',
-    w: 1600, h: 900, ...PAL.cave,
-    spawn: { x: 100, y: 620 },
-    goal: { x: 1500, y: 620, r: 44 },
-    solids: [
-      ...walls(1600, 900),
-      S(120, 700, 200, 44),                // start (top 678)
-      S(300, 560, 120, 30),                // launch (top 545)
-      S(420, 430, 80, 26),                 // ceiling blocks, 145 spacing
-      S(565, 430, 80, 26),
-      S(710, 430, 80, 26),
-      S(855, 430, 80, 26),
-      S(1000, 430, 80, 26),
-      S(1145, 430, 80, 26),
-      S(1290, 430, 80, 26),
-      S(870, 760, 90, 26),                 // mercy island (top 747)
-      S(1480, 700, 200, 44),               // end (top 678)
-      S(900, 880, 1360, 40, { deadly: true }),
-    ],
-    route: [
-      { move: 'standLatch', x: 245, y: 575, from: { x: 210, y: 657 } },
-      { move: 'standLatch', x: 420, y: 443, from: { x: 350, y: 524 } },
-      { move: 'hangReach', x: 565, y: 443 },
-      { move: 'hangReach', x: 710, y: 443 },
-      { move: 'hangReach', x: 855, y: 443 },
-      { move: 'hangReach', x: 1000, y: 443 },
-      { move: 'hangReach', x: 1145, y: 443 },
-      { move: 'hangReach', x: 1290, y: 443 },
-      { move: 'swingCatch', x: 1440, y: 678, from: { x: 1320, y: 530 } },
+      { move: 'mover', x: 400, y: 640, from: { x: 280, y: 659 }, halfw: 67 },
+      { move: 'ride', x: 800, y: 640 },
+      { move: 'mover', x: 800, y: 560, from: { x: 800, y: 606 }, halfw: 67 },
+      { move: 'ride', x: 1200, y: 560 },
+      { move: 'drop', x: 1360, y: 479 },
     ],
   },
   {
@@ -795,8 +819,8 @@ export const LEVELS = [
     solids: [
       ...walls(900, 1400),
       S(450, 1370, 900, 60),               // floor (top 1340)
-      S(70, 700, 60, 1150, { deadly: true }),   // razor walls
-      S(830, 700, 60, 1150, { deadly: true }),
+      S(70, 700, 60, 1150, { deadly: true, spikeDir: 'right' }),   // razor walls
+      S(830, 700, 60, 1150, { deadly: true, spikeDir: 'left' }),
       S(450, 240, 240, 40),                // goal shelf (top 220)
     ],
     spinners: [
@@ -840,6 +864,44 @@ export const LEVELS = [
     ],
   },
   {
+    name: 'UPDRAFT', diff: 'hard',
+    intro: 'Ride the vents up, let the tailwind carry you over. Spiky caps up top!',
+    w: 1600, h: 1000, ...PAL.storm,
+    spawn: { x: 140, y: 760 },
+    goal: { x: 1490, y: 290, r: 44 },
+    solids: [
+      ...walls(1600, 1000),
+      S(160, 840, 280, 40),                // start (top 820)
+      S(390, 120, 220, 40, { deadly: true, spikeDir: 'down' }),  // vent 1 cap
+      S(500, 330, 80, 24),                 // exit bars beside vent 1
+      S(640, 330, 80, 24),
+      S(780, 330, 80, 24),
+      S(1320, 110, 240, 40, { deadly: true, spikeDir: 'down' }), // vent 2 cap
+      S(1440, 680, 40, 600, { ice: true }),   // slick backstop beside vent 2
+      S(1490, 362, 180, 30),               // goal shelf on top (top 347)
+      S(800, 980, 1520, 40, { deadly: true }),
+    ],
+    winds: [
+      { x: 390, y: 595, w: 160, h: 750, fx: 0, fy: -1.3 },      // vent 1
+      { x: 1040, y: 380, w: 360, h: 300, fx: 0.35, fy: -0.35 }, // tailwind
+      { x: 1320, y: 600, w: 200, h: 740, fx: 0, fy: -1.3 },     // vent 2
+      // gentle sideways nudges at the top of each vent: nobody hovers
+      // forever — they drift out toward the next handhold
+      { x: 420, y: 280, w: 220, h: 120, fx: 0.3, fy: 0 },
+      { x: 1360, y: 280, w: 160, h: 120, fx: 0.35, fy: 0 },
+    ],
+    texts: [{ x: 1000, y: 200, text: 'THE WIND CARRIES YOU ACROSS' }],
+    route: [
+      { move: 'vent', x: 390, y: 330 },
+      { move: 'hangReach', x: 500, y: 342 },
+      { move: 'hangReach', x: 640, y: 342 },
+      { move: 'hangReach', x: 780, y: 342 },
+      { move: 'windFling', x: 1320, y: 420, from: { x: 810, y: 420 } },
+      { move: 'vent', x: 1398, y: 400 },
+      { move: 'standLatch', x: 1400, y: 377, from: { x: 1398, y: 400 } },
+    ],
+  },
+  {
     name: 'SUMMIT', diff: 'hard',
     intro: 'Climb, swing, spin, sail. The whole mountain in one board.',
     w: 2000, h: 1200, ...PAL.frost,
@@ -859,6 +921,7 @@ export const LEVELS = [
     spinners: [{ x: 1300, y: 500, len: 280, speed: 2.0 }],
     movers: [{ w: 140, h: 26, from: [1550, 800], to: [1850, 800], speed: 150 }],
     powerups: [{ x: 900, y: 720 }, { x: 1550, y: 650 }],
+    checkpoints: [{ x: 620, y: 539 }],
     route: [
       { move: 'standLatch', x: 365, y: 900, from: { x: 280, y: 954 } },
       { move: 'standLatch', x: 555, y: 800, from: { x: 470, y: 839 } },

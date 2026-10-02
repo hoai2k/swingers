@@ -3,12 +3,27 @@
 // A level definition (see levels.js) is plain data:
 //   { name, intro, w, h, bg:[top,bottom], plat, accent, hazard?,
 //     spawn:{x,y}, goal:{x,y,r},
-//     solids:  [{x,y,w,h, angle?, deadly?, spikeDir?, grab?, color?}]  (x,y = center)
+//     solids:  [{x,y,w,h, angle?, deadly?, spikeDir?, grab?, color?,
+//                ice?, bounce?, crumble?}]  (x,y = center)
+//                ice:     slick AND ungrabbable — hands slide off, bodies skid
+//                bounce:  trampoline; launches a landing body along the
+//                         pad's normal at this speed (px/tick, ~12-22)
+//                crumble: cracks when touched or gripped, falls away after
+//                         a beat (true = 0.85s, or a number of seconds),
+//                         grows back a few seconds later
 //     ropes:   [{x,y,len}]
 //     balloons:[{x,y}]
 //     movers:  [{w,h, from:[x,y], to:[x,y], speed, phase?}]
 //     spinners:[{x,y,len,thick?,speed,phase?}]
 //     powerups:[{x,y}]
+//     winds:   [{x,y,w,h, fx,fy, period?,on?,phase?}]
+//                                   gust zones (x,y = center); fx/fy are the
+//                                   push in robot body-weights (fy -1.3 = an
+//                                   updraft that lifts a robot). With a
+//                                   period the gust blows for `on` seconds
+//                                   of every `period` (streaks flicker as a
+//                                   warning just before it starts)
+//     checkpoints:[{x,y}]           touch the flag and you respawn there
 //     texts:   [{x,y,text,size?}] }
 // Everything solid is grabbable unless deadly or grab:false.
 
@@ -25,6 +40,9 @@ const BALLOON_COLORS = ['#ff8fb3', '#8fd0ff', '#fff09e', '#b9f0b0'];
 const REF_PLAYER_MASS = 3.5;
 const POWERUP_RESPAWN = 9;
 const BALLOON_RESPAWN = 3.5;
+const CRUMBLE_DELAY = 0.85;   // seconds of cracking before a block falls
+const CRUMBLE_REGROW = 3.2;   // seconds until it grows back
+const BOUNCE_COOLDOWN = 0.3;
 
 export class Level {
   constructor(def, engine) {
@@ -43,6 +61,12 @@ export class Level {
     this.movers = [];      // {body,w,h,from,to,speed,u}
     this.spinners = [];    // {body,len,thick,speed,angle}
     this.powerups = [];    // {x,y,active,respawnAt}
+    this.bouncers = [];    // solid recs with .bounce
+    this.bounceCd = new Map();   // player -> time their next bounce may fire
+    this.crumbles = [];    // solid recs with .crumble state
+    this.winds = (def.winds || []).map((w) => ({ ...w }));
+    this.checkpoints = (def.checkpoints || []).map((c) => ({ x: c.x, y: c.y, color: null, raise: 0 }));
+    this.debris = [];      // falling crumble chunks (visual only)
 
     for (const s of def.solids || []) this.addSolid(s);
     for (const r of def.ropes || []) this.addRope(r);
@@ -65,18 +89,29 @@ export class Level {
 
   addSolid(s) {
     const deadly = !!s.deadly;
+    const ice = !deadly && !!s.ice;
+    const bounce = !deadly && s.bounce ? s.bounce : 0;
     const body = M.Bodies.rectangle(s.x, s.y, s.w, s.h, {
       isStatic: true,
       angle: s.angle || 0,
-      friction: 0.9,
+      friction: ice ? 0.015 : 0.9,
+      frictionStatic: ice ? 0.02 : 0.5,
       restitution: 0,
       collisionFilter: { category: CAT.SOLID, mask: 0xffff },
-      plugin: { hh: { type: deadly ? 'deadly' : 'solid', grab: !deadly && s.grab !== false } },
+      plugin: { hh: { type: deadly ? 'deadly' : 'solid', grab: !deadly && !ice && !bounce && s.grab !== false } },
     });
     M.Composite.add(this.engine.world, body);
-    const rec = { body, w: s.w, h: s.h, deadly, spikeDir: s.spikeDir || 'up', color: s.color, slick: !deadly && s.grab === false };
+    const rec = {
+      body, w: s.w, h: s.h, deadly, spikeDir: s.spikeDir || 'up', color: s.color,
+      slick: !deadly && !bounce && (ice || s.grab === false), ice, bounce,
+    };
     this.solids.push(rec);
     if (deadly) this.deadlyBodies.push(body);
+    if (bounce) { rec.squash = 0; this.bouncers.push(rec); }
+    if (!deadly && s.crumble) {
+      rec.crumble = { state: 'solid', t: 0, delay: typeof s.crumble === 'number' ? s.crumble : CRUMBLE_DELAY };
+      this.crumbles.push(rec);
+    }
   }
 
   addRope(r) {
@@ -216,6 +251,161 @@ export class Level {
     for (const p of this.powerups) {
       if (!p.active && this.time >= p.respawnAt) p.active = true;
     }
+
+    const alive = players.filter((p) => p.state === 'alive');
+    this.updateBouncers(dt, particles, alive);
+    this.updateCrumbles(dt, particles, alive);
+    this.updateWinds(alive);
+    this.updateCheckpoints(particles, alive);
+    for (const d of this.debris) {
+      d.vy += 1600 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.spin * dt; d.life -= dt;
+    }
+    this.debris = this.debris.filter((d) => d.life > 0);
+  }
+
+  // Trampolines: a body that lands on the pad's face is relaunched along the
+  // pad's normal at its fixed speed (velocity along the face is kept, so a
+  // running landing becomes a long arc). Deterministic on purpose — the same
+  // bounce every time is what lets boards be designed around it.
+  updateBouncers(dt, particles, players) {
+    for (const r of this.bouncers) {
+      r.squash = Math.max(0, r.squash - dt * 5);
+      const b = r.body;
+      const n = { x: Math.sin(b.angle), y: -Math.cos(b.angle) };
+      for (const p of players) {
+        if ((this.bounceCd.get(p) || 0) > this.time) continue;
+        const pb = p.body;
+        const rel = { x: pb.position.x - b.position.x, y: pb.position.y - b.position.y };
+        const along = rel.x * n.y * -1 + rel.y * n.x;   // offset along the face
+        const out = rel.x * n.x + rel.y * n.y;          // height above the center
+        if (Math.abs(along) > r.w / 2 + 6) continue;
+        if (out < r.h / 2 || out > r.h / 2 + 21 + 4) continue;   // touching the face
+        const vn = pb.velocity.x * n.x + pb.velocity.y * n.y;
+        if (vn > r.bounce * 0.5) continue;              // already flying off
+        const v = {
+          x: pb.velocity.x - vn * n.x + r.bounce * n.x,
+          y: pb.velocity.y - vn * n.y + r.bounce * n.y,
+        };
+        p.releaseAll();
+        // kick the whole rig (arms too) — launching only the body would
+        // share its momentum with the dangling arms and fizzle
+        const dv = { x: v.x - pb.velocity.x, y: v.y - pb.velocity.y };
+        for (const rb of p.rigBodies) {
+          M.Body.setVelocity(rb, { x: rb.velocity.x + dv.x, y: rb.velocity.y + dv.y });
+        }
+        this.bounceCd.set(p, this.time + BOUNCE_COOLDOWN);
+        r.squash = 1;
+        if (particles) particles.ring(pb.position.x, pb.position.y + 14, 30, this.def.accent, 0.3);
+        sfx.boing();
+      }
+    }
+  }
+
+  // Crumbling blocks: touched (stood on, gripped) -> crack -> fall away ->
+  // grow back. Hands on a vanished block let go on their own (player.js
+  // releases grips on bodies flagged removed).
+  updateCrumbles(dt, particles, players) {
+    for (const r of this.crumbles) {
+      const c = r.crumble, b = r.body;
+      if (c.state === 'solid') {
+        if (this.touchedBy(r, players)) { c.state = 'cracking'; c.t = c.delay; sfx.crack(); }
+      } else if (c.state === 'cracking') {
+        c.t -= dt;
+        if (c.t <= 0) {
+          c.state = 'gone'; c.t = CRUMBLE_REGROW;
+          b.plugin.hh.removed = true;
+          M.Composite.remove(this.engine.world, b);
+          for (let i = 0; i < 6; i++) {
+            this.debris.push({
+              x: b.position.x + (hash01(i, this.time * 7) - 0.5) * r.w,
+              y: b.position.y + (hash01(i, this.time * 3 + 1) - 0.5) * r.h,
+              w: r.w / 4, h: r.h * 0.7, vx: (hash01(i, 9) - 0.5) * 120, vy: -60,
+              rot: 0, spin: (hash01(i, 4) - 0.5) * 6, life: 1.2,
+            });
+          }
+          if (particles) particles.dust(b.position.x, b.position.y, 10);
+          sfx.crumble();
+        }
+      } else if (c.state === 'gone') {
+        c.t -= dt;
+        // don't grow back inside someone
+        if (c.t <= 0 && !players.some((p) => this.overlapsRec(r, p.body, 4))) {
+          c.state = 'solid';
+          b.plugin.hh.removed = false;
+          M.Composite.add(this.engine.world, b);
+        }
+      }
+    }
+  }
+
+  overlapsRec(r, body, pad) {
+    const b = r.body.bounds, o = body.bounds;
+    return o.max.x > b.min.x - pad && o.min.x < b.max.x + pad &&
+      o.max.y > b.min.y - pad && o.min.y < b.max.y + pad;
+  }
+
+  touchedBy(r, players) {
+    for (const p of players) {
+      if (this.overlapsRec(r, p.body, 3)) return true;
+      for (const a of p.arms) if (a.grab && a.grab.body === r.body) return true;
+    }
+    return false;
+  }
+
+  // Gust zones push robots (and loose balloons) — forces are in body
+  // weights of a whole robot rig so a zone reads the same on any board.
+  updateWinds(players) {
+    if (!this.winds.length) return;
+    const g = this.engine.gravity;
+    const W = REF_PLAYER_MASS * g.y * g.scale;
+    const inside = (w, pt) => Math.abs(pt.x - w.x) < w.w / 2 && Math.abs(pt.y - w.y) < w.h / 2;
+    for (const w of this.winds) {
+      const k0 = this.windStrength(w);
+      if (k0 <= 0) continue;
+      for (const p of players) {
+        if (inside(w, p.body.position)) M.Body.applyForce(p.body, p.body.position, { x: w.fx * W * k0, y: w.fy * W * k0 });
+      }
+      for (const bl of this.balloons) {
+        const b = bl.body;
+        if (!b || !inside(w, b.position)) continue;
+        const held = players.some((p) => p.arms.some((a) => a.grab && a.grab.body === b));
+        if (held) continue;   // the rider already feels the gust
+        const k = b.mass * g.y * g.scale * 1.5 * k0;
+        M.Body.applyForce(b, b.position, { x: w.fx * k, y: w.fy * k });
+      }
+    }
+  }
+
+  // 0..1 gust strength right now (always 1 for a steady zone)
+  windStrength(w) {
+    if (!w.period) return 1;
+    const t = (this.time + (w.phase || 0)) % w.period;
+    const on = w.on || w.period / 2, ramp = 0.35;
+    if (t > on) return 0;
+    return Math.min(1, t / ramp, (on - t) / ramp);
+  }
+
+  // seconds until a pulsing gust starts (Infinity if it's steady/blowing)
+  windWarning(w) {
+    if (!w.period) return Infinity;
+    const t = (this.time + (w.phase || 0)) % w.period;
+    const on = w.on || w.period / 2;
+    return t > on ? w.period - t : Infinity;
+  }
+
+  updateCheckpoints(particles, players) {
+    for (const c of this.checkpoints) {
+      c.raise = Math.min(1, c.raise + (c.color ? 0.04 : 0));
+      for (const p of players) {
+        const d = Math.hypot(p.body.position.x - c.x, p.body.position.y - c.y);
+        if (d > 52) continue;
+        if (p.spawnPoint.x === c.x && p.spawnPoint.y === c.y) continue;
+        p.spawnPoint = { x: c.x, y: c.y };
+        if (c.color !== p.color.main) { c.color = p.color.main; c.raise = 0; }
+        if (particles) particles.burst(c.x, c.y - 40, p.color.main, 10, 160);
+        sfx.checkpoint();
+      }
+    }
   }
 
   // ----------------------------------------------------------------- drawing
@@ -246,6 +436,8 @@ export class Level {
       ctx.fillText(t.text, t.x, t.y);
     }
 
+    for (const w of this.winds) this.drawWind(ctx, w);
+    for (const c of this.checkpoints) this.drawCheckpoint(ctx, c);
     if (this.goal) this.drawGoal(ctx);
 
     // ropes
@@ -270,7 +462,17 @@ export class Level {
     // solids
     for (const s of this.solids) {
       if (s.deadly) this.drawDeadly(ctx, s);
+      else if (s.bounce) this.drawBouncer(ctx, s);
+      else if (s.crumble) this.drawCrumble(ctx, s);
       else this.drawPlatform(ctx, s.body, s.w, s.h, s.color || this.def.plat, null, s.slick);
+    }
+    for (const d of this.debris) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, d.life * 2);
+      ctx.translate(d.x, d.y); ctx.rotate(d.rot);
+      ctx.fillStyle = this.def.plat;
+      ctx.fillRect(-d.w / 2, -d.h / 2, d.w, d.h);
+      ctx.restore();
     }
 
     // movers
@@ -383,6 +585,8 @@ export class Level {
         ctx.stroke();
       }
       ctx.restore();
+      // the sheen loop replaced the current path — rebuild the outline
+      roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
     }
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = 3;
@@ -405,6 +609,153 @@ export class Level {
       ctx.fill();
     }
     ctx.restore();
+  }
+
+  drawBouncer(ctx, s) {
+    const b = s.body;
+    const sq = s.squash * s.squash;
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    // base block
+    roundRectPath(ctx, -s.w / 2, -s.h / 2 + 6, s.w, s.h - 6, 6);
+    ctx.fillStyle = '#2b2f3c';
+    ctx.fill();
+    // springs
+    ctx.strokeStyle = '#b8c0d4';
+    ctx.lineWidth = 3;
+    const top = -s.h / 2 + 6 - (1 - sq) * 6;
+    for (const fx of [-0.3, 0.3]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 6; i++) {
+        const y = lerp(top, -s.h / 2 + 8, i / 6);
+        ctx.lineTo(fx * s.w + (i % 2 ? 6 : -6), y);
+      }
+      ctx.stroke();
+    }
+    // the springy pad
+    roundRectPath(ctx, -s.w / 2 - 2, top - 9, s.w + 4, 11, 5);
+    ctx.fillStyle = this.def.accent;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // up-chevrons
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 3;
+    const bob = (this.time * 1.5) % 1;
+    ctx.globalAlpha = 1 - bob;
+    for (const k of [0, 1]) {
+      const y = top - 22 - bob * 14 - k * 10;
+      ctx.beginPath(); ctx.moveTo(-9, y + 6); ctx.lineTo(0, y); ctx.lineTo(9, y + 6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawCrumble(ctx, s) {
+    const c = s.crumble, b = s.body;
+    if (c.state === 'gone') {
+      // ghost outline that fills in as it regrows
+      ctx.save();
+      ctx.translate(b.position.x, b.position.y);
+      ctx.rotate(b.angle);
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-s.w / 2, -s.h / 2, s.w, s.h);
+      ctx.setLineDash([]);
+      const f = 1 - Math.max(0, c.t) / CRUMBLE_REGROW;
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(-s.w / 2, s.h / 2 - s.h * f, s.w, s.h * f);
+      ctx.restore();
+      return;
+    }
+    const shake = c.state === 'cracking' ? (1 - c.t / c.delay) * 3 : 0;
+    ctx.save();
+    ctx.translate(
+      b.position.x + (shake ? Math.sin(this.time * 60) * shake : 0),
+      b.position.y + (shake ? Math.cos(this.time * 47) * shake * 0.5 : 0),
+    );
+    ctx.rotate(b.angle);
+    // chunky bricks
+    const n = Math.max(2, Math.round(s.w / 34));
+    const bw = s.w / n;
+    for (let i = 0; i < n; i++) {
+      roundRectPath(ctx, -s.w / 2 + i * bw + 1, -s.h / 2, bw - 2, s.h, 4);
+      ctx.fillStyle = s.color || this.def.plat;
+      ctx.fill();
+      ctx.fillStyle = `rgba(0,0,0,${0.12 + hash01(i, s.w) * 0.12})`;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // cracks grow as it gives way
+    const k = c.state === 'cracking' ? 1 - c.t / c.delay : 0.25;
+    ctx.strokeStyle = `rgba(255,255,255,${0.25 + k * 0.5})`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < n; i++) {
+      const x0 = -s.w / 2 + (i + 0.5) * bw;
+      ctx.beginPath();
+      ctx.moveTo(x0, -s.h / 2);
+      ctx.lineTo(x0 + (hash01(i, 2) - 0.5) * bw * 0.6, -s.h / 2 + s.h * 0.5 * k + 2);
+      ctx.lineTo(x0 + (hash01(i, 5) - 0.5) * bw * 0.8, -s.h / 2 + s.h * k);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawWind(ctx, w) {
+    const x0 = w.x - w.w / 2, y0 = w.y - w.h / 2;
+    const m = Math.hypot(w.fx, w.fy) || 1;
+    const dx = w.fx / m, dy = w.fy / m;
+    const k = this.windStrength(w);
+    const warn = this.windWarning(w);
+    // calm: a faint outline; a gust about to start flickers as a warning
+    let alpha = 0.18 + k * 0.82;
+    if (warn < 0.9) alpha = Math.max(alpha, Math.floor(this.time * 10) % 2 ? 0.55 : 0.2);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.rect(x0, y0, w.w, w.h); ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(x0, y0, w.w, w.h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.32)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    const speed = 260 * Math.min(1.6, m);
+    const wrap = (v, n) => ((v % n) + n) % n;
+    const count = Math.round((w.w * w.h) / 9000) + 4;
+    for (let i = 0; i < count; i++) {
+      // streaks drift along the wind, wrapping around inside the zone
+      const sp = speed * (0.7 + hash01(i, 12) * 0.6);
+      const px = x0 + wrap(hash01(i, 11) * w.w + this.time * sp * dx, w.w + 60) - 30;
+      const py = y0 + wrap(hash01(i, 13) * w.h + this.time * sp * dy, w.h + 60) - 30;
+      const len = 26 + hash01(i, 14) * 30;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px - dx * len, py - dy * len);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawCheckpoint(ctx, c) {
+    const baseY = c.y + 21;            // checkpoints are placed at standing height
+    ctx.strokeStyle = '#d8dce8';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(c.x, baseY); ctx.lineTo(c.x, baseY - 64); ctx.stroke();
+    ctx.fillStyle = '#d8dce8';
+    ctx.beginPath(); ctx.arc(c.x, baseY - 64, 3.5, 0, TAU); ctx.fill();
+    const top = c.color ? baseY - 62 : baseY - 30;
+    const y = lerp(baseY - 30, top, c.color ? c.raise : 0);
+    const wave = Math.sin(this.time * 5 + c.x) * 3;
+    ctx.fillStyle = c.color || 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.moveTo(c.x, y);
+    ctx.lineTo(c.x + 26, y + 7 + wave);
+    ctx.lineTo(c.x, y + 16);
+    ctx.closePath();
+    ctx.fill();
   }
 
   drawDeadly(ctx, s) {
@@ -432,6 +783,20 @@ export class Level {
       }
       // glowing strip
       ctx.fillRect(-s.w / 2, edge - (sign > 0 ? 0 : 4), s.w, 4);
+    } else {
+      // 'left' / 'right': teeth along a vertical edge (razor walls)
+      const sign = s.spikeDir === 'left' ? -1 : 1;
+      const edge = (s.w / 2) * sign;
+      for (let y = -s.h / 2; y < s.h / 2 - 1; y += step) {
+        const h = Math.min(step, s.h / 2 - y);
+        ctx.beginPath();
+        ctx.moveTo(edge, y);
+        ctx.lineTo(edge + sign * spikeH, y + h / 2);
+        ctx.lineTo(edge, y + h);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillRect(edge - (sign > 0 ? 4 : 0), -s.h / 2, 4, s.h);
     }
     ctx.restore();
   }
