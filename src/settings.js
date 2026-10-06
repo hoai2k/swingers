@@ -9,6 +9,7 @@ const DEFAULTS = {
   music: true,
   sfx: true,
   originalSwingers: false,  // add the 8 original robot heads to the picker
+  powerups: 'normal',       // 'off' | 'normal' | 'frequent'
 };
 
 function load() {

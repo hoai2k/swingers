@@ -25,6 +25,12 @@
   `bodyScale`/`bodyOffset`/`bodyRotation` overrides); re-run the import
   instead. Rounders characters face left/right with the stick and stay
   upright; original Swingers heads roll with the ball.
+- Guns (`src/guns.js`): grabbed with a trigger, fired with that hand's
+  bumper, and locked to the forearm at the angle they were grabbed (wobbly
+  aiming is intended). Recoil must never break the shooter's grip; a hit
+  breaks the victim's grips and knocks them back but doesn't kill.
+- Power-ups (`src/powerups.js`) spawn at random; the rate is a setting
+  (off / normal / frequent).
 - Settings (`src/settings.js`, localStorage) — Original Swingers defaults
   OFF. Sound must stay muted while the tab is hidden/unfocused.
 - Image asset requests for the owner live in `image-requests.md`. Generated

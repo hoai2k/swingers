@@ -14,9 +14,11 @@ import { settings, setSetting, onSettingsChange } from './settings.js';
 import { Level } from './level.js';
 import { LEVELS, PRACTICE } from './levels.js';
 import { Particles } from './particles.js';
+import { Shots } from './guns.js';
+import { POWERS } from './powerups.js';
 import { sfx } from './audio.js';
 import { art } from './art.js';
-import { clamp, lerp, TAU, roundRectPath } from './util.js';
+import { clamp, lerp, TAU, roundRectPath, FONT } from './util.js';
 
 const M = window.Matter;
 
@@ -25,7 +27,9 @@ const DIFFS = [
   { key: 'easy', label: 'EASY', color: '#5fe08b' },
   { key: 'medium', label: 'MEDIUM', color: '#ffd94d' },
   { key: 'hard', label: 'HARD', color: '#ff5d6c' },
+  { key: 'blasters', label: 'BLASTERS', color: '#ff8a3d' },
 ];
+const CARD_COLS = 5;
 
 // Which board-select icons a board gets (one per mechanic it uses).
 function mechanicsOf(lv) {
@@ -39,6 +43,7 @@ function mechanicsOf(lv) {
   if (so.some((s) => s.ice)) out.push('ice');
   if (so.some((s) => s.crumble)) out.push('crumble');
   if ((lv.winds || []).length) out.push('wind');
+  if ((lv.guns || []).length) out.push('gun');
   return out;
 }
 
@@ -55,6 +60,7 @@ export class Game {
     this.level = null;
     this.levelIndex = 0;
     this.particles = new Particles();
+    this.shots = new Shots();
     this.LEVELS = LEVELS;
 
     this.time = 0;
@@ -86,6 +92,7 @@ export class Game {
     onSettingsChange((key) => {
       if (key === 'sound' || key === 'music' || key === 'sfx') this.applySound();
       if (key === 'originalSwingers') this.refreshRoster();
+      if (key === 'powerups' && this.level) this.level.power.setRate(settings.powerups);
     });
     const focusChanged = () => {
       const away = document.hidden || !document.hasFocus();
@@ -126,7 +133,8 @@ export class Game {
       if (this.state === 'select') {
         for (const r of this.selRects) {
           if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-            this.chooseLevel(r.index);
+            if (r.tab !== undefined) { this.sel = { col: r.tab, row: 0 }; sfx.uiTick(); }
+            else this.chooseLevel(r.index);
             return;
           }
         }
@@ -163,7 +171,9 @@ export class Game {
     });
     this.engine.gravity.y = 1.18;
     this.level = new Level(PRACTICE, this.engine);
+    this.level.power.setRate(settings.powerups);
     this.particles.clear();
+    this.shots.clear();
     this.shake = 0;
     // respawn any already-joined players into the playground
     this.players.forEach((p, i) => {
@@ -200,8 +210,10 @@ export class Game {
     this.engine.gravity.y = 1.18;   // punchy Heave Ho pace; muscle forces are
                                     // specified in body-weights so they scale
     this.level = new Level(LEVELS[this.levelIndex], this.engine);
+    this.level.power.setRate(settings.powerups);
     this.music.race(this.level.def.theme);
     this.particles.clear();
+    this.shots.clear();
     const s = this.level.spawn;
     this.players.forEach((p, i) => {
       p.spawn(this.engine, s.x + (i - (this.players.length - 1) / 2) * 46, s.y);
@@ -330,6 +342,7 @@ export class Game {
       ['sound', 'SOUND', 'everything on / off (M, or the speaker button)'],
       ['music', 'MUSIC', 'the Rounders soundtrack'],
       ['sfx', 'SOUND EFFECTS', 'grabs, punches, boings'],
+      ['powerups', 'POWER-UPS', 'random pickups around the board', ['off', 'normal', 'frequent']],
       ['originalSwingers', 'ORIGINAL SWINGERS', 'add the 8 original robot heads to the character picker'],
     ];
   }
@@ -343,7 +356,12 @@ export class Game {
 
   activateSetting(key) {
     if (key === 'close') { this.toggleSettings(); return; }
-    setSetting(key, !settings[key]);
+    const row = this.settingRows().find((r) => r[0] === key);
+    if (row && row[3]) {
+      // a choice: step to the next option
+      const opts = row[3];
+      setSetting(key, opts[(opts.indexOf(settings[key]) + 1) % opts.length]);
+    } else setSetting(key, !settings[key]);
     sfx.uiTick();
   }
 
@@ -535,10 +553,19 @@ export class Game {
     this.physicsStep(dt);
   }
 
+  // Board select: a tab per difficulty (LB / RB, or click), a grid of board
+  // cards inside it (stick / dpad).
   selectStep(states) {
-    const rows = () => this.grid[this.sel.col].length;
+    const count = () => this.grid[this.sel.col].length;
     for (const s of states) {
       if (!this.isJoined(s.id)) continue;
+      if (s.pressed.lbd || s.pressed.rbd) {
+        const n = DIFFS.length;
+        this.sel.col = (this.sel.col + (s.pressed.rbd ? 1 : n - 1)) % n;
+        this.sel.row = Math.min(this.sel.row, count() - 1);
+        sfx.uiTick();
+        continue;
+      }
       let mx = 0, my = 0;
       if (s.pressed.dl) mx = -1;
       else if (s.pressed.dr) mx = 1;
@@ -553,9 +580,14 @@ export class Game {
       }
       if (mx || my) {
         this.selMoveAt = this.time;
-        this.sel.col = (this.sel.col + mx + 3) % 3;
-        this.sel.row = clamp(this.sel.row, 0, rows() - 1);
-        this.sel.row = (this.sel.row + my + rows()) % rows();
+        const n = count();
+        let i = this.sel.row + mx + my * CARD_COLS;
+        if (mx && (i < 0 || i >= n)) {
+          // stepping off either end of a tab moves to the neighbouring tab
+          this.sel.col = (this.sel.col + mx + DIFFS.length) % DIFFS.length;
+          i = mx > 0 ? 0 : count() - 1;
+        } else i = clamp(i, 0, n - 1);
+        this.sel.row = i;
         sfx.uiTick();
       }
       if (s.pressed.a || s.pressed.start) {
@@ -572,6 +604,8 @@ export class Game {
     this.level.update(dt, this.particles, this.players);
     M.Engine.update(this.engine, dt * 1000);
     for (let i = 0; i < 3; i++) for (const p of this.players) p.solveGrabs();
+    this.level.updateHeldGuns();
+    this.shots.update(dt, this);
 
     for (const p of this.players) {
       if (p.state !== 'alive') continue;
@@ -581,6 +615,19 @@ export class Game {
       // hazards + out of bounds
       const hitDeadly = this.level.deadlyBodies.length &&
         M.Query.collides(p.body, this.level.deadlyBodies).length > 0;
+      if (hitDeadly && p.has('shield')) {
+        // BUBBLE SHIELD: pops instead of you — thrown clear, a moment of grace
+        p.endPower();
+        p.protectUntil = this.time + 1;
+        p.graceUntil = this.time + 0.7;   // time to get clear of the spikes
+        p.releaseAll();
+        for (const rb of p.rigBodies) M.Body.setVelocity(rb, { x: rb.velocity.x * 0.5, y: -17 });
+        this.particles.ring(pos.x, pos.y, 50, '#7fd8ff', 0.4);
+        this.particles.burst(pos.x, pos.y, '#bfefff', 14, 260);
+        sfx.pop();
+        continue;
+      }
+      if (hitDeadly && this.time < (p.graceUntil || 0)) continue;
       if (hitDeadly || pos.y > this.level.h + 120 || pos.x < -150 || pos.x > this.level.w + 150) {
         p.die(this);
         continue;
@@ -588,15 +635,14 @@ export class Game {
 
       if (this.state !== 'play') continue;
 
-      // power-ups
-      for (const pu of this.level.powerups) {
-        if (!pu.active || p.superPunch) continue;
-        if (Math.hypot(pos.x - pu.x, pos.y - pu.y) < 34 + CFG.radius) {
-          pu.active = false;
-          pu.respawnAt = this.level.time + 9;
-          p.superPunch = true;
-          this.particles.burst(pu.x, pu.y, '#ffd94d', 10, 200);
+      // power-ups: touch one to take it (it replaces any you had)
+      for (const pu of this.level.power.live) {
+        if (Math.hypot(pos.x - pu.x, pos.y - pu.y) < 30 + CFG.radius) {
+          this.level.power.take(pu);
+          p.givePower(pu.id);
+          this.particles.burst(pu.x, pu.y, POWERS[pu.id].color, 12, 220);
           sfx.pickup();
+          break;
         }
       }
 
@@ -656,6 +702,8 @@ export class Game {
 
     this.level.draw(ctx);
     for (const p of this.players) p.draw(ctx, this);
+    this.level.drawGuns(ctx);
+    this.shots.draw(ctx);
     this.drawFinishedAtGoal(ctx);
     this.particles.draw(ctx);
     ctx.restore();
@@ -782,7 +830,7 @@ export class Game {
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.fillStyle = it.fg;
-        ctx.font = '900 22px system-ui, sans-serif';
+        ctx.font = `900 22px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.fillText(it.label, cw / 2, by + bh / 2 + 8);
         by += bh + g;
@@ -794,20 +842,20 @@ export class Game {
   drawSettings(ctx, cw, ch) {
     this.veil(ctx, cw, ch, 0.7);
     const rows = this.settingRows();
-    const pw = Math.min(560, cw - 40), rh = 64;
+    const pw = Math.min(620, cw - 40), rh = 64;
     const ph = 90 + rows.length * (rh + 10) + 70;
     const px = cw / 2 - pw / 2, py = Math.max(60, ch / 2 - ph / 2);
     roundRectPath(ctx, px, py, pw, ph, 18);
-    ctx.fillStyle = 'rgba(16,18,36,0.96)';
+    ctx.fillStyle = '#10122a';
     ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.18)';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd94d';
-    ctx.font = '900 32px system-ui, sans-serif';
+    ctx.font = `900 32px ${FONT}`;
     ctx.fillText('SETTINGS', cw / 2, py + 52);
-    rows.forEach(([key, label, hint], i) => {
+    rows.forEach(([key, label, hint, choices], i) => {
       const y = py + 80 + i * (rh + 10), x = px + 24, w = pw - 48;
       const sel = this.setSel === i;
       this.buttons.push({ id: 'set:' + key, x, y, w, h: rh });
@@ -817,11 +865,26 @@ export class Game {
       if (sel) { ctx.strokeStyle = '#ffd94d'; ctx.lineWidth = 2.5; ctx.stroke(); }
       ctx.textAlign = 'left';
       ctx.fillStyle = '#fff';
-      ctx.font = '900 19px system-ui, sans-serif';
+      ctx.font = `900 19px ${FONT}`;
       ctx.fillText(label, x + 16, y + 28);
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = '13px system-ui, sans-serif';
+      ctx.font = `13px ${FONT}`;
       ctx.fillText(hint, x + 16, y + 49);
+      if (choices) {
+        // segmented choice: OFF | NORMAL | FREQUENT
+        const segW = 82, segH = 30, sx0 = x + w - segW * choices.length - 14, sy = y + rh / 2 - segH / 2;
+        choices.forEach((c, k) => {
+          const cx = sx0 + k * segW, cur = settings[key] === c;
+          roundRectPath(ctx, cx + 2, sy, segW - 4, segH, 10);
+          ctx.fillStyle = cur ? (c === 'off' ? 'rgba(255,255,255,0.35)' : '#5fe08b') : 'rgba(255,255,255,0.1)';
+          ctx.fill();
+          ctx.textAlign = 'center';
+          ctx.fillStyle = cur ? '#0c2417' : 'rgba(255,255,255,0.6)';
+          ctx.font = `bold 12px ${FONT}`;
+          ctx.fillText(c.toUpperCase(), cx + segW / 2, sy + segH / 2 + 4);
+        });
+        return;
+      }
       // switch
       const on = !!settings[key];
       const sw = 58, sh = 30, sx = x + w - sw - 14, sy = y + rh / 2 - sh / 2;
@@ -832,7 +895,7 @@ export class Game {
       ctx.beginPath(); ctx.arc(on ? sx + sw - sh / 2 : sx + sh / 2, sy + sh / 2, sh / 2 - 4, 0, TAU); ctx.fill();
       ctx.textAlign = 'right';
       ctx.fillStyle = on ? '#5fe08b' : 'rgba(255,255,255,0.45)';
-      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.font = `bold 13px ${FONT}`;
       ctx.fillText(on ? 'ON' : 'OFF', sx - 10, sy + sh / 2 + 5);
     });
     // DONE
@@ -844,10 +907,10 @@ export class Game {
     ctx.fill();
     ctx.fillStyle = sel ? '#221c08' : '#fff';
     ctx.textAlign = 'center';
-    ctx.font = '900 20px system-ui, sans-serif';
+    ctx.font = `900 20px ${FONT}`;
     ctx.fillText('DONE', cw / 2, by + 30);
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.font = `13px ${FONT}`;
     ctx.fillText('dpad ▲▼ choose  •  A toggle  •  B close', cw / 2, py + ph + 24);
     if (this.music.nowPlaying && settings.sound && settings.music) {
       ctx.fillText(`♪ now playing: ${this.music.nowPlaying}`, cw / 2, py + ph + 44);
@@ -864,7 +927,7 @@ export class Game {
       const y = goal.y - 76 + bob;
       drawHead(ctx, x, y, 18, p.color, p.headStyle, { x: 0, y: -0.3 }, Math.sin(this.time * 6 + p.slot) * 0.2);
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.font = `bold 14px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillText(['1st', '2nd', '3rd', '4th'][p.finishOrder], x, y + 34);
     }
@@ -875,30 +938,30 @@ export class Game {
     const diff = DIFFS.find((d) => d.key === lv.diff);
     ctx.textAlign = 'left';
     ctx.fillStyle = diff ? diff.color : 'rgba(255,255,255,0.55)';
-    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.font = `bold 15px ${FONT}`;
     const diffLabel = diff ? diff.label : '';
     ctx.fillText(`${diffLabel}  ·  ${this.mode === 'coop' ? 'CO-OP' : 'VS'}`, 16, 26);
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = '900 21px system-ui, sans-serif';
+    ctx.font = `900 21px ${FONT}`;
     ctx.fillText(lv.name, 16, 50);
     const bestT = this.best[this.mode][lv.name];
     if (bestT !== undefined) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.font = `bold 13px ${FONT}`;
       ctx.fillText(`best ${bestT.toFixed(2)}s`, 16, 70);
     }
 
     ctx.textAlign = 'center';
     if (this.state === 'play') {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.font = '900 24px system-ui, sans-serif';
+      ctx.font = `900 24px ${FONT}`;
       ctx.fillText(this.raceTime.toFixed(1), cw / 2, 34);
     }
 
     // drop-in hint: while a slot is open, invite spectators to jump in
     if ((this.state === 'play' || this.state === 'countdown') && this.roster.some((r) => !r)) {
       ctx.fillStyle = `rgba(255,255,255,${0.32 + Math.sin(this.time * 3) * 0.14})`;
-      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.font = `bold 14px ${FONT}`;
       ctx.fillText('press A to join', cw / 2, ch - 14);
     }
 
@@ -911,12 +974,12 @@ export class Game {
       roundRectPath(ctx, x, 12, w, 34, 17);
       ctx.fillStyle = 'rgba(10,12,24,0.55)';
       ctx.fill();
-      ctx.fillStyle = p.color.main;
-      ctx.beginPath(); ctx.arc(x + 19, 29, 9, 0, TAU); ctx.fill();
+      // the player's character as the chip's portrait
+      drawHead(ctx, x + 19, 29, 11, p.color, p.headStyle, { x: 0, y: 0 }, 0, 1);
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 15px system-ui, sans-serif';
+      ctx.font = `bold 15px ${FONT}`;
       ctx.textAlign = 'left';
-      ctx.fillText(`${p.name} ${p.score}`, x + 34, 34);
+      ctx.fillText(`${p.name} ${p.score}`, x + 36, 34);
     }
   }
 
@@ -928,14 +991,14 @@ export class Game {
       const lh = Math.min(84, ch * 0.12), lw = lh * (logo.width / logo.height);
       ctx.drawImage(logo, cw / 2 - lw / 2, 2, lw, lh);
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.font = `bold 13px ${FONT}`;
       ctx.fillText('a ROUNDERS spinoff', cw / 2, lh + 12);
     } else {
       ctx.fillStyle = '#ffd94d';
-      ctx.font = `900 ${Math.min(64, cw * 0.06)}px system-ui, sans-serif`;
+      ctx.font = `900 ${Math.min(64, cw * 0.06)}px ${FONT}`;
       ctx.fillText('SWINGERS', cw / 2, 58);
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = 'bold 15px system-ui, sans-serif';
+      ctx.font = `bold 15px ${FONT}`;
       ctx.fillText('a ROUNDERS spinoff', cw / 2, 80);
     }
 
@@ -957,14 +1020,14 @@ export class Game {
         drawHead(ctx, x + 26, cy0 + chipH / 2, 16, PLAYER_COLORS[i], slot.headStyle, { x: 0, y: 0 }, 0, 1);
         const tx = x + 30 + (chipW - 30) / 2;
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 15px system-ui, sans-serif';
+        ctx.font = `bold 15px ${FONT}`;
         ctx.fillText(`P${i + 1}  ◀ ${st.name} ▶`, tx, cy0 + 23);
         ctx.fillStyle = 'rgba(255,255,255,0.55)';
-        ctx.font = 'italic 12px system-ui, sans-serif';
+        ctx.font = `italic 12px ${FONT}`;
         ctx.fillText(st.cast ? st.cast.title : 'original Swingers', tx, cy0 + 41);
       } else {
         ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(this.time * 3 + i) * 0.12})`;
-        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.font = `bold 14px ${FONT}`;
         ctx.fillText('press A to join', x + chipW / 2, cy0 + 31);
       }
       x += chipW + 12;
@@ -988,12 +1051,12 @@ export class Game {
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.fillStyle = '#221c08';
-      ctx.font = '900 30px system-ui, sans-serif';
+      ctx.font = `900 30px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillText('▶  PLAY', 0, 11);
       ctx.restore();
       ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.font = `bold 14px ${FONT}`;
       ctx.fillText('or press START', cw / 2, by - 10);
 
       // mode dropdown (VS / CO-OP). Opens UPWARD — it lives at the bottom
@@ -1013,10 +1076,10 @@ export class Game {
       ctx.stroke();
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.font = `bold 11px ${FONT}`;
       ctx.fillText('MODE (Y)', mx + mw / 2, by + 17);
       ctx.fillStyle = '#fff';
-      ctx.font = '900 20px system-ui, sans-serif';
+      ctx.font = `900 20px ${FONT}`;
       ctx.fillText(`${MODES.find((m) => m.key === this.mode).label}  ${this.modeOpen ? '▴' : '▾'}`, mx + mw / 2, by + 44);
       if (this.modeOpen) {
         const oh = 44;
@@ -1030,19 +1093,19 @@ export class Game {
           ctx.lineWidth = 1.5;
           ctx.stroke();
           ctx.fillStyle = m.key === this.mode ? '#221c08' : '#fff';
-          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.font = `bold 18px ${FONT}`;
           ctx.fillText(m.label, mx + mw / 2, oy + 29);
         });
       }
     } else {
       ctx.fillStyle = `rgba(255,255,255,${0.5 + Math.sin(this.time * 3) * 0.2})`;
-      ctx.font = 'bold 22px system-ui, sans-serif';
+      ctx.font = `bold 22px ${FONT}`;
       ctx.fillText('press A on a controller — or Enter for keyboard', cw / 2, ch - 52);
     }
 
     // controls legend
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.font = `13px ${FONT}`;
     ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ character  •  Y mode  •  X settings  •  BACK leave  •  M sound  •  F fullscreen', cw / 2, ch - 8);
   }
 
@@ -1073,7 +1136,7 @@ export class Game {
     ctx.textAlign = 'center';
     const spaced = (text, y, size, color, spacing, glow) => {
       ctx.save();
-      ctx.font = `900 ${size}px system-ui, sans-serif`;
+      ctx.font = `900 ${size}px ${FONT}`;
       if ('letterSpacing' in ctx) ctx.letterSpacing = spacing + 'px';
       ctx.shadowColor = glow || 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = glow ? 18 : 10;
@@ -1103,7 +1166,7 @@ export class Game {
     }
     y += lh + 30;
     ctx.save();
-    ctx.font = `600 ${Math.max(14, Math.min(19, cw * 0.016))}px system-ui, sans-serif`;
+    ctx.font = `600 ${Math.max(14, Math.min(19, cw * 0.016))}px ${FONT}`;
     ctx.fillStyle = 'rgba(245,242,255,0.88)';
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 14;
@@ -1115,7 +1178,7 @@ export class Game {
     spaced('PRESS START', y, Math.max(16, Math.min(26, cw * 0.02)), '#ffd94d', 11, 'rgba(255,190,60,0.6)');
     ctx.globalAlpha = 1;
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.font = `13px ${FONT}`;
     ctx.fillText('any controller button  •  a key  •  or a click', cw / 2, ch - 18);
   }
 
@@ -1166,84 +1229,175 @@ export class Game {
     grad.addColorStop(1, '#233054');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, cw, ch);
-    const key = art('keyart');
-    if (key) {
-      // key art behind the list, heavily dimmed so the rows stay readable
-      const s = Math.max(cw / key.width, ch / key.height);
-      ctx.drawImage(key, (cw - key.width * s) / 2, (ch - key.height * s) / 2, key.width * s, key.height * s);
-      ctx.fillStyle = 'rgba(12,14,32,0.86)';
+    const tab = DIFFS[this.sel.col];
+    const list = this.grid[this.sel.col];
+    const cur = LEVELS[list[this.sel.row]];
+    // the selected board's own backdrop fills the screen, heavily dimmed
+    const bg = art('bg:' + cur.theme) || art('keyart');
+    if (bg) {
+      const s = Math.max(cw / bg.width, ch / bg.height);
+      ctx.drawImage(bg, (cw - bg.width * s) / 2, (ch - bg.height * s) / 2, bg.width * s, bg.height * s);
+      ctx.fillStyle = 'rgba(12,14,32,0.8)';
       ctx.fillRect(0, 0, cw, ch);
     }
+    this.selRects = [];
 
+    // title + session scores
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffd94d';
-    ctx.font = `900 ${Math.min(44, cw * 0.045)}px system-ui, sans-serif`;
-    ctx.fillText(`CHOOSE A BOARD — ${this.mode === 'coop' ? 'CO-OP' : 'VS'}`, cw / 2, 52);
+    ctx.font = `900 ${Math.min(34, cw * 0.032)}px ${FONT}`;
+    ctx.fillText(`CHOOSE A BOARD — ${this.mode === 'coop' ? 'CO-OP' : 'VS'}`, cw / 2, 40);
 
-    // session scores
-    ctx.font = 'bold 15px system-ui, sans-serif';
-    let sx = cw / 2 - (this.players.length - 1) * 60;
-    for (const p of this.players) {
-      ctx.fillStyle = p.color.main;
-      ctx.fillText(`${p.name} ${p.score}`, sx, 78);
-      sx += 120;
-    }
+    // difficulty tabs
+    const tw = Math.min(170, (cw - 80) / DIFFS.length - 10), th = 38, ty = 56;
+    const tx0 = cw / 2 - (DIFFS.length * (tw + 10) - 10) / 2;
+    DIFFS.forEach((d, i) => {
+      const x = tx0 + i * (tw + 10), on = i === this.sel.col;
+      this.selRects.push({ x, y: ty, w: tw, h: th, tab: i });
+      roundRectPath(ctx, x, ty, tw, th, th / 2);
+      ctx.fillStyle = on ? d.color : 'rgba(255,255,255,0.08)';
+      ctx.fill();
+      ctx.fillStyle = on ? '#141830' : d.color;
+      ctx.font = `bold 17px ${FONT}`;
+      ctx.fillText(`${d.label}  ${this.grid[i].length}`, x + tw / 2, ty + 25);
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = `13px ${FONT}`;
+    ctx.fillText('LB / RB  switch tabs', cw / 2, ty + th + 18);
 
-    this.selRects = [];
-    const colW = Math.min(300, (cw - 80) / 3);
-    const rowH = Math.min(46, (ch - 200) / 10);
-    const x0 = cw / 2 - colW * 1.5 - 20;
-    const y0 = 116;
-    DIFFS.forEach((d, ci) => {
-      const cx = x0 + ci * (colW + 20);
-      ctx.textAlign = 'center';
-      ctx.fillStyle = d.color;
-      ctx.font = '900 22px system-ui, sans-serif';
-      ctx.fillText(d.label, cx + colW / 2, y0 - 12);
-      this.grid[ci].forEach((levelIndex, ri) => {
-        const lv = LEVELS[levelIndex];
-        const y = y0 + ri * rowH;
-        const isSel = this.sel.col === ci && this.sel.row === ri;
-        this.selRects.push({ x: cx, y, w: colW, h: rowH - 6, index: levelIndex });
-        roundRectPath(ctx, cx, y, colW, rowH - 6, 10);
-        ctx.fillStyle = isSel ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)';
-        ctx.fill();
-        if (isSel) {
-          ctx.strokeStyle = d.color;
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
-        ctx.fillStyle = isSel ? '#fff' : 'rgba(255,255,255,0.75)';
-        ctx.font = `bold ${Math.min(15, rowH * 0.38)}px system-ui, sans-serif`;
-        ctx.textAlign = 'left';
-        ctx.fillText(lv.name, cx + 14, y + rowH / 2 + 4);
-        const bt = this.best[this.mode][lv.name];
-        let ix = cx + colW - 12;
-        if (bt !== undefined) {
-          ctx.textAlign = 'right';
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
-          ctx.font = `${Math.min(12, rowH * 0.3)}px system-ui, sans-serif`;
-          ctx.fillText(bt.toFixed(2) + 's', ix, y + rowH / 2 + 4);
-          ix -= ctx.measureText(bt.toFixed(2) + 's').width + 8;
-        }
-        // mechanic icons, right-aligned before the best time
-        const isz = Math.min(20, rowH * 0.48);
-        ctx.globalAlpha = isSel ? 0.95 : 0.55;
-        for (const m of mechanicsOf(lv).reverse()) {
-          const icon = art('icon:' + m);
-          if (!icon) continue;
-          ix -= isz;
-          ctx.drawImage(icon, ix, y + (rowH - 6 - isz) / 2, isz, isz);
-          ix -= 4;
-        }
-        ctx.globalAlpha = 1;
-      });
+    // board cards
+    const gap = 14;
+    const rowsN = Math.ceil(list.length / CARD_COLS);
+    const avail = ch - 150 - 80;
+    let cardW = Math.min(230, (cw - 60 - gap * (CARD_COLS - 1)) / CARD_COLS);
+    let cardH = cardW * 0.78;
+    if (rowsN * (cardH + gap) > avail) { cardH = avail / rowsN - gap; cardW = cardH / 0.78; }
+    const gx0 = cw / 2 - (CARD_COLS * cardW + (CARD_COLS - 1) * gap) / 2, gy0 = 136;
+    list.forEach((li, k) => {
+      const lv = LEVELS[li];
+      const x = gx0 + (k % CARD_COLS) * (cardW + gap), y = gy0 + Math.floor(k / CARD_COLS) * (cardH + gap);
+      const on = k === this.sel.row;
+      this.selRects.push({ x, y, w: cardW, h: cardH, index: li });
+      this.drawBoardCard(ctx, lv, x, y, cardW, cardH, on, tab.color);
     });
 
+    // selected board's pitch
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('stick / dpad to browse  •  A to race  •  B back to the playground  •  X settings  •  or click a board', cw / 2, ch - 14);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.min(22, cw * 0.02)}px ${FONT}`;
+    ctx.fillText(cur.name, cw / 2, ch - 62);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = `${Math.min(17, cw * 0.015)}px ${FONT}`;
+    ctx.fillText(cur.intro || '', cw / 2, ch - 38);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = `13px ${FONT}`;
+    ctx.fillText('stick / dpad pick  •  A race  •  B back to the playground  •  X settings  •  or click a card', cw / 2, ch - 12);
+  }
+
+  // One board card: its theme backdrop, a live mini-map drawn from the
+  // board's data, its name, mechanic icons and best time.
+  drawBoardCard(ctx, lv, x, y, w, h, on, accent) {
+    ctx.save();
+    if (on) {
+      ctx.translate(x + w / 2, y + h / 2);
+      ctx.scale(1.05, 1.05);
+      ctx.translate(-x - w / 2, -y - h / 2);
+    }
+    const footH = 40, mapH = h - footH;
+    roundRectPath(ctx, x, y, w, h, 14);
+    ctx.fillStyle = '#0d0f22';
+    ctx.fill();
+    ctx.save();
+    roundRectPath(ctx, x, y, w, h, 14);
+    ctx.clip();
+    const bg = art('bg:' + lv.theme);
+    if (bg) {
+      const s = Math.max(w / bg.width, mapH / bg.height);
+      ctx.drawImage(bg, x + (w - bg.width * s) / 2, y + (mapH - bg.height * s) / 2, bg.width * s, bg.height * s);
+      ctx.fillStyle = 'rgba(8,10,24,0.35)';
+      ctx.fillRect(x, y, w, mapH);
+    } else {
+      ctx.fillStyle = lv.bg[1];
+      ctx.fillRect(x, y, w, mapH);
+    }
+    this.drawMiniMap(ctx, lv, x + 6, y + 6, w - 12, mapH - 10);
+    ctx.restore();
+
+    roundRectPath(ctx, x, y, w, h, 14);
+    ctx.strokeStyle = on ? accent : 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = on ? 4 : 1.5;
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = on ? '#ffffff' : 'rgba(255,255,255,0.85)';
+    ctx.font = `bold ${Math.max(11, Math.min(15, w * 0.068))}px ${FONT}`;
+    ctx.fillText(lv.name, x + 10, y + mapH + 16);
+    // mechanic icons + best time on the second line
+    let ix = x + 10;
+    const isz = 16;
+    for (const m of mechanicsOf(lv)) {
+      const icon = art('icon:' + m);
+      if (!icon) continue;
+      ctx.globalAlpha = 0.85;
+      ctx.drawImage(icon, ix, y + mapH + 21, isz, isz);
+      ctx.globalAlpha = 1;
+      ix += isz + 4;
+    }
+    const bt = this.best[this.mode][lv.name];
+    if (bt !== undefined) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = `bold 12px ${FONT}`;
+      ctx.fillText(`★ ${bt.toFixed(2)}s`, x + w - 10, y + mapH + 34);
+    }
+    ctx.restore();
+  }
+
+  // The board's layout, drawn small from its level data.
+  drawMiniMap(ctx, lv, x, y, w, h) {
+    const s = Math.min(w / lv.w, h / lv.h);
+    ctx.save();
+    ctx.translate(x + (w - lv.w * s) / 2, y + (h - lv.h * s) / 2);
+    ctx.scale(s, s);
+    for (const z of lv.winds || []) {
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.fillRect(z.x - z.w / 2, z.y - z.h / 2, z.w, z.h);
+    }
+    for (const so of lv.solids || []) {
+      ctx.save();
+      ctx.translate(so.x, so.y);
+      ctx.rotate(so.angle || 0);
+      ctx.fillStyle = so.deadly ? (lv.hazard || '#ff4757') : so.bounce ? lv.accent : so.ice ? '#cfefff' : '#e6e9f5';
+      ctx.globalAlpha = so.deadly ? 0.9 : 0.85;
+      ctx.fillRect(-so.w / 2, -so.h / 2, so.w, so.h);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#e0c088';
+    ctx.lineWidth = 9;
+    for (const r of lv.ropes || []) { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x, r.y + r.len); ctx.stroke(); }
+    ctx.strokeStyle = '#aab3c8';
+    ctx.lineWidth = 24;
+    ctx.lineCap = 'round';
+    for (const sp of lv.spinners || []) {
+      const a = sp.phase || 0.6;
+      ctx.beginPath();
+      ctx.moveTo(sp.x - Math.cos(a) * sp.len / 2, sp.y - Math.sin(a) * sp.len / 2);
+      ctx.lineTo(sp.x + Math.cos(a) * sp.len / 2, sp.y + Math.sin(a) * sp.len / 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = lv.accent;
+    for (const m of lv.movers || []) ctx.fillRect(m.from[0] - m.w / 2, m.from[1] - m.h / 2, m.w, m.h);
+    ctx.fillStyle = '#ff8fb3';
+    for (const b of lv.balloons || []) { ctx.beginPath(); ctx.arc(b.x, b.y, 28, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#ff8a3d';
+    for (const g of lv.guns || []) ctx.fillRect(g.x - 26, g.y - 9, 52, 18);
+    // start (a robot) and goal (a ring)
+    ctx.fillStyle = '#ff5d6c';
+    ctx.beginPath(); ctx.arc(lv.spawn.x, lv.spawn.y, 34, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#ffd94d';
+    ctx.lineWidth = 14;
+    ctx.beginPath(); ctx.arc(lv.goal.x, lv.goal.y, lv.goal.r + 6, 0, TAU); ctx.stroke();
+    ctx.restore();
   }
 
   drawCountdown(ctx, cw, ch) {
@@ -1254,12 +1408,12 @@ export class Game {
     ctx.scale(1 + (1 - frac) * 0.25, 1 + (1 - frac) * 0.25);
     ctx.globalAlpha = clamp(frac * 2.5, 0, 1);
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 120px system-ui, sans-serif';
+    ctx.font = `900 120px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText(String(n), 0, 40);
     ctx.restore();
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.font = 'bold 22px system-ui, sans-serif';
+    ctx.font = `bold 22px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText(LEVELS[this.levelIndex].intro, cw / 2, ch * 0.62);
   }
@@ -1268,7 +1422,7 @@ export class Game {
     ctx.save();
     ctx.globalAlpha = clamp(this.goFlash / 0.5, 0, 1);
     ctx.fillStyle = '#ffd94d';
-    ctx.font = '900 130px system-ui, sans-serif';
+    ctx.font = `900 130px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText('GO!', cw / 2, ch * 0.4 + 40);
     ctx.restore();
@@ -1286,9 +1440,9 @@ export class Game {
     this.veil(ctx, cw, ch, 0.62);
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.font = '900 52px system-ui, sans-serif';
+    ctx.font = `900 52px ${FONT}`;
     ctx.fillText('PAUSED', cw / 2, ch * 0.28);
-    ctx.font = '14px system-ui, sans-serif';
+    ctx.font = `14px ${FONT}`;
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.fillText('controller:  A / START resume  •  Y settings  •  X restart  •  B / BACK quit', cw / 2, ch * 0.76);
     ctx.fillText('keyboard:  P resume  •  C settings  •  X restart  •  Backspace quit  •  M sound  •  F fullscreen', cw / 2, ch * 0.76 + 22);
@@ -1299,7 +1453,7 @@ export class Game {
     ctx.textAlign = 'center';
     if (this.coopWin !== null) {
       // co-op: everybody made it — congratulate the whole team
-      const names = (this.roundResults || []).map((r) => r.p.name);
+      const names = (this.roundResults || []).map((r) => headStyle(r.p.headStyle).name);
       const who = names.length > 1
         ? names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1]
         : names.join('');
@@ -1308,11 +1462,11 @@ export class Game {
       ctx.translate(cw / 2, ch * 0.2 - 16);
       ctx.scale(pulse, pulse);
       ctx.fillStyle = '#ffd94d';
-      ctx.font = `900 ${names.length > 2 ? 44 : 54}px system-ui, sans-serif`;
+      ctx.font = `900 ${names.length > 2 ? 44 : 54}px ${FONT}`;
       ctx.fillText(`${who} MADE IT!`, 0, 16);
       ctx.restore();
       ctx.fillStyle = '#5fe08b';
-      ctx.font = '900 20px system-ui, sans-serif';
+      ctx.font = `900 20px ${FONT}`;
       ctx.fillText(`TEAM TIME  ${this.coopWin.toFixed(2)}s`, cw / 2, ch * 0.2 + 52);
     } else if (this.winner) {
       const pulse = 1 + Math.sin(this.time * 5) * 0.03;
@@ -1320,16 +1474,19 @@ export class Game {
       ctx.translate(cw / 2, ch * 0.2 - 16);
       ctx.scale(pulse, pulse);
       ctx.fillStyle = this.winner.color.main;
-      ctx.font = '900 54px system-ui, sans-serif';
-      ctx.fillText(`${this.winner.name} WINS!`, 0, 16);
+      ctx.font = `900 54px ${FONT}`;
+      ctx.fillText(`${headStyle(this.winner.headStyle).name.toUpperCase()} WINS!`, 0, 16);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = `bold 18px ${FONT}`;
+      ctx.fillText(this.winner.name, 0, 44);
       ctx.restore();
     } else {
       ctx.fillStyle = '#ffd94d';
-      ctx.font = '900 46px system-ui, sans-serif';
+      ctx.font = `900 46px ${FONT}`;
       ctx.fillText('ROUND OVER', cw / 2, ch * 0.2);
     }
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.font = 'bold 18px system-ui, sans-serif';
+    ctx.font = `bold 18px ${FONT}`;
     ctx.fillText(LEVELS[this.levelIndex].name, cw / 2, ch * 0.2 + 30);
 
     const rows = this.roundResults || [];
@@ -1340,13 +1497,17 @@ export class Game {
       roundRectPath(ctx, cw / 2 - w / 2, y, w, rh - 10, 12);
       ctx.fillStyle = 'rgba(255,255,255,0.08)';
       ctx.fill();
-      ctx.fillStyle = row.p.color.main;
-      ctx.beginPath(); ctx.arc(cw / 2 - w / 2 + 30, y + 21, 13, 0, TAU); ctx.fill();
+      drawHead(ctx, cw / 2 - w / 2 + 30, y + 21, 15, row.p.color, row.p.headStyle, { x: 0, y: 0 }, 0, 1);
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'left';
-      ctx.font = 'bold 20px system-ui, sans-serif';
-      ctx.fillText(row.p.name, cw / 2 - w / 2 + 54, y + 28);
-      ctx.fillText(row.finished ? row.time.toFixed(2) + 's' : 'DNF', cw / 2 - w / 2 + 130, y + 28);
+      ctx.font = `bold 20px ${FONT}`;
+      ctx.fillText(headStyle(row.p.headStyle).name, cw / 2 - w / 2 + 56, y + 23);
+      ctx.fillStyle = row.p.color.main;
+      ctx.font = `bold 12px ${FONT}`;
+      ctx.fillText(row.p.name, cw / 2 - w / 2 + 56, y + 37);
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold 20px ${FONT}`;
+      ctx.fillText(row.finished ? row.time.toFixed(2) + 's' : 'DNF', cw / 2 - w / 2 + 170, y + 28);
       ctx.textAlign = 'right';
       ctx.fillStyle = row.pts ? '#ffd94d' : 'rgba(255,255,255,0.4)';
       ctx.fillText(`+${row.pts}`, cw / 2 + w / 2 - 110, y + 28);
@@ -1357,7 +1518,7 @@ export class Game {
     if (this.roundEndT > 0.8) {
       ctx.textAlign = 'center';
       ctx.fillStyle = `rgba(255,255,255,${0.6 + Math.sin(this.time * 4) * 0.3})`;
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = `bold 20px ${FONT}`;
       ctx.fillText('Press A for the board list', cw / 2, ch * 0.85);
     }
   }

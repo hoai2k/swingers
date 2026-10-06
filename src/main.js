@@ -2,6 +2,12 @@
 
 import { Game } from './game.js';
 
+// canvas text doesn't trigger web-font loading by itself — ask for the
+// UI face up front (it draws with the fallback until it arrives)
+if (document.fonts) {
+  for (const w of [400, 600, 700]) document.fonts.load(`${w} 20px Fredoka`).catch(() => {});
+}
+
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
 

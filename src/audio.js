@@ -82,6 +82,8 @@ class Sfx {
   crack()  { this.noise(0.09, 0.12); this.tone(150, 0.06, { type: 'square', vol: 0.06, slide: -40 }); }
   crumble() { this.noise(0.3, 0.18); this.tone(90, 0.25, { type: 'sawtooth', vol: 0.1, slide: -50 }); }
   checkpoint() { [587, 784, 1175].forEach((f, i) => this.tone(f, 0.09, { type: 'triangle', vol: 0.12, delay: i * 0.07 })); }
+  shoot()  { this.noise(0.07, 0.16); this.tone(220, 0.09, { type: 'sawtooth', vol: 0.1, slide: -140 }); }
+  hit()    { this.noise(0.18, 0.2); this.tone(140, 0.2, { type: 'triangle', vol: 0.16, slide: 260 }); }
   pop()    { this.tone(500, 0.08, { type: 'square', vol: 0.12, slide: 300 }); this.noise(0.05, 0.1); }
 }
 

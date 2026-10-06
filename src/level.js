@@ -15,7 +15,8 @@
 //     balloons:[{x,y}]
 //     movers:  [{w,h, from:[x,y], to:[x,y], speed, phase?}]
 //     spinners:[{x,y,len,thick?,speed,phase?}]
-//     powerups:[{x,y}]
+//     powerups:[{x,y}]             preferred power-up spots (they also
+//                                   appear on platform tops; powerups.js)
 //     winds:   [{x,y,w,h, fx,fy, period?,on?,phase?}]
 //                                   gust zones (x,y = center); fx/fy are the
 //                                   push in robot body-weights (fy -1.3 = an
@@ -24,13 +25,18 @@
 //                                   of every `period` (streaks flicker as a
 //                                   warning just before it starts)
 //     checkpoints:[{x,y}]           touch the flag and you respawn there
+//     guns:    [{x,y, id?}]         gun pickups (grab with a trigger, fire
+//                                   with that hand's bumper); id picks the
+//                                   Rounders weapon art, else it cycles
 //     texts:   [{x,y,text,size?}] }
 // Everything solid is grabbable unless deadly or grab:false.
 
-import { clamp, lerp, TAU, hash01, roundRectPath } from './util.js';
+import { clamp, lerp, TAU, hash01, roundRectPath, FONT } from './util.js';
 import { CAT } from './player.js';
 import { sfx } from './audio.js';
 import { art, pattern } from './art.js';
+import { Gun, GUN_IDS } from './guns.js';
+import { PowerSpawner } from './powerups.js';
 
 const TILE_K = 0.42;        // platform tiles: 512x128 drawn ~215x54 (rim ~9px)
 const TILE_RIM = 128 * TILE_K;
@@ -64,7 +70,6 @@ export class Level {
     this.balloons = [];    // {home:{x,y}, body|null, respawnAt, color}
     this.movers = [];      // {body,w,h,from,to,speed,u}
     this.spinners = [];    // {body,len,thick,speed,angle}
-    this.powerups = [];    // {x,y,active,respawnAt}
     this.bouncers = [];    // solid recs with .bounce
     this.bounceCd = new Map();   // player -> time their next bounce may fire
     this.crumbles = [];    // solid recs with .crumble state
@@ -81,7 +86,11 @@ export class Level {
     }
     for (const m of def.movers || []) this.addMover(m);
     for (const s of def.spinners || []) this.addSpinner(s);
-    for (const p of def.powerups || []) this.powerups.push({ x: p.x, y: p.y, active: true, respawnAt: 0 });
+    // each board gets a different spread of Rounders weapons
+    const seed = [...def.name].reduce((a, c) => a + c.charCodeAt(0), 0);
+    this.guns = (def.guns || []).map((d, i) => new Gun(engine, d.x, d.y, d.id || GUN_IDS[(seed + i * 5) % GUN_IDS.length]));
+
+    this.power = new PowerSpawner(this);
 
     // Static surfaces open hands can shove against.
     this.pushables = [
@@ -252,8 +261,13 @@ export class Level {
       }
     }
 
-    for (const p of this.powerups) {
-      if (!p.active && this.time >= p.respawnAt) p.active = true;
+    this.power.update(dt, this.time);
+
+    for (const gun of this.guns) {
+      gun.cd = Math.max(0, gun.cd - dt);
+      // lost off the board: back to its spot
+      const b = gun.body.position;
+      if (!gun.holder && (b.y > this.h + 120 || b.x < -150 || b.x > this.w + 150)) gun.spawn();
     }
 
     const alive = players.filter((p) => p.state === 'alive');
@@ -265,6 +279,16 @@ export class Level {
       d.vy += 1600 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.spin * dt; d.life -= dt;
     }
     this.debris = this.debris.filter((d) => d.life > 0);
+  }
+
+  // carried guns ride their hand (run after the physics step, so they're
+  // drawn exactly where the hand ended up)
+  updateHeldGuns() {
+    for (const gun of this.guns) if (gun.holder) gun.follow();
+  }
+
+  drawGuns(ctx) {
+    for (const gun of this.guns) gun.draw(ctx, this.time);
   }
 
   // Trampolines: a body that lands on the pad's face is relaunched along the
@@ -452,7 +476,7 @@ export class Level {
     // hint texts
     for (const t of this.def.texts || []) {
       ctx.fillStyle = 'rgba(255,255,255,0.28)';
-      ctx.font = `bold ${t.size || 26}px system-ui, sans-serif`;
+      ctx.font = `bold ${t.size || 26}px ${FONT}`;
       ctx.textAlign = 'center';
       ctx.fillText(t.text, t.x, t.y);
     }
@@ -553,33 +577,7 @@ export class Level {
       ctx.restore();
     }
 
-    // power-ups
-    for (const p of this.powerups) {
-      if (!p.active) continue;
-      const bob = Math.sin(this.time * 2.4 + p.x) * 5;
-      ctx.save();
-      ctx.translate(p.x, p.y + bob);
-      ctx.fillStyle = 'rgba(255,255,255,0.13)';
-      ctx.beginPath(); ctx.arc(0, 0, 21, 0, TAU); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      // little fist
-      ctx.fillStyle = '#ffd94d';
-      roundRectPath(ctx, -9, -8, 15, 16, 5);
-      ctx.fill();
-      ctx.fillStyle = '#e0b32e';
-      roundRectPath(ctx, -12, -5, 5, 10, 2);
-      ctx.fill();
-      ctx.strokeStyle = '#b98f14';
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.moveTo(-2 + i * 4.5, -8); ctx.lineTo(-2 + i * 4.5, -3);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+    this.power.draw(ctx, this.time);
   }
 
   // Fill the current local-frame rect with the theme's platform tile: the
@@ -940,7 +938,7 @@ export class Level {
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.font = `bold 15px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText('GOAL', g.x, g.y - g.r - 14);
   }

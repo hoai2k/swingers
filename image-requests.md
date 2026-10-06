@@ -1,10 +1,45 @@
 # Image requests
 
-**Status: 2 open requests for the title screen, listed first below.** The
-original 45 images are delivered and integrated, and none need
-regenerating.
+**Status: two open rounds — round 2, the title screen (2 images), and
+round 3, power-ups and blasters (10 images).** The original 45 images are
+delivered and integrated, and none need regenerating. Every open image
+already has a working stand-in in the game, so nothing is blocked.
 
-## OPEN: Title screen (2 images)
+## OPEN round 3: Power-ups and blasters (10 images)
+
+Two new features shipped with procedural stand-ins:
+
+- **Power-ups** appear at random on every board. Each one shows as an icon
+  inside a glowing ring; the game draws the ring, so the icon is just the
+  symbol. A small version of the icon also floats over the robot carrying
+  it.
+- **Blasters**, the new tab of gun boards. The guns themselves are the
+  Rounders weapons, so they need no art. The board cards just need a
+  mechanic icon.
+
+Style: the same glossy, bold-outlined cartoon look as the Rounders art and
+the board icons you made last round. Centered, filling about 80% of the
+frame, transparent background, no text.
+
+| File | Size | Prompt |
+| --- | --- | --- |
+| `assets/ui/power_super.png` | 256 × 256 | A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. |
+| `assets/ui/power_feather.png` | 256 × 256 | A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. |
+| `assets/ui/power_shield.png` | 256 × 256 | A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. |
+| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. |
+| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. |
+| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. |
+| `assets/ui/icon_gun.png` | 128 × 128 | White line icon of a chunky toy blaster with a soft drop shadow, matching the other `icon_*.png` board icons. |
+| `assets/ui/fx_feather.png` | 128 × 128 | One small white feather on its own, pointing up and to the right, clean silhouette. Drawn several times falling around a robot with Feather. |
+| `assets/ui/fx_goo.png` | 128 × 128 | A round blob of glossy green goo with a couple of drips. Drawn on the hands of a robot with Sticky Gloves. |
+| `assets/ui/fx_spark.png` | 128 × 128 | A small orange-yellow electric spark burst. Drawn flickering on the arms of a robot with Turbo Arms. |
+
+The Bubble Shield uses the Rounders `shield-bubble` effect (already
+imported), so it needs no new art. After adding these, run
+`python3 tools/build_assets.py` and they replace the stand-ins
+automatically.
+
+## OPEN round 2: Title screen (2 images)
 
 The game now boots on a Rounders-style title screen: dark vignette, a big
 arched logo that slowly "looms", a small line above it, a tagline and a

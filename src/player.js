@@ -27,13 +27,14 @@
 // A conservative rope-clamp keeps chains from overstretching under extreme
 // loads; it only engages beyond full arm extension.
 
-import { clamp, lerp, angDiff, TAU } from './util.js';
+import { clamp, lerp, angDiff, TAU, FONT } from './util.js';
 import { drawHead, headStyle } from './heads.js';
 import { sfx } from './audio.js';
+import { POWERS, drawPowerAura, drawPowerBadge } from './powerups.js';
 
 const M = window.Matter;
 
-export const CAT = { SOLID: 0x0001, PLAYER: 0x0002, ROPE: 0x0004, BALLOON: 0x0008, ARM: 0x0010, HAND: 0x0020 };
+export const CAT = { SOLID: 0x0001, PLAYER: 0x0002, ROPE: 0x0004, BALLOON: 0x0008, ARM: 0x0010, HAND: 0x0020, GUN: 0x0040 };
 
 export const PLAYER_COLORS = [
   { main: '#ff5d6c', dark: '#b03544', name: 'RED' },
@@ -191,6 +192,8 @@ export class Player {
     this.punchAngle = 0;
     this.punchCharge = -1;   // -1 idle; >=0 seconds B has been held
     this.superPunch = false;
+    this.powerId = null;      // power-up in effect (powerups.js)
+    this.powerT = 0;          // seconds left (Infinity for super punch)
     this.face = 1;
     this.spawnPoint = { x, y };
     this.buildRig(x, y);
@@ -271,7 +274,10 @@ export class Player {
   }
 
   removeRig() {
-    for (const arm of this.arms) this.releaseArm(arm);
+    for (const arm of this.arms) {
+      this.releaseArm(arm);
+      if (arm.gun) arm.gun.drop();
+    }
     this.body.plugin.hh.removed = true;
     for (const arm of this.arms) arm.hand.plugin.hh.removed = true;
     M.Composite.remove(this.engine.world, this.rigJoints);
@@ -318,11 +324,30 @@ export class Player {
   // Other players letting go of me (I died / finished / got super-punched).
   static breakGrabsOn(target, players) {
     for (const p of players) {
+      if (p.has('sticky')) continue;          // sticky gloves don't let go
       for (const a of p.arms) {
         if (a.grab && a.grab.body.plugin.hh.player === target) p.releaseArm(a);
       }
     }
   }
+
+  // ---- power-ups
+  givePower(id) {
+    this.endPower();
+    this.powerId = id;
+    this.powerT = POWERS[id].dur;
+    if (id === 'super') this.superPunch = true;
+    if (id === 'rubber') this.body.restitution = 0.95;
+  }
+
+  endPower() {
+    if (this.powerId === 'super') this.superPunch = false;
+    if (this.powerId === 'rubber' && this.body) this.body.restitution = CFG.restitution;
+    this.powerId = null;
+    this.powerT = 0;
+  }
+
+  has(id) { return this.powerId === id; }
 
   // ------------------------------------------------------------------ update
 
@@ -335,6 +360,17 @@ export class Player {
 
     const A = this.body;
     const W = this.weight(g);
+    // power-ups that act every tick
+    if (this.powerT !== Infinity && this.powerId) {
+      this.powerT -= dt;
+      if (this.powerT <= 0) this.endPower();
+    }
+    const pw = this.has('turbo') ? 1.6 : 1;     // TURBO ARMS: stronger muscles
+    if (this.has('feather')) {
+      // FEATHER: cancel most of gravity on the whole rig
+      const gk = g.engine.gravity.y * g.engine.gravity.scale * 0.62;
+      for (const rb of this.rigBodies) M.Body.applyForce(rb, rb.position, { x: 0, y: -rb.mass * gk });
+    }
     const controls = g.controlsEnabled();
 
     // --- each stick drives its OWN arm (Heave Ho's twin-stick scheme:
@@ -406,6 +442,8 @@ export class Player {
       if (arm.grab) {
         if (arm.grab.body.plugin.hh.removed) { this.releaseArm(arm); continue; }
         if (arm.trig < 0.25) { this.releaseArm(arm); continue; }
+        // a gripping hand that brushes a loose gun swaps the grip for it
+        if (controls && this.tryGun(arm, g)) { this.releaseArm(arm); continue; }
 
         // Matter's constraint solver never rotates anchors on STATIC bodies
         // (it assumes statics don't spin) — but spinners are statics rotated
@@ -504,7 +542,7 @@ export class Player {
           // moving your own body — grabbing a teammate (their body or hand)
           // multiplies the muscle so you can hoist them like a winch.
           const liftGrab = B.plugin.hh.player && B.plugin.hh.player !== this;
-          const gm = CFG.muscleGrab * (liftGrab ? CFG.liftBoost : 1);
+          const gm = CFG.muscleGrab * (liftGrab ? CFG.liftBoost : 1) * pw;
 
           const Ft = gm * W * tanScale * dir
                    - vt * CFG.dampTan * W;
@@ -563,19 +601,29 @@ export class Player {
           const desired = { x: A.position.x + T.x + offX, y: A.position.y + T.y + offY };
           const err = { x: desired.x - hand.position.x, y: desired.y - hand.position.y };
           let F = capMag({
-            x: err.x * (CFG.muscleFree * W / CFG.satDist),
-            y: err.y * (CFG.muscleFree * W / CFG.satDist),
-          }, CFG.muscleFree * W);
+            x: err.x * (CFG.muscleFree * pw * W / CFG.satDist),
+            y: err.y * (CFG.muscleFree * pw * W / CFG.satDist),
+          }, CFG.muscleFree * pw * W);
           F = capMag({
             x: F.x - (hand.velocity.x - A.velocity.x) * CFG.dampFree * W,
             y: F.y - (hand.velocity.y - A.velocity.y) * CFG.dampFree * W,
-          }, CFG.muscleFree * W * 1.3);
+          }, CFG.muscleFree * pw * W * 1.3);
           M.Body.applyForce(hand, hand.position, F);
           M.Body.applyForce(A, A.position, { x: -F.x, y: -F.y });
         }
         // closed hand latches onto anything grabbable it touches
-        if (arm.trig > 0.3 && controls) this.tryLatch(arm, g);
+        // a hand carrying a gun keeps it while the trigger is held, and
+        // never latches onto anything else
+        if (arm.gun) {
+          if (arm.trig < 0.25 || !controls) arm.gun.drop();
+        } else if (arm.trig > 0.3 && controls && !this.tryGun(arm, g)) this.tryLatch(arm, g);
       }
+    }
+
+    // a held gun fires with that hand's bumper: LB = left, RB = right
+    if (controls && ctrl.pressed) {
+      if (ctrl.pressed.lbd && this.arms[0].gun) g.shots.fire(g, this, this.arms[0].gun);
+      if (ctrl.pressed.rbd && this.arms[1].gun) g.shots.fire(g, this, this.arms[1].gun);
     }
 
     // tiny hidden roll assist (Heave Ho-style games are unplayable without a
@@ -606,10 +654,24 @@ export class Player {
     } else this.punchCharge = -1;
   }
 
+  // pick up a loose gun near a closed hand (guns win over latching)
+  tryGun(arm, g) {
+    const guns = g.level.guns || [];
+    const h = arm.hand.position;
+    for (const gun of guns) {
+      if (gun.holder) continue;
+      if (Math.hypot(gun.body.position.x - h.x, gun.body.position.y - h.y) < 36) {
+        gun.pickUp(this, arm);
+        return true;
+      }
+    }
+    return false;
+  }
+
   tryLatch(arm, g) {
     const hand = arm.hand;
     const hx = hand.position.x, hy = hand.position.y;
-    const R = CFG.grabAssist;
+    const R = CFG.grabAssist * (this.has('sticky') ? 2 : 1);   // STICKY GLOVES reach further
     const candidates = g.grabCandidates(this);
     const near = M.Query.region(candidates, {
       min: { x: hx - R - 8, y: hy - R - 8 }, max: { x: hx + R + 8, y: hy + R + 8 },
@@ -651,6 +713,7 @@ export class Player {
     const t = clamp(charge, 0, 1);
     const isSuper = this.superPunch;
     this.superPunch = false;
+    if (this.has('super')) this.endPower();
     this.punchCd = CFG.punchCooldown;
     const aim = move && move.mag > 0.05
       ? { x: move.x / move.mag, y: move.y / move.mag }
@@ -674,6 +737,7 @@ export class Player {
 
     for (const p of g.players) {
       if (p === this || p.state !== 'alive') continue;
+      if (p.has('shield')) continue;                    // bounces off the bubble
       const B = p.body;
       const dx = B.position.x - A.position.x, dy = B.position.y - A.position.y;
       const d = Math.hypot(dx, dy);
@@ -683,7 +747,7 @@ export class Player {
         x: B.velocity.x + dir.x * kick,
         y: B.velocity.y + dir.y * kick - 2,
       });
-      p.releaseAll();                                   // knock their grip loose
+      if (!p.has('sticky')) p.releaseAll();             // knock their grip loose
       if (big) Player.breakGrabsOn(p, g.players);       // and shake off grapplers
       g.particles.burst(B.position.x, B.position.y, '#ffffff', big ? 14 : 8, 200 + 140 * t);
     }
@@ -765,6 +829,7 @@ export class Player {
     if (this.state !== 'alive') return;
     this.state = 'dead';
     this.deaths++;
+    this.endPower();
     this.respawnAt = g.time + CFG.respawnDelay;
     Player.breakGrabsOn(this, g.players);
     g.particles.burst(this.body.position.x, this.body.position.y, this.color.main, 22, 380);
@@ -799,6 +864,7 @@ export class Player {
     const flicker = t < this.protectUntil && Math.floor(t * 14) % 2 === 0;
     ctx.globalAlpha = flicker ? 0.35 : 1;
 
+    drawPowerAura(ctx, this, t);
     for (const arm of this.arms) this.drawArm(ctx, arm);
 
     // gaze follows the stick, else velocity; the face rotates with the body
@@ -811,15 +877,11 @@ export class Player {
     // name tag + super-punch marker (upright, above the body)
     ctx.globalAlpha = flicker ? 0.35 : 0.85;
     ctx.fillStyle = this.color.main;
-    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.font = `bold 13px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.fillText(this.name, A.position.x, A.position.y - CFG.radius - 12);
-    if (this.superPunch) {
-      const bob = Math.sin(t * 6) * 3;
-      ctx.font = '15px system-ui, sans-serif';
-      ctx.fillStyle = '#ffd94d';
-      ctx.fillText('★', A.position.x, A.position.y - CFG.radius - 27 + bob);
-    }
+    ctx.globalAlpha = 1;
+    drawPowerBadge(ctx, this, t);
     // charging punch: a ring closes in and burns brighter as it fills
     if (this.punchCharge >= 0) {
       const c = Math.min(1, this.punchCharge / CFG.punchChargeTime);

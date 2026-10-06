@@ -83,6 +83,7 @@ export const PRACTICE = {
   ],
   ropes: [{ x: 1260, y: 120, len: 460 }],
   balloons: [{ x: 450, y: 740 }],
+  guns: [{ x: 620, y: 820 }],
   texts: [
     { x: 650, y: 480, text: 'GRAB • SWING • FLING', size: 22 },
     { x: 800, y: 250, text: 'WARM UP — PRESS PLAY WHEN READY', size: 26 },
@@ -933,6 +934,113 @@ export const LEVELS = [
       { move: 'mover', x: 1600, y: 800, from: { x: 1600, y: 760 }, halfw: 70 },
       { move: 'ride', x: 1850, y: 800 },
       { move: 'standLatch', x: 1850, y: 668, from: { x: 1850, y: 766 } },
+    ],
+  },
+
+  // ════════════════════════════ BLASTERS ════════════════════════════
+  // Gun boards. Grab a gun with a trigger; that hand's bumper (LB/RB)
+  // fires. The gun keeps the angle it was grabbed at, so aiming is
+  // wobbly. Every shot kicks you back (a movement tool), and a hit knocks
+  // a rival flying and off their holds without killing them.
+  {
+    name: 'RECOIL RAVINE', diff: 'blasters',
+    intro: 'A long way across. Point the gun behind you and fire: recoil carries you over.',
+    w: 1600, h: 900, ...PAL.desert,
+    spawn: { x: 160, y: 560 },
+    goal: { x: 1470, y: 500, r: 46 },
+    solids: [
+      ...walls(1600, 900),
+      S(200, 640, 340, 40),                // start (top 620)
+      S(830, 600, 200, 30),                // rest island (top 585) — 360 past the start
+      S(1445, 580, 230, 40),               // goal ledge (top 560) — 400 past the island
+      S(800, 880, 1520, 40, { deadly: true }),
+    ],
+    guns: [{ x: 100, y: 590 }, { x: 170, y: 590 }, { x: 240, y: 590 }, { x: 310, y: 590 }],
+    checkpoints: [{ x: 830, y: 564 }],
+    texts: [{ x: 800, y: 260, text: 'AIM DOWN & BACK • FIRE WITH LB / RB' }],
+    route: [
+      { move: 'recoil', x: 830, y: 564, from: { x: 340, y: 599 } },
+      { move: 'recoil', x: 1445, y: 539, from: { x: 910, y: 564 } },
+    ],
+  },
+  {
+    name: 'HIGH NOON', diff: 'blasters',
+    intro: 'A shootout climb. Race up either side — and shoot the climbers off the other.',
+    w: 1600, h: 900, ...PAL.sunset,
+    spawn: { x: 800, y: 800 },
+    goal: { x: 800, y: 195, r: 44 },
+    solids: [
+      ...gapWall(20, 900, 250, 820),       // unclimbable side walls
+      ...gapWall(1580, 900, 250, 820),
+      S(800, 880, 1600, 40),               // SAFE floor: being shot down costs time, not a life
+      // left stairs (rises of 120) and the mirror on the right
+      S(260, 740, 200, 30), S(470, 620, 180, 30), S(260, 500, 180, 30), S(470, 380, 180, 30),
+      S(1340, 740, 200, 30), S(1130, 620, 180, 30), S(1340, 500, 180, 30), S(1130, 380, 180, 30),
+      S(600, 300, 70, 24), S(1000, 300, 70, 24),   // last handholds
+      S(800, 260, 200, 30),                // the perch (top 245)
+    ],
+    guns: [{ x: 260, y: 700 }, { x: 1340, y: 700 }, { x: 760, y: 830 }, { x: 840, y: 830 }],
+    route: [
+      { move: 'standLatch', x: 260, y: 755, from: { x: 330, y: 839 } },
+      { move: 'standLatch', x: 470, y: 635, from: { x: 330, y: 704 } },
+      { move: 'standLatch', x: 260, y: 515, from: { x: 400, y: 584 } },
+      { move: 'standLatch', x: 470, y: 395, from: { x: 330, y: 464 } },
+      { move: 'standLatch', x: 600, y: 312, from: { x: 530, y: 344 } },
+      { move: 'hangReach', x: 700, y: 275 },
+    ],
+  },
+  {
+    name: 'POP SHOT', diff: 'blasters',
+    intro: 'Balloon up past the ice. Recoil steers you — and bullets pop balloons.',
+    w: 1000, h: 1400, ...PAL.sky,
+    spawn: { x: 500, y: 1300 },
+    goal: { x: 800, y: 100, r: 44 },
+    solids: [
+      S(20, 700, 40, 1400, { ice: true }),     // slick walls: no climbing out of trouble
+      S(980, 700, 40, 1400, { ice: true }),
+      S(500, 1370, 1000, 60),                  // safe floor
+      S(330, 1000, 600, 40, { ice: true }),    // slick ledges to steer around
+      S(670, 650, 600, 40, { ice: true }),
+      S(330, 330, 600, 40, { ice: true }),
+      S(800, 160, 260, 36),                    // goal shelf (top 142)
+    ],
+    balloons: [{ x: 200, y: 1250 }, { x: 420, y: 1250 }, { x: 640, y: 1250 }, { x: 860, y: 1250 }],
+    guns: [{ x: 320, y: 1320 }, { x: 680, y: 1320 }],
+    route: [
+      { move: 'balloonCatch', x: 860, y: 1250, from: { x: 860, y: 1319 } },
+      { move: 'ride', x: 800, y: 900 },
+      { move: 'recoilSteer', x: 200, y: 600 },
+      { move: 'recoilSteer', x: 800, y: 250 },
+      { move: 'drop', x: 800, y: 121 },
+    ],
+  },
+  {
+    name: 'BLAST CLIMB', diff: 'blasters',
+    intro: 'Every ledge is out of reach. Shoot the floor to hop, then grab on.',
+    w: 1200, h: 1300, ...PAL.storm,
+    spawn: { x: 600, y: 1200 },
+    goal: { x: 850, y: 120, r: 44 },
+    solids: [
+      S(20, 650, 40, 1300, { ice: true }),
+      S(1180, 650, 40, 1300, { ice: true }),
+      S(600, 1270, 1200, 60),              // safe floor (top 1240)
+      S(330, 1075, 220, 30),               // ledges ~180 apart: beyond a normal reach,
+      S(760, 895, 220, 30),                //   inside a recoil hop + reach
+      S(420, 715, 220, 30),
+      S(800, 535, 220, 30),
+      S(400, 355, 220, 30),
+      S(830, 190, 280, 30),                // goal shelf (top 175)
+    ],
+    guns: [{ x: 300, y: 1200 }, { x: 500, y: 1200 }, { x: 700, y: 1200 }, { x: 900, y: 1200 }],
+    checkpoints: [{ x: 420, y: 679 }],
+    texts: [{ x: 600, y: 1150, text: 'AIM DOWN • FIRE • GRAB' }],
+    route: [
+      { move: 'recoilHop', x: 330, y: 1090, from: { x: 330, y: 1219 } },
+      { move: 'recoilHop', x: 760, y: 910, from: { x: 400, y: 1039 } },
+      { move: 'recoilHop', x: 420, y: 730, from: { x: 700, y: 859 } },
+      { move: 'recoilHop', x: 800, y: 550, from: { x: 480, y: 679 } },
+      { move: 'recoilHop', x: 400, y: 370, from: { x: 740, y: 499 } },
+      { move: 'recoilHop', x: 830, y: 205, from: { x: 460, y: 319 } },
     ],
   },
 ];

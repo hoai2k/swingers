@@ -66,6 +66,11 @@ for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'heads', '*.png'))):
 for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'ui', 'icon_*.png'))):
     Image.open(f).convert('RGBA').resize((64, 64), Image.LANCZOS).save(out(os.path.basename(f)), optimize=True)
 
+# power-up icons + effect sprites (round 3)
+for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'ui', 'power_*.png'))
+                + glob.glob(os.path.join(ROOT, 'assets', 'ui', 'fx_*.png'))):
+    Image.open(f).convert('RGBA').resize((128, 128), Image.LANCZOS).save(out(os.path.basename(f)), optimize=True)
+
 Image.open(os.path.join(ROOT, 'assets', 'ui', 'logo.png')).convert('RGBA') \
     .resize((960, 300), Image.LANCZOS).save(out('logo.png'), optimize=True)
 

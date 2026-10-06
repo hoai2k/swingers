@@ -509,3 +509,280 @@ export const ROUNDERS_CAST = [
   "size": 256
  }
 ];
+
+// Gun pickups: Rounders weapons cropped to their ink (w x h px); grip is
+// where the hand holds it, muzzle where shots leave.
+export const ROUNDERS_GUNS = [
+ {
+  "id": "rook",
+  "kind": "sawnoff",
+  "owner": "Rook",
+  "color": "#7d8087",
+  "accent": "#ff7a2e",
+  "w": 256,
+  "h": 182,
+  "grip": {
+   "x": 56.99,
+   "y": 60.82
+  },
+  "muzzle": {
+   "x": 247.43,
+   "y": 55.35
+  }
+ },
+ {
+  "id": "jinx",
+  "kind": "glitchgun",
+  "owner": "Jinx",
+  "color": "#1f2333",
+  "accent": "#29f2ff",
+  "w": 256,
+  "h": 186,
+  "grip": {
+   "x": 56.09,
+   "y": 70.51
+  },
+  "muzzle": {
+   "x": 221.94,
+   "y": 70.97
+  }
+ },
+ {
+  "id": "diesel",
+  "kind": "flamer",
+  "owner": "Diesel",
+  "color": "#4d2e26",
+  "accent": "#ff9e2e",
+  "w": 256,
+  "h": 94,
+  "grip": {
+   "x": 17.19,
+   "y": 49.17
+  },
+  "muzzle": {
+   "x": 246.99,
+   "y": 54.77
+  }
+ },
+ {
+  "id": "havoc",
+  "kind": "launcher",
+  "owner": "Havoc",
+  "color": "#a08a52",
+  "accent": "#ffd23d",
+  "w": 256,
+  "h": 142,
+  "grip": {
+   "x": 36.67,
+   "y": 58.84
+  },
+  "muzzle": {
+   "x": 248.78,
+   "y": 57.19
+  }
+ },
+ {
+  "id": "blitz",
+  "kind": "coilgun",
+  "owner": "Blitz",
+  "color": "#ffd21f",
+  "accent": "#29b6ff",
+  "w": 256,
+  "h": 110,
+  "grip": {
+   "x": 19.5,
+   "y": 43.49
+  },
+  "muzzle": {
+   "x": 245.6,
+   "y": 44.49
+  }
+ },
+ {
+  "id": "riot",
+  "kind": "spraygat",
+  "owner": "Riot",
+  "color": "#1f6e62",
+  "accent": "#ff3df2",
+  "w": 256,
+  "h": 128,
+  "grip": {
+   "x": 28.16,
+   "y": 76.11
+  },
+  "muzzle": {
+   "x": 248.44,
+   "y": 79.3
+  }
+ },
+ {
+  "id": "pip",
+  "kind": "peashooter",
+  "owner": "Pip",
+  "color": "#ff9838",
+  "accent": "#7ed957",
+  "w": 256,
+  "h": 169,
+  "grip": {
+   "x": 45.69,
+   "y": 67.64
+  },
+  "muzzle": {
+   "x": 247.7,
+   "y": 63.91
+  }
+ },
+ {
+  "id": "bolt",
+  "kind": "tesla",
+  "owner": "Bolt",
+  "color": "#3fa8ff",
+  "accent": "#ffe14d",
+  "w": 256,
+  "h": 180,
+  "grip": {
+   "x": 23.96,
+   "y": 63.91
+  },
+  "muzzle": {
+   "x": 244.95,
+   "y": 62.68
+  }
+ },
+ {
+  "id": "mochi",
+  "kind": "bubble",
+  "owner": "Mochi",
+  "color": "#ffa8c8",
+  "accent": "#fff0f6",
+  "w": 256,
+  "h": 217,
+  "grip": {
+   "x": 11.73,
+   "y": 94.04
+  },
+  "muzzle": {
+   "x": 245.63,
+   "y": 89.38
+  }
+ },
+ {
+  "id": "gruff",
+  "kind": "blunderbuss",
+  "owner": "Gruff",
+  "color": "#647d3f",
+  "accent": "#c9a86a",
+  "w": 256,
+  "h": 200,
+  "grip": {
+   "x": 7.09,
+   "y": 94.57
+  },
+  "muzzle": {
+   "x": 236.75,
+   "y": 88.38
+  }
+ },
+ {
+  "id": "nova",
+  "kind": "raygun",
+  "owner": "Nova",
+  "color": "#8a5cf5",
+  "accent": "#ffd9fb",
+  "w": 256,
+  "h": 147,
+  "grip": {
+   "x": 44.16,
+   "y": 65.33
+  },
+  "muzzle": {
+   "x": 244.31,
+   "y": 54.7
+  }
+ },
+ {
+  "id": "fizz",
+  "kind": "spray",
+  "owner": "Fizz",
+  "color": "#8fdc3f",
+  "accent": "#eaffd0",
+  "w": 256,
+  "h": 101,
+  "grip": {
+   "x": 14.08,
+   "y": 34.09
+  },
+  "muzzle": {
+   "x": 244.02,
+   "y": 32.66
+  }
+ },
+ {
+  "id": "ember",
+  "kind": "flare",
+  "owner": "Ember",
+  "color": "#ff5540",
+  "accent": "#ffd166",
+  "w": 256,
+  "h": 236,
+  "grip": {
+   "x": 14.83,
+   "y": 138.02
+  },
+  "muzzle": {
+   "x": 237.4,
+   "y": 135.46
+  }
+ },
+ {
+  "id": "glacia",
+  "kind": "frost",
+  "owner": "Glacia",
+  "color": "#bfe7ff",
+  "accent": "#eaf9ff",
+  "w": 256,
+  "h": 146,
+  "grip": {
+   "x": 16.19,
+   "y": 66.37
+  },
+  "muzzle": {
+   "x": 223.14,
+   "y": 76.81
+  }
+ },
+ {
+  "id": "duke",
+  "kind": "longrifle",
+  "owner": "Duke",
+  "color": "#f2e2b8",
+  "accent": "#caa43c",
+  "w": 256,
+  "h": 139,
+  "grip": {
+   "x": 10.93,
+   "y": 50.71
+  },
+  "muzzle": {
+   "x": 248.66,
+   "y": 48.15
+  }
+ },
+ {
+  "id": "sprocket",
+  "kind": "rivet",
+  "owner": "Sprocket",
+  "color": "#b5642c",
+  "accent": "#ffd98f",
+  "w": 256,
+  "h": 157,
+  "grip": {
+   "x": 11.16,
+   "y": 41.41
+  },
+  "muzzle": {
+   "x": 249.26,
+   "y": 41.12
+  }
+ }
+];

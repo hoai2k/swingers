@@ -1,10 +1,12 @@
 // Input abstraction: every "source" (a gamepad, or the keyboard) produces the
 // same virtual controller state each poll:
-//   { id, l:{x,y,mag}, r:{x,y,mag}, lt, rt, a,b,x,y,start,back,
+//   { id, l:{x,y,mag}, r:{x,y,mag}, lt, rt, lb, rb, a,b,x,y,start,back,
 //     dpad:{up,down,left,right}, pressed:{...edge-triggered booleans} }
 //
 // Gamepads use the standard mapping (Xbox layout). Bumpers also count as
-// grabs for controllers with mushy triggers.
+// grabs for controllers with mushy triggers; they're ALSO reported on their
+// own (lb/rb, edges lbd/rbd) because a hand holding a gun fires with its
+// bumper.
 
 const DEADZONE = 0.22;
 
@@ -15,7 +17,7 @@ function readStick(x, y) {
   return { x: (x / m) * n, y: (y / m) * n, mag: n };
 }
 
-const EDGE_KEYS = ['a', 'b', 'x', 'y', 'start', 'back', 'du', 'dd', 'dl', 'dr', 'ltd', 'rtd'];
+const EDGE_KEYS = ['a', 'b', 'x', 'y', 'start', 'back', 'du', 'dd', 'dl', 'dr', 'ltd', 'rtd', 'lbd', 'rbd'];
 
 export class Input {
   constructor() {
@@ -49,6 +51,7 @@ export class Input {
       l, r,
       lt: k('ShiftLeft') || k('KeyQ') ? 1 : 0,
       rt: k('ShiftRight') || k('KeyE') ? 1 : 0,
+      lb: k('KeyZ'), rb: k('KeyV'),            // bumpers: fire a held gun
       a: k('Enter'), b: k('Space'), x: k('KeyX'), y: k('KeyC'),
       start: k('Escape') || k('KeyP'), back: k('Backspace'),
       dpad: { up: k('Digit3'), down: k('Digit4'), left: k('Digit1'), right: k('Digit2') },
@@ -64,6 +67,7 @@ export class Input {
       r: readStick(pad.axes[2] || 0, pad.axes[3] || 0),
       lt: Math.max(val(6), btn(4) ? 1 : 0),
       rt: Math.max(val(7), btn(5) ? 1 : 0),
+      lb: btn(4), rb: btn(5),
       a: btn(0), b: btn(1), x: btn(2), y: btn(3),
       start: btn(9), back: btn(8),
       dpad: { up: btn(12), down: btn(13), left: btn(14), right: btn(15) },
@@ -93,7 +97,7 @@ export class Input {
       const raw = {
         a: s.a, b: s.b, x: s.x, y: s.y, start: s.start, back: s.back,
         du: s.dpad.up, dd: s.dpad.down, dl: s.dpad.left, dr: s.dpad.right,
-        ltd: s.lt > 0.5, rtd: s.rt > 0.5,
+        ltd: s.lt > 0.5, rtd: s.rt > 0.5, lbd: !!s.lb, rbd: !!s.rb,
       };
       const prev = this.prev.get(s.id) || {};
       s.pressed = {};
@@ -115,7 +119,7 @@ export class Input {
 export const NEUTRAL = {
   id: 'none', kind: 'none',
   l: { x: 0, y: 0, mag: 0 }, r: { x: 0, y: 0, mag: 0 },
-  lt: 0, rt: 0, a: false, b: false, x: false, y: false, start: false, back: false,
+  lt: 0, rt: 0, lb: false, rb: false, a: false, b: false, x: false, y: false, start: false, back: false,
   dpad: { up: false, down: false, left: false, right: false },
-  pressed: { a: false, b: false, x: false, y: false, start: false, back: false, du: false, dd: false, dl: false, dr: false, ltd: false, rtd: false },
+  pressed: { a: false, b: false, x: false, y: false, start: false, back: false, du: false, dd: false, dl: false, dr: false, ltd: false, rtd: false, lbd: false, rbd: false },
 };

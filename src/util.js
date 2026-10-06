@@ -36,3 +36,7 @@ export function hash01(i, j) {
   const s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453;
   return s - Math.floor(s);
 }
+
+// The UI typeface: Fredoka (rounded, matches the logo), loaded in index.html
+// from Google Fonts, with system fallbacks if it can't load.
+export const FONT = "'Fredoka', 'Trebuchet MS', system-ui, sans-serif";

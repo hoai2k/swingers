@@ -28,8 +28,10 @@ climbing tower). Pick a mode from the dropdown next to PLAY (or press **Y**):
 **VS** (first to the goal wins the round) or **CO-OP** (the round is only won
 when *everyone* reaches the goal — the team gets congratulated and the team
 clock stops when the last robot gets in). Hit **PLAY** (or START) to open the
-board list: **30 boards, 10 each of Easy / Medium / Hard**, organized in
-columns — browse with stick/dpad, pick with A, or just click one. Races
+board picker: **34 boards in four tabs: Easy, Medium and Hard (10 each) plus
+BLASTERS (4 gun boards)**. Switch tabs with LB / RB. Each board is a card
+showing its backdrop, a mini-map of its layout, its mechanics and your best
+time. Browse with the stick or dpad, pick with A, or just click one. Races
 return to the board list; session scores persist, and best times are kept
 **separately per mode** for every board.
 
@@ -42,9 +44,27 @@ Onyx, Blitz). Arms are cosmetic: everyone has the same reach and grip. Hands
 are always **blue = left, red = right**, and a thin ring in your player color
 sits behind your character.
 
+**Guns** (the BLASTERS boards, plus one in the playground): grab a gun with a
+trigger and fire it with that hand's bumper. The guns are the Rounders
+arsenal, and they all play the same. A gun stays at whatever angle you grabbed
+it, so aiming is wobbly on purpose. Every shot kicks you back hard: fire down
+to hop, or fire behind you to rocket across a gap. Recoil never breaks your
+own grip. A hit knocks a rival flying and shakes loose every grip they had,
+but doesn't kill them; the fall might.
+
+**Power-ups** appear at random on every board (at most 2 at a time; up to 4
+on Frequent). Touch one to take it; a new one replaces the old.
+**Super Punch** (your next punch is a huge blast), **Feather** (light
+gravity), **Bubble Shield** (shots and punches bounce off, and touching
+spikes pops the bubble instead of you), **Sticky Gloves** (grab from twice as
+far; nothing shakes your grip), **Rubber Ball** (you bounce off everything),
+**Turbo Arms** (much stronger swings and flings). Settings → Power-ups:
+Off / Normal / Frequent.
+
 **Settings** (gear button, top right; **X** in the lobby and board list, **Y**
 in the pause menu): sound on/off, music on/off, sound effects on/off, and
-**Original Swingers** (default off), which adds the 8 original robot heads
+**Power-ups** (Off / Normal / Frequent) and **Original Swingers** (default
+off), which adds the 8 original robot heads
 back into the character picker. Settings are remembered in the browser.
 
 **Sound:** the speaker button (or **M**) switches all sound. Music follows the
@@ -62,12 +82,14 @@ the window loses focus, and a race in progress pauses itself.
 | **Right stick** | right arm — each stick drives only its own arm |
 | **LT / LB (hold)** | close left hand — latches onto anything it touches |
 | **RT / RB (hold)** | close right hand |
+| **LB / RB** | fire the gun in that hand (left / right). Grab a gun with the trigger; the bumper on the same side shoots |
 | **B** | punch (fires on release) — tap for a quick shove, **hold ~1s to charge** a huge blast; always shakes off anyone holding you |
 | **START** | pause — the pause menu has clickable **RESUME / RESTART / QUIT** buttons, or use **A**/**START** resume, **X** restart, **B**/**BACK** quit to the menu |
 
 Keyboard (for testing / a 5th friend): **WASD** + **Arrows** = sticks,
 **LShift/Q** + **RShift/E** = grabs, **Space** = punch/B, **Enter** = A,
 **Esc/P** = START, **X** = X, **Backspace** = BACK, **C** = Y (mode),
+**Z** / **V** = LB / RB (fire a held gun),
 **1/2** = pick a character. In the pause menu, **Backspace** (or **Space**)
 quits to the menu, **X** restarts. Dev keys: **R** restart board,
 **N** skip board. **M** sound on/off, **X** settings in the lobby.

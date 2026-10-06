@@ -7,7 +7,7 @@ const BASE = 'assets/web/';
 export const THEMES = ['meadow', 'cave', 'sunset', 'jungle', 'factory', 'sky', 'volcano',
   'night', 'candy', 'frost', 'desert', 'storm'];
 export const HEADS = ['happy', 'visor', 'grump', 'wink', 'shades', 'screen', 'antenna', 'cyclops'];
-export const ICONS = ['rope', 'wheel', 'balloon', 'lift', 'bounce', 'ice', 'crumble', 'wind'];
+export const ICONS = ['rope', 'wheel', 'balloon', 'lift', 'bounce', 'ice', 'crumble', 'wind', 'gun'];
 
 const images = new Map();
 
@@ -31,6 +31,9 @@ load('logo', 'logo.png');
 load('keyart', 'keyart.jpg');
 // title screen (see image-requests.md: Title screen)
 load('title-bg', 'title_bg.jpg');
+// power-up icons (image-requests.md round 3)
+for (const id of ['super', 'feather', 'shield', 'sticky', 'rubber', 'turbo']) load('power:' + id, `power_${id}.png`);
+for (const id of ['feather', 'goo', 'spark']) load('fx:' + id, `fx_${id}.png`);
 load('logo-arch', 'logo_arch.png');
 
 export function art(key) {
