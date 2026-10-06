@@ -215,8 +215,13 @@ export class Game {
     this.particles.clear();
     this.shots.clear();
     const s = this.level.spawn;
+    // line the robots up around the spawn, nudged clear of the side walls
+    const gap = 36, n = this.players.length;   // 4 robots fit the narrowest start ledge (Razor Run)
+    let x0 = s.x - ((n - 1) / 2) * gap;
+    x0 = Math.max(x0, 66);
+    x0 = Math.min(x0, this.level.w - 66 - (n - 1) * gap);
     this.players.forEach((p, i) => {
-      p.spawn(this.engine, s.x + (i - (this.players.length - 1) / 2) * 46, s.y);
+      p.spawn(this.engine, x0 + i * gap, s.y);
     });
     this.state = 'countdown';
     this.cd = 3.0;
@@ -690,9 +695,13 @@ export class Game {
     this.level.drawBackground(ctx, cw, ch);
 
     // world transform (letterboxed fit) + screenshake
-    const scale = Math.min(cw / this.level.w, ch / this.level.h);
+    // Tall boards (narrower than the screen) are height-limited: keep a strip
+    // at the top for the HUD so goals up there aren't hidden under it.
+    const tall = this.level.w / this.level.h < cw / ch && this.state !== 'lobby';
+    const top = tall ? 50 : 0;
+    const scale = Math.min(cw / this.level.w, (ch - top) / this.level.h);
     const ox = (cw - this.level.w * scale) / 2;
-    const oy = (ch - this.level.h * scale) / 2;
+    const oy = top + (ch - top - this.level.h * scale) / 2;
     ctx.save();
     if (this.shake > 0.5) {
       ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
@@ -936,6 +945,16 @@ export class Game {
   drawHud(ctx, cw, ch) {
     const lv = LEVELS[this.levelIndex];
     const diff = DIFFS.find((d) => d.key === lv.diff);
+    // a soft plate under the board name so it reads on bright backdrops
+    // (sky, snow) as well as dark ones
+    const bestT0 = this.best[this.mode][lv.name];
+    ctx.font = `900 21px ${FONT}`;
+    const plateW = Math.max(150, ctx.measureText(lv.name).width + 28);
+    roundRectPath(ctx, 6, 6, plateW, bestT0 !== undefined ? 72 : 54, 12);
+    ctx.fillStyle = 'rgba(10,12,24,0.5)';
+    ctx.fill();
+    roundRectPath(ctx, cw / 2 - 44, 8, 88, 36, 12);
+    ctx.fill();
     ctx.textAlign = 'left';
     ctx.fillStyle = diff ? diff.color : 'rgba(255,255,255,0.55)';
     ctx.font = `bold 15px ${FONT}`;
@@ -984,15 +1003,20 @@ export class Game {
   }
 
   drawLobbyOverlay(ctx, cw, ch) {
-    // title: the logo when it's loaded, else plain text
+    // title: the arched logo (same as the title screen), else plain text.
+    // The arch is tall, so the player slots sit just under it.
     ctx.textAlign = 'center';
-    const logo = art('logo');
+    const logo = art('logo-arch') || art('logo');
+    let cy0 = 104;
     if (logo) {
-      const lh = Math.min(84, ch * 0.12), lw = lh * (logo.width / logo.height);
-      ctx.drawImage(logo, cw / 2 - lw / 2, 2, lw, lh);
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = `bold 13px ${FONT}`;
-      ctx.fillText('a ROUNDERS spinoff', cw / 2, lh + 12);
+      const lh = Math.min(150, ch * 0.21), lw = lh * (logo.width / logo.height);
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 6;
+      ctx.drawImage(logo, cw / 2 - lw / 2, 0, lw, lh);
+      ctx.restore();
+      cy0 = Math.round(lh + 4);
     } else {
       ctx.fillStyle = '#ffd94d';
       ctx.font = `900 ${Math.min(64, cw * 0.06)}px ${FONT}`;
@@ -1003,7 +1027,7 @@ export class Game {
     }
 
     // slot chips: character portrait, name, and their Rounders title
-    const chipW = Math.min(210, cw / 4 - 20), chipH = 52, cy0 = 104;
+    const chipW = Math.min(210, cw / 4 - 20), chipH = 52;
     const total = chipW * 4 + 12 * 3;
     let x = cw / 2 - total / 2;
     for (let i = 0; i < 4; i++) {
@@ -1476,9 +1500,6 @@ export class Game {
       ctx.fillStyle = this.winner.color.main;
       ctx.font = `900 54px ${FONT}`;
       ctx.fillText(`${headStyle(this.winner.headStyle).name.toUpperCase()} WINS!`, 0, 16);
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = `bold 18px ${FONT}`;
-      ctx.fillText(this.winner.name, 0, 44);
       ctx.restore();
     } else {
       ctx.fillStyle = '#ffd94d';
@@ -1487,7 +1508,7 @@ export class Game {
     }
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
     ctx.font = `bold 18px ${FONT}`;
-    ctx.fillText(LEVELS[this.levelIndex].name, cw / 2, ch * 0.2 + 30);
+    ctx.fillText((this.winner ? `${this.winner.name}  ·  ` : '') + LEVELS[this.levelIndex].name, cw / 2, ch * 0.2 + 30);
 
     const rows = this.roundResults || [];
     const y0 = ch * 0.32, rh = 52;

@@ -86,7 +86,7 @@ export const PRACTICE = {
   guns: [{ x: 620, y: 820 }],
   texts: [
     { x: 650, y: 480, text: 'GRAB • SWING • FLING', size: 22 },
-    { x: 800, y: 250, text: 'WARM UP — PRESS PLAY WHEN READY', size: 26 },
+    { x: 800, y: 310, text: 'WARM UP — PRESS PLAY WHEN READY', size: 26 },
   ],
 };
 

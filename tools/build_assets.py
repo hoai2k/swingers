@@ -74,6 +74,19 @@ for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'ui', 'power_*.png'))
 Image.open(os.path.join(ROOT, 'assets', 'ui', 'logo.png')).convert('RGBA') \
     .resize((960, 300), Image.LANCZOS).save(out('logo.png'), optimize=True)
 
+# level objects (round 4): keep aspect, long side at most 512
+for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'ui', 'obj_*.png'))):
+    im = Image.open(f).convert('RGBA')
+    k = 512 / max(im.size)
+    if k < 1:
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+    im.save(out(os.path.basename(f)), optimize=True)
+
+# favicon: Pip, the cheerful Rounders rookie
+fav = os.path.join(ROOT, 'assets', 'characters', 'pip.png')
+if os.path.exists(fav):
+    Image.open(fav).convert('RGBA').resize((64, 64), Image.LANCZOS).save(out('favicon.png'), optimize=True)
+
 # title screen art (optional until delivered)
 tb = os.path.join(ROOT, 'assets', 'ui', 'title-bg.png')
 if os.path.exists(tb):

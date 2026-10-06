@@ -34,6 +34,8 @@ load('title-bg', 'title_bg.jpg');
 // power-up icons (image-requests.md round 3)
 for (const id of ['super', 'feather', 'shield', 'sticky', 'rubber', 'turbo']) load('power:' + id, `power_${id}.png`);
 for (const id of ['feather', 'goo', 'spark']) load('fx:' + id, `fx_${id}.png`);
+// level objects (image-requests round 4)
+for (const id of ['goal', 'checkpoint', 'bounce', 'vent', 'spinner']) load('obj:' + id, `obj_${id}.png`);
 load('logo-arch', 'logo_arch.png');
 
 export function art(key) {

@@ -35,6 +35,25 @@ import { clamp, lerp, TAU, hash01, roundRectPath, FONT } from './util.js';
 import { CAT } from './player.js';
 import { sfx } from './audio.js';
 import { art, pattern } from './art.js';
+
+// white sprite -> player-colored copy (cached), for claimed checkpoint flags
+const tintCache = new Map();
+function tintedSprite(img, key, color) {
+  const k = key + color;
+  let c = tintCache.get(k);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0);
+  x.globalCompositeOperation = 'multiply';
+  x.fillStyle = color;
+  x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'destination-in';
+  x.drawImage(img, 0, 0);
+  tintCache.set(k, c);
+  return c;
+}
 import { Gun, GUN_IDS } from './guns.js';
 import { PowerSpawner } from './powerups.js';
 
@@ -511,6 +530,7 @@ export class Level {
       else if (s.crumble) this.drawCrumble(ctx, s);
       else this.drawPlatform(ctx, s.body, s.w, s.h, s.color || this.def.plat, null, s.slick);
     }
+    this.drawVents(ctx);
     for (const d of this.debris) {
       ctx.save();
       ctx.globalAlpha = Math.min(1, d.life * 2);
@@ -526,8 +546,19 @@ export class Level {
     }
 
     // spinners
+    const bar = art('obj:spinner');
     for (const s of this.spinners) {
       const b = s.body;
+      if (bar) {
+        // generated spinner bar, stretched along the arm, hub on top
+        ctx.save();
+        ctx.translate(b.position.x, b.position.y);
+        ctx.rotate(b.angle);
+        const h = s.thick * 2.2;
+        ctx.drawImage(bar, -s.len / 2 - 6, -h / 2, s.len + 12, h);
+        ctx.restore();
+        continue;
+      }
       ctx.save();
       ctx.translate(b.position.x, b.position.y);
       ctx.rotate(b.angle);
@@ -604,6 +635,10 @@ export class Level {
     ctx.save();
     ctx.translate(body.position.x, body.position.y);
     ctx.rotate(body.angle);
+    // soft drop shadow: lifts platforms off busy or bright backdrops
+    roundRectPath(ctx, -w / 2 + 3, -h / 2 + 5, w, h, Math.min(8, h / 3));
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fill();
     roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
     ctx.fillStyle = color;
     ctx.fill();
@@ -639,7 +674,7 @@ export class Level {
       // the sheen loop replaced the current path — rebuild the outline
       roundRectPath(ctx, -w / 2, -h / 2, w, h, Math.min(8, h / 3));
     }
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 3;
     ctx.stroke();
     // top highlight (grabbable surfaces only — the gloss reads as grip)
@@ -668,6 +703,14 @@ export class Level {
     ctx.save();
     ctx.translate(b.position.x, b.position.y);
     ctx.rotate(b.angle);
+    const pad = art('obj:bounce');
+    if (pad) {
+      // generated trampoline, bottom on the pad's base, squashing on a bounce
+      const w = s.w + 14, h = (s.h + 26) * (1 - sq * 0.25);
+      ctx.drawImage(pad, -w / 2, s.h / 2 - h, w, h);
+      ctx.restore();
+      return;
+    }
     // base block
     roundRectPath(ctx, -s.w / 2, -s.h / 2 + 6, s.w, s.h - 6, 6);
     ctx.fillStyle = '#2b2f3c';
@@ -758,6 +801,18 @@ export class Level {
     ctx.restore();
   }
 
+  // updrafts blow out of a vent at the bottom of their column (drawn after
+  // the solids, so it sits on top of whatever floor is down there)
+  drawVents(ctx) {
+    const vent = art('obj:vent');
+    if (!vent) return;
+    for (const w of this.winds) {
+      if (w.fy > -0.8) continue;
+      const vw = w.w + 20, vh = vw * (vent.height / vent.width);
+      ctx.drawImage(vent, w.x - vw / 2, w.y + w.h / 2 - vh - 6, vw, vh);
+    }
+  }
+
   drawWind(ctx, w) {
     const x0 = w.x - w.w / 2, y0 = w.y - w.h / 2;
     const m = Math.hypot(w.fx, w.fy) || 1;
@@ -794,6 +849,17 @@ export class Level {
 
   drawCheckpoint(ctx, c) {
     const baseY = c.y + 21;            // checkpoints are placed at standing height
+    const flag = art('obj:checkpoint');
+    if (flag) {
+      // generated flag (white cloth), tinted to whoever claimed it last
+      const h = 74, w = h * (flag.width / flag.height);
+      const img = c.color ? tintedSprite(flag, 'checkpoint', c.color) : flag;
+      ctx.save();
+      ctx.globalAlpha = c.color ? 1 : 0.75;
+      ctx.drawImage(img, c.x - w * 0.25, baseY - h, w, h);
+      ctx.restore();
+      return;
+    }
     ctx.strokeStyle = '#d8dce8';
     ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(c.x, baseY); ctx.lineTo(c.x, baseY - 64); ctx.stroke();
@@ -909,6 +975,21 @@ export class Level {
   drawGoal(ctx) {
     const g = this.goal;
     const pulse = 1 + Math.sin(this.time * 3) * 0.06;
+    const portal = art('obj:goal');
+    if (portal) {
+      // generated goal portal (image-requests round 4), slowly breathing
+      const d = g.r * 2.9 * pulse;
+      ctx.save();
+      ctx.translate(g.x, g.y);
+      ctx.rotate(Math.sin(this.time * 0.8) * 0.04);
+      ctx.drawImage(portal, -d / 2, -d / 2, d, d);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.font = `bold 15px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('GOAL', g.x, g.y - d / 2 - 6);
+      return;
+    }
     // beam
     const grad = ctx.createLinearGradient(0, g.y - 130, 0, g.y + g.r);
     grad.addColorStop(0, 'rgba(255,255,255,0)');
