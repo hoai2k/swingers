@@ -595,6 +595,37 @@
       "transparent": true,
       "seamlessX": false,
       "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 256 x 512. Primary request: A short climbing-flag pole: dark iron pole with a carabiner clipped near the top and a coil of rope at the base, and a plain white triangular pennant flying to the right. Only the cloth is plain pure white for recoloring; everything else is dark metal. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, filling the frame nearly edge to edge, tall 1:2 composition, no cropping. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor."
+    },
+    {
+      "path": "assets/ui/obj_bounce.png",
+      "size": [
+        512,
+        192
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 512 x 192. Primary request: A side-view trampoline: a thick bouncy pink-and-white striped mat on top, two big coiled steel springs underneath, and a chunky dark base. Fill the full width. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, extremely wide 512:192 composition, filling nearly the entire width and height with no cropping. Side view, horizontal bottom base sits flush with bottom edge. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor.",
+      "editPrompt": "Use case: background-extraction. Edit only the background of this trampoline sprite: remove the dark purple/blue background everywhere, including the open area between the two springs, inside the spring coils and above and below the object. Make those pixels genuinely fully transparent, not dark or semi-opaque. Keep the pink-and-white mat, two metal springs and chunky dark metal base unchanged, with crisp clean edges. Preserve wide 8:3 framing, complete object and glossy cartoon style. No floor or shadow beyond the object."
+    },
+    {
+      "path": "assets/ui/obj_vent.png",
+      "size": [
+        512,
+        160
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 512 x 160. Primary request: A side-view industrial floor vent: a chunky metal grate box with angled slats, a dark interior with a faint cyan glow, and wisps of wind curling up out of the top. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, extremely wide 512:160 composition, filling nearly the entire width and height with no cropping. Side view, horizontal bottom base sits flush with bottom edge. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor."
+    },
+    {
+      "path": "assets/ui/obj_spinner.png",
+      "size": [
+        1024,
+        96
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 1024 x 96. Primary request: A long horizontal windmill or clock-hand bar: a riveted brass-and-wood beam with rounded, glowing teal caps on both ends and a heavy round iron hub in the exact center. Fill the full width. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, extremely wide 1024:96 composition, filling nearly the entire width and height with no cropping. The bar is horizontal, straight, symmetrically balanced around the central round hub. Fit all artwork within a very shallow horizontal strip; no perspective angle. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor."
     }
   ]
 }
