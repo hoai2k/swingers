@@ -504,6 +504,36 @@
       "transparent": true,
       "seamlessX": false,
       "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/power_sticky.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/power_rubber.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/power_turbo.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A flexed orange robot arm crackling with an orange lightning bolt and sparks. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
     }
   ]
 }

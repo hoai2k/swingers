@@ -1,6 +1,6 @@
 # Image requests
 
-**Status: round 2 title art delivered and integrated (checked in-game: title screen); round 3 power-ups and blasters has 3 of 10 delivered and integrated (super, feather, shield; checked in-game as pickups and badges) and 7 open requests.** The original 45 images are delivered and integrated,
+**Status: round 2 title art delivered and integrated (checked in-game: title screen); round 3 power-ups and blasters has 6 of 10 delivered and 4 open requests.** Super, Feather, and Shield have also been checked in-game as pickups and badges. The original 45 images are delivered and integrated,
 and none need regenerating. Delivered originals and web copies are committed
 together; exact prompts are recorded in `assets/generation.json`.
 
@@ -25,9 +25,9 @@ frame, transparent background, no text.
 | `assets/ui/power_super.png` | 256 × 256 | A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. | Delivered |
 | `assets/ui/power_feather.png` | 256 × 256 | A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. | Delivered |
 | `assets/ui/power_shield.png` | 256 × 256 | A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. | Delivered |
-| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. | Open |
-| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. | Open |
-| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. | Open |
+| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. | Delivered |
+| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. | Delivered |
+| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. | Delivered |
 | `assets/ui/icon_gun.png` | 128 × 128 | White line icon of a chunky toy blaster with a soft drop shadow, matching the other `icon_*.png` board icons. | Open |
 | `assets/ui/fx_feather.png` | 128 × 128 | One small white feather on its own, pointing up and to the right, clean silhouette. Drawn several times falling around a robot with Feather. | Open |
 | `assets/ui/fx_goo.png` | 128 × 128 | A round blob of glossy green goo with a couple of drips. Drawn on the hands of a robot with Sticky Gloves. | Open |
