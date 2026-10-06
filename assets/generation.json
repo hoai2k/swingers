@@ -534,6 +534,47 @@
       "transparent": true,
       "seamlessX": false,
       "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A flexed orange robot arm crackling with an orange lightning bolt and sparks. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/icon_gun.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 128 x 128 transparent PNG game icon/effect sprite for SWINGERS. White line icon of a chunky toy blaster with a soft drop shadow, matching the other SWINGERS mechanic board icons. Monochrome white lines only. Clean thick white line icon with rounded strokes, soft dark drop shadow. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only.",
+      "reference": "assets/ui/icon_wheel.png"
+    },
+    {
+      "path": "assets/ui/fx_feather.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 128 x 128 transparent PNG game icon/effect sprite for SWINGERS. One small white feather on its own, pointing up and to the right, clean silhouette. Used several times falling around a robot with Feather. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/fx_goo.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 128 x 128 transparent PNG game icon/effect sprite for SWINGERS. A round blob of glossy green goo with a couple of drips. Used on the hands of a robot with Sticky Gloves. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/fx_spark.png",
+      "size": [
+        128,
+        128
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 128 x 128 transparent PNG game icon/effect sprite for SWINGERS. A small orange-yellow electric spark burst. Used flickering on arms of a robot with Turbo Arms. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
     }
   ]
 }
