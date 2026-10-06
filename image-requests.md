@@ -1,8 +1,9 @@
 # Image requests
 
-**Status: all 57 images delivered, including both title-screen images and all 10 power-up and blaster images.** Super, Feather, and Shield have also been checked in-game as pickups and badges. The original 45 images are delivered and integrated,
-and none need regenerating. Delivered originals and web copies are committed
-together; exact prompts are recorded in `assets/generation.json`.
+**Status: everything requested so far is delivered and integrated — the
+original 45, round 2 (title art) and round 3 (all 10 power-up / blaster
+images, checked in-game: pickups, player badges, auras, board cards).
+No open requests.** Exact prompts are recorded in `assets/generation.json`.
 
 ## DELIVERED round 3: Power-ups and blasters (10 images)
 

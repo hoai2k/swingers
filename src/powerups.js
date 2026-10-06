@@ -206,7 +206,7 @@ export function drawPowerAura(ctx, p, time, fxBubble = BUBBLE) {
       const x = A.x + Math.sin(time * 2 + i * 2) * 18;
       const y = A.y + 10 + u * 34;
       ctx.globalAlpha = 0.6 * (1 - u);
-      if (fimg) { ctx.drawImage(fimg, x - 8, y - 8, 16, 16); continue; }
+      if (fimg) { ctx.drawImage(fimg, x - 12, y - 12, 24, 24); continue; }
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(x - 4, y + 4); ctx.quadraticCurveTo(x, y - 2, x + 5, y - 5); ctx.stroke();
@@ -215,7 +215,7 @@ export function drawPowerAura(ctx, p, time, fxBubble = BUBBLE) {
     const img = art(id === 'sticky' ? 'fx:goo' : 'fx:spark');
     for (const a of p.arms) {
       const h = a.hand.position;
-      const d = id === 'sticky' ? 20 : 18 + Math.sin(time * 30 + a.side) * 4;
+      const d = id === 'sticky' ? 26 : 26 + Math.sin(time * 30 + a.side) * 5;
       ctx.globalAlpha = id === 'turbo' ? 0.6 + Math.random() * 0.4 : 0.9;
       ctx.drawImage(img, h.x - d / 2, h.y - d / 2, d, d);
     }
@@ -247,7 +247,7 @@ export function drawPowerBadge(ctx, p, time) {
   if (!p.powerId) return;
   const A = p.body.position;
   ctx.save();
-  ctx.translate(A.x, A.y - 52);
+  ctx.translate(A.x, A.y - 64);   // above the name tag
   drawPowerIcon(ctx, p.powerId, 11, time);
   if (p.powerT !== Infinity) {
     const f = Math.max(0, p.powerT / POWERS[p.powerId].dur);
