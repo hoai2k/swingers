@@ -1,9 +1,9 @@
 # Image requests
 
-**Status: two open rounds — round 2, the title screen (2 images), and
-round 3, power-ups and blasters (10 images).** The original 45 images are
-delivered and integrated, and none need regenerating. Every open image
-already has a working stand-in in the game, so nothing is blocked.
+**Status: round 2 title art delivered; round 3 power-ups and blasters
+has 10 open requests.** The original 45 images are delivered and integrated,
+and none need regenerating. Delivered originals and web copies are committed
+together; exact prompts are recorded in `assets/generation.json`.
 
 ## OPEN round 3: Power-ups and blasters (10 images)
 
@@ -39,7 +39,7 @@ imported), so it needs no new art. After adding these, run
 `python3 tools/build_assets.py` and they replace the stand-ins
 automatically.
 
-## OPEN round 2: Title screen (2 images)
+## DELIVERED round 2: Title screen (2 images)
 
 The game now boots on a Rounders-style title screen: dark vignette, a big
 arched logo that slowly "looms", a small line above it, a tagline and a

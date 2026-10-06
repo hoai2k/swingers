@@ -452,6 +452,28 @@
       "seamlessX": false,
       "prompt": "Use case: stylized-concept. Asset type: 2400 x1350 opaque PNG lobby / board-select key art for SWINGERS. Four round robot heads/body spheres (red #ff5d6c, blue #4da3ff, gold #ffd94d, green #5fe08b) with large expressive faces, no torso or legs, and each exactly two long noodly segmented mechanical arms with claw hands. Grabbing each other, swinging from ropes and spinning bars over a spike pit, one flung through air, joyful chaos. Bright clean 2D flat cel-shaded shapes with soft gradients and gentle rim light, toy-box style. Dark navy background with warm spotlight. Action in bottom two thirds, top third open for title overlay. No text, letters, logos or UI.",
       "editPrompt": "Edit target: referenced SWINGERS key art. Change only the green robot in upper right: remove its LOWER RIGHT arm and claw (the arm projecting right at face-mouth height), replace that arm's area with matching dark navy background. Preserve its upper right arm and its left arm so it has exactly TWO arms, one on each side. Keep green spherical body/face identical, all three other robots, their poses, scenery, spike pit, ropes, bars, colors, composition and lighting unchanged. No new elements. Output opaque PNG 2400 x1350."
+    },
+    {
+      "path": "assets/ui/logo-arch.png",
+      "size": [
+        1680,
+        900
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "reference": "assets/reference/rounders-logo-arch.png",
+      "prompt": "Use case: logo-brand. Reference image: supplied Rounders arched logo, STYLE REFERENCE ONLY, create a distinct climbing-spinoff logo. Asset type: 1680 x 900 PNG with actual transparent background. Exact wordmark \"SWINGERS\", spelled S W I N G E R S. Match reference finish and energy: heavy beveled letters with thick dark outline, bright rim-lit edges, gentle upward arch, big burst of objects fanning out behind word. Replace ALL guns and blades with climbing and adventure gear: coiled ropes, grappling hooks, carabiners, monkey-bar ladder, spinning bar, jungle vines with leaves, ice-crystal shards, glowing lava-rock chunk, balloon, trampoline spring, small mountain peaks with goal flag on top. Loop rope through G. Rim-light palette sunrise gold #ffd94d, sky blue #4da3ff, leaf green #5fe08b, deep purple shadows. Centered complete silhouette with small safe margins, readable bold lettering across foreground. No characters, guns, weapons, blades, extra words or checkerboard. Transparent outside objects and lettering."
+    },
+    {
+      "path": "assets/ui/title-bg.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "transparent": false,
+      "seamlessX": false,
+      "reference": "assets/reference/rounders-menu-bg.jpg",
+      "prompt": "Use case: stylized-concept. Reference image: supplied Rounders floating-world dusk backdrop, STYLE REFERENCE ONLY. Asset type: 1920 x 1080 16:9 opaque PNG title-screen backdrop for climbing spinoff SWINGERS. Match dreamy rich floating worlds at dusk, polished painted 3D-like fantasy illustration, cinematic depth of field and luminous rim lighting, but build a VERTICAL CLIMBING WORLD. Cluster of tall floating rock spires and sky islands rising into clouds, each a Swingers theme: lava volcano spire, frozen peak dripping icicles, jungle tower wrapped in vines, candy cliff with frosting, clockwork tower of gears, desert ruin arch. Hanging ropes, rope bridges, monkey bars and spinning bars link them; a few balloons drift upward; tiny goal flag on highest peak. Warm sunrise glow on horizon, deep indigo sky at top. Center 60 percent must be SOFT, DARKER AND LOW DETAIL for huge logo overlay; place detailed spires and islands along outer thirds and bottom. Far left and right edges remain simple for foreground characters swinging on ropes. No characters, text, logo, UI, guns or blades."
     }
   ]
 }
