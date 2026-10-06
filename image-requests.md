@@ -5,7 +5,7 @@ Everything earlier is delivered and integrated: the original 45, round 2
 (title art) and round 3 (power-ups and blasters). Exact prompts are recorded
 in `assets/generation.json`.
 
-## OPEN round 4: Level objects (5 images)
+## IN PROGRESS round 4: Level objects (5 images)
 
 After the art review, these are the last frequently seen objects that are
 still flat procedural shapes next to the painted backdrops and textured
@@ -18,13 +18,13 @@ and the Rounders art. Transparent background, no text, no characters. The
 subject should fill the frame edge to edge, because the game stretches
 each one to fit the object's size.
 
-| File | Size | How the game uses it | Prompt |
-| --- | --- | --- | --- |
-| `assets/ui/obj_goal.png` | 512 × 512 | The finish line on every board, drawn about 130 px across and gently pulsing. A "GOAL" label is drawn above it. | A round finish portal seen face-on: a glowing golden ring made of twisted rope and brass fittings, a swirling bright sky-blue vortex inside, a small checkered pennant flag sticking up from the top of the ring, sparkles around it. |
-| `assets/ui/obj_checkpoint.png` | 256 × 512 (tall) | A checkpoint flag on long boards, about 74 px tall. The game tints the cloth to the color of whoever touched it last, so the cloth must be **plain white**. | A short climbing-flag pole: dark iron pole with a carabiner clipped near the top and a coil of rope at the base, and a plain **white** triangular pennant flying to the right. Only the cloth is white; everything else is dark metal. |
-| `assets/ui/obj_bounce.png` | 512 × 192 (wide) | A trampoline pad, stretched to each pad's width (120–150 px) and squashed when someone bounces. The bottom edge sits on the floor. | A side-view trampoline: a thick bouncy pink-and-white striped mat on top, two big coiled steel springs underneath, and a chunky dark base. Fill the full width. |
-| `assets/ui/obj_vent.png` | 512 × 160 (wide) | The vent at the bottom of an updraft column, sitting on the floor (about 180 px wide on Updraft). | A side-view industrial floor vent: a chunky metal grate box with angled slats, a dark interior with a faint cyan glow, and wisps of wind curling up out of the top. |
-| `assets/ui/obj_spinner.png` | 1024 × 96 (very wide) | The spinning bars robots ride (Spin Cycle, Clock Tower, Windmill Pass...), stretched along a 280–300 px bar about 48 px thick. | A long horizontal windmill or clock-hand bar: a riveted brass-and-wood beam with rounded, glowing teal caps on both ends and a heavy round iron hub in the exact center. Fill the full width. |
+| File | Size | How the game uses it | Prompt | Status |
+| --- | --- | --- | --- | --- |
+| `assets/ui/obj_goal.png` | 512 × 512 | The finish line on every board, drawn about 130 px across and gently pulsing. A "GOAL" label is drawn above it. | A round finish portal seen face-on: a glowing golden ring made of twisted rope and brass fittings, a swirling bright sky-blue vortex inside, a small checkered pennant flag sticking up from the top of the ring, sparkles around it. | Delivered |
+| `assets/ui/obj_checkpoint.png` | 256 × 512 (tall) | A checkpoint flag on long boards, about 74 px tall. The game tints the cloth to the color of whoever touched it last, so the cloth must be **plain white**. | A short climbing-flag pole: dark iron pole with a carabiner clipped near the top and a coil of rope at the base, and a plain **white** triangular pennant flying to the right. Only the cloth is white; everything else is dark metal. | Delivered |
+| `assets/ui/obj_bounce.png` | 512 × 192 (wide) | A trampoline pad, stretched to each pad's width (120–150 px) and squashed when someone bounces. The bottom edge sits on the floor. | A side-view trampoline: a thick bouncy pink-and-white striped mat on top, two big coiled steel springs underneath, and a chunky dark base. Fill the full width. | Pending |
+| `assets/ui/obj_vent.png` | 512 × 160 (wide) | The vent at the bottom of an updraft column, sitting on the floor (about 180 px wide on Updraft). | A side-view industrial floor vent: a chunky metal grate box with angled slats, a dark interior with a faint cyan glow, and wisps of wind curling up out of the top. | Pending |
+| `assets/ui/obj_spinner.png` | 1024 × 96 (very wide) | The spinning bars robots ride (Spin Cycle, Clock Tower, Windmill Pass...), stretched along a 280–300 px bar about 48 px thick. | A long horizontal windmill or clock-hand bar: a riveted brass-and-wood beam with rounded, glowing teal caps on both ends and a heavy round iron hub in the exact center. Fill the full width. | Pending |
 
 ## DELIVERED round 3: Power-ups and blasters (10 images)
 

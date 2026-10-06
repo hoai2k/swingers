@@ -575,6 +575,26 @@
       "transparent": true,
       "seamlessX": false,
       "prompt": "Use case: stylized-concept. Asset type: 128 x 128 transparent PNG game icon/effect sprite for SWINGERS. A small orange-yellow electric spark burst. Used flickering on arms of a robot with Turbo Arms. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/obj_goal.png",
+      "size": [
+        512,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 512 x 512. Primary request: A round finish portal seen face-on: a glowing golden ring made of twisted rope and brass fittings, a swirling bright sky-blue vortex inside, a small checkered pennant flag sticking up from the top of the ring, sparkles around it. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, filling the frame nearly edge to edge, square composition, no cropping. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor."
+    },
+    {
+      "path": "assets/ui/obj_checkpoint.png",
+      "size": [
+        256,
+        512
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: SWINGERS level-object sprite, transparent PNG 256 x 512. Primary request: A short climbing-flag pole: dark iron pole with a carabiner clipped near the top and a coil of rope at the base, and a plain white triangular pennant flying to the right. Only the cloth is plain pure white for recoloring; everything else is dark metal. Style: glossy clean cartoon game art, bold dark outlines, soft cel shading and gentle rim light, readable at small sizes. Composition: single complete object centered, filling the frame nearly edge to edge, tall 1:2 composition, no cropping. Constraints: genuinely transparent background, no text, letters, logos, watermark or characters. No scenery or floor."
     }
   ]
 }
