@@ -1,6 +1,6 @@
 # Image requests
 
-**Status: round 2 title art delivered; round 3 power-ups and blasters has 3 of 10 delivered and 7 open requests.** The original 45 images are delivered and integrated,
+**Status: round 2 title art delivered and integrated (checked in-game: title screen); round 3 power-ups and blasters has 3 of 10 delivered and integrated (super, feather, shield; checked in-game as pickups and badges) and 7 open requests.** The original 45 images are delivered and integrated,
 and none need regenerating. Delivered originals and web copies are committed
 together; exact prompts are recorded in `assets/generation.json`.
 

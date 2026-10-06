@@ -1145,7 +1145,7 @@ export class Game {
       ctx.restore();
     };
     const logo = art('logo-arch') || art('logo');
-    const lw = Math.min(980, cw * 0.72);
+    const lw = Math.min(900, cw * 0.64);
     const lh = logo ? lw * (logo.height / logo.width) : 140;
     const blockH = 30 + lh + 50 + 70;
     let y = Math.max(40, ch * 0.47 - blockH / 2);
