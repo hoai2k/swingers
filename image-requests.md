@@ -1,11 +1,10 @@
 # Image requests
 
-**Status: round 2 title art delivered; round 3 power-ups and blasters
-has 10 open requests.** The original 45 images are delivered and integrated,
+**Status: round 2 title art delivered; round 3 power-ups and blasters has 3 of 10 delivered and 7 open requests.** The original 45 images are delivered and integrated,
 and none need regenerating. Delivered originals and web copies are committed
 together; exact prompts are recorded in `assets/generation.json`.
 
-## OPEN round 3: Power-ups and blasters (10 images)
+## IN PROGRESS round 3: Power-ups and blasters (10 images)
 
 Two new features shipped with procedural stand-ins:
 
@@ -21,18 +20,18 @@ Style: the same glossy, bold-outlined cartoon look as the Rounders art and
 the board icons you made last round. Centered, filling about 80% of the
 frame, transparent background, no text.
 
-| File | Size | Prompt |
-| --- | --- | --- |
-| `assets/ui/power_super.png` | 256 × 256 | A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. |
-| `assets/ui/power_feather.png` | 256 × 256 | A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. |
-| `assets/ui/power_shield.png` | 256 × 256 | A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. |
-| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. |
-| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. |
-| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. |
-| `assets/ui/icon_gun.png` | 128 × 128 | White line icon of a chunky toy blaster with a soft drop shadow, matching the other `icon_*.png` board icons. |
-| `assets/ui/fx_feather.png` | 128 × 128 | One small white feather on its own, pointing up and to the right, clean silhouette. Drawn several times falling around a robot with Feather. |
-| `assets/ui/fx_goo.png` | 128 × 128 | A round blob of glossy green goo with a couple of drips. Drawn on the hands of a robot with Sticky Gloves. |
-| `assets/ui/fx_spark.png` | 128 × 128 | A small orange-yellow electric spark burst. Drawn flickering on the arms of a robot with Turbo Arms. |
+| File | Size | Prompt | Status |
+| --- | --- | --- | --- |
+| `assets/ui/power_super.png` | 256 × 256 | A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. | Delivered |
+| `assets/ui/power_feather.png` | 256 × 256 | A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. | Delivered |
+| `assets/ui/power_shield.png` | 256 × 256 | A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. | Delivered |
+| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. | Open |
+| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. | Open |
+| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. | Open |
+| `assets/ui/icon_gun.png` | 128 × 128 | White line icon of a chunky toy blaster with a soft drop shadow, matching the other `icon_*.png` board icons. | Open |
+| `assets/ui/fx_feather.png` | 128 × 128 | One small white feather on its own, pointing up and to the right, clean silhouette. Drawn several times falling around a robot with Feather. | Open |
+| `assets/ui/fx_goo.png` | 128 × 128 | A round blob of glossy green goo with a couple of drips. Drawn on the hands of a robot with Sticky Gloves. | Open |
+| `assets/ui/fx_spark.png` | 128 × 128 | A small orange-yellow electric spark burst. Drawn flickering on the arms of a robot with Turbo Arms. | Open |
 
 The Bubble Shield uses the Rounders `shield-bubble` effect (already
 imported), so it needs no new art. After adding these, run

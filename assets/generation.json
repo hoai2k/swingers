@@ -474,6 +474,36 @@
       "seamlessX": false,
       "reference": "assets/reference/rounders-menu-bg.jpg",
       "prompt": "Use case: stylized-concept. Reference image: supplied Rounders floating-world dusk backdrop, STYLE REFERENCE ONLY. Asset type: 1920 x 1080 16:9 opaque PNG title-screen backdrop for climbing spinoff SWINGERS. Match dreamy rich floating worlds at dusk, polished painted 3D-like fantasy illustration, cinematic depth of field and luminous rim lighting, but build a VERTICAL CLIMBING WORLD. Cluster of tall floating rock spires and sky islands rising into clouds, each a Swingers theme: lava volcano spire, frozen peak dripping icicles, jungle tower wrapped in vines, candy cliff with frosting, clockwork tower of gears, desert ruin arch. Hanging ropes, rope bridges, monkey bars and spinning bars link them; a few balloons drift upward; tiny goal flag on highest peak. Warm sunrise glow on horizon, deep indigo sky at top. Center 60 percent must be SOFT, DARKER AND LOW DETAIL for huge logo overlay; place detailed spires and islands along outer thirds and bottom. Far left and right edges remain simple for foreground characters swinging on ropes. No characters, text, logo, UI, guns or blades."
+    },
+    {
+      "path": "assets/ui/power_super.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/power_feather.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
+    },
+    {
+      "path": "assets/ui/power_shield.png",
+      "size": [
+        256,
+        256
+      ],
+      "transparent": true,
+      "seamlessX": false,
+      "prompt": "Use case: stylized-concept. Asset type: 256 x 256 transparent PNG power-up symbol for SWINGERS. A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. Glossy bold dark-outlined cartoon game art matching polished Rounders art, saturated clean colors, strong readable shapes, gentle highlights. Centered, entire silhouette visible, fills about 80% of frame, readable at small gameplay size. Actual transparent background, no checkerboard, no text, no UI, no surrounding badge or ring; game renders its own pickup ring. Single subject only."
     }
   ]
 }
