@@ -28,7 +28,7 @@
 // loads; it only engages beyond full arm extension.
 
 import { clamp, lerp, angDiff, TAU } from './util.js';
-import { drawHead } from './heads.js';
+import { drawHead, headStyle } from './heads.js';
 import { sfx } from './audio.js';
 
 const M = window.Matter;
@@ -376,7 +376,11 @@ export class Player {
     this.arms[0].trig = controls ? ctrl.lt : 0;
     this.arms[1].trig = controls ? ctrl.rt : 0;
     const move = controls ? (srcL || srcR) : null;
-    if (move && Math.abs(move.x) > 0.3) this.face = Math.sign(move.x);
+    // Facing follows where the player is pointing (both sticks blended),
+    // relative to the robot: push left and a Rounders character turns left.
+    // Only a clear sideways push flips it, so it doesn't flicker.
+    const focus = controls ? (steer || move) : null;
+    if (focus && Math.abs(focus.x) > 0.3) this.face = Math.sign(focus.x);
 
     for (const arm of this.arms) {
       // gripping arms steer by the stick BLEND; free arms aim with their own
@@ -802,7 +806,7 @@ export class Player {
     let look;
     if (move) look = { x: move.x, y: move.y };
     else look = { x: clamp(A.velocity.x / 12, -1, 1), y: clamp(A.velocity.y / 12, -1, 1) };
-    drawHead(ctx, A.position.x, A.position.y, CFG.radius, this.color, this.headStyle, look, A.angle);
+    drawHead(ctx, A.position.x, A.position.y, CFG.radius, this.color, this.headStyle, look, A.angle, this.face);
 
     // name tag + super-punch marker (upright, above the body)
     ctx.globalAlpha = flicker ? 0.35 : 0.85;
@@ -832,6 +836,11 @@ export class Player {
 
   drawArm(ctx, arm) {
     ctx.lineCap = 'round';
+    // Rounders characters dress the same physical arm in their own style
+    const style = headStyle(this.headStyle);
+    const cast = style.cast;
+    if (cast && style.arm !== 'robot') { this.drawSoftArm(ctx, arm, cast, style.arm); return; }
+    const tint = cast ? { o: cast.dark, i: cast.color, bolt: cast.accent } : null;
 
     // segmented metal chain, drawn from each segment's real physics transform
     const joints = [this.shoulderWorld(arm)];
@@ -842,10 +851,10 @@ export class Player {
       const a = { x: seg.position.x - c * hl, y: seg.position.y - s * hl };
       const b = { x: seg.position.x + c * hl, y: seg.position.y + s * hl };
       const w = 11 - i * 0.8;
-      ctx.strokeStyle = arm.side < 0 ? '#4e5568' : '#565d70';
+      ctx.strokeStyle = tint ? tint.o : arm.side < 0 ? '#4e5568' : '#565d70';
       ctx.lineWidth = w;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      ctx.strokeStyle = arm.side < 0 ? '#8e97ad' : '#9aa3ba';
+      ctx.strokeStyle = tint ? tint.i : arm.side < 0 ? '#8e97ad' : '#9aa3ba';
       ctx.lineWidth = w - 5;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       joints.push(b);
@@ -856,7 +865,7 @@ export class Player {
       const r = i === 0 ? 6 : 4.5 - i * 0.3;
       ctx.fillStyle = '#3c4252';
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#b8c0d4';
+      ctx.fillStyle = tint ? tint.bolt : '#b8c0d4';
       ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.4, 0, TAU); ctx.fill();
     }
     // shoulder accent in player color
@@ -905,5 +914,50 @@ export class Player {
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  // Noodle and wisp arms for Rounders characters: a smooth curve through the
+  // real physics joints. Hands keep the left = blue / right = red coding.
+  drawSoftArm(ctx, arm, cast, kind) {
+    const pts = [this.shoulderWorld(arm)];
+    for (const seg of arm.segs) {
+      const c = Math.cos(seg.angle), s = Math.sin(seg.angle), hl = CFG.segLen / 2;
+      pts.push({ x: seg.position.x + c * hl, y: seg.position.y + s * hl });
+    }
+    const h = arm.hand.position;
+    pts.push(h);
+    const path = () => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx.lineTo(h.x, h.y);
+    };
+    const handC = arm.side < 0 ? '#3d8bff' : '#ff4d54';
+    const closed = !!arm.grab || arm.trig > 0.3;
+    if (kind === 'wisp') {
+      // ghostly ribbon: a translucent sleeve around a glowing accent core
+      ctx.save();
+      ctx.shadowColor = cast.accent;
+      ctx.shadowBlur = 12;
+      ctx.globalAlpha *= 0.55;
+      ctx.strokeStyle = cast.color; ctx.lineWidth = 12; path(); ctx.stroke();
+      ctx.globalAlpha /= 0.55;
+      ctx.strokeStyle = cast.accent; ctx.lineWidth = 4; path(); ctx.stroke();
+      ctx.fillStyle = handC; ctx.shadowColor = handC; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(h.x, h.y, closed ? 6 : 8, 0, TAU); ctx.fill();
+      ctx.restore();
+      return;
+    }
+    // rubber hose in the character's colors, with mitten hands
+    ctx.strokeStyle = '#16121f'; ctx.lineWidth = 13; path(); ctx.stroke();
+    ctx.strokeStyle = cast.dark; ctx.lineWidth = 10; path(); ctx.stroke();
+    ctx.strokeStyle = cast.color; ctx.lineWidth = 6; path(); ctx.stroke();
+    ctx.fillStyle = handC; ctx.strokeStyle = '#16121f'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(h.x, h.y, closed ? 7 : 9, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath(); ctx.arc(h.x - 2.5, h.y - 2.5, 2.5, 0, TAU); ctx.fill();
   }
 }

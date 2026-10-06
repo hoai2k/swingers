@@ -1,17 +1,19 @@
 // Tiny procedural sound effects (WebAudio). No assets needed.
 // Browsers require a user gesture before audio can start; game calls
-// sfx.ensure() from input handlers. M toggles mute.
+// sfx.ensure() from input handlers. Sound settings (game.js) switch it with
+// setEnabled; it's suspended while the tab is hidden or unfocused.
 
 class Sfx {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.away = false;
     this.master = null;
   }
 
   ensure() {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      if (this.ctx.state === 'suspended' && !this.away) this.ctx.resume().catch(() => {});
       return;
     }
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -24,13 +26,18 @@ class Sfx {
     } catch (e) { /* audio unavailable, play silent */ }
   }
 
-  toggleMute() {
-    this.muted = !this.muted;
-    return this.muted;
+  setEnabled(on) { this.muted = !on; }
+
+  // tab hidden / window unfocused: stop the audio clock entirely
+  setAway(away) {
+    this.away = away;
+    if (!this.ctx) return;
+    if (away && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
+    else if (!away && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
   }
 
   tone(freq, dur = 0.1, { type = 'square', vol = 0.12, slide = 0, delay = 0 } = {}) {
-    if (!this.ctx || this.muted) return;
+    if (!this.ctx || this.muted || this.away) return;
     const t0 = this.ctx.currentTime + delay;
     const osc = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -45,7 +52,7 @@ class Sfx {
   }
 
   noise(dur = 0.2, vol = 0.15, delay = 0) {
-    if (!this.ctx || this.muted) return;
+    if (!this.ctx || this.muted || this.away) return;
     const t0 = this.ctx.currentTime + delay;
     const len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
     const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);

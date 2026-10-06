@@ -1,22 +1,31 @@
-// Head rendering. For now heads are solid circles with simple placeholder
-// faces. When real head sprites arrive, drop the PNGs in assets/heads/ and
-// call registerSpriteHead('assets/heads/mine.png') below (or from main.js) —
-// sprite heads are drawn centered and scaled to the body diameter, and show
-// up in the lobby picker automatically.
+// The roster and head rendering.
+//
+// Swingers is a Rounders spinoff: the playable cast is the 24 Rounders
+// characters (assets/characters/, sized by src/characters-data.js — both
+// imported by tools/import_rounders.mjs). The 8 original Swingers robot
+// heads come back when Settings → Original Swingers is on.
+//
+// HEAD_STYLES is the live picker list (rebuilt in place by rebuildRoster);
+// players and lobby slots hold an index into it.
 
 import { clamp, TAU } from './util.js';
 import { art, HEADS } from './art.js';
+import { ROUNDERS_CAST } from './characters-data.js';
+import { settings } from './settings.js';
 
 export const HEAD_STYLES = [];
 
+const PROC = [];          // procedural placeholder faces (fallbacks)
+const EXTRA = [];         // registerSpriteHead() additions
 function face(name, draw) {
-  HEAD_STYLES.push({ name, draw });
+  PROC.push({ name, draw });
 }
 
 export function registerSpriteHead(src, name = 'sprite') {
   const img = new Image();
   img.src = src;
-  HEAD_STYLES.push({ name, img });
+  EXTRA.push({ name, img, original: true });
+  rebuildRoster();
 }
 
 // --- placeholder faces (drawn on top of the solid circle) -------------------
@@ -97,17 +106,54 @@ face('shades', (ctx, r, look) => {
   ctx.beginPath(); ctx.moveTo(-r * 0.2, r * 0.42); ctx.lineTo(r * 0.25, r * 0.38); ctx.stroke();
 });
 
-// The generated heads (assets/heads, see image-requests.md) are the real
-// roster. Each keeps a procedural face as its fallback while the sprite
-// loads (or if it's missing).
-{
-  const proc = new Map(HEAD_STYLES.map((h) => [h.name, h]));
+// Arm look per Rounders character (same physics for all of them):
+// robot = segmented metal tinted to the character, wisp = a glowing
+// ribbon, everyone else = a rubber-hose noodle.
+const ARM_STYLE = {
+  robot: ['rook', 'diesel', 'havoc', 'sprocket', 'duke', 'onyx', 'blitz'],
+  wisp: ['wraith', 'nyx', 'jinx', 'nova', 'shade', 'vex'],
+};
+
+const CAST = ROUNDERS_CAST.map((c) => {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = `assets/characters/${c.id}.png`;
+  const arm = Object.keys(ARM_STYLE).find((k) => ARM_STYLE[k].includes(c.id)) || 'noodle';
+  return { name: c.name, cast: c, arm, img };
+});
+
+// The original Swingers robots: generated heads (assets/heads), each with a
+// procedural face as its fallback while the sprite loads.
+const ORIGINALS = (() => {
+  const proc = new Map(PROC.map((h) => [h.name, h]));
   const fallback = { screen: 'visor', antenna: 'dot', cyclops: 'dot' };
-  HEAD_STYLES.length = 0;
-  for (const name of HEADS) {
+  return HEADS.map((name) => {
     const f = proc.get(name) || proc.get(fallback[name]);
-    HEAD_STYLES.push({ name, art: 'head:' + name, draw: f.draw });
-  }
+    return { name: name[0].toUpperCase() + name.slice(1), art: 'head:' + name, draw: f.draw, original: true };
+  });
+})();
+
+export function rebuildRoster() {
+  HEAD_STYLES.length = 0;
+  HEAD_STYLES.push(...CAST);
+  if (settings.originalSwingers) HEAD_STYLES.push(...ORIGINALS, ...EXTRA);
+}
+rebuildRoster();
+
+export function styleIndexByName(name) {
+  return HEAD_STYLES.findIndex((h) => h.name === name);
+}
+
+// Opening picks: a character in each player's own color.
+const DEFAULT_PICKS = ['Ember', 'Bolt', 'Blitz', 'Fizz'];
+export function defaultStyleFor(slot) {
+  const i = styleIndexByName(DEFAULT_PICKS[slot % DEFAULT_PICKS.length]);
+  return i >= 0 ? i : slot % HEAD_STYLES.length;
+}
+
+export function headStyle(i) {
+  const n = HEAD_STYLES.length;
+  return HEAD_STYLES[((i % n) + n) % n];
 }
 
 // Sprites are white robots; tint each one to the player's color once and
@@ -137,12 +183,47 @@ function tintedHead(img, key, color) {
   return c;
 }
 
-// Draw a full head (solid circle body + face or sprite). `rot` is the body's
-// physics angle — the face rotates with the ball, Heave Ho style.
-export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 }, rot = 0) {
-  const style = HEAD_STYLES[((styleIndex % HEAD_STYLES.length) + HEAD_STYLES.length) % HEAD_STYLES.length];
+// Draw a Rounders body exactly as Rounders sizes it: the fitted ball
+// (pivot/radius) maps onto the physics circle, then the /workbench
+// bodyScale / bodyOffset / bodyRotation apply on top. Rounders characters
+// have a front: they stay upright (a little rocking as the ball rolls) and
+// mirror to face `facing`.
+function drawCastBody(ctx, r, style, color, rot, facing) {
+  const c = style.cast;
+  // a thin ring in the PLAYER's color behind the art, so two players on
+  // similar-colored characters can still tell themselves apart
+  ctx.strokeStyle = color.main;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha *= 0.9;
+  ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, TAU); ctx.stroke();
+  ctx.globalAlpha /= 0.9;
+  ctx.rotate(Math.sin(rot) * 0.22);
+  ctx.scale(facing < 0 ? -1 : 1, 1);
+  if (!(style.img.complete && style.img.naturalWidth)) {
+    ctx.fillStyle = c.color;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = c.dark; ctx.lineWidth = r * 0.14; ctx.stroke();
+    return;
+  }
+  ctx.translate(c.bodyOffset.x * r, c.bodyOffset.y * r);
+  if (c.bodyRotation) ctx.rotate((c.bodyRotation * Math.PI) / 180);
+  const k = (r / c.radius) * c.bodyScale;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(style.img, -c.pivot.x * k, -c.pivot.y * k, c.size * k, c.size * k);
+}
+
+// Draw a full head. `rot` is the body's physics angle: original Swingers
+// faces roll with the ball, Heave Ho style; Rounders characters stay upright
+// and face `facing` (+1 right, -1 left).
+export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 }, rot = 0, facing = 1) {
+  const style = headStyle(styleIndex);
   ctx.save();
   ctx.translate(x, y);
+  if (style.cast) {
+    drawCastBody(ctx, r, style, color, rot, facing);
+    ctx.restore();
+    return;
+  }
   ctx.rotate(rot);
   const sprite = style.art ? art(style.art) : null;
   if (sprite) {

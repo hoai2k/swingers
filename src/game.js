@@ -8,7 +8,9 @@
 
 import { Input, NEUTRAL } from './input.js';
 import { Player, PLAYER_COLORS, CFG, CAT } from './player.js';
-import { HEAD_STYLES, drawHead } from './heads.js';
+import { HEAD_STYLES, drawHead, headStyle, rebuildRoster, defaultStyleFor, styleIndexByName } from './heads.js';
+import { Music, DUCK } from './music.js';
+import { settings, setSetting, onSettingsChange } from './settings.js';
 import { Level } from './level.js';
 import { LEVELS, PRACTICE } from './levels.js';
 import { Particles } from './particles.js';
@@ -75,6 +77,26 @@ export class Game {
     this.selMoveAt = 0;
     this.selRects = [];
 
+    // sound: music + sfx follow the settings, and go quiet while the tab is
+    // hidden or the window loses focus (a race in progress pauses too)
+    this.music = new Music();
+    this.applySound();
+    this.settingsOpen = false;
+    this.setSel = 0;
+    onSettingsChange((key) => {
+      if (key === 'sound' || key === 'music' || key === 'sfx') this.applySound();
+      if (key === 'originalSwingers') this.refreshRoster();
+    });
+    const focusChanged = () => {
+      const away = document.hidden || !document.hasFocus();
+      this.music.setAway(away);
+      sfx.setAway(away);
+      if (away && this.state === 'play') this.state = 'pause';
+    };
+    document.addEventListener('visibilitychange', focusChanged);
+    window.addEventListener('blur', focusChanged);
+    window.addEventListener('focus', focusChanged);
+
     // clickable on-screen buttons, rebuilt every frame
     this.buttons = [];
     canvas.addEventListener('pointerdown', (e) => {
@@ -83,6 +105,9 @@ export class Game {
         if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) {
           if (b.id === 'pause') this.togglePause();
           else if (b.id === 'fs') this.toggleFullscreen();
+          else if (b.id === 'sound') this.toggleSound();
+          else if (b.id === 'settings' || b.id === 'p_settings') this.toggleSettings();
+          else if (b.id.startsWith('set:')) this.activateSetting(b.id.slice(4));
           else if (b.id === 'play') this.openSelect();
           else if (b.id === 'back') this.backToLobby();
           else if (b.id === 'p_resume') this.togglePause();
@@ -108,10 +133,11 @@ export class Game {
     });
 
     // audio unlock needs a real user gesture; pointer works for pad-only setups
-    window.addEventListener('pointerdown', () => sfx.ensure());
+    window.addEventListener('pointerdown', () => { sfx.ensure(); this.music.unlock(); });
     window.addEventListener('keydown', (e) => {
       sfx.ensure();
-      if (e.code === 'KeyM') sfx.toggleMute();
+      this.music.unlock();
+      if (e.code === 'KeyM') this.toggleSound();
       if (e.code === 'KeyF') this.toggleFullscreen();
       if (this.state === 'play' || this.state === 'pause') {
         if (e.code === 'KeyN') this.skipLevel();        // debug: next board
@@ -140,6 +166,7 @@ export class Game {
       p.spawn(this.engine, PRACTICE.spawn.x + i * 50, PRACTICE.spawn.y);
     });
     this.state = 'lobby';
+    this.music.menu();
   }
 
   backToLobby() {
@@ -169,6 +196,7 @@ export class Game {
     this.engine.gravity.y = 1.18;   // punchy Heave Ho pace; muscle forces are
                                     // specified in body-weights so they scale
     this.level = new Level(LEVELS[this.levelIndex], this.engine);
+    this.music.race(this.level.def.theme);
     this.particles.clear();
     const s = this.level.spawn;
     this.players.forEach((p, i) => {
@@ -243,6 +271,76 @@ export class Game {
     }
   }
 
+  // ---- sound + settings
+
+  applySound() {
+    sfx.setEnabled(settings.sound && settings.sfx);
+    this.music.setEnabled(settings.sound && settings.music);
+  }
+
+  toggleSound() {
+    setSetting('sound', !settings.sound);
+    sfx.ensure();
+    sfx.uiTick();
+  }
+
+  // The settings panel. Rows: [key, label, hint]
+  settingRows() {
+    return [
+      ['sound', 'SOUND', 'everything on / off (M, or the speaker button)'],
+      ['music', 'MUSIC', 'the Rounders soundtrack'],
+      ['sfx', 'SOUND EFFECTS', 'grabs, punches, boings'],
+      ['originalSwingers', 'ORIGINAL SWINGERS', 'add the 8 original robot heads to the character picker'],
+    ];
+  }
+
+  toggleSettings() {
+    if (!this.settingsOpen && this.state === 'play') this.state = 'pause';
+    this.settingsOpen = !this.settingsOpen;
+    this.setSel = 0;
+    sfx.uiTick();
+  }
+
+  activateSetting(key) {
+    if (key === 'close') { this.toggleSettings(); return; }
+    setSetting(key, !settings[key]);
+    sfx.uiTick();
+  }
+
+  // Original Swingers changed: rebuild the picker list, keeping everyone's
+  // pick when it still exists (and a fresh default when it doesn't).
+  refreshRoster() {
+    const names = this.roster.map((r) => (r ? headStyle(r.headStyle).name : null));
+    rebuildRoster();
+    this.roster.forEach((r, slot) => {
+      if (!r) return;
+      const i = styleIndexByName(names[slot]);
+      r.headStyle = i >= 0 ? i : defaultStyleFor(slot);
+      const p = this.players.find((q) => q.slot === slot);
+      if (p) p.headStyle = r.headStyle;
+    });
+  }
+
+  settingsStep(states) {
+    const rows = this.settingRows();
+    for (const s of states) {
+      if (!this.isJoined(s.id)) continue;
+      if (s.pressed.du) { this.setSel = (this.setSel + rows.length) % (rows.length + 1); sfx.uiTick(); }
+      if (s.pressed.dd) { this.setSel = (this.setSel + 1) % (rows.length + 1); sfx.uiTick(); }
+      if (s.pressed.a) this.activateSetting(this.setSel < rows.length ? rows[this.setSel][0] : 'close');
+      else if (s.pressed.b || s.pressed.back || s.pressed.start || s.pressed.y) this.toggleSettings();
+      if (!this.settingsOpen) return;
+    }
+  }
+
+  // how loud the music sits for what's on screen
+  musicDuck() {
+    if (this.settingsOpen || this.state === 'pause') return DUCK.paused;
+    if (this.state === 'roundEnd') return DUCK.roundEnd;
+    if (this.state === 'select' && this.music.context === 'session') return DUCK.menu;
+    return DUCK.none;
+  }
+
   controlsEnabled() { return this.state === 'play' || this.state === 'lobby'; }
 
   addShake(n) { this.shake = Math.min(20, this.shake + n); }
@@ -267,8 +365,9 @@ export class Game {
   // Register a new controller as a player in the given roster slot and spawn
   // its robot at (x, y). Shared by the lobby and by mid-game join.
   addPlayer(sourceId, slot, x, y) {
-    this.roster[slot] = { sourceId, headStyle: slot % HEAD_STYLES.length };
-    const p = new Player(slot, sourceId, slot % HEAD_STYLES.length);
+    const pick = defaultStyleFor(slot);
+    this.roster[slot] = { sourceId, headStyle: pick };
+    const p = new Player(slot, sourceId, pick);
     p.spawn(this.engine, x, y);
     this.players.push(p);
     this.players.sort((a, b) => a.slot - b.slot);
@@ -292,6 +391,15 @@ export class Game {
     this.time += dt;
     const states = this.input.poll();
     if (this.input.anyActivity) sfx.ensure();
+    const duck = this.musicDuck();
+    if (duck !== this.music.duck) this.music.setDuck(duck);
+
+    if (this.settingsOpen) {
+      this.settingsStep(states);
+      // the playground keeps simmering behind the panel; races stay paused
+      if (this.state === 'lobby') this.physicsStep(dt);
+      return;
+    }
 
     switch (this.state) {
       case 'lobby': this.lobbyStep(states, dt); break;
@@ -331,6 +439,7 @@ export class Game {
           if (!this.isJoined(s.id)) continue;
           // resume: START (toggle) or A (confirm the default action)
           if (s.pressed.start || s.pressed.a) this.togglePause();
+          else if (s.pressed.y) { this.toggleSettings(); break; }
           else if (s.pressed.x) this.startLevel();          // restart board
           // quit to the lobby: B (universal cancel) or BACK/View
           else if (s.pressed.b || s.pressed.back) this.backToLobby();
@@ -377,6 +486,7 @@ export class Game {
         if (s.pressed.dr) { slot.headStyle = (slot.headStyle + 1) % HEAD_STYLES.length; sfx.uiTick(); }
         if (player) player.headStyle = slot.headStyle;
         if (s.pressed.y) { this.mode = this.mode === 'vs' ? 'coop' : 'vs'; sfx.uiTick(); }
+        if (s.pressed.x) { this.toggleSettings(); return; }
         if (s.pressed.start) { this.openSelect(); return; }
       }
     }
@@ -411,6 +521,7 @@ export class Game {
         return;
       }
       if (s.pressed.b || s.pressed.back) { this.backToLobby(); return; }
+      if (s.pressed.x) { this.toggleSettings(); return; }
     }
   }
 
@@ -545,6 +656,41 @@ export class Game {
         ctx.stroke();
       }
     });
+    x -= s + gap;
+    drawBtn(x, 'sound', (cx, cy) => {
+      // speaker, with sound waves when on and a cross when off
+      ctx.beginPath();
+      ctx.moveTo(cx - 9, cy - 4); ctx.lineTo(cx - 5, cy - 4); ctx.lineTo(cx, cy - 9);
+      ctx.lineTo(cx, cy + 9); ctx.lineTo(cx - 5, cy + 4); ctx.lineTo(cx - 9, cy + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      if (settings.sound) {
+        for (const r of [5, 9]) {
+          ctx.beginPath(); ctx.arc(cx + 1, cy, r, -0.8, 0.8); ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = '#ff6b78';
+        ctx.beginPath(); ctx.moveTo(cx + 4, cy - 5); ctx.lineTo(cx + 10, cy + 5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + 10, cy - 5); ctx.lineTo(cx + 4, cy + 5); ctx.stroke();
+      }
+    });
+    x -= s + gap;
+    drawBtn(x, 'settings', (cx, cy) => {
+      // gear
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6);
+        ctx.lineTo(cx + Math.cos(a) * 9.5, cy + Math.sin(a) * 9.5);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx, cy, 5.5, 0, TAU); ctx.stroke();
+    });
     if (withPause) {
       x -= s + gap;
       drawBtn(x, 'pause', (cx, cy) => {
@@ -562,14 +708,20 @@ export class Game {
       });
     }
 
-    // Pause menu: big centered, clickable RESUME / RESTART / QUIT buttons.
-    // (Drawn here, after the reset above, so their hitboxes survive in
-    // this.buttons for the pointer handler.)
+    if (this.settingsOpen) {
+      this.drawSettings(ctx, cw, ch);
+      return;
+    }
+
+    // Pause menu: big centered, clickable RESUME / SETTINGS / RESTART / QUIT
+    // buttons. (Drawn here, after the reset above, so their hitboxes survive
+    // in this.buttons for the pointer handler.)
     if (this.state === 'pause') {
-      const bw = Math.min(300, cw * 0.6), bh = 54, g = 14;
-      let by = ch * 0.42;
+      const bw = Math.min(300, cw * 0.6), bh = 50, g = 12;
+      let by = ch * 0.36;
       const items = [
         { id: 'p_resume', label: '▶  RESUME', fill: '#5fe08b', fg: '#0c2417' },
+        { id: 'p_settings', label: '⚙  SETTINGS', fill: 'rgba(255,255,255,0.16)', fg: '#fff' },
         { id: 'p_restart', label: '↻  RESTART', fill: 'rgba(255,255,255,0.16)', fg: '#fff' },
         { id: 'p_quit', label: '✕  QUIT TO MENU', fill: 'rgba(255,255,255,0.16)', fg: '#fff' },
       ];
@@ -588,6 +740,70 @@ export class Game {
         ctx.fillText(it.label, cw / 2, by + bh / 2 + 8);
         by += bh + g;
       }
+    }
+  }
+
+  // Settings panel: on/off rows (click, or dpad + A), DONE closes.
+  drawSettings(ctx, cw, ch) {
+    this.veil(ctx, cw, ch, 0.7);
+    const rows = this.settingRows();
+    const pw = Math.min(560, cw - 40), rh = 64;
+    const ph = 90 + rows.length * (rh + 10) + 70;
+    const px = cw / 2 - pw / 2, py = Math.max(60, ch / 2 - ph / 2);
+    roundRectPath(ctx, px, py, pw, ph, 18);
+    ctx.fillStyle = 'rgba(16,18,36,0.96)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd94d';
+    ctx.font = '900 32px system-ui, sans-serif';
+    ctx.fillText('SETTINGS', cw / 2, py + 52);
+    rows.forEach(([key, label, hint], i) => {
+      const y = py + 80 + i * (rh + 10), x = px + 24, w = pw - 48;
+      const sel = this.setSel === i;
+      this.buttons.push({ id: 'set:' + key, x, y, w, h: rh });
+      roundRectPath(ctx, x, y, w, rh, 12);
+      ctx.fillStyle = sel ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)';
+      ctx.fill();
+      if (sel) { ctx.strokeStyle = '#ffd94d'; ctx.lineWidth = 2.5; ctx.stroke(); }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 19px system-ui, sans-serif';
+      ctx.fillText(label, x + 16, y + 28);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '13px system-ui, sans-serif';
+      ctx.fillText(hint, x + 16, y + 49);
+      // switch
+      const on = !!settings[key];
+      const sw = 58, sh = 30, sx = x + w - sw - 14, sy = y + rh / 2 - sh / 2;
+      roundRectPath(ctx, sx, sy, sw, sh, sh / 2);
+      ctx.fillStyle = on ? '#5fe08b' : 'rgba(255,255,255,0.18)';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(on ? sx + sw - sh / 2 : sx + sh / 2, sy + sh / 2, sh / 2 - 4, 0, TAU); ctx.fill();
+      ctx.textAlign = 'right';
+      ctx.fillStyle = on ? '#5fe08b' : 'rgba(255,255,255,0.45)';
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.fillText(on ? 'ON' : 'OFF', sx - 10, sy + sh / 2 + 5);
+    });
+    // DONE
+    const bw = 180, bh = 46, bx = cw / 2 - bw / 2, by = py + ph - 64;
+    const sel = this.setSel === rows.length;
+    this.buttons.push({ id: 'set:close', x: bx, y: by, w: bw, h: bh });
+    roundRectPath(ctx, bx, by, bw, bh, 12);
+    ctx.fillStyle = sel ? '#ffd94d' : 'rgba(255,255,255,0.16)';
+    ctx.fill();
+    ctx.fillStyle = sel ? '#221c08' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = '900 20px system-ui, sans-serif';
+    ctx.fillText('DONE', cw / 2, by + 30);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText('dpad ▲▼ choose  •  A toggle  •  B close', cw / 2, py + ph + 24);
+    if (this.music.nowPlaying && settings.sound && settings.music) {
+      ctx.fillText(`♪ now playing: ${this.music.nowPlaying}`, cw / 2, py + ph + 44);
     }
   }
 
@@ -640,7 +856,7 @@ export class Game {
     }
 
     // score chips (top-right, left of the pause/fullscreen buttons)
-    let x = cw - 16 - (34 * 2 + 8) - 10;
+    let x = cw - 14 - (34 * 4 + 8 * 3) - 10;   // left of the 4 corner buttons
     for (let i = this.players.length - 1; i >= 0; i--) {
       const p = this.players[i];
       const w = 86;
@@ -663,23 +879,26 @@ export class Game {
     const logo = art('logo');
     if (logo) {
       const lh = Math.min(84, ch * 0.12), lw = lh * (logo.width / logo.height);
-      ctx.drawImage(logo, cw / 2 - lw / 2, 4, lw, lh);
+      ctx.drawImage(logo, cw / 2 - lw / 2, 2, lw, lh);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      ctx.fillText('a ROUNDERS spinoff', cw / 2, lh + 12);
     } else {
       ctx.fillStyle = '#ffd94d';
       ctx.font = `900 ${Math.min(64, cw * 0.06)}px system-ui, sans-serif`;
       ctx.fillText('SWINGERS', cw / 2, 58);
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = 'bold 15px system-ui, sans-serif';
-      ctx.fillText('a grabby robot party game', cw / 2, 80);
+      ctx.fillText('a ROUNDERS spinoff', cw / 2, 80);
     }
 
-    // slot chips
-    const chipW = Math.min(190, cw / 4 - 20), chipH = 44;
+    // slot chips: character portrait, name, and their Rounders title
+    const chipW = Math.min(210, cw / 4 - 20), chipH = 52, cy0 = 104;
     const total = chipW * 4 + 12 * 3;
     let x = cw / 2 - total / 2;
     for (let i = 0; i < 4; i++) {
       const slot = this.roster[i];
-      roundRectPath(ctx, x, 96, chipW, chipH, 12);
+      roundRectPath(ctx, x, cy0, chipW, chipH, 12);
       ctx.fillStyle = slot ? 'rgba(10,12,24,0.6)' : 'rgba(10,12,24,0.3)';
       ctx.fill();
       ctx.strokeStyle = slot ? PLAYER_COLORS[i].main : 'rgba(255,255,255,0.2)';
@@ -687,14 +906,19 @@ export class Game {
       ctx.stroke();
       ctx.textAlign = 'center';
       if (slot) {
-        drawHead(ctx, x + 24, 96 + chipH / 2, 14, PLAYER_COLORS[i], slot.headStyle, { x: 0, y: 0 }, 0);
+        const st = headStyle(slot.headStyle);
+        drawHead(ctx, x + 26, cy0 + chipH / 2, 16, PLAYER_COLORS[i], slot.headStyle, { x: 0, y: 0 }, 0, 1);
+        const tx = x + 30 + (chipW - 30) / 2;
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.fillText(`P${i + 1}  ◀ ${HEAD_STYLES[slot.headStyle].name} ▶`, x + 24 + (chipW - 34) / 2, 96 + 28);
+        ctx.font = 'bold 15px system-ui, sans-serif';
+        ctx.fillText(`P${i + 1}  ◀ ${st.name} ▶`, tx, cy0 + 23);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = 'italic 12px system-ui, sans-serif';
+        ctx.fillText(st.cast ? st.cast.title : 'original Swingers', tx, cy0 + 41);
       } else {
         ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.sin(this.time * 3 + i) * 0.12})`;
         ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.fillText('press A to join', x + chipW / 2, 96 + 28);
+        ctx.fillText('press A to join', x + chipW / 2, cy0 + 31);
       }
       x += chipW + 12;
     }
@@ -772,7 +996,7 @@ export class Game {
     // controls legend
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '13px system-ui, sans-serif';
-    ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ face  •  Y mode  •  BACK leave  •  F fullscreen', cw / 2, ch - 8);
+    ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ character  •  Y mode  •  X settings  •  BACK leave  •  M sound  •  F fullscreen', cw / 2, ch - 8);
   }
 
   drawSelect(ctx, cw, ch) {
@@ -858,7 +1082,7 @@ export class Game {
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.font = '14px system-ui, sans-serif';
-    ctx.fillText('stick / dpad to browse  •  A to race  •  B back to the playground  •  or click a board', cw / 2, ch - 14);
+    ctx.fillText('stick / dpad to browse  •  A to race  •  B back to the playground  •  X settings  •  or click a board', cw / 2, ch - 14);
   }
 
   drawCountdown(ctx, cw, ch) {
@@ -905,8 +1129,8 @@ export class Game {
     ctx.fillText('PAUSED', cw / 2, ch * 0.28);
     ctx.font = '14px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.fillText('controller:  A / START resume  •  X restart  •  B / BACK quit', cw / 2, ch * 0.76);
-    ctx.fillText('keyboard:  P resume  •  X restart  •  Backspace quit  •  M mute  •  F fullscreen', cw / 2, ch * 0.76 + 22);
+    ctx.fillText('controller:  A / START resume  •  Y settings  •  X restart  •  B / BACK quit', cw / 2, ch * 0.76);
+    ctx.fillText('keyboard:  P resume  •  C settings  •  X restart  •  Backspace quit  •  M sound  •  F fullscreen', cw / 2, ch * 0.76 + 22);
   }
 
   drawRoundEnd(ctx, cw, ch) {

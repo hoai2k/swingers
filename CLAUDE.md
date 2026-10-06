@@ -18,6 +18,15 @@
 - `window.__hh` is the live Game; with `__hh.input.mock`, `player.teleport`
   and `__hh.step(1/60)` you can run headless physics probes in Playwright
   to check that a jump, bounce or swing actually lands.
+- Swingers is a Rounders spinoff: the cast and music come from the
+  `hoai2k/rounders` repo via `node tools/import_rounders.mjs <rounders
+  checkout>`. Never hand-edit `src/characters-data.js` — it records the
+  body sizing Rounders resolves (fitted ball + the owner's /workbench
+  `bodyScale`/`bodyOffset`/`bodyRotation` overrides); re-run the import
+  instead. Rounders characters face left/right with the stick and stay
+  upright; original Swingers heads roll with the ball.
+- Settings (`src/settings.js`, localStorage) — Original Swingers defaults
+  OFF. Sound must stay muted while the tab is hidden/unfocused.
 - Image asset requests for the owner live in `image-requests.md`. Generated
   originals are in `assets/{bg,heads,tiles,ui}`; after any change there run
   `python3 tools/build_assets.py` to rebuild the web copies in
