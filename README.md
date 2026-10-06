@@ -17,6 +17,11 @@ python3 -m http.server 8123      # then open http://localhost:8123
 # or: npx serve
 ```
 
+The game opens on a **title screen**. PRESS START (any controller button, a
+key, or a click) starts the music, goes fullscreen, and opens the lobby. A
+controller that pressed **A**/**START** is already joined. Title art requests
+are in `image-requests.md`.
+
 Connect controllers and press **A** to join — you spawn straight into the
 lobby **playground** (a live practice arena with a bar, rope, balloon and
 climbing tower). Pick a mode from the dropdown next to PLAY (or press **Y**):

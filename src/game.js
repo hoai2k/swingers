@@ -122,6 +122,7 @@ export class Game {
           return;
         }
       }
+      if (this.state === 'title' && !this.settingsOpen) { this.startFromTitle(null); return; }
       if (this.state === 'select') {
         for (const r of this.selRects) {
           if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
@@ -145,8 +146,11 @@ export class Game {
       }
     });
 
-    this.state = 'lobby';
+    // Boot on the title screen. The lobby playground is built behind it so
+    // PRESS START drops straight into it.
     this.buildLobby();
+    this.state = 'title';
+    this.titleT = 0;
   }
 
   // ------------------------------------------------------------- game flow
@@ -271,6 +275,42 @@ export class Game {
     }
   }
 
+  // ---- title screen
+
+  // Any button on any controller (or a key, or a click) leaves the title.
+  // That press is the user gesture browsers want before they'll play audio
+  // or go fullscreen, so music starts and fullscreen is requested right
+  // here (Chrome honours a gamepad press; a refusal is swallowed and the
+  // corner button still works). A controller that presses A/START also
+  // joins the lobby on the spot.
+  titleStep(states, dt) {
+    this.titleT += dt;
+    this.physicsStep(dt);           // the playground keeps simmering behind
+    if (this.titleT < 0.5) return;  // ignore a press still held from boot
+    for (const s of states) {
+      const p = s.pressed;
+      if (p.a || p.b || p.x || p.y || p.start || p.back || p.ltd || p.rtd || p.du || p.dd || p.dl || p.dr) {
+        this.startFromTitle(s);
+        return;
+      }
+    }
+  }
+
+  startFromTitle(source) {
+    if (this.state !== 'title') return;
+    this.state = 'lobby';
+    sfx.ensure();
+    this.music.unlock();
+    sfx.go();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => { /* stay windowed */ });
+    }
+    if (source && (source.pressed.a || source.pressed.start) && !this.isJoined(source.id)) {
+      const free = this.roster.findIndex((r) => !r);
+      if (free !== -1) this.addPlayer(source.id, free, PRACTICE.spawn.x + free * 50, PRACTICE.spawn.y - 40);
+    }
+  }
+
   // ---- sound + settings
 
   applySound() {
@@ -323,8 +363,9 @@ export class Game {
 
   settingsStep(states) {
     const rows = this.settingRows();
+    const anyone = !this.players.length;
     for (const s of states) {
-      if (!this.isJoined(s.id)) continue;
+      if (!anyone && !this.isJoined(s.id)) continue;
       if (s.pressed.du) { this.setSel = (this.setSel + rows.length) % (rows.length + 1); sfx.uiTick(); }
       if (s.pressed.dd) { this.setSel = (this.setSel + 1) % (rows.length + 1); sfx.uiTick(); }
       if (s.pressed.a) this.activateSetting(this.setSel < rows.length ? rows[this.setSel][0] : 'close');
@@ -397,11 +438,12 @@ export class Game {
     if (this.settingsOpen) {
       this.settingsStep(states);
       // the playground keeps simmering behind the panel; races stay paused
-      if (this.state === 'lobby') this.physicsStep(dt);
+      if (this.state === 'lobby' || this.state === 'title') this.physicsStep(dt);
       return;
     }
 
     switch (this.state) {
+      case 'title': this.titleStep(states, dt); break;
       case 'lobby': this.lobbyStep(states, dt); break;
       case 'select': this.selectStep(states); break;
 
@@ -587,6 +629,11 @@ export class Game {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    if (this.state === 'title') {
+      this.drawTitle(ctx, cw, ch);
+      this.drawButtons(ctx, cw, ch, false);
+      return;
+    }
     if (this.state === 'select') {
       this.drawSelect(ctx, cw, ch);
       this.drawButtons(ctx, cw, ch, false);
@@ -997,6 +1044,120 @@ export class Game {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '13px system-ui, sans-serif';
     ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ character  •  Y mode  •  X settings  •  BACK leave  •  M sound  •  F fullscreen', cw / 2, ch - 8);
+  }
+
+  // Title screen, after Rounders' (dark vignette, arched logo, tagline,
+  // pulsing PRESS START) but about climbing: Rounders characters hang off
+  // ropes from the top of the screen and swing.
+  drawTitle(ctx, cw, ch) {
+    const t = this.time;
+    const bg = art('title-bg') || art('bg:meadow');
+    if (bg) {
+      const s = Math.max(cw / bg.width, ch / bg.height) * 1.06;
+      const dw = bg.width * s, dh = bg.height * s;
+      ctx.drawImage(bg, (cw - dw) / 2 + Math.sin(t * 0.05) * (dw - cw) * 0.4, (ch - dh) / 2, dw, dh);
+    } else {
+      ctx.fillStyle = '#141830';
+      ctx.fillRect(0, 0, cw, ch);
+    }
+    // vignette: dark behind the logo block, fading out to the edges
+    const vg = ctx.createRadialGradient(cw / 2, ch * 0.46, 0, cw / 2, ch * 0.46, Math.max(cw, ch) * 0.62);
+    vg.addColorStop(0, 'rgba(6,5,14,0.78)');
+    vg.addColorStop(0.55, 'rgba(6,5,14,0.45)');
+    vg.addColorStop(1, 'rgba(6,5,14,0)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, cw, ch);
+
+    this.drawTitleSwingers(ctx, cw, ch);
+
+    ctx.textAlign = 'center';
+    const spaced = (text, y, size, color, spacing, glow) => {
+      ctx.save();
+      ctx.font = `900 ${size}px system-ui, sans-serif`;
+      if ('letterSpacing' in ctx) ctx.letterSpacing = spacing + 'px';
+      ctx.shadowColor = glow || 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = glow ? 18 : 10;
+      ctx.fillStyle = color;
+      ctx.fillText(text, cw / 2 + spacing / 2, y);
+      ctx.restore();
+    };
+    const logo = art('logo-arch') || art('logo');
+    const lw = Math.min(980, cw * 0.72);
+    const lh = logo ? lw * (logo.height / logo.width) : 140;
+    const blockH = 30 + lh + 50 + 70;
+    let y = Math.max(40, ch * 0.47 - blockH / 2);
+    spaced('A ROUNDERS SPINOFF  •  1–4 PLAYER CLIMBING PARTY GAME', y + 16, Math.max(12, Math.min(16, cw * 0.013)), 'rgba(255,255,255,0.75)', 3);
+    y += 30;
+    if (logo) {
+      const k = 1 + Math.sin(t * 1.85) * 0.015;   // slow "loom"
+      ctx.save();
+      ctx.translate(cw / 2, y + lh / 2);
+      ctx.scale(k, k);
+      ctx.shadowColor = 'rgba(0,0,0,0.65)';
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 14;
+      ctx.drawImage(logo, -lw / 2, -lh / 2, lw, lh);
+      ctx.restore();
+    } else {
+      spaced('SWINGERS', y + lh * 0.7, 110, '#ffd94d', 6);
+    }
+    y += lh + 30;
+    ctx.save();
+    ctx.font = `600 ${Math.max(14, Math.min(19, cw * 0.016))}px system-ui, sans-serif`;
+    ctx.fillStyle = 'rgba(245,242,255,0.88)';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 14;
+    ctx.fillText('Grab. Swing. Fling. Race the Rounders up to the flag.', cw / 2, y);
+    ctx.restore();
+    y += 64;
+    const pulse = 0.55 + 0.45 * Math.sin(t * 3.2);
+    ctx.globalAlpha = 0.35 + 0.65 * pulse;
+    spaced('PRESS START', y, Math.max(16, Math.min(26, cw * 0.02)), '#ffd94d', 11, 'rgba(255,190,60,0.6)');
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText('any controller button  •  a key  •  or a click', cw / 2, ch - 18);
+  }
+
+  // A few Rounders characters hanging one-handed from ropes at the top of
+  // the title screen, swinging like pendulums (different lengths, different
+  // rhythms), each facing the way it's swinging.
+  drawTitleSwingers(ctx, cw, ch) {
+    if (!this.titleCast) {
+      const cast = HEAD_STYLES.filter((h) => h.cast);
+      const pick = [];
+      while (pick.length < 4 && cast.length) pick.push(HEAD_STYLES.indexOf(cast.splice(Math.floor(Math.random() * cast.length), 1)[0]));
+      this.titleCast = pick;
+    }
+    const r = Math.max(16, ch * 0.045);
+    const spots = [[0.06, 0.44], [0.16, 0.22], [0.84, 0.27], [0.94, 0.4]];   // [x, rope length] — kept clear of the logo
+    this.titleCast.forEach((style, i) => {
+      const [fx, fl] = spots[i];
+      const ax = cw * fx, len = ch * fl;
+      const w = Math.sqrt(1.6 / fl);                    // longer rope, slower swing
+      const amp = 0.32;
+      const ph = this.time * w + i * 1.7;
+      const ang = Math.sin(ph) * amp;
+      const vel = Math.cos(ph);                         // swing direction
+      const hx = ax + Math.sin(ang) * len, hy = Math.cos(ang) * len;
+      // rope
+      ctx.strokeStyle = '#caa268';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ax, -4); ctx.lineTo(hx, hy); ctx.stroke();
+      // the hanging arm and body (body trails a little below the hand)
+      const bx = hx + Math.sin(ang) * r * 1.6, by = hy + Math.cos(ang) * r * 1.6 + r * 0.4;
+      const st = headStyle(style);
+      ctx.strokeStyle = st.cast ? st.cast.dark : '#4e5568';
+      ctx.lineWidth = r * 0.42;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(hx + (bx - hx) * 0.2 - vel * r * 0.3, (hy + by) / 2, bx, by - r * 0.6); ctx.stroke();
+      ctx.strokeStyle = st.cast ? st.cast.color : '#8e97ad';
+      ctx.lineWidth = r * 0.22;
+      ctx.stroke();
+      ctx.fillStyle = '#ff4d54';
+      ctx.beginPath(); ctx.arc(hx, hy, r * 0.3, 0, TAU); ctx.fill();
+      drawHead(ctx, bx, by, r, PLAYER_COLORS[i], style, { x: vel, y: 0 }, ang, vel >= 0 ? 1 : -1);
+    });
   }
 
   drawSelect(ctx, cw, ch) {

@@ -68,4 +68,13 @@ for f in sorted(glob.glob(os.path.join(ROOT, 'assets', 'ui', 'icon_*.png'))):
 
 Image.open(os.path.join(ROOT, 'assets', 'ui', 'logo.png')).convert('RGBA') \
     .resize((960, 300), Image.LANCZOS).save(out('logo.png'), optimize=True)
+
+# title screen art (optional until delivered)
+tb = os.path.join(ROOT, 'assets', 'ui', 'title-bg.png')
+if os.path.exists(tb):
+    Image.open(tb).convert('RGB').resize((1920, 1080), Image.LANCZOS).save(out('title_bg.jpg'), quality=86, optimize=True)
+la = os.path.join(ROOT, 'assets', 'ui', 'logo-arch.png')
+if os.path.exists(la):
+    im = Image.open(la).convert('RGBA')
+    im.resize((1400, round(1400 * im.height / im.width)), Image.LANCZOS).save(out('logo_arch.png'), optimize=True)
 print('built', len(os.listdir(OUT)), 'files into assets/web/')

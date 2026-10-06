@@ -1,6 +1,31 @@
 # Image requests
 
-**Status: all 45 delivered and integrated. Nothing needs regenerating.**
+**Status: 2 open requests for the title screen, listed first below.** The
+original 45 images are delivered and integrated, and none need
+regenerating.
+
+## OPEN: Title screen (2 images)
+
+The game now boots on a Rounders-style title screen: dark vignette, a big
+arched logo that slowly "looms", a small line above it, a tagline and a
+pulsing PRESS START. It works today with a stand-in look (the meadow
+backdrop and the current flat logo). Rounders characters swing on ropes in
+from the top corners, so keep the far left and right edges simple.
+
+Use the Rounders title art as an explicit style reference. Copies are in
+`assets/reference/`:
+`rounders-logo-arch.png` (the arched logo) and `rounders-menu-bg.jpg` (the
+title backdrop). Swingers is the climbing spinoff, so keep the same finish
+and energy, but swap the guns and blades for **climbing gear and
+environments**.
+
+| File | Size | Prompt |
+| --- | --- | --- |
+| `assets/ui/logo-arch.png` | 1680 × 900, transparent | Game logo wordmark reading **"SWINGERS"**, matching the style of the reference `rounders-logo-arch.png`. Heavy beveled letters with a thick dark outline and bright rim-lit edges, set on a gentle upward arch, with a big burst of objects fanning out behind the word. In the burst, instead of guns and blades, put climbing and adventure gear: coiled ropes, grappling hooks, carabiners, a monkey-bar ladder, a spinning bar, jungle vines with leaves, ice-crystal shards, a glowing lava-rock chunk, a balloon, a trampoline spring, and small mountain peaks with a goal flag on top. Let one letter hang from a rope, or loop a rope through the "G". Rim-light palette: sunrise gold `#ffd94d`, sky blue `#4da3ff` and leaf green `#5fe08b`, with deep purple shadows. No characters. Transparent background. |
+| `assets/ui/title-bg.png` | 1920 × 1080, opaque | Title-screen backdrop matching the style of the reference `rounders-menu-bg.jpg` (floating worlds at dusk, dreamy depth of field), but built as a **vertical climbing world**. A cluster of tall floating rock spires and sky islands rises into the clouds, each one a Swingers theme: a lava volcano spire, a frozen peak dripping icicles, a jungle tower wrapped in vines, a candy cliff with frosting, a clockwork tower of gears, and a desert ruin arch. Hanging ropes, rope bridges, monkey bars and spinning bars link them, a few balloons drift upward, and a tiny goal flag waves on the highest peak. Warm sunrise glow on the horizon, deep indigo sky at the top. Keep the center 60% soft and darker, because the logo sits there; put the detail at the edges and the bottom. No characters, no text. |
+
+After adding them, run `python3 tools/build_assets.py`. The title screen
+picks them up automatically, and the stand-ins stay as fallbacks.
 The exact prompts are recorded in `assets/generation.json`. The game loads
 web-ready copies from `assets/web/`. After replacing any original, rebuild
 them with `python3 tools/build_assets.py`. That script also:

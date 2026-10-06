@@ -29,6 +29,9 @@ load('icewater', 'tile_icewater.png');
 load('spikes', 'tile_spikes.png');
 load('logo', 'logo.png');
 load('keyart', 'keyart.jpg');
+// title screen (see image-requests.md: Title screen)
+load('title-bg', 'title_bg.jpg');
+load('logo-arch', 'logo_arch.png');
 
 export function art(key) {
   const img = images.get(key);
