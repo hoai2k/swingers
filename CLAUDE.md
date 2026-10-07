@@ -24,7 +24,8 @@
   body sizing Rounders resolves (fitted ball + the owner's /workbench
   `bodyScale`/`bodyOffset`/`bodyRotation` overrides); re-run the import
   instead. Rounders characters face left/right with the stick and stay
-  upright; original Swingers heads roll with the ball.
+  upright; original Swingers heads roll with the ball. Facing flips only in
+  gameplay — non-gameplay animation (title swingers etc.) keeps a fixed facing.
 - Guns (`src/guns.js`): grabbed with a trigger, fired with that hand's
   bumper, and locked to the forearm at the angle they were grabbed (wobbly
   aiming is intended). Recoil must never break the shooter's grip; a hit

@@ -1208,7 +1208,8 @@ export class Game {
 
   // A few Rounders characters hanging one-handed from ropes at the top of
   // the title screen, swinging like pendulums (different lengths, different
-  // rhythms), each facing the way it's swinging.
+  // rhythms). They keep one facing (turned in toward the logo) rather than
+  // flipping with each swing — only gameplay flips the Rounders cast.
   drawTitleSwingers(ctx, cw, ch) {
     if (!this.titleCast) {
       const cast = HEAD_STYLES.filter((h) => h.cast);
@@ -1243,7 +1244,8 @@ export class Game {
       ctx.stroke();
       ctx.fillStyle = '#ff4d54';
       ctx.beginPath(); ctx.arc(hx, hy, r * 0.3, 0, TAU); ctx.fill();
-      drawHead(ctx, bx, by, r, PLAYER_COLORS[i], style, { x: vel, y: 0 }, ang, vel >= 0 ? 1 : -1);
+      const face = fx < 0.5 ? 1 : -1;
+      drawHead(ctx, bx, by, r, PLAYER_COLORS[i], style, { x: face * 0.6, y: 0 }, ang, face);
     });
   }
 
