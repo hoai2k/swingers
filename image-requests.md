@@ -1,7 +1,7 @@
 # Image requests
 
 **Status: all 62 requested images are delivered. No open requests.**
-Round 4 level-object art is delivered; everything earlier is delivered and integrated: the original 45, round 2
+All rounds are delivered and integrated, including round 4 (level objects, checked in game on Spin Cycle, Bounce House, Updraft, Down the Well and Clock Tower): the original 45, round 2
 (title art) and round 3 (power-ups and blasters). Exact prompts are recorded
 in `assets/generation.json`.
 
