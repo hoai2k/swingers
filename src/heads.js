@@ -188,15 +188,8 @@ function tintedHead(img, key, color) {
 // bodyScale / bodyOffset / bodyRotation apply on top. Rounders characters
 // have a front: they stay upright (a little rocking as the ball rolls) and
 // mirror to face `facing`.
-function drawCastBody(ctx, r, style, color, rot, facing) {
+function drawCastBody(ctx, r, style, rot, facing) {
   const c = style.cast;
-  // a thin ring in the PLAYER's color behind the art, so two players on
-  // similar-colored characters can still tell themselves apart
-  ctx.strokeStyle = color.main;
-  ctx.lineWidth = 3;
-  ctx.globalAlpha *= 0.9;
-  ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, TAU); ctx.stroke();
-  ctx.globalAlpha /= 0.9;
   ctx.rotate(Math.sin(rot) * 0.22);
   ctx.scale(facing < 0 ? -1 : 1, 1);
   if (!(style.img.complete && style.img.naturalWidth)) {
@@ -220,7 +213,7 @@ export function drawHead(ctx, x, y, r, color, styleIndex, look = { x: 0, y: 0 },
   ctx.save();
   ctx.translate(x, y);
   if (style.cast) {
-    drawCastBody(ctx, r, style, color, rot, facing);
+    drawCastBody(ctx, r, style, rot, facing);
     ctx.restore();
     return;
   }
