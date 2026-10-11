@@ -1,11 +1,15 @@
 // Boot: fixed-timestep loop (60 Hz physics, render every frame).
 
 import { Game } from './game.js';
+import { trackPromise } from './preload.js';
 
 // canvas text doesn't trigger web-font loading by itself — ask for the
 // UI face up front (it draws with the fallback until it arrives)
 if (document.fonts) {
-  for (const w of [400, 600, 700]) document.fonts.load(`${w} 20px Fredoka`).catch(() => {});
+  for (const w of [400, 600, 700]) {
+    // capped, so a blocked font CDN can't hold up the loading screen
+    trackPromise(Promise.race([document.fonts.load(`${w} 20px Fredoka`), new Promise((r) => setTimeout(r, 4000))]).catch(() => {}));
+  }
 }
 
 const canvas = document.getElementById('game');

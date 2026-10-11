@@ -21,6 +21,7 @@
 
 import { TAU, hash01, roundRectPath } from './util.js';
 import { art } from './art.js';
+import { track } from './preload.js';
 
 export const POWERS = {
   super:   { name: 'SUPER PUNCH',   color: '#ffd94d', dur: Infinity, weight: 3 },
@@ -178,6 +179,7 @@ export function drawPowerIcon(ctx, id, r, time = 0) {
 // Per-robot effect visuals drawn around the body (world space).
 const BUBBLE = new Image();
 BUBBLE.src = 'assets/fx/shield-bubble.png';   // from Rounders
+track(BUBBLE);
 
 export function drawPowerAura(ctx, p, time, fxBubble = BUBBLE) {
   const id = p.powerId;

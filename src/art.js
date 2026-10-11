@@ -3,6 +3,8 @@
 // get() returns null until an image has loaded (or if it's missing), and
 // every caller falls back to the procedural drawing in that case.
 
+import { track } from './preload.js';
+
 const BASE = 'assets/web/';
 export const THEMES = ['meadow', 'cave', 'sunset', 'jungle', 'factory', 'sky', 'volcano',
   'night', 'candy', 'frost', 'desert', 'storm'];
@@ -11,12 +13,21 @@ export const ICONS = ['rope', 'wheel', 'balloon', 'lift', 'bounce', 'ice', 'crum
 
 const images = new Map();
 
-function load(key, file) {
+function load(key, file, priority) {
   const img = new Image();
   img.decoding = 'async';
+  if (priority) img.fetchPriority = priority;
   img.src = BASE + file;
   images.set(key, img);
+  track(img);
 }
+
+// first in line: the small logo the loading screen shows above its bar,
+// then the title screen's own art (the big arched logo would otherwise be
+// the last thing in and stall the bar at the end)
+load('logo-load', 'logo_load.png', 'high');
+load('logo-arch', 'logo_arch.png', 'high');
+load('title-bg', 'title_bg.jpg', 'high');
 
 for (const t of THEMES) {
   load('bg:' + t, `bg_${t}.jpg`);
@@ -29,14 +40,11 @@ load('icewater', 'tile_icewater.png');
 load('spikes', 'tile_spikes.png');
 load('logo', 'logo.png');
 load('keyart', 'keyart.jpg');
-// title screen (see image-requests.md: Title screen)
-load('title-bg', 'title_bg.jpg');
 // power-up icons (image-requests.md round 3)
 for (const id of ['super', 'feather', 'shield', 'sticky', 'rubber', 'turbo']) load('power:' + id, `power_${id}.png`);
 for (const id of ['feather', 'goo', 'spark']) load('fx:' + id, `fx_${id}.png`);
 // level objects (image-requests round 4)
 for (const id of ['goal', 'checkpoint', 'bounce', 'vent', 'spinner']) load('obj:' + id, `obj_${id}.png`);
-load('logo-arch', 'logo_arch.png');
 
 export function art(key) {
   const img = images.get(key);

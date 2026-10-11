@@ -18,6 +18,7 @@ import { ROUNDERS_GUNS } from './characters-data.js';
 import { CAT } from './player.js';
 import { sfx } from './audio.js';
 import { TAU } from './util.js';
+import { track } from './preload.js';
 
 const M = window.Matter;
 
@@ -37,12 +38,14 @@ export const GUN_IDS = ROUNDERS_GUNS.map((g) => g.id);
 const SPRITES = new Map(ROUNDERS_GUNS.map((g) => {
   const img = new Image();
   img.src = `assets/guns/${g.id}.png`;
+  track(img);
   return [g.id, { def: g, img }];
 }));
 const FX = {};
 for (const f of ['muzzle-flash', 'shockwave-ring']) {
   FX[f] = new Image();
   FX[f].src = `assets/fx/${f}.png`;
+  track(FX[f]);
 }
 
 const ready = (img) => img && img.complete && img.naturalWidth;

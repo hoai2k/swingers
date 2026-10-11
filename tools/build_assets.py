@@ -95,4 +95,7 @@ la = os.path.join(ROOT, 'assets', 'ui', 'logo-arch.png')
 if os.path.exists(la):
     im = Image.open(la).convert('RGBA')
     im.resize((1400, round(1400 * im.height / im.width)), Image.LANCZOS).save(out('logo_arch.png'), optimize=True)
+    # a small copy for the loading screen, so it arrives first
+    small = im.resize((560, round(560 * im.height / im.width)), Image.LANCZOS)
+    small.quantize(256, method=Image.Quantize.FASTOCTREE).save(out('logo_load.png'), optimize=True)
 print('built', len(os.listdir(OUT)), 'files into assets/web/')

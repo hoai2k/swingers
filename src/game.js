@@ -18,6 +18,7 @@ import { Shots } from './guns.js';
 import { POWERS } from './powerups.js';
 import { sfx } from './audio.js';
 import { art } from './art.js';
+import { loadProgress } from './preload.js';
 import { clamp, lerp, TAU, roundRectPath, FONT } from './util.js';
 
 const M = window.Matter;
@@ -159,6 +160,9 @@ export class Game {
     this.buildLobby();
     this.state = 'title';
     this.titleT = 0;
+    // boot loading: the title waits (behind a loading bar if it takes a
+    // moment) until every image and the font are in, then fades up
+    this.boot = { ready: false, t: 0, bar: 0, fade: 0, logoT: -1 };
   }
 
   // ------------------------------------------------------------- game flow
@@ -301,6 +305,15 @@ export class Game {
   // corner button still works). A controller that presses A/START also
   // joins the lobby on the spot.
   titleStep(states, dt) {
+    const b = this.boot;
+    if (!b.ready) {
+      b.t += dt;
+      const p = loadProgress();
+      b.bar += (p - b.bar) * Math.min(1, dt * 12);
+      if ((p >= 1 && b.bar > 0.97) || b.t > 25) b.ready = true;
+      return;
+    }
+    b.fade = Math.min(1, b.fade + dt / 0.45);
     this.titleT += dt;
     this.physicsStep(dt);           // the playground keeps simmering behind
     if (this.titleT < 0.5) return;  // ignore a press still held from boot
@@ -314,7 +327,7 @@ export class Game {
   }
 
   startFromTitle(source) {
-    if (this.state !== 'title') return;
+    if (this.state !== 'title' || !this.boot.ready) return;
     this.state = 'lobby';
     sfx.ensure();
     this.music.unlock();
@@ -681,8 +694,13 @@ export class Game {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     if (this.state === 'title') {
+      if (!this.boot.ready) { this.drawLoading(ctx, cw, ch); return; }
       this.drawTitle(ctx, cw, ch);
       this.drawButtons(ctx, cw, ch, false);
+      if (this.boot.fade < 1) {
+        ctx.fillStyle = `rgba(13,15,28,${1 - this.boot.fade})`;
+        ctx.fillRect(0, 0, cw, ch);
+      }
       return;
     }
     if (this.state === 'select') {
@@ -1131,6 +1149,36 @@ export class Game {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = `13px ${FONT}`;
     ctx.fillText('STICKS steer  •  LT/RT grab  •  B punch  •  ◀▶ character  •  Y mode  •  X settings  •  BACK leave  •  M sound  •  F fullscreen', cw / 2, ch - 8);
+  }
+
+  // Boot loading screen: the logo (a small copy that loads first) over a
+  // progress bar. Nothing shows for the first half second, so a warm
+  // cache goes straight to the title without flashing the loader.
+  drawLoading(ctx, cw, ch) {
+    const b = this.boot;
+    ctx.fillStyle = '#0d0f1c';
+    ctx.fillRect(0, 0, cw, ch);
+    const a = clamp((b.t - 0.5) / 0.3, 0, 1);
+    if (a <= 0) return;
+    const logo = art('logo-load');
+    const lw = Math.min(560, cw * 0.62);
+    const lh = lw * (logo ? logo.height / logo.width : 0.536);   // reserved before it lands
+    const barW = Math.min(420, cw * 0.55), barH = 12;
+    const top = ch / 2 - (lh + 40 + barH) / 2;
+    if (logo) {
+      if (b.logoT < 0) b.logoT = b.t;
+      ctx.globalAlpha = a * clamp((b.t - b.logoT) / 0.35, 0, 1);
+      ctx.drawImage(logo, cw / 2 - lw / 2, top, lw, lh);
+    }
+    ctx.globalAlpha = a;
+    const bx = cw / 2 - barW / 2, by = top + lh + 40;
+    roundRectPath(ctx, bx, by, barW, barH, barH / 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fill();
+    roundRectPath(ctx, bx, by, Math.max(barH, barW * b.bar), barH, barH / 2);
+    ctx.fillStyle = '#ffd94d';
+    ctx.fill();
+    ctx.globalAlpha = 1;
   }
 
   // Title screen, after Rounders' (dark vignette, arched logo, tagline,

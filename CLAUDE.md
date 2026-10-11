@@ -37,4 +37,6 @@
 - Image asset requests for the owner live in `image-requests.md`. Generated
   originals are in `assets/{bg,heads,tiles,ui}`; after any change there run
   `python3 tools/build_assets.py` to rebuild the web copies in
-  `assets/web/` that `src/art.js` actually loads.
+  `assets/web/` that `src/art.js` actually loads. Every image the game loads
+  must go through `track()` (`src/preload.js`) so the boot loading bar waits
+  for it — the title never shows stand-in drawings.

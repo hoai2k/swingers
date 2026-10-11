@@ -12,6 +12,7 @@ import { clamp, TAU } from './util.js';
 import { art, HEADS } from './art.js';
 import { ROUNDERS_CAST } from './characters-data.js';
 import { settings } from './settings.js';
+import { track } from './preload.js';
 
 export const HEAD_STYLES = [];
 
@@ -24,6 +25,7 @@ function face(name, draw) {
 export function registerSpriteHead(src, name = 'sprite') {
   const img = new Image();
   img.src = src;
+  track(img);
   EXTRA.push({ name, img, original: true });
   rebuildRoster();
 }
@@ -118,6 +120,7 @@ const CAST = ROUNDERS_CAST.map((c) => {
   const img = new Image();
   img.decoding = 'async';
   img.src = `assets/characters/${c.id}.png`;
+  track(img);
   const arm = Object.keys(ARM_STYLE).find((k) => ARM_STYLE[k].includes(c.id)) || 'noodle';
   return { name: c.name, cast: c, arm, img };
 });
