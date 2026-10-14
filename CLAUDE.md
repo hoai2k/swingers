@@ -41,6 +41,15 @@
   must go through `track()` (`src/preload.js`) so the boot loading bar waits
   for it — the title never shows stand-in drawings.
 
+## Push to `main` once per task
+
+This repository is private, so every push to `main` runs a deploy that is paid
+for in GitHub Actions minutes, and the account's allowance is small. Batch a
+task's work into one push to `main` at the end rather than pushing after every
+small step. Pushes to a working branch run nothing, so push those as often as
+you like. A newer push cancels a deploy still in progress, so a burst of
+pushes publishes only the last one.
+
 ## Models
 
 - Only a session already running on Fable may start Fable subagents, workers or helper agents. Opus,
