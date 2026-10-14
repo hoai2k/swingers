@@ -41,14 +41,21 @@
   must go through `track()` (`src/preload.js`) so the boot loading bar waits
   for it — the title never shows stand-in drawings.
 
-## Push to `main` once per task
+## Tests and deploys
 
-This repository is private, so every push to `main` runs a deploy that is paid
-for in GitHub Actions minutes, and the account's allowance is small. Batch a
-task's work into one push to `main` at the end rather than pushing after every
-small step. Pushes to a working branch run nothing, so push those as often as
-you like. A newer push cancels a deploy still in progress, so a burst of
-pushes publishes only the last one.
+Pushes to `main` build and deploy only; they run no tests. Tests are your job
+before you commit:
+
+- There are no automated tests; check the change in a browser (local server)
+  before committing. A change to a board can also be checked with the headless
+  physics probes described under *Project notes* (`window.__hh`).
+- Say in the commit message what you ran and that it passed.
+
+Every deploy is paid for in GitHub Actions minutes while the repository is
+private, so batch a task's work into one push to `main` at the end rather than
+pushing after every small step. Pushes to a working branch run nothing. A newer
+push cancels a deploy still in progress, so a burst of pushes publishes only the
+last one.
 
 ## Models
 
