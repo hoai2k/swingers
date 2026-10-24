@@ -1,13 +1,14 @@
 # Wobblers image requests
 
-**Status: round 3 open — 3 replacement faces.** Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+**Status: round 3 delivered — 3 replacement faces, 2026-10-24.** Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
 
-## OPEN round 3: replace three faces (3 images) — `assets/faces/`
+## Delivered round 3: replace three faces (3 images) — `assets/faces/`
 
-Checked in game: these three are drawn in a semi-realistic anime style with
-thin lashes, shaded irises and skin-tone shading, which clashes with the bold
-cartoon look of the other faces and blurs at game distance. Please redo them
-(same file names, overwrite):
+Replaced the three semi-realistic faces with bold, flat cartoon features,
+thick dark outlines and solid fills at the same file names. All three are
+transparent 512 × 512 images, framed within the middle ~65% of the square,
+and verified through the game's face-texture hook. Final prompts and prior
+generation records are preserved in `assets/generation.json`.
 
 | File | Size | Expression |
 | --- | --- | --- |

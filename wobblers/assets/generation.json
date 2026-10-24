@@ -34,8 +34,22 @@
       "width": 512,
       "height": 512,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-11b95ef5-0d86-4023-9403-1e0bae1328cf.png",
-      "prompt": "undefinedOnly facial features: droopy half-closed eyelids, tiny relaxed smile, drowsy look, no z or text.undefined"
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-001881a5-54b2-4013-8b82-b716a85a412b.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 3,
+          "file": "faces/face_sleepy.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-11b95ef5-0d86-4023-9403-1e0bae1328cf.png",
+          "prompt": "undefinedOnly facial features: droopy half-closed eyelids, tiny relaxed smile, drowsy look, no z or text.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c4dfdbe1-4448-4e0a-b7d0-a7b32561157d.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: Heavy half-closed eyelids drawn as thick flat dark lines over half-circle eyes, tiny relaxed smile. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
     },
     {
       "index": 4,
@@ -52,8 +66,22 @@
       "width": 512,
       "height": 512,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f7b70b61-9996-4afc-a6d9-9aa849c16236.png",
-      "prompt": "undefinedOnly facial features: one eye winking, the other open, tongue poking out of a grin.undefined"
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a7ba5d9-1df4-43fa-a0c2-0ddaec666379.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 5,
+          "file": "faces/face_cheeky.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f7b70b61-9996-4afc-a6d9-9aa849c16236.png",
+          "prompt": "undefinedOnly facial features: one eye winking, the other open, tongue poking out of a grin.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2032c34c-267b-481b-b7ba-431a2829db18.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: One eye winking as a single thick happy arc, the other a big round cartoon eye; wide grin with a pink tongue poking out. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
     },
     {
       "index": 6,
@@ -61,8 +89,22 @@
       "width": 512,
       "height": 512,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5fd06f29-da45-456e-a366-04b04310504c.png",
-      "prompt": "undefinedOnly facial features: big sparkly eyes with long curled eyelashes, sweet smile, rosy cheeks.undefined"
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a592222-6a9d-4f97-814b-e329a6b6a07e.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 6,
+          "file": "faces/face_lashes.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5fd06f29-da45-456e-a366-04b04310504c.png",
+          "prompt": "undefinedOnly facial features: big sparkly eyes with long curled eyelashes, sweet smile, rosy cheeks.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e3d99de8-0800-46d5-8c9c-9695908bfbbb.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: Big round cartoon eyes with exactly THREE thick, simple curled lashes on EACH upper lid, sweet small smile, solid pink blush ovals. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
     },
     {
       "index": 7,
