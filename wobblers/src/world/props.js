@@ -85,7 +85,7 @@ export function scatterProps(game) {
   for (let i = 0; i < 8; i++) spawnProp(game, 'ball', -40 + i * 12, 318);
 
   // ---- vehicles
-  const V = (type, x, z, yaw, color) => game.vehicles.push(new Vehicle(game, type, x, 1.2, z, yaw, color));
+  const V = (type, x, z, yaw, color, opts) => game.vehicles.push(new Vehicle(game, type, x, 1.2, z, yaw, color, opts));
   // parked along the town grid
   const parked = [
     ['car', 63.5, -30, Math.PI], ['car', 63.5, 22, Math.PI], ['car', -63.5, -12, 0], ['car', -63.5, 30, 0],
@@ -99,8 +99,8 @@ export function scatterProps(game) {
   const lot = ['car', 'car', 'pickup', 'car', 'van', 'car', 'quad', 'car'];
   lot.forEach((t, i) => V(t, -132.5 + i * 5 + 0.0, -137, 0));
   // ice cream van at the beach + pool
-  V('van', -10, 302, Math.PI / 2, 0xffb7d5);
-  V('van', 70, 88, Math.PI / 2, 0x6ac8ff);
+  V('van', -10, 302, Math.PI / 2, 0xffb7d5, { icecream: true });
+  V('van', 70, 88, Math.PI / 2, 0x6ac8ff, { icecream: true });
   // quads on the beach
   V('quad', 45, 300, 0, 0xffd23f); V('quad', 50, 300, 0, 0xff5a5a);
   // a pickup + car by the stunt park

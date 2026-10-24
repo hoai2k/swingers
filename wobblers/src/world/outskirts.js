@@ -194,6 +194,14 @@ function mountainTop(game, kit) {
   kit.cone(x, h + 4.2, z, 4.6, 1.8, 0xd9483f, { seg: 4, euler: [0, Math.PI / 4, 0] });
   kit.cyl(x + 3.5, h + 4, z, 0.06, 8, 0xdddddd);
   kit.deco(x + 4.3, h + 7.4, z, 1.6, 1.0, 0.05, 0xff5a8a);
+  // boulders to push down the slope
+  for (let i = 0; i < 4; i++) {
+    const bx = x - 8 + i * 5, bz = z + 9, r = 1.1 + (i % 2) * 0.5;
+    const bb = new Builder();
+    bb.add(new THREE.DodecahedronGeometry(r, 1), 0x9a958a, [0, 0, 0]);
+    const o = game.physics.dynamic({ x: bx, y: heightAt(bx, bz) + r + 0.3, z: bz }, [RAPIER.ColliderDesc.ball(r).setMass(60 * r * r * r).setFriction(0.9)], bb.mesh(), { angDamp: 0.3 });
+    game.scene.add(o.mesh);
+  }
   // quads at the foot of the mountain
   for (let i = 0; i < 3; i++) {
     const qx = 30 + i * 4, qz = -190;

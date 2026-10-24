@@ -52,7 +52,8 @@ export const VEHICLES = {
 const _q = new THREE.Quaternion(), _v = new THREE.Vector3(), _v2 = new THREE.Vector3();
 
 export class Vehicle {
-  constructor(game, type, x, y, z, yaw, color) {
+  constructor(game, type, x, y, z, yaw, color, opts = {}) {
+    this.opts = opts;
     this.game = game;
     this.type = type;
     const def = this.def = VEHICLES[type];
@@ -240,8 +241,7 @@ export class Vehicle {
         this.wheelMeshes.push(wm);
       }
     }
-    if (this.type === 'van' && this.game.iceCreamVans < 2) {
-      this.game.iceCreamVans = (this.game.iceCreamVans || 0) + 1;
+    if (this.opts.icecream) {
       const ib = new Builder(), co = def.cabin.off, ch = def.cabin.half;
       ib.cone(0.45, 1.1, 0xe0a860, [0, co[1] + ch[1] + 0.55, co[2] - 0.6], [Math.PI, 0, 0]);
       ib.sphere(0.5, 0xffb7d5, [0, co[1] + ch[1] + 1.15, co[2] - 0.6]);
@@ -255,7 +255,7 @@ export class Vehicle {
     const def = this.def;
     const gas = inp.gas || 0, brake = inp.brake || 0;
     const steerIn = -(inp.steer || 0); // +X is left
-    const lim = def.steer * (def.boat ? 1 : 1 / (1 + Math.abs(this.speed) * 0.035));
+    const lim = def.steer * (def.boat ? 1 : 1 / (1 + Math.abs(this.speed) * 0.06));
     this.steer += (steerIn * lim - this.steer) * Math.min(1, DT * 8);
     this.throttle = gas - brake;
     this.handbrake = !!inp.jump;

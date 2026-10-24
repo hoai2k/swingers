@@ -487,6 +487,18 @@ export class Player {
       this.upright(hips, hipsT, 200 * k, 22 * Math.sqrt(k), parts.hips.I * 4.5);
     }
 
+    // --- limp bodies float: per-part buoyancy and water drag
+    if (limp && water != null) {
+      for (const n in parts) {
+        const p = parts[n], b = p.body, t = b.translation();
+        const r = p.def.r * S, depth = water - t.y;
+        if (depth <= -r) continue;
+        const k = Math.min(1, (depth + r) / (2 * r)), m = b.mass(), bv = b.linvel();
+        const drag = Math.min(1, k * 2.5 * DT);
+        b.applyImpulse({ x: -bv.x * m * drag, y: k * m * 9.81 * 1.3 * DT - bv.y * m * drag, z: -bv.z * m * drag }, true);
+      }
+    }
+
     // --- trampolines and bouncy castles
     if (this.grounded && !seated && this.groundCollider && this.jumpCool <= 0) {
       const bounce = this.physics.bouncy.get(this.groundCollider.handle);
@@ -525,7 +537,7 @@ export class Player {
     // --- locomotion
     if (!limp && !seated) {
       const slippery = this.grounded && this.groundCollider && this.physics.slippery.has(this.groundCollider.handle);
-      let ctrl = this.swimming ? 6 : this.grounded ? (slippery ? 0.6 : 14) : (hanging ? 1.5 : 3.0);
+      let ctrl = this.swimming ? 6 : this.grounded ? (slippery ? 0.6 : 14) : (hanging ? 1.5 : 6.0);
       const tvx = mvx * speed + gv.x, tvz = mvz * speed + gv.z;
       let dvx = (mag > 0.05 ? tvx : (this.grounded ? gv.x : v.x)) - v.x;
       let dvz = (mag > 0.05 ? tvz : (this.grounded ? gv.z : v.z)) - v.z;

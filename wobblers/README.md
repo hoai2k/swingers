@@ -54,7 +54,7 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
 - **Sports field** (NW) — football pitch with a giant ball, basketball court, parking lot.
 - **Kart track** (east) with six go-karts; **farm** with hay bales and a pickup;
-  **mountain** with a lookout and quad bikes; **lake** with a camp and boats;
+  **mountain** with a lookout, boulders to roll and quad bikes; **lake** with a camp and boats;
   **beach** with a pier, boats, palms and a lighthouse.
 
 ## Code map
