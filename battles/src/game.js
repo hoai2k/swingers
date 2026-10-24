@@ -5,6 +5,8 @@ import { Input } from './input.js';
 import { Audio } from './audio.js';
 import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
+import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
+import { Creator } from './creator.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
 import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
@@ -58,6 +60,16 @@ const skelOf = (def) => {
   return s;
 };
 const teamTag = (t) => `<b style="color:${TEAM_COLORS[t]}">${TEAM_NAMES[t]}</b>`;
+// Possessed, does this unit shoot where the crosshair points (LT aims instead of
+// blocking)? Core ranged units, and pack kinds that say so (kind.aim) or that have a
+// range and no melee (guns, Zeus, a mammoth's spear thrower...); kind.aim: false opts out.
+function aims(u) {
+  const w = u?.def.weapon, k = u?.kind;
+  if (!w) return false;
+  if (w.kind === 'ranged') return true;
+  if (k && k.aim !== undefined) return !!k.aim;
+  return !!k && !k.melee && w.range > 0 && !u.bc;
+}
 const onOff = (b) => (b ? 'On' : 'Off');
 
 export class Game {
@@ -107,6 +119,7 @@ export class Game {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'battle') this.openPause();
     });
+    this.creator = new Creator(this);
     window.__battles = window.__tabs = this;
   }
 
@@ -115,7 +128,10 @@ export class Game {
     await initPhysics();
     progress?.('Painting the soldiers…');
     await new Promise((r) => setTimeout(r, 20));
+    // custom units (Unit Creator): register the saved ones before anything reads the roster
+    try { loadRecipes(); syncCustomUnits(); } catch (e) { console.warn('custom units skipped', e); }
     this.ui.portraits = renderPortraits(UNITS, 112);
+    this.customSig = this.customSigs();
     this.ui.buildTitle();
     this.ui.buildSetup();
     this.ui.buildBattle();
@@ -248,7 +264,7 @@ export class Game {
     this.setupVis = [[], []];
     for (let t = 0; t < 2; t++) {
       const keep = [];
-      for (const a of this.armies[t]) if (UNIT_BY_ID[a.type]) { keep.push(a); this.addSetupVis(t, a); }
+      for (const a of this.armies[t]) if (UNIT_BY_ID[a.type] && !this.terrain.blocked(a.x, a.z, 0)) { keep.push(a); this.addSetupVis(t, a); }
       this.armies[t] = keep;
     }
     for (const p of this.ps) { p.ghosts = []; p.ghostId = null; }
@@ -300,7 +316,12 @@ export class Game {
       case 'battle': case 'result': this.updateBattle(dt); break;
       case 'replay': this.updateReplay(dt); break;
       case 'paused': this.updatePause(dt); break;
+      case 'creator': this.creator.update(dt); break;
     }
+    // slow motion slows the sound too (pitch of new sounds, a muffling low-pass)
+    const ts = this.state === 'battle' || this.state === 'result' ? this.timeScale
+      : this.state === 'replay' && this.player ? (this.player.playing ? this.player.speed : 1) : this.state === 'paused' ? this.audio.wantScale ?? 1 : 1;
+    this.audio.setTimeScale(ts);
     if (this.snow) {
       const p = this.snow.geometry.attributes.position;
       const c = this.rigs[0].pos;
@@ -334,7 +355,7 @@ export class Game {
 
   views() {
     if (this.state === 'setup') return this.solo ? [0] : [0, 1];
-    if (this.state === 'title' || this.state === 'levels') return [0];
+    if (this.state === 'title' || this.state === 'levels' || this.state === 'creator') return [0];
     return this.split ? [0, 1] : [0];
   }
 
@@ -383,6 +404,40 @@ export class Game {
   blindNow() { return this.state === 'setup' && this.mode === 'versus' && this.settings.blind && !(this.countdown > 0); }
 
   showAllSetupVis() { for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) v.root.visible = true; }
+
+  // ---------------------------------------------------------------- custom units
+  customSigs() {
+    const o = {};
+    for (const d of unitsOfFaction(CUSTOM_FACTION.id)) o[d.id] = JSON.stringify(d);
+    return o;
+  }
+
+  // The Unit Creator saved or deleted units: re-register them and refresh everything
+  // that caches a unit definition (portraits, skeletons, placement ghosts, placed units).
+  customChanged() {
+    syncCustomUnits();
+    const sig = this.customSigs(), old = this.customSig || {};
+    const changed = Object.keys(sig).filter((id) => sig[id] !== old[id]);
+    const gone = Object.keys(old).filter((id) => !sig[id]);
+    this.customSig = sig;
+    const touched = new Set([...changed, ...gone]);
+    if (!touched.size) return;
+    if (changed.length) Object.assign(this.ui.portraits, renderPortraits(changed.map((id) => UNIT_BY_ID[id]), 112));
+    for (const id of touched) SKEL_CACHE.delete(id);
+    for (const p of this.ps) { for (const g of p.ghosts) disposeVisual(g); p.ghosts = []; p.ghostId = null; p.undo = []; }
+    for (let t = 0; t < 2; t++) {
+      // deleted units leave the armies; edited ones are rebuilt with their new look
+      this.armies[t] = this.armies[t].filter((a) => UNIT_BY_ID[a.type]);
+      for (const v of this.setupVis[t].filter((v) => touched.has(v.entry.type))) disposeVisual(v);
+      this.setupVis[t] = this.setupVis[t].filter((v) => !touched.has(v.entry.type));
+      for (const a of this.armies[t]) if (changed.includes(a.type)) {
+        const v = this.addSetupVis(t, a);
+        if (this.state === 'creator') { v.root.visible = false; this.creator.hidden.push(v); }
+      }
+    }
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.save();
+  }
 
   // ---------------------------------------------------------------- title
   goTitle(sel = 0) {
@@ -472,6 +527,7 @@ export class Game {
       { label: 'VERSUS', note: '2 players · build at the same time', key: 'versus' },
       { label: 'CAMPAIGN', note: `1 player or 2-player co-op · ★ ${stars} / ${LEVELS.length * 3}`, key: 'campaign' },
       { label: 'SANDBOX', note: '1 player builds both armies', key: 'sandbox' },
+      { label: 'UNIT CREATOR', note: 'design your own units for every mode but the campaign', key: 'creator' },
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
     ];
@@ -543,8 +599,12 @@ export class Game {
       this.audio.play('click');
       return;
     }
-    const PAGES = ['versus', 'campaign', 'sandbox', 'options'];
-    const back = () => { this.titleSel = Math.max(0, PAGES.indexOf(this.titlePage)); this.titlePage = 'main'; this.audio.play('click'); };
+    const back = () => {
+      const page = this.titlePage;
+      this.titlePage = 'main';
+      this.titleSel = Math.max(0, this.titleItems().findIndex((i) => i.key === page));
+      this.audio.play('click');
+    };
     let items = this.titleItems();
     for (let p = 0; p < 2; p++) {
       if (I.nav(p, 'down')) { this.titleSel = (this.titleSel + 1) % items.length; this.audio.play('click', null, 0.5); }
@@ -558,6 +618,7 @@ export class Game {
       if (I.pressed(p, 'a')) {
         if (it.key === 'go') { this.startMode(this.titlePage); return; }
         if (it.key === 'campaign') { this.goLevels(); return; }
+        if (it.key === 'creator') { this.creator.open(); return; }
         if (it.key === 'versus' || it.key === 'sandbox' || it.key === 'options') { this.titlePage = it.key; this.titleSel = 0; this.audio.play('click'); }
         else if (it.key === 'back') back();
         else if (it.key === 'help') { this.helpOn = true; this.ui.setHelp(true); }
@@ -849,8 +910,15 @@ export class Game {
       const perRow = clamp(Math.floor((FIELD.z * 2 - 4) / sp), 1, 12);
       while (todo > 0 && d <= FIELD.x - 1) {
         const k = Math.min(todo, perRow);
-        for (let i = 0; i < k; i++) added.push({ type: def.id, x: sx * d, z: (i - (k - 1) / 2) * sp });
-        todo -= k;
+        // fill the row from the middle out, skipping spots in walls or water
+        let placed = 0;
+        for (let i = 0; i < perRow && placed < k; i++) {
+          const z = (i % 2 ? -1 : 1) * Math.ceil(i / 2) * sp + (k % 2 ? 0 : sp / 2);
+          if (Math.abs(z) > FIELD.z - 1 || this.terrain.blocked(sx * d, z, skelOf(def).radius)) continue;
+          added.push({ type: def.id, x: sx * d, z });
+          placed++;
+        }
+        todo -= placed;
         if (todo > 0) d += sp;
       }
       prevSp = sp;
@@ -1128,6 +1196,7 @@ export class Game {
       sl.ok = false;
       let w = '';
       if (!this.inZone(t, sl.x, sl.z)) w = `Place units in the ${TEAM_NAMES[t]} zone`;
+      else if (this.terrain.blocked(sl.x, sl.z, skel.radius)) w = "Can't place units in water or walls";
       else {
         let clash = false;
         for (const a of army) {
@@ -1364,7 +1433,9 @@ export class Game {
       for (let j = 0; j < u.held.length; j++) { const h = u.held[j]; placeHeld(vis, j, h.body ? h.pos : null, h.quat); }
       setExpression(vis, u.expr);
       const w = u.def.weapon;
-      if (w.kind === 'ranged' && w.style === 'throw') {
+      // a thrown weapon leaves the hand (core throwers, and pack kinds that throw their
+      // held item: the Mammoth rider's spear, the Harpooner's harpoon...)
+      if (w.anim === 'throw' && w.proj) {
         u.itemHidden = u.st.attack ? u.st.attackT > (w.releaseAt || 0.7) : u.released && u.cooldown > w.cooldown * 0.4;
         for (const it of vis.items) it.visible = !u.itemHidden;
       }
@@ -1511,8 +1582,7 @@ export class Game {
       if (rig.mode === 'possess') this.possessControl(v, rig, s, units);
       const slow = rig.mode === 'free' || rig.mode === 'follow' ? clamp((s.lt - 0.15) / 0.7, 0, 1) : 0;
       // possessing: LT aims (zooms in, finer look) with ranged units, blocks with the rest
-      const ranged = rig.unit?.def.weapon.kind === 'ranged';
-      const aiming = rig.mode === 'possess' && s.lt > 0.3 && ranged;
+      const aiming = rig.mode === 'possess' && s.lt > 0.3 && aims(rig.unit);
       rig.aimZoom = lerp(rig.aimZoom || 0, aiming ? 1 : 0, damp(10, dt));
       const look = this.lookOpts;
       if (rig.mode === 'possess') look.lookSpeed *= 1 - 0.55 * rig.aimZoom;
@@ -1537,19 +1607,26 @@ export class Game {
     const tgt = rig.aimPoint(this.terrain, units, u, 90);
     const cp = u.chestPos;
     c.aimYaw = Math.atan2(tgt.x - cp.x, tgt.z - cp.z);
-    const w = u.def.weapon;
+    // the crosshair point itself: pack kinds aim their shots / spells at it
+    // (common.js aimPoint), siege crews lay their engine on it
+    c.aimPt = (c.aimPt || new THREE.Vector3()).copy(tgt);
+    const w = u.def.weapon, aimer = aims(u);
     rig.aimInfo = null;
-    if (w.kind === 'ranged' && w.speed) {
-      const dx = Math.hypot(tgt.x - cp.x, tgt.z - cp.z), dy = tgt.y - (cp.y + 0.3 * (u.s || 1));
+    const dx = Math.hypot(tgt.x - cp.x, tgt.z - cp.z);
+    if (aimer && w.speed) {
+      const dy = tgt.y - (cp.y + 0.3 * (u.s || 1));
       const g = PROJ[w.proj]?.g ?? 9.81;
       let ang = g <= 0.01 ? Math.atan2(dy, dx) : ballisticAngle(dx, dy, w.speed, g, w.arc === 'high');
-      const reach = ang !== null;
+      const reach = ang !== null && !(w.range && dx > w.range * 1.5);
       if (ang === null) ang = Math.PI / 4;
       c.aimPitch = clamp(ang, -0.7, 1.45);
       rig.aimInfo = { dist: dx, ok: reach };
-    } else c.aimPitch = clamp(rig.pitch + 0.35, 0.05, 1.1);
+    } else {
+      c.aimPitch = clamp(rig.pitch + 0.35, 0.05, 1.1);
+      if (aimer && w.range) rig.aimInfo = { dist: dx, ok: dx <= w.range * 1.2 };
+    }
     c.attack = s.rt > 0.4;
-    c.block = w.kind !== 'ranged' && s.lt > 0.3;
+    c.block = !aimer && s.lt > 0.3;
     if (this.vPressed(v, 'a')) c.jump = true;
     if (rig.lastHp !== undefined && u.hp < rig.lastHp - 0.5) {
       const f = clamp((rig.lastHp - u.hp) / u.maxHp * 4, 0.15, 1);
@@ -1562,7 +1639,7 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${rig.unit?.def.weapon.kind === 'ranged' ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
+        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
       case 'cine':
@@ -1835,7 +1912,7 @@ export class Game {
     for (const r of this.rigs) { if (r.unit && r.unit.control) r.unit.control = null; r.release(); }
     // camera proxies so you can follow units in the replay
     this.proxies = this.battleVis.map((vis, i) => ({
-      vis, team: this.rec.units[i].team, def: UNIT_BY_ID[this.rec.units[i].type], s: vis.skel.scale,
+      vis, team: this.rec.units[i].team, def: UNIT_BY_ID[this.rec.units[i].type], def0: UNIT_BY_ID[this.rec.units[i].type], s: vis.skel.scale,
       get chestPos() { return vis.parts[PART.chest].position; }, alive: true, hp: 1, maxHp: 1,
     }));
     const overT = this.overTime || P.duration;
@@ -1921,6 +1998,9 @@ export class Game {
         for (const it of vis.items) it.visible = !hide;
         const px = this.proxies[i];
         px.alive = !!(f & 8);
+        // a raised zombie fights for the side that raised it from then on
+        px.team = f & 32 ? 1 : 0;
+        px.def = f & 64 ? px.zdef || (px.zdef = { ...px.def0, name: 'Zombie ' + px.def0.name }) : px.def0;
         px.maxHp = px.def.hp;
         px.hp = (fr.hp[i] / 255) * px.def.hp;
       });

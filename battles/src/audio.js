@@ -153,6 +153,8 @@ export class Audio {
     this.musicTimer = null;
     this.offline = false;
     this.hidden = false;
+    this.timeScale = 1;       // slow motion: new sounds pitch down, sfx and voices muffle
+    this.slowPitch = 1;
     const upd = () => {
       this.hidden = document.hidden || !document.hasFocus();
       if (!this.ctx || this.offline) return;
@@ -214,10 +216,15 @@ export class Audio {
     const revOut = c.createGain(); revOut.gain.value = 0.55;
     const revHp = c.createBiquadFilter(); revHp.type = 'highpass'; revHp.frequency.value = 180;
     this.revIn.connect(revHp).connect(conv).connect(revOut).connect(this.master);
-    // buses
-    this.sfx = c.createGain(); this.sfx.gain.value = this.sfxVol; this.sfx.connect(this.master);
+    // buses (sfx and voices through the slow-motion low-pass, see setTimeScale)
+    this.slowLp = c.createBiquadFilter(); this.slowLp.type = 'lowpass'; this.slowLp.Q.value = 0.6;
+    this.slowLp.frequency.value = 20000;
+    this.slowLp.connect(this.master);
+    this.sfx = c.createGain(); this.sfx.gain.value = this.sfxVol; this.sfx.connect(this.slowLp);
     this.voiceBus = c.createGain(); this.voiceBus.gain.value = this.sfxVol * this.voiceVol;
-    this.voiceBus.connect(this.master);
+    this.voiceBus.connect(this.slowLp);
+    this.timeScale = 1;
+    this.setTimeScale(this.wantScale ?? 1);
     this.musicBus = c.createGain(); this.musicBus.gain.value = this.musicVol;
     this.duck = c.createGain(); this.duck.gain.value = 1;
     const mSend = c.createGain(); mSend.gain.value = 0.32;
@@ -283,6 +290,21 @@ export class Audio {
 
   // cameras: [{position, right(Vector3)}]
   setListeners(list) { this.listeners = list; }
+
+  // Slow motion (x = the game's time scale, 1 = normal): sounds started from now on are
+  // pitched down (and so played slower), and the sfx / voice buses get a gentle
+  // low-pass, so a slowed battle sounds heavy and muffled. Cheap to call every frame.
+  setTimeScale(x) {
+    x = clamp(x, 0, 1);
+    this.wantScale = x;
+    if (Math.abs(x - this.timeScale) < 0.005) return;
+    this.timeScale = x;
+    const k = Math.max(0.1, x);
+    this.slowPitch = clamp(Math.pow(k, 0.33), 0.5, 1);
+    if (!this.ctx) return;
+    const f = x >= 0.99 ? 20000 : 900 + 17000 * Math.pow(k, 1.6);
+    this.slowLp.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.08);
+  }
 
   beginFrame() {
     this.frameCount = 0;
@@ -431,7 +453,7 @@ export class Audio {
     const c = this.ctx, t = c.currentTime + 0.005;
     const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : 0.04;
     const o = this.out(gain, pan, dist, this.sfx, wet);
-    const p = pitch * rand(0.96, 1.04);
+    const p = pitch * rand(0.96, 1.04) * this.slowPitch;
     const dur = this.synth(name, o, t, p, gain) || 0.3;
     this.sfxList.push({ end: t + dur, gain, out: o });
     this.active = this.sfxList.length + this.voiceList.length;
@@ -747,7 +769,7 @@ export class Audio {
     if (!this.ctx) return;
     const kind = KIND[kindIdx] || 'idle';
     const cry = CRY[cryIdx] || 'charge';
-    pitchMul = clamp(pitchMul || 1, 0.25, 3);
+    pitchMul = clamp((pitchMul || 1) * this.slowPitch, 0.2, 3);
     const pri = PRIORITY[kind];
     const kindVol = { idle: 0.55, attack: 0.8, hurt: 0.9, die: 1, cry: 1, scream: 0.9, sing: 0.6, cheer: 0.9 }[kind];
     const big = pitchMul < 0.6 ? 1.6 : 1;

@@ -108,8 +108,21 @@ export class Battle {
       const d = ((o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2) * rand(0.9, 1.1) * (1 + 0.35 * crowd / Math.max(1, o.s));
       if (d < bd) { bd = d; best = o; }
     }
+    // nobody left on foot: something still fighting for a fallen unit (kind.standIn,
+    // e.g. the War Elephant's second archer) is the target
+    if (!best) {
+      for (const o of this.teams[1 - u.team]) {
+        const s = !o.alive && o.kind?.standIn?.(o);
+        if (!s || !s.alive) continue;
+        const d = (s.pos.x - p.x) ** 2 + (s.pos.z - p.z) ** 2;
+        if (d < bd) { bd = d; best = s; }
+      }
+    }
     return best;
   }
+
+  // Still in the fight: alive, or its kind says something of it fights on (kind.standing)
+  fighting(u) { return u.alive || !!u.kind?.standing?.(u); }
 
   mostHurtAlly(u, range) {
     let best = null, bf = 0.97;
@@ -180,7 +193,7 @@ export class Battle {
     }
     for (const f of EXT.battleStep) f(this, dt);
     if (!this.over) {
-      const a0 = this.teams[0].some((u) => u.alive), a1 = this.teams[1].some((u) => u.alive);
+      const a0 = this.teams[0].some((u) => this.fighting(u)), a1 = this.teams[1].some((u) => this.fighting(u));
       if (!a0 || !a1) {
         this.over = true;
         this.winner = a0 ? 0 : a1 ? 1 : -1;
@@ -230,6 +243,14 @@ export class Battle {
       let dmg = w.damage * k;
       // knockback: big and funny, but a slap should send a peasant ~10-20 m, not off the map
       let force = Math.min(w.force * k, v.M * 15);
+      // parried on the blade (kind.parry): sparks, the blow bounces off, no blood or push
+      if (v.kind?.parry && v.kind.parry(v, att, 'melee')) {
+        v.hit(dmg, PART.farmR, 0, 0, 0, att, 'melee');
+        _a.copy(tipVel).normalize();
+        const wp = att.weapons[0]?.part ?? PART.farmR, rb = Math.min(force * 0.1, att.M);
+        att.rag.impulse(wp, -_a.x * rb, rb * 0.3, -_a.z * rb);
+        return;
+      }
       // shields: a blow that meets the board, or comes from in front of a bearer who
       // is on their feet, is blocked - with a physical bump: the bearer is shoved
       // back a step and the attacker's weapon arm bounces off
@@ -446,6 +467,7 @@ export class Battle {
           hit = true;
           return;
         }
+        if (v.kind?.parry && v.kind.parry(v, pr.owner, pr.type)) { v.hit(dmg, i, 0, 0, 0, pr.owner, pr.type); hit = true; return; }
         v.hit(dmg, i, _a.x * f * 0.5, _a.y * f * 0.5 + f * 0.1, _a.z * f * 0.5, pr.owner, pr.type);
         v.rag.impulseAll(_a.x * f * 0.5, _a.y * f * 0.5, _a.z * f * 0.5);
         if (v.def.armor > 0.3) { this.emit('spark', c.x, c.y, c.z, 4); this.sound('clang', c, 0.5, 1.3); }
@@ -567,7 +589,7 @@ export class Battle {
 
   stats() {
     return [0, 1].map((t) => {
-      const alive = this.teams[t].filter((u) => u.alive);
+      const alive = this.teams[t].filter((u) => this.fighting(u));
       return {
         alive: alive.length, total: this.teams[t].length,
         value: alive.reduce((s, u) => s + u.def.cost, 0), startValue: this.startValue[t],

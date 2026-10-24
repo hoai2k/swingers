@@ -1,8 +1,29 @@
 # Wobbly Battles — image request history
 
-Delivered requests (rounds 1–4, items 1–49). Kept for the record: the
+Delivered requests (rounds 1–5, items 1–51). Kept for the record: the
 briefs, final paths and where each image is used. Open requests live in
 `image-requests.md`.
+
+## Delivered round 5 — Unit Creator (2 images)
+
+Delivered 2026-10-24 with built-in imagegen. The transparent emblem is 128 × 128
+and the workshop illustration is 640 × 400. Both were checked for decoding,
+alpha, requested subjects and browser preload loading. Full-size originals
+are preserved in `assets/originals/ui/`; prompts are in `assets/generation.json`.
+
+
+### Round 5: Unit Creator
+
+The Unit Creator (title menu → *Unit Creator*) builds custom units that appear in a new
+**Custom** faction tab in army setup. Both files are optional: the game shows a plain tab
+and a text-only empty list until they arrive. Deliver the full-size originals as
+`assets/originals/ui/faction-custom.png` and `assets/originals/ui/creator-empty.png`, then
+run `tools/build_battles_assets.py`.
+
+| # | File | Size / format | Status | What |
+|---|---|---|---|---|
+| 50 | `assets/ui/faction-custom.png` | 128×128, transparent PNG | **wired** (setup unit-bar tab for the Custom faction; the creator's header) | Faction emblem for player-made units: a tailor's dummy (mannequin bust) in a bean-soldier shape with a measuring tape round its middle, and a sewing needle and a little wrench crossed behind it. Warm orange (#ffb84a) and gold, flat sticker style like the other 15 emblems, bold outline, no text. Must read at 28 px. |
+| 51 | `assets/ui/creator-empty.png` | 640×400, transparent PNG | **wired** (shown on the creator's unit list while no custom unit is saved) | A comedic workshop scene: a chubby bean-soldier tailor in an apron, a tape measure round its neck, stitching together a half-finished bean soldier on a workbench. Spare helmets, a sword, a bow and a feathered hat lie about, and bolts of blue and red cloth sit in a basket. Clean flat colours with soft shading, transparent around the scene (no background box), no text. |
 
 ## Delivered round 4 — new map art (7 images)
 
@@ -139,3 +160,5 @@ All 43 listed files have arrived. All 24 UI assets are wired into the game.
 Reference sheets remain available for future procedural model refinement.
 
 Round 4 review: all six map previews and `reference/maps-2.png` match their briefs (point-symmetric layouts, readable at preview size) and preload in the game; they appear on the map cards once the new maps are merged. Accepted, no replacements.
+
+Round 5 review: the workshop illustration fills the creator's empty list and the Custom emblem reads well in the creator header (checked in headless Chromium). Accepted, no replacements.

@@ -13,8 +13,8 @@ import {
   HORSE, MAMMOTH, mountLayout, mountInit, stepMount, cavalryThink, mammothThink, riderHit, riderDie, riderStep,
   setupRidePoses, rangedEvent,
 } from './sm-mounts.js';
-import { CATAPULT, BALLISTA, siegeLayout, siegeInit, siegeThink, siegeEvent, stepSiege, siegeCrewDie, PROJ } from './sm-siege.js';
-import { valkInit, valkThink, valkStep, stepFlyer, wingLayout, restSt } from './sm-valkyrie.js';
+import { CATAPULT, BALLISTA, siegeLayout, siegeInit, siegeThink, siegeEvent, siegeControl, stepSiege, siegeCrewDie, PROJ } from './sm-siege.js';
+import { valkInit, valkThink, valkStep, valkControl, stepFlyer, wingLayout, restSt } from './sm-valkyrie.js';
 import * as M from './sm-meshes.js';
 
 const UNITS = [
@@ -108,9 +108,9 @@ register({
   kinds: {
     sm_cavalry: { melee: true, init: (u) => mountInit(u, HORSE), think: cavalryThink, step: riderStep, hit: riderHit, die: riderDie },
     sm_mammoth: { init: (u) => mountInit(u, MAMMOTH), think: mammothThink, step: riderStep, hit: riderHit, die: riderDie, event: rangedEvent },
-    sm_catapult: { melee: true, init: (u) => siegeInit(u, CATAPULT), think: siegeThink, event: siegeEvent, die: siegeCrewDie },
-    sm_ballista: { melee: true, init: (u) => siegeInit(u, BALLISTA), think: siegeThink, event: siegeEvent, die: siegeCrewDie },
-    sm_valkyrie: { melee: true, init: valkInit, think: valkThink, step: valkStep },
+    sm_catapult: { melee: true, init: (u) => siegeInit(u, CATAPULT), think: siegeThink, event: siegeEvent, die: siegeCrewDie, control: siegeControl },
+    sm_ballista: { melee: true, init: (u) => siegeInit(u, BALLISTA), think: siegeThink, event: siegeEvent, die: siegeCrewDie, control: siegeControl },
+    sm_valkyrie: { melee: true, init: valkInit, think: valkThink, step: valkStep, control: valkControl },
   },
   proj: PROJ,
   buildProj(type, g, H) {

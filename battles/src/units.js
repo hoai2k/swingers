@@ -180,3 +180,24 @@ export const FACTIONS = [...BASE_FACTIONS, ...EXT.factions];
 export const UNITS = [...BASE_UNITS, ...EXT.units];
 export const UNIT_BY_ID = Object.fromEntries(UNITS.map((u) => [u.id, u]));
 export const unitsOfFaction = (f) => UNITS.filter((u) => u.faction === f);
+
+// Runtime roster changes (the Unit Creator's custom units, src/packs/custom.js):
+// replace every unit of one faction in place, so FACTIONS / UNITS / UNIT_BY_ID stay the
+// same objects for every module. rosterVersion counts changes (UI caches key on it);
+// rosterHooks get (faction, defs) to refresh caches such as portraits.
+export let rosterVersion = 0;
+export const rosterHooks = [];
+export function setFactionUnits(faction, defs) {
+  for (let i = UNITS.length - 1; i >= 0; i--) {
+    if (UNITS[i].faction !== faction) continue;
+    delete UNIT_BY_ID[UNITS[i].id];
+    UNITS.splice(i, 1);
+  }
+  for (const d of defs) {
+    if (UNIT_BY_ID[d.id]) continue;
+    UNITS.push(d);
+    UNIT_BY_ID[d.id] = d;
+  }
+  rosterVersion++;
+  for (const f of rosterHooks) f(faction, defs);
+}
