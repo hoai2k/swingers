@@ -14,7 +14,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .layer { position: absolute; inset: 0; }
 
 #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(#8fc3ea, #4f8ac4); z-index: 10; }
-#loading .ltitle { font-family: var(--font); font-size: 96px; color: #fff; text-shadow: 0 6px 0 #1e3d6a; letter-spacing: 4px; }
+#loading .ltitle { font-family: var(--font); font-size: clamp(40px, 8vw, 96px); text-align: center; color: #fff; text-shadow: 0 6px 0 #1e3d6a; letter-spacing: 4px; }
 #loading #loadmsg { font-weight: 800; font-size: 20px; opacity: 0.9; }
 #loading.err #loadmsg { color: #ffdddd; background: #a22; padding: 8px 14px; border-radius: 8px; }
 
@@ -28,8 +28,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .layer-title { display: flex; flex-direction: column; align-items: center; padding-top: 2.5vh; background: linear-gradient(rgba(0,0,0,0.0) 45%, rgba(0,0,0,0.4)); }
 .logo { font-family: var(--font); text-align: center; line-height: 0.92; filter: drop-shadow(0 6px 0 rgba(20,30,60,0.55)); }
 .logo .lw { display: block; font-size: clamp(26px, min(6vw, 7.6vh), 92px); color: #fff; -webkit-text-stroke: 3px #1e2c48; }
-.logo .lw1 { font-size: clamp(18px, min(3.5vw, 4.4vh), 52px); color: var(--gold); transform: rotate(-4deg); }
-.logo .lw0 { color: #7fd0ff; } .logo .lw3 { color: #ff7b6e; }
+.logo .lw { font-size: clamp(36px, min(9vw, 12vh), 140px); }
+.logo .lw0 { color: #7fd0ff; transform: rotate(-3deg); } .logo .lw1 { color: #ff7b6e; transform: rotate(2deg); }
+.logo.hasimg { filter: none; }
+.logo .logoimg { display: block; max-width: min(720px, 80vw); max-height: 34vh; }
 .logo i { display: inline-block; font-style: normal; animation: wob 2.4s ease-in-out infinite; animation-delay: var(--d); }
 @keyframes wob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-3deg); } }
 .subtitle { margin-top: 8px; font-weight: 800; font-size: 18px; text-shadow: 0 2px 3px rgba(0,0,0,0.5); }
@@ -193,3 +195,5 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 #hud[data-state=replay] .viewlabel { bottom: 72px; }
 #hud[data-state=title] .tsc { top: auto; bottom: 100px; }
 #hud[data-hud=off] .layer-battle, #hud[data-hud=off] .layer-replay, #hud[data-hud=off] .layer-toast { display: none !important; }
+
+.tab .ficon { height: 1.2em; width: auto; vertical-align: -0.2em; margin-right: 4px; }

@@ -1,12 +1,12 @@
-# TNABS — Totally Not Accurate Battle Simulator
+# Wobbly Battles
 
-A browser clone of *Totally Accurate Battle Simulator* for two players on one
+A wobbly physics battle game in the style of *Totally Accurate Battle Simulator* for two players on one
 screen: both players build their armies **at the same time** in split screen
 with Xbox controllers, then watch the wobbly active-ragdoll battle together.
 
-Serve the repo root over http (ES modules) and open `/tnabs/`:
+Serve the repo root over http (ES modules) and open `/battles/`:
 
-    python3 -m http.server 8123   # then http://localhost:8123/tnabs/
+    python3 -m http.server 8123   # then http://localhost:8123/battles/
 
 `?q=low` forces the Low graphics quality at boot; otherwise *Options → Graphics
 quality* (Low / Medium / High: render scale and shadow resolution) is saved with the
@@ -22,7 +22,7 @@ countdown (Y cancels) → **battle** (shared or split camera) → **result** men
 Pads bind to players in the order they connect and keep their slot until unplugged;
 the title shows which pad is which player, and **View** there swaps sides (the pad
 that rumbles is Blue). Unplugging a pad pauses a battle and un-readies a player in
-setup. Armies are saved per map in `localStorage` (`tnabs.v1`).
+setup. Armies are saved per map in `localStorage` (`wobbly-battles.v1`).
 
 Options: blind setup (each player only sees their own army until the countdown),
 default battle screen (shared / split), graphics quality, look speed, invert Y,

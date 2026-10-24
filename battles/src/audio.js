@@ -30,7 +30,7 @@ const GLIDE = { w: 1, y: 1, l: 1, m: 1, n: 1, r: 1 };
 // Look-ahead peak limiter (5 ms): sliding-window max → gain that reaches the target before the
 // delayed peak arrives, slow release. Reports its current gain a few times a second.
 const LIMITER_SRC = `
-class TnabsLimiter extends AudioWorkletProcessor {
+class WobblyLimiter extends AudioWorkletProcessor {
   constructor() {
     super();
     this.L = Math.max(16, Math.round(sampleRate * 0.005));
@@ -63,7 +63,7 @@ class TnabsLimiter extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor('tnabs-limiter', TnabsLimiter);
+registerProcessor('wobbly-limiter', WobblyLimiter);
 `;
 
 const hz = (n) => 440 * Math.pow(2, (n - 69) / 12);
@@ -201,7 +201,7 @@ export class Audio {
     if (c.audioWorklet && typeof AudioWorkletNode !== 'undefined' && typeof Blob !== 'undefined') {
       const url = URL.createObjectURL(new Blob([LIMITER_SRC], { type: 'application/javascript' }));
       this.ready = c.audioWorklet.addModule(url).then(() => {
-        const lim = new AudioWorkletNode(c, 'tnabs-limiter', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+        const lim = new AudioWorkletNode(c, 'wobbly-limiter', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
         lim.port.onmessage = (e) => { this.limGain = e.data; if (e.data < this.limMin) this.limMin = e.data; };
         this.master.disconnect(); this.master.connect(lim).connect(pre);
         this.limiter = lim;

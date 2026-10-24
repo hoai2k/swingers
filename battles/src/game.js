@@ -33,7 +33,7 @@ const BRUSHES = [
   { name: 'Block 3×3', w: 3, d: 3 },
   { name: 'Block 4×4', w: 4, d: 4 },
 ];
-const STORE = 'tnabs.v1';
+const STORE = 'wobbly-battles.v1';
 const FINAL_SECONDS = 6;
 
 function loadStore() {
@@ -93,7 +93,7 @@ export class Game {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'battle') this.openPause();
     });
-    window.__tabs = this;
+    window.__battles = window.__tabs = this;
   }
 
   async init(progress) {

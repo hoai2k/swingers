@@ -1026,7 +1026,7 @@ BAKED.onBeforeCompile = (sh) => {
       outgoingLight = mix(outgoingLight, diffuseColor.rgb * 1.25, vFx.y); }
       #include <opaque_fragment>`);
 };
-BAKED.customProgramCacheKey = () => 'tnabs-baked';
+BAKED.customProgramCacheKey = () => 'wobbly-baked';
 
 function isDesc(o, anc) { for (let p = o; p; p = p.parent) if (p === anc) return true; return false; }
 // Replace the meshes under `node` (filtered) with a single merged mesh added to `node`.

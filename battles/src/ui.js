@@ -67,9 +67,15 @@ export class UI {
     const L = this.layers.title;
     L.innerHTML = '';
     const logo = el('div', 'logo');
-    const words = ['TOTALLY', 'NOT', 'ACCURATE', 'BATTLE', 'SIMULATOR'];
+    const words = ['WOBBLY', 'BATTLES'];
     logo.innerHTML = words.map((w, i) => `<span class="lw lw${i}">${w.split('').map((c, j) => `<i style="--d:${(i * 7 + j) * 0.06}s">${c}</i>`).join('')}</span>`).join('');
     L.appendChild(logo);
+    // a generated logo (see image-requests.md) replaces the text logo once it exists
+    const img = new Image();
+    img.className = 'logoimg';
+    img.alt = 'Wobbly Battles';
+    img.onload = () => { logo.replaceChildren(img); logo.classList.add('hasimg'); };
+    img.src = 'assets/ui/logo.png';
     const sub = el('div', 'subtitle', '2 player local battles &middot; build armies at the same time');
     L.appendChild(sub);
     this.menuHead = el('div', 'menuhead');
@@ -172,7 +178,7 @@ export class UI {
       s.faction = d.faction;
       s.unit = -1;
       s.budgetKey = '';
-      this.setText(s.tabs, FACTIONS.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}" style="--fc:${f.color}">${f.name}</span>`).join(''));
+      this.setText(s.tabs, FACTIONS.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}" style="--fc:${f.color}"><img class="ficon" src="assets/ui/faction-${f.id}.png" alt="" onerror="this.remove()">${f.name}</span>`).join(''));
       const list = unitsOfFaction(FACTIONS[d.faction].id);
       s.cards.innerHTML = list.map((u) => `<div class="card" data-id="${u.id}">
         <img src="${this.portraits[u.id + ':' + p] || ''}" alt=""><div class="cn">${u.name}</div><div class="cc"><span class="coin"></span>${u.cost}</div></div>`).join('');
