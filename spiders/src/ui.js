@@ -153,7 +153,12 @@ export class UI {
     root.append(this.layer);
     document.body.append(root);
     // auto-hide the corner buttons when the mouse is idle
-    const wake = () => this.poke();
+    // During play the keyboard player aims with the mouse, so only the
+    // corner itself wakes the buttons then (touch always does).
+    const wake = (e) => {
+      if (e.pointerType === 'touch' || e.type === 'touchstart' || !this.busy()) { this.poke(); return; }
+      if (e.clientX > window.innerWidth - 380 && e.clientY < 120) this.poke(1.5);
+    };
     window.addEventListener('mousemove', wake, { passive: true });
     window.addEventListener('pointerdown', wake, { passive: true });
     window.addEventListener('touchstart', wake, { passive: true });
@@ -165,6 +170,12 @@ export class UI {
       const show = this.idle > 0 || this.open || this.bar.matches(':hover');
       this.bar.classList.toggle('hidden', !show);
     }, 250);
+  }
+
+  // a match is running (not paused): keep the corner quiet
+  busy() {
+    const g = this.game;
+    return !!(g && !g.paused && g.overlay && g.overlay.inMatch);
   }
 
   poke(t = 2.5) { this.idle = Math.max(this.idle, t); this.bar.classList.remove('hidden'); }

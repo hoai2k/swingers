@@ -152,10 +152,17 @@ export function drawPlayerTags(ctx, game) {
     const show = sp.invuln > 0 || game.sceneName === 'lobby';
     if (!show) continue;
     const bob = Math.sin(game.realTime * 5 + sp.slot) * 2;
-    const y = sp.y - sp.r - 22 + bob;
     ctx.fillStyle = sp.color.main;
-    ctx.beginPath(); ctx.moveTo(sp.x - 7, y); ctx.lineTo(sp.x + 7, y); ctx.lineTo(sp.x, y + 9); ctx.fill();
-    text(ctx, `P${sp.player.slot + 1}`, sp.x, y - 4, { size: 19, color: sp.color.main, sw: 5, stroke: 'rgba(5,3,16,0.8)' });
+    if (game.sceneName === 'lobby') {
+      const y = sp.y - sp.r - 22 + bob;
+      ctx.beginPath(); ctx.moveTo(sp.x - 7, y); ctx.lineTo(sp.x + 7, y); ctx.lineTo(sp.x, y + 9); ctx.fill();
+      text(ctx, `P${sp.player.slot + 1}`, sp.x, y - 4, { size: 19, color: sp.color.main, sw: 5, stroke: 'rgba(5,3,16,0.8)' });
+    } else {
+      // matches: under the spider (pickup labels pop up above it at spawn)
+      const y = sp.y + sp.r + (sp.weapon ? 26 : 12) - bob;
+      ctx.beginPath(); ctx.moveTo(sp.x - 7, y + 9); ctx.lineTo(sp.x + 7, y + 9); ctx.lineTo(sp.x, y); ctx.fill();
+      text(ctx, `P${sp.player.slot + 1}`, sp.x, y + 28, { size: 19, color: sp.color.main, sw: 5, stroke: 'rgba(5,3,16,0.8)' });
+    }
   }
 }
 

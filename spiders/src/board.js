@@ -20,6 +20,7 @@
 
 import { World } from './physics.js';
 import { loadImage, ready } from './preload.js';
+import { optionalImage } from './optional-art.js';
 import { TAU, mulberry, rgba } from './util.js';
 
 export const W = 1920, H = 1080;
@@ -49,18 +50,9 @@ function themeImage(kind, key) {
   }
   return texCache.get(k);
 }
-// spiders-specific art (image-requests.md); optional
-const spiderArt = new Map();
-export function spiderImage(file) {
-  if (!spiderArt.has(file)) {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onerror = () => { img.failed = true; };
-    img.src = `assets/web/${file}`;
-    spiderArt.set(file, img);
-  }
-  return spiderArt.get(file);
-}
+// spiders-specific art (image-requests.md); optional, only requested once
+// listed in assets/web/manifest.json (see optional-art.js), so no 404s
+export function spiderImage(file) { return optionalImage(file).img; }
 // preload the shared theme art
 for (const t of Object.keys(THEMES)) { themeImage('bg', t); themeImage('tex', t); }
 const MAT = {
