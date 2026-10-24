@@ -78,12 +78,11 @@
     .key { flex: 0 0 auto; min-width: 7.2em; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,.1);
       border-bottom: 2px solid rgba(0,0,0,.35); font-weight: 600; color: #fff; font-size: .9em; text-align: center; }
     @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } .key { min-width: 6.4em; } }
-    /* small screens: keep panels clear of the corner buttons */
+    /* small screens: a open panel hides the corner buttons (panels have their own close) */
     @media (max-width: 760px), (max-height: 520px) {
-      .ui-layer { padding: calc(var(--btn) + 18px) 0 10px; box-sizing: border-box; }
-      .ui-panel { max-height: calc(100dvh - var(--btn) - 32px); border-radius: 20px; }
+      .ui-root.menu-open .ui-bar { opacity: 0; pointer-events: none; }
+      .ui-panel { max-height: calc(100dvh - 20px); border-radius: 20px; }
     }
-    @media (max-height: 520px) and (min-width: 600px) { .ui-layer { padding: 10px calc(var(--btn) + 24px) 10px 10px; } .ui-panel { max-height: calc(100dvh - 20px); } }
     @media (max-height: 460px) { .ui-hint { display: none; } }
   </style>
 </head>

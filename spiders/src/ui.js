@@ -229,6 +229,7 @@ export class UI {
     this.layer.append(panel);
     this.layer.classList.add('show');
     this.stack.push(m);
+    this.root.classList.add('menu-open');
     this.renderRows(m);
     this.setFocus(m, 0);
     sfx.ui();
@@ -241,7 +242,7 @@ export class UI {
     if (!m) return;
     m.el.remove();
     if (this.top) this.top.el.classList.remove('under');
-    else this.layer.classList.remove('show');
+    else { this.layer.classList.remove('show'); this.root.classList.remove('menu-open'); }
     if (m.def.onClose) m.def.onClose();
     if (this.onChange) this.onChange();
   }
