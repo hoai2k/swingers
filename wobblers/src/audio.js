@@ -509,7 +509,7 @@ export class Audio {
       heli: { w1: 'sawtooth', w2: 'triangle', base: 30, range: 0.6, ratio: 2.0, lp: 500, vol: 0.12, am: 13 },
     };
     VOICES.police = VOICES.car;
-    const V = VOICES[type] || VOICES.car;
+    const V = veh.def?.engineVoice || VOICES[veh.def?.voice || type] || VOICES.car;
     const o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
     o.type = V.w1; o2.type = V.w2; f.type = 'lowpass'; f.frequency.value = V.lp; f.Q.value = 2;
     g.gain.value = 0;
@@ -527,7 +527,7 @@ export class Audio {
     let tail = g;
     if (c.createStereoPanner) { const pn = c.createStereoPanner(); g.connect(pn); tail = pn; e.pan = pn; }
     tail.connect(this.sfx);
-    if (type === 'boat') {
+    if (type === 'boat' || veh.def?.boat) {
       const n = c.createBufferSource(); n.buffer = this.noise; n.loop = true;
       const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.7;
       const ng = c.createGain(); ng.gain.value = 0;

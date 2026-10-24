@@ -12,6 +12,8 @@ import { UI } from './ui.js';
 import { buildWorld } from './world/index.js';
 import { Vehicle } from './vehicles.js';
 import { Emotes } from './emotes.js';
+import { NPCManager } from './npc.js';
+import { RegionBanners } from './regionbanner.js';
 
 export class Game {
   constructor(canvas) {
@@ -45,13 +47,15 @@ export class Game {
     this.input = new Input(canvas);
     this.audio = new Audio(this);
     this.setupLights();
+    this.npcs = new NPCManager(this); // world builders spawn NPCs into it
     buildWorld(this);
     this.ui = new UI(this);
+    this.regionBanners = new RegionBanners(this); // "Welcome to Frostpeak!"; sets player.region
     this.emotes = new Emotes(this); // emote wheel + quick emotes
     this.physics.world.step(); // build broad-phase so first queries work
     addEventListener('resize', () => this.resize());
     this.resize();
-    this.idleCam = new THREE.PerspectiveCamera(55, 1, 0.1, 900);
+    this.idleCam = new THREE.PerspectiveCamera(55, 1, 0.1, 2200);
     this.physics.onContactForce = (e) => this.contactSound(e);
   }
 
@@ -273,6 +277,15 @@ export class Game {
     }
   }
 
+  // Merged static chunks (world/kit.js) far from this camera are hidden, except
+  // tall ones (towers, the bridge, skyscrapers) that read as silhouettes.
+  farCull(cam) {
+    const list = this.staticChunks;
+    if (!list) return;
+    const p = cam.position;
+    for (const c of list) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) - c.r < (c.tall ? 2400 : 760);
+  }
+
   render(dt) {
     const r = this.renderer;
     const views = this.views();
@@ -283,7 +296,7 @@ export class Game {
     const setFog = (cam, under) => {
       // underwater: murky blue that dims with the daylight
       if (under) { fog.color.set(0x1f7fa8).multiplyScalar(0.35 + 0.65 * this.dayLight); fog.near = 1; fog.far = 30; }
-      else { fog.color.copy(sky.fogColor); fog.near = 70 + 70 * this.dayLight; fog.far = sky.fogFar; }
+      else { fog.color.copy(sky.fogColor); fog.near = 80 + 100 * this.dayLight; fog.far = sky.fogFar; }
     };
     r.info.autoReset = false;
     r.info.reset();
@@ -292,6 +305,7 @@ export class Game {
       setFog(cam, under);
       sky.view(cam, under, fog.color);
       this.cullSmall(cam, h);
+      this.farCull(cam);
       this.interiorLights?.view(cam);
       this.detail?.view(cam);
       this.scene.userData.terrainLOD?.view(cam);

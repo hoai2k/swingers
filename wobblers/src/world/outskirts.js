@@ -2,7 +2,7 @@
 // farm, mountain lookout, lighthouse, forests and clouds.
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { FLAT, LAKE, MOUNTAIN, fbm } from '../terrain.js';
+import { FLAT, LAKE, MOUNTAIN, fbm, homeMeshHeightOriginal, inHomeExtraFlat } from '../terrain.js';
 import { groundAt as heightAt } from './common.js';
 import { Builder, signMesh } from '../mesh.js';
 import { Vehicle } from '../vehicles.js';
@@ -225,6 +225,10 @@ function inFlat(x, z, m) {
   return false;
 }
 function forests(game, kit) {
+  // Decisions use the ground as it was before the bridge road was flattened
+  // (HOME_EXTRA_FLAT) so the random layout is unchanged; things are placed on
+  // the actual ground, and none on the road itself.
+  const H0 = homeMeshHeightOriginal, onRoad = (x, z) => inHomeExtraFlat(x, z, 4);
   let placed = 0, tries = 0;
   while (placed < 420 && tries < 6000) {
     tries++;
@@ -234,22 +238,25 @@ function forests(game, kit) {
     if (r > 312) continue;
     if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r + 6) continue;
     if (Math.abs(x - 215) < 40 && Math.abs(z + 160) < 30) continue;
-    const h = heightAt(x, z);
+    const h = H0(x, z);
     if (h < 0.4 || h > 40) continue;
-    const slope = Math.abs(heightAt(x + 2, z) - heightAt(x - 2, z)) + Math.abs(heightAt(x, z + 2) - heightAt(x, z - 2));
+    const slope = Math.abs(H0(x + 2, z) - H0(x - 2, z)) + Math.abs(H0(x, z + 2) - H0(x, z - 2));
     if (slope > 3.2) continue;
     // clumps: prefer areas with higher noise
     if (fbm(x / 40, z / 40) < 0.42) continue;
     const kind = h > 14 || rnd() < 0.35 ? 1 : 0;
-    kit.tree(x, z, h - 0.1, kind, 0.8 + rnd() * 0.6);
+    const sc = 0.8 + rnd() * 0.6;
+    if (!onRoad(x, z)) kit.tree(x, z, heightAt(x, z) - 0.1, kind, sc);
     placed++;
   }
   for (let i = 0; i < 80; i++) {
     const x = (rnd() * 2 - 1) * 320, z = (rnd() * 2 - 1) * 320;
     if (inFlat(x, z, 4) || Math.hypot(x, z) > 315) continue;
-    const h = heightAt(x, z);
+    const h = H0(x, z);
     if (h < 0) continue;
-    if (rnd() < 0.5) kit.rock(x, z, h, 0.6 + rnd() * 1.6); else kit.bush(x, z, h, 0.8 + rnd() * 0.6);
+    const rock = rnd() < 0.5, sc = rock ? 0.6 + rnd() * 1.6 : 0.8 + rnd() * 0.6;
+    if (onRoad(x, z)) continue;
+    if (rock) kit.rock(x, z, heightAt(x, z), sc); else kit.bush(x, z, heightAt(x, z), sc);
   }
 }
 

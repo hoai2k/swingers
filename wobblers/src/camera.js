@@ -18,7 +18,7 @@ export class FollowCam {
   constructor(game, player) {
     this.game = game;
     this.player = player;
-    this.cam = new THREE.PerspectiveCamera(FOV, 1, 0.1, 900);
+    this.cam = new THREE.PerspectiveCamera(FOV, 1, 0.1, 2200);
     this.yaw = player.yaw;
     this.pitch = 0.28;
     this.dist = FOOT_DIST;

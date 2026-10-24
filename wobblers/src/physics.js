@@ -202,7 +202,7 @@ export class Physics {
     for (const o of this.objects) {
       if (o.kind !== 'prop') continue;
       const t = o.body.translation();
-      if (t.y < -30 || Math.abs(t.x) > 420 || Math.abs(t.z) > 420) {
+      if (t.y < -30 || Math.abs(t.x) > 1450 || Math.abs(t.z) > 1450) {
         o.body.setTranslation(o.home, true); o.body.setRotation(o.homeRot, true);
         o.body.setLinvel({ x: 0, y: 0, z: 0 }, true); o.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
       }

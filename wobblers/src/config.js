@@ -9,7 +9,8 @@ export const MAX_PLAYERS = 8;
 export const G_STATIC = 1 << 0;
 export const G_PROP = 1 << 1;
 export const G_VEH = 1 << 2;      // vehicles and moving ride parts
-export const playerBit = (i) => 1 << (3 + i);
+export const playerBit = (i) => 1 << (3 + i);   // players 0..7: bits 3..10
+export const NPC_BITS = [11, 12, 13, 14, 15];      // NPCs (src/npc.js) use playerBit(8..12)
 export const ALL = 0xffff;
 export const groups = (member, filter) => ((member & 0xffff) << 16) | (filter & 0xffff);
 

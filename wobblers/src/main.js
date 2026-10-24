@@ -12,7 +12,9 @@ if (hasAsset('ui/logo.png')) {
 pct.textContent = '40%';
 const { Game } = await import('./game.js');
 await new Promise((r) => setTimeout(r, 0));
+const tBoot = performance.now();
 const game = new Game(document.getElementById('view'));
+game.bootMs = Math.round(performance.now() - tBoot); // world build time (probes report it)
 window.__wob = game;
 pct.textContent = '100%';
 game.ui.setReady();

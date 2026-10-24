@@ -1,6 +1,8 @@
-// Builds the whole island.
+// Builds the whole archipelago: the home island, then every region in
+// world/regions/ (terrain first, see terrain.js), the bridge, ferries and NPCs.
 import * as THREE from 'three';
-import { buildTerrain } from '../terrain.js';
+import { buildTerrain, REGIONS, terrainStats, heightAt, meshHeight, biomeAt, regionAt } from '../terrain.js';
+import { defineRegions, buildRegions } from './regions/index.js';
 import { SEA_LEVEL } from '../config.js';
 import { Kit } from './kit.js';
 import { seaMaterial, animateWater } from './water.js';
@@ -17,34 +19,48 @@ import { buildGarage } from './garage.js';
 import { buildFun } from './fun.js';
 import { InteriorLights } from './lights.js';
 import { buildPresents } from './presents.js';
+import { buildBridge } from './bridge.js';
+import { buildFerries } from './ferries.js';
+import { buildFolk } from './folk.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
   game.kit = kit;
   game.waterMats = [];
   game.interiorLights = new InteriorLights(game);
-  buildTerrain(game.scene, game.physics);
-  buildSea(game);
-  buildRoads(game, kit);
-  buildTown(game, kit);
-  buildPlayground(game, kit);
-  buildPool(game, kit);
-  buildPark(game, kit);
-  buildStunts(game, kit);
-  buildSports(game, kit);
-  buildOutskirts(game, kit);
-  scatterProps(game, kit);
-  buildGarage(game, kit);
-  buildFun(game, kit);
-  buildPresents(game); // after everything static (it rays down onto it) and the rafts
-  kit.finish();
-  game.interiorLights.finish();
-  buildDetail(game); // grass, flowers, road edges, lamp glow
+  const times = game.buildTimes ||= {}; // ms per build step (probes report them)
+  const T = (name, fn) => { const t0 = performance.now(); fn(); times[name] = Math.round(performance.now() - t0); };
+  T('defineRegions', () => defineRegions());
+  game.regions = REGIONS; // [{ id, name, biome, centre, bounds, labels, docks, ... }]; REGIONS[0] is the home island
+  T('terrain', () => buildTerrain(game.scene, game.physics));
+  game.terrainStats = terrainStats;
+  game.terrain = { heightAt, groundAt: meshHeight, biomeAt, regionAt }; // handy for probes / other modules
+  T('sea', () => buildSea(game));
+  T('home', () => {
+    buildRoads(game, kit);
+    buildTown(game, kit);
+    buildPlayground(game, kit);
+    buildPool(game, kit);
+    buildPark(game, kit);
+    buildStunts(game, kit);
+    buildSports(game, kit);
+    buildOutskirts(game, kit);
+    scatterProps(game, kit);
+    buildGarage(game, kit);
+    buildFun(game, kit);
+  });
+  T('bridge', () => buildBridge(game, kit));
+  T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]
+  T('ferries', () => buildFerries(game, kit)); // docks from every region's `docks`, then the ferry lines
+  T('folk', () => buildFolk(game));            // home island NPCs
+  T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
+  T('kitFinish', () => { kit.finish(); game.interiorLights.finish(); });
+  T('detail', () => buildDetail(game));        // grass, flowers, road edges, lamp glow
   animateWater(game, game.waterMats);
 }
 
 function buildSea(game) {
-  const geo = new THREE.PlaneGeometry(2400, 2400, 1, 1).rotateX(-Math.PI / 2);
+  const geo = new THREE.PlaneGeometry(8000, 8000, 1, 1).rotateX(-Math.PI / 2);
   const mat = seaMaterial();
   game.waterMats.push(mat);
   const sea = new THREE.Mesh(geo, mat);

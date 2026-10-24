@@ -153,6 +153,8 @@ export function signTexture(text, bg = '#ff5a8a', fg = '#fff', w = 512, h = 128)
   const r = h * 0.3;
   g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, r); g.fill();
   g.fillStyle = fg; g.font = `900 ${h * 0.55}px Trebuchet MS, sans-serif`;
+  const tw = g.measureText(text).width; // long text: shrink to fit
+  if (tw > w - h * 0.4) g.font = `900 ${Math.floor(h * 0.55 * (w - h * 0.4) / tw)}px Trebuchet MS, sans-serif`;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(text, w / 2, h / 2 + 4);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;

@@ -138,6 +138,33 @@ export const VEHICLES = {
   },
 };
 
+// ---- extending: new vehicle types and handling models without editing this file
+//
+// registerVehicle(type, def): adds/replaces VEHICLES[type]. def has the fields
+// above (mass, half, axles, accel, maxSpeed, rev, brakeDecel, steer, grip,
+// susp, com, seats, camH, camDist, lights, horn, cabin...), plus optionally
+//   boat: true          buoyant hull (no wheels); engine (N), maxSpeed, steer; buoy: { points, r, volume } (default from half / mass)
+//   heli: true          the arcade helicopter model
+//   handling: 'name'    a model registered with registerHandling (replaces the wheel / boat / heli update)
+//   mesh(b, def, color, P, vehicle)   custom look: add primitives to Builder b (body frame, +Z forward,
+//                       +X left); P = { b, glass, lights, tail, c, dark, trim } builders/colours, P.shell the
+//                       wobbling group (add extra meshes to it)
+//   colliders(add, C, def, vehicle)   custom hull: add(RAPIER.ColliderDesc) for each shape (C = ColliderDesc)
+//   voice: engine sound of another type ('car', 'bus', 'boat', 'kart', 'heli'...) or engineVoice: { w1, w2, base, range, ratio, lp, vol, am }
+//   horn: horn of another type ('car', 'sports', 'truck', 'bus', 'boat', 'kart', 'heli', 'bumper')
+// registerHandling(name, { update(vehicle, driver, vel, fwd, up, side), wheels: bool }):
+//   update runs every physics step (vehicle.throttle / steer / handbrake / lift / fly are set from the
+//   driver's input by control()); wheels: true keeps the ray-cast wheels (def.axles) and their controller.
+// Make it callable from the phone with registerCallable (phone.js).
+export const HANDLING = {};
+export function registerVehicle(type, def) {
+  if (!def || !def.seats?.length || !def.half) throw new Error('registerVehicle ' + type + ': needs half and seats');
+  def.mass ??= 1000;
+  VEHICLES[type] = def;
+  return def;
+}
+export function registerHandling(name, h) { HANDLING[name] = h; return h; }
+
 // Horn sounds: [wave, [freqs], duration, volume]
 const HORNS = {
   car: ['square', [392, 494], 0.32, 0.07], sports: ['sawtooth', [523, 659], 0.25, 0.05], truck: ['sawtooth', [233, 294], 0.45, 0.06],
@@ -166,13 +193,15 @@ export class Vehicle {
       .setLinearDamping(def.boat ? 0.15 : def.heli ? 0.1 : 0.02).setAngularDamping(def.boat ? 1.2 : def.heli ? 1.0 : 0.5).setCcdEnabled(true);
     this.body = world.createRigidBody(bd);
     this.buildColliders();
-    this.wheeled = !def.boat && !def.heli;
+    this.handling = def.handling ? HANDLING[def.handling] : null;
+    if (def.handling && !this.handling) throw new Error('unknown handling ' + def.handling);
+    this.wheeled = this.handling ? (this.handling.wheels ?? !!def.axles) : !def.boat && !def.heli;
     if (this.wheeled) this.buildWheels();
     else if (def.boat) {
-      // buoyancy samples around the hull
-      const pts = [];
-      for (const sx of [-0.85, 0.85]) for (const sz of [-2.0, -0.7, 0.7, 2.0]) pts.push([sx, -0.25, sz]);
-      this.buoy = { points: pts, r: 0.35, volume: 2.6 };
+      // buoyancy samples around the hull (the default boat: half [1, 0.35, 2.4], 420 kg)
+      const pts = [], h = def.half;
+      for (const sx of [-(h[0] - 0.15), h[0] - 0.15]) for (const sz of [-(h[2] - 0.4), -(h[2] - 0.4) * 0.35, (h[2] - 0.4) * 0.35, h[2] - 0.4]) pts.push([sx, -0.25, sz]);
+      this.buoy = def.buoy ? { ...def.buoy } : { points: pts, r: 0.35, volume: 2.6 * def.mass / 420 };
       game.physics.objects.push({ body: this.body, mesh: null, buoy: this.buoy, kind: 'vehicle' });
     }
     if (!def.boat) game.physics.objects.push({ body: this.body, mesh: null, buoy: { r: 0.6, volume: 0.25 * def.mass / 400, drag: 1.2 }, kind: 'vehicle' });
@@ -220,7 +249,8 @@ export class Vehicle {
       return c;
     };
     const C = RAPIER.ColliderDesc;
-    if (def.boat) {
+    if (def.colliders) def.colliders(add, C, def, this);
+    else if (def.boat) {
       add(C.cuboid(h[0], 0.18, h[2]).setTranslation(0, -0.15, 0));
       add(C.cuboid(0.1, 0.3, h[2]).setTranslation(h[0] - 0.1, 0.2, 0));
       add(C.cuboid(0.1, 0.3, h[2]).setTranslation(-h[0] + 0.1, 0.2, 0));
@@ -385,7 +415,8 @@ export class Vehicle {
     this.speed = v.x * fwd.x + v.y * fwd.y + v.z * fwd.z;
     this.massEff = def.mass + this.riders() * 45;
 
-    if (def.boat) this.updateBoat(drv, v, fwd, side);
+    if (this.handling) this.handling.update(this, drv, v, fwd, up, side);
+    else if (def.boat) this.updateBoat(drv, v, fwd, side);
     else if (def.heli) this.updateHeli(drv, v, fwd, up, side);
     else this.updateWheels(drv, v, fwd, up, side);
 
@@ -527,7 +558,7 @@ export class Vehicle {
       const x = clamp(this.speed / def.maxSpeed, 0, 1);
       const f = (t > 0 ? def.engine * (1 - x * x) : def.engine * 0.5 * (this.speed > -5 ? 1 : 0)) * t;
       const p = this.body.translation();
-      const stern = { x: p.x - fwd.x * 2.3, y: p.y - 0.2, z: p.z - fwd.z * 2.3 };
+      const sb = def.half[2] - 0.1, stern = { x: p.x - fwd.x * sb, y: p.y - 0.2, z: p.z - fwd.z * sb };
       this.body.applyImpulseAtPoint({ x: fwd.x * f * DT, y: 0, z: fwd.z * f * DT }, stern, true);
       // turn rate follows the stick, more authority with speed or throttle
       const av = this.body.angvel();
@@ -724,7 +755,8 @@ export class Vehicle {
     const fn = def.boat ? 'meshBoat' : def.heli ? 'meshHeli' : def.bumper ? 'meshBumper' : def.quad ? 'meshQuad' : def.bike ? 'meshScooter'
       : def.kart ? 'meshKart' : def.tractor ? 'meshTractor' : def.fire ? 'meshFire' : this.type === 'bus' ? 'meshBus'
       : def.convertible ? 'meshSports' : 'meshCar';
-    this[fn](P);
+    P.shell = shell;
+    if (def.mesh) def.mesh(b, def, this.color, P, this); else this[fn](P);
     if (def.lights && !def.boat && !def.heli) {
       const h = def.half, [hy, hz] = def.lights.head;
       const lx = def.bike || def.tractor ? [0] : [-1, 1];
