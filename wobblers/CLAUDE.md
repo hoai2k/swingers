@@ -49,7 +49,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   faces (`faces/face_<name>.png`), signs (`signs/<text>.png`, any `signMesh` text; run
   `python3 tools/clean_signs.py` after adding signs to key out their backgrounds), posters
   (`world/posters.js`, `posters/<name>.png`) and the title logo (`ui/logo.png`). Open
-  requests are in `image-requests.md`.
+  requests are in `image-requests.md` (formats + style rules at its top); delivered rounds
+  move to `image-requests-history.md`. **Request art early:** as soon as a feature's sign
+  words / face / poster names are known, add an `## OPEN round N` entry and commit + push
+  it on its own before finishing the feature, so the art is generated in parallel. A
+  subagent that may not push sends the entry to its coordinator instead, who commits it.
 - Interior lights: rooms call `game.interiorLights.add(x, y, z, opts)` (`world/lights.js`); a
   pool of 6 point lights follows each view's camera, so adding spots costs nothing per frame.
 - Vehicles can be removed at runtime with `vehicle.destroy()` (riders and grabbing hands let
