@@ -135,7 +135,7 @@ const units = [
     desc: 'A cone of buckshot. Devastating up close.',
   },
   {
-    id: 'ww_lasso', name: 'Lasso', faction: 'wildwest', cost: 100, hp: 105, speed: 4.6,
+    id: 'ww_lasso', name: 'Lasso', faction: 'wildwest', cost: 90, hp: 105, speed: 4.6,
     build: { scale: 1.0, girth: 1.0 },
     weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'ww_lasso_hand', proj: 'lasso', speed: 15, arc: 'low', range: 17, minRange: 4, cooldown: 4.2, damage: 20, force: 0, spread: 0.04, releaseAt: 0.7, windup: 0.8, hold: 2.2, pull: 26 },
     look: { skin: '#e8b890', hat: 'ww_cowboy', top: 'ww_vest', legs: '#6a5236' },
@@ -143,9 +143,9 @@ const units = [
     desc: 'Ropes an enemy and drags it into your lines.',
   },
   {
-    id: 'ww_dynamite', name: 'Dynamite', faction: 'wildwest', cost: 220, hp: 95, speed: 4.4,
+    id: 'ww_dynamite', name: 'Dynamite', faction: 'wildwest', cost: 170, hp: 95, speed: 4.4,
     build: { scale: 0.95, girth: 1.05, head: 1.05 },
-    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'ww_dynamite_hand', proj: 'dynamite', speed: 14, arc: 'high', range: 22, minRange: 6, cooldown: 2.8, damage: 95, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.4 },
+    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'ww_dynamite_hand', proj: 'dynamite', speed: 14, arc: 'high', range: 22, minRange: 6, cooldown: 2.8, damage: 100, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.6 },
     look: { skin: '#e8b890', hat: 'ww_miner', top: 'overalls', legs: '#4a5a7a', beard: '#7a5a3a' },
     personality: { aggro: 0.45, bravery: 0.25, voice: 0.85, chatter: 0.9, cry: 'cackle', idle: 'shake' },
     desc: 'Bouncing sticks of dynamite on a short fuse.',

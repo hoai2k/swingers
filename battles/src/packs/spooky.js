@@ -77,7 +77,7 @@ const units = [
     desc: 'Cheap and rattly. Falls to bits when beaten.',
   },
   {
-    id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 85, hp: 40, speed: 4.5,
+    id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 70, hp: 40, speed: 4.5,
     build: { scale: 0.95, girth: 0.78, head: 1.05, mass: 0.7 },
     weapon: { kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.2, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
     look: { skin: BONE, hat: 'sp_skull_hood', top: 'sp_ribs', legs: BONE, quiver: true },
@@ -94,7 +94,7 @@ const units = [
     desc: 'Flings flaming wisps that set enemies alight.',
   },
   {
-    id: 'sp_vampire', name: 'Vampire', faction: 'spooky', cost: 400, hp: 340, speed: 6.0,
+    id: 'sp_vampire', name: 'Vampire', faction: 'spooky', cost: 340, hp: 340, speed: 6.0,
     build: { scale: 1.08, girth: 0.92, arms: 1.1 },
     weapon: { kind: 'sp_vampire', style: 'dual', anim: 'dual', item: 'sp_claw', item2: 'sp_claw', damage: 36, reach: 1.2, cooldown: 0.6, force: 200, drain: 0.6 },
     look: { skin: '#e4dce6', hat: 'sp_vampire', top: 'sp_vampire', legs: '#1d1a20', cape: true },
@@ -103,9 +103,9 @@ const units = [
     desc: 'Lightning fast claws that drain health back.',
   },
   {
-    id: 'sp_reaper', name: 'Reaper', faction: 'spooky', cost: 1600, hp: 650, speed: 3.4,
+    id: 'sp_reaper', name: 'Reaper', faction: 'spooky', cost: 2000, hp: 650, speed: 3.4,
     build: { scale: 1.35, girth: 0.95, head: 1.0, mass: 1.3 },
-    weapon: { kind: 'melee', style: 'twohand', anim: 'slam', item: 'sp_scythe', damage: 3000, reach: 2.4, cooldown: 2.5, force: 520, sweep: true },
+    weapon: { kind: 'melee', style: 'twohand', anim: 'slam', item: 'sp_scythe', damage: 3000, reach: 2.4, cooldown: 2.9, force: 520, sweep: true },
     look: { skin: BONE, hat: 'sp_reaper', top: 'sp_reaper', legs: '#141216' },
     personality: { aggro: 0.8, bravery: 0, voice: 0.5, chatter: 0.3, cry: 'magic', idle: 'float' },
     armor: 0.1, stagger: 0.3,

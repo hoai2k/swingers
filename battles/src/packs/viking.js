@@ -98,9 +98,9 @@ const jarl = {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'vk_brawler', name: 'Brawler', faction: 'viking', cost: 80, hp: 125, speed: 4.5,
+    id: 'vk_brawler', name: 'Brawler', faction: 'viking', cost: 100, hp: 115, speed: 4.5,
     build: { scale: 1.02, girth: 1.12 },
-    weapon: { kind: 'melee', style: 'shield', anim: 'overhead', item: 'vk_hammer', shield: 'wood', damage: 24, reach: 1.25, cooldown: 1.05, force: 300, blockMelee: 0.4 },
+    weapon: { kind: 'melee', style: 'shield', anim: 'overhead', item: 'vk_hammer', shield: 'wood', damage: 22, reach: 1.25, cooldown: 1.05, force: 300, blockMelee: 0.4 },
     look: { skin: '#f0c8a8', hat: 'vk_cap', top: 'fur', legs: '#5e5048', bare: true, beard: '#c8702c' },
     personality: { aggro: 0.95, bravery: 0.1, voice: 0.85, chatter: 0.7, cry: 'roar', idle: 'thump' },
     desc: 'Hammer, shield and a terrible temper.',
@@ -123,9 +123,9 @@ const units = [
     desc: 'Frost arrows freeze targets: slower steps, slower swings.',
   },
   {
-    id: 'vk_jarl', name: 'Jarl', faction: 'viking', cost: 750, hp: 560, speed: 4.4,
+    id: 'vk_jarl', name: 'Jarl', faction: 'viking', cost: 850, hp: 480, speed: 4.4,
     build: { scale: 1.3, girth: 1.15, head: 1.0, mass: 1.5 },
-    weapon: { kind: 'vk_jarl', style: 'shield', anim: 'overhead', item: 'vk_sword', shield: 'round', damage: 62, reach: 1.7, cooldown: 1.4, force: 560, sweep: true, blockMelee: 0.35 },
+    weapon: { kind: 'vk_jarl', style: 'shield', anim: 'overhead', item: 'vk_sword', shield: 'round', damage: 52, reach: 1.7, cooldown: 1.5, force: 560, sweep: true, blockMelee: 0.35 },
     look: { skin: '#f0c4a0', hat: 'vk_jarl', top: 'fur', legs: '#4a3e36', beard: '#b8b8b8', cape: true },
     personality: { aggro: 1, bravery: 0, voice: 0.62, chatter: 0.7, cry: 'royal', idle: 'regal' },
     armor: 0.2, stagger: 0.35,

@@ -110,7 +110,7 @@ const units = [
     desc: 'A pike so long it pokes enemies before they get close.',
   },
   {
-    id: 'an_snake_archer', name: 'Snake Archer', faction: 'ancient', cost: 165, hp: 80, speed: 4.4,
+    id: 'an_snake_archer', name: 'Snake Archer', faction: 'ancient', cost: 150, hp: 80, speed: 4.4,
     build: { scale: 0.96, girth: 0.95 },
     weapon: { kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'venom_arrow', speed: 32, arc: 'low', range: 36, minRange: 8, cooldown: 2.2, damage: 22, force: 80, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#e6b48c', hat: 'an_snakehood', top: 'an_linen', legs: '#4c6a2e', quiver: true },
