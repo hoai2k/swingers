@@ -463,6 +463,46 @@
       "transparent": false,
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-58163fa5-2a7e-466d-bc24-410a17e1ba1c.png",
       "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A top-down illustrated map of the island: town in the middle with a grid of roads and a ring road, playground NE, swimming pool SE, stunt park SW, sports field NW, fun park far west, kart track far east, snowy mountain and a lake to the north, beach with a pier and lighthouse to the south. Labels optional. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "file": "faces/face_star_eyes.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-38df0f1e-a709-4822-ac45-e478e4d06503.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Starstruck: big yellow five-point stars for eyes with a white sparkle, huge open delighted smile. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 51
+    },
+    {
+      "file": "faces/face_winky.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ba7abe82-5c79-4c7f-ac29-9aaafdc31960.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Playful wink: one eye closed in a happy arc, the other big and round with a white highlight, a cheeky grin with one raised eyebrow. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 52
+    },
+    {
+      "file": "faces/face_robot.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f665e575-0b15-4609-b58a-554611687e92.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Toy robot: two glowing cyan square LED eyes, a flat rectangular grille mouth with little lines, a tiny antenna-free bolt on each cheek. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 53
+    },
+    {
+      "file": "faces/face_moustache.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f7f14939-ba45-4ee4-9054-53b06da619bc.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: A big curly brown handlebar moustache under a round nose, friendly round eyes with white highlights, small smile peeking out. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 54
     }
   ]
 }
