@@ -1162,6 +1162,7 @@ export class Player {
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
+    this.emote = null; this.emoteBody = null; // stop any dance / sit
     this.wake(false);
     this.recover = 1;
     const sp = this.game.spawnPoint(this.index);
