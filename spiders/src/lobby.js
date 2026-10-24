@@ -7,7 +7,7 @@
 //   [VERSUS]   ( board island )   [SURVIVAL]       <- web-swing up to these
 //      o                  o                         <- anchor rocks (+ a hanging dummy)
 //               (     hub island     )              <- spawn, practice weapons
-//       (trials) [TRIALS sign]                      <- trials perch (jump up from the hub's left end)
+//   [TRIALS sign] over the trials perch, up between VERSUS and BOARD (it is also the left swing anchor)
 //  (settings)                             (range)   <- low ledges: SETTINGS / target dummy
 //
 // Everyone joined standing on the same mode island for 3 s starts it (solo
@@ -36,7 +36,7 @@ import { TRIALS, TIERS, loadTrials, setTrialSel, trialUnlocked, trialCleared, tr
 const LOBBY_BG = optionalImage('lobby_bg.jpg');
 
 const HUB_Y = 790, MODE_Y = 460, BOARD_Y = 430, LEDGE_Y = 815;
-const TRIAL_X = 470, TRIAL_Y = 650, TRIAL_SIGN_X = 715;
+const TRIAL_X = 600, TRIAL_Y = 262, TRIAL_SIGN_X = 612;   // up between VERSUS and BOARD, clear of the hub routes
 
 export const LOBBY_BOARD = {
   id: 'lobby',
@@ -49,8 +49,8 @@ export const LOBBY_BOARD = {
     { poly: island(960, BOARD_Y, 380, 110, { seed: 15 }), zone: 'board' },
     { poly: island(225, LEDGE_Y, 240, 90, { seed: 16 }), zone: 'settings' },
     { poly: island(1695, LEDGE_Y, 240, 90, { seed: 17 }), zone: 'range' },
-    { poly: island(TRIAL_X, TRIAL_Y, 210, 60, { seed: 21, n: 18 }), zone: 'challenge' },
-    { poly: blob(590, 235, 34, 30, { seed: 18, n: 14 }) },                // anchor rocks
+    { poly: island(TRIAL_X, TRIAL_Y, 190, 56, { seed: 21, n: 18 }), zone: 'challenge' },  // doubles as the left anchor rock
+    // anchor rock (right)
     { poly: blob(1330, 235, 34, 30, { seed: 19, n: 14 }) },
   ],
   spawns: [[700, 740], [1220, 740], [800, 740], [1120, 740], [900, 740], [1020, 740], [750, 700], [1170, 700]],
@@ -456,7 +456,7 @@ export class Lobby {
     // threads holding up the islands (it's a spider's lobby)
     ctx.save();
     ctx.strokeStyle = 'rgba(230,236,255,0.22)'; ctx.lineWidth = 1.5;
-    for (const [x, y] of [[170, MODE_Y], [430, MODE_Y], [1490, MODE_Y], [1750, MODE_Y], [800, BOARD_Y], [1120, BOARD_Y], [590, 210], [1330, 210], [TRIAL_X - 70, TRIAL_Y], [TRIAL_X + 70, TRIAL_Y], [TRIAL_SIGN_X - 95, TRIAL_Y - 100], [TRIAL_SIGN_X + 95, TRIAL_Y - 100]]) {
+    for (const [x, y] of [[170, MODE_Y], [430, MODE_Y], [1490, MODE_Y], [1750, MODE_Y], [800, BOARD_Y], [1120, BOARD_Y], [1330, 210], [TRIAL_X - 70, TRIAL_Y], [TRIAL_X + 70, TRIAL_Y], [TRIAL_SIGN_X - 95, TRIAL_Y - 100], [TRIAL_SIGN_X + 95, TRIAL_Y - 100]]) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, y); ctx.stroke();
     }
     ctx.restore();

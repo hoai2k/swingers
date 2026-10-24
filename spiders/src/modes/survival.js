@@ -37,6 +37,7 @@ import { castAt } from '../cast.js';
 import { text, drawBanner, drawPlayerTags, drawPanel, drawPortrait, drawCountdown } from '../hud.js';
 import { Stinglet, Gnatling, Buzzgunner, Bladewing, Shellback, Dropmoth, Hexfly } from '../enemies/insects.js';
 import { BroodTyrant } from '../enemies/boss.js';
+import { applyRoundMods, applySpiderMods, tickMods, drawMods } from '../modifiers.js';
 
 // cost: wave budget points per spawn; from: first wave it appears; group: insects per spawn
 export const ROSTER = [
@@ -54,13 +55,16 @@ const START_LIVES = 3;
 const LIFE_CAP = 5;
 const RESPAWN_T = 3;             // seconds before a fallen spider drops back in
 
+// a spider field's value before perks touched it (modifiers may have set it)
+function base(sp, k) { sp.perkBase = sp.perkBase || {}; if (!(k in sp.perkBase)) sp.perkBase[k] = sp[k] || 1; return sp.perkBase[k]; }
+
 // Perks: stackable up to max. apply(sp, n) sets spider fields on every spawn;
 // take(p, n, mode) runs once when picked.
 export const PERKS = [
   { id: 'shell',  name: 'Hard Shell',   desc: '+1 shield charge, refilled every wave', max: 3, color: '#7fe8ff', apply: (sp, n) => { sp.shield = Math.max(sp.shield, n); } },
-  { id: 'legs',   name: 'Quick Legs',   desc: 'Walk 20% faster',                 max: 3, color: '#4fdc6a', apply: (sp, n) => { sp.speedMul = 1 + 0.2 * n; } },
-  { id: 'spring', name: 'Spring Legs',  desc: 'Jump 15% higher',                 max: 3, color: '#ffd23f', apply: (sp, n) => { sp.jumpMul = 1 + 0.15 * n; } },
-  { id: 'silk',   name: 'Long Silk',    desc: 'Webs reach 35% farther',          max: 2, color: '#f4f7ff', apply: (sp, n) => { sp.webMul = 1 + 0.35 * n; } },
+  { id: 'legs',   name: 'Quick Legs',   desc: 'Walk 20% faster',                 max: 3, color: '#4fdc6a', apply: (sp, n) => { sp.speedMul = base(sp, 'speedMul') * (1 + 0.2 * n); } },
+  { id: 'spring', name: 'Spring Legs',  desc: 'Jump 15% higher',                 max: 3, color: '#ffd23f', apply: (sp, n) => { sp.jumpMul = base(sp, 'jumpMul') * (1 + 0.15 * n); } },
+  { id: 'silk',   name: 'Long Silk',    desc: 'Webs reach 35% farther',          max: 2, color: '#f4f7ff', apply: (sp, n) => { sp.webMul = base(sp, 'webMul') * (1 + 0.35 * n); } },
   { id: 'venom',  name: 'Venom Fangs',  desc: 'Deal double damage to insects',   max: 2, color: '#b46bff', apply: (sp, n) => { sp.dmgMul = 1 + n; } },
   { id: 'saber',  name: 'Born Duelist', desc: 'Start every wave holding a saber', max: 1, color: '#4dd2ff', excl: 'armory' },
   { id: 'armory', name: 'Armory',       desc: 'Start every wave with a random gun', max: 1, color: '#ff5a5a', excl: 'saber' },
@@ -123,6 +127,7 @@ export class SurvivalMode {
     this.startLives = START_LIVES;
     this.lifeCap = LIFE_CAP;
     this.dropRate = settings.dropRate;
+    this.useMods = true;      // Settings > Modifiers apply to survival (trials use their own rules)
   }
 
   get friendlyFire() { return !!settings.friendlyFire; }
@@ -152,6 +157,7 @@ export class SurvivalMode {
     const game = this.game;
     const def = this.pickBoard();
     const board = game.loadBoard(def);
+    this.mods = this.useMods ? applyRoundMods(game) : [];
     game.music.match(def.music);
     game.music.setDuck(1);
     this.drops = new DropSpawner(game, board, this.dropRate);
@@ -188,6 +194,7 @@ export class SurvivalMode {
   applyPerks(sp, waveStart = false) {
     const p = sp.player;
     if (!p) return sp;
+    if (!sp.modsApplied) { sp.modsApplied = true; if (this.useMods) applySpiderMods(this.game, sp); }
     this.applyRules(sp);
     const perks = p.perks || {};
     for (const P of PERKS) if (perks[P.id] && P.apply) P.apply(sp, perks[P.id]);
@@ -545,6 +552,7 @@ export class SurvivalMode {
       if (b.t <= 0) game.explode(b.x, b.y, { radius: 150, owner: b.owner, damage: 4, force: 900, selfOk: false, color: '#ff9a3c' });
     }
     this.blasts = this.blasts.filter((b) => b.t > 0);
+    if (this.useMods && this.inPlay) tickMods(game, dt);
     if (this.inPlay) {
       this.updateRespawns(dt);
       if (this.checkLost()) return;
@@ -587,6 +595,7 @@ export class SurvivalMode {
 
   // ---- drawing ----------------------------------------------------------------
   draw(ctx) {
+    if (this.useMods) drawMods(ctx, this.game);
     // respawn markers where the spider fell
     for (const r of this.respawns) {
       ctx.save();
@@ -665,11 +674,11 @@ export class SurvivalMode {
       if (out) text(ctx, 'OUT', x + 56, y + 46, { size: 18, color: '#ff5a7a', sw: 4, align: 'left' });
       else {
         const max = this.maxLives(p), n = p.lives || 0;
-        const step = Math.min(15, 104 / Math.max(1, max));
+        const step = Math.min(18, 106 / Math.max(1, max));
         for (let k = 0; k < max; k++) {
-          const hx = x + 63 + k * step, hy = y + 40;
-          if (k < n) drawHeart(ctx, hx, hy, 6.5, k === n - 1 && n === 1 ? '#ff2a4a' : '#ff5a7a', 'rgba(40,0,10,0.8)');
-          else drawHeart(ctx, hx, hy, 6.5, null, 'rgba(255,255,255,0.28)');
+          const hx = x + 64 + k * step, hy = y + 39;
+          if (k < n) drawHeart(ctx, hx, hy, 8, k === n - 1 && n === 1 ? '#ff2a4a' : '#ff5a7a', 'rgba(40,0,10,0.8)');
+          else drawHeart(ctx, hx, hy, 8, null, 'rgba(255,255,255,0.28)');
         }
       }
       // shield pips

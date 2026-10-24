@@ -110,6 +110,7 @@ export class ChallengeMode extends SurvivalMode {
     this.lifeCap = 1;
     this.recordBest = false;
     this.dropRate = 'normal';
+    this.useMods = false;      // a trial's rules are fixed
     this.unlockedNow = null;   // what clearing it opened
   }
 

@@ -115,6 +115,7 @@ export class Overlay {
     const g = this.game;
     const s = g.scene;
     if (g.sceneName === 'versus' && s) return `${g.board ? g.board.name : ''} · round ${s.round || 1}`;
+    if (g.sceneName === 'challenge' && s && s.trial) return `Trial: ${s.trial.name}${s.wave ? ' · wave ' + s.waveInStage + '/3' : ''}`;
     if (g.sceneName === 'survival' && s) return `${g.board ? g.board.name : ''}${s.wave ? ' · wave ' + s.wave : ''}`;
     return '';
   }
