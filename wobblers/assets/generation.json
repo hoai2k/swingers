@@ -745,6 +745,46 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a1af10a-c04c-4a66-b76b-0fe846c2e6b1.png",
       "prompt": "Use case: stylized-concept. Wobblers game shop sign. Bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words \"CAR DEALER\": rounded letters on an orange board, small toy-car icon. One front-facing horizontal 4:1 signboard intended 1024x256, bold legible lettering spelled EXACTLY as requested. Board fills canvas, safe margin, one small icon. Transparent outside board. No scene, other words, logos, brands or watermark.",
       "round": 5
+    },
+    {
+      "index": 75,
+      "file": "faces/face_heart_eyes.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-37af8ac3-8930-42af-9bce-a015edea6497.png",
+      "prompt": "Use case: stylized-concept. Wobblers square facial-feature decal, 512x512. Two big red heart-shaped eyes and a wide happy smile. Only isolated facial features floating on genuinely transparent background. Front view centered in middle 70% of canvas. Bold FLAT CARTOON, thick dark rounded outlines, solid fills, at most one simple white highlight per eye, simple flat pink blush optional. No gradients, realism, anime eyes, thin lashes, skin shading, skin fill, head, head outline, hair, hat, body, text or watermark. Cheerful toy-like game expression, readable when tiny. Will overlay peach #ffd9b8 head.",
+      "round": 5
+    },
+    {
+      "index": 76,
+      "file": "faces/face_tongue_out.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ed61c532-6b05-4c0d-b3ec-cf89c6d818c7.png",
+      "prompt": "Use case: stylized-concept. Wobblers square facial-feature decal, 512x512. Round eyes, open grin with a pink tongue sticking out. Only isolated facial features floating on genuinely transparent background. Front view centered in middle 70% of canvas. Bold FLAT CARTOON, thick dark rounded outlines, solid fills, at most one simple white highlight per eye, simple flat pink blush optional. No gradients, realism, anime eyes, thin lashes, skin shading, skin fill, head, head outline, hair, hat, body, text or watermark. Cheerful toy-like game expression, readable when tiny. Will overlay peach #ffd9b8 head.",
+      "round": 5
+    },
+    {
+      "index": 77,
+      "file": "faces/face_dizzy.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-12e3849b-969d-45cd-86df-49d511db17c6.png",
+      "prompt": "Use case: stylized-concept. Wobblers square facial-feature decal, 512x512. Spiral swirl eyes and a wavy zig-zag mouth. Only isolated facial features floating on genuinely transparent background. Front view centered in middle 70% of canvas. Bold FLAT CARTOON, thick dark rounded outlines, solid fills, at most one simple white highlight per eye, simple flat pink blush optional. No gradients, realism, anime eyes, thin lashes, skin shading, skin fill, head, head outline, hair, hat, body, text or watermark. Cheerful toy-like game expression, readable when tiny. Will overlay peach #ffd9b8 head.",
+      "round": 5
+    },
+    {
+      "index": 78,
+      "file": "faces/face_nerd.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-672d65d7-4b26-4565-baef-17f891f46b98.png",
+      "prompt": "Use case: stylized-concept. Wobblers square facial-feature decal, 512x512. Small eyes behind big thick round glasses, buck-tooth grin. Only isolated facial features floating on genuinely transparent background. Front view centered in middle 70% of canvas. Bold FLAT CARTOON, thick dark rounded outlines, solid fills, at most one simple white highlight per eye, simple flat pink blush optional. No gradients, realism, anime eyes, thin lashes, skin shading, skin fill, head, head outline, hair, hat, body, text or watermark. Cheerful toy-like game expression, readable when tiny. Will overlay peach #ffd9b8 head.",
+      "round": 5
     }
   ]
 }

@@ -13,6 +13,10 @@ Generated with built-in imagegen; sizes, alpha, manifest and browser loader chec
 - `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
 - `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
 - `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
+- `face_heart_eyes.png` — two big red heart-shaped eyes and a wide happy smile.
+- `face_tongue_out.png` — round eyes, open grin with a pink tongue sticking out.
+- `face_dizzy.png` — spiral swirl eyes and a wavy zig-zag mouth.
+- `face_nerd.png` — small eyes behind big thick round glasses, buck-tooth grin.
 <!-- /round5-progress -->
 
 Summary: round 4 — 16 images (6 region/ferry signs + 10 reference sheets);

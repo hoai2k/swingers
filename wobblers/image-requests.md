@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 5 open (8 images remaining; 4 delivered).** Rounds 1–4 are delivered and integrated;
+**Status: round 5 open (4 images remaining; 8 delivered).** Rounds 1–4 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -55,10 +55,6 @@ The game draws a procedural stand-in for each until the art arrives.
 
 ### Faces (`assets/faces/`, 512 × 512, transparent, features only — new clothes-shop faces)
 
-- `face_heart_eyes.png` — two big red heart-shaped eyes and a wide happy smile.
-- `face_tongue_out.png` — round eyes, open grin with a pink tongue sticking out.
-- `face_dizzy.png` — spiral swirl eyes and a wavy zig-zag mouth.
-- `face_nerd.png` — small eyes behind big thick round glasses, buck-tooth grin.
 
 ### Posters (`assets/posters/`)
 
