@@ -92,7 +92,7 @@ export class Spider {
     this.stun = 0;             // can't act (s)
     this.speedMul = 1;         // perks
     this.jumpMul = 1;
-    this.legs = LEGS.map((L) => ({ ...L, fx: 0, fy: 0, sx: 0, sy: 0, tx: 0, ty: 0, t: 1, planted: false, solid: null, lx: 0, ly: 0 }));
+    this.legs = LEGS.map((L) => ({ ...L, F: SP.femur * (L.far ? 0.85 : 0.9), T: SP.tibia * (L.far ? 1.1 : 1.35), fx: 0, fy: 0, sx: 0, sy: 0, tx: 0, ty: 0, t: 1, planted: false, solid: null, lx: 0, ly: 0 }));
     this.ctl = null;
     this.recallable = null;   // thrown weapon that answers RT (saber)
   }
@@ -505,7 +505,7 @@ export class Spider {
         if (hit) {
           L.tx = hit.x; L.ty = hit.y;
           const far = Math.hypot(L.fx - L.tx, L.fy - L.ty);
-          const tooFar = Math.hypot(L.fx - hipX, L.fy - hipY) > reach * 1.05;
+          const tooFar = Math.hypot(L.fx - hipX, L.fy - hipY) > (L.F + L.T) * 1.02;
           if ((!L.planted && L.t >= 1) || ((far > r * 1.25 || tooFar) && L.t >= 1 && !anyStep[1 - L.g])) {
             L.sx = L.fx; L.sy = L.fy; L.t = 0; L.planted = false; anyStep[L.g] = true;
             L.solid = hit.solid; const lp = hit.solid.inv(hit); L.lx = lp.x; L.ly = lp.y;
@@ -588,7 +588,6 @@ export class Spider {
     const outline = back ? '#0b0b10' : '#14141c';
     const fill = back ? shade(c.dark, 0.75) : c.color;
     const shin = back ? shade(c.dark, 0.6) : c.dark;
-    const F = SP.femur, T = SP.tibia;
     const coxaCol = back ? shade(c.dark, 0.5) : c.dark;
     for (const L of this.legs) {
       if (far === 'hold' ? !L.hold : (L.far !== far || L.hold)) continue;
@@ -597,6 +596,7 @@ export class Spider {
       let fx = L.fx, fy = L.fy;
       let dx = fx - cx, dy = fy - cy;
       let d = Math.hypot(dx, dy) || 1;
+      const F = L.F, T = L.T;
       const max = (F + T) * 0.999;
       if (d > max) { fx = cx + dx / d * max; fy = cy + dy / d * max; dx = fx - cx; dy = fy - cy; d = max; }
       // two-bone IK, knee bent up/out: away from the surface, outward from the body
