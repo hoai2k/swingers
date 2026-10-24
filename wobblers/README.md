@@ -42,8 +42,15 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
 | Quick emotes: wave / cheer / dance | D-pad up / left / right | 2 / 3 / 4 | |
 | Menu | Start | Esc | Numpad Enter |
+| Map (pan LS, zoom LT / RT) | View | M | Numpad / |
+| Phone: call a vehicle | D-pad down | P | Numpad * |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
+
+**Map** opens the island map in your own view (pan with the stick, zoom with the triggers,
+**A** to find yourself). The **phone** calls any vehicle to you: it pops in on a clear spot
+beside you, facing your way. Boats need water nearby and helicopters need open space. Each
+player has one called vehicle; calling another sends the old one away unless someone is in it.
 
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
 players, ledges, bars) until you let go. Punch while holding (or standing at) a ball, can
@@ -94,6 +101,8 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/world/water.js` | sea / lake / pool water shader: depth tint, foam, reflections |
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
+| `src/map.js` | island map: illustrated picture painted once from the terrain grid, roads, zones and static colliders; per-player map panel with players, vehicles, labels |
+| `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one) |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |

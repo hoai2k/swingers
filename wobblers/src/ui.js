@@ -9,6 +9,8 @@ import { settings, saveSettings, devicePrefs } from './settings.js';
 import { glyph, formatHint, promptRow, deviceKind } from './glyphs.js';
 import { FACES, PANTS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace } from './cosmetics.js';
 import { buildTitleCrowd } from './title.js';
+import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
+import { PhonePanel } from './phone.js';
 
 const DEV_NAME = (id) => id === 'kb1' ? 'Keyboard' : id === 'kb2' ? 'Keyboard 2' : id.startsWith('gp') ? 'Controller ' + (+id.slice(2) + 1) : id;
 const textCol = (c) => (c === 0xffffff || c === 0xffc233 || c === 0x3fe0d0) ? '#234' : '#fff';
@@ -317,6 +319,7 @@ export class UI {
     this.joinHTML = '';
     this.ready = false;
     buildTitleCrowd(document.getElementById('crowd'));
+    buildMapImage(game); // the island map picture, painted once
     // apply stored settings
     game.shadows = settings.shadows;
     if (settings.res !== 1) game.setResScale?.(settings.res);
@@ -354,9 +357,10 @@ export class UI {
       const mouse = document.createElement('div'); mouse.className = 'vpmouse hidden';
       mouse.innerHTML = 'Click to look around with the mouse';
       const border = document.createElement('div'); border.className = 'vpborder';
-      root.append(border, label, hint, mouse);
+      const corner = document.createElement('div'); corner.className = 'vpcorner'; // map / phone prompt
+      root.append(border, label, hint, mouse, corner);
       this.hud.insertBefore(root, this.hud.firstChild);
-      this.viewEls.push({ root, label, hint, mouse, border, player: p, hintHTML: null });
+      this.viewEls.push({ root, label, hint, mouse, border, corner, player: p, hintHTML: null });
     }
     this.refreshTags();
   }
@@ -438,6 +442,10 @@ export class UI {
       const hint = panel ? '' : this.hintFor(p, k);
       if (hint !== ve.hintHTML) { ve.hint.innerHTML = hint; ve.hintHTML = hint; ve.hint.classList.toggle('hidden', !hint); }
       Object.assign(ve.hint.style, { left: x + w / 2 + 'px', top: y + h - 16 + 'px' });
+      // map / phone corner prompt, when the view has room for it
+      const cornerOn = !panel && w >= 420 && h >= 260 && (!hint || w >= 760), ch = cornerOn ? cornerHintHTML(k) : '';
+      if (ve.cornerHTML !== ch) { ve.corner.innerHTML = ch; ve.cornerHTML = ch; }
+      if (cornerOn) Object.assign(ve.corner.style, { left: x + 10 + 'px', top: y + h - 10 + 'px' });
       const needMouse = p.deviceId === 'kb1' && !panel && !this.help && document.pointerLockElement !== g.canvas;
       ve.mouse.classList.toggle('hidden', !needMouse);
       if (needMouse) Object.assign(ve.mouse.style, { left: x + w / 2 + 'px', top: y + 14 + 'px' });
@@ -540,6 +548,8 @@ export class UI {
       if (!d) continue;
       const startPressed = p.deviceId === 'kb1' ? (d.pressed.start && inp.held().has('Escape')) : d.pressed.start;
       if (startPressed) { this.openMenu(p); continue; }
+      if (d.pressed.map) { this.openMap(p); continue; }       // map.js
+      if (d.pressed.phone) { this.openPhone(p); continue; }   // phone.js
       if (p.deviceId === 'kb1' && inp.tapped('F1')) this.openHelp('kb1');
     }
     // title: controls overlay
@@ -583,6 +593,8 @@ export class UI {
   }
   openCustomiser(p, first) { this.setPanel(p, new Customiser(this, p, first)); }
   openMenu(p) { this.sfx('uiOpen'); this.setPanel(p, new PauseMenu(this, p)); }
+  openMap(p) { this.sfx('uiOpen'); this.setPanel(p, new MapPanel(this, p)); }
+  openPhone(p) { this.setPanel(p, new PhonePanel(this, p)); }
   closePanel(p) {
     this.setPanel(p, null);
     if (p.deviceId === 'kb1') this.game.input.lockMouse();

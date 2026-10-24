@@ -646,6 +646,38 @@ export class Vehicle {
     this.rec.snap = true;
   }
 
+  // Remove this vehicle from the game for good (phone-called vehicles): riders
+  // and grabbing hands let go, then the body (with its colliders), the wheel
+  // controller, seats, buoyancy, interpolation record, meshes and engine sound go.
+  destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    const g = this.game, ph = g.physics, world = ph.world;
+    for (const s of this.seats) if (s.occupant) s.occupant.leaveSeat();
+    for (const p of g.players) for (const h of ['L', 'R']) if (p.hands?.[h]?.body === this.body) p.releaseHand(h);
+    const drop = (arr, pred) => { for (let i = arr.length - 1; i >= 0; i--) if (pred(arr[i])) arr.splice(i, 1); };
+    const seats = new Set(this.seats);
+    drop(g.seats, (s) => seats.has(s));
+    for (const s of this.seats) s.disabled = true;
+    drop(ph.objects, (o) => o.body === this.body);
+    for (const c of this.colliders) ph.handleOwner.delete(c.handle);
+    if (this.ctrl) { world.removeVehicleController(this.ctrl); this.ctrl = null; }
+    world.removeRigidBody(this.body);
+    ph.untrack(this.rec);
+    g.scene.remove(this.mesh);
+    this.mesh.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry?.dispose();
+      if (o.material !== matVC && o.material !== matGlass && o.material !== matHead) o.material?.dispose?.();
+    });
+    const e = g.audio?.engines?.get(this);
+    if (e) {
+      try { e.g.gain.value = 0; for (const n of e.stops) n.stop(); } catch (err) { /* already stopped */ }
+      g.audio.engines.delete(this);
+    }
+    drop(g.vehicles, (v) => v === this);
+  }
+
   // ---- rendering ------------------------------------------------------------------------------
   sync() {
     this.game.physics.pose(this.rec, this.mesh);

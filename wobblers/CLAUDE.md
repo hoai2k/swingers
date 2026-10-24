@@ -43,3 +43,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   requests are in `image-requests.md`.
 - Interior lights: rooms call `game.interiorLights.add(x, y, z, opts)` (`world/lights.js`); a
   pool of 6 point lights follows each view's camera, so adding spots costs nothing per frame.
+- Vehicles can be removed at runtime with `vehicle.destroy()` (riders and grabbing hands let
+  go; body, colliders, wheel controller, seats, buoyancy, render record, meshes and engine
+  sound all go). The phone (`src/phone.js`, `callVehicle(game, player, id)`) uses it; called
+  vehicles are in `game.calledVehicles` (player -> vehicle). The map picture (`src/map.js`)
+  is painted once at load from the terrain grid, `ROADS` and the static colliders, so new
+  buildings show up on it by themselves; add a label to `AREAS` for a new area. Map and
+  phone are per-player UI panels (`ui.openMap` / `ui.openPhone`), like the pause menu.
