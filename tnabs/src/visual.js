@@ -349,8 +349,8 @@ export function buildUnitVisual(def, team, opts = {}) {
           const coll = mesh(cyl(r * 0.85, r * 0.95, r * 0.3, 14), mat('#f5f0e0'), 0, len * 0.5 + r * 0.6, 0, g);
           coll.castShadow = false;
         } else if (top === 'overalls') {
-          mesh(box(r * 1.3, len + r * 0.6, r * 0.2), mat('#3b5ea8'), 0, -r * 0.3, r * 0.85, g);
-          for (const x of [-0.45, 0.45]) mesh(box(r * 0.15, len + r * 1.6, r * 2.04), mat('#3b5ea8'), x * r, 0, 0, g);
+          mesh(box(r * 1.3, len + r * 0.6, r * 0.2), mat('#8a6a45'), 0, -r * 0.3, r * 0.85, g);
+          for (const x of [-0.45, 0.45]) mesh(box(r * 0.15, len + r * 1.6, r * 2.04), mat('#8a6a45'), x * r, 0, 0, g);
         } else if (top === 'vest') {
           mesh(box(r * 0.8, len + r, r * 0.12), mat('#f3e6c8'), 0, 0, r * 0.88, g);
         } else if (top === 'apron') {
