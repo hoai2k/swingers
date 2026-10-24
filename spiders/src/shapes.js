@@ -131,3 +131,69 @@ export function ngon(cx, cy, r, n = 6, rot = 0) {
 // translate/scale/mirror helpers
 export const shift = (pts, dx, dy) => pts.map(([x, y]) => [x + dx, y + dy]);
 export const mirrorX = (pts, w = 1920) => pts.map(([x, y]) => [w - x, y]).reverse();
+
+// rotate points about (cx, cy) by a radians
+export function rotate(pts, cx, cy, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return pts.map(([x, y]) => [Math.round(cx + (x - cx) * c - (y - cy) * s), Math.round(cy + (x - cx) * s + (y - cy) * c)]);
+}
+
+// a slanted slab (fallen pillar, roof pane, catwalk): rounded rect of w x h
+// centred on (cx, cy), tilted by angle a
+export function shard(cx, cy, w, h, a = 0, r = 12) {
+  return rotate(rrect(cx - w / 2, cy - h / 2, w, h, r, 3), cx, cy, a);
+}
+
+// a tapered spike with a rounded tip hanging from (x, y) (dir 1 = down,
+// -1 = up: stalagmite). The base reaches `root` units back into the rock.
+export function spike(x, y, w, len, { dir = 1, root = 40, bend = 0, seed = 1 } = {}) {
+  const rnd = mulberry(seed * 131 + 7);
+  const h = w / 2, tip = Math.max(5, w * 0.12);
+  const pts = [];
+  const side = (k, s) => {
+    // k: 0 base -> 1 tip, s: -1 left / +1 right
+    const wid = h * Math.pow(1 - k, 1.35) + tip * k;
+    return [x + s * wid + bend * k * k + (rnd() - 0.5) * 4 * (1 - k), y + dir * k * len];
+  };
+  pts.push([x - h, y - dir * root]);
+  for (const k of [0, 0.3, 0.55, 0.78, 0.92]) pts.push(side(k, -1));
+  for (let i = 0; i <= 4; i++) {
+    const a = Math.PI + (i / 4) * Math.PI;   // round tip
+    pts.push([x + bend + Math.cos(a) * tip, y + dir * (len - Math.sin(a) * tip * 0.9 - tip * 0.6)]);
+  }
+  for (const k of [0.92, 0.78, 0.55, 0.3, 0]) pts.push(side(k, 1));
+  pts.push([x + h, y - dir * root]);
+  return pts.map(([a, b]) => [Math.round(a), Math.round(b)]);
+}
+
+// a gear: `teeth` trapezoid teeth between radii r0 (root) and r1 (tip)
+export function gear(cx, cy, r0, r1, teeth = 10, rot = 0) {
+  const pts = [];
+  const step = TAU / teeth;
+  for (let i = 0; i < teeth; i++) {
+    const a = rot + i * step;
+    pts.push([cx + Math.cos(a) * r0, cy + Math.sin(a) * r0]);
+    pts.push([cx + Math.cos(a + step * 0.2) * r1, cy + Math.sin(a + step * 0.2) * r1]);
+    pts.push([cx + Math.cos(a + step * 0.5) * r1, cy + Math.sin(a + step * 0.5) * r1]);
+    pts.push([cx + Math.cos(a + step * 0.7) * r0, cy + Math.sin(a + step * 0.7) * r0]);
+  }
+  return pts.map(([x, y]) => [Math.round(x), Math.round(y)]);
+}
+
+// a broken ring: `n` arc segments between radii r0..r1 with `gap` radians
+// between them, starting at angle a0. Returns a list of polys.
+export function ring(cx, cy, r0, r1, n = 3, gap = 0.5, a0 = 0, seg = 8) {
+  const out = [];
+  const span = TAU / n;
+  for (let i = 0; i < n; i++) {
+    const s = a0 + i * span + gap / 2;
+    out.push(arc(cx, cy, r0, r1, s, s + span - gap, seg));
+  }
+  return out;
+}
+
+// vertical ground (a cave wall): like terrain() but along y. `xs` are
+// sample x values from y0 to y1; the shape closes to xBase.
+export function wall(y0, y1, xs, xBase, opts) {
+  return terrain(y0, y1, xs, xBase, opts).map(([y, x]) => [x, y]);
+}

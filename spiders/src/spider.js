@@ -374,7 +374,7 @@ export class Spider {
       }
       w.x = nx; w.y = ny;
       w.dist += step;
-      if (w.dist > SP.webMax || hit) { this.web = null; }
+      if (w.dist > SP.webMax * (this.webMul || 1) || hit) { this.web = null; }
       return;
     }
     // stuck: dead targets or broken solids drop the web

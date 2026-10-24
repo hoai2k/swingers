@@ -389,6 +389,7 @@ export class Game {
   // advance the simulation (also the headless test hook)
   step(dt) {
     const sdt = dt * this.timeScale;
+    if (this.overlay) this.overlay.update(dt);   // pause menu / DOM menus / pad notices (pause.js)
     if (this.scene && this.scene.preUpdate) this.scene.preUpdate(dt);
     if (this.paused) { if (this.scene && this.scene.pausedUpdate) this.scene.pausedUpdate(dt); return; }
     this.time += sdt;
@@ -446,6 +447,7 @@ export class Game {
     if (this.board) this.drawWorld(ctx);
     ctx.restore();
     if (this.scene && this.scene.drawUI) this.scene.drawUI(ctx);
+    if (this.overlay) this.overlay.drawUI(ctx);
     if (this.fx.flashA > 0) {
       ctx.globalAlpha = this.fx.flashA * 0.5;
       ctx.fillStyle = this.fx.flashColor;
