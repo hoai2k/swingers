@@ -7,14 +7,15 @@ as soon as the file is listed in `assets/manifest.json` (I add it when the image
 arrives; the game preloads only what the manifest lists, so missing files never cause
 broken images or 404s).
 
-**Status: round 3 open — items 31–42 requested** (six new faction emblems and six
-reference sheets for the Pirate, Renaissance, Prehistoric, Good, Evil and Secret
-factions and the big beasts). All 31 earlier files are delivered and in use.
-
-To deliver round 3, save the full-size generated originals as
-`assets/originals/ui/faction-<id>.png` (emblems) and `reference/<name>.png` (sheets),
-then run `python3 tools/build_battles_assets.py`. It builds the 128×128 emblems and
-lists them in the manifest, and it skips anything not delivered yet.
+**Status: all 43 requested files delivered. No open image requests.**
+Round 3 (items 31–42) delivered six faction emblems and six reference sheets for
+Pirate, Renaissance, Prehistoric, Good, Evil, Secret and the big beasts.
+The six new emblems are built at 128×128 and registered in the preload manifest.
+Full-size originals are in `assets/originals/ui/`; sheets are in `reference/`.
+Reviewed in the game: all 15 faction emblems load in the setup tabs for both players,
+and every round-3 sheet matches its brief. No replacements needed.
+Exact built-in imagegen prompts, style references and dimensions are recorded in
+`assets/generation.json`. Rebuild with `python3 tools/build_battles_assets.py`.
 
 Earlier rounds: all 31 requested files delivered (18 UI images and 13 reference sheets).
 Generated with the built-in imagegen tool. Exact prompts and final dimensions are in
@@ -64,12 +65,12 @@ the TABS logo.
 
 | # | File | Size / format | Status | What |
 |---|---|---|---|---|
-| 31 | `assets/ui/faction-pirate.png` | 128×128, transparent PNG | **wired** once delivered | Skull wearing a tricorn hat over two crossed cutlasses, sea green (#2a9d7c) and gold. Flat sticker style like the other emblems. |
-| 32 | `assets/ui/faction-renaissance.png` | 128×128, transparent PNG | **wired** once delivered | Vermilion (#d0503c) shield with a gold quill crossed with a halberd, a small Vitruvian-style circle behind. |
-| 33 | `assets/ui/faction-prehistoric.png` | 128×128, transparent PNG | **wired** once delivered | T-Rex skull over a crossed bone club, jungle green (#3daa6e) with ivory and gold. |
-| 34 | `assets/ui/faction-good.png` | 128×128, transparent PNG | **wired** once delivered | Golden halo over a white tower shield with a sun emblem, soft gold (#ffe680). |
-| 35 | `assets/ui/faction-evil.png` | 128×128, transparent PNG | **wired** once delivered | Purple (#8e4fd6) horned skull with a spiked flail and a small hourglass behind it. Comedic, not scary. |
-| 36 | `assets/ui/faction-secret.png` | 128×128, transparent PNG | **wired** once delivered | A big question mark made from a banana, with a chicken peeking round it, mint (#3fd0a0). |
+| 31 | `assets/ui/faction-pirate.png` | 128×128, transparent PNG | **wired** (delivered) | Skull wearing a tricorn hat over two crossed cutlasses, sea green (#2a9d7c) and gold. Flat sticker style like the other emblems. |
+| 32 | `assets/ui/faction-renaissance.png` | 128×128, transparent PNG | **wired** (delivered) | Vermilion (#d0503c) shield with a gold quill crossed with a halberd, a small Vitruvian-style circle behind. |
+| 33 | `assets/ui/faction-prehistoric.png` | 128×128, transparent PNG | **wired** (delivered) | T-Rex skull over a crossed bone club, jungle green (#3daa6e) with ivory and gold. |
+| 34 | `assets/ui/faction-good.png` | 128×128, transparent PNG | **wired** (delivered) | Golden halo over a white tower shield with a sun emblem, soft gold (#ffe680). |
+| 35 | `assets/ui/faction-evil.png` | 128×128, transparent PNG | **wired** (delivered) | Purple (#8e4fd6) horned skull with a spiked flail and a small hourglass behind it. Comedic, not scary. |
+| 36 | `assets/ui/faction-secret.png` | 128×128, transparent PNG | **wired** (delivered) | A big question mark made from a banana, with a chicken peeking round it, mint (#3fd0a0). |
 
 ## 2. Reference art (not shipped, guides future model and colour work)
 
@@ -100,5 +101,5 @@ background, with its weapon.
 | 42 | `reference/secret.png` | Banana Thrower with peels on the ground, Cheerleader (pom-poms), Bomb on a Stick, Chicken Man throwing chickens, Lightning Gun with chained arcs, Ullr (archer god on skis with frost arrows). |
 | 30 | `reference/siege-mounts.png` | Cavalry knight on a chunky toy horse with a couched lance; a woolly Mammoth with tusks, a rider and a drummer on top; a wooden Catapult cart with its crewman; a Ballista bolt-thrower; show the same bean-soldier proportions as the rest. |
 
-All listed files have arrived. Remaining integration: map select previews, loading
-screen, victory banners, and model refinement against the reference sheets.
+All 43 listed files have arrived. All 24 UI assets are wired into the game.
+Reference sheets remain available for future procedural model refinement.

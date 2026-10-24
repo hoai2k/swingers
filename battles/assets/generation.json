@@ -129,12 +129,12 @@
       "mode": "built-in",
       "original": "assets/originals/ui/logo.png",
       "size": [
-        1600,
-        700
+        1200,
+        525
       ]
     },
     {
-      "file": "assets/ui/map-autumn.png",
+      "file": "assets/ui/map-autumn.jpg",
       "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: orange and red trees, golden grass, haystacks. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
       "mode": "built-in",
       "transparent": false,
@@ -145,7 +145,7 @@
       ]
     },
     {
-      "file": "assets/ui/map-desert.png",
+      "file": "assets/ui/map-desert.jpg",
       "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: sandy dunes, cacti, sandstone rocks, warm sky. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
       "mode": "built-in",
       "transparent": false,
@@ -156,7 +156,7 @@
       ]
     },
     {
-      "file": "assets/ui/map-grass.png",
+      "file": "assets/ui/map-grass.jpg",
       "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: rolling green hills, low-poly round trees, tiny flowers, bright blue sky. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
       "mode": "built-in",
       "transparent": false,
@@ -167,7 +167,7 @@
       ]
     },
     {
-      "file": "assets/ui/map-winter.png",
+      "file": "assets/ui/map-winter.jpg",
       "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: snowy field, snow-capped pines, light snowfall. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
       "mode": "built-in",
       "transparent": false,
@@ -340,6 +340,150 @@
       "size": [
         1200,
         400
+      ]
+    },
+    {
+      "file": "assets/ui/faction-evil.png",
+      "original": "assets/originals/ui/faction-evil.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: Purple (#8e4fd6) horned skull with a spiked flail and a small hourglass behind it. Comedic, not scary. Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-good.png",
+      "original": "assets/originals/ui/faction-good.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: Golden halo over a white tower shield with a sun emblem, soft gold (#ffe680). Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-pirate.png",
+      "original": "assets/originals/ui/faction-pirate.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: Skull wearing a tricorn hat over two crossed cutlasses, sea green (#2a9d7c) and gold. Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-prehistoric.png",
+      "original": "assets/originals/ui/faction-prehistoric.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: T-Rex skull over a crossed bone club, jungle green (#3daa6e) with ivory and gold. Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-renaissance.png",
+      "original": "assets/originals/ui/faction-renaissance.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: Vermilion (#d0503c) shield with a gold quill crossed with a halberd, a small Vitruvian-style circle behind. Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-secret.png",
+      "original": "assets/originals/ui/faction-secret.png",
+      "prompt": "Use case: stylized-concept. Asset type: square transparent faction emblem for Wobbly Battles, intended downsampling to 128x128. Reference image: style reference only, keep its bold readable polished cartoon sticker finish, soft cel shading, chunky shapes, dark navy outline. Create a NEW emblem: A big question mark made from a banana, with a chicken peeking round it, mint (#3fd0a0). Centered, entire emblem visible, fills about 85% of square frame, simple readable silhouette and few large details. Bright toy-like comedic fantasy, no real brands, no TABS logo, no text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "reference": "assets/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "reference/big-beasts.png",
+      "original": "reference/big-beasts.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution large 2048x2048 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: Ancient War Elephant (bronze armour, team caparison, howdah with TWO archers); Dynasty Battle Elephant (lacquered plates, spiked head-plate, mahout, banners); Dynasty Dragon (team-coloured scales, gold belly, orange flame mane, ivory horns, bat wings, breathing fire). Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels.  No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "file": "reference/good-evil.png",
+      "original": "reference/good-evil.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution tall 2048x3072 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: GOOD: Shield Bearer (huge tower shield); Cleric (heal beam); Angel (wings, halo, holy sword); Phoenix (fire bird); Super Peasant (flying fist-first). EVIL: Fan Bearer (large hand fan); Mace Spinner (two flails); Necromancer with a zombie; Chronomancer with a slow-time bubble; Tree Giant throwing a tree. Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels. Ten distinct rows, Good five rows above Evil five rows. No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "reference/pirate.png",
+      "original": "reference/pirate.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution large 2048x2048 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: Flintlock Pirate (smoking pistol); Harpooner (barbed harpoon and line); Bomb Thrower (round cartoon lit bomb); Pirate Captain (tricorn, cutlass and pistol); Pirate Queen (two pistols, big hat); crewed Cannon (wheeled carriage with its gunner). Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels.  No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "file": "reference/prehistoric.png",
+      "original": "reference/prehistoric.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution large 2048x2048 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: Caveman (femur club, shaggy hair, team headband); Velociraptor (olive with a team-coloured feather crest and stripes, mid-leap); Raptor Rider (skull cap, club, mounted on a raptor); Pterodactyl (team-coloured wing membranes and crest, carrying a soldier); T-Rex (team war-paint bands, roaring). Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels.  No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "file": "reference/renaissance.png",
+      "original": "reference/renaissance.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution large 2048x2048 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: Halberd (soldier holding a halberd); Fencer (rapier lunge); Musketeer (volley pose); Balloon Archer (archer hanging under a striped balloon); Painter (beret, palette, paint splats); Da Vinci Tank (wooden cone tank with cannons round the rim, engineer in the hatch). Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels.  No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "file": "reference/secret.png",
+      "original": "reference/secret.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution large 2048x2048 practical character/model reference sheet, plain light background. Input image is a STYLE AND LAYOUT reference only: match its charming toy-like rounded bean soldier proportions and soft shading; create the NEW units described here, not its medieval roster. Chubby bean bodies, stubby arms and legs, big round heads about 40% of soldier height, simple white eyes and black pupils, thick eyebrows, no noses, no fingers, no realistic anatomy. Ball hands and chunky boots. Blue team #3d72e3, Red #e2403b, gold #f2c230. Clean flat colours with soft shading, comedic fantasy. Requested units: Banana Thrower with peels on the ground; Cheerleader (pom-poms); Bomb on a Stick; Chicken Man throwing chickens; Lightning Gun with chained arcs; Ullr (archer god on skis with frost arrows). Layout: one clearly labelled row per unit, FOUR columns BLUE FRONT, BLUE THREE-QUARTER, RED FRONT, RED THREE-QUARTER. Show every listed unit, its full weapon and mount/vehicle where specified, all silhouettes fully inside the frame. Keep rows separate, adequate whitespace, legible unit labels.  No brands, no real people, no TABS logo, no scenery.",
+      "mode": "built-in",
+      "transparent": false,
+      "reference": "reference/medieval.png",
+      "size": [
+        1254,
+        1254
       ]
     }
   ]
