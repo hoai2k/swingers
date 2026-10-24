@@ -14,7 +14,10 @@ import { Vehicle, VEHICLES } from './vehicles.js';
 import { promptRow, deviceKind } from './glyphs.js';
 import { injectCSS } from './map.js';
 
-// Callable types, in phone order. `type` must exist in VEHICLES.
+// Callable types, in phone order. `type` must exist in VEHICLES. Add more with
+// registerCallable({ id, type, name, icon, color?, opts?, svg? }) (icon: a key of
+// ICONS below, or svg: your own 24x14 pictogram paths), optionally before
+// another entry: registerCallable(entry, 'heli').
 const CALLABLE = [
   { id: 'car', type: 'car', name: 'Car', icon: 'car' },
   { id: 'sports', type: 'sports', name: 'Sports car', icon: 'sports' },
@@ -32,6 +35,15 @@ const CALLABLE = [
   { id: 'heli', type: 'heli', name: 'Helicopter', icon: 'heli', color: 0x3f8cff },
 ].filter((c) => VEHICLES[c.type]);
 export { CALLABLE };
+export function registerCallable(entry, before = null) {
+  if (!VEHICLES[entry.type]) throw new Error('registerCallable: unknown vehicle type ' + entry.type);
+  const old = CALLABLE.findIndex((c) => c.id === entry.id);
+  if (old >= 0) CALLABLE.splice(old, 1);
+  if (entry.svg) ICONS[entry.id] = entry.svg, entry.icon = entry.id;
+  const at = before ? CALLABLE.findIndex((c) => c.id === before) : -1;
+  if (at >= 0) CALLABLE.splice(at, 0, entry); else CALLABLE.push(entry);
+  return entry;
+}
 
 // Tiny side-on pictograms (24x14 viewBox), filled with currentColor.
 const ICONS = {
@@ -139,8 +151,9 @@ export class PhonePanel {
     const per = 40, vis = 6.45, N = CALLABLE.length;
     const off = Math.max(0, Math.min(N - vis, this.sel - 2.5)) * per;
     const items = CALLABLE.map((c, i) => {
-      const note = c.type === 'boat' ? (this.water ? 'water nearby' : 'needs water') : c.type === 'heli' ? 'needs space' : '';
-      const off2 = c.type === 'boat' && !this.water;
+      const vd = VEHICLES[c.type] || {};
+      const note = vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli ? 'needs space' : '';
+      const off2 = vd.boat && !this.water;
       return `<div class="phitem ${i === this.sel ? 'sel' : ''} ${off2 ? 'off' : ''}" data-i="${i}"><svg viewBox="0 0 24 14">${ICONS[c.icon] || ICONS.car}</svg>${c.name}${note ? `<small>${note}</small>` : ''}</div>`;
     }).join('');
     const prev = this.ui.game.calledVehicles?.get(p);
@@ -166,7 +179,7 @@ function extents(def) {
   const h = def.half;
   if (def.heli) return { hx: 4.1, hz: 4.6, cz: -1.2, below: 1.18, above: 1.45 };
   if (def.boat) return { hx: h[0] + 0.3, hz: h[2] + 0.3, cz: 0, below: 0.35, above: 0.8 };
-  const below = Math.max(...def.axles.map((a) => -(a.y - a.rest - a.r)));
+  const below = def.axles ? Math.max(...def.axles.map((a) => -(a.y - a.rest - a.r))) : h[1] + 0.2;
   const above = def.cabin ? def.cabin.off[1] + def.cabin.half[1] : def.tractor ? 2.1 : h[1] + (def.open ? 0.5 : 0.2);
   return { hx: h[0] + 0.25, hz: h[2] + 0.3, cz: 0, below, above };
 }
@@ -193,7 +206,7 @@ export function findSpot(game, player, def, excludeBody) {
     const ax = Math.sin(yaw + a), az = Math.cos(yaw + a);
     // vehicle centre (the heli's body sits ahead of its footprint centre)
     const x = c.x + ax * d, z = c.z + az * d;
-    if (Math.abs(x) > 380 || Math.abs(z) > 380) continue;
+    if (Math.abs(x) > 1380 || Math.abs(z) > 1380) continue;
     // ground under the footprint (static world only)
     const hs = [];
     let ok = true, wet = 0;

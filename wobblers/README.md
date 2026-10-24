@@ -88,6 +88,24 @@ pads with the two keyboard schemes (or using controllers that show up as generic
   lake; **lake** with a camp, boats, log rafts and a rope swing;
   **beach** with a pier, boats, palms and a lighthouse.
 
+## The archipelago
+
+Around the home island lie five more islands, each with its own landscape, people and things
+to do (a banner welcomes you as you arrive; the map zooms out to show them all):
+
+- **Bigtown** (east) — the city, reached over a drivable suspension bridge from the home
+  island's east road.
+- **Frostpeak** (north) — icy mountains, a ski village on the southern foothills.
+- **Dusty Dunes** (west) — dunes, a red-rock canyon and mesas, an oasis, a wild-west town.
+- **Tiki Jungle** (south-west) — a volcano, a river, beaches and a stilt village.
+- **Coconut Cove** (south-east) — little tropical islets in a turquoise lagoon.
+
+**Ferries** sail between them: the *Island Hopper* (home beach, Coconut Cove, Tiki Jungle),
+the *Frostpeak Ferry* (home north coast) and the *Desert Ferry* (home west coast). Walk on
+board at a dock (the gate is behind the seats), stand on deck or sit on a bench, and get
+off at the next stop. Islanders wander about, wave and chat when you come close, and flop
+over when punched or run over. The phone calls vehicles anywhere (including a jet ski).
+
 ## Code map
 
 | File | What |
@@ -97,17 +115,21 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/sky.js` | sky dome, clouds, sun/moon lights and the 16-minute day/night cycle |
 | `src/look.js` | soft wrapped shading + rim light for all Lambert materials, night glow of windows/lamps |
 | `src/player.js` | the active ragdoll: hover spring, upright torques, joint drives, grabbing, punching, swimming, seats |
-| `src/vehicles.js` | vehicles: ray-cast wheels + arcade handling assists (cars, police, sports, pickup, van, bus, fire truck, tractor, kart, quad, scooter, bumper car), boats, helicopter |
+| `src/vehicles.js` | vehicles: ray-cast wheels + arcade handling assists (cars, police, sports, pickup, van, bus, fire truck, tractor, kart, quad, scooter, bumper car), boats, helicopter; `registerVehicle` / `registerHandling` add new types from other files |
 | `src/world/garage.js` | placement of the bus, police, fire truck, sports cars, scooters, tractor, helipad |
 | `src/camera.js` | third-person orbit camera |
 | `src/input.js` | gamepads + two keyboard schemes |
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
-| `src/terrain.js` | island height function, ground colours, LOD terrain tiles + collider |
+| `src/terrain.js` | the archipelago terrain: regions (home island + islands) with height functions, biomes, flat areas; ground colours, LOD tiles, colliders; `heightAt`, `groundAt`, `biomeAt`, `regionAt` |
+| `src/world/regions/` | one module per island (city, snow, desert, jungle, tropical): terrain descriptor + `build(game, kit, R)`; `helpers.js` is the `R` helper bag |
+| `src/world/bridge.js`, `src/world/ferries.js` | the Bigtown suspension bridge; ferry docks, routes and the kinematic `Ferry` |
+| `src/npc.js`, `src/world/folk.js` | NPCs (AI-driven ragdolls with roles, outfits, props, speech bubbles, LOD); the home island's islanders |
+| `src/regionbanner.js` | "Welcome to ...!" banners per view; `player.region` |
 | `src/world/water.js` | sea / lake / pool water shader: depth tint, foam, reflections |
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
-| `src/map.js` | island map: illustrated picture painted once from the terrain grid, roads, zones and static colliders; per-player map panel with players, vehicles, labels |
-| `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one) |
+| `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
+| `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |

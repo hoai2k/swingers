@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import { RAPIER, yawQuat } from '../physics.js';
 import { DT, G_PROP, G_STATIC, ALL, groups, VEH_GROUPS } from '../config.js';
 import { Builder } from '../mesh.js';
-import { heightAt } from '../terrain.js';
 import { addSeat } from './playground.js';
 
 // Props that ignore the static world (doors, lids: their joints hold them).
@@ -281,17 +280,9 @@ function ladderStep(game) {
 }
 
 // ---- ground height --------------------------------------------------------------
-// Height of the actual terrain mesh/collider (3 m grid, two triangles per cell
-// split along the b-d diagonal, as built in terrain.js). heightAt() is the smooth
-// analytic surface; on curved ground the mesh can sit half a metre away from it,
-// which leaves things placed with heightAt floating or buried.
-const T_EXT = 400, T_STEP = 3;
-export function groundAt(x, z) {
-  const gx = (x + T_EXT) / T_STEP, gz = (z + T_EXT) / T_STEP;
-  const i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j;
-  const X = (k) => -T_EXT + k * T_STEP;
-  const ha = heightAt(X(i), X(j)), hb = heightAt(X(i + 1), X(j)), hd = heightAt(X(i), X(j + 1));
-  if (fx + fz <= 1) return ha + (hb - ha) * fx + (hd - ha) * fz;
-  const he = heightAt(X(i + 1), X(j + 1));
-  return he + (hd - he) * (1 - fx) + (hb - he) * (1 - fz);
-}
+// Height of the actual terrain mesh/collider (3 or 4 m grid per region, two
+// triangles per cell split along the b-d diagonal, as built in terrain.js).
+// heightAt() is the smooth analytic surface; on curved ground the mesh can sit
+// half a metre away from it, which leaves things placed with heightAt floating
+// or buried. Works anywhere in the archipelago (sea floor between islands).
+export { meshHeight as groundAt } from '../terrain.js';

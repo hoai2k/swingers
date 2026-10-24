@@ -254,6 +254,7 @@ export class Player {
       b.sphere(0.105 * S, shoe, [0, -0.075 * S, 0.045 * S], [1, 0.68, 1.45], 16);
       b.sphere(0.102 * S, 0xe8e8e8, [0, -0.098 * S, 0.045 * S], [1, 0.3, 1.47], 16);
     }
+    this.outfit?.(p.n, b); // NPC outfits (src/npc.js): ties, scarves, backpacks...
     const m = b.mesh(PLAYER_MAT);
     g.add(m);
     return g;
@@ -503,7 +504,9 @@ export class Player {
     out.set(0, 0, 0);
     const gb = this.groundBody;
     if (!gb || gb.isFixed()) return out;
-    const v = gb.linvel(), w = gb.angvel(), c = gb.worldCom(), p = this.groundPoint;
+    // kinematic bodies (rides, ferries) don't keep worldCom() up to date as they
+    // move, so measure the lever arm from the body origin (their pivot) instead
+    const v = gb.linvel(), w = gb.angvel(), c = gb.isKinematic() ? gb.translation() : gb.worldCom(), p = this.groundPoint;
     _vc.set(p.x - c.x, p.y - c.y, p.z - c.z);
     out.set(w.x, w.y, w.z).cross(_vc).add(_vb.set(v.x, v.y, v.z));
     return out;

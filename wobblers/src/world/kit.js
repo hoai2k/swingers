@@ -198,9 +198,17 @@ export class Kit {
 
   finish() {
     if (this.dbl) { const m = this.dbl.mesh(matVCDouble); this.game.scene.add(m); this.dbl = null; }
+    const list = this.game.staticChunks ||= [];
     for (const b of this.chunks.values()) {
       const m = b.mesh(matVC);
       this.game.scene.add(m);
+      // far culling per view (game.farCull): centre, radius, tall enough to show from afar
+      const g = m.geometry;
+      if (!g.boundingBox) g.computeBoundingBox();
+      const bb = g.boundingBox;
+      if (bb.isEmpty()) continue;
+      list.push({ mesh: m, x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, r: Math.hypot(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2,
+        tall: bb.max.y > 20 || bb.max.y - bb.min.y > 16 });
     }
     this.chunks.clear();
   }
