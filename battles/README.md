@@ -80,7 +80,7 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
 
 - `src/body.js` skeleton (11 parts, joints, FK) · `src/pose.js` procedural target poses and attack animations
 - `src/ragdoll.js` Rapier bodies/joints + muscle servo · `src/unit.js` balance, locomotion, AI, personalities
-- `src/units.js` the roster (stats, weapons, looks, personality) · `src/items.js` weapon hit geometry
+- `src/units.js` the roster (stats, weapons, looks, personality) · `src/items.js` held items: hit geometry, mass, shields (held items are colliders on the forearm and drop as rigid bodies on death)
 - `src/battle.js` simulation: melee sweeps, projectiles, explosions, healing, bard aura; emits events
 - `src/replay.js` quantised 30 Hz recording + interpolated playback with event replay
 - `src/visual.js` unit meshes (baked per part), faces, hats, weapons, portraits

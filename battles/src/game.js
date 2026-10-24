@@ -6,7 +6,7 @@ import { Audio } from './audio.js';
 import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
-import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, TEAM_COLORS, TEAM_NAMES } from './visual.js';
+import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
 import { CamRig } from './camera.js';
 import { Battle, PROJ } from './battle.js';
@@ -1359,6 +1359,7 @@ export class Game {
         ex[j].group.position.copy(u.extras[j].pos);
         ex[j].group.quaternion.copy(u.extras[j].quat);
       }
+      for (let j = 0; j < u.held.length; j++) { const h = u.held[j]; placeHeld(vis, j, h.body ? h.pos : null, h.quat); }
       setExpression(vis, u.expr);
       const w = u.def.weapon;
       if (w.kind === 'ranged' && w.style === 'throw') {

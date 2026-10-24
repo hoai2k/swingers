@@ -20,6 +20,7 @@ export class Ragdoll {
     this.bodies = [];
     this.colliders = [];
     this.inertia = new Float32Array(NPARTS);
+    this.axial = new Float32Array(NPARTS);
     this.pos = Array.from({ length: NPARTS }, () => new THREE.Vector3());
     this.quat = Array.from({ length: NPARTS }, () => new THREE.Quaternion());
     this.vel = Array.from({ length: NPARTS }, () => new THREE.Vector3());
@@ -52,6 +53,9 @@ export class Ragdoll {
       this.colliders.push(col);
       const I = body.principalInertia();
       this.inertia[i] = (I.x + I.y + I.z) / 3;
+      // inertia about the part's own long axis (local Y): a limb twisting about
+      // itself is much lighter than one swinging about its joint
+      this.axial[i] = (p.shape === 'ball' ? 0.4 : 0.5) * p.mass * p.r * p.r;
     }
     // Legs swing about their joint and drag the shin along, so their muscles work
     // against (part of) the inertia about the joint, not the part's own. Using all
@@ -80,6 +84,32 @@ export class Ragdoll {
       this.joints.push(joint);
     }
     this.read();
+  }
+
+  // Add a collider (a held weapon, a shield) to part i's body. The part's muscle
+  // works against the combined inertia about its joint, so a heavy weapon is held
+  // steadily but swings no faster than the arm's torque cap allows.
+  // The parent part (the upper arm) has to swing the load too, so its muscle gets
+  // the load's inertia about the shoulder as well.
+  // loadK[i] scales part i's torque cap with its load (the unit is strong enough to
+  // wield its weapon, but not by much: a heavy one still lags and overshoots).
+  attach(i, colliderDesc, mass, at) {
+    if (!this.inertia0) { this.inertia0 = Float32Array.from(this.inertia); this.loadK = new Float32Array(NPARTS).fill(1); }
+    const col = this.world.createCollider(colliderDesc, this.bodies[i]);
+    const b = this.bodies[i];
+    const I = b.principalInertia(), m = b.mass(), c = b.localCom();
+    const j = this.skel.parentJoint[i];
+    const d2 = j ? (c.x - j.anchorB.x) ** 2 + (c.y - j.anchorB.y) ** 2 + (c.z - j.anchorB.z) ** 2 : 0;
+    this.inertia[i] = (I.x + I.y + I.z) / 3 + m * d2 * 0.5;
+    if (mass > 0) this.axial[i] += mass * (at.x * at.x + at.z * at.z);
+    const jp = j && this.skel.parentJoint[j.a];
+    if (jp && mass > 0) {
+      // load position relative to the shoulder, arm hanging straight
+      _v.set(at.x - j.anchorB.x + j.anchorA.x - jp.anchorB.x, at.y - j.anchorB.y + j.anchorA.y - jp.anchorB.y, at.z - j.anchorB.z + j.anchorA.z - jp.anchorB.z);
+      this.inertia[j.a] += mass * _v.lengthSq() * 0.12;
+    }
+    for (const k of [i, j ? j.a : i]) this.loadK[k] = Math.min(6, (this.inertia[k] / this.inertia0[k]) ** 0.8);
+    return col;
   }
 
   read() {
@@ -112,6 +142,14 @@ export class Ragdoll {
     let ix = (tx - av.x) * f, iy = (ty - av.y) * f, iz = (tz - av.z) * f;
     const I = this.inertia[i];
     ix *= I; iy *= I; iz *= I;
+    // the twist about the part's own axis only has the (small) axial inertia to
+    // move: using the full one there overshoots into a 30 Hz buzz
+    const ka = this.axial[i] / I;
+    if (ka < 1) {
+      _v.set(0, 1, 0).applyQuaternion(q);
+      const d = (ix * _v.x + iy * _v.y + iz * _v.z) * (1 - ka);
+      ix -= _v.x * d; iy -= _v.y * d; iz -= _v.z * d;
+    }
     const m = Math.hypot(ix, iy, iz), cap = maxT * dt;
     if (m > cap) { const sc = cap / m; ix *= sc; iy *= sc; iz *= sc; }
     this.bodies[i].applyTorqueImpulse({ x: ix, y: iy, z: iz }, true);

@@ -3,10 +3,10 @@ import { THREE, clamp, lerp, rand, angleDiff, damp, pick, ballisticAngle, eulerY
 import { makeSkeleton, NPARTS, PART } from './body.js';
 import { computePose, newPose, STYLE_ANIM } from './pose.js';
 import { Ragdoll } from './ragdoll.js';
-import { ITEMS, gripDir } from './items.js';
+import { ITEMS, gripDir, heldLayout, shieldDef, itemMass, itemSpan } from './items.js';
 import { FIELD } from './world.js';
 import { EXT } from './ext.js';
-import { RAPIER, GROUPS } from './physics.js';
+import { RAPIER, GROUPS, itemGroups } from './physics.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -32,6 +32,11 @@ const STRIKE = {
   dual: [[0.3, 0.6], [0.47, 0.85]], punch: [[0.36, 0.8]],
 };
 
+// Stepping: the physical leg trails its target by a few frames, so a swinging foot
+// is aimed SWING_LEAD seconds ahead (and lowered YLEAD times that early) so it lands
+// on time instead of skidding in; a foot plants where it actually touches down.
+const SWING_LEAD = 0.03, YLEAD = 1.5;
+
 export const EXPR = { normal: 0, angry: 1, scared: 2, dead: 3, happy: 4, hurt: 5 };
 
 let nextId = 1;
@@ -53,7 +58,7 @@ export class Unit {
     this.hasPrev = false;
     this.st = {
       phase: rand(0, 6), amp: 0, lean: 0, style: def.weapon.style, attack: null, attackT: 0,
-      headPitch: 0, headYaw: 0, mode: 'normal', t: rand(0, 10), crouch: 0,
+      headPitch: 0, headYaw: 0, mode: 'normal', t: rand(0, 10), crouch: 0, seed: rand(0, 10),
     };
     computePose(this.st, this.pose);
     const gy = battle.terrain.height(x, z);
@@ -63,6 +68,7 @@ export class Unit {
     this.M = this.skel.totalMass;
     this.s = this.skel.scale;
     this.initLegs();
+    this.initHeld();
 
     this.target = null;
     this.retarget = rand(0, 0.5);
@@ -264,11 +270,14 @@ export class Unit {
 
   possessed(dt, spd) {
     const c = this.control;
-    this.desired.set(c.mx * spd * 1.15, 0, c.mz * spd * 1.15);
+    // control.block (optional): raise the shield / weapon and brace, moving slowly
+    this.blocking = !!c.block && !this.st.attack;
+    const mv = this.blocking ? 0.45 : 1.15;
+    this.desired.set(c.mx * spd * mv, 0, c.mz * spd * mv);
     this.faceYaw = c.aimYaw;
     this.expr = EXPR.angry;
     this.st.mode = 'normal';
-    if (c.attack && !this.st.attack && this.cooldown <= 0) {
+    if (c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
       this.startAttack();
       this.aimAt = null;
     }
@@ -380,7 +389,7 @@ export class Unit {
         if (tm > lim) { tx *= lim / tm; tz *= lim / tm; }
         l.to.set(hx + tx, 0, hz + tz);
         if (l.t >= 1) {
-          l.state = 'stance'; l.stanceT = 0;
+          l.state = 'stance'; l.stanceT = 0; l.down = false;
           this.footPoint(l, l.foot);
           // land where the foot actually is if it got close, so it doesn't skate in
           const e = Math.hypot(l.foot.x - l.to.x, l.foot.z - l.to.z);
@@ -391,6 +400,13 @@ export class Unit {
       }
       if (l.state === 'stance') {
         l.stanceT += dt;
+        // still coming down: the foot plants where it touches the ground instead of
+        // being dragged to the spot it was aimed at (that drag reads as skating)
+        if (!l.down) {
+          this.footPoint(l, _v3);
+          if (_v3.y - this.footR - ter.height(_v3.x, _v3.z) < 0.03 * s || l.stanceT > 0.12) l.down = true;
+          else { l.plant.x = _v3.x; l.plant.z = _v3.z; l.plant.y = ter.height(_v3.x, _v3.z); }
+        }
         l.err = Math.hypot(l.plant.x - ix, l.plant.z - iz);
         l.hd = Math.hypot(l.plant.x - hx, l.plant.z - hz);
         // a foot ahead of the hip (along the motion) is about to be walked over: leave it
@@ -421,9 +437,11 @@ export class Unit {
     for (const l of legs) {
       const F = l.foot;
       if (l.state === 'swing') {
-        const f = smooth(clamp(l.t, 0, 1));
+        // the physical leg trails its target by a few frames: aim ahead in time
+        const ld = SWING_LEAD * sq / l.dur;
+        const f = smooth(clamp(l.t + ld, 0, 1));
         F.lerpVectors(l.from, l.to, f);
-        F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t, 0, 1)) * lift;
+        F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t + ld * YLEAD, 0, 1)) * lift;
       } else {
         F.copy(l.plant);
         F.y -= 0.03 * s; // press into the ground so the planted leg bears weight
@@ -540,17 +558,33 @@ export class Unit {
     this.st.amp = lerp(this.st.amp, clamp(hs / Math.max(2, this.def.speed * 0.8), 0, 1), damp(8, dt));
     this.st.phase += dt * (hs / stride) * Math.PI;
     this.st.lean = clamp(hs * 0.04, 0, 0.3);
-    if (this.target) {
+    // heads look at their target (ahead of the body as it turns)
+    const st = this.st;
+    if (this.target && this.target.alive && st.mode !== 'cheer') {
       const tp = this.target.headPos;
       const hp = this.headPos;
-      this.st.headPitch = clamp(-Math.atan2(tp.y - hp.y, Math.hypot(tp.x - hp.x, tp.z - hp.z) + 0.1), -0.5, 0.5);
-    }
-    this.st.swing = this.gaitSwing;
+      st.headPitch = clamp(-Math.atan2(tp.y - hp.y, Math.hypot(tp.x - hp.x, tp.z - hp.z) + 0.1), -0.5, 0.5);
+      st.headYaw = lerp(st.headYaw, clamp(angleDiff(this.heading, Math.atan2(tp.x - hp.x, tp.z - hp.z)), -0.9, 0.9), damp(10, dt));
+    } else { st.headPitch = lerp(st.headPitch, 0, damp(4, dt)); st.headYaw = lerp(st.headYaw, 0, damp(4, dt)); }
+    // shield bearers brace behind the shield when an enemy is close; a possessed
+    // unit blocks on command
+    const near = this.target && this.target.alive && Math.hypot(this.target.pos.x - p.x, this.target.pos.z - p.z) - this.target.skel.radius < 3.5 * this.s;
+    const brace = this.def.weapon.shield && near && !st.attack && st.mode === 'normal' ? 1 : 0;
+    st.brace = lerp(st.brace || 0, brace, damp(8, dt));
+    st.block = lerp(st.block || 0, this.blocking ? 1 : 0, damp(12, dt));
+    st.flinch = Math.max(0, (st.flinch || 0) - dt * 3.5);
+    // groggy for a moment after getting back up
+    if (this.stun > 0) this.groggyT = Math.min(1.6, 0.6 + this.stun);
+    else this.groggyT = Math.max(0, (this.groggyT || 0) - dt);
+    st.wobble = this.stun > 0 ? 0 : clamp(this.groggyT, 0, 1) * 0.9;
+    st.swing = this.gaitSwing;
     this.st.rock = this.gaitRock || 0;
     computePose(this.st, this.pose);
     this.updateLegs(dt, !airborne && this.stun <= 0 && this.recover > 0.6 && this.st.mode !== 'flail');
 
     const strength = this.recover * (this.stun > 0 ? 0.08 : 1);
+    // knocked flying: the arms keep enough strength to windmill
+    this.armStrength = st.mode === 'flail' ? Math.max(strength, 0.35) : strength;
     this.drive(dt, strength, !airborne && this.stun <= 0);
 
     // melee hits
@@ -582,8 +616,9 @@ export class Unit {
         const kk = Math.min(a / dt, 30) / sn * ffk;
         ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
       }
-      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
-        m[2] * Mk * strength * (1 + arm * 1.2), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
+      const sk = i >= PART.uarmL && this.alive ? Math.max(strength, this.armStrength || 0) : strength;
+      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, sk) * (1 + arm * 0.5),
+        m[2] * Mk * sk * (1 + arm * 1.2) * (rag.loadK ? rag.loadK[i] : 1), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
     this.hasPrev = true;
     if (!support || strength < 0.05) return;
@@ -591,7 +626,7 @@ export class Unit {
     const p = rag.pos[PART.pelvis];
     const gy = this.battle.terrain.height(p.x, p.z);
     const h = p.y - gy;
-    const target = this.hipH * (1 - (this.st.crouch || 0) * 0.3);
+    const target = this.hipH * (1 - (this.st.crouchOut ?? this.st.crouch ?? 0) * 0.3);
     const vy = rag.vel[PART.pelvis].y;
     const k = strength;
     if (h < target + 0.5 * this.s) {
@@ -679,6 +714,114 @@ export class Unit {
     }
   }
 
+  // ----------------------------------------------------------------- held items
+  // Each held weapon / shield is a collider on its forearm's body while the unit
+  // lives (mass, inertia, clashes with enemy weapons and shields), and becomes a
+  // rigid body of its own when the unit dies. h.pos/h.quat are its world transform
+  // (item origin = the hand; long axis local +Y), kept up to date every step.
+  initHeld() {
+    const s = this.s, sk = this.skel;
+    this.held = heldLayout(this.def).map((l, slot) => {
+      const h = { slot, shield: l.shield, name: l.name, part: l.part, lp: new THREE.Vector3(), lq: new THREE.Quaternion(),
+        phys: false, shape: null, mass: 0, collider: null, body: null, dropped: false,
+        pos: new THREE.Vector3(), quat: new THREE.Quaternion() };
+      if (l.shield) {
+        const sd = shieldDef(l.name);
+        h.lp.set(sk.parts[l.part].r * 1.7, 0, 0);
+        h.shape = { box: sd.half.map((x) => x * s), cy: 0 };
+        h.mass = sd.mass * s * s * s;
+        h.phys = true;
+      } else {
+        const it = ITEMS[l.name];
+        h.lp.set(0, -sk.handOffset, 0);
+        h.lq.setFromUnitVectors(UP, gripDir(it, _v));
+        const [y0, y1] = itemSpan(it, s);
+        const r = Math.max(0.03 * s, Math.min(it.r * 0.6, 0.09) * s);
+        h.phys = it.phys !== false && y1 - y0 > 0.1;
+        h.shape = { r, hh: Math.max(0.01, (y1 - y0) / 2 - r), cy: (y0 + y1) / 2 };
+        h.mass = itemMass(it, s);
+      }
+      if (h.phys) {
+        const at = new THREE.Vector3(0, h.shape.cy, 0).applyQuaternion(h.lq).add(h.lp);
+        h.collider = this.rag.attach(h.part, this.heldCollider(h, true), h.mass, at);
+      }
+      return h;
+    });
+    this.readHeld();
+  }
+
+  // the shield this unit still carries, if any
+  shield() {
+    for (const h of this.held) if (h.shield && !h.dropped) return h;
+    return null;
+  }
+
+  heldCollider(h, onArm) {
+    const sh = h.shape;
+    const cd = sh.box ? RAPIER.ColliderDesc.cuboid(sh.box[0], sh.box[1], sh.box[2]) : RAPIER.ColliderDesc.capsule(sh.hh, sh.r);
+    cd.setMass(h.mass).setFriction(0.6).setRestitution(0.15);
+    if (onArm) {
+      _v.set(0, sh.cy, 0).applyQuaternion(h.lq).add(h.lp);
+      cd.setTranslation(_v.x, _v.y, _v.z).setRotation({ x: h.lq.x, y: h.lq.y, z: h.lq.z, w: h.lq.w });
+      cd.setCollisionGroups(itemGroups(this.team));
+    } else {
+      cd.setTranslation(0, sh.cy, 0).setCollisionGroups(GROUPS.dropped);
+    }
+    return cd;
+  }
+
+  readHeld(dt = 1 / 60) {
+    const r = this.rag;
+    for (const h of this.held) {
+      if (h.body) {
+        const b = h.body;
+        if (b.isSleeping()) continue;
+        const t = b.translation(), q = b.rotation();
+        h.pos.set(t.x, t.y, t.z); h.quat.set(q.x, q.y, q.z, q.w);
+        // once it has landed a round haft would roll down slopes for ever: damp
+        // its spin hard and put it to sleep when it has come to rest
+        h.t += dt;
+        const gy = this.battle.terrain.height(t.x, t.z);
+        if (!h.landed && h.t > 0.15 && t.y - gy < 0.5 * this.s) { h.landed = true; b.setAngularDamping(6); b.setLinearDamping(0.6); }
+        const lv = b.linvel(), av = b.angvel();
+        const slow = lv.x * lv.x + lv.y * lv.y + lv.z * lv.z < 0.15 && av.x * av.x + av.y * av.y + av.z * av.z < 1;
+        h.restT = slow ? h.restT + dt : 0;
+        if (h.restT > 0.3 || h.t > 10) { b.sleep(); h.restT = 0; h.t = 0.5; }
+        // (no CCD, it is costly: a blade that tunnelled into the ground pops back out)
+        if (t.y < gy - 0.05) { b.setTranslation({ x: t.x, y: gy + 0.15 * this.s, z: t.z }, true); b.setLinvel({ x: 0, y: 0, z: 0 }, true); }
+      } else {
+        h.quat.copy(r.quat[h.part]).multiply(h.lq);
+        h.pos.copy(h.lp).applyQuaternion(r.quat[h.part]).add(r.pos[h.part]);
+      }
+    }
+  }
+
+  // Let go of everything held: each item flies off with the velocity its hand had.
+  dropHeld() {
+    const r = this.rag, world = this.battle.world;
+    for (const h of this.held) {
+      if (h.dropped) continue;
+      h.dropped = true;
+      if (!h.phys) continue;
+      this.readHeld();
+      world.removeCollider(h.collider, true);
+      h.collider = null;
+      const bd = RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(h.pos.x, h.pos.y, h.pos.z)
+        .setRotation({ x: h.quat.x, y: h.quat.y, z: h.quat.z, w: h.quat.w })
+        .setLinearDamping(0.1).setAngularDamping(0.8);
+      const body = world.createRigidBody(bd);
+      world.createCollider(this.heldCollider(h, false), body);
+      // velocity of the item's centre as carried by the forearm, plus a little spin
+      const w = r.angvel[h.part], v = r.vel[h.part];
+      _v2.set(0, h.shape.cy, 0).applyQuaternion(h.quat).add(h.pos).sub(r.pos[h.part]);
+      _v3.crossVectors(w, _v2).add(v);
+      body.setLinvel({ x: _v3.x, y: _v3.y + rand(0.5, 2), z: _v3.z }, true);
+      body.setAngvel({ x: w.x + rand(-4, 4), y: w.y + rand(-4, 4), z: w.z + rand(-4, 4) }, true);
+      h.body = body; h.t = 0; h.restT = 0; h.landed = false;
+    }
+  }
+
   // ----------------------------------------------------------------- extra bodies
   // Packs can give a unit extra rigid bodies (a horse, a catapult, a wing...). pos/quat
   // are in the unit frame relative to its ground point at spawn; they must match the
@@ -721,6 +864,15 @@ export class Unit {
     if (st > 0.2) this.stun = Math.max(this.stun, st);
     if (this.def.frenzy) this.stun = Math.min(this.stun, 0.3);
     this.expr = EXPR.hurt;
+    // flinch along the push (unit frame: +Z forward, +X left)
+    const jm = Math.hypot(ix, iz);
+    if (jm > 1e-3) {
+      const hx = Math.sin(this.heading), hz = Math.cos(this.heading);
+      const k = clamp(jm * 2.5 / this.M / 3, 0.35, 1);
+      this.st.flinch = Math.max(this.st.flinch || 0, k);
+      this.st.flinchZ = (ix * hx + iz * hz) / jm;
+      this.st.flinchX = (ix * hz - iz * hx) / jm;
+    }
     this.lastHitBy = attacker;
     if (attacker && attacker.alive) attacker.damageDealt += amount;
     if (this.hp <= 0) this.die(attacker);
@@ -734,6 +886,7 @@ export class Unit {
     this.hp = 0;
     this.expr = EXPR.dead;
     this.st.attack = null;
+    this.dropHeld();
     if (killer) killer.kills++;
     this.battle.onDeath(this, killer);
   }

@@ -4,8 +4,15 @@
 import { THREE } from './util.js';
 import { NPARTS } from './body.js';
 import { PROJ_TYPES } from './battle.js';
+import { placeHeld } from './visual.js';
 
 export const REC_HZ = 30;
+function restingStuck(s) {
+  if (s.held) return !!s.held.body && s.held.body.isSleeping();
+  if (s.unit) return !s.unit.alive && s.unit.rag.bodies[0].isSleeping();
+  return true;
+}
+const q16 = (x) => Math.max(-32767, Math.min(32767, Math.round(x)));
 
 export class Recorder {
   constructor(battle) {
@@ -13,6 +20,8 @@ export class Recorder {
     this.n = battle.units.reduce((s, u) => s + NPARTS + u.extras.length, 0);
     this.frames = [];
     this.events = [];
+    this.statics = [];
+    this.restDrops = [];
     this.next = 0;
     this.maxFrames = REC_HZ * 60 * 6; // 6 minutes
   }
@@ -44,7 +53,24 @@ export class Recorder {
       us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0);
       hp[i] = Math.round(255 * Math.max(0, u.hp) / u.maxHp);
     });
-    const np = b.projectiles.length + b.stuck.length;
+    // arrows stuck in the ground (or in a corpse / dropped shield at rest) don't
+    // move: recorded once per resting spell, with its start and end time
+    const fno = this.frames.length;
+    let nd = 0;
+    for (const s of b.stuck) {
+      s.moving = !restingStuck(s);
+      if (s.moving) {
+        if (s.rec) { if (s.rec.t1 === Infinity) s.rec.t1 = b.time; s.rec = null; }
+        nd++; continue;
+      }
+      if (!s.rec) {
+        s.rec = { id: s.id, type: PROJ_TYPES.indexOf(s.type), p: s.pos.clone(), q: s.quat.clone(), t0: b.time, t1: Infinity, seen: fno };
+        this.statics.push(s.rec);
+      }
+      s.rec.seen = fno;
+    }
+    for (const r of this.statics) if (r.t1 === Infinity && r.seen !== fno) r.t1 = b.time;
+    const np = b.projectiles.length + nd;
     const proj = new Float32Array(np * 9);
     let j = 0;
     const put = (id, type, p, q) => {
@@ -53,14 +79,38 @@ export class Recorder {
       proj[j++] = q.x; proj[j++] = q.y; proj[j++] = q.z; proj[j++] = q.w;
     };
     for (const p of b.projectiles) put(p.id, p.type, p.pos, p.quat);
-    for (const s of b.stuck) put(s.id, s.type, s.pos, s.quat);
-    this.frames.push({ t: b.time, bodies, us, hp, proj, counts: b.stats().map((s) => s.alive) });
+    for (const s of b.stuck) if (s.moving) put(s.id, s.type, s.pos, s.quat);
+    // weapons and shields that have been let go of: [unit, slot, x, y, z (cm), quat]
+    // while moving; once at rest, one record per resting spell (restDrops)
+    const moving = [];
+    b.units.forEach((u, ui) => {
+      for (const h of u.held) {
+        if (!h.body) continue;
+        if (!h.body.isSleeping()) {
+          if (h.rec) { if (h.rec.t1 === Infinity) h.rec.t1 = b.time; h.rec = null; }
+          moving.push(ui, h);
+        } else if (!h.rec) {
+          h.rec = { ui, slot: h.slot, p: h.pos.clone(), q: h.quat.clone(), t0: b.time, t1: Infinity };
+          this.restDrops.push(h.rec);
+        }
+      }
+    });
+    const drops = new Int16Array(moving.length / 2 * 9);
+    let d = 0;
+    for (let k = 0; k < moving.length; k += 2) {
+      const h = moving[k + 1];
+      drops[d++] = moving[k]; drops[d++] = h.slot;
+      drops[d++] = q16(h.pos.x * 100); drops[d++] = q16(h.pos.y * 100); drops[d++] = q16(h.pos.z * 100);
+      drops[d++] = Math.round(h.quat.x * 32767); drops[d++] = Math.round(h.quat.y * 32767);
+      drops[d++] = Math.round(h.quat.z * 32767); drops[d++] = Math.round(h.quat.w * 32767);
+    }
+    this.frames.push({ t: b.time, bodies, us, hp, proj, drops, counts: b.stats().map((s) => s.alive) });
   }
 
   get duration() { return this.frames.length ? this.frames[this.frames.length - 1].t : 0; }
 }
 
-const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _p = new THREE.Vector3();
 
 export class Player {
   constructor(rec) {
@@ -144,6 +194,29 @@ export class Player {
         _qb.set(B[o + 3], B[o + 4], B[o + 5], B[o + 6]).normalize();
         g.quaternion.slerpQuaternions(_qa, _qb, k);
       }
+      for (let i = 0; i < (vis.held?.length || 0); i++) placeHeld(vis, i, null);
+    }
+    // dropped weapons: at rest, then moving
+    for (const r of this.rec.restDrops) {
+      if (r.t0 > this.t + 1e-6 || r.t1 <= this.t) continue;
+      const vis = visuals[r.ui];
+      if (vis) placeHeld(vis, r.slot, r.p, r.q);
+    }
+    const da = a.drops, db = b.drops;
+    if (da && da.length) {
+      const idx = new Map();
+      for (let j = 0; db && j < db.length; j += 9) idx.set(db[j] * 64 + db[j + 1], j);
+      for (let j = 0; j < da.length; j += 9) {
+        const vis = visuals[da[j]];
+        if (!vis) continue;
+        const jb = idx.get(da[j] * 64 + da[j + 1]);
+        const B2 = jb === undefined ? da : db, o2 = jb === undefined ? j : jb;
+        _p.set(da[j + 2] + (B2[o2 + 2] - da[j + 2]) * k, da[j + 3] + (B2[o2 + 3] - da[j + 3]) * k, da[j + 4] + (B2[o2 + 4] - da[j + 4]) * k).multiplyScalar(0.01);
+        _qa.set(da[j + 5], da[j + 6], da[j + 7], da[j + 8]).normalize();
+        _qb.set(B2[o2 + 5], B2[o2 + 6], B2[o2 + 7], B2[o2 + 8]).normalize();
+        _qa.slerp(_qb, k);
+        placeHeld(vis, da[j + 1], _p, _qa);
+      }
     }
     // projectiles: interpolate those present in both frames
     projViz.begin();
@@ -155,6 +228,10 @@ export class Player {
       let x = pa[j + 2], y = pa[j + 3], z = pa[j + 4];
       if (jb !== undefined && k > 0) { x += (pb[jb + 2] - x) * k; y += (pb[jb + 3] - y) * k; z += (pb[jb + 4] - z) * k; }
       projViz.put(pa[j], PROJ_TYPES[pa[j + 1]], x, y, z, pa[j + 5], pa[j + 6], pa[j + 7], pa[j + 8]);
+    }
+    for (const s of this.rec.statics) {
+      if (s.t0 > this.t + 1e-6 || s.t1 <= this.t) continue;
+      projViz.put(s.id, PROJ_TYPES[s.type], s.p.x, s.p.y, s.p.z, s.q.x, s.q.y, s.q.z, s.q.w);
     }
     projViz.end(this.playing ? dt : 0);
     return a;

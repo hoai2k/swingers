@@ -44,6 +44,7 @@ class Grid {
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 let projId = 1;
+const MAX_STUCK = 800, STUCK_LIFE = 600;
 
 export class Battle {
   // armies: [[{type, x, z}], [{...}]]
@@ -174,6 +175,7 @@ export class Battle {
     this.world.step();
     for (const u of this.units) {
       if (u.alive || !u.rag.bodies[0].isSleeping()) u.rag.read();
+      if (u.held.length) u.readHeld(dt);
       if (u.extras.length) u.readExtras();
     }
     for (const f of EXT.battleStep) f(this, dt);
@@ -190,7 +192,7 @@ export class Battle {
       this.overT += dt;
       // winners hop about
       for (const u of this.units) {
-        if (u.alive && u.team === this.winner && u.stun <= 0 && Math.random() < dt * 0.8 && u.groundGap() < 0.2) {
+        if (u.alive && u.team === this.winner && u.stun <= 0 && Math.random() < dt * 1.3 && u.groundGap() < 0.2) {
           u.rag.impulseAll(0, u.M * rand(3, 5), 0);
         }
       }
@@ -228,22 +230,45 @@ export class Battle {
       let dmg = w.damage * k;
       // knockback: big and funny, but a slap should send a peasant ~10-20 m, not off the map
       let force = Math.min(w.force * k, v.M * 15);
-      // shields
+      // shields: a blow that meets the board, or comes from in front of a bearer who
+      // is on their feet, is blocked - with a physical bump: the bearer is shoved
+      // back a step and the attacker's weapon arm bounces off
       let blocked = false;
       const vw = v.def.weapon;
-      if (vw.shield && v.stun <= 0) {
+      const sh = v.shield();
+      let hitPos = v.rag.pos[best];
+      // (a braced or blocking bearer covers a wider arc; a possessed unit blocking
+      // without a shield parries blows from the front with its weapon)
+      const guardUp = v.blocking && v.stun <= 0;
+      if ((sh || guardUp) && v.stun <= 0) {
         const fx = Math.sin(v.heading), fz = Math.cos(v.heading);
         const tx = p.x - v.pos.x, tz = p.z - v.pos.z;
-        if (fx * tx + fz * tz > 0) {
-          dmg *= 1 - (vw.blockMelee || 0.3);
-          force *= 0.6;
+        const sr = 0.45 * v.s + r;
+        const onBoard = sh && segSegDist2(A, B, sh.pos, sh.pos) < sr * sr;
+        const arc = guardUp ? -0.1 : (v.st.brace || 0) > 0.5 ? 0.1 : 0.35;
+        if (onBoard || (fx * tx + fz * tz > arc * Math.hypot(tx, tz) && !v.isDown())) {
+          const bm = sh ? vw.blockMelee || 0.3 : 0.4;
+          dmg *= 1 - (guardUp && sh ? Math.max(bm, 0.85) : bm);
+          force *= guardUp ? 0.4 : 0.6;
           blocked = true;
+          hitPos = sh ? sh.pos : v.rag.pos[PART.farmR];
         }
       }
       _a.copy(tipVel).normalize();
       _a.y = Math.max(_a.y, 0) + 0.25;
       _a.normalize();
-      const hitPos = v.rag.pos[best];
+      if (blocked) {
+        // bump: the bearer slides back with the shield arm braced; the blow rebounds
+        v.hit(dmg, PART.farmL, _a.x * force * 0.15, 0, _a.z * force * 0.15, att, 'melee');
+        v.rag.impulseAll(_a.x * force * 0.55, force * 0.05, _a.z * force * 0.55);
+        const wp = att.weapons[0]?.part ?? PART.farmR;
+        const rb = Math.min(force * 0.12, att.M * 1.2);
+        att.rag.impulse(wp, -_a.x * rb, rb * 0.3, -_a.z * rb);
+        att.rag.impulse(PART.chest, -_a.x * rb * 0.5, 0, -_a.z * rb * 0.5);
+        this.emit('spark', hitPos.x, hitPos.y, hitPos.z, 8);
+        this.sound('shield', hitPos, 0.8 * Math.min(2, att.s), 1 / Math.sqrt(att.s));
+        return;
+      }
       if (blocked || v.def.armor > 0.3) {
         this.emit('spark', hitPos.x, hitPos.y, hitPos.z, 6);
         this.sound(blocked ? 'shield' : 'clang', hitPos, 0.8 * Math.min(2, att.s), 1 / Math.sqrt(att.s));
@@ -325,7 +350,7 @@ export class Battle {
             // bury the tip in the ground
             const tip = _a.copy(pr.vel).normalize();
             pr.pos.y = gy + 0.02 - tip.y * P.len * 0.25;
-            this.stuck.push({ type: pr.type, unit: null, part: -1, pos: pr.pos.clone(), quat: pr.quat.clone(), t: 25, id: pr.id });
+            this.stuck.push({ type: pr.type, unit: null, part: -1, pos: pr.pos.clone(), quat: pr.quat.clone(), t: STUCK_LIFE, id: pr.id });
             this.emit('dust', pr.pos.x, gy, pr.pos.z, 2);
             dead = true;
           } else if (P.explode && !P.fuse) {
@@ -346,12 +371,17 @@ export class Battle {
       }
       if (dead) list.splice(i, 1);
     }
-    // stuck projectiles follow their part
+    // stuck projectiles follow their part (or the shield they're in, also once it
+    // has been dropped); they stay for the whole battle unless there are very many
+    if (this.stuck.length > MAX_STUCK) this.stuck.splice(0, this.stuck.length - MAX_STUCK);
     for (let i = this.stuck.length - 1; i >= 0; i--) {
       const s = this.stuck[i];
       s.t -= dt;
-      if (s.t <= 0 || this.stuck.length > 500) { this.stuck.splice(i, 1); continue; }
-      if (s.unit) {
+      if (s.t <= 0) { this.stuck.splice(i, 1); continue; }
+      if (s.held) {
+        s.pos.copy(s.lp).applyQuaternion(s.held.quat).add(s.held.pos);
+        s.quat.copy(s.held.quat).multiply(s.lq);
+      } else if (s.unit) {
         const rag = s.unit.rag;
         s.pos.copy(s.lp).applyQuaternion(rag.quat[s.part]).add(rag.pos[s.part]);
         s.quat.copy(rag.quat[s.part]).multiply(s.lq);
@@ -378,16 +408,12 @@ export class Battle {
       const rag = v.rag;
       // shield first
       const vw = v.def.weapon;
-      if (vw.shield && P.stick) {
-        const fa = rag.pos[PART.farmL];
-        _c.set(rag.skel.parts[PART.farmL].r * 1.6, 0, 0).applyQuaternion(rag.quat[PART.farmL]).add(fa);
-        const sr = 0.42 * v.s;
-        if (segSegDist2(pr.prev, pr.pos, _c, _c) < sr * sr) {
-          this.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 4);
-          this.sound('block', pr.pos, 0.7, 1);
-          const lp = pr.pos.clone().sub(fa).applyQuaternion(_q.copy(rag.quat[PART.farmL]).invert());
-          const lq = _q.clone().multiply(pr.quat);
-          this.stuck.push({ type: pr.type, unit: v, part: PART.farmL, lp, lq, pos: pr.pos.clone(), quat: pr.quat.clone(), t: 25, id: pr.id });
+      const sh = P.stick ? v.shield() : null;
+      if (sh) {
+        const sr = 0.4 * v.s;
+        if (segSegDist2(pr.prev, pr.pos, sh.pos, sh.pos) < sr * sr) {
+          _a.copy(pr.vel).normalize();
+          this.shieldStick(pr, P, v, sh, _a, false);
           hit = true;
           return;
         }
@@ -409,15 +435,9 @@ export class Battle {
         const f = pr.force * dmgK;
         _a.copy(pr.vel).normalize();
         // a raised shield catches most arrows and spears that come from the front
-        if (vw.shield && P.stick && v.stun <= 0 && !v.isDown() &&
-            -(_a.x * Math.sin(v.heading) + _a.z * Math.cos(v.heading)) > 0.3 && Math.random() < 0.85) {
-          const fa = rag.pos[PART.farmL];
-          this.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 4);
-          this.sound('block', pr.pos, 0.7, 1);
-          v.rag.impulse(PART.farmL, _a.x * pr.force * 0.2, 0, _a.z * pr.force * 0.2);
-          const lp = _b.set(rag.skel.parts[PART.farmL].r * 1.4, 0, 0);
-          const lq = _q.copy(rag.quat[PART.farmL]).invert().multiply(pr.quat).clone();
-          this.stuck.push({ type: pr.type, unit: v, part: PART.farmL, lp: lp.clone(), lq, pos: fa.clone(), quat: pr.quat.clone(), t: 25, id: pr.id });
+        if (sh && v.stun <= 0 && !v.isDown() &&
+            -(_a.x * Math.sin(v.heading) + _a.z * Math.cos(v.heading)) > 0.3 && Math.random() < (v.blocking ? 0.98 : 0.85)) {
+          this.shieldStick(pr, P, v, sh, _a, true);
           hit = true;
           return;
         }
@@ -433,7 +453,7 @@ export class Battle {
         if (P.stick) {
           const lp = pr.pos.clone().addScaledVector(_a, -P.len * 0.15).sub(c).applyQuaternion(_q.copy(rag.quat[i]).invert());
           const lq = _q.clone().multiply(pr.quat);
-          this.stuck.push({ type: pr.type, unit: v, part: i, lp, lq, pos: pr.pos.clone(), quat: pr.quat.clone(), t: 25, id: pr.id });
+          this.stuck.push({ type: pr.type, unit: v, part: i, lp, lq, pos: pr.pos.clone(), quat: pr.quat.clone(), t: STUCK_LIFE, id: pr.id });
           hit = true;
         } else {
           // rolling things keep going, a bit slower
@@ -443,6 +463,32 @@ export class Battle {
       }
     });
     return hit;
+  }
+
+  // An arrow or spear caught by a shield: it sticks in the board (and stays there
+  // when the shield is dropped) and shoves the bearer back a little.
+  // face: snap it onto the shield's outer face (caught by the bearer raising it).
+  shieldStick(pr, P, v, sh, dir, face) {
+    this.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 4);
+    this.sound('block', pr.pos, 0.7, 1);
+    const f = pr.force * 0.35;
+    v.rag.impulse(PART.farmL, dir.x * f, 0, dir.z * f);
+    v.rag.impulseAll(dir.x * f, 0, dir.z * f);
+    _q.copy(sh.quat).invert();
+    const lp = new THREE.Vector3();
+    if (face) {
+      const box = sh.shape.box;
+      // the side of the board facing the arrow
+      _b.copy(dir).applyQuaternion(_q);
+      lp.set(-Math.sign(_b.x || 1) * box[0], rand(-0.6, 0.6) * box[1], rand(-0.6, 0.6) * box[2]);
+      lp.addScaledVector(_b, -P.len * 0.4);
+    } else {
+      lp.copy(pr.pos).addScaledVector(dir, -P.len * 0.15).sub(sh.pos).applyQuaternion(_q);
+    }
+    const lq = _q.clone().multiply(pr.quat);
+    const s = { type: pr.type, unit: v, held: sh, part: PART.farmL, lp, lq, pos: pr.pos.clone(), quat: pr.quat.clone(), t: STUCK_LIFE, id: pr.id };
+    s.pos.copy(lp).applyQuaternion(sh.quat).add(sh.pos);
+    this.stuck.push(s);
   }
 
   explode(pos, radius, damage, force, owner, kind) {
