@@ -11,6 +11,7 @@
 //   dropPoints: [[x,y]],      // optional: where random drops fall in (default: anywhere on top)
 //   enemySpawns: [[x,y]],     // survival: where enemies enter (default: edges)
 //   killY: 1180,              // fall below this = death (default 1180)
+//   bgDim: 0.38,              // how much a delivered bgFile is darkened (busy art: more)
 //   decor: [ {type, ...} ],   // optional background props (drawDecor)
 //   tagline: 'Short hint shown on the board card',
 //   onUpdate(game, dt) / onDraw(ctx, game)  // optional board-specific hooks
@@ -57,7 +58,6 @@ export function spiderImage(file) { return optionalImage(file).img; }
 for (const t of Object.keys(THEMES)) { themeImage('bg', t); themeImage('tex', t); }
 const MAT = {
   lava: loadImage('../assets/web/tile_lava.png'),
-  ice: loadImage('../assets/web/tile_icewater.png'),
 };
 
 export class Board {
@@ -92,12 +92,15 @@ export class Board {
     // a spiders-specific backdrop wins if delivered, then the shared Swingers one
     const own = this.def.bgFile ? spiderImage(this.def.bgFile) : null;
     const img = own && ready(own) ? own : themeImage('bg', THEMES[key] ? key : this.theme);
+    // a board's own painted backdrop already shows its sky, clouds and
+    // distant shapes: the procedural stand-ins for those are skipped then
+    this.paintedBg = !!(own && ready(own));
     if (ready(img)) {
       const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
       const iw = img.naturalWidth * s, ih = img.naturalHeight * s;
       ctx.drawImage(img, (W - iw) / 2, (H - ih) / 2, iw, ih);
       // push it back so the action reads
-      ctx.fillStyle = 'rgba(8,10,24,0.38)';
+      ctx.fillStyle = `rgba(8,10,24,${this.paintedBg ? this.def.bgDim ?? 0.38 : 0.38})`;
       ctx.fillRect(0, 0, W, H);
     } else {
       const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -115,6 +118,7 @@ export class Board {
     if (!decor) return;
     for (const d of decor) {
       if ((d.layer || 'back') !== layer) continue;
+      if (this.paintedBg && PAINTED.has(d.type)) continue;
       const fn = DECOR[d.type];
       if (fn) fn(ctx, d, this);
     }
@@ -138,7 +142,9 @@ export class Board {
     ctx.fillStyle = fill;
     ctx.fill(path);
     // texture
-    const tex = mat === 'lava' ? MAT.lava : mat === 'ice' ? MAT.ice : themeImage('tex', s.def.tex || this.theme);
+    const iceTex = mat === 'ice' ? spiderImage('tile_spider_frost_ice.png') : null;
+    const tex = mat === 'lava' ? MAT.lava : mat === 'ice' ? iceTex : themeImage('tex', s.def.tex || this.theme);
+    if (mat === 'ice' && !ready(tex)) drawIce(ctx, path, s);
     if (ready(tex) && mat !== 'glass') {
       if (!tex._pat) tex._pat = ctx.createPattern(tex, 'repeat');
       if (tex._pat) {
@@ -283,6 +289,9 @@ export class Board {
     this.dirty = !(ready(themeImage('tex', this.theme)));
   }
 }
+
+// decor that only stands in for a painted backdrop (skipped once one is delivered)
+const PAINTED = new Set(['silhouette', 'bggear', 'stars', 'clouds', 'cloudbank', 'vortex', 'moon', 'sun', 'frame', 'plants', 'crystals', 'rays']);
 
 // --- background props ---------------------------------------------------------
 // Each draws {type, ...} data. Add more as boards need them.
@@ -638,3 +647,31 @@ export const DECOR = {
     }
   },
 };
+
+// glossy procedural ice: a cold gradient, diagonal sheen streaks and a few
+// cracks (until tile_spider_frost_ice.png is delivered)
+function drawIce(ctx, path, s) {
+  const bb = s.bb;
+  ctx.save();
+  ctx.clip(path);
+  const g = ctx.createLinearGradient(bb.x0, bb.y0, bb.x1 * 0.3 + bb.x0 * 0.7, bb.y1);
+  g.addColorStop(0, '#bfeeff'); g.addColorStop(0.45, '#6cc4ec'); g.addColorStop(1, '#2a6f9e');
+  ctx.fillStyle = g;
+  ctx.fill(path);
+  const rnd = mulberry(s.i * 131 + 7);
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineCap = 'round';
+  for (let x = bb.x0 - (bb.y1 - bb.y0); x < bb.x1; x += 70 + rnd() * 60) {
+    ctx.lineWidth = 4 + rnd() * 10;
+    ctx.beginPath(); ctx.moveTo(x, bb.y1); ctx.lineTo(x + (bb.y1 - bb.y0) * 0.8, bb.y0); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(20,70,110,0.35)';
+  ctx.lineWidth = 1.5;
+  for (let k = 0; k < 6; k++) {
+    let x = bb.x0 + rnd() * (bb.x1 - bb.x0), y = bb.y0 + rnd() * (bb.y1 - bb.y0);
+    ctx.beginPath(); ctx.moveTo(x, y);
+    for (let j = 0; j < 4; j++) { x += (rnd() - 0.5) * 50; y += 10 + rnd() * 25; ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}

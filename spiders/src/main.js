@@ -9,6 +9,11 @@ import { VsMode } from './modes/vs.js';
 import { SurvivalMode } from './modes/survival.js';
 import { ChallengeMode } from './modes/challenge.js';
 import './weapons/index.js';
+import { BOARDS } from './boards.js';
+import { optionalImage } from './optional-art.js';
+
+// delivered board backdrops load during the boot bar (no pop-in mid-round)
+for (const b of BOARDS) if (b.bgFile) optionalImage(b.bgFile);
 import { UI } from './ui.js';
 import { Overlay } from './pause.js';
 

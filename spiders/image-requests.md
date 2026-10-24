@@ -1,6 +1,6 @@
 # Spider Swingers — image requests
 
-**Status: all 13 hook-ready images delivered and listed in the manifest.**
+**Status: all 13 hook-ready images delivered and checked in game; 1 new request open (section 4).**
 Title/lobby art and all 10 board backgrounds are delivered. Optional extras
 below remain deferred. Exact prompts are recorded in `assets/generation.json`.
 The final logo uses ice blue and pink/magenta, with no orange or spider character.
@@ -41,6 +41,26 @@ backdrop for its theme.
 | `bg_storm.jpg` | Eye of the Storm (storm) | A towering storm vortex with its eye slightly above centre, dark misty mountains at the bottom, rain streaks throughout, lightning glowing inside the clouds at the far left and right. |
 | `bg_dunes.jpg` | Sunken Ruins (desert) | Desert ruins at dusk: broken sandstone arches and columns silhouetted at the left and right edges, low dunes on the horizon, warm amber-to-violet sky with the first stars, a low sun glowing lower right. |
 
+## 4. NEW: integration review of the delivered art (1 request open)
+
+All 13 delivered images were checked in the game (title, lobby, every board
+mid-round). They load through the boot bar (board backdrops are now
+preloaded, so they no longer pop in), and none need replacing. Changes made
+around them:
+
+- Procedural stand-in props that the paintings now show themselves (clouds,
+  stars, silhouettes, background gears, vortex, glazing frame, ferns,
+  crystals, light rays) are skipped on boards whose backdrop is delivered.
+- Stalactite Hollow and Gumdrop Grove are busier behind the action, so their
+  backdrops are darkened a little more (`bgDim` in `src/boards.js`).
+- The glacier's ice slopes no longer use the shared striped water tile (it
+  read as stairs); they are drawn as procedural glossy ice until the texture
+  below arrives. Its hook is ready.
+
+| File | Size | How the game uses it | Prompt | Status |
+| --- | --- | --- | --- | --- |
+| `tile_spider_frost_ice.png` | 512 × 512, seamless PNG | Fills every ice solid (Glacier Rift's big slopes, the ice bridge, icicles), tiled at half size; outlines and the white top edge are drawn over it. Must read as slippery, not as steps. | Seamless tileable texture of glossy glacier ice: translucent pale-cyan to mid-blue, soft diagonal light streaks and a few thin white cracks and trapped air bubbles; no horizontal bands, no stripes, no hard edges; even brightness across the tile so the repeat doesn't show. | Requested |
+
 ## 3. Optional extras — would each need a small loader hook
 
 These are nice-to-haves; the procedural versions work. Ask before
@@ -48,8 +68,8 @@ generating and I'll add the hook with them.
 
 - **Terrain textures** (512 × 512 seamless PNG): `tile_spider_cave.png` wet
   violet rock; `tile_spider_volcano.png` basalt with glowing cracks;
-  `tile_spider_frost_ice.png` glossy blue ice (the shared striped water tile
-  reads as stairs on the glacier slopes); `tile_spider_sky.png` puffy cloud
+  (`tile_spider_frost_ice.png` moved to section 4, hook ready);
+  `tile_spider_sky.png` puffy cloud
   texture; `tile_spider_desert.png` carved sandstone.
 - **Board props** (≈ 256 × 256 transparent): crystal cluster, hanging work
   lamp, fern / palm frond.

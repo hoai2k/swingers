@@ -55,6 +55,7 @@ const canopy = {
 const hollowCeil = terrain(0, W, [70, 130, 150, 110, 170, 130, 150, 120, 160, 110, 140, 70], -60, { smooth: 2 });
 const hollow = {
   id: 'hollow',
+    bgDim: 0.52,
   name: 'Stalactite Hollow',
   theme: 'cave',
   bgFile: 'bg_hollow.jpg',
@@ -297,6 +298,7 @@ const cane = (x, dir) => [
 ];
 const sweets = {
   id: 'sweets',
+    bgDim: 0.48,
   name: 'Gumdrop Grove',
   theme: 'candy',
   bgFile: 'bg_sweets.jpg',
