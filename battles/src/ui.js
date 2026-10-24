@@ -42,7 +42,7 @@ export class UI {
   constructor(root) {
     this.root = root;
     this.layers = {};
-    for (const k of ['title', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
+    for (const k of ['title', 'levels', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
       const l = el('div', 'layer layer-' + k);
       root.appendChild(l);
       this.layers[k] = l;
@@ -59,7 +59,7 @@ export class UI {
   menuHtml(items, sel) {
     return items.map((it, i) => `<div class="mi ${i === sel ? 'sel' : ''} ${it.cls || ''}">${it.value !== undefined
       ? `<span class="ml">${it.label}</span><span class="mv">${i === sel ? '◀ ' : ''}${it.value}${i === sel ? ' ▶' : ''}</span>`
-      : `<span class="ml big">${it.label}</span>`}</div>`).join('');
+      : `<span class="ml big">${it.label}${it.note ? `<small class="mnote">${it.note}</small>` : ''}</span>`}</div>`).join('');
   }
 
   // ------------------------------------------------------------- title
@@ -105,6 +105,37 @@ export class UI {
     this.setText(this.sound, d.soundOff ? '🔇 press any button to enable sound' : '');
   }
 
+  // ------------------------------------------------------------- campaign level select
+  buildLevels() {
+    const L = this.layers.levels;
+    L.innerHTML = `<div class="lvhead">CAMPAIGN <span class="lvtotal"></span></div>
+      <div class="lvworlds"></div><div class="lvdetail"></div><div class="lvplayers"></div>
+      <div class="menuhint lvhint">${btn('dpad')}/${btn('LS')} ←→ level ↑↓ world &nbsp; ${btn('A')} play &nbsp; ${btn('X')} 1 player / 2-player co-op &nbsp; ${btn('B')} back</div>`;
+    this.lv = {
+      total: L.querySelector('.lvtotal'), worlds: L.querySelector('.lvworlds'),
+      detail: L.querySelector('.lvdetail'), players: L.querySelector('.lvplayers'),
+    };
+  }
+
+  updateLevels(d) {
+    const v = this.lv;
+    const stars = (n) => [1, 2, 3].map((k) => `<i class="${k <= n ? 'on' : ''}">★</i>`).join('');
+    this.setText(v.total, `★ ${d.total} / ${d.max}`);
+    this.setText(v.worlds, d.worlds.map((w, wi) => `<div class="lvworld ${w.unlocked ? '' : 'locked'}" style="--wc:${w.color}">
+      <div class="lvwname">${w.unlocked ? '' : '🔒 '}${w.name}</div>
+      ${w.levels.map((l, li) => `<div class="lvtile ${l.sel ? 'sel' : ''} ${l.unlocked ? '' : 'locked'}"><b>${wi + 1}-${li + 1}</b>
+        <span class="lvn">${l.unlocked ? l.name : '🔒'}</span><span class="lvs">${stars(l.stars)}</span></div>`).join('')}</div>`).join(''));
+    const L = d.level;
+    this.setText(v.detail, `<div class="lvd-top" style="--wc:${L.color}"><span class="lvd-name">${L.name}</span><span class="lvd-stars">${stars(L.stars)}</span></div>
+      <div class="lvd-tip">${L.unlocked ? L.tip : '🔒 Locked — beat the level before it first.'}</div>
+      <div class="lvd-row"><span>🗺 ${L.map}</span><span><span class="coin"></span> budget <b>${fmt(L.budget)}</b></span><span>👥 up to <b>${L.cap}</b> units</span>
+        ${L.best !== undefined ? `<span>best: <b>${fmt(L.best)}</b> gold</span>` : ''}</div>
+      <div class="lvd-row lvd-enemy"><span style="color:${tc(1)}"><b>Enemy</b></span>${L.enemy.map((r) => `<span class="rc"><img src="${this.portraits[r.id + ':1'] || ''}" alt="">×${r.n}</span>`).join('')}
+        <small>${L.enemyCount} units · ${fmt(L.enemyValue)} gold</small></div>
+      <div class="lvd-row"><small>★★★ ≤ ${fmt(L.starGold[0])} gold · ★★ ≤ ${fmt(L.starGold[1])} gold · ★ any win &nbsp;·&nbsp; units: ${L.factions.join(', ')}</small></div>`);
+    this.setText(v.players, `Players: <span class="${d.coop ? '' : 'on'}">👤 1 player</span><span class="${d.coop ? 'on' : ''}">👥 2-player co-op <small>(both build the Blue army)</small></span>`);
+  }
+
   // ------------------------------------------------------------- setup
   buildSetup() {
     const L = this.layers.setup;
@@ -132,18 +163,18 @@ export class UI {
       bar.appendChild(tabs); bar.appendChild(cards); bar.appendChild(brush);
       half.appendChild(bar);
       const hints = el('div', 'hints');
-      hints.innerHTML = `<div>${btn('A')} place <small>(hold: paint)</small> ${btn('B')} remove ${btn('X')} undo ${btn('Y')} ready</div>
-        <div>${btn('dpad')} ←→ unit ↑↓ faction &nbsp;${btn('LT')}${btn('RT')} brush &nbsp;${btn('LB')}${btn('RB')} down/up &nbsp;${btn('View')} clear &nbsp;${btn('Start')} menu</div>`;
       half.appendChild(hints);
       const ready = el('div', 'readybadge', 'READY!');
       half.appendChild(ready);
       const modal = el('div', 'hmodal');
       half.appendChild(modal);
       L.appendChild(half);
-      this.sp.push({ half, top, pid: top.querySelector('.pid'), gv: top.querySelector('.gv'), cnt: top.querySelector('.cnt'), foe: top.querySelector('.foe'), info, roster, reticle, status, brush, tabs, cards, ready, modal, faction: -1, unit: -1, budgetKey: '' });
+      this.sp.push({ half, top, hints, tname: top.querySelector('.team-name'), pid: top.querySelector('.pid'), gv: top.querySelector('.gv'), cnt: top.querySelector('.cnt'), foe: top.querySelector('.foe'), info, roster, reticle, status, brush, tabs, cards, ready, modal, faction: -1, unit: -1, budgetKey: '' });
     }
     this.countdown = el('div', 'countdown');
     L.appendChild(this.countdown);
+    this.timer = el('div', 'stimer');
+    L.appendChild(this.timer);
     this.divider = el('div', 'divider');
     L.appendChild(this.divider);
   }
@@ -160,28 +191,67 @@ export class UI {
       <div class="ui-desc">${def.desc || ''}</div></div>`;
   }
 
+  // solo: one full-width setup view (sandbox, 1-player campaign)
+  setSetupLayout(solo) {
+    this.solo = solo;
+    this.layers.setup.classList.toggle('solo', solo);
+    this.sp[0].team = this.sp[1].team = -1;
+  }
+
+  setTimer(t) {
+    this.timer.style.display = t > 0 ? '' : 'none';
+    if (t > 0) {
+      this.setText(this.timer, `⏱ ${ftime(Math.ceil(t))}`);
+      this.timer.classList.toggle('low', t <= 10);
+    }
+  }
+
+  rosterHtml(list, team) {
+    return list.map((r) => `<span class="rc" title="${UNIT_BY_ID[r.id]?.name || r.id}"><img src="${this.portraits[r.id + ':' + team] || ''}" alt="">×${r.n}<small>${fmt(r.gold)}</small></span>`).join('');
+  }
+
   updateSetup(p, d) {
     const s = this.sp[p];
+    const t = d.team;
+    if (s.team !== t || s.title !== d.title) {
+      // the army this player builds changed (sandbox side switch): recolour the half
+      s.team = t;
+      s.title = d.title;
+      s.half.style.setProperty('--tc', tc(t));
+      s.tname.innerHTML = `${d.title ? `<span class="lvname">${d.title}</span> ` : ''}${TEAM_NAMES[t].toUpperCase()} <small class="pid"></small>`;
+      s.pid = s.tname.querySelector('.pid');
+      s.pid._t = undefined;
+      s.faction = -1;
+      s.roster._t = undefined;
+    }
     this.setText(s.pid, `P${p + 1} ${d.pad ? '🎮' : '⌨'}`);
     this.setText(s.gv, `${fmt(d.used)} <small>/ ${fmt(d.budget)}</small>`);
-    this.setText(s.cnt, `${d.count}<small> / ${d.cap} units</small>`);
-    this.setText(s.foe, `<span style="color:${tc(1 - p)}">${TEAM_NAMES[1 - p]}</span> ${d.enemy.hidden ? '<b class="hid">🙈 hidden</b>' : `<small>${d.enemy.count} units · ${fmt(d.enemy.value)}</small>`} ${d.otherReady ? '<b class="ok">✔ READY</b>' : '<small class="busy">building…</small>'}`);
+    s.gv.classList.toggle('over', d.used > d.budget);
+    this.setText(s.cnt, `${d.count}<small> / ${fmt(d.cap)} units</small>`);
+    const e = d.enemy;
+    this.setText(s.foe, `<span style="color:${tc(1 - t)}">${e.name}</span> ${e.hidden ? '<b class="hid">🙈 hidden</b>' : `<small>${e.count} units · ${fmt(e.value)}</small>`} ${e.state || ''}`);
+    this.setText(s.hints, d.hints.map((h) => `<div>${h}</div>`).join(''));
     s.ready.style.display = d.ready ? '' : 'none';
     this.setText(s.status, d.status || '');
     s.reticle.className = 'reticle ' + (d.valid ? 'ok' : 'bad');
     s.reticle.style.display = d.ready || d.modal ? 'none' : '';
     this.setText(s.brush, d.ready ? '' : `brush ${btn('LT')} <b>${d.brush}</b> ${btn('RT')}`);
     const def = d.def;
-    this.setText(s.info, this.infoHtml(def, p));
-    this.setText(s.roster, d.roster.length ? d.roster.map((r) => `<span class="rc" title="${UNIT_BY_ID[r.id]?.name || r.id}"><img src="${this.portraits[r.id + ':' + p] || ''}" alt="">×${r.n}</span>`).join('') : '<span class="empty">No units yet</span>');
-    if (s.faction !== d.faction) {
-      s.faction = d.faction;
+    this.setText(s.info, this.infoHtml(def, t));
+    // overview: my army by unit type (count and gold); building alone, the other army too
+    let ro = d.roster.length ? this.rosterHtml(d.roster, t) : '<span class="empty">No units yet</span>';
+    if (e.roster) ro = `<div class="rrow">${ro}</div><div class="rrow other" style="--oc:${tc(1 - t)}"><b>${TEAM_NAMES[1 - t]}</b>${e.roster.length ? this.rosterHtml(e.roster, 1 - t) : '<span class="empty">empty</span>'}</div>`;
+    this.setText(s.roster, ro);
+    const facs = d.factions || FACTIONS;
+    const fkey = facs.map((f) => f.id).join() + ':' + d.faction;
+    if (s.faction !== fkey) {
+      s.faction = fkey;
       s.unit = -1;
       s.budgetKey = '';
-      this.setText(s.tabs, FACTIONS.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}" style="--fc:${f.color}"><img class="ficon" src="assets/ui/faction-${f.id}.png" alt="" onerror="this.remove()">${f.name}</span>`).join(''));
-      const list = unitsOfFaction(FACTIONS[d.faction].id);
+      this.setText(s.tabs, facs.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}" style="--fc:${f.color}"><img class="ficon" src="assets/ui/faction-${f.id}.png" alt="" onerror="this.remove()">${f.name}</span>`).join(''));
+      const list = unitsOfFaction(facs[d.faction].id);
       s.cards.innerHTML = list.map((u) => `<div class="card" data-id="${u.id}">
-        <img src="${this.portraits[u.id + ':' + p] || ''}" alt=""><div class="cn">${u.name}</div><div class="cc"><span class="coin"></span>${u.cost}</div></div>`).join('');
+        <img src="${this.portraits[u.id + ':' + t] || ''}" alt=""><div class="cn">${u.name}</div><div class="cc"><span class="coin"></span>${u.cost}</div></div>`).join('');
     }
     if (s.unit !== d.unit) {
       s.unit = d.unit;
@@ -219,6 +289,10 @@ export class UI {
     L.appendChild(this.counts);
     this.tscale = el('div', 'tscale');
     L.appendChild(this.tscale);
+    this.banner = el('div', 'bbanner');
+    L.appendChild(this.banner);
+    this.cards = [el('div', 'ucard v0'), el('div', 'ucard v1')];
+    this.cards.forEach((v) => L.appendChild(v));
     this.viewLabels = [el('div', 'viewlabel v0'), el('div', 'viewlabel v1')];
     this.viewLabels.forEach((v) => L.appendChild(v));
     this.reticles = [el('div', 'reticle small v0'), el('div', 'reticle small v1')];
@@ -235,6 +309,8 @@ export class UI {
       <span class="bar"><i style="width:${(a / Math.max(1, d.start[0])) * 50}%;background:${tc(0)}"></i><em style="width:${(b / Math.max(1, d.start[1])) * 50}%;background:${tc(1)}"></em></span>
       <span class="cb" style="--tc:${tc(1)}">${b}</span>`);
     this.setText(this.tscale, d.scaleText || '');
+    this.setText(this.banner, d.banner || '');
+    this.banner.style.display = d.banner ? '' : 'none';
     this.layers.battle.classList.toggle('split', d.split);
     this.bdivider.style.display = d.split ? '' : 'none';
     for (let i = 0; i < 2; i++) {
@@ -245,6 +321,8 @@ export class UI {
         this.reticles[i].className = `reticle small v${i} ${v.reticle || ''}`;
         this.setText(this.viewLabels[i], v.label || '');
       }
+      this.cards[i].style.display = v && v.card ? '' : 'none';
+      if (v && v.card) this.setText(this.cards[i], this.unitCardHtml(v.card));
     }
     for (let i = 0; i < 2; i++) {
       const v = d.views[i];
@@ -253,17 +331,48 @@ export class UI {
     }
   }
 
+  // stats of the followed / possessed unit (like TABS's unit info)
+  unitCardHtml(c) {
+    const def = UNIT_BY_ID[c.id];
+    const f = Math.max(0, Math.min(1, c.hp / Math.max(1, c.maxHp)));
+    const stats = [`<span class="coin"></span>${fmt(c.cost)}`];
+    if (c.kills !== undefined) stats.push(`💀 ${c.kills} kill${c.kills === 1 ? '' : 's'}`);
+    if (c.dmg !== undefined) stats.push(`⚔ ${fmt(c.dmg)} dmg`);
+    if (c.buff) stats.push('🎵 inspired');
+    return `<img src="${this.portraits[c.id + ':' + c.team] || ''}" alt="">
+      <div class="uc-body"><div class="uc-name" style="color:${tc(c.team)}">${c.name}${c.alive ? '' : ' <em>down</em>'}</div>
+      <div class="uc-hp"><span class="hp"><i style="width:${f * 100}%"></i></span> ${c.alive ? `${fmt(c.hp)} / ${fmt(c.maxHp)}` : ''}</div>
+      <div class="uc-stats">${stats.join(' &nbsp;')}</div>
+      ${def ? `<div class="uc-weap">${weaponLine(def)}</div>` : ''}</div>`;
+  }
+
   // ------------------------------------------------------------- result
   showResult(d) {
     const L = this.layers.result;
     const col = d.winner >= 0 ? tc(d.winner) : '#ddd';
-    const title = d.winner >= 0 ? `${TEAM_NAMES[d.winner].toUpperCase()} VICTORY` : 'DRAW';
+    let title = d.winner >= 0 ? `${TEAM_NAMES[d.winner].toUpperCase()} VICTORY` : 'DRAW';
+    const lv = d.level, m = d.match;
+    if (lv) title = lv.won ? 'VICTORY!' : d.winner < 0 ? 'DRAW' : 'DEFEAT';
+    if (m && m.winner >= 0) title = `${TEAM_NAMES[m.winner].toUpperCase()} WINS THE MATCH!`;
+    let extra = '';
+    if (lv) {
+      const st = [1, 2, 3].map((k) => `<i class="${k <= lv.stars ? 'on' : ''}">★</i>`).join('');
+      extra = `<div class="rlevel"><div class="rstars">${st}</div>
+        <div>${lv.name} · spent <b>${fmt(lv.spent)}</b> / ${fmt(lv.budget)} gold${lv.record ? ' · <b class="ok">new best!</b>' : ''}</div>
+        <small>★★★ ≤ ${fmt(lv.starGold[0])} gold · ★★ ≤ ${fmt(lv.starGold[1])} gold${lv.won ? '' : ' · win to earn stars'}</small></div>`;
+    }
+    if (m) {
+      extra = `<div class="rmatch">Round ${m.round} · <b style="color:${tc(0)}">${TEAM_NAMES[0]} ${m.wins[0]}</b> – <b style="color:${tc(1)}">${m.wins[1]} ${TEAM_NAMES[1]}</b> · best of ${m.bestOf}
+        ${m.bonus >= 0 ? `<br><small>${TEAM_NAMES[m.bonus]} gets bonus gold next round</small>` : ''}</div>`;
+    }
+    const names = d.names || [`${TEAM_NAMES[0]} <small>P1</small>`, `${TEAM_NAMES[1]} <small>P2</small>`];
+    if (d.coop) names[0] = `${TEAM_NAMES[0]} <small>P1 + P2</small>`;
     L.innerHTML = `<div class="victory" style="--tc:${col}">${title}</div>
-      <div class="rsub">${d.duration ? `Battle lasted ${ftime(d.duration)}` : ''}</div>
-      <div class="rstats">${[0, 1].map((t) => `<div class="rs" style="--tc:${tc(t)}"><b>${TEAM_NAMES[t]} <small>P${t + 1}</small></b>
+      <div class="rsub">${d.duration ? `Battle lasted ${ftime(d.duration)}` : ''}</div>${extra}
+      <div class="rstats">${[0, 1].map((t) => `<div class="rs" style="--tc:${tc(t)}"><b>${names[t]}</b>
         <div>${d.stats[t].alive} / ${d.stats[t].total} survived</div><div>${fmt(d.stats[t].startValue - d.stats[t].value)} gold lost</div></div>`).join('')}</div>
       <div class="rmenu menu"></div>
-      <div class="rhint">${btn('dpad')} choose &nbsp; ${btn('A')} select &nbsp;·&nbsp; the battlefield stays live: fly around with ${btn('LS')} ${btn('RS')}</div>`;
+      <div class="rhint">${btn('dpad')} choose &nbsp; ${btn('A')} select &nbsp;·&nbsp; the battlefield stays live: fly with ${btn('LS')} ${btn('RS')}, ${btn('B')} cinematic camera</div>`;
     this.rmenu = L.querySelector('.rmenu');
   }
 
@@ -312,7 +421,7 @@ export class UI {
     if (!this.stacks) {
       this.stacks = ['c', '0', '1'].map((k) => { const e = el('div', 'tstack ts' + k); this.layers.toast.appendChild(e); return e; });
     }
-    const half = (side === 0 || side === 1) && this.root.dataset.state === 'setup';
+    const half = (side === 0 || side === 1) && this.root.dataset.state === 'setup' && !this.solo;
     const stack = half ? this.stacks[1 + side] : this.stacks[0];
     const t = el('div', 'toastmsg', msg);
     stack.appendChild(t);
@@ -332,15 +441,15 @@ export class UI {
     <tr><td>${btn('RS')}</td><td>look</td><td>look · orbit · aim</td><td>look · orbit</td></tr>
     <tr><td>${btn('LB')} ${btn('RB')}</td><td>down / up</td><td>down / up · following: prev / next unit</td><td>same</td></tr>
     <tr><td>${btn('L3')}</td><td>fly fast (hold)</td><td>fly fast (hold)</td><td>fly fast</td></tr>
-    <tr><td>${btn('A')}</td><td>place unit (hold to paint)</td><td>follow unit in crosshair · possessing: jump</td><td>play / pause</td></tr>
-    <tr><td>${btn('B')}</td><td>remove unit (hold)</td><td>free camera / let go</td><td>free camera · exit</td></tr>
-    <tr><td>${btn('X')}</td><td>undo (hold to repeat)</td><td>possess the unit in crosshair</td><td>follow unit</td></tr>
-    <tr><td>${btn('Y')}</td><td>ready / not ready</td><td>slow motion</td><td>slow-mo final moments</td></tr>
-    <tr><td>${btn('LT')} ${btn('RT')}</td><td>brush: single / line / block</td><td>${btn('LT')} slow smooth camera · ${btn('RT')} attack (possessing)</td><td>scrub back / forward</td></tr>
+    <tr><td>${btn('A')}</td><td>place unit (hold to paint)</td><td>follow unit in crosshair · controlling: jump</td><td>play / pause</td></tr>
+    <tr><td>${btn('B')}</td><td>remove unit (hold)</td><td>free cam: cinematic camera · else back to free cam / let go</td><td>free camera · exit</td></tr>
+    <tr><td>${btn('X')}</td><td>undo (hold to repeat)</td><td>take control of the unit in crosshair (or the followed one)</td><td>follow unit</td></tr>
+    <tr><td>${btn('Y')}</td><td>ready / not ready (alone: start battle)</td><td>slow motion</td><td>slow-mo final moments</td></tr>
+    <tr><td>${btn('LT')} ${btn('RT')}</td><td>brush: single / line / block</td><td>${btn('LT')} smooth camera · controlling: ${btn('RT')} attack, ${btn('LT')} aim</td><td>scrub back / forward</td></tr>
     <tr><td>${btn('dpad')}</td><td>←→ unit · ↑↓ faction</td><td>↑↓ time speed (down to freeze) · ←→ zoom</td><td>←→ skip · ↑↓ speed</td></tr>
     <tr><td>${btn('R3')}</td><td>reset camera</td><td>cycle tips / HUD off (photo)</td><td>HUD off</td></tr>
-    <tr><td>${btn('View')}</td><td>clear army…</td><td>split / shared screen</td><td>split / shared screen</td></tr>
-    <tr><td>${btn('Start')}</td><td>menu (ready, map, quit)</td><td>pause menu (cinematic camera…)</td><td>menu</td></tr>
+    <tr><td>${btn('View')}</td><td>hold: clear army · building alone: tap to switch side</td><td>split / shared screen</td><td>split / shared screen</td></tr>
+    <tr><td>${btn('Start')}</td><td>menu (ready, random army, map, quit)</td><td>pause menu (camera, screen, HUD, time…)</td><td>menu</td></tr>
     </table>
     <p>Shared screen: either pad drives the camera. Split screen: each player has their own camera.<br>
     Keyboard: P1 WASD / arrows / Q E / Space R F Y / Z C / 1-4 / Tab / Enter, mouse right-drag look, click place, wheel unit.

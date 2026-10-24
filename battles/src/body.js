@@ -78,7 +78,7 @@ export function makeSkeleton(build = {}) {
     parts: ordered, joints, parentJoint, totalMass, scale: s,
     standHeight: pelvisY, height: headY + rHead, rHead, rChest,
     handOffset: fLen / 2, // hand is at local (0,-handOffset,0) of the forearm
-    radius: Math.max(rChest, 0.25 * s),
+    radius: build.radius ?? Math.max(rChest, 0.25 * s), // build.radius: footprint of big (pack) units
   };
 }
 
