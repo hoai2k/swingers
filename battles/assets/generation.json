@@ -578,6 +578,32 @@
       "round": 4,
       "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3ea358c9-106d-4fce-88a6-e47aa74cba10.png",
       "initialPrompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. One sheet with a colour-palette and mood board for each of the six new maps (castle, river, cove, volcano, canyon, graveyard): ground, path/paving, water (where the map has it), rock/stone, wood, trees, sky gradient and fog colour, plus a small sketch of each map's signature obstacle (wall with gate and towers, plank bridge, boardwalk and wreck, mesa and tar pit, ruined columns, tombstones and mausoleum). Same layout as `reference/maps.png`. Landscape 16:9 reference sheet, six clearly separated labelled panels, one per named map, each with palette swatches for the requested materials and a sketch of the signature obstacle. Include all six maps."
+    },
+    {
+      "file": "assets/ui/faction-custom.png",
+      "original": "assets/originals/ui/faction-custom.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e6f6cab7-6b9b-479c-811b-865ccc98f875.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game UI art. Bright toy-like comedic medieval fantasy. Chubby bean-shaped soldiers with stubby limbs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers or realistic anatomy. Clean flat colours with soft shading. Team cloth Blue #3d72e3 and Red #e2403b, gold #f2c230. Faction emblem for player-made units: a tailor's dummy (mannequin bust) in a bean-soldier shape with a measuring tape round its middle, and a sewing needle and little wrench crossed behind it. Warm orange #ffb84a and gold. Flat sticker style, bold dark outline, centered square silhouette filling middle 85%, clear margin. Must read at 28 pixels. No text. Genuinely transparent background. No real brands, people, TABS logo or watermark.",
+      "mode": "built-in",
+      "transparent": true,
+      "size": [
+        128,
+        128
+      ],
+      "round": 5
+    },
+    {
+      "file": "assets/ui/creator-empty.png",
+      "original": "assets/originals/ui/creator-empty.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a119b0c1-d974-4215-81cd-ba43f9b95baa.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game UI art. Bright toy-like comedic medieval fantasy. Chubby bean-shaped soldiers with stubby limbs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers or realistic anatomy. Clean flat colours with soft shading. Team cloth Blue #3d72e3 and Red #e2403b, gold #f2c230. A comedic workshop scene: a chubby bean-soldier tailor in an apron, a tape measure round its neck, stitching together a half-finished bean soldier on a workbench. Spare helmets, a sword, a bow and a feathered hat lie about, and bolts of blue and red cloth sit in a basket. Transparent around the whole scene, no background box or wall, no text. Landscape 8:5 composition for 640x400 delivery. Keep all objects fully in frame. Genuinely transparent background. No real brands, people, TABS logo or watermark.",
+      "mode": "built-in",
+      "transparent": true,
+      "size": [
+        640,
+        400
+      ],
+      "round": 5
     }
   ]
 }
