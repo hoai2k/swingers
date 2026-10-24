@@ -393,7 +393,9 @@ export class UI {
     const G = (b) => glyph(b, k);
     if (p.seat) {
       if (p.seat.kind === 'driver' && p.seat.vehicle) {
-        const boat = p.seat.vehicle.def?.boat;
+        const def = p.seat.vehicle.def || {}, boat = def.boat;
+        if (def.heli) return `${G('GAS')} Up ${G('BRAKE')} Down ${G('LS')} Fly ${G('Y')} Get out`;
+        if (def.siren) return `${G('GAS')} Gas ${G('BRAKE')} Brake ${G('HORN')} Siren ${G('Y')} Get out`;
         return `${G('GAS')} ${boat ? 'Throttle' : 'Gas'} ${G('BRAKE')} ${boat ? 'Reverse' : 'Brake'} ${G('HORN')} Horn ${G('Y')} Get out`;
       }
       return formatHint(p.seat.hint || 'Y Get up', k).replace(/exit/g, 'Get off');
@@ -402,7 +404,7 @@ export class UI {
     const s = g.nearestSeat(p);
     if (s) {
       const veh = s.vehicle;
-      const what = s.kind === 'driver' ? (veh?.def?.boat ? 'Drive boat' : 'Drive') : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
+      const what = s.kind === 'driver' ? (veh?.def?.heli ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
       return `${G('Y')} ${what}`;
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);

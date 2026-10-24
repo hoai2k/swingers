@@ -204,7 +204,7 @@ function mountainTop(game, kit) {
   }
   // quads at the foot of the mountain
   for (let i = 0; i < 3; i++) {
-    const qx = 30 + i * 4, qz = -190;
+    const qx = 30 + i * 4, qz = -176;
     game.vehicles.push(new Vehicle(game, 'quad', qx, heightAt(qx, qz) + 1, qz, Math.PI, [0xff5a5a, 0x55d85a, 0x3f8cff][i]));
   }
 }

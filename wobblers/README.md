@@ -41,7 +41,8 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Sprint | LB (or click LS) | Shift | Numpad . |
 | Colour / hat | D-pad left-right / up-down | 1 2 / 3 4 | Numpad / * and - |
 | Menu | Start | Esc | Numpad Enter |
-| Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
+| Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
+| Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
 
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
 players, ledges, bars) until you let go. Grab with both hands and jump to pull yourself
@@ -75,7 +76,8 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/sky.js` | sky dome, clouds, sun/moon lights and the 16-minute day/night cycle |
 | `src/look.js` | soft wrapped shading + rim light for all Lambert materials, night glow of windows/lamps |
 | `src/player.js` | the active ragdoll: hover spring, upright torques, joint drives, grabbing, punching, swimming, seats |
-| `src/vehicles.js` | ray-cast cars, karts, quads, bumper cars, boats |
+| `src/vehicles.js` | vehicles: ray-cast wheels + arcade handling assists (cars, police, sports, pickup, van, bus, fire truck, tractor, kart, quad, scooter, bumper car), boats, helicopter |
+| `src/world/garage.js` | placement of the bus, police, fire truck, sports cars, scooters, tractor, helipad |
 | `src/camera.js` | third-person orbit camera |
 | `src/input.js` | gamepads + two keyboard schemes |
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |

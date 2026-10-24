@@ -334,7 +334,7 @@ export class Audio {
 
   horn(pos, v, out) {
     const veh = pos ? this.vehicleNear(pos) : null;
-    const type = veh?.type || 'car';
+    const type = veh?.def?.horn || veh?.type || 'car';
     if (veh?.opts?.icecream) {
       // ice-cream van chimes
       [76, 79, 84, 83, 79, 81, 76].forEach((m, i) => {
@@ -344,7 +344,10 @@ export class Audio {
       return;
     }
     const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.connect(out);
-    if (type === 'kart' || type === 'quad') {
+    if (type === 'heli') {
+      lp.frequency.value = 2000;
+      this.tone('triangle', 1200, 1200, 0.1, 0.06 * v, 0, lp); this.tone('triangle', 1200, 1200, 0.1, 0.06 * v, 0.18, lp);
+    } else if (type === 'kart' || type === 'quad') {
       lp.frequency.value = 3000;
       for (const w of [0, 0.16]) { this.tone('square', 740, 720, 0.12, 0.07 * v, w, lp); }
     } else if (type === 'bumper') {
@@ -354,9 +357,9 @@ export class Audio {
       lp.frequency.value = 900;
       this.tone('sawtooth', 160, 155, 0.9, 0.12 * v, 0, lp, 0.05); this.tone('sawtooth', 240, 236, 0.9, 0.06 * v, 0, lp, 0.05);
     } else {
-      const deep = type === 'van' || type === 'pickup';
-      lp.frequency.value = 1800;
-      const a = deep ? 311 : 415, b = deep ? 392 : 523;
+      const deep = type === 'van' || type === 'pickup' || type === 'truck', huge = type === 'bus' || type === 'tractor';
+      lp.frequency.value = huge ? 1200 : 1800;
+      const a = huge ? 233 : deep ? 311 : type === 'sports' ? 466 : 415, b = huge ? 277 : deep ? 392 : type === 'sports' ? 622 : 523;
       this.tone('square', a, a, 0.32, 0.07 * v, 0, lp, 0.01); this.tone('square', b, b, 0.32, 0.055 * v, 0, lp, 0.01);
     }
   }
@@ -468,7 +471,7 @@ export class Audio {
       live.add(veh);
       let e = this.engines.get(veh);
       if (!e) { e = this.makeEngine(veh); this.engines.set(veh, e); }
-      const rpm = clamp(Math.abs(veh.speed || 0) / (veh.def.maxSpeed || 20), 0, 1.2);
+      const rpm = veh.type === 'heli' ? clamp(veh.rpm || 0, 0, 1.2) : clamp(Math.abs(veh.speed || 0) / (veh.def.maxSpeed || 20), 0, 1.2);
       const thr = Math.abs(veh.throttle || 0);
       const V = e.voice;
       const f = V.base + rpm * V.base * V.range + thr * V.base * 0.25;
@@ -498,7 +501,14 @@ export class Audio {
       quad: { w1: 'square', w2: 'sawtooth', base: 58, range: 2.6, ratio: 0.5, lp: 700, vol: 0.07, am: 14 },
       bumper: { w1: 'triangle', w2: 'sine', base: 180, range: 1.6, ratio: 0.333, lp: 1400, vol: 0.045, am: 0 },
       boat: { w1: 'sawtooth', w2: 'square', base: 38, range: 1.8, ratio: 0.5, lp: 420, vol: 0.09, am: 9 },
+      sports: { w1: 'sawtooth', w2: 'sawtooth', base: 48, range: 3.2, ratio: 0.5, lp: 600, vol: 0.09, am: 0 },
+      bus: { w1: 'sawtooth', w2: 'square', base: 26, range: 1.7, ratio: 0.5, lp: 260, vol: 0.11, am: 0 },
+      firetruck: { w1: 'sawtooth', w2: 'square', base: 28, range: 1.9, ratio: 0.5, lp: 280, vol: 0.11, am: 0 },
+      tractor: { w1: 'square', w2: 'sawtooth', base: 24, range: 1.6, ratio: 0.5, lp: 360, vol: 0.1, am: 11 },
+      scooter: { w1: 'square', w2: 'sawtooth', base: 90, range: 2.6, ratio: 1.01, lp: 1100, vol: 0.05, am: 22 },
+      heli: { w1: 'sawtooth', w2: 'triangle', base: 30, range: 0.6, ratio: 2.0, lp: 500, vol: 0.12, am: 13 },
     };
+    VOICES.police = VOICES.car;
     const V = VOICES[type] || VOICES.car;
     const o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
     o.type = V.w1; o2.type = V.w2; f.type = 'lowpass'; f.frequency.value = V.lp; f.Q.value = 2;
