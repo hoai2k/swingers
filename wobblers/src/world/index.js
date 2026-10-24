@@ -12,6 +12,7 @@ import { buildPark } from './park.js';
 import { buildStunts, buildSports } from './stunts.js';
 import { buildOutskirts } from './outskirts.js';
 import { scatterProps } from './props.js';
+import { buildGarage } from './garage.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -28,6 +29,7 @@ export function buildWorld(game) {
   buildSports(game, kit);
   buildOutskirts(game, kit);
   scatterProps(game, kit);
+  buildGarage(game, kit);
   kit.finish();
   animateWater(game, game.waterMats);
 }

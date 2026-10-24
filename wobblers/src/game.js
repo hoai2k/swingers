@@ -155,7 +155,7 @@ export class Game {
     }
     if (p.seat?.vehicle && p.seat.kind === 'driver') {
       p.seat.vehicle.control(inp);
-      if (pr.horn || (pr.punch && !inp.mouse)) this.audio.play('horn', p.pos());
+      if (pr.horn || (pr.punch && !inp.mouse)) p.seat.vehicle.honk();
     }
     if (p.seat?.control) p.seat.control(inp, pr);
     if (pr.dLeft) p.setColor(p.colorIndex - 1);
