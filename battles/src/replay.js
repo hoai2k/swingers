@@ -10,7 +10,7 @@ export const REC_HZ = 30;
 export class Recorder {
   constructor(battle) {
     this.units = battle.units.map((u) => ({ type: u.def.id, team: u.team }));
-    this.n = battle.units.length * NPARTS;
+    this.n = battle.units.reduce((s, u) => s + NPARTS + u.extras.length, 0);
     this.frames = [];
     this.events = [];
     this.next = 0;
@@ -26,8 +26,9 @@ export class Recorder {
     let k = 0;
     for (const u of b.units) {
       const r = u.rag;
-      for (let i = 0; i < NPARTS; i++) {
-        const p = r.pos[i], q = r.quat[i];
+      const ne = u.extras.length;
+      for (let i = 0; i < NPARTS + ne; i++) {
+        const p = i < NPARTS ? r.pos[i] : u.extras[i - NPARTS].pos, q = i < NPARTS ? r.quat[i] : u.extras[i - NPARTS].quat;
         bodies[k++] = Math.max(-32767, Math.min(32767, Math.round(p.x * 100)));
         bodies[k++] = Math.max(-32767, Math.min(32767, Math.round(p.y * 100)));
         bodies[k++] = Math.max(-32767, Math.min(32767, Math.round(p.z * 100)));
@@ -132,8 +133,9 @@ export class Player {
     let o = 0;
     for (let u = 0; u < visuals.length; u++) {
       const vis = visuals[u];
-      for (let i = 0; i < NPARTS; i++, o += 7) {
-        const g = vis.parts[i];
+      const ex = vis.extraParts || [];
+      for (let i = 0; i < NPARTS + ex.length; i++, o += 7) {
+        const g = i < NPARTS ? vis.parts[i] : ex[i - NPARTS].group;
         g.position.set(
           (A[o] + (B[o] - A[o]) * k) / 100,
           (A[o + 1] + (B[o + 1] - A[o + 1]) * k) / 100,

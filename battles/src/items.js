@@ -23,6 +23,10 @@ export const ITEMS = {
   bomb_hand: { len: 0.0, r: 0.0, grip: 90 },
 };
 
+import './packs/index.js';
+import { EXT } from './ext.js';
+Object.assign(ITEMS, EXT.items);
+
 export function gripDir(item, out) {
   const a = (item.grip * Math.PI) / 180;
   return out.set(0, -Math.sin(a), Math.cos(a));

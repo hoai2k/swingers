@@ -5,6 +5,7 @@
 import { THREE, clamp, lerp } from './util.js';
 import { PART, NPARTS, makeSkeleton, forwardKinematics } from './body.js';
 import { ITEMS, gripDir } from './items.js';
+import { EXT } from './ext.js';
 import { computePose, newPose } from './pose.js';
 
 export const TEAM_COLORS = ['#3d72e3', '#e2403b'];
@@ -457,6 +458,7 @@ export function buildItem(name, s, team) {
       mesh(sphere(0.03 * s, 6, 5), mat('#ffffff', { spec: 1 }), -0.05 * s, 0.06 * s, 0.19 * s, g);
       break;
     }
+    default: for (const f of EXT.buildItem) if (f(name, s, team, g, H)) break;
   }
   return g;
 }
@@ -700,6 +702,7 @@ function buildHat(kind, r, team, id) {
       mesh(sphere(r * 0.09, 6, 5), glow('#ffe14a'), 0, r * 2.07, -r * 1.25, g);
       break;
     }
+    default: for (const f of EXT.buildHat) if (f(kind, r, team, g, H)) break;
   }
   return g;
 }
@@ -964,6 +967,10 @@ export function buildUnitVisual(def, team, opts = {}) {
     sh.position.set(skel.parts[PART.farmL].r * 1.7, 0, 0);
     parts[PART.farmL].add(sh);
   }
+  // packs: extra meshes on parts, and extra bodies (vis.extraParts: {group, pos, quat})
+  const extraParts = [];
+  for (const f of EXT.decorate) f(def, team, { root, parts, items, skel, extraParts }, H);
+  for (const e of extraParts) root.add(e.group);
   // Merge each part's static meshes (and each held item) into one vertex-coloured mesh.
   if (!opts.noBake) {
     root.updateMatrixWorld(true);
@@ -971,6 +978,7 @@ export function buildUnitVisual(def, team, opts = {}) {
       for (const it of [...g.children]) if (items.includes(it)) bake(it, it);
       bake(g, g, (o) => o !== g.userData.face && !items.some((it) => isDesc(o, it)));
     }
+    for (const e of extraParts) bake(e.group, e.group);
   }
   if (opts.ghost) {
     const gm = ghostMaterial(opts.ghostColor || tcHex);
@@ -985,7 +993,7 @@ export function buildUnitVisual(def, team, opts = {}) {
     }
     root.userData.ghostMat = gm;
   }
-  const vis = { root, parts, items, skel, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id) };
+  const vis = { root, parts, items, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id) };
   if (!opts.ghost && !opts.portrait) LIVE_VIS.add(vis);
   return vis;
 }
@@ -1093,6 +1101,9 @@ export function disposeVisual(vis) {
 }
 
 // Expressions: see FACE_MATS. Normal and angry faces blink every few seconds.
+// Helpers handed to packs for building meshes.
+export const H = { THREE, mat, mesh, geo, sphere, capsule, cyl, box, cone, octa, metal, gold, wood, darkWood, leather, glow, TEAM_COLORS, TEAM_DARK };
+
 export function setExpression(vis, e) {
   if (!vis.face) { vis.expr = e; return; }
   let k = e;
@@ -1125,6 +1136,11 @@ export function poseVisual(vis, x, y, z, yaw, st) {
     g.position.copy(_pos[i]).applyQuaternion(_yq);
     g.position.x += x; g.position.y += y; g.position.z += z;
     g.quaternion.copy(_yq).multiply(_pose[i]);
+  }
+  for (const e of vis.extraParts || []) {
+    e.group.position.copy(e.pos).applyQuaternion(_yq);
+    e.group.position.x += x; e.group.position.y += y; e.group.position.z += z;
+    e.group.quaternion.copy(_yq).multiply(e.quat);
   }
 }
 

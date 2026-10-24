@@ -10,14 +10,17 @@
 //   bravery  0..1  below this fraction of hp the unit panics and runs for a while
 //   voice    pitch multiplier of its grunts; chatter = how often it talks
 //   cry      battle cry vowel set; idle = what it does while waiting
-export const FACTIONS = [
+import './packs/index.js';
+import { EXT } from './ext.js';
+
+const BASE_FACTIONS = [
   { id: 'tribal', name: 'Tribal', color: '#c98a4b' },
   { id: 'farmer', name: 'Farmer', color: '#8fbf4a' },
   { id: 'medieval', name: 'Medieval', color: '#7f9ad1' },
   { id: 'legacy', name: 'Legacy', color: '#c66bd1' },
 ];
 
-export const UNITS = [
+const BASE_UNITS = [
   // ---------------- Tribal
   {
     id: 'clubber', name: 'Clubber', faction: 'tribal', cost: 70, hp: 100, speed: 4.6,
@@ -173,5 +176,7 @@ export const UNITS = [
   },
 ];
 
+export const FACTIONS = [...BASE_FACTIONS, ...EXT.factions];
+export const UNITS = [...BASE_UNITS, ...EXT.units];
 export const UNIT_BY_ID = Object.fromEntries(UNITS.map((u) => [u.id, u]));
 export const unitsOfFaction = (f) => UNITS.filter((u) => u.faction === f);

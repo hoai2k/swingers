@@ -4,6 +4,8 @@
 import { THREE } from './util.js';
 import { mat } from './visual.js';
 import { PROJ_TYPES } from './battle.js';
+import { EXT } from './ext.js';
+import { H } from './visual.js';
 
 const G = {};
 const once = (k, f) => G[k] || (G[k] = f());
@@ -58,6 +60,7 @@ function build(type) {
       g.userData.flicker = [h, h2];
       break;
     }
+    default: for (const f of EXT.buildProj) if (f(type, g, H)) break;
   }
   return g;
 }

@@ -5,6 +5,8 @@ import { computePose, newPose, STYLE_ANIM } from './pose.js';
 import { Ragdoll } from './ragdoll.js';
 import { ITEMS, gripDir } from './items.js';
 import { FIELD } from './world.js';
+import { EXT } from './ext.js';
+import { RAPIER, GROUPS } from './physics.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -55,6 +57,8 @@ export class Unit {
     };
     computePose(this.st, this.pose);
     const gy = battle.terrain.height(x, z);
+    this.spawn = new THREE.Vector3(x, gy, z);
+    this.spawnYaw = yaw;
     this.rag = new Ragdoll(battle.world, this.skel, new THREE.Vector3(x, gy, z), yaw, this.pose);
     this.M = this.skel.totalMass;
     this.s = this.skel.scale;
@@ -84,6 +88,10 @@ export class Unit {
     this.kills = 0;
     this.damageDealt = 0;
 
+    // pack-defined behaviour for this weapon kind (src/ext.js), and extra rigid bodies
+    this.kind = EXT.kinds[def.weapon.kind] || null;
+    this.extras = [];
+
     // Weapon hit geometry, in forearm-local space.
     this.weapons = [];
     const w = def.weapon;
@@ -98,7 +106,7 @@ export class Unit {
       if (item === 'none') { a.set(0, 0, 0); b.copy(hand).multiplyScalar(1.4); }
       this.weapons.push({ part, a, b, r: Math.max(0.08, it.r * s), prevTip: new THREE.Vector3(), tipVel: new THREE.Vector3(), first: true });
     };
-    if (w.kind === 'melee' || w.kind === 'bard' || w.kind === 'heal') {
+    if (w.kind === 'melee' || w.kind === 'bard' || w.kind === 'heal' || this.kind?.melee) {
       if (w.style === 'dual') { addW(w.item, PART.farmL); addW(w.item2 || w.item, PART.farmR); }
       else if (w.style === 'fists') { addW('none', PART.farmL); addW('none', PART.farmR); }
       else addW(w.item || 'none', PART.farmR);
@@ -174,7 +182,9 @@ export class Unit {
     }
     this.st.mode = 'normal';
 
-    if (w.kind === 'melee') {
+    if (this.kind && this.kind.think) {
+      face = this.kind.think(this, dt, { t, dist, gap, dirx, dirz, spd }) || null;
+    } else if (w.kind === 'melee') {
       face = t;
       this.expr = gap < 6 ? EXPR.angry : EXPR.normal;
       const near = dist - t.skel.radius;
@@ -499,6 +509,7 @@ export class Unit {
     this.airT = airborne ? this.airT + dt : 0;
 
     this.think(dt);
+    if (this.kind?.step) this.kind.step(this, dt);
     if (this.airT > 0.25 || this.stun > 0.3) this.st.mode = 'flail';
 
     // talk
@@ -601,6 +612,7 @@ export class Unit {
   }
 
   attackEvents(t0, t1) {
+    if (this.kind?.event) return this.kind.event(this, t0, t1);
     const w = this.def.weapon;
     if (w.kind === 'ranged') {
       const at = w.releaseAt || 0.7;
@@ -667,8 +679,33 @@ export class Unit {
     }
   }
 
+  // ----------------------------------------------------------------- extra bodies
+  // Packs can give a unit extra rigid bodies (a horse, a catapult, a wing...). pos/quat
+  // are in the unit frame relative to its ground point at spawn; they must match the
+  // rest pose of the matching vis.extraParts entry so setup previews line up.
+  addExtraBody(bodyDesc, colliderDescs, pos, quat) {
+    const yq = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.spawnYaw);
+    const wp = pos.clone().applyQuaternion(yq).add(this.spawn);
+    const wq = yq.clone().multiply(quat);
+    bodyDesc.setTranslation(wp.x, wp.y, wp.z).setRotation({ x: wq.x, y: wq.y, z: wq.z, w: wq.w });
+    const body = this.battle.world.createRigidBody(bodyDesc);
+    for (const cd of [].concat(colliderDescs)) this.battle.world.createCollider(cd, body);
+    const e = { body, pos: wp.clone(), quat: wq.clone() };
+    this.extras.push(e);
+    return e;
+  }
+
+  readExtras() {
+    for (const e of this.extras) {
+      const t = e.body.translation(), r = e.body.rotation();
+      e.pos.set(t.x, t.y, t.z);
+      e.quat.set(r.x, r.y, r.z, r.w);
+    }
+  }
+
   // ----------------------------------------------------------------- damage
   hit(amount, part, ix, iy, iz, attacker, kind) {
+    if (this.kind?.hit && this.alive) amount = this.kind.hit(this, amount, part, attacker, kind);
     if (!this.alive) {
       this.rag.impulse(part, ix, iy, iz);
       return;
@@ -692,6 +729,7 @@ export class Unit {
 
   die(killer) {
     if (!this.alive) return;
+    this.kind?.die?.(this, killer);
     this.alive = false;
     this.hp = 0;
     this.expr = EXPR.dead;

@@ -954,6 +954,11 @@ export class Game {
         vis.parts[j].position.copy(r.pos[j]);
         vis.parts[j].quaternion.copy(r.quat[j]);
       }
+      const ex = vis.extraParts || [];
+      for (let j = 0; j < u.extras.length && j < ex.length; j++) {
+        ex[j].group.position.copy(u.extras[j].pos);
+        ex[j].group.quaternion.copy(u.extras[j].quat);
+      }
       setExpression(vis, u.expr);
       const w = u.def.weapon;
       if (w.kind === 'ranged' && w.style === 'throw') {

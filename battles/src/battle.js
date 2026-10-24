@@ -6,6 +6,7 @@ import { createWorld } from './physics.js';
 import { Unit, EXPR } from './unit.js';
 import { PART, NPARTS } from './body.js';
 import { UNIT_BY_ID } from './units.js';
+import { EXT } from './ext.js';
 
 export const PROJ = {
   arrow: { g: 9.81, len: 0.85, r: 0.05, stick: true, life: 8 },
@@ -15,6 +16,7 @@ export const PROJ = {
   bomb: { g: 9.81, len: 0.0, r: 0.16, explode: 'bomb', fuse: 0.6, life: 6 },
   fireball: { g: 2.5, len: 0.0, r: 0.3, explode: 'fire', life: 4 },
 };
+Object.assign(PROJ, EXT.proj);
 export const PROJ_TYPES = Object.keys(PROJ);
 
 class Grid {
@@ -69,6 +71,7 @@ export class Battle {
         if (!def) continue;
         const yaw = t === 0 ? Math.PI / 2 : -Math.PI / 2;
         const u = new Unit(this, def, t, a.x, a.z, yaw + rand(-0.05, 0.05));
+        u.kind?.init?.(u);
         this.units.push(u);
         this.teams[t].push(u);
       }
@@ -171,7 +174,9 @@ export class Battle {
     this.world.step();
     for (const u of this.units) {
       if (u.alive || !u.rag.bodies[0].isSleeping()) u.rag.read();
+      if (u.extras.length) u.readExtras();
     }
+    for (const f of EXT.battleStep) f(this, dt);
     if (!this.over) {
       const a0 = this.teams[0].some((u) => u.alive), a1 = this.teams[1].some((u) => u.alive);
       if (!a0 || !a1) {
@@ -301,6 +306,7 @@ export class Battle {
         _q.setFromEuler(new THREE.Euler(pr.spin.x * dt, pr.spin.y * dt, pr.spin.z * dt));
         pr.quat.multiply(_q);
       }
+      if (P.step) P.step(this, pr, dt);
       let dead = pr.life <= 0;
       // unit hits
       if (!dead) dead = this.projectileHits(pr, P);
@@ -313,7 +319,9 @@ export class Battle {
       if (!dead) {
         const gy = this.terrain.height(pr.pos.x, pr.pos.z);
         if (pr.pos.y - P.r * 0.5 < gy) {
-          if (P.stick) {
+          if (P.ground && P.ground(this, pr)) {
+            dead = true;
+          } else if (P.stick) {
             // bury the tip in the ground
             const tip = _a.copy(pr.vel).normalize();
             pr.pos.y = gy + 0.02 - tip.y * P.len * 0.25;
@@ -359,6 +367,13 @@ export class Battle {
     this.grid.query(pr.pos.x, pr.pos.z, reach + 2, (v) => {
       if (hit || !v.alive || pr.hits.has(v)) return;
       if (v.team === pr.team && !P.roll) return;
+      if (P.hit) {
+        // custom projectiles test the chest only and decide what happens
+        const c = v.chestPos;
+        const rr = v.skel.radius + P.r;
+        if (segSegDist2(pr.prev, pr.pos, c, c) < rr * rr) { pr.hits.add(v); hit = P.hit(this, pr, v, PART.chest); }
+        return;
+      }
       if (v.team === pr.team && P.roll && pr.owner === v) return;
       const rag = v.rag;
       // shield first
