@@ -189,6 +189,7 @@ export class FX {
     for (const r of this.rings) { r.life = 0; r.m.visible = false; }
     this.lightT = 0; this.light.intensity = 0;
     for (const v of LIVE_VIS) v._fx = null;
+    this.terrain.resetProps?.(); // smashed crates and fences stand again (src/mapscene.js)
   }
 
   // ---- particle spawners
@@ -238,6 +239,7 @@ export class FX {
         for (let i = 0; i < a * 2; i++) this.chunk(x, y + 0.1, z, rand(-2, 2), rand(1, 3), rand(-2, 2), rand(0.03, 0.06), rand(0.4, 0.8), Math.random() < 0.5 ? this.chunkCol : this.grassCol);
         break;
       case 'explode': this.explode(x, y, z, a, b); break;
+      case 'propbreak': this.terrain.breakProp?.(a, this); break; // a crate / fence smashed
       case 'heal':
         for (let i = 0; i < a; i++) {
           const plus = i % 2 === 0;

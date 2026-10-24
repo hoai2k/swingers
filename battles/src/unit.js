@@ -246,6 +246,8 @@ export class Unit {
       if (w.kind === 'bard' && !this.st.attack) this.st.mode = 'play';
     }
     this.separate(spd);
+    // map features (src/features.js): wade slowly through water, steer around walls
+    this.battle.terrain.steer?.(this);
     // unstick: wanting to move but going nowhere for a while -> sidestep
     const want = Math.hypot(this.desired.x, this.desired.z);
     const v0 = this.rag.vel[PART.pelvis];
