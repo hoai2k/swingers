@@ -275,9 +275,9 @@ export class Game {
     if (!c1) return;
     const o1 = this.physics.handleOwner.get(h1), o2 = this.physics.handleOwner.get(h2);
     for (const [a, b] of [[o1, o2], [o2, o1]]) {
-      if (a instanceof Player && b instanceof Vehicle && m > 2500 && a.state !== 'seated') {
-        const v = b.body.linvel();
-        if (Math.hypot(v.x, v.z) > 3.5) { a.knockOut(2.5); a.impactGrace = 0.5; }
+      if (a instanceof Player && b instanceof Vehicle && m > 1500 && a.state !== 'seated') {
+        // speed before this step: the hit itself may already have slowed the car
+        if (Math.abs(b.speed) > 3.5) { a.knockOut(2.5); a.impactGrace = 0.5; }
       }
     }
     const t = c1.translation();

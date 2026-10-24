@@ -3,7 +3,7 @@
 // here. Faces are extra head textures swapped in while the player shows its
 // normal face (the knocked-out face still comes from mesh.js).
 import * as THREE from 'three';
-import { faceMaterials } from './mesh.js';
+import { headMaterials } from './player.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { devicePrefs, saveSettings } from './settings.js';
 
@@ -107,9 +107,9 @@ function drawFace(kind) {
 
 const faceCache = new Map();
 export function faceMaterial(i) {
-  if (!i) return faceMaterials().normal;
+  if (!i) return headMaterials().normal;
   let m = faceCache.get(i);
-  if (!m) { m = new THREE.MeshLambertMaterial({ map: drawFace(FACES[i]) }); faceCache.set(i, m); }
+  if (!m) { m = new THREE.MeshPhongMaterial({ map: drawFace(FACES[i]), shininess: 24, specular: 0x2a2a2a }); faceCache.set(i, m); }
   return m;
 }
 
@@ -117,14 +117,14 @@ export function faceMaterial(i) {
 export function syncFace(p) {
   const hm = p.headMesh;
   if (!hm) return;
-  const want = faceMaterial(p.face || 0), normal = faceMaterials().normal;
+  const want = faceMaterial(p.face || 0), normal = headMaterials().normal;
   if (hm.material === normal && want !== normal) hm.material = want;
 }
 
 export function setFace(p, i) {
   p.face = (i + FACES.length) % FACES.length;
   const hm = p.headMesh;
-  if (hm && hm.material !== faceMaterials().ko) hm.material = faceMaterial(p.face);
+  if (hm && hm.material !== headMaterials().ko) hm.material = faceMaterial(p.face);
 }
 
 export function setPants(p, i) {
