@@ -2,6 +2,7 @@
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { padLabel } from './input.js';
+import { hasAsset } from './assets.js';
 
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -21,9 +22,16 @@ const tc = (t) => TEAM_COLORS[t];
 const ftime = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
 
 // One-line weapon summary for the unit info panel.
+// pale faction colours need dark tab text
+function light(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 190;
+}
+
 export function weaponLine(def) {
   const w = def.weapon || {};
   const k = w.kind;
+  if (w.line) return w.line; // packs describe their own weapons
   if (k === 'ranged') {
     const p = { arrow: 'arrows', spear: 'spears', hay: 'hay bales', potion: 'potions', bomb: 'bombs', fireball: 'fireballs' }[w.proj] || w.proj;
     return `Ranged · throws ${p}${w.blast ? ' (splash)' : ''} · range ${Math.round(w.range || 0)} m`;
@@ -34,6 +42,7 @@ export function weaponLine(def) {
   if (w.sweep) bits.push('hits everyone in the swing');
   if (w.blockMelee) bits.push(`blocks ${Math.round(w.blockMelee * 100)}% of melee`);
   if (w.style === 'dual') bits.push('two weapons');
+  if (k !== 'melee') return w.proj ? `Ranged · range ${Math.round(w.range || 0)} m` : 'Special';
   bits.push(`reach ${(+w.reach || 0).toFixed(1)} m`);
   return bits.join(' · ');
 }
@@ -70,12 +79,11 @@ export class UI {
     const words = ['WOBBLY', 'BATTLES'];
     logo.innerHTML = words.map((w, i) => `<span class="lw lw${i}">${w.split('').map((c, j) => `<i style="--d:${(i * 7 + j) * 0.06}s">${c}</i>`).join('')}</span>`).join('');
     L.appendChild(logo);
-    // a generated logo (see image-requests.md) replaces the text logo once it exists
-    const img = new Image();
-    img.className = 'logoimg';
-    img.alt = 'Wobbly Battles';
-    img.onload = () => { logo.replaceChildren(img); logo.classList.add('hasimg'); };
-    img.src = 'assets/ui/logo.png';
+    // the generated logo (see image-requests.md) replaces the text logo once delivered
+    if (hasAsset('assets/ui/logo.png')) {
+      logo.innerHTML = '<img class="logoimg" src="assets/ui/logo.png" alt="Wobbly Battles">';
+      logo.classList.add('hasimg');
+    }
     const sub = el('div', 'subtitle', '2 player local battles &middot; build armies at the same time');
     L.appendChild(sub);
     this.menuHead = el('div', 'menuhead');
@@ -248,7 +256,9 @@ export class UI {
       s.faction = fkey;
       s.unit = -1;
       s.budgetKey = '';
-      this.setText(s.tabs, facs.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}" style="--fc:${f.color}"><img class="ficon" src="assets/ui/faction-${f.id}.png" alt="" onerror="this.remove()">${f.name}</span>`).join(''));
+      this.setText(s.tabs, facs.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}${light(f.color) ? ' light' : ''}" style="--fc:${f.color}">${hasAsset(`assets/ui/faction-${f.id}.png`) ? `<img class="ficon" src="assets/ui/faction-${f.id}.png" alt="">` : ''}${f.name}</span>`).join(''));
+      const on = s.tabs.children[d.faction];
+      if (on) s.tabs.scrollLeft = on.offsetLeft - s.tabs.offsetLeft - (s.tabs.clientWidth - on.offsetWidth) / 2;
       const list = unitsOfFaction(facs[d.faction].id);
       s.cards.innerHTML = list.map((u) => `<div class="card" data-id="${u.id}">
         <img src="${this.portraits[u.id + ':' + t] || ''}" alt=""><div class="cn">${u.name}</div><div class="cc"><span class="coin"></span>${u.cost}</div></div>`).join('');

@@ -93,7 +93,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .brush { position: absolute; right: 10px; top: 6px; background: #3a3f47; color: #fff; border-radius: 9px; padding: 2px 8px; font-weight: 900; font-size: 13px; white-space: nowrap; }
 .brush:empty { display: none; }
 .unitbar { position: absolute; left: 10px; right: 10px; bottom: 50px; background: rgba(255,248,234,0.92); border-radius: 14px; padding: 6px 8px 8px; box-shadow: 0 5px 0 rgba(0,0,0,0.3); color: var(--ink); }
-.tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 6px; overflow: hidden; margin-right: 150px; scroll-behavior: smooth; }
+.tab { flex: 0 0 auto; white-space: nowrap; }
 .tab { font-family: var(--font); font-size: 16px; padding: 3px 10px 0; border-radius: 8px; background: #e2d8c2; color: #6a5d48; }
 .tab.on { background: var(--fc); color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.25); }
 .cards { display: flex; gap: 6px; overflow: hidden; padding-top: 6px; margin-top: -6px; }
@@ -275,3 +276,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
   .rhint { display: none; } /* the bottom hint line already says it */
   .layer-result { padding-top: 8vh; }
 }
+.tab.on.light { color: #3a2f1c; }

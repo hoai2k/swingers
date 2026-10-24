@@ -70,7 +70,7 @@ const units = [
   {
     id: 'sp_skeleton', name: 'Skeleton', faction: 'spooky', cost: 40, hp: 45, speed: 4.7,
     build: { scale: 0.97, girth: 0.78, head: 1.05, mass: 0.7 },
-    weapon: { kind: 'melee', style: 'sword', anim: 'overhead', item: 'sp_rusty_sword', damage: 19, reach: 1.25, cooldown: 1.0, force: 160 },
+    weapon: { line: 'Melee · cheap, falls apart', kind: 'melee', style: 'sword', anim: 'overhead', item: 'sp_rusty_sword', damage: 19, reach: 1.25, cooldown: 1.0, force: 160 },
     look: { skin: BONE, hat: 'sp_skull', top: 'sp_ribs', legs: BONE },
     personality: { aggro: 1, bravery: 0, voice: 1.4, chatter: 0.6, cry: 'cackle', idle: 'shake' },
     fallApart: true,
@@ -79,7 +79,7 @@ const units = [
   {
     id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 70, hp: 40, speed: 4.5,
     build: { scale: 0.95, girth: 0.78, head: 1.05, mass: 0.7 },
-    weapon: { kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.2, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
+    weapon: { line: 'Ranged · cheap bony archer', kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.2, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
     look: { skin: BONE, hat: 'sp_skull_hood', top: 'sp_ribs', legs: BONE, quiver: true },
     personality: { aggro: 0.35, bravery: 0, voice: 1.5, chatter: 0.5, cry: 'cackle', idle: 'shake' },
     fallApart: true,
@@ -88,7 +88,7 @@ const units = [
   {
     id: 'sp_candlehead', name: 'Candlehead', faction: 'spooky', cost: 200, hp: 80, speed: 4.2,
     build: { scale: 0.95, girth: 1.0, head: 1.0 },
-    weapon: { kind: 'sp_candle', style: 'staff', anim: 'cast', item: 'none', damage: 28, speed: 16, range: 26, minRange: 6, cooldown: 2.2, force: 260, blast: 1.8, spread: 0.06, releaseAt: 0.6, windup: 0.9, burn: 6, burnTime: 3.5 },
+    weapon: { line: 'Magic · flaming wisps that set enemies alight', kind: 'sp_candle', style: 'staff', anim: 'cast', item: 'none', damage: 28, speed: 16, range: 26, minRange: 6, cooldown: 2.2, force: 260, blast: 1.8, spread: 0.06, releaseAt: 0.6, windup: 0.9, burn: 6, burnTime: 3.5 },
     look: { skin: '#e8d8b8', hat: 'sp_candle', top: 'sp_robe', legs: '#2a2630' },
     personality: { aggro: 0.35, bravery: 0.3, voice: 1.3, chatter: 0.7, cry: 'magic', idle: 'float' },
     desc: 'Flings flaming wisps that set enemies alight.',
@@ -96,7 +96,7 @@ const units = [
   {
     id: 'sp_vampire', name: 'Vampire', faction: 'spooky', cost: 340, hp: 340, speed: 6.0,
     build: { scale: 1.08, girth: 0.92, arms: 1.1 },
-    weapon: { kind: 'sp_vampire', style: 'dual', anim: 'dual', item: 'sp_claw', item2: 'sp_claw', damage: 36, reach: 1.2, cooldown: 0.6, force: 200, drain: 0.6 },
+    weapon: { line: 'Melee · heals from the damage it deals', kind: 'sp_vampire', style: 'dual', anim: 'dual', item: 'sp_claw', item2: 'sp_claw', damage: 36, reach: 1.2, cooldown: 0.6, force: 200, drain: 0.6 },
     look: { skin: '#e4dce6', hat: 'sp_vampire', top: 'sp_vampire', legs: '#1d1a20', cape: true },
     personality: { aggro: 1, bravery: 0, voice: 0.8, chatter: 0.7, cry: 'magic', idle: 'regal' },
     stagger: 0.6,
@@ -105,7 +105,7 @@ const units = [
   {
     id: 'sp_reaper', name: 'Reaper', faction: 'spooky', cost: 2000, hp: 650, speed: 3.4,
     build: { scale: 1.35, girth: 0.95, head: 1.0, mass: 1.3 },
-    weapon: { kind: 'melee', style: 'twohand', anim: 'slam', item: 'sp_scythe', damage: 3000, reach: 2.4, cooldown: 2.9, force: 520, sweep: true },
+    weapon: { line: 'Melee · scythe sweep kills almost anything', kind: 'melee', style: 'twohand', anim: 'slam', item: 'sp_scythe', damage: 3000, reach: 2.4, cooldown: 2.9, force: 520, sweep: true },
     look: { skin: BONE, hat: 'sp_reaper', top: 'sp_reaper', legs: '#141216' },
     personality: { aggro: 0.8, bravery: 0, voice: 0.5, chatter: 0.3, cry: 'magic', idle: 'float' },
     armor: 0.1, stagger: 0.3,

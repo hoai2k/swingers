@@ -2,8 +2,14 @@
 
 Images the game can use, plus reference art. Drop each finished file at the path given
 (relative to `battles/`). Everything in the game currently has a drawn or procedural
-fallback, so nothing breaks while an image is missing. Items marked **wired** are
-picked up automatically as soon as the file exists.
+fallback, so nothing breaks while an image is missing. Items marked **wired** are used
+as soon as the file is listed in `assets/manifest.json` (I add it when the image
+arrives; the game preloads only what the manifest lists, so missing files never cause
+broken images or 404s).
+
+**Status (round 2):** nothing delivered yet. Round 2 adds emblems for the five new
+factions (items 20–24) and reference sheets for the new factions and the siege,
+mount and flying units (items 25–30).
 
 ## Shared style
 
@@ -25,6 +31,11 @@ the TABS logo.
 | 4 | `assets/ui/faction-farmer.png` | 128×128, transparent PNG | **wired** | Faction emblem: pitchfork stuck in a hay bale. |
 | 5 | `assets/ui/faction-medieval.png` | 128×128, transparent PNG | **wired** | Faction emblem: heater shield with a crown on it, crossed with a sword. |
 | 6 | `assets/ui/faction-legacy.png` | 128×128, transparent PNG | **wired** | Faction emblem: a lit cartoon bomb with a wizard hat on it. |
+| 20 | `assets/ui/faction-viking.png` | 128×128, transparent PNG | **wired** | Faction emblem: horned helmet over a round wooden shield, icy-blue accents (#5ec8e0). |
+| 21 | `assets/ui/faction-ancient.png` | 128×128, transparent PNG | **wired** | Faction emblem: crested Greek hoplite helmet in front of a laurel wreath, marble/cream and bronze (#f2e4b8). |
+| 22 | `assets/ui/faction-dynasty.png` | 128×128, transparent PNG | **wired** | Faction emblem: a katana crossed with a lit firework rocket, red and gold (#e2556b). |
+| 23 | `assets/ui/faction-wildwest.png` | 128×128, transparent PNG | **wired** | Faction emblem: cowboy hat on a revolver with a stick of dynamite, sandy gold (#e8b84a). |
+| 24 | `assets/ui/faction-spooky.png` | 128×128, transparent PNG | **wired** | Faction emblem: a grinning cartoon skull with a lit candle on top, cool grey (#8c95a8). Comedic, not scary. |
 | 7 | `assets/ui/map-grass.png` | 640×360 PNG/JPG | not wired yet | Map preview card, "Simulation Grassland": rolling green hills, low-poly round trees, flowers, blue sky, empty battlefield in the middle. |
 | 8 | `assets/ui/map-desert.png` | 640×360 | not wired yet | Map preview, "Dusty Dunes": sandy dunes, cacti, sandstone rocks, warm sky. |
 | 9 | `assets/ui/map-winter.png` | 640×360 | not wired yet | Map preview, "Frozen Pass": snowy field, snow-capped pines, light snowfall. |
@@ -48,7 +59,13 @@ background, with its weapon.
 | 17 | `reference/medieval.png` | Bard (feathered cap, lute), Squire (round shield and sword, metal cap), Archer (green hood, longbow, quiver), Healer (white nun's robe with red cross), Knight (full plate, bucket helm with plume, greatsword), King (crown, beard, cape, enormous sword). |
 | 18 | `reference/legacy.png` | Berserker (bare-chested, horned helmet, orange beard, two axes), Bomber (goggles, apron, holding a lit bomb), Wizard (tall blue hat, white beard, staff with a glowing orb), Giant (green-skinned ogre, 2.3× height, loincloth, bare fists). |
 | 19 | `reference/maps.png` | One colour-palette and mood board per map (grass, desert, winter, autumn): ground, trees, rocks, sky gradient and fog colour. |
+| 25 | `reference/viking.png` | Brawler (hammer, wooden shield), Headbutter (huge horned helmet, mid-headbutt), Ice Archer (fur hood, frosty bow, ice arrows), Jarl (big beard, cape, axe, leaping), Valkyrie (winged helmet, feathered wings, sword, flying). |
+| 26 | `reference/ancient.png` | Hoplite (crested helmet, round bronze shield, spear), Sarissa (very long pike), Snake Archer (snake-scale hood, green poison arrows), Minotaur (bull head, horns, charging), Zeus (toga, huge white beard, floating, lightning in hand). |
+| 27 | `reference/dynasty.png` | Monk (orange robe, bald, palm strike), Samurai (lacquered armour, katana in parry stance), Firework Archer (bow with a rocket arrow), Hwacha (soldier carrying a rack of 16 rockets on his back). |
+| 28 | `reference/wildwest.png` | Cactus (a living cactus with a cartoon face and cowboy hat), Gunslinger (cowboy hat, poncho, revolver with smoke), Blunderbuss (flared shotgun), Lasso (spinning rope), Dynamite (miner with lit sticks). |
+| 29 | `reference/spooky.png` | Skeleton and Skeleton Archer (goofy bones, one falling apart), Candlehead (head is a lit candle), Vampire (cape with high collar, fangs), Reaper (hooded black robe, giant scythe, skull face). Comedic, not scary. |
+| 30 | `reference/siege-mounts.png` | Cavalry knight on a chunky toy horse with a couched lance; a woolly Mammoth with tusks, a rider and a drummer on top; a wooden Catapult cart with its crewman; a Ballista bolt-thrower; show the same bean-soldier proportions as the rest. |
 
-When you add images, tell me which ones arrived. I'll wire up the "not wired yet"
+When you add images, put them at these paths and tell me which ones arrived. I'll wire up the "not wired yet"
 ones (map select previews, loading screen, victory banners) and tune the models
 against the reference sheets.
