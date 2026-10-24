@@ -5,6 +5,8 @@ import { Input } from './input.js';
 import { Audio } from './audio.js';
 import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
+import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
+import { Creator } from './creator.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
 import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
@@ -117,6 +119,7 @@ export class Game {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'battle') this.openPause();
     });
+    this.creator = new Creator(this);
     window.__battles = window.__tabs = this;
   }
 
@@ -125,7 +128,10 @@ export class Game {
     await initPhysics();
     progress?.('Painting the soldiers…');
     await new Promise((r) => setTimeout(r, 20));
+    // custom units (Unit Creator): register the saved ones before anything reads the roster
+    try { loadRecipes(); syncCustomUnits(); } catch (e) { console.warn('custom units skipped', e); }
     this.ui.portraits = renderPortraits(UNITS, 112);
+    this.customSig = this.customSigs();
     this.ui.buildTitle();
     this.ui.buildSetup();
     this.ui.buildBattle();
@@ -310,6 +316,7 @@ export class Game {
       case 'battle': case 'result': this.updateBattle(dt); break;
       case 'replay': this.updateReplay(dt); break;
       case 'paused': this.updatePause(dt); break;
+      case 'creator': this.creator.update(dt); break;
     }
     // slow motion slows the sound too (pitch of new sounds, a muffling low-pass)
     const ts = this.state === 'battle' || this.state === 'result' ? this.timeScale
@@ -348,7 +355,7 @@ export class Game {
 
   views() {
     if (this.state === 'setup') return this.solo ? [0] : [0, 1];
-    if (this.state === 'title' || this.state === 'levels') return [0];
+    if (this.state === 'title' || this.state === 'levels' || this.state === 'creator') return [0];
     return this.split ? [0, 1] : [0];
   }
 
@@ -397,6 +404,40 @@ export class Game {
   blindNow() { return this.state === 'setup' && this.mode === 'versus' && this.settings.blind && !(this.countdown > 0); }
 
   showAllSetupVis() { for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) v.root.visible = true; }
+
+  // ---------------------------------------------------------------- custom units
+  customSigs() {
+    const o = {};
+    for (const d of unitsOfFaction(CUSTOM_FACTION.id)) o[d.id] = JSON.stringify(d);
+    return o;
+  }
+
+  // The Unit Creator saved or deleted units: re-register them and refresh everything
+  // that caches a unit definition (portraits, skeletons, placement ghosts, placed units).
+  customChanged() {
+    syncCustomUnits();
+    const sig = this.customSigs(), old = this.customSig || {};
+    const changed = Object.keys(sig).filter((id) => sig[id] !== old[id]);
+    const gone = Object.keys(old).filter((id) => !sig[id]);
+    this.customSig = sig;
+    const touched = new Set([...changed, ...gone]);
+    if (!touched.size) return;
+    if (changed.length) Object.assign(this.ui.portraits, renderPortraits(changed.map((id) => UNIT_BY_ID[id]), 112));
+    for (const id of touched) SKEL_CACHE.delete(id);
+    for (const p of this.ps) { for (const g of p.ghosts) disposeVisual(g); p.ghosts = []; p.ghostId = null; p.undo = []; }
+    for (let t = 0; t < 2; t++) {
+      // deleted units leave the armies; edited ones are rebuilt with their new look
+      this.armies[t] = this.armies[t].filter((a) => UNIT_BY_ID[a.type]);
+      for (const v of this.setupVis[t].filter((v) => touched.has(v.entry.type))) disposeVisual(v);
+      this.setupVis[t] = this.setupVis[t].filter((v) => !touched.has(v.entry.type));
+      for (const a of this.armies[t]) if (changed.includes(a.type)) {
+        const v = this.addSetupVis(t, a);
+        if (this.state === 'creator') { v.root.visible = false; this.creator.hidden.push(v); }
+      }
+    }
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.save();
+  }
 
   // ---------------------------------------------------------------- title
   goTitle(sel = 0) {
@@ -486,6 +527,7 @@ export class Game {
       { label: 'VERSUS', note: '2 players · build at the same time', key: 'versus' },
       { label: 'CAMPAIGN', note: `1 player or 2-player co-op · ★ ${stars} / ${LEVELS.length * 3}`, key: 'campaign' },
       { label: 'SANDBOX', note: '1 player builds both armies', key: 'sandbox' },
+      { label: 'UNIT CREATOR', note: 'design your own units for every mode but the campaign', key: 'creator' },
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
     ];
@@ -557,8 +599,12 @@ export class Game {
       this.audio.play('click');
       return;
     }
-    const PAGES = ['versus', 'campaign', 'sandbox', 'options'];
-    const back = () => { this.titleSel = Math.max(0, PAGES.indexOf(this.titlePage)); this.titlePage = 'main'; this.audio.play('click'); };
+    const back = () => {
+      const page = this.titlePage;
+      this.titlePage = 'main';
+      this.titleSel = Math.max(0, this.titleItems().findIndex((i) => i.key === page));
+      this.audio.play('click');
+    };
     let items = this.titleItems();
     for (let p = 0; p < 2; p++) {
       if (I.nav(p, 'down')) { this.titleSel = (this.titleSel + 1) % items.length; this.audio.play('click', null, 0.5); }
@@ -572,6 +618,7 @@ export class Game {
       if (I.pressed(p, 'a')) {
         if (it.key === 'go') { this.startMode(this.titlePage); return; }
         if (it.key === 'campaign') { this.goLevels(); return; }
+        if (it.key === 'creator') { this.creator.open(); return; }
         if (it.key === 'versus' || it.key === 'sandbox' || it.key === 'options') { this.titlePage = it.key; this.titleSel = 0; this.audio.play('click'); }
         else if (it.key === 'back') back();
         else if (it.key === 'help') { this.helpOn = true; this.ui.setHelp(true); }
