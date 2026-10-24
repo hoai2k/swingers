@@ -146,7 +146,7 @@ export class Player {
   partMesh(p) {
     const b = new Builder();
     const shirt = this.color;
-    const pants = new THREE.Color(this.color).multiplyScalar(0.55).getHex();
+    const pants = this.pantsColor ?? new THREE.Color(this.color).multiplyScalar(0.55).getHex(); // pantsColor: customiser (cosmetics.js)
     const skin = 0xffd9b8;
     const shoe = 0x3a3340;
     let mat = matVC;

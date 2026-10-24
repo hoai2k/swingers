@@ -29,6 +29,10 @@ export class Input {
     this.devices = new Map(); // id -> {state, prev}
     this.canvas = canvas;
     this.mock = null; // tests: { id: partialState }
+    // UI capture: a captured device reports blank state/pressed to the game
+    // while menus read its real input from `raw` / `rawPressed`.
+    this.captured = new Set();
+    this.prefs = null; // (id) => { invertY, sens } camera preferences
     addEventListener('keydown', (e) => {
       this.keys.add(e.code);
       this.taps.add(e.code);
@@ -45,11 +49,20 @@ export class Input {
   }
 
   lockMouse() {
-    if (document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock?.();
+    if (document.pointerLockElement === this.canvas) return;
+    try {
+      const r = this.canvas.requestPointerLock?.();
+      if (r && r.catch) r.catch(() => {});
+    } catch (e) { /* needs a user gesture; the canvas click retries */ }
   }
 
   // A key counts as held if it is down now or was tapped since the last poll.
   held() { const k = this.keys, t = this.pollTaps; return { has: (c) => k.has(c) || t.has(c) }; }
+  // A key that went down since the last poll.
+  tapped(code) { return this.pollTaps.has(code); }
+  capture(id, on) {
+    if (on) this.captured.add(id); else this.captured.delete(id);
+  }
 
   kb1() {
     const k = this.held(), s = blank();
@@ -123,11 +136,21 @@ export class Input {
     const set = (id, s) => {
       seen.add(id);
       let d = this.devices.get(id);
-      if (!d) { d = { state: blank(), prev: blank(), pressed: {} }; this.devices.set(id, d); }
-      d.prev = d.state; d.state = s;
-      for (const b of BUTTONS.concat(['horn'])) d.pressed[b] = !!s[b] && !d.prev[b];
-      d.pressed.grabL = s.grabL > 0.5 && !(d.prev.grabL > 0.5);
-      d.pressed.grabR = s.grabR > 0.5 && !(d.prev.grabR > 0.5);
+      if (!d) { d = { state: blank(), prev: blank(), pressed: {}, raw: blank() }; this.devices.set(id, d); }
+      const pf = this.prefs ? this.prefs(id) : null;
+      if (pf) {
+        s.lookX *= pf.sens;
+        s.lookY *= pf.sens * (pf.invertY ? -1 : 1);
+      }
+      const prev = d.raw || blank();
+      const pr = {};
+      for (const b of BUTTONS.concat(['horn'])) pr[b] = !!s[b] && !prev[b];
+      pr.grabL = s.grabL > 0.5 && !(prev.grabL > 0.5);
+      pr.grabR = s.grabR > 0.5 && !(prev.grabR > 0.5);
+      d.raw = s; d.rawPressed = pr;
+      d.prev = d.state;
+      if (this.captured.has(id)) { d.state = Object.assign(blank(), { gas: 0, brake: 0, steer: 0, mouse: s.mouse }); d.pressed = {}; }
+      else { d.state = s; d.pressed = pr; }
     };
     for (const gp of pads) {
       if (!gp || !gp.connected) continue;
@@ -143,6 +166,7 @@ export class Input {
   }
 
   get(id) { return this.devices.get(id); }
+  kind(id) { return id === 'kb1' ? 'kb1' : id === 'kb2' ? 'kb2' : 'pad'; }
   // Device ids that pressed "join" this frame.
   joinPresses() {
     const out = [];

@@ -17,7 +17,16 @@ cd wobblers && python3 -m http.server 8123   # then open http://localhost:8123
 ```
 
 Press **A** on a controller (or **Enter** / **Space** on the keyboard) to join. More players
-join the same way at any time; the screen splits 2 / 4 / 6 / 8 ways.
+join the same way at any time; the screen splits 2 / 4 / 6 / 8 ways. Each new player first
+gets a customiser in their own view (colour, hat, face, trousers; **X** for a random look);
+the look is remembered per controller / keyboard. **Y** (or **E** / **F1**) on the title
+opens the controls overlay.
+
+**Start** / **Esc** opens that player's own menu (resume, customise, respawn, settings,
+controls, reset vehicles, leave). With one player it pauses the game; in split screen it
+only covers that player's view. Settings (music and sound volume, shadows, resolution, and
+per-player invert-Y and camera sensitivity) are saved in `localStorage`. Menus work with the
+stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or the mouse.
 
 ## Controls
 
@@ -70,4 +79,7 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
 | `src/terrain.js` | island height function, terrain mesh + collider |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
-| `src/ui.js`, `src/audio.js` | HUD/menus, synthesized sound |
+| `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
+| `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
+| `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks; persistent settings |
+| `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |

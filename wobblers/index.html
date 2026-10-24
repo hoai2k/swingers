@@ -17,22 +17,25 @@
 <canvas id="view"></canvas>
 <div id="hud"></div>
 <div id="title" class="screen">
-  <div class="logo"><span>W</span><span>o</span><span>b</span><span>b</span><span>l</span><span>e</span><span>r</span><span>s</span></div>
-  <div id="loading">Loading… <b id="loadpct">0%</b></div>
-  <div id="press" class="hidden">Press <kbd>A</kbd> on a controller or <kbd>Enter</kbd> to join</div>
-  <div class="controls">
-    <div><h3>Xbox controller</h3>
-      <p><b>LS</b> move · <b>RS</b> camera · <b>A</b> jump · <b>B</b> ragdoll · <b>X</b> punch · <b>Y</b> enter / exit seat</p>
-      <p><b>LT / RT</b> raise &amp; grab left / right hand · <b>LB</b> sprint · <b>D-pad</b> colour / hat · <b>Start</b> menu</p>
-      <p>Driving: <b>RT</b> gas · <b>LT</b> brake / reverse · <b>A</b> handbrake · <b>X</b> horn</p></div>
-    <div><h3>Keyboard 1</h3>
-      <p><b>WASD</b> move · <b>mouse</b> camera · <b>Space</b> jump · <b>R</b> ragdoll · <b>F</b> punch · <b>E</b> enter / exit</p>
-      <p><b>Left / right mouse</b> grab · <b>Shift</b> sprint · <b>Esc</b> menu</p></div>
-    <div><h3>Keyboard 2</h3>
-      <p><b>Arrows</b> move · <b>Numpad 4/6/8/5</b> camera · <b>Numpad 0</b> jump · <b>Numpad 1/3</b> grab · <b>Numpad 2</b> punch · <b>Numpad 7</b> ragdoll · <b>Numpad 9</b> enter · join with <b>Numpad Enter</b></p></div>
+  <div class="sun"></div>
+  <div class="clouds"><i></i><i></i><i></i></div>
+  <div class="logowrap">
+    <div class="logo"><span>W</span><span>o</span><span>b</span><span>b</span><span>l</span><span>e</span><span>r</span><span>s</span></div>
+    <div class="tagline">A wobbly island sandbox for 1 to 8 players</div>
+  </div>
+  <div id="crowd"></div>
+  <div class="tbottom">
+    <div id="loading"><div class="lbar"><i id="loadbar"></i></div><span>Loading the island… <b id="loadpct">0%</b></span></div>
+    <div id="press" class="hidden">
+      <div class="bigprompt"><span class="btn bA">A</span> Press to join</div>
+      <div class="sub">Keyboard: <span class="key">Enter</span> or <span class="key">Space</span> · second keyboard: <span class="key">NumEnter</span></div>
+      <div class="sub"><span class="btn bY">Y</span> or <span class="key">E</span> / <span class="key">F1</span> Controls</div>
+    </div>
+    <div id="devices"></div>
   </div>
 </div>
-<div id="menu" class="screen hidden"></div>
+<div id="help" class="screen hidden"></div>
+<div id="toasts"></div>
 <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,40 @@
+// Button prompts: Xbox-style glyphs for pads (A green, B red, X blue,
+// Y yellow circles, pill-shaped triggers and bumpers) and key caps for the
+// two keyboard schemes.
+
+const KEYS = {
+  kb1: { A: 'Space', B: 'R', X: 'F', Y: 'E', LT: 'LMB', RT: 'RMB', LB: 'Shift', RB: 'Tab', START: 'Esc', BACK: 'Bksp', GAS: 'W', BRAKE: 'S', HORN: 'H', DPAD: '1-4', LS: 'WASD', RS: 'Mouse', OK: 'Enter', MENUBACK: 'Esc' },
+  kb2: { A: 'Num0', B: 'Num7', X: 'Num2', Y: 'Num9', LT: 'Num1', RT: 'Num3', LB: 'Num.', RB: 'Num+', START: 'NumEnter', BACK: 'Num7', GAS: '↑', BRAKE: '↓', HORN: 'Num+', DPAD: 'Num/ * -', LS: 'Arrows', RS: 'Num8456', OK: 'Num0', MENUBACK: 'Num7' },
+};
+
+export function deviceKind(id) {
+  return id === 'kb1' ? 'kb1' : id === 'kb2' ? 'kb2' : 'pad';
+}
+
+// One prompt glyph. `b` is A B X Y LT RT LB RB START BACK GAS BRAKE HORN DPAD LS RS OK MENUBACK.
+export function glyph(b, kind = 'pad') {
+  if (kind !== 'pad') {
+    const k = KEYS[kind][b] || b;
+    return `<span class="key">${k}</span>`;
+  }
+  const map = { GAS: 'RT', BRAKE: 'LT', HORN: 'X', OK: 'A', MENUBACK: 'B' };
+  b = map[b] || b;
+  if ('ABXY'.includes(b) && b.length === 1) return `<span class="btn b${b}">${b}</span>`;
+  if (b === 'START') return '<span class="btn bS" title="Menu"><i></i><i></i><i></i></span>';
+  if (b === 'BACK') return '<span class="btn bS bV" title="View"><i></i><i></i></span>';
+  if (b === 'DPAD') return '<span class="btn bD"><i></i><i></i></span>';
+  if (b === 'LS' || b === 'RS') return `<span class="btn bStick">${b[0]}</span>`;
+  return `<span class="trig">${b}</span>`;
+}
+
+// Replace button words in a hint ("Y exit", "A push off · Y exit",
+// "Arms up! (LT/RT)") with glyphs for this device.
+export function formatHint(text, kind) {
+  const esc = text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  return esc.replace(/\b(LT|RT|LB|RB|A|B|X|Y)\b(?=[\s/)·]|$)/g, (m) => glyph(m, kind));
+}
+
+// A row of "glyph label" prompts: [['A', 'Select'], ['B', 'Back']].
+export function promptRow(list, kind) {
+  return list.map(([b, label]) => `<span class="prompt">${glyph(b, kind)}<span>${label}</span></span>`).join('');
+}
