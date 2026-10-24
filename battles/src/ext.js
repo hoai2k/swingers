@@ -38,3 +38,9 @@ export function register(pack) {
   if (pack.proj) Object.assign(EXT.proj, pack.proj);
   for (const k of ['buildItem', 'buildHat', 'decorate', 'buildProj', 'battleStep']) if (pack[k]) EXT[k].push(pack[k]);
 }
+
+// Pose hook: functions (st, pose) run at the end of computePose (src/pose.js), so packs
+// can add stances such as riders sitting on a mount or flyers. A hook may set st.bob,
+// which poseVisual adds to the pelvis height in setup previews and portraits.
+// Packs push to it directly: EXT.pose.push(fn).
+EXT.pose = [];

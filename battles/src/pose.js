@@ -3,6 +3,7 @@
 // toward them with "muscle" torques, so the pose is only ever approximately hit.
 import { THREE, eulerYZX, clamp, lerp, smooth } from './util.js';
 import { PART, NPARTS } from './body.js';
+import { EXT } from './ext.js';
 
 const P = PART;
 const tmp = () => new THREE.Quaternion();
@@ -176,6 +177,7 @@ export function computePose(st, pose) {
   eulerYZX(pose[P.pelvis], -twist * 0.3 - sw * 0.22, rock * 0.05, lean * 0.3);
   eulerYZX(pose[P.chest], twist + sw * 0.16, rock * 0.1, lean + bob);
   eulerYZX(pose[P.head], (st.headYaw || 0) + twist * 0.3, 0, (st.headPitch || 0) - lean * 0.4);
+  for (const f of EXT.pose) f(st, pose); // pack stances (src/ext.js)
   return pose;
 }
 
