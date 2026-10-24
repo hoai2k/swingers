@@ -81,6 +81,17 @@ export class Terrain {
         this.h[iz * n + ix] = y;
       }
     }
+    // Fair fights: inside the battle field the ground is point-symmetric about the
+    // centre, so both armies' halves have the same bumps (blending out past the edge).
+    const src = this.h.slice();
+    for (let iz = 0; iz < n; iz++) for (let ix = 0; ix < n; ix++) {
+      const x = (ix / SEG - 0.5) * SIZE, z = (iz / SEG - 0.5) * SIZE;
+      const out = Math.hypot(Math.max(0, Math.abs(x) - FIELD.x), Math.max(0, Math.abs(z) - FIELD.z));
+      const k = 1 - smooth(clamp(out / 12, 0, 1));
+      if (k <= 0) continue;
+      const i = iz * n + ix, j = (SEG - iz) * n + (SEG - ix);
+      this.h[i] = lerp(src[i], (src[i] + src[j]) / 2, k);
+    }
   }
 
   height(x, z) {
