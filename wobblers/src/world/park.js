@@ -94,7 +94,7 @@ function ferrisWheel(game, kit, cx, cz) {
   }
   wb.cyl(1.0, 1.0, 2.4, 0xffd23f, [0, 0, 0], [0, 0, Math.PI / 2], 16);
   const wheel = kinematic(game, { x: cx, y: H, z: cz }, [RAPIER.ColliderDesc.cylinder(1.2, 1.0).setRotation({ x: 0, y: 0, z: Math.sin(Math.PI / 4), w: Math.cos(Math.PI / 4) })], wb.mesh());
-  const cabins = [];
+  const cabins = [], cabinSeats = [];
   const cols = [0xff5a5a, 0x3f8cff, 0x55d85a, 0xffd23f, 0xb46cff];
   for (let i = 0; i < n; i++) {
     const b = new Builder(), c = cols[i % cols.length];
@@ -109,8 +109,10 @@ function ferrisWheel(game, kit, cx, cz) {
       RAPIER.ColliderDesc.cuboid(0.8, 0.06, 0.9).setTranslation(0, -0.6, 0),
     ], b.mesh());
     cabins.push(body);
-    for (const s of [1, -1]) addSeat(game, { body, pos: [0, -0.2, s * 0.55], yaw: s > 0 ? Math.PI : 0, label: 'Ride', hint: 'Enjoy the view! · Y exit', exit: [0, -0.2, s * 2.2] });
+    for (const s of [1, -1]) cabinSeats.push(addSeat(game, { body, pos: [0, -0.2, s * 0.55], yaw: s > 0 ? Math.PI : 0, label: 'Ride', hint: 'Enjoy the view! · Y exit', exit: [0, -0.2, s * 2.2] }));
   }
+  // getting off a raised cabin puts you back on the boarding platform
+  const offRide = { x: cx, y: 1.0, z: cz - 0.6 };
   game.physics.animators.push((t) => {
     const ang = t * 0.07;
     _q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), ang);
@@ -119,7 +121,9 @@ function ferrisWheel(game, kit, cx, cz) {
       const a = ang + i / n * Math.PI * 2;
       const sway = Math.sin(t * 0.9 + i) * 0.04;
       _q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), sway);
-      setPose(body, { x: cx, y: H + Math.sin(a) * R - 1.5, z: cz + Math.cos(a) * R }, _q);
+      const y = H + Math.sin(a) * R - 1.5;
+      setPose(body, { x: cx, y, z: cz + Math.cos(a) * R }, _q);
+      cabinSeats[i * 2].exitWorld = cabinSeats[i * 2 + 1].exitWorld = y > 3.5 ? offRide : null;
     });
   });
 }
@@ -231,9 +235,10 @@ function dropTower(game, kit, cx, cz) {
     b.rbox(0.6, 0.9, 0.12, 0.04, 0xffd23f, [Math.sin(a) * 1.7, 0.1, Math.cos(a) * 1.7], [0, a, 0]);
   }
   const ring = kinematic(game, { x: cx, y: 1.2, z: cz }, [], b.mesh());
+  const towerSeats = [];
   for (let i = 0; i < seatsN; i++) {
     const a = i / seatsN * Math.PI * 2;
-    addSeat(game, { body: ring, pos: [Math.sin(a) * 2.0, -0.15, Math.cos(a) * 2.0], yaw: a, label: 'Drop tower', hint: 'Here we go… · Y exit', exit: [Math.sin(a) * 3.3, 0, Math.cos(a) * 3.3] });
+    towerSeats.push(addSeat(game, { body: ring, pos: [Math.sin(a) * 2.0, -0.15, Math.cos(a) * 2.0], yaw: a, label: 'Drop tower', hint: 'Here we go… · Y exit', exit: [Math.sin(a) * 3.3, 0, Math.cos(a) * 3.3] }));
   }
   const low = 1.2, high = 31;
   game.physics.animators.push((t) => {
@@ -255,6 +260,12 @@ function dropTower(game, kit, cx, cz) {
     }
     _q.setFromAxisAngle(UP, t * 0.1);
     setPose(ring, { x: cx, y, z: cz }, _q);
+    // off a raised ring: step off at the base instead of falling 30 m
+    towerSeats.forEach((st, i) => {
+      if (y < 2.5) { st.exitWorld = null; return; }
+      const a = i / seatsN * Math.PI * 2 + t * 0.1;
+      st.exitWorld = { x: cx + Math.sin(a) * 4.6, y: 0.6, z: cz + Math.cos(a) * 4.6 };
+    });
   });
 }
 

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
 import { Builder, matVCDouble, signMesh } from '../mesh.js';
 import { addWater } from './water.js';
+import { ladder } from './common.js';
 
 export const POOL = { x0: 87, x1: 113, z0: 93, z1: 107, level: -0.15 };
 
@@ -33,6 +34,9 @@ export function buildPool(game, kit) {
     const alongX = lx > 112;
     for (const s of [-0.3, 0.3]) kit.cyl(lx + (alongX ? 0 : s), 0.1, lz + (alongX ? s : 0), 0.035, 2.0, 0xdddddd, { collide: false });
     for (let k = 0; k < 4; k++) kit.cyl(lx, -1.3 + k * 0.45, lz, 0.03, 0.6, 0xdddddd, { euler: alongX ? [Math.PI / 2, 0, 0] : [0, 0, Math.PI / 2] });
+    // climbable: push toward the wall at the ladder to climb out
+    const out = alongX ? [1, 0] : [0, lz > 100 ? 1 : -1];
+    ladder(game, lx, lz, -1.6, 0.1, out[0], out[1]);
   }
 
   // ---- springy diving board (deep end, east wall)
@@ -89,13 +93,13 @@ export function buildPool(game, kit) {
     const b = new Builder();
     b.sphere(0.45, toyCols[i], [0, 0, 0], null, 14);
     b.sphere(0.452, 0xffffff, [0, 0, 0], [0.35, 1, 1], 14);
-    const o = phys.dynamic({ x: 92 + i * 5, y: 0.2, z: 97 + (i % 2) * 6 }, [RAPIER.ColliderDesc.ball(0.45).setMass(0.4).setRestitution(0.7)], b.mesh(), { buoy: { r: 0.45, volume: 0.38, drag: 1.0 } });
+    const o = phys.dynamic({ x: 92 + i * 5, y: 0.2, z: 97 + (i % 2) * 6 }, [RAPIER.ColliderDesc.ball(0.45).setMass(0.4).setRestitution(0.7)], b.mesh(), { buoy: { r: 0.45, volume: 0.38, drag: 14 } });
     game.scene.add(o.mesh);
   }
   for (let i = 0; i < 3; i++) {
     const b = new Builder();
     b.torus(0.55, 0.22, [0xff7fc8, 0xff8a3d, 0x3fe0d0][i], [0, 0, 0], [Math.PI / 2, 0, 0]);
-    const o = phys.dynamic({ x: 96 + i * 6, y: 0.1, z: 101 }, [RAPIER.ColliderDesc.cylinder(0.2, 0.75).setMass(1)], b.mesh(), { buoy: { r: 0.22, volume: 0.25, drag: 1.5 } });
+    const o = phys.dynamic({ x: 96 + i * 6, y: 0.1, z: 101 }, [RAPIER.ColliderDesc.cylinder(0.2, 0.75).setMass(1)], b.mesh(), { buoy: { r: 0.22, volume: 0.25, drag: 10 } });
     game.scene.add(o.mesh);
   }
   // giant rubber duck

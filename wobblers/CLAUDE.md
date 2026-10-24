@@ -31,3 +31,8 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   Small top-level scene objects are hidden per view by on-screen size (`game.cullSmall`);
   set `userData.noCull` to opt out. Check draw calls with `game.renderStats` for 1 and 8
   players after adding many meshes.
+- World helpers live in `world/common.js`: `Local` (building-local kit placement, `wall`
+  with door holes, `stairs`, `rail`), `addDoor` (hinged physics door), `useSpot` (a seat with
+  `use(player)` that Y triggers instead of sitting), `throwable` (punch to throw, optional
+  `aim`), `ladder`, and `groundAt(x, z)` — the exact terrain mesh height. Place things on
+  hills with `groundAt`, not `heightAt` (the analytic surface can be ~0.5 m off the mesh).
