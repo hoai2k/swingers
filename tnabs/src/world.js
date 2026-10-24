@@ -406,7 +406,7 @@ export function buildScene(scene, map, terrain) {
       const a = (i / 26) * Math.PI * 2 + rand(-0.08, 0.08), r = rand(260, 340);
       const h = rand(45, 110), w = rand(60, 110);
       const c = new THREE.Color(map.mountains).multiplyScalar(rand(0.88, 1.08));
-      parts.push([lumpy(1, 2, 0.25, i), c, T(Math.cos(a) * r, -10, Math.sin(a) * r, w, h, w * 0.8, 0, rand(0, 3), 0)]);
+      parts.push([lumpy(1, 3, 0.18, i), c, T(Math.cos(a) * r, -10, Math.sin(a) * r, w, h, w * 0.8, 0, rand(0, 3), 0)]);
       if (map.snow || h > 95) parts.push([lumpy(1, 2, 0.2, i + 50), '#f4f8fc', T(Math.cos(a) * r, -10 + h * 0.45, Math.sin(a) * r, w * 0.5, h * 0.58, w * 0.42, 0, rand(0, 3), 0)]);
     }
     const mm = new THREE.Mesh(merged(parts), vcMat());
@@ -500,7 +500,7 @@ export function buildScene(scene, map, terrain) {
     const parts = [0, 1.05, 2.1].map((ry) => [blade(ry), '#ffffff']);
     const geo = merged(parts);
     const col = geo.attributes.color, pos = geo.attributes.position;
-    const root = new THREE.Color(map.grass).multiplyScalar(0.8), tip = new THREE.Color(map.grass).lerp(new THREE.Color(map.grassTip), 0.55), c = new THREE.Color();
+    const root = new THREE.Color(map.grass).multiplyScalar(0.8), tip = new THREE.Color(map.grass).lerp(new THREE.Color(map.grassTip), 0.35), c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) { c.copy(root).lerp(tip, clamp(pos.getY(i) / 0.5, 0, 1)); col.setXYZ(i, c.r, c.g, c.b); }
     // light blades like the ground (normals up) and make them two-sided by adding
     // a reversed copy, so the material can stay FrontSide
@@ -520,7 +520,8 @@ export function buildScene(scene, map, terrain) {
       const inField = outDist(x, z) === 0;
       if (inField && Math.random() < 0.55) continue;
       const big = vnoise(x * 0.08, z * 0.08);
-      tufts.push(comp(x, terrain.height(x, z) - 0.02, z, rand(0.8, 1.3) * (0.7 + big * 0.8), rand(0.4, 0.9) * (0.6 + big * 0.9)));
+      const k = inField ? 0.7 : 1;
+      tufts.push(comp(x, terrain.height(x, z) - 0.02, z, rand(0.8, 1.3) * (0.7 + big * 0.8) * k, rand(0.4, 0.9) * (0.6 + big * 0.9) * k));
     }
     const tm = instanced(geo, vcMat(), tufts, false, (c2) => c2.setHSL(0, 0, rand(0.85, 1.1)));
     group.add(tm);

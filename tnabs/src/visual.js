@@ -306,7 +306,7 @@ export function initFaces() {
 function faceGeo(r) {
   return geo('face' + f3(r), () => {
     const len = Math.PI * 0.95;
-    return new THREE.SphereGeometry(r * 1.012, 24, 14, Math.PI / 2 - len / 2, len, Math.PI * 0.14, Math.PI * 0.62);
+    return new THREE.SphereGeometry(r * 1.012, 20, 12, Math.PI / 2 - len / 2, len, Math.PI * 0.14, Math.PI * 0.62);
   });
 }
 
@@ -739,7 +739,7 @@ export function buildUnitVisual(def, team, opts = {}) {
         const m = mesh(sphere(r, 16, 12), robe ? (top === 'robe_white' ? white() : chestMat) : legMat, 0, 0, 0, g);
         m.scale.set(1.1, 0.95, 0.98);
         if (top === 'loincloth' || top === 'fur' || top === 'bare_belt') {
-          const lc = mesh(cyl(r * 1.06, r * 1.25, r * 1.1, 14), top === 'bare_belt' ? mat('#6a5a50') : fur(), 0, -r * 0.35, 0, g);
+          const lc = mesh(cyl(r * 1.06, r * 1.25, r * 1.1, 14), td, 0, -r * 0.35, 0, g); // team-coloured loincloth/kilt
           lc.scale.set(1, 1, 0.95);
           if (top !== 'bare_belt') for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; mesh(cone(r * 0.2, r * 0.35, 4), fur(), Math.sin(a) * r * 1.15, -r * 1.0, Math.cos(a) * r * 1.15, g).rotation.x = Math.PI; }
         }
@@ -859,7 +859,7 @@ export function buildUnitVisual(def, team, opts = {}) {
       }
       case PART.head: {
         const r = p.r;
-        mesh(sphere(r, 24, 16), skin, 0, 0, 0, g);
+        mesh(sphere(r, 20, 14), skin, 0, 0, 0, g);
         const hat = buildHat(look.hat, r, team, id);
         g.add(hat);
         if (!hat.userData.hidesFace && !opts.ghost) {
@@ -1003,8 +1003,8 @@ function ghostMaterial(color) {
     fragmentShader: `uniform vec3 color; uniform float opacity; varying vec3 vN; varying vec3 vV; varying float vY;
       void main(){ float f = 1.0 - abs(dot(normalize(vN), normalize(vV))); f = f * f;
         float scan = 0.88 + 0.12 * smoothstep(0.35, 0.65, abs(fract(vY * 6.0) - 0.5) * 2.0);
-        vec3 c = mix(color * 1.1, vec3(1.0), f * 0.55) * scan;
-        gl_FragColor = vec4(c, clamp(opacity * (0.75 + 0.9 * f), 0.0, 1.0)); }`,
+        vec3 c = mix(color * 1.15 + 0.12, vec3(1.0), f * 0.6) * scan;
+        gl_FragColor = vec4(c, clamp(opacity * (1.15 + 0.9 * f), 0.0, 0.95)); }`,
   });
   m.color = m.uniforms.color.value;
   Object.defineProperty(m, 'opacity', { get: () => m.uniforms.opacity.value, set: (v) => { m.uniforms.opacity.value = v; } });

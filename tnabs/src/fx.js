@@ -138,7 +138,7 @@ export class FX {
     this.scene = scene;
     this.terrain = terrain;
     const map = terrain.map || {};
-    this.dustCol = new THREE.Color(map.snow ? '#f4f8fc' : map.dirt || '#b9a68a').lerp(new THREE.Color('#f2ead8'), map.snow ? 0 : 0.45);
+    this.dustCol = new THREE.Color(map.snow ? '#f4f8fc' : map.dirt || '#b9a68a').lerp(new THREE.Color('#f4eee0'), map.snow ? 0 : 0.62);
     this.chunkCol = new THREE.Color(map.dirt || '#7a5a3a').multiplyScalar(0.8);
     this.grassCol = new THREE.Color((map.ground && map.ground[2]) || '#4f9a2c');
     // lit chunks
@@ -208,8 +208,8 @@ export class FX {
     for (let i = 0; i < n; i++) {
       const a = rand(0, 6.28), sp = rand(0.4, 1.4) * spread * 3;
       this.bb(this.ss, x + Math.cos(a) * spread, y + 0.08, z + Math.sin(a) * spread, Math.cos(a) * sp, rand(0.2, 1) * up, Math.sin(a) * sp,
-        size * rand(0.7, 1.3), rand(0.6, 1.1), _c.copy(this.dustCol).multiplyScalar(rand(0.92, 1.05)),
-        { tile: Math.random() < 0.5 ? T_DUST : T_SMOKE, grow: 1.6, alpha: 0.75, drag: 3, vr: rand(-1, 1) });
+        size * rand(0.7, 1.3), rand(0.45, 0.85), _c.copy(this.dustCol).multiplyScalar(rand(0.94, 1.04)),
+        { tile: Math.random() < 0.6 ? T_DUST : T_PUFF, grow: 1.8, alpha: 0.5, drag: 3, vr: rand(-1, 1) });
     }
   }
 
