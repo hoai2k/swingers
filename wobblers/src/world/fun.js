@@ -47,10 +47,22 @@ export function trolley(game, x, z, yaw) {
   for (const s of [-1, 1]) b.box(0.03, 0.03, 0.2, 0xcccccc, [s * 0.3, 0.38, -0.54]);
   for (const [wx, wz] of [[-0.25, -0.38], [0.25, -0.38], [-0.25, 0.38], [0.25, 0.38]]) b.cyl(0.07, 0.07, 0.04, 0x222222, [wx, -0.4, wz], [0, 0, Math.PI / 2], 10);
   const o = game.physics.dynamic({ x, y: 0.5, z }, [
-    C.cuboid(0.31, 0.27, 0.46).setTranslation(0, 0.02, 0).setMass(9).setFriction(0.04),
+    C.cuboid(0.31, 0.27, 0.46).setTranslation(0, 0.02, 0).setMass(3).setFriction(0.04),
+    C.cuboid(0.3, 0.04, 0.44).setTranslation(0, -0.37, 0).setMass(14).setFriction(0.03), // wheels: low and heavy so it doesn't tip
     C.cuboid(0.31, 0.03, 0.12).setTranslation(0, 0.4, -0.56).setMass(0.5),
   ], b.mesh(), { rot: yawQuat(yaw), groups: VEH_GROUPS, angDamp: 0.8, linDamp: 0.15 });
   game.scene.add(o.mesh);
+  // gentle self-righting so a shove from the side doesn't tip it (a car still can)
+  const up = new THREE.Vector3(), ax = new THREE.Vector3();
+  game.steppers.push(() => {
+    if (o.body.isSleeping()) return;
+    const r = o.body.rotation(); _q.set(r.x, r.y, r.z, r.w);
+    up.set(0, 1, 0).applyQuaternion(_q);
+    if (up.y < 0.2) return; // properly knocked over: leave it
+    ax.set(up.z, 0, -up.x); // up x Y
+    const w = o.body.angvel();
+    o.body.applyTorqueImpulse({ x: (-ax.x * 90 - w.x * 6) * DT, y: 0, z: (-ax.z * 90 - w.z * 6) * DT }, true);
+  });
   addSeat(game, { body: o.body, pos: [0, 0.12, 0.08], yaw: 0, label: 'Ride trolley', hint: 'Get someone to push! · Y exit', exit: [0.9, 0.1, 0] });
   return o;
 }
