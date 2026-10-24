@@ -34,19 +34,19 @@ export const SP = {
   webReel: 520,
   webYank: 0.9,          // rope length snaps to this fraction of the hit distance
   webPump: 1500,
-  coxa: 9,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
-  femur: 34,
-  tibia: 46,
+  coxa: 15,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
+  femur: 44,
+  tibia: 54,
   legLen: 40,            // average segment (reach = femur + tibia)
   lift: 17,              // the body stands this far above the surface (r + lift)
 };
 
 const LEGS = [
   // side (+1 = along tangent), rest offset along the surface (x r), group, far (drawn darker)
-  { side: 1, off: 1.1, g: 0, far: true }, { side: 1, off: 2.0, g: 1, far: false },
-  { side: 1, off: 2.9, g: 0, far: true }, { side: 1, off: 3.7, g: 1, far: false },
-  { side: -1, off: 1.1, g: 1, far: true }, { side: -1, off: 2.0, g: 0, far: false },
-  { side: -1, off: 2.9, g: 1, far: true }, { side: -1, off: 3.7, g: 0, far: false },
+  { side: 1, off: 1.1, g: 0, far: true }, { side: 1, off: 1.85, g: 1, far: false },
+  { side: 1, off: 2.4, g: 0, far: true }, { side: 1, off: 2.9, g: 1, far: false },
+  { side: -1, off: 1.1, g: 1, far: true }, { side: -1, off: 1.85, g: 0, far: false },
+  { side: -1, off: 2.4, g: 1, far: true }, { side: -1, off: 2.9, g: 0, far: false },
 ];
 
 let NEXT_ID = 1;
@@ -176,9 +176,12 @@ export class Spider {
     for (let s = 0; s < sub; s++) this.step(h, move);
 
     // ---- surroundings
-    this.up.x = lerp(this.up.x, this.ground ? this.ground.nx : 0, Math.min(1, dt * 10));
-    this.up.y = lerp(this.up.y, this.ground ? this.ground.ny : -1, Math.min(1, dt * 10));
-    const ul = Math.hypot(this.up.x, this.up.y) || 1; this.up.x /= ul; this.up.y /= ul;
+    // ease the visual 'up' by rotating it (blending vectors would get stuck on a
+    // straight flip, e.g. floor -> ceiling)
+    const ua = Math.atan2(this.up.y, this.up.x);
+    const ta = this.ground ? Math.atan2(this.ground.ny, this.ground.nx) : -Math.PI / 2;
+    const na = ua + angDiff(ua, ta) * Math.min(1, dt * 12);
+    this.up.x = Math.cos(na); this.up.y = Math.sin(na);
 
     this.updateLegs(dt);
 
@@ -483,7 +486,7 @@ export class Spider {
       // planted feet ride their surface
       if (L.planted && L.solid && L.solid.dynamic) { const p = L.solid.tx({ x: L.lx, y: L.ly }); L.fx = p.x; L.fy = p.y; }
       if (L.planted && L.solid && L.solid.broken) L.planted = false;
-      const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
+      const root = this.legRoot(L, nx, ny, tx, ty), hipX = root.cx, hipY = root.cy;   // reach is measured from the base segment's end
       // front legs lift off the ground to hold the weapon (or follow through a throw)
       const hold = holds.get(i);
       if (hold) {
@@ -563,6 +566,19 @@ export class Spider {
     return out;
   }
 
+  // where a leg leaves the body (hip, at the body's edge) and where its short
+  // base segment ends (rising up and out, away from the surface)
+  legRoot(L, nx, ny, tx, ty) {
+    const r = this.r;
+    // legs fan out: the front pair's base points outward, the rear ones more upright
+    const k = (L.off - LEGS[0].off) / (LEGS[3].off - LEGS[0].off);   // 0 inner .. 1 outer
+    const hs = L.side * r * (0.4 + 0.25 * k), hu = r * (0.25 - 0.3 * k);
+    const hipX = this.x + tx * hs + nx * hu, hipY = this.y + ty * hs + ny * hu;
+    const ex = tx * L.side * (0.25 + 0.55 * k) + nx * (1 - 0.3 * k), ey = ty * L.side * (0.25 + 0.55 * k) + ny * (1 - 0.3 * k), m = Math.hypot(ex, ey);
+    const len = SP.coxa * (0.8 + 0.4 * k);
+    return { hipX, hipY, cx: hipX + ex / m * len, cy: hipY + ey / m * len };
+  }
+
   drawLegs(ctx, far) {
     const c = castAt(this.castIndex);
     const r = this.r;
@@ -573,11 +589,11 @@ export class Spider {
     const fill = back ? shade(c.dark, 0.75) : c.color;
     const shin = back ? shade(c.dark, 0.6) : c.dark;
     const F = SP.femur, T = SP.tibia;
+    const coxaCol = back ? shade(c.dark, 0.5) : c.dark;
     for (const L of this.legs) {
       if (far === 'hold' ? !L.hold : (L.far !== far || L.hold)) continue;
       // hip on the body, then a short base segment angled up and out
-      const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
-      const cx = hipX + (tx * L.side * 0.8 + nx * 0.6) * SP.coxa, cy = hipY + (ty * L.side * 0.8 + ny * 0.6) * SP.coxa;
+      const { hipX, hipY, cx, cy } = this.legRoot(L, nx, ny, tx, ty);
       let fx = L.fx, fy = L.fy;
       let dx = fx - cx, dy = fy - cy;
       let d = Math.hypot(dx, dy) || 1;
@@ -594,19 +610,18 @@ export class Spider {
       // outline pass, then colour: base + thigh thick, the shin tapers to a point
       for (const pass of [0, 1]) {
         const o = pass ? 0 : 2.2;
+        ctx.fillStyle = pass ? coxaCol : outline;
+        taper(ctx, hipX, hipY, cx, cy, 7 * w + o, 6.5 * w + o);
         ctx.fillStyle = pass ? fill : outline;
-        taper(ctx, hipX, hipY, cx, cy, 6.5 * w + o, 6 * w + o);
-        taper(ctx, cx, cy, kx, ky, 6 * w + o, 5 * w + o);
+        taper(ctx, cx, cy, kx, ky, 6.2 * w + o, 5 * w + o);
         ctx.fillStyle = pass ? shin : outline;
         taper(ctx, kx, ky, fx, fy, 5 * w + o, 0.6 + o * 0.6);
       }
       // joints
-      if (!back) {
-        ctx.fillStyle = c.accent;
-        ctx.beginPath(); ctx.arc(kx, ky, 2.6, 0, TAU); ctx.fill();
-        ctx.fillStyle = shade(c.dark, 0.8);
-        ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, TAU); ctx.fill();
-      }
+      // joints: the base/thigh joint and the knee read as distinct bends
+      ctx.fillStyle = back ? shade(c.dark, 0.45) : c.accent;
+      ctx.beginPath(); ctx.arc(cx, cy, back ? 2.2 : 2.8, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(kx, ky, back ? 2.2 : 2.8, 0, TAU); ctx.fill();
     }
   }
 
