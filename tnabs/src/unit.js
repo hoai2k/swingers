@@ -1,5 +1,5 @@
 // A battle unit: active ragdoll + controller + personality-driven AI.
-import { THREE, clamp, lerp, rand, angleDiff, damp, pick, ballisticAngle } from './util.js';
+import { THREE, clamp, lerp, rand, angleDiff, damp, pick, ballisticAngle, eulerYZX, smooth } from './util.js';
 import { makeSkeleton, NPARTS, PART } from './body.js';
 import { computePose, newPose, STYLE_ANIM } from './pose.js';
 import { Ragdoll } from './ragdoll.js';
@@ -13,13 +13,13 @@ const _q = new THREE.Quaternion();
 const _yawQ = new THREE.Quaternion();
 const UP = new THREE.Vector3(0, 1, 0);
 
-// Muscle tuning per part: [gain, rate, torque cap per kg of unit mass]
+// Muscle tuning per part: [gain, rate, torque cap per kg of unit mass, max spin rad/s]
 const MUSCLE = [
   [10, 22, 5.5], // pelvis
   [12, 26, 8.5], // chest
   [9, 18, 0.9], // head
-  [13, 26, 3.4], [13, 26, 2.0], // thigh, shin L
-  [13, 26, 3.4], [13, 26, 2.0], // R
+  [26, 32, 4.5, 26], [28, 32, 2.6, 30], // thigh, shin L
+  [26, 32, 4.5, 26], [28, 32, 2.6, 30], // R
   [18, 30, 1.9], [18, 30, 1.2], // arm L
   [18, 30, 1.9], [18, 30, 1.2], // arm R
 ];
@@ -47,6 +47,8 @@ export class Unit {
     this.heading = yaw;
     this.pose = newPose();
     this.worldTarget = newPose();
+    this.prevTarget = newPose();
+    this.hasPrev = false;
     this.st = {
       phase: rand(0, 6), amp: 0, lean: 0, style: def.weapon.style, attack: null, attackT: 0,
       headPitch: 0, headYaw: 0, mode: 'normal', t: rand(0, 10), crouch: 0,
@@ -56,6 +58,7 @@ export class Unit {
     this.rag = new Ragdoll(battle.world, this.skel, new THREE.Vector3(x, gy, z), yaw, this.pose);
     this.M = this.skel.totalMass;
     this.s = this.skel.scale;
+    this.initLegs();
 
     this.target = null;
     this.retarget = rand(0, 0.5);
@@ -129,7 +132,9 @@ export class Unit {
     const b = this.battle, def = this.def, w = def.weapon, p = this.pos;
     this.desired.set(0, 0, 0);
     let face = null;
-    const spd = def.speed * (1 + (this.buff > 0 ? 0.3 : 0));
+    // berserkers get faster and angrier the more they are hurt
+    this.frenzy = def.frenzy ? clamp(1 - this.hp / this.maxHp, 0, 1) : 0;
+    const spd = def.speed * (1 + (this.buff > 0 ? 0.2 : 0) + this.frenzy * 0.4);
 
     if (b.over) {
       this.st.mode = b.winner === this.team ? 'cheer' : 'cower';
@@ -173,17 +178,28 @@ export class Unit {
       face = t;
       this.expr = gap < 6 ? EXPR.angry : EXPR.normal;
       const near = dist - t.skel.radius;
-      if (near > this.reachDist * 0.8) this.desired.set(dirx * spd, 0, dirz * spd);
+      // advance more or less in line: careful units ahead of their team's front ease off
+      let pace = 1;
+      if (gap > 8 && pers.aggro < 1 && !def.frenzy) {
+        const f = b.front[this.team];
+        if (f && (p.x - f.x) * f.dx + (p.z - f.z) * f.dz > 2.5) pace = 0.65;
+      }
+      if (near > this.reachDist * 0.8) this.desired.set(dirx * spd * pace, 0, dirz * spd * pace);
       else if (near < this.reachDist * 0.4) this.desired.set(-dirx * spd * 0.3, 0, -dirz * spd * 0.3);
-      if (near < this.reachDist + 0.35 && this.cooldown <= 0 && !this.st.attack) this.startAttack();
+      if (near < this.reachDist + 0.35 && this.cooldown <= 0 && !this.st.attack && !this.isDown()) this.startAttack();
       if (this.st.attack) this.desired.multiplyScalar(0.35);
     } else if (w.kind === 'ranged') {
       face = t;
       this.expr = EXPR.normal;
       const shy = pers.aggro < 0.5;
-      if (dist > w.range * 0.9) this.desired.set(dirx * spd, 0, dirz * spd);
-      else if (shy && dist < w.minRange * 0.6) this.desired.set(-dirx * spd * 0.6, 0, -dirz * spd * 0.6);
-      if (dist < w.range && !this.st.attack && this.cooldown <= 0 && (dist > w.minRange * 0.4 || !shy)) {
+      // close to firing range; shy shooters back off from melee, but only for a
+      // limited time and never off the field (no endless kiting)
+      this.kiteT = Math.min(3, (this.kiteT ?? 3) + dt * 0.4);
+      const cornered = Math.abs(p.x) > FIELD.x - 2 || Math.abs(p.z) > FIELD.z - 2;
+      const kiting = shy && dist < w.minRange * 0.6 && this.kiteT > 0 && !cornered && t.def.weapon.kind === 'melee';
+      if (dist > w.range * 0.85) this.desired.set(dirx * spd, 0, dirz * spd);
+      else if (kiting) { this.desired.set(-dirx * spd * 0.75, 0, -dirz * spd * 0.75); this.kiteT -= dt * 1.4; }
+      if (dist < w.range && !this.st.attack && this.cooldown <= 0 && (dist > w.minRange * 0.4 || !kiting)) {
         this.startAttack();
         this.aimAt = t;
       }
@@ -214,6 +230,18 @@ export class Unit {
       if (w.kind === 'bard' && !this.st.attack) this.st.mode = 'play';
     }
     this.separate(spd);
+    // unstick: wanting to move but going nowhere for a while -> sidestep
+    const want = Math.hypot(this.desired.x, this.desired.z);
+    const v0 = this.rag.vel[PART.pelvis];
+    if (this.sideT > 0) {
+      this.sideT -= dt;
+      const dx0 = this.desired.x, dz0 = this.desired.z;
+      this.desired.x = dx0 * 0.4 - dz0 * this.sideDir;
+      this.desired.z = dz0 * 0.4 + dx0 * this.sideDir;
+    } else if (want > spd * 0.5 && Math.hypot(v0.x, v0.z) < spd * 0.15 && !this.st.attack) {
+      this.stuckT = (this.stuckT || 0) + dt;
+      if (this.stuckT > 1.2) { this.stuckT = 0; this.sideT = rand(0.6, 1.1); this.sideDir = Math.random() < 0.5 ? -1 : 1; }
+    } else this.stuckT = 0;
     // stay on the battlefield
     const bx = FIELD.x + 8, bz = FIELD.z + 6;
     if (Math.abs(p.x) > bx) this.desired.x -= Math.sign(p.x) * (Math.abs(p.x) - bx) * 2;
@@ -264,7 +292,7 @@ export class Unit {
     this.hitSet.clear();
     this.released = false;
     const w = this.def.weapon;
-    this.cooldown = w.cooldown * rand(0.85, 1.15) * (this.buff > 0 ? 0.8 : 1);
+    this.cooldown = w.cooldown * rand(0.85, 1.15) * (this.buff > 0 ? 0.88 : 1) * (1 - 0.35 * (this.frenzy || 0));
     if (Math.random() < 0.35 * this.def.personality.chatter) this.battle.voice(this, 'attack');
     if (w.kind === 'melee') this.battle.sound('whoosh', this.pos, 0.5 * Math.min(2, this.s), 1 / Math.sqrt(this.s));
   }
@@ -272,6 +300,160 @@ export class Unit {
   groundGap() {
     const p = this.pos;
     return p.y - this.battle.terrain.height(p.x, p.z) - this.skel.standHeight;
+  }
+
+  // ----------------------------------------------------------------- legs
+  // Procedural stepping: each foot is either planted (its leg is aimed at a
+  // fixed spot on the ground, so it stays put while the body walks over it) or
+  // swinging to a new spot ahead of the hip. Steps fire when a planted foot
+  // strays too far from where it should be, alternating legs - which gives the
+  // TABS waddle, shuffles when turning on the spot, and catch-up steps after a shove.
+  initLegs() {
+    const sk = this.skel, P = sk.parts;
+    this.thighLen = P[PART.thighL].hh * 2;
+    this.shinLen = P[PART.shinL].hh * 2;
+    this.footR = P[PART.shinL].r;
+    this.legLen = this.thighLen + this.shinLen;
+    this.legs = [PART.thighL, PART.thighR].map((th, k) => ({
+      side: k ? -1 : 1, thigh: th, shin: th + 1, hip: sk.joints[k ? 4 : 2],
+      state: 'free', plant: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(),
+      foot: new THREE.Vector3(), t: 0, dur: 0.25, stanceT: 0, err: 0, hd: 0,
+    }));
+    this.hipH = this.skel.standHeight;
+    this.gaitSwing = 0;
+  }
+
+  hipPoint(leg, out) {
+    const r = this.rag;
+    return out.copy(leg.hip.anchorA).applyQuaternion(r.quat[PART.pelvis]).add(r.pos[PART.pelvis]);
+  }
+
+  footPoint(leg, out) {
+    return this.rag.worldPoint(leg.shin, 0, -this.shinLen / 2, 0, out);
+  }
+
+  // Returns true when the legs are being placed (the pose's leg targets were overwritten).
+  updateLegs(dt, grounded) {
+    const legs = this.legs, s = this.s, ter = this.battle.terrain;
+    if (!grounded) {
+      for (const l of legs) l.state = 'free';
+      this.hipH = this.skel.standHeight;
+      return false;
+    }
+    const p = this.pos, v = this.rag.vel[PART.pelvis];
+    // steer the feet by a blend of actual and wanted velocity (feet lead turns)
+    const vx = v.x * 0.6 + this.desired.x * 0.4, vz = v.z * 0.6 + this.desired.z * 0.4;
+    const spd = Math.hypot(vx, vz);
+    const h = this.heading, ch = Math.cos(h), sh = Math.sin(h);
+    const hipX = Math.abs(legs[0].hip.anchorA.x) * 1.15;
+    const sq = Math.sqrt(s);
+    const dur = clamp(0.24 - spd * 0.02, 0.13, 0.24) * sq;
+    const base = 0.14 * s;
+    // how far a foot can be from under the hip at the current hip height
+    const vert = Math.max(0.05, this.hipH - 0.05 * s - this.footR);
+    const reach = Math.max(0.2 * s, Math.sqrt(Math.max(0.0025, (this.legLen * 0.98) ** 2 - vert * vert)));
+    const lead = Math.min(0.06 * sq, reach * 0.8 / Math.max(0.5, spd));
+    for (const l of legs) {
+      // ideal spot: under the hip, a little ahead along the velocity
+      const hx = p.x + ch * hipX * l.side, hz = p.z - sh * hipX * l.side;
+      const ix = hx + vx * lead, iz = hz + vz * lead;
+      if (l.state === 'free') {
+        this.footPoint(l, l.plant);
+        l.plant.y = ter.height(l.plant.x, l.plant.z);
+        l.state = 'stance'; l.stanceT = 0;
+      }
+      if (l.state === 'swing') {
+        l.t += dt / l.dur;
+        const rem = Math.max(0, 1 - l.t) * l.dur;
+        let tx = vx * (rem + lead), tz = vz * (rem + lead);
+        const tm = Math.hypot(tx, tz), lim = reach * 0.9 + vx * 0 + spd * rem;
+        if (tm > lim) { tx *= lim / tm; tz *= lim / tm; }
+        l.to.set(hx + tx, 0, hz + tz);
+        if (l.t >= 1) {
+          l.state = 'stance'; l.stanceT = 0;
+          this.footPoint(l, l.foot);
+          // land where the foot actually is if it got close, so it doesn't skate in
+          const e = Math.hypot(l.foot.x - l.to.x, l.foot.z - l.to.z);
+          if (e < 0.25 * s) l.plant.set(l.foot.x, 0, l.foot.z); else l.plant.copy(l.to);
+          l.plant.y = ter.height(l.plant.x, l.plant.z);
+          if (s > 1.6 && this.battle.stomp) this.battle.stomp(this, l.plant);
+        }
+      }
+      if (l.state === 'stance') {
+        l.stanceT += dt;
+        l.err = Math.hypot(l.plant.x - ix, l.plant.z - iz);
+        l.hd = Math.hypot(l.plant.x - hx, l.plant.z - hz);
+        // a foot ahead of the hip (along the motion) is about to be walked over: leave it
+        l.ahead = (l.plant.x - hx) * vx + (l.plant.z - hz) * vz > 0.05 * spd;
+      }
+    }
+    // lift at most one leg per frame: the one that is worst off
+    const a = legs[0], b = legs[1];
+    const thr = Math.min(base + spd * lead, reach * 1.6);
+    let cand = null;
+    for (const l of legs) {
+      if (l.state !== 'stance') continue;
+      const o = l === a ? b : a;
+      const need = l.ahead ? l.hd > reach * 1.6 : l.err > thr || l.hd > reach;
+      if (!need) continue;
+      const otherOk = o.state === 'stance' && o.stanceT > 0.02;
+      const desperate = l.hd > reach * 1.5 + 0.1 * s;
+      if ((otherOk || desperate) && (!cand || l.err > cand.err)) cand = l;
+    }
+    if (cand) {
+      cand.state = 'swing'; cand.t = 0; cand.dur = dur;
+      this.footPoint(cand, cand.from);
+      cand.from.y = ter.height(cand.from.x, cand.from.z);
+    }
+    // aim each leg at its foot target with 2-bone IK
+    let hMin = Infinity;
+    const lift = (0.1 + Math.min(1, spd / 4) * 0.1) * s;
+    for (const l of legs) {
+      const F = l.foot;
+      if (l.state === 'swing') {
+        const f = smooth(clamp(l.t, 0, 1));
+        F.lerpVectors(l.from, l.to, f);
+        F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t, 0, 1)) * lift;
+      } else {
+        F.copy(l.plant);
+        F.y -= 0.03 * s; // press into the ground so the planted leg bears weight
+      }
+      F.y += this.footR;
+      this.hipPoint(l, _v3);
+      const wx = F.x - _v3.x, wy = F.y - _v3.y, wz = F.z - _v3.z;
+      const lx = wx * ch - wz * sh, lz = wx * sh + wz * ch;
+      this.legIK(l, lx, wy, lz);
+      if (l.state === 'stance') {
+        const hd = Math.hypot(lx, lz);
+        const hy = Math.sqrt(Math.max(0, (this.legLen * 0.97) ** 2 - hd * hd));
+        hMin = Math.min(hMin, l.plant.y + this.footR + hy + 0.05 * s);
+      }
+    }
+    const gy = ter.height(p.x, p.z);
+    const SH = this.skel.standHeight;
+    const top = SH * (1 - 0.13 * Math.min(1, spd / 3.5));
+    const want = hMin === Infinity ? gy + top * 0.97 : clamp(hMin, gy + SH * 0.8, gy + top);
+    this.hipH = lerp(this.hipH, want - gy, damp(14, dt));
+    // arm swing signal: the opposite arm follows each foot forward
+    const fl = legs[0].foot, fr = legs[1].foot;
+    const dz = ((fl.x - fr.x) * sh + (fl.z - fr.z) * ch) / Math.max(0.3, reach * 2);
+    this.gaitSwing = lerp(this.gaitSwing, clamp(dz, -1, 1), damp(20, dt));
+    const rk = (a.state === 'swing' ? 1 : 0) - (b.state === 'swing' ? 1 : 0);
+    this.gaitRock = lerp(this.gaitRock || 0, rk * Math.min(1, spd / 2 + 0.3), damp(10, dt));
+    return true;
+  }
+
+  legIK(l, x, y, z) {
+    const a = this.thighLen, b = this.shinLen;
+    let L = Math.hypot(x, y, z);
+    const nx = x / L, ny = y / L, nz = z / L;
+    L = clamp(L, Math.abs(a - b) + 0.05, a + b - 1e-4);
+    const pitch = Math.asin(clamp(-nz, -1, 1));
+    const roll = Math.atan2(nx, -ny);
+    const alpha = Math.acos(clamp((a * a + L * L - b * b) / (2 * a * L), -1, 1));
+    const knee = Math.PI - Math.acos(clamp((a * a + b * b - L * L) / (2 * a * b), -1, 1));
+    eulerYZX(this.pose[l.thigh], 0, roll, pitch - alpha);
+    eulerYZX(this.pose[l.shin], 0, roll, pitch - alpha + knee);
   }
 
   // ----------------------------------------------------------------- physics step
@@ -283,9 +465,19 @@ export class Unit {
 
     if (!this.alive) {
       this.deadT += dt;
-      // a short twitch then limp
-      if (this.deadT < 0.4) this.drive(dt, 0.15 * (1 - this.deadT / 0.4), false);
-      if (this.deadT > 4 && !this.settled) { rag.setDamping(0.6, 2.5); this.settled = true; }
+      // a short twitch then fully limp; once the body has come to rest it is
+      // put to sleep (costs nothing until something hits it again)
+      if (this.deadT < 0.3) this.drive(dt, 0.12 * (1 - this.deadT / 0.3), false);
+      if (this.deadT > 1.5) {
+        if (!this.settled) { rag.setDamping(0.8, 3.0); rag.corpse(); this.settled = true; this.awakeT = 0; }
+        if (!rag.bodies[0].isSleeping()) {
+          // (also when a sleeping corpse is woken by a blast or a bale it settles again)
+          const ms = rag.maxSpeed();
+          this.awakeT += dt;
+          this.restT = ms < 0.5 ? (this.restT || 0) + dt : 0;
+          if (this.restT > 0.3 || (this.awakeT > 3 && ms < 2)) { rag.sleep(); this.restT = 0; this.awakeT = 0; }
+        }
+      }
       return;
     }
 
@@ -297,6 +489,11 @@ export class Unit {
       if (this.stun <= 0) this.stun = 0;
     } else this.recover = Math.min(1, this.recover + dt * 1.4);
 
+    // stuck lying down (pinned, wedged): heave up with a wobbly hop
+    if (this.stun <= 0 && this.isDown()) {
+      this.downT = (this.downT || 0) + dt;
+      if (this.downT > 3) { this.downT = 0; this.rag.impulseAll(rand(-1, 1) * this.M, this.M * 4.5, rand(-1, 1) * this.M); }
+    } else this.downT = 0;
     const gap = this.groundGap();
     const airborne = gap > 0.7 * this.s;
     this.airT = airborne ? this.airT + dt : 0;
@@ -337,7 +534,10 @@ export class Unit {
       const hp = this.headPos;
       this.st.headPitch = clamp(-Math.atan2(tp.y - hp.y, Math.hypot(tp.x - hp.x, tp.z - hp.z) + 0.1), -0.5, 0.5);
     }
+    this.st.swing = this.gaitSwing;
+    this.st.rock = this.gaitRock || 0;
     computePose(this.st, this.pose);
+    this.updateLegs(dt, !airborne && this.stun <= 0 && this.recover > 0.6 && this.st.mode !== 'flail');
 
     const strength = this.recover * (this.stun > 0 ? 0.08 : 1);
     this.drive(dt, strength, !airborne && this.stun <= 0);
@@ -354,19 +554,33 @@ export class Unit {
     _yawQ.setFromAxisAngle(UP, this.heading);
     const Mk = M * Math.max(1, this.s);
     const atk = this.st.attack ? 1 : 0;
+    const ffk = 0.5;
     for (let i = 0; i < NPARTS; i++) {
       const m = MUSCLE[i];
       const arm = i >= PART.uarmL ? atk : 0;
-      this.worldTarget[i].copy(_yawQ).multiply(this.pose[i]);
-      rag.muscle(i, this.worldTarget[i], m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
-        m[2] * Mk * strength * (1 + arm * 1.2), dt, arm ? 17 / Math.sqrt(this.s) : 12);
+      const wt = this.worldTarget[i];
+      this.prevTarget[i].copy(wt);
+      wt.copy(_yawQ).multiply(this.pose[i]);
+      // feed-forward: the target's own spin, so fast-moving targets (legs) don't lag
+      let ff = null;
+      if (this.hasPrev && ffk > 0 && (i >= PART.thighL && i <= PART.shinR || arm)) {
+        _q.copy(this.prevTarget[i]).invert().premultiply(wt);
+        if (_q.w < 0) { _q.x = -_q.x; _q.y = -_q.y; _q.z = -_q.z; _q.w = -_q.w; }
+        const a = 2 * Math.acos(clamp(_q.w, -1, 1));
+        const sn = Math.sqrt(Math.max(1e-9, 1 - _q.w * _q.w));
+        const kk = Math.min(a / dt, 30) / sn * ffk;
+        ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
+      }
+      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
+        m[2] * Mk * strength * (1 + arm * 1.2), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
+    this.hasPrev = true;
     if (!support || strength < 0.05) return;
     // Balance: hold the pelvis at standing height, and steer.
     const p = rag.pos[PART.pelvis];
     const gy = this.battle.terrain.height(p.x, p.z);
     const h = p.y - gy;
-    const target = this.skel.standHeight * (1 - (this.st.crouch || 0) * 0.3);
+    const target = this.hipH * (1 - (this.st.crouch || 0) * 0.3);
     const vy = rag.vel[PART.pelvis].y;
     const k = strength;
     if (h < target + 0.5 * this.s) {

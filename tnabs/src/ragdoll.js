@@ -53,6 +53,16 @@ export class Ragdoll {
       const I = body.principalInertia();
       this.inertia[i] = (I.x + I.y + I.z) / 3;
     }
+    // Legs swing about their joint and drag the shin along, so their muscles work
+    // against (part of) the inertia about the joint, not the part's own. Using all
+    // of it makes the servo overshoot and buzz; 0.3 tracks well and stays calm.
+    const P = PART, parts = skel.parts;
+    const about = (i, d) => this.inertia[i] + parts[i].mass * d * d;
+    for (const [up, lo] of [[P.thighL, P.shinL], [P.thighR, P.shinR]]) {
+      const iu = about(up, parts[up].hh), il = about(lo, parts[lo].hh);
+      this.inertia[up] = (iu + parts[lo].mass * (2 * parts[up].hh + parts[lo].hh) ** 2 * 0.6) * 0.3;
+      this.inertia[lo] = il * 0.3;
+    }
     this.joints = [];
     for (const j of skel.joints) {
       const a = { x: j.anchorA.x, y: j.anchorA.y, z: j.anchorA.z };
@@ -85,7 +95,8 @@ export class Ragdoll {
 
   // Drive part i toward world quaternion target with a velocity servo.
   // gain: rad/s per rad of error; rate: how quickly (1/s) the servo acts; maxT: torque cap (N·m).
-  muscle(i, target, gain, rate, maxT, dt, maxW = 14) {
+  // ff: optional feed-forward angular velocity (how fast the target itself turns).
+  muscle(i, target, gain, rate, maxT, dt, maxW = 14, ff = null) {
     const q = this.quat[i];
     _qi.copy(q).invert();
     _qt.copy(target).multiply(_qi);
@@ -96,7 +107,9 @@ export class Ragdoll {
     const k = Math.min(ang * gain, maxW) / s;
     const av = this.angvel[i];
     const f = 1 - Math.exp(-rate * dt);
-    let ix = (_qt.x * k - av.x) * f, iy = (_qt.y * k - av.y) * f, iz = (_qt.z * k - av.z) * f;
+    let tx = _qt.x * k, ty = _qt.y * k, tz = _qt.z * k;
+    if (ff) { tx += ff.x; ty += ff.y; tz += ff.z; }
+    let ix = (tx - av.x) * f, iy = (ty - av.y) * f, iz = (tz - av.z) * f;
     const I = this.inertia[i];
     ix *= I; iy *= I; iz *= I;
     const m = Math.hypot(ix, iy, iz), cap = maxT * dt;
@@ -119,6 +132,23 @@ export class Ragdoll {
   // Point on a part, in world space (local offset along the part's Y axis etc.)
   worldPoint(i, lx, ly, lz, out) {
     return out.set(lx, ly, lz).applyQuaternion(this.quat[i]).add(this.pos[i]);
+  }
+
+  maxSpeed() {
+    let m = 0;
+    for (let i = 0; i < NPARTS; i++) {
+      const v = this.vel[i];
+      m = Math.max(m, v.x * v.x + v.y * v.y + v.z * v.z);
+    }
+    return Math.sqrt(m);
+  }
+
+  corpse() {
+    for (let i = 0; i < NPARTS; i++) this.colliders[i].setCollisionGroups(this.skel.parts[i].limb ? GROUPS.deadLimb : GROUPS.dead);
+  }
+
+  sleep() {
+    for (const b of this.bodies) b.sleep();
   }
 
   setDamping(lin, ang) {
