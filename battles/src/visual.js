@@ -176,7 +176,7 @@ const FACE_VARIANTS = [
 ];
 const BRUTES = new Set(['clubber', 'protector', 'chieftain', 'berserker', 'giant', 'king', 'knight']);
 const CUTE = new Set(['halfling', 'bard', 'healer', 'bomber', 'archer']);
-const faceVariant = (id) => (BRUTES.has(id) ? 1 : CUTE.has(id) ? 2 : 0);
+const faceVariant = (id, def) => (def?.face >= 0 && def.face <= 2 ? def.face : BRUTES.has(id) ? 1 : CUTE.has(id) ? 2 : 0); // def.face: custom units
 
 function drawFace(kind, V) {
   const c = document.createElement('canvas');
@@ -726,7 +726,7 @@ export function buildUnitVisual(def, team, opts = {}) {
   const armor = top === 'armor';
   const chestMat = armor ? metal() : top === 'robe_white' ? white() : top === 'robe_blue' ? mat(WIZARD[team]) : tc;
   const legMat = armor ? mat(look.legs || '#8d939c', { spec: 0.9 }) : look.legs ? mat(look.legs) : td;
-  const bootMat = look.bare ? mat('#7a5634', { spec: 0 }) : armor ? darkMetal() : mat('#3a2a1e', { spec: 0.3 });
+  const bootMat = look.accent ? mat(look.accent, { spec: 0.3 }) : look.bare ? mat('#7a5634', { spec: 0 }) : armor ? darkMetal() : mat('#3a2a1e', { spec: 0.3 });
   const sleeve = look.bare ? skin : chestMat;
   const paint = look.paint ? tc : null;
   for (let i = 0; i < NPARTS; i++) {
@@ -866,12 +866,12 @@ export function buildUnitVisual(def, team, opts = {}) {
         const hat = buildHat(look.hat, r, team, id);
         g.add(hat);
         if (!hat.userData.hidesFace && !opts.ghost) {
-          const f = new THREE.Mesh(faceGeo(r), FACE_MATS[faceVariant(id) * 8]);
+          const f = new THREE.Mesh(faceGeo(r), FACE_MATS[faceVariant(id, def) * 8]);
           f.castShadow = false;
           g.add(f);
           g.userData.face = f;
         }
-        const V = FACE_VARIANTS[faceVariant(id)];
+        const V = FACE_VARIANTS[faceVariant(id, def)];
         if (!hat.userData.hidesFace) mesh(sphere(r * V.nose, 10, 8), skin, 0, -r * 0.1, r * 0.98, g).scale.set(1, 0.9, 0.85);
         if (id === 'giant') { // heavy brow, big ears, a few hairs
           const b = mesh(capsule(r * 0.16, r * 0.9), skin, 0, r * 0.42, r * 0.8, g);
@@ -982,7 +982,9 @@ export function buildUnitVisual(def, team, opts = {}) {
   }
   // packs: extra meshes on parts, and extra bodies (vis.extraParts: {group, pos, quat})
   const extraParts = [];
-  for (const f of EXT.decorate) f(def, team, { root, parts, items, skel, extraParts }, H);
+  // (a custom unit wearing a pack's outfit is decorated as that pack's faction)
+  const ddef = def.lookFaction ? { ...def, faction: def.lookFaction } : def;
+  for (const f of EXT.decorate) f(ddef, team, { root, parts, items, skel, extraParts }, H);
   for (const e of extraParts) root.add(e.group);
   // Merge each part's static meshes (and each held item) into one vertex-coloured mesh.
   if (!opts.noBake) {
@@ -1006,7 +1008,7 @@ export function buildUnitVisual(def, team, opts = {}) {
     }
     root.userData.ghostMat = gm;
   }
-  const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id) };
+  const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id, def) };
   if (!opts.ghost && !opts.portrait) LIVE_VIS.add(vis);
   return vis;
 }

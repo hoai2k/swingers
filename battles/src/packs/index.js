@@ -12,3 +12,4 @@ import './big-beasts.js';
 import './good.js';
 import './evil.js';
 import './secret.js';
+import './custom.js'; // Unit Creator: the Custom faction (keep last: reads the other packs)
