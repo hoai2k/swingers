@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 5 open (12 images).** Rounds 1–4 are delivered and integrated;
+**Status: round 5 open (16 images).** Rounds 1–4 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -46,7 +46,7 @@ push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
 
-## OPEN round 5 — shops, homes and pets (12 images)
+## OPEN round 5 — shops, homes, pets and ferries (16 images)
 
 The game draws a procedural stand-in for each until the art arrives.
 
@@ -56,6 +56,10 @@ The game draws a procedural stand-in for each until the art arrives.
 - `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
 - `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
 - `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
+- `island_hopper.png` — **ISLAND HOPPER**: ferry hull nameplate (red-trimmed ferry): white board, navy rounded letters, small anchor.
+- `frostpeak_ferry.png` — **FROSTPEAK FERRY**: same nameplate style (blue-trimmed ferry), small snowflake.
+- `desert_ferry.png` — **DESERT FERRY**: same nameplate style (yellow-trimmed ferry), small cactus.
+- `saloon.png` — **SALOON**: Dusty Dunes saloon front: weathered wood-plank board, cream western-style letters.
 
 ### Faces (`assets/faces/`, 512 × 512, transparent, features only — new clothes-shop faces)
 
