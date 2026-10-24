@@ -241,10 +241,10 @@ export class Battle {
       const hitPos = v.rag.pos[best];
       if (blocked || v.def.armor > 0.3) {
         this.emit('spark', hitPos.x, hitPos.y, hitPos.z, 6);
-        this.sound('clang', hitPos, 0.8 * Math.min(2, att.s), 1 / Math.sqrt(att.s));
+        this.sound(blocked ? 'shield' : 'clang', hitPos, 0.8 * Math.min(2, att.s), 1 / Math.sqrt(att.s));
       } else {
         this.emit('blood', hitPos.x, hitPos.y, hitPos.z, Math.min(16, 4 + dmg / 8), _a.x, _a.z);
-        this.sound(w.item && w.item.includes('sword') || w.item === 'axe' || w.item === 'big_axe' ? 'slash' : 'thud', hitPos, clamp(dmg / 40, 0.4, 1.5), 1 / Math.sqrt(att.s));
+        this.sound(w.item && w.item.includes('sword') || w.item === 'axe' || w.item === 'big_axe' ? 'slash' : dmg > 60 ? 'crunch' : 'thud', hitPos, clamp(dmg / 40, 0.4, 1.5), 1 / Math.sqrt(att.s));
       }
       // part of the push goes to the struck part, the rest to the body
       v.hit(dmg, best, _a.x * force * 0.35, _a.y * force * 0.35, _a.z * force * 0.35, att, 'melee');
@@ -494,7 +494,8 @@ export class Battle {
   onDeath(u, killer) {
     this.voice(u, 'die', true);
     const p = u.chestPos;
-    this.emit('death', p.x, p.y, p.z, u.team);
+    // a: victim team, b: victim index, c: killer index (-1 if none)
+    this.emit('death', p.x, p.y, p.z, u.team, this.units.indexOf(u), killer ? this.units.indexOf(killer) : -1);
     if (u.def.deathBomb) {
       this.delayed.push([0.35, () => {
         const c = u.chestPos.clone();
