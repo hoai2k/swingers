@@ -1,6 +1,21 @@
 # Wobblers image requests
 
-**Status: round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.**
+**Status: round 2 open — 4 faces.** Round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+
+## OPEN round 2: unlockable faces (4 images) — `assets/faces/`
+
+Four new faces unlock from the hidden presents and currently use procedural
+stand-ins. Same format and style as the round 1 faces (512 × 512, transparent,
+features only, no head outline or skin): run `python3 tools/build_manifest.py`
+after adding them.
+
+| File | Size | Expression |
+| --- | --- | --- |
+| `face_star_eyes.png` | 512 × 512 | Starstruck: big yellow five-point stars for eyes with a white sparkle, huge open delighted smile. |
+| `face_winky.png` | 512 × 512 | Playful wink: one eye closed in a happy arc, the other big and round, a cheeky grin with one raised eyebrow. |
+| `face_robot.png` | 512 × 512 | Toy robot: two glowing cyan square LED eyes, a flat rectangular grille mouth with little lines, a tiny antenna-free bolt on each cheek. |
+| `face_moustache.png` | 512 × 512 | A big curly brown handlebar moustache under a round nose, friendly round eyes, small smile peeking out. |
+
 
 Generated with the built-in image generation tool and saved at the paths and
 dimensions below. The final prompts and source files are recorded in
