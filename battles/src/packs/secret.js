@@ -5,7 +5,7 @@
 // Ullr (a skiing archer god: frost volleys slow, three hits freeze solid).
 import { register } from '../ext.js';
 import {
-  THREE, clamp, rand, PART, EXPR, rangedThink, crossed, aimPoint, launchVel, addProjectile,
+  THREE, rand, PART, EXPR, rangedThink, crossed, aimPoint, launchVel, addProjectile,
   strike, blast, addStatus, arrowProj, arrowMesh, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo,
 } from './common.js';
 import { UPY, mark, markAt, refreshBeam, supportMove } from './ges-core.js';

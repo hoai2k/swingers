@@ -6,11 +6,11 @@ import { register } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, crossed, inFront, blast, addStatus,
-  torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo,
+  torus, tube, dome, headBand, tcol, tdark, chestShell,
 } from './common.js';
 import { valkInit, valkThink, valkStep, wingLayout, restSt, VALK } from './sm-valkyrie.js';
 import {
-  UPY, revivable, keepsKind, revive, reequip, markAt, refreshBeam, endBeam, supportMove, hover, STANCE, setArmKey,
+  revivable, keepsKind, revive, reequip, markAt, refreshBeam, endBeam, supportMove, hover, STANCE, setArmKey,
 } from './ges-core.js';
 
 const _d = new THREE.Vector3(), _p = new THREE.Vector3(), _o = new THREE.Vector3();

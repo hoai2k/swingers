@@ -6,7 +6,7 @@
 import { register, EXT } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
-  THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, aimPoint, launchVel,
+  THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel,
   addProjectile, sweepParts, strike, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo, twoSided,
 } from './common.js';
 import { UPY, revivable, revive, fists, mark, markAt, nearest, STANCE, setArmKey } from './ges-core.js';
