@@ -519,8 +519,8 @@ class Corpse {
     ctx.lineCap = 'round';
     for (const l of this.legs) {
       ctx.beginPath();
-      ctx.moveTo(l.x - Math.cos(l.a) * 12, l.y - Math.sin(l.a) * 12);
-      ctx.lineTo(l.x + Math.cos(l.a) * 12, l.y + Math.sin(l.a) * 12);
+      ctx.moveTo(l.x - Math.cos(l.a) * 18, l.y - Math.sin(l.a) * 18);
+      ctx.lineTo(l.x + Math.cos(l.a) * 18, l.y + Math.sin(l.a) * 18);
       ctx.stroke();
     }
     ctx.restore();

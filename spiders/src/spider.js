@@ -34,15 +34,16 @@ export const SP = {
   webReel: 520,
   webYank: 0.9,          // rope length snaps to this fraction of the hit distance
   webPump: 1500,
-  legLen: 25,            // each of the two leg bones
+  legLen: 37,            // each of the two leg bones
+  lift: 14,              // the body stands this far above the surface (r + lift)
 };
 
 const LEGS = [
   // side (+1 = along tangent), rest offset along the surface (x r), group, far (drawn darker)
-  { side: 1, off: 0.7, g: 0, far: true }, { side: 1, off: 1.2, g: 1, far: false },
-  { side: 1, off: 1.7, g: 0, far: true }, { side: 1, off: 2.15, g: 1, far: false },
-  { side: -1, off: 0.7, g: 1, far: true }, { side: -1, off: 1.2, g: 0, far: false },
-  { side: -1, off: 1.7, g: 1, far: true }, { side: -1, off: 2.15, g: 0, far: false },
+  { side: 1, off: 0.95, g: 0, far: true }, { side: 1, off: 1.75, g: 1, far: false },
+  { side: 1, off: 2.5, g: 0, far: true }, { side: 1, off: 3.15, g: 1, far: false },
+  { side: -1, off: 0.95, g: 1, far: true }, { side: -1, off: 1.75, g: 0, far: false },
+  { side: -1, off: 2.5, g: 1, far: true }, { side: -1, off: 3.15, g: 0, far: false },
 ];
 
 let NEXT_ID = 1;
@@ -127,7 +128,9 @@ export class Spider {
       this.aim.x = inp.r.x / m; this.aim.y = inp.r.y / m;
     }
     this.aimAngle = Math.atan2(this.aim.y, this.aim.x);
-    if (this.weapon || (inp && inp.r.mag > 0.3)) { if (Math.abs(this.aim.x) > 0.15) this.facing = Math.sign(this.aim.x); }
+    // face the side the weapon points to (or the aim, or the walk)
+    if (this.weapon) { const c = Math.cos(this.weapon.angle); if (Math.abs(c) > 0.08) this.facing = Math.sign(c); }
+    else if (inp && inp.r.mag > 0.3) { if (Math.abs(this.aim.x) > 0.15) this.facing = Math.sign(this.aim.x); }
     else if (Math.abs(move.x) > 0.2) this.facing = Math.sign(move.x);
 
     this.ctl = inp ? {
@@ -201,7 +204,7 @@ export class Spider {
       // climbing into a wall ahead: switch onto it before moving
       if (this.circ) {
         const g0 = this.ground;
-        const hit = world.raycast(this.x, this.y, -g0.ny * this.circ, g0.nx * this.circ, this.r + 4);
+        const hit = world.raycast(this.x, this.y, -g0.ny * this.circ, g0.nx * this.circ, this.r + SP.lift + 4);
         if (hit && hit.nx * g0.nx + hit.ny * g0.ny < 0.7 && clingable(hit.solid)) {
           this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
         }
@@ -213,7 +216,7 @@ export class Spider {
         const continuing = this.circ && this.circStick && dx * this.circStick.x + dy * this.circStick.y > 0.9;
         if (!continuing && Math.abs(dx * -g0.ny + dy * g0.nx) < 0.38) {
           for (const sgn of [1, -1]) {
-            const hit = world.raycast(this.x, this.y, -dy * sgn, dx * sgn, this.r + 5);
+            const hit = world.raycast(this.x, this.y, -dy * sgn, dx * sgn, this.r + SP.lift + 5);
             if (hit && clingable(hit.solid) && Math.abs(dx * -hit.ny + dy * hit.nx) > 0.6) {
               this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
               break;
@@ -273,7 +276,7 @@ export class Spider {
     // find the surface to cling to
     if (this.jumpLock > 0) { this.ground = null; }
     else {
-      const n = world.nearest(this.x, this.y, this.r + SP.stickRange);
+      const n = world.nearest(this.x, this.y, this.r + SP.lift + SP.stickRange);
       const webPull = this.web && this.web.state === 'stuck' ? this.webDir() : null;
       let ok = n && clingable(n.solid);
       if (ok && webPull && webPull.x * n.nx + webPull.y * n.ny > 0.25 && this.web.taut) ok = false;
@@ -283,8 +286,10 @@ export class Spider {
         this.coyote = SP.coyote; this.lastNormal = { x: n.nx, y: n.ny };
       } else if (ok) {
         this.ground = { nx: n.nx, ny: n.ny, x: n.x, y: n.y, solid: n.solid };
-        const gap = (n.inside ? -n.d : n.d) - this.r;
-        if (gap > 0) { this.x -= this.ground.nx * gap; this.y -= this.ground.ny * gap; }
+        // stand on the legs: hold the body at r + lift from the surface
+        let gap = (n.inside ? -n.d : n.d) - this.r - SP.lift;
+        if (gap < 0) gap *= 0.35;   // rise smoothly (and give way under low ceilings)
+        this.x -= this.ground.nx * gap; this.y -= this.ground.ny * gap;
         if (!this.wasGround) {
           const impact = -(preVx * n.nx + preVy * n.ny);
           if (impact > 250) { sfx.land(); this.squash = 1 - Math.min(0.3, impact / 3000); this.game.fx.burst(n.x, n.y, { n: 4, speed: 120, color: 'rgba(255,255,255,0.5)', kind: 'smoke', size: 4, life: 0.3, g: 0 }); }
@@ -467,18 +472,18 @@ export class Spider {
       // planted feet ride their surface
       if (L.planted && L.solid && L.solid.dynamic) { const p = L.solid.tx({ x: L.lx, y: L.ly }); L.fx = p.x; L.fy = p.y; }
       if (L.planted && L.solid && L.solid.broken) L.planted = false;
-      const hipX = this.x + tx * L.side * r * 0.35, hipY = this.y + ty * L.side * r * 0.35;
+      const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
       if (g) {
         // ideal foothold: along the surface, leading in the walk direction
         const lead = clamp(((this.vx * tx + this.vy * ty) * 0.07), -r, r);
         const ox = this.x + tx * (L.side * L.off * r + lead) * 0.9, oy = this.y + ty * (L.side * L.off * r + lead) * 0.9;
-        let hit = world.raycast(ox, oy, -nx, -ny, r * 2.6);
+        let hit = world.raycast(ox, oy, -nx, -ny, (r + SP.lift) * 2.2);
         if (!hit) hit = world.raycast(this.x, this.y, tx * L.side * 0.8 - nx, ty * L.side * 0.8 - ny, reach + r);
         if (hit) {
           L.tx = hit.x; L.ty = hit.y;
           const far = Math.hypot(L.fx - L.tx, L.fy - L.ty);
           const tooFar = Math.hypot(L.fx - hipX, L.fy - hipY) > reach * 1.05;
-          if ((!L.planted && L.t >= 1) || ((far > r * 0.95 || tooFar) && L.t >= 1 && !anyStep[1 - L.g])) {
+          if ((!L.planted && L.t >= 1) || ((far > r * 1.25 || tooFar) && L.t >= 1 && !anyStep[1 - L.g])) {
             L.sx = L.fx; L.sy = L.fy; L.t = 0; L.planted = false; anyStep[L.g] = true;
             L.solid = hit.solid; const lp = hit.solid.inv(hit); L.lx = lp.x; L.ly = lp.y;
             L.tN = { x: nx, y: ny };
@@ -489,8 +494,8 @@ export class Spider {
       } else {
         L.planted = false;
         // airborne: legs spread and trail the motion
-        const spread = L.side * (0.6 + L.off * 0.5);
-        const ax = this.x + spread * r * 1.05 - clamp(this.vx * 0.02, -14, 14), ay = this.y + r * (0.95 + 0.25 * Math.sin(this.time * 9 + i)) - clamp(this.vy * 0.015, -10, 12);
+        const spread = L.side * (0.7 + L.off * 0.55);
+        const ax = this.x + spread * r * 1.05 - clamp(this.vx * 0.02, -14, 14), ay = this.y + r * (1.2 + 0.3 * Math.sin(this.time * 9 + i)) - clamp(this.vy * 0.015, -10, 12);
         L.tx = ax; L.ty = ay;
         L.fx = lerp(L.fx, ax, Math.min(1, dt * 14)); L.fy = lerp(L.fy, ay, Math.min(1, dt * 14));
         L.t = 1;
@@ -499,7 +504,7 @@ export class Spider {
       if (L.t < 1) {
         L.t = Math.min(1, L.t + dt / Math.max(0.05, 0.11 - speed * 0.00008));
         const s = L.t;
-        const lift = Math.sin(s * Math.PI) * r * 0.55;
+        const lift = Math.sin(s * Math.PI) * r * 0.75;
         const tN = L.tN || { x: nx, y: ny };
         L.fx = lerp(L.sx, L.tx, s) + tN.x * lift;
         L.fy = lerp(L.sy, L.ty, s) + tN.y * lift;
@@ -517,7 +522,7 @@ export class Spider {
     ctx.lineJoin = 'round';
     for (const L of this.legs) {
       if (L.far !== far) continue;
-      const hipX = this.x + tx * L.side * r * 0.35, hipY = this.y + ty * L.side * r * 0.35;
+      const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
       let fx = L.fx, fy = L.fy;
       let dx = fx - hipX, dy = fy - hipY;
       let d = Math.hypot(dx, dy) || 1;
@@ -531,17 +536,23 @@ export class Spider {
       const s1 = Math.cos(k1) * ux + Math.sin(k1) * uy, s2 = Math.cos(k2) * ux + Math.sin(k2) * uy;
       const ka = s1 > s2 ? k1 : k2;
       const kx = hipX + Math.cos(ka) * SP.legLen, ky = hipY + Math.sin(ka) * SP.legLen;
-      ctx.strokeStyle = far ? '#0c0c12' : '#15151d';
+      // thick thigh, thin shin: an outline pass then the colour pass
+      const outline = far ? '#0c0c12' : '#15151d', fill = far ? shade(c.dark, 0.6) : c.dark;
+      ctx.strokeStyle = outline;
       ctx.lineWidth = far ? 5.5 : 6.5;
-      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = far ? shade(c.dark, 0.6) : c.dark;
+      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+      ctx.lineWidth = far ? 3.8 : 4.4;
+      ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.strokeStyle = fill;
       ctx.lineWidth = far ? 2.6 : 3.2;
-      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+      ctx.lineWidth = far ? 1.4 : 1.8;
+      ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
       if (!far) {
         ctx.fillStyle = c.accent;
         ctx.beginPath(); ctx.arc(kx, ky, 2.4, 0, TAU); ctx.fill();
         ctx.fillStyle = '#15151d';
-        ctx.beginPath(); ctx.arc(fx, fy, 2.6, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(fx, fy, 2, 0, TAU); ctx.fill();
       }
     }
   }
@@ -586,7 +597,8 @@ export class Spider {
     if (this.weapon && this.weapon.drawBehind) this.weapon.drawBehind(ctx);
     const tilt = clamp(Math.atan2(this.up.x, -this.up.y), -0.45, 0.45) + (this.ground ? Math.sin(this.time * 14) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 0.06 : clamp(this.vx * 0.0004, -0.3, 0.3));
     const blink = this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0;
-    drawBody(ctx, this.x, this.y, r * 1.08, this.castIndex, { tilt, facing: this.facing, squash: this.squash, alpha: blink ? 0.45 : 1, flash: this.flash });
+    const bob = this.ground ? Math.abs(Math.sin(this.time * 16)) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 2.5 : 0;
+    drawBody(ctx, this.x + this.up.x * bob, this.y + this.up.y * bob, r * 1.0, this.castIndex, { tilt, facing: this.facing, squash: this.squash, alpha: blink ? 0.45 : 1, flash: this.flash });
     if (this.shield > 0) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
