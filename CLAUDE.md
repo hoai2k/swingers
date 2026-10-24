@@ -1,6 +1,6 @@
 # Agent guidance for SWINGERS
 
-## Deploy state: **DISABLED**
+## Deploy state: **ENABLED**
 
 This switch overrides every other instruction in this file about pushing,
 merging or fast-forwarding `main`, opening or merging pull requests into it,
@@ -74,6 +74,25 @@ and deploying.
   `assets/web/` that `src/art.js` actually loads. Every image the game loads
   must go through `track()` (`src/preload.js`) so the boot loading bar waits
   for it — the title never shows stand-in drawings.
+
+## Spider Swingers (`spiders/`)
+
+- A second game in the same repo, served at `/spiders/`: a Spider Heck-style
+  brawler (wall-walking spiders, webs, plasma sabers, 15 weapons, VS and
+  wave survival, up to 8 Xbox pads + keyboard/mouse). Same rules: no build
+  step, open `http://localhost:8123/spiders/`.
+- It reuses the Rounders cast (`../src/characters-data.js`,
+  `../assets/characters`), the music and the shared theme art in
+  `../assets/web/`; never copy those into `spiders/`.
+- `window.__sp` is the live Game (`manual = true`, `input.mock = [{id, ...}]`,
+  `step(1/60)`); `spiders/tools/probe-example.cjs` shows a headless probe.
+- Module map: `game.js` (API block at the top), `spider.js` (movement, webs,
+  legs), `physics.js` (terrain), `weapons.js` + `weapons/*.js`,
+  `boards.js` (10 boards; format in `board.js`), `modes/vs.js`,
+  `modes/survival.js` + `enemies/`, `lobby.js`, `title.js`, `ui.js`,
+  `pause.js`, `hud.js`.
+- Its image requests live in `spiders/image-requests.md`; delivered files go
+  in `spiders/assets/web/` and must be listed in its `manifest.json`.
 
 ## Tests and deploys
 
