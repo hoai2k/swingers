@@ -21,6 +21,7 @@ export class Saber extends Weapon {
   static color = '#4dd2ff';
   static blades = [{ from: 4, to: 70 }];    // along the axis from the grip
   static throwSpeed = 1500;
+  static throwCenter = 35;                 // spin center along the axis when thrown
 
   constructor(game) {
     super(game);
@@ -211,8 +212,9 @@ export class Saber extends Weapon {
       p.x += p.vx * dt; p.y += p.vy * dt;
       p.angle += p.spin * dt;
       // the spinning blade is two-sided while flying: grip at the center
-      const cx = p.x - Math.cos(p.angle) * 35, cy = p.y - Math.sin(p.angle) * 35;
-      const pcx = px - Math.cos(pa) * 35, pcy = py - Math.sin(pa) * 35;
+      const tc = this.constructor.throwCenter;
+      const cx = p.x - Math.cos(p.angle) * tc, cy = p.y - Math.sin(p.angle) * tc;
+      const pcx = px - Math.cos(pa) * tc, pcy = py - Math.sin(pa) * tc;
       this.on = 1;
       this.angle = p.angle;
       this.x = cx; this.y = cy;
@@ -283,7 +285,7 @@ export class Saber extends Weapon {
       // flying/stuck sabers stay lit
       ctx.translate(this.length * 0.4, 0);
       const c = this.thrower ? this.thrower.color.main : this.color;
-      ctx.translate(-35, 0);
+      ctx.translate(-this.constructor.throwCenter, 0);
       for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
       this.drawHilt(ctx);
       return;

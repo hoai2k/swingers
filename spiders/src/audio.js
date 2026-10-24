@@ -133,6 +133,33 @@ class Sfx {
   lose()   { [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.25, { type: 'triangle', vol: 0.12, delay: i * 0.14 })); }
   spawnIn() { this.tone(300, 0.25, { type: 'sine', vol: 0.08, slide: 600 }); }
   crate()  { this.noise(0.1, 0.12, { freq: 800 }); this.tone(150, 0.1, { type: 'triangle', vol: 0.1 }); }
+  // survival (insects)
+  enemyCharge() { if (this.limit('echarge', 80)) this.tone(300, 0.35, { type: 'sine', vol: 0.06, slide: 700 }); }
+  enemyShoot() { if (this.limit('eshoot', 40)) { this.tone(520, 0.12, { type: 'sawtooth', vol: 0.06, slide: -380 }); this.noise(0.06, 0.06, { filter: 'bandpass', freq: 1800, q: 2 }); } }
+  teleport() { if (this.limit('tele', 80)) { this.tone(900, 0.25, { type: 'sine', vol: 0.06, slide: 900 }); this.tone(450, 0.25, { type: 'triangle', vol: 0.04, slide: -300, delay: 0.05 }); } }
+  orb()    { if (this.limit('orb', 80)) { this.tone(220, 0.4, { type: 'sine', vol: 0.09, slide: 120 }); this.tone(330, 0.3, { type: 'triangle', vol: 0.04, delay: 0.04 }); } }
+  bossRoar() { if (this.limit('roar', 300)) { this.tone(70, 0.7, { type: 'sawtooth', vol: 0.12, slide: 40 }); this.tone(105, 0.6, { type: 'square', vol: 0.05, slide: -30 }); this.noise(0.6, 0.12, { filter: 'bandpass', freq: 500, sweepTo: 200, q: 1.5 }); } }
+  warn()   { if (this.limit('warn', 120)) this.tone(1180, 0.07, { type: 'square', vol: 0.04 }); }
+  perk()   { [523, 784, 1047].forEach((f, i) => this.tone(f, 0.14, { type: 'triangle', vol: 0.1, delay: i * 0.06 })); }
+  revive() { this.tone(400, 0.3, { type: 'sine', vol: 0.09, slide: 500 }); this.tone(800, 0.2, { type: 'triangle', vol: 0.06, delay: 0.12 }); }
+  // weapon roster (src/weapons/*.js)
+  shotgun() { if (this.limit('shotgun', 60)) { this.noise(0.35, 0.3, { freq: 3200, sweepTo: 200 }); this.tone(80, 0.22, { type: 'sine', vol: 0.25, slide: -40 }); this.noise(0.04, 0.07, { filter: 'bandpass', freq: 1800, q: 4, delay: 0.3 }); this.noise(0.05, 0.07, { filter: 'bandpass', freq: 1300, q: 4, delay: 0.4 }); } }
+  rail()   { if (this.limit('rail', 60)) { this.tone(3200, 0.35, { type: 'sawtooth', vol: 0.07, slide: -3000 }); this.noise(0.3, 0.2, { filter: 'highpass', freq: 1500, sweepTo: 8000 }); this.tone(60, 0.3, { type: 'sine', vol: 0.25, slide: -20 }); } }
+  rocket() { if (this.limit('rocket', 60)) { this.noise(0.5, 0.15, { filter: 'bandpass', freq: 400, sweepTo: 1800, q: 1.2 }); this.tone(140, 0.2, { type: 'sawtooth', vol: 0.06, slide: 120 }); } }
+  tick(hi = 0) { if (this.limit('tick', 50)) this.tone(hi ? 2100 : 1500, 0.04, { type: 'square', vol: 0.05 }); }
+  beep()   { if (this.limit('beep', 60)) this.tone(2400, 0.05, { type: 'sine', vol: 0.06 }); }
+  stick()  { if (this.limit('stick', 40)) { this.tone(260, 0.05, { type: 'triangle', vol: 0.08 }); this.noise(0.04, 0.06, { freq: 1200 }); } }
+  saw()    { if (this.limit('saw', 50)) { this.tone(900, 0.18, { type: 'sawtooth', vol: 0.04, slide: 400 }); this.noise(0.12, 0.06, { filter: 'bandpass', freq: 3000, q: 6 }); } }
+  sawHit() { if (this.limit('sawhit', 40)) { this.tone(2600 + Math.random() * 600, 0.12, { type: 'triangle', vol: 0.07, slide: -800 }); this.noise(0.08, 0.08, { filter: 'highpass', freq: 3500 }); } }
+  grind()  { if (this.limit('grind', 80)) this.noise(0.1, 0.05, { filter: 'bandpass', freq: 2400 + Math.random() * 800, q: 5 }); }
+  beam()   { if (this.limit('beam', 70)) { this.tone(70 + Math.random() * 10, 0.1, { type: 'sawtooth', vol: 0.05 }); this.tone(1400 + Math.random() * 300, 0.08, { type: 'square', vol: 0.015 }); } }
+  spin(t)  { if (this.limit('spin', 60)) this.tone(150 + t * 500, 0.09, { type: 'sawtooth', vol: 0.025 }); }
+  rattle() { if (this.limit('rattle', 45)) { this.noise(0.05, 0.12, { freq: 3500, sweepTo: 600 }); this.tone(160, 0.04, { type: 'square', vol: 0.05 }); } }
+  vent()   { if (this.limit('vent', 300)) this.noise(0.6, 0.08, { filter: 'highpass', freq: 3000, sweepTo: 1500 }); }
+  warp()   { if (this.limit('warp', 110)) this.tone(55 + Math.random() * 20, 0.16, { type: 'sine', vol: 0.12, slide: 30 }); }
+  implode() { if (this.limit('implode', 80)) { this.tone(900, 0.4, { type: 'sine', vol: 0.12, slide: -850 }); this.noise(0.4, 0.15, { freq: 300, sweepTo: 3000 }); } }
+  crackle() { if (this.limit('crackle', 40)) { for (let i = 0; i < 4; i++) this.noise(0.03, 0.1, { filter: 'highpass', freq: 2500 + Math.random() * 3000, delay: i * 0.025 }); this.tone(120, 0.12, { type: 'sawtooth', vol: 0.06 }); } }
+  swarm()  { if (this.limit('swarm', 50)) { this.tone(600 + Math.random() * 300, 0.12, { type: 'square', vol: 0.04, slide: 600 }); this.noise(0.1, 0.06, { filter: 'bandpass', freq: 2000, q: 2 }); } }
 }
 
 export const sfx = new Sfx();
