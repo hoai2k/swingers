@@ -22,6 +22,7 @@ export class Glaive extends Saber {
   static weight = 0.9;
   static color = '#ffe066';
   static blades = [{ from: 74, to: 112 }];
+  static chargeThrow = false;      // RT is an instant lunge
 
   hands() { return [{ x: this.x, y: this.y }, this.along(30, 1)]; }
 

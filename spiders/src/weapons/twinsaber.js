@@ -35,8 +35,8 @@ export class TwinSaber extends Saber {
     this.wallN = { x: 0, y: -1 };
   }
 
-  throwSaber(ctl) {
-    super.throwSaber(ctl);
+  throwSaber(ctl, charge = 0) {
+    super.throwSaber(ctl, charge);
     if (this.pickup) this.pickup.spin *= 1.5;
     this.grind = 0;
   }

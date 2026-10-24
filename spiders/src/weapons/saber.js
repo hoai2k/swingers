@@ -21,6 +21,7 @@ export class Saber extends Weapon {
   static color = '#4dd2ff';
   static blades = [{ from: 4, to: 70 }];    // along the axis from the grip
   static throwSpeed = 1500;
+  static chargeThrow = true;               // hold RT to wind up the throw, release to let fly
   static throwCenter = 35;                 // spin center along the axis when thrown
 
   constructor(game) {
@@ -40,7 +41,7 @@ export class Saber extends Weapon {
   onEquip(sp) {
     if (this.thrower && this.thrower.recallable === this) this.thrower.recallable = null;
     this.mode = null; this.thrower = null; this.pickup = null;
-    this.on = 0; this.trail.length = 0;
+    this.on = 0; this.trail.length = 0; this.charging = 0; this.throwPower = 1;
     sp.recallable = null;
     sfx.saberOn();
   }
@@ -65,7 +66,24 @@ export class Saber extends Weapon {
     this.trail.push({ x: tip.x, y: tip.y, bx: this.x, by: this.y, t: 0 });
     if (this.trail.length > 6) this.trail.shift();
     for (const t of this.trail) t.t += dt;
-    if (ctl.firePressed) this.throwSaber(ctl);
+    if (!this.constructor.chargeThrow) { if (ctl.firePressed) this.throwSaber(ctl); return; }
+    // RT: a tap throws; holding winds it up (up to 0.7 s) for a faster,
+    // harder-hitting throw — the blade swells and crackles while it charges
+    if (ctl.firePressed) this.charging = 0.001;
+    if (this.charging > 0) {
+      if (ctl.fire) {
+        this.charging = Math.min(1, this.charging + dt / 0.7);
+        sfx.charge(this.charging);
+        if (this.charging >= 1 && Math.random() < 0.5) {
+          const t = this.along(this.length * Math.random());
+          this.game.fx.spark(t.x, t.y, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, this.bladeColor, 0.2, 1.5);
+        }
+      } else {
+        const c = this.charging;
+        this.charging = 0;
+        this.throwSaber(ctl, c);
+      }
+    }
   }
 
   // kill / clash / deflect / cut webs along the swept blade
@@ -99,7 +117,7 @@ export class Saber extends Weapon {
         const c = closestOnSeg(actor.x, actor.y, s.x1, s.y1, s.x2, s.y2);
         if (Math.hypot(actor.x - c.x, actor.y - c.y) < actor.r + 3) {
           const dx = actor.x - (owner ? owner.x : x), dy = actor.y - (owner ? owner.y : y), m = Math.hypot(dx, dy) || 1;
-          if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500, iy: dy / m * 500, weapon: this, melee: true })) {
+          if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500 * (this.mode ? this.throwPower || 1 : 1), iy: dy / m * 500 * (this.mode ? this.throwPower || 1 : 1), weapon: this, melee: true })) {
             game.fx.burst(c.x, c.y, { n: 14, speed: 500, color: this.bladeColor, life: 0.3 });
           }
           break;
@@ -148,10 +166,11 @@ export class Saber extends Weapon {
   // ---- throwing ---------------------------------------------------------
   onThrow() { return false; }   // RB/B: plain toss
 
-  throwSaber(ctl) {
+  throwSaber(ctl, charge = 0) {
     const o = this.owner;
     if (!o) return;
-    const sp = this.constructor.throwSpeed;
+    const sp = this.constructor.throwSpeed * (1 + 0.6 * charge);
+    this.throwPower = 1 + 1.6 * charge;
     const p = o.dropWeapon(0, 0);
     if (!p) return;
     p.vx = ctl.aimX * sp; p.vy = ctl.aimY * sp;
@@ -260,6 +279,15 @@ export class Saber extends Weapon {
 
   draw(ctx) {
     const color = this.bladeColor;
+    if (this.charging > 0) {
+      // wind-up glow along the blade
+      const c = this.charging;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.25 + 0.35 * c * (0.7 + 0.3 * Math.sin(this.time * 40));
+      for (const sg of this.segsAt(this.x, this.y, this.angle)) glowLine(ctx, sg.x1, sg.y1, sg.x2, sg.y2, color, 4.5 + 7 * c);
+      ctx.restore();
+    }
     // swing smear
     if (this.trail.length > 2 && Math.abs(this.av) > 8) {
       ctx.save();
