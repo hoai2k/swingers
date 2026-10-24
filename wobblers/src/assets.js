@@ -45,14 +45,35 @@ export function paintOver(tex, path, draw) {
 
 // Faces: the image holds just the features (eyes, brows, mouth) on a
 // transparent background; it is laid on skin over the front of the head.
+// Art is framed differently from face to face, so each is cropped to its
+// visible features and scaled to the same width.
+const bboxes = new Map();
+function featureBox(im) {
+  if (bboxes.has(im)) return bboxes.get(im);
+  const cv = document.createElement('canvas');
+  cv.width = im.width; cv.height = im.height;
+  const g = cv.getContext('2d');
+  g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, cv.width, cv.height).data;
+  let x0 = cv.width, y0 = cv.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+    if (d[(y * cv.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  const box = x1 < 0 ? [0, 0, im.width, im.height] : [x0, y0, x1 - x0 + 1, y1 - y0 + 1];
+  bboxes.set(im, box);
+  return box;
+}
+
 export function paintFace(tex, name) {
   return paintOver(tex, `faces/face_${slug(name)}.png`, (g, im, cv) => {
     const W = cv.width, H = cv.height;
     g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
     // the head's texture is equirectangular with square pixels (0.7 degrees
-    // each), so a square image stays square. The art leaves a margin round the
-    // features, so draw it over ~145 degrees of the head
-    const s = W * 0.4;
-    g.drawImage(im, W * 0.25 - s / 2, H * 0.47 - s / 2, s, s);
+    // each), so the features keep their proportions: ~110 degrees wide,
+    // centred a little above the head's equator
+    const [bx, by, bw, bh] = featureBox(im);
+    const k = Math.min(W * 0.31 / bw, H * 0.52 / bh);
+    const dw = bw * k, dh = bh * k;
+    g.drawImage(im, bx, by, bw, bh, W * 0.25 - dw / 2, H * 0.5 - dh / 2, dw, dh);
   });
 }

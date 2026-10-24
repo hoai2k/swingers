@@ -38,9 +38,9 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 |---|---|---|---|
 | Move / camera | LS / RS | WASD / mouse | Arrows / Numpad 4 6 8 5 |
 | Jump | A | Space | Numpad 0 |
-| Ragdoll (flop) | B | R | Numpad 7 |
-| Punch | X | F | Numpad 2 |
-| Enter / exit seat | Y | E | Numpad 9 |
+| Ragdoll (flop) | B | X (or R) | Numpad 7 |
+| Punch | X | G or middle mouse | Numpad 2 |
+| Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
