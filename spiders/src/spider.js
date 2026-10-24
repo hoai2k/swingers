@@ -1,0 +1,586 @@
+// The spider: a Rounders character ball with eight procedural legs.
+//
+// Movement (Spider-Heck style):
+//  - clings to every surface it touches (floors, walls, ceilings, round
+//    rocks, moving platforms) and walks around it with the left stick.
+//    Holding a direction keeps circulating around a corner, so holding
+//    right on the floor walks you up the wall you run into.
+//  - A / LB jumps off the surface (along its normal, nudged by the stick).
+//  - LT shoots a web toward the right-stick aim; hold to swing, release to
+//    let go. Left stick pumps the swing (sideways) and reels (up/down).
+//  - RT uses the held weapon, RB / B throws it, X swaps with one nearby.
+//
+// Spiders die from one hit (game.killSpider). Ice can't be clung to; lava
+// kills.
+
+import { clamp, lerp, TAU, angDiff, rand, rgba } from './util.js';
+import { castAt, drawBody } from './cast.js';
+import { sfx } from './audio.js';
+
+export const SP = {
+  r: 19,
+  gravity: 2000,
+  walkSpeed: 340,
+  walkAccel: 4200,
+  airAccel: 1100,
+  airMax: 430,
+  stickRange: 10,
+  jumpSpeed: 800,
+  maxSpeed: 2200,
+  coyote: 0.1,
+  webSpeed: 3600,
+  webMax: 860,
+  webMin: 36,
+  webReel: 520,
+  webYank: 0.9,          // rope length snaps to this fraction of the hit distance
+  webPump: 1500,
+  legLen: 23,            // each of the two leg bones
+};
+
+const LEGS = [
+  // side (+1 = along tangent), rest offset along the surface (x r), group, far (drawn darker)
+  { side: 1, off: 0.55, g: 0, far: true }, { side: 1, off: 1.05, g: 1, far: false },
+  { side: 1, off: 1.55, g: 0, far: true }, { side: 1, off: 2.0, g: 1, far: false },
+  { side: -1, off: 0.55, g: 1, far: true }, { side: -1, off: 1.05, g: 0, far: false },
+  { side: -1, off: 1.55, g: 1, far: true }, { side: -1, off: 2.0, g: 0, far: false },
+];
+
+let NEXT_ID = 1;
+
+export class Spider {
+  constructor(game, { slot = 0, castIndex = 0, color, inputId = null, team = null, name = '' } = {}) {
+    this.game = game;
+    this.id = NEXT_ID++;
+    this.kind = 'spider';
+    this.slot = slot;
+    this.castIndex = castIndex;
+    this.color = color;
+    this.inputId = inputId;
+    this.team = team ?? ('p' + slot);
+    this.name = name || castAt(castIndex).name;
+    this.r = SP.r;
+    this.x = 0; this.y = 0; this.vx = 0; this.vy = 0;
+    this.alive = true;
+    this.hp = 1;
+    this.ground = null;        // {nx, ny, x, y, solid} while clinging
+    this.wasGround = false;
+    this.up = { x: 0, y: -1 }; // smoothed surface normal (visuals)
+    this.jumpLock = 0;
+    this.coyote = 0;
+    this.lastNormal = { x: 0, y: -1 };
+    this.circ = 0;             // walking direction memory (+1/-1 around the surface)
+    this.circStick = null;
+    this.aim = { x: 1, y: 0 };
+    this.aimAngle = 0;
+    this.facing = 1;
+    this.web = null;
+    this.weapon = null;
+    this.pickCooldown = 0;
+    this.invuln = 0;           // spawn protection (s)
+    this.shield = 0;           // hits a shield absorbs (perks/pickups)
+    this.flash = 0;
+    this.squash = 1;
+    this.time = rand(0, 10);
+    this.stepPhase = 0;
+    this.kills = 0;
+    this.stun = 0;             // can't act (s)
+    this.speedMul = 1;         // perks
+    this.jumpMul = 1;
+    this.legs = LEGS.map((L) => ({ ...L, fx: 0, fy: 0, sx: 0, sy: 0, tx: 0, ty: 0, t: 1, planted: false, solid: null, lx: 0, ly: 0 }));
+    this.ctl = null;
+    this.recallable = null;   // thrown weapon that answers RT (saber)
+  }
+
+  get webColor() { return '#f4f7ff'; }
+
+  place(x, y) {
+    this.x = x; this.y = y; this.vx = 0; this.vy = 0;
+    this.ground = null;
+    this.web = null;
+    for (const L of this.legs) { L.fx = L.sx = L.tx = x + L.side * L.off * this.r; L.fy = L.sy = L.ty = y + this.r; L.t = 1; L.planted = false; L.solid = null; }
+  }
+
+  impulse(ix, iy, detach = true) {
+    this.vx += ix; this.vy += iy;
+    if (detach && Math.hypot(ix, iy) > 260) { this.jumpLock = Math.max(this.jumpLock, 0.14); this.ground = null; }
+  }
+
+  // ----------------------------------------------------------------------
+  update(dt, input) {
+    const game = this.game;
+    const world = game.world;
+    this.time += dt;
+    this.jumpLock = Math.max(0, this.jumpLock - dt);
+    this.pickCooldown = Math.max(0, this.pickCooldown - dt);
+    this.invuln = Math.max(0, this.invuln - dt);
+    this.flash = Math.max(0, this.flash - dt * 4);
+    this.stun = Math.max(0, this.stun - dt);
+    this.squash = lerp(this.squash, 1, Math.min(1, dt * 12));
+
+    const inp = this.stun > 0 ? null : input;
+    const move = inp ? inp.l : { x: 0, y: 0, mag: 0 };
+    // aim: right stick (or mouse). Neutral keeps the last aim.
+    if (inp && inp.r.mag > 0.3) {
+      const m = Math.hypot(inp.r.x, inp.r.y);
+      this.aim.x = inp.r.x / m; this.aim.y = inp.r.y / m;
+    }
+    this.aimAngle = Math.atan2(this.aim.y, this.aim.x);
+    if (this.weapon || (inp && inp.r.mag > 0.3)) { if (Math.abs(this.aim.x) > 0.15) this.facing = Math.sign(this.aim.x); }
+    else if (Math.abs(move.x) > 0.2) this.facing = Math.sign(move.x);
+
+    this.ctl = inp ? {
+      aimX: this.aim.x, aimY: this.aim.y, angle: this.aimAngle, aimMag: inp.r.mag,
+      fire: inp.rt > 0.45, firePressed: inp.pressed.rt, fireReleased: inp.released.rt,
+      alt: inp.held.rb, altPressed: inp.pressed.rb,
+    } : { aimX: this.aim.x, aimY: this.aim.y, angle: this.aimAngle, aimMag: 0, fire: false, firePressed: false, fireReleased: false, alt: false, altPressed: false };
+
+    // ---- jump
+    const jumpPressed = inp && (inp.pressed.a || inp.pressed.lb);
+    if (jumpPressed) {
+      if (this.ground || this.coyote > 0) {
+        const n = this.ground || this.lastNormal;
+        const jv = SP.jumpSpeed * this.jumpMul;
+        let jx = n.nx ?? n.x, jy = n.ny ?? n.y;
+        // nudge by the stick; on a ceiling, a jump is a drop
+        jx += move.x * 0.55; jy += move.y * 0.35;
+        const m = Math.hypot(jx, jy) || 1;
+        const sv = this.ground ? this.ground.solid.velAt(this.ground.x, this.ground.y, world.dt) : { x: 0, y: 0 };
+        this.vx = (jx / m) * jv + sv.x * 0.6 + this.vx * 0.3;
+        this.vy = (jy / m) * jv + sv.y * 0.6;
+        this.ground = null; this.coyote = 0; this.jumpLock = 0.16;
+        this.squash = 0.75;
+        sfx.jump();
+        game.fx.burst(this.x - jx / m * this.r, this.y - jy / m * this.r, { n: 6, speed: 160, color: 'rgba(255,255,255,0.6)', kind: 'smoke', size: 5, life: 0.35, g: 0 });
+      } else if (this.web && this.web.state === 'stuck') {
+        // jump out of a swing: let go with a little boost
+        this.releaseWeb(true);
+      }
+    }
+
+    // ---- web
+    if (inp && inp.pressed.lt && !this.web) this.shootWeb();
+    if (this.web && (!inp || !(inp.lt > 0.3))) this.releaseWeb(false);
+    if (this.web) this.updateWeb(dt, move);
+
+    // ---- locomotion
+    const sub = 2;
+    const h = dt / sub;
+    for (let s = 0; s < sub; s++) this.step(h, move);
+
+    // ---- surroundings
+    this.up.x = lerp(this.up.x, this.ground ? this.ground.nx : 0, Math.min(1, dt * 10));
+    this.up.y = lerp(this.up.y, this.ground ? this.ground.ny : -1, Math.min(1, dt * 10));
+    const ul = Math.hypot(this.up.x, this.up.y) || 1; this.up.x /= ul; this.up.y /= ul;
+
+    this.updateLegs(dt);
+
+    // weapon
+    const hadWeapon = !!this.weapon;
+    if (this.weapon) this.weapon.update(dt, this.ctl);
+    if (inp && this.weapon && (inp.pressed.rb || inp.pressed.b)) this.throwWeapon();
+    if (inp && inp.pressed.x) this.swapWeapon();
+    // a thrown weapon that can come back (sabers): pull the trigger to recall it
+    if (inp && !hadWeapon && this.recallable && inp.pressed.rt) this.recallable.recall(this);
+    if (!this.weapon && this.pickCooldown <= 0) {
+      const p = game.pickupNear(this.x, this.y, this.r + 16, this);
+      if (p) game.takePickup(this, p);
+    }
+
+    // hazards
+    if (this.y > game.board.killY || this.x < -300 || this.x > world.bounds.w + 300) game.killSpider(this, { cause: 'fall' });
+  }
+
+  step(h, move) {
+    const world = this.game.world;
+    const speed = Math.hypot(this.vx, this.vy);
+    if (speed > SP.maxSpeed) { this.vx *= SP.maxSpeed / speed; this.vy *= SP.maxSpeed / speed; }
+
+    if (this.ground) {
+      const g = this.ground;
+      const nx = g.nx, ny = g.ny;
+      const tx = -ny, ty = nx;            // consistent circulation around a solid
+      const sv = g.solid.velAt(g.x, g.y, world.dt);
+      // direction memory: keep circulating while the stick stays put
+      let target = 0;
+      if (move.mag > 0.25) {
+        const s = move.x * tx + move.y * ty;
+        const into = -(move.x * nx + move.y * ny);
+        const stuck = this.circStick && (move.x * this.circStick.x + move.y * this.circStick.y) > 0.8;
+        if (Math.abs(s) > 0.38) { this.circ = Math.sign(s); this.circStick = { x: move.x / move.mag, y: move.y / move.mag }; }
+        else if (!(stuck && this.circ * s > -0.3 && into > -0.2)) this.circ = 0;
+        target = this.circ * SP.walkSpeed * this.speedMul * Math.min(1, move.mag * 1.2);
+      } else { this.circ = 0; this.circStick = null; }
+      // walking speed along the tangent
+      let vt = (this.vx - sv.x) * tx + (this.vy - sv.y) * ty;
+      const acc = SP.walkAccel * h * (g.solid.mat === 'ice' ? 0.15 : 1);
+      vt += clamp(target - vt, -acc, acc);
+      if (!target && g.solid.mat !== 'ice') vt *= Math.max(0, 1 - h * 14);
+      if (g.solid.mat === 'ice') vt += SP.gravity * ty * h;   // slide down icy slopes
+      this.vx = sv.x + tx * vt - nx * 40;
+      this.vy = sv.y + ty * vt - ny * 40;
+      // climbing into a wall ahead: switch to it
+      if (this.circ) {
+        const hit = world.raycast(this.x, this.y, tx * this.circ, ty * this.circ, this.r + 4);
+        if (hit && hit.nx * nx + hit.ny * ny < 0.7 && hit.solid.mat !== 'ice') {
+          this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
+        }
+      }
+    } else {
+      this.vy += SP.gravity * h;
+      // air control
+      const ax = move.x * SP.airAccel * h;
+      if ((ax > 0 && this.vx < SP.airMax) || (ax < 0 && this.vx > -SP.airMax)) this.vx += ax;
+      this.vx *= 1 - h * 0.15;
+    }
+
+    this.x += this.vx * h;
+    this.y += this.vy * h;
+    if (this.web && this.web.state === 'stuck') this.constrainWeb(h);
+
+    const preVx = this.vx, preVy = this.vy;
+    const contacts = world.collideCircle(this, { bounce: 0, friction: 0 });
+    for (const c of contacts) {
+      if (c.solid.mat === 'lava') { this.game.killSpider(this, { cause: 'lava' }); return; }
+      if (c.solid.mat === 'bouncy' && c.vn < -150) { sfx.jump(); this.jumpLock = 0.15; this.ground = null; }
+    }
+
+    // find the surface to cling to
+    if (this.jumpLock > 0) { this.ground = null; }
+    else {
+      const n = world.nearest(this.x, this.y, this.r + SP.stickRange);
+      const webPull = this.web && this.web.state === 'stuck' ? this.webDir() : null;
+      let ok = n && n.solid.mat !== 'ice' && n.solid.mat !== 'bouncy' && n.solid.mat !== 'lava';
+      if (ok && webPull && webPull.x * n.nx + webPull.y * n.ny > 0.25 && this.web.taut) ok = false;
+      if (n && n.solid.mat === 'ice' && n.ny < -0.5) {
+        // ice: you can stand on top, slipping, but not cling
+        this.ground = { nx: n.nx, ny: n.ny, x: n.x, y: n.y, solid: n.solid };
+        this.coyote = SP.coyote; this.lastNormal = { x: n.nx, y: n.ny };
+      } else if (ok) {
+        this.ground = { nx: n.nx, ny: n.ny, x: n.x, y: n.y, solid: n.solid };
+        const gap = (n.inside ? -n.d : n.d) - this.r;
+        if (gap > 0) { this.x -= this.ground.nx * gap; this.y -= this.ground.ny * gap; }
+        if (!this.wasGround) {
+          const impact = -(preVx * n.nx + preVy * n.ny);
+          if (impact > 250) { sfx.land(); this.squash = 1 - Math.min(0.3, impact / 3000); this.game.fx.burst(n.x, n.y, { n: 4, speed: 120, color: 'rgba(255,255,255,0.5)', kind: 'smoke', size: 4, life: 0.3, g: 0 }); }
+        }
+        this.coyote = SP.coyote;
+        this.lastNormal = { x: n.nx, y: n.ny };
+      } else {
+        this.ground = null;
+      }
+    }
+    if (!this.ground) this.coyote = Math.max(0, this.coyote - h);
+    this.wasGround = !!this.ground;
+  }
+
+  // ---------------------------------------------------------------- web
+  shootWeb() {
+    let dx = this.aim.x, dy = this.aim.y;
+    this.web = { state: 'fly', x: this.x, y: this.y, dx, dy, len: 0, dist: 0, solid: null, lx: 0, ly: 0, taut: false, target: null, t: 0 };
+    sfx.webShoot();
+  }
+
+  releaseWeb(boost) {
+    if (!this.web) return;
+    if (this.web.state === 'stuck' && boost) {
+      const sp = Math.hypot(this.vx, this.vy);
+      if (sp > 50) { this.vx *= 1.08; this.vy = this.vy * 1.08 - 220; }
+      else this.vy -= 400;
+      this.jumpLock = 0.1;
+    }
+    this.web = null;
+  }
+
+  // anchor in world coords
+  webAnchor() {
+    const w = this.web;
+    if (w.target) return { x: w.target.x, y: w.target.y };
+    if (w.solid) { const p = w.solid.tx({ x: w.lx, y: w.ly }); return p; }
+    return { x: w.x, y: w.y };
+  }
+  webDir() {
+    const a = this.webAnchor();
+    const dx = a.x - this.x, dy = a.y - this.y, m = Math.hypot(dx, dy) || 1;
+    return { x: dx / m, y: dy / m, d: m };
+  }
+
+  updateWeb(dt, move) {
+    const w = this.web;
+    const world = this.game.world;
+    w.t += dt;
+    if (w.state === 'fly') {
+      const step = SP.webSpeed * dt;
+      const nx = w.x + w.dx * step, ny = w.y + w.dy * step;
+      // things the web can grab: pickups (yank them to you), other bodies
+      const ent = this.game.webHitTest(w.x, w.y, nx, ny, this);
+      const hit = world.segment(w.x, w.y, nx, ny);
+      if (ent && (!hit || ent.t * step <= hit.t)) {
+        if (ent.pickup) {
+          const p = ent.pickup;
+          const dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
+          p.vx = (dx / m) * 1100; p.vy = (dy / m) * 1100 - 250; p.yankedBy = this; p.yankT = 0.6;
+          sfx.webStick();
+          this.game.fx.burst(p.x, p.y, { n: 6, speed: 150, color: '#fff', size: 2 });
+          this.web = null;
+          return;
+        }
+        if (ent.body) {
+          w.state = 'stuck'; w.target = ent.body;
+          const d = Math.hypot(ent.body.x - this.x, ent.body.y - this.y);
+          w.len = Math.max(SP.webMin, d * SP.webYank);
+          sfx.webStick();
+          return;
+        }
+      }
+      if (hit && hit.solid.mat !== 'lava') {
+        w.state = 'stuck';
+        w.solid = hit.solid;
+        const l = hit.solid.inv({ x: hit.x, y: hit.y });
+        w.lx = l.x; w.ly = l.y;
+        const d = Math.hypot(hit.x - this.x, hit.y - this.y);
+        w.len = Math.max(SP.webMin, d * SP.webYank);
+        w.x = hit.x; w.y = hit.y;
+        sfx.webStick();
+        this.game.fx.burst(hit.x, hit.y, { n: 5, speed: 120, color: '#ffffff', size: 1.5, life: 0.25 });
+        // a fresh web lifts you off the floor
+        if (this.ground && (hit.y < this.y - 30)) { this.ground = null; this.jumpLock = 0.08; }
+        return;
+      }
+      w.x = nx; w.y = ny;
+      w.dist += step;
+      if (w.dist > SP.webMax || hit) { this.web = null; }
+      return;
+    }
+    // stuck: dead targets or broken solids drop the web
+    if ((w.target && (!w.target.alive || w.target.removed)) || (w.solid && w.solid.broken)) { this.web = null; return; }
+    // reel with up/down relative to the rope, pump sideways
+    const d = this.webDir();
+    const reel = -(move.x * d.x + move.y * d.y);   // stick toward anchor = shorten
+    if (Math.abs(reel) > 0.3) w.len = clamp(w.len + reel * SP.webReel * dt, SP.webMin, SP.webMax + 40);
+    if (w.t < 0.25) w.len = Math.max(SP.webMin, w.len - 260 * dt);
+    if (!this.ground) {
+      const tx = -d.y, ty = d.x;
+      const pump = move.x * tx + move.y * ty;
+      this.vx += tx * pump * SP.webPump * dt;
+      this.vy += ty * pump * SP.webPump * dt;
+    }
+    // a web pulls things it's tied to
+    if (w.target && w.target.impulse) {
+      const k = (d.d - w.len) > 0 ? (d.d - w.len) * 6 : 0;
+      w.target.impulse(-d.x * k * dt * 60 * 0.02, -d.y * k * dt * 60 * 0.02, false);
+    }
+    // rope blocked by terrain: snap
+    const a = this.webAnchor();
+    const hit = world.segment(this.x, this.y, a.x - d.x * 3, a.y - d.y * 3);
+    if (hit && hit.t > 12) this.web = null;
+  }
+
+  constrainWeb(h) {
+    const w = this.web;
+    const a = this.webAnchor();
+    let dx = this.x - a.x, dy = this.y - a.y;
+    const d = Math.hypot(dx, dy) || 1;
+    w.taut = d >= w.len - 1;
+    if (d > w.len) {
+      dx /= d; dy /= d;
+      this.x = a.x + dx * w.len;
+      this.y = a.y + dy * w.len;
+      const vr = this.vx * dx + this.vy * dy;
+      if (vr > 0) { this.vx -= vr * dx * 1.0; this.vy -= vr * dy * 1.0; }
+    }
+  }
+
+  // ---------------------------------------------------------------- weapons
+  giveWeapon(w) {
+    if (this.weapon) this.dropWeapon();
+    this.weapon = w;
+    w.owner = this;
+    if (w.onEquip) w.onEquip(this);
+  }
+
+  dropWeapon(vx = 0, vy = -100) {
+    const w = this.weapon;
+    if (!w) return null;
+    this.weapon = null;
+    if (w.onUnequip) w.onUnequip(this);
+    w.owner = null;
+    this.pickCooldown = 0.35;
+    return this.game.spawnPickup(w, this.x, this.y, this.vx * 0.5 + vx, this.vy * 0.5 + vy, { from: this });
+  }
+
+  throwWeapon() {
+    const w = this.weapon;
+    if (!w) return;
+    if (w.onThrow && w.onThrow(this.ctl) === true) return; // weapon handled it (e.g. saber throw)
+    const sp = 1300;
+    const p = this.dropWeapon(this.aim.x * sp, this.aim.y * sp);
+    if (p) { p.thrown = true; p.thrower = this; p.spin = 18 * this.facing; }
+    sfx.throwIt();
+  }
+
+  swapWeapon() {
+    const p = this.game.pickupNear(this.x, this.y, this.r + 40, this, true);
+    if (!p) return;
+    if (this.weapon) this.dropWeapon(0, -200);
+    this.game.takePickup(this, p);
+  }
+
+  // ---------------------------------------------------------------- legs
+  updateLegs(dt) {
+    const world = this.game.world;
+    const r = this.r;
+    const reach = SP.legLen * 2 * 0.98;
+    const g = this.ground;
+    const nx = g ? g.nx : this.up.x, ny = g ? g.ny : this.up.y;
+    const tx = -ny, ty = nx;
+    const speed = Math.hypot(this.vx, this.vy);
+    let anyStep = [false, false];
+    for (const L of this.legs) if (L.t < 1) anyStep[L.g] = true;
+    for (let i = 0; i < this.legs.length; i++) {
+      const L = this.legs[i];
+      // planted feet ride their surface
+      if (L.planted && L.solid && L.solid.dynamic) { const p = L.solid.tx({ x: L.lx, y: L.ly }); L.fx = p.x; L.fy = p.y; }
+      if (L.planted && L.solid && L.solid.broken) L.planted = false;
+      const hipX = this.x + tx * L.side * r * 0.35, hipY = this.y + ty * L.side * r * 0.35;
+      if (g) {
+        // ideal foothold: along the surface, leading in the walk direction
+        const lead = clamp(((this.vx * tx + this.vy * ty) * 0.07), -r, r);
+        const ox = this.x + tx * (L.side * L.off * r + lead) * 0.9, oy = this.y + ty * (L.side * L.off * r + lead) * 0.9;
+        let hit = world.raycast(ox, oy, -nx, -ny, r * 2.6);
+        if (!hit) hit = world.raycast(this.x, this.y, tx * L.side * 0.8 - nx, ty * L.side * 0.8 - ny, reach + r);
+        if (hit) {
+          L.tx = hit.x; L.ty = hit.y;
+          const far = Math.hypot(L.fx - L.tx, L.fy - L.ty);
+          const tooFar = Math.hypot(L.fx - hipX, L.fy - hipY) > reach * 1.05;
+          if ((!L.planted && L.t >= 1) || ((far > r * 0.95 || tooFar) && L.t >= 1 && !anyStep[1 - L.g])) {
+            L.sx = L.fx; L.sy = L.fy; L.t = 0; L.planted = false; anyStep[L.g] = true;
+            L.solid = hit.solid; const lp = hit.solid.inv(hit); L.lx = lp.x; L.ly = lp.y;
+            L.tN = { x: nx, y: ny };
+          }
+        } else if (L.t >= 1) {
+          L.planted = false;
+        }
+      } else {
+        L.planted = false;
+        // airborne: legs spread and trail the motion
+        const spread = L.side * (0.6 + L.off * 0.5);
+        const ax = this.x + spread * r * 1.0 - this.vx * 0.02, ay = this.y + r * (0.9 + 0.25 * Math.sin(this.time * 9 + i)) - this.vy * 0.015;
+        L.tx = ax; L.ty = ay;
+        L.fx = lerp(L.fx, ax, Math.min(1, dt * 14)); L.fy = lerp(L.fy, ay, Math.min(1, dt * 14));
+        L.t = 1;
+        continue;
+      }
+      if (L.t < 1) {
+        L.t = Math.min(1, L.t + dt / Math.max(0.05, 0.11 - speed * 0.00008));
+        const s = L.t;
+        const lift = Math.sin(s * Math.PI) * r * 0.55;
+        const tN = L.tN || { x: nx, y: ny };
+        L.fx = lerp(L.sx, L.tx, s) + tN.x * lift;
+        L.fy = lerp(L.sy, L.ty, s) + tN.y * lift;
+        if (L.t >= 1) { L.planted = true; L.fx = L.tx; L.fy = L.ty; if (speed > 60) sfx.step(); }
+      }
+    }
+  }
+
+  drawLegs(ctx, far) {
+    const c = castAt(this.castIndex);
+    const r = this.r;
+    const nx = this.up.x, ny = this.up.y;
+    const tx = -ny, ty = nx;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const L of this.legs) {
+      if (L.far !== far) continue;
+      const hipX = this.x + tx * L.side * r * 0.35, hipY = this.y + ty * L.side * r * 0.35;
+      let fx = L.fx, fy = L.fy;
+      let dx = fx - hipX, dy = fy - hipY;
+      let d = Math.hypot(dx, dy) || 1;
+      const max = SP.legLen * 2 * 0.999;
+      if (d > max) { fx = hipX + dx / d * max; fy = hipY + dy / d * max; dx = fx - hipX; dy = fy - hipY; d = max; }
+      const a = Math.acos(clamp(d / (2 * SP.legLen), -1, 1));
+      const base = Math.atan2(dy, dx);
+      // knee bends up/out: away from the surface, outward from the body
+      const k1 = base + a, k2 = base - a;
+      const ux = nx + tx * L.side * 0.6, uy = ny + ty * L.side * 0.6;
+      const s1 = Math.cos(k1) * ux + Math.sin(k1) * uy, s2 = Math.cos(k2) * ux + Math.sin(k2) * uy;
+      const ka = s1 > s2 ? k1 : k2;
+      const kx = hipX + Math.cos(ka) * SP.legLen, ky = hipY + Math.sin(ka) * SP.legLen;
+      ctx.strokeStyle = far ? shade(c.dark, 0.55) : c.dark;
+      ctx.lineWidth = far ? 4.2 : 5;
+      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.strokeStyle = far ? shade(c.color, 0.6) : c.color;
+      ctx.lineWidth = far ? 2 : 2.4;
+      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+      if (!far) {
+        ctx.fillStyle = c.accent;
+        ctx.beginPath(); ctx.arc(kx, ky, 2.6, 0, TAU); ctx.fill();
+      }
+    }
+  }
+
+  drawWeb(ctx) {
+    const w = this.web;
+    if (!w) return;
+    const a = w.state === 'fly' ? { x: w.x, y: w.y } : this.webAnchor();
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = rgba(this.color.main, 0.55);
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(a.x, a.y); ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    // slack webs sag a little
+    const d = Math.hypot(a.x - this.x, a.y - this.y);
+    const sag = w.state === 'stuck' ? Math.max(0, (w.len - d)) * 0.5 : 0;
+    ctx.moveTo(this.x, this.y);
+    ctx.quadraticCurveTo((this.x + a.x) / 2, (this.y + a.y) / 2 + sag, a.x, a.y);
+    ctx.stroke();
+    if (w.state === 'stuck') {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(a.x, a.y, 3.5, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  draw(ctx) {
+    if (!this.alive) return;
+    const r = this.r;
+    this.drawWeb(ctx);
+    this.drawLegs(ctx, true);
+    this.drawLegs(ctx, false);
+    // player ring
+    ctx.strokeStyle = this.color.main;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.arc(this.x, this.y, r + 2.5, 0, TAU); ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (this.weapon && this.weapon.drawBehind) this.weapon.drawBehind(ctx);
+    const tilt = clamp(Math.atan2(this.up.x, -this.up.y), -0.45, 0.45) + (this.ground ? Math.sin(this.time * 14) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 0.06 : clamp(this.vx * 0.0004, -0.3, 0.3));
+    const blink = this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0;
+    drawBody(ctx, this.x, this.y, r * 1.08, this.castIndex, { tilt, facing: this.facing, squash: this.squash, alpha: blink ? 0.45 : 1, flash: this.flash });
+    if (this.shield > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = '#7fe8ff'; ctx.globalAlpha = 0.5 + 0.2 * Math.sin(this.time * 8);
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(this.x, this.y, r + 9, 0, TAU); ctx.stroke();
+      ctx.restore();
+    }
+    if (this.weapon) this.weapon.draw(ctx);
+  }
+}
+
+// darken a hex color by factor k (0..1)
+const shadeCache = new Map();
+export function shade(hex, k) {
+  const key = hex + k;
+  let v = shadeCache.get(key);
+  if (v) return v;
+  const h = hex.replace('#', '');
+  const n = parseInt(h, 16);
+  const r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+  v = `rgb(${r},${g},${b})`;
+  shadeCache.set(key, v);
+  return v;
+}
