@@ -2,7 +2,7 @@
 // Every device yields the same state shape each frame; `pressed` holds the
 // buttons that went down this frame.
 
-const BUTTONS = ['jump', 'ragdoll', 'punch', 'interact', 'sprint', 'start', 'back',
+const BUTTONS = ['jump', 'ragdoll', 'punch', 'interact', 'sprint', 'start', 'back', 'emote', 'map', 'phone',
   'dUp', 'dDown', 'dLeft', 'dRight', 'grabLBtn', 'grabRBtn', 'rb', 'ls', 'rs'];
 
 function blank() {
@@ -71,17 +71,22 @@ export class Input {
     const l = Math.hypot(s.moveX, s.moveY); if (l > 1) { s.moveX /= l; s.moveY /= l; }
     s.lookX = this.mouseDX * 0.0025; s.lookY = this.mouseDY * 0.0025; s.mouse = true;
     s.jump = k.has('Space');
-    s.ragdoll = k.has('KeyR');
-    s.punch = k.has('KeyF');
-    s.interact = k.has('KeyE');
+    // Wobbly Life's PC layout: X ragdoll, F interact, H horn, 1 emote wheel, M map
+    s.ragdoll = k.has('KeyX') || k.has('KeyR');
+    s.interact = k.has('KeyF') || k.has('KeyE');
     s.sprint = k.has('ShiftLeft') || k.has('ShiftRight');
     s.start = k.has('Escape') || k.has('Enter');
     s.back = k.has('Backspace');
+    s.emote = k.has('Digit1');
+    s.map = k.has('KeyM');
+    s.phone = k.has('KeyP');
     const mb = this.mouseButtons | this.pollMouseTaps;
+    s.punch = k.has('KeyG') || !!(mb & 2);
     s.grabL = (mb & 1) || k.has('KeyQ') ? 1 : 0;
     s.grabR = (mb & 4) || k.has('KeyC') ? 1 : 0;
     s.horn = k.has('KeyH');
-    s.dLeft = k.has('Digit1'); s.dRight = k.has('Digit2'); s.dUp = k.has('Digit3'); s.dDown = k.has('Digit4');
+    // quick emotes (the pad's D-pad): 2 wave, 3 cheer, 4 dance
+    s.dUp = k.has('Digit2'); s.dLeft = k.has('Digit3'); s.dRight = k.has('Digit4');
     // Driving: W/S also act as gas/brake, Space handbrake.
     s.gas = s.moveY > 0 ? s.moveY : 0; s.brake = s.moveY < 0 ? -s.moveY : 0;
     s.steer = s.moveX;
@@ -104,7 +109,9 @@ export class Input {
     s.grabL = k.has('Numpad1') ? 1 : 0;
     s.grabR = k.has('Numpad3') ? 1 : 0;
     s.horn = k.has('NumpadAdd');
-    s.dLeft = k.has('NumpadDivide'); s.dRight = k.has('NumpadMultiply'); s.dUp = k.has('NumpadSubtract');
+    s.emote = k.has('NumpadSubtract');
+    s.map = k.has('NumpadDivide');
+    s.phone = k.has('NumpadMultiply');
     s.gas = s.moveY > 0 ? s.moveY : 0; s.brake = s.moveY < 0 ? -s.moveY : 0;
     s.steer = s.moveX;
     return s;
@@ -124,6 +131,8 @@ export class Input {
     s.grabL = bv(6); s.grabR = bv(7);
     s.back = bp(8); s.start = bp(9); s.rs = bp(11);
     s.dUp = bp(12); s.dDown = bp(13); s.dLeft = bp(14); s.dRight = bp(15);
+    // RB held: emote wheel; View: map; D-pad down: phone (call a vehicle)
+    s.emote = bp(5); s.map = bp(8); s.phone = bp(13);
     s.gas = bv(7); s.brake = bv(6); s.steer = s.moveX; s.horn = bp(2);
     return s;
   }

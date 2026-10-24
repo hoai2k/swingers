@@ -139,9 +139,6 @@ export class Game {
       if (pr.horn || (pr.punch && !inp.mouse)) p.seat.vehicle.honk();
     }
     if (p.seat?.control) p.seat.control(inp, pr);
-    if (pr.dLeft) p.setColor(p.colorIndex - 1);
-    if (pr.dRight) p.setColor(p.colorIndex + 1);
-    if (pr.dUp || pr.dDown) { p.hat = (p.hat + (pr.dUp ? 1 : HATS.length - 1)) % HATS.length; p.buildHat(); }
   }
 
   step() {
