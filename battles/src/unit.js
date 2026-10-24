@@ -32,6 +32,11 @@ const STRIKE = {
   dual: [[0.3, 0.6], [0.47, 0.85]], punch: [[0.36, 0.8]],
 };
 
+// Stepping: the physical leg trails its target by a few frames, so a swinging foot
+// is aimed SWING_LEAD seconds ahead (and lowered YLEAD times that early) so it lands
+// on time instead of skidding in; a foot plants where it actually touches down.
+const SWING_LEAD = 0.03, YLEAD = 1.5;
+
 export const EXPR = { normal: 0, angry: 1, scared: 2, dead: 3, happy: 4, hurt: 5 };
 
 let nextId = 1;
@@ -381,7 +386,7 @@ export class Unit {
         if (tm > lim) { tx *= lim / tm; tz *= lim / tm; }
         l.to.set(hx + tx, 0, hz + tz);
         if (l.t >= 1) {
-          l.state = 'stance'; l.stanceT = 0;
+          l.state = 'stance'; l.stanceT = 0; l.down = false;
           this.footPoint(l, l.foot);
           // land where the foot actually is if it got close, so it doesn't skate in
           const e = Math.hypot(l.foot.x - l.to.x, l.foot.z - l.to.z);
@@ -392,6 +397,13 @@ export class Unit {
       }
       if (l.state === 'stance') {
         l.stanceT += dt;
+        // still coming down: the foot plants where it touches the ground instead of
+        // being dragged to the spot it was aimed at (that drag reads as skating)
+        if (!l.down) {
+          this.footPoint(l, _v3);
+          if (_v3.y - this.footR - ter.height(_v3.x, _v3.z) < 0.03 * s || l.stanceT > 0.12) l.down = true;
+          else { l.plant.x = _v3.x; l.plant.z = _v3.z; l.plant.y = ter.height(_v3.x, _v3.z); }
+        }
         l.err = Math.hypot(l.plant.x - ix, l.plant.z - iz);
         l.hd = Math.hypot(l.plant.x - hx, l.plant.z - hz);
         // a foot ahead of the hip (along the motion) is about to be walked over: leave it
@@ -422,9 +434,11 @@ export class Unit {
     for (const l of legs) {
       const F = l.foot;
       if (l.state === 'swing') {
-        const f = smooth(clamp(l.t, 0, 1));
+        // the physical leg trails its target by a few frames: aim ahead in time
+        const ld = SWING_LEAD * sq / l.dur;
+        const f = smooth(clamp(l.t + ld, 0, 1));
         F.lerpVectors(l.from, l.to, f);
-        F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t, 0, 1)) * lift;
+        F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t + ld * YLEAD, 0, 1)) * lift;
       } else {
         F.copy(l.plant);
         F.y -= 0.03 * s; // press into the ground so the planted leg bears weight

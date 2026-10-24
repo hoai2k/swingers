@@ -48,7 +48,7 @@ export function gripDir(item, out) {
 // Mass of a held item (kg) at unit scale s.
 export function itemMass(it, s = 1) {
   const m = it.mass ?? Math.max(0.4, it.len * it.r * 25);
-  return m * s * s * s * (globalThis.TUNE?.massK ?? 1);
+  return m * s * s * s;
 }
 
 // What a unit holds, in a fixed order shared by the sim (Unit.held) and the visuals

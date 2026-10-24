@@ -14,8 +14,7 @@ export const G_GROUND = 0x1, G_BODY = 0x2, G_LIMB = 0x4, G_PROP = 0x8, G_DEAD = 
 // shields (parries, shield blocks) but never with their own side's
 export const G_ITEM0 = 0x20, G_ITEM1 = 0x40;
 export const groups = (member, filter) => ((member & 0xffff) << 16) | (filter & 0xffff);
-const TT = globalThis.TUNE || {};
-export const itemGroups = (team) => team ? groups(G_ITEM1, (TT.noground ? 0 : G_GROUND) | G_PROP | (TT.noclash ? 0 : G_ITEM0)) : groups(G_ITEM0, (TT.noground ? 0 : G_GROUND) | G_PROP | (TT.noclash ? 0 : G_ITEM1));
+export const itemGroups = (team) => team ? groups(G_ITEM1, G_GROUND | G_PROP | G_ITEM0) : groups(G_ITEM0, G_GROUND | G_PROP | G_ITEM1);
 export const GROUPS = {
   ground: groups(G_GROUND, 0xffff),
   body: groups(G_BODY, G_GROUND | G_BODY | G_PROP),
