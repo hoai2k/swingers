@@ -1,6 +1,9 @@
 // Stunt park (ramps, half-pipe, quarter pipes, big jump) and the sports
 // field (football pitch with a giant ball, basketball court).
+import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
+import { DT } from '../config.js';
+import { throwable, lob, chime, liveSign } from './common.js';
 import { Builder, signMesh } from '../mesh.js';
 
 const quarter = (R, steps = 8, flat = 0) => {
@@ -99,25 +102,83 @@ export function buildSports(game, kit) {
   const bx = cx + 2, bz = cz + PD / 2 + 11;
   kit.deco(bx, 0.04, bz, 18, 0.08, 12, 0xd9824a);
   line(bx, bz, 0.12, 12);
-  for (const s of [-1, 1]) {
-    const hx = bx + s * 8;
-    kit.cyl(hx + s * 0.6, 1.7, bz, 0.1, 3.4, 0x666666);
-    kit.box(hx, 3.4, bz, 0.1, 1.1, 1.8, 0xffffff);
-    const b = kit.b(hx, bz);
-    b.torus(0.3, 0.025, 0xff5a1a, [hx - s * 0.4, 3.05, bz], [Math.PI / 2, 0, 0], 16);
-    for (let k = 0; k < 8; k++) {
-      const a = k / 8 * Math.PI * 2;
-      game.physics.ball(hx - s * 0.4 + Math.cos(a) * 0.3, 3.05, bz + Math.sin(a) * 0.3, 0.035, {});
-    }
-  }
-  for (let i = 0; i < 3; i++) {
-    const b = new Builder();
-    b.sphere(0.24, 0xff7a2a, [0, 0, 0], null, 14);
-    b.torus(0.24, 0.008, 0x222222, [0, 0, 0], [Math.PI / 2, 0, 0]); b.torus(0.24, 0.008, 0x222222, [0, 0, 0], [0, 0, 0]);
-    const o = game.physics.dynamic({ x: bx - 2 + i * 2, y: 0.4, z: bz + 2 }, [RAPIER.ColliderDesc.ball(0.24).setMass(0.6).setRestitution(0.8)], b.mesh());
-    game.scene.add(o.mesh);
-  }
+  for (const s of [-1, 1]) { line(bx + s * 5.2, bz, 0.12, 3.6); line(bx + s * 7, bz - 1.8, 3.6, 0.12); line(bx + s * 7, bz + 1.8, 3.6, 0.12); }
+  basketball(game, kit, bx, bz);
   // parking lot next to the field
   kit.deco(cx, 0.035, -137, 60, 0.07, 12, 0x5a5d66);
   for (let i = 0; i <= 12; i++) kit.deco(cx - 30 + i * 5, 0.075, -137, 0.15, 0.01, 10, 0xffffff);
+}
+
+// Hoops you can actually score on: rims at 2.75 m (Wobbly-sized), a net,
+// scoring when a ball drops through, and a scoreboard. Punch while holding
+// (or standing at) a ball to shoot; facing a hoop lobs it toward the rim.
+function basketball(game, kit, bx, bz) {
+  const RH = 2.75, RR = 0.4, BR = 0.19;
+  const hoops = [];
+  for (const s of [-1, 1]) {
+    const hx = bx + s * 8, rx = hx - s * 0.45;
+    kit.cyl(hx + s * 0.6, 1.9, bz, 0.1, 3.8, 0x666666);
+    kit.box(hx + s * 0.3, 3.6, bz, 0.6, 0.1, 0.1, 0x666666);
+    kit.box(hx, RH + 0.45, bz, 0.1, 1.1, 1.8, 0xffffff, { restitution: 0.5 });
+    kit.deco(hx - s * 0.055, RH + 0.35, bz, 0.01, 0.45, 0.6, 0xff5a1a);
+    kit.deco(hx - s * 0.06, RH + 0.35, bz, 0.01, 0.37, 0.52, 0xffffff);
+    const b = kit.b(hx, bz);
+    b.torus(RR, 0.025, 0xff5a1a, [rx, RH, bz], [Math.PI / 2, 0, 0], 20);
+    b.add(new THREE.CylinderGeometry(RR, RR * 0.65, 0.45, 12, 1, true), 0xffffff, [rx, RH - 0.23, bz]);
+    kit.deco(hx - s * 0.22, RH, bz, 0.4, 0.04, 0.06, 0xff5a1a);
+    for (let k = 0; k < 16; k++) {
+      const a = k / 16 * Math.PI * 2;
+      game.physics.ball(rx + Math.cos(a) * RR, RH, bz + Math.sin(a) * RR, 0.03, { restitution: 0.6 });
+    }
+    hoops.push({ x: rx, y: RH, z: bz, score: 0 });
+  }
+  const board = liveSign(game, 3.2, 1.0, '#112', '#ffd23f');
+  board.mesh.position.set(bx, 3.2, bz - 6.3);
+  const show = () => board.set(['HOME ' + hoops[1].score + '  :  ' + hoops[0].score + ' AWAY']);
+  show();
+  kit.box(bx, 1.4, bz - 6.4, 0.2, 2.8, 0.2, 0x666666);
+  const aim = (p, body) => {
+    const t = body.translation();
+    let best = null, bd = 1e9;
+    for (const h of hoops) {
+      const D = Math.hypot(h.x - t.x, h.z - t.z);
+      let da = Math.atan2(h.x - t.x, h.z - t.z) - p.yaw; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+      if (D < 11 && D > 0.4 && da < 0.9 && D < bd) { bd = D; best = h; }
+    }
+    if (!best) return null;
+    // a little random spread so it's not automatic
+    const tgt = { x: best.x + (Math.random() - 0.5) * 0.12, y: best.y + 0.05, z: best.z + (Math.random() - 0.5) * 0.12 };
+    // steepest-enough arc: the ball must clear the front of the rim and drop in
+    for (let a = 0.85; a < 1.45; a += 0.04) {
+      const v = lob(t, tgt, a);
+      if (!v) continue;
+      const vh = Math.hypot(v.x, v.z), tt = Math.max(0, bd - RR) / vh;
+      if (t.y + v.y * tt - 4.905 * tt * tt > RH + BR + 0.06) return v;
+    }
+    return lob(t, tgt, 1.3);
+  };
+  const balls = [];
+  for (let i = 0; i < 4; i++) {
+    const b = new Builder();
+    b.sphere(BR, 0xff7a2a, [0, 0, 0], null, 14);
+    b.torus(BR, 0.008, 0x222222, [0, 0, 0], [Math.PI / 2, 0, 0]); b.torus(BR, 0.008, 0x222222, [0, 0, 0], [0, 0, 0]);
+    const o = game.physics.dynamic({ x: bx - 3 + i * 2, y: 0.4, z: bz + 2 }, [RAPIER.ColliderDesc.ball(BR).setMass(0.6).setRestitution(0.75)], b.mesh(), { ccd: true });
+    game.scene.add(o.mesh);
+    throwable(game, o, { r: BR + 0.02, speed: 7, up: 0.9, aim });
+    balls.push({ body: o.body, py: 0 });
+  }
+  game.hoops = hoops;
+  game.steppers.push(() => {
+    for (const b of balls) {
+      const t = b.body.translation();
+      if (b.py > RH && t.y <= RH) {
+        for (const h of hoops) {
+          if (Math.hypot(t.x - h.x, t.z - h.z) < RR - 0.05 && b.body.linvel().y < 0) {
+            h.score++; show(); chime(game, h, [76, 79, 84]);
+          }
+        }
+      }
+      b.py = t.y;
+    }
+  });
 }

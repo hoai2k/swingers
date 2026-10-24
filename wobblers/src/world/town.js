@@ -1,6 +1,10 @@
 // Town centre shops, town hall, apartments and the suburbs.
 import * as THREE from 'three';
 import { signMesh } from '../mesh.js';
+import { interiorShop, interiorHouse } from './interiors.js';
+
+// Shops you can walk into (first occurrence of each name) and the house with an upstairs.
+const ENTERABLE = new Set(['CAFE', 'MARKET', 'ARCADE']);
 
 const WALLS = [0xfff1d6, 0xffd6d6, 0xd6ecff, 0xe2ffd6, 0xfff7b0, 0xf0dcff, 0xffe2c4, 0xd9f7f2];
 const ROOFS = [0xd9534f, 0x5b7fd6, 0x4a9f5a, 0x8a5a44, 0xe08a3a, 0x7a5aa8];
@@ -48,6 +52,10 @@ function windows(kit, P, yaw, w, d, h, floors, color = 0x8fcfff, skipDoor = true
 export function house(kit, x, z, yaw, opts = {}) {
   const w = opts.w || 9 + rnd() * 2, d = opts.d || 8 + rnd() * 2, h = opts.h || (rnd() < 0.4 ? 6 : 3.4);
   const wall = opts.wall || pick(WALLS), roof = opts.roof || pick(ROOFS);
+  if (opts.interior) { // same random draws as below so the other houses don't change
+    const doorCol = pick([0x8a4a2a, 0x2a62c9, 0xd9534f, 0x3a8a4a]);
+    return interiorHouse(opts.interior, kit, x, z, yaw, wall, roof, doorCol);
+  }
   const P = frame(x, z, yaw);
   kit.box(x, h / 2, z, w, h, d, wall, { yaw });
   // gable roof: two slabs + gable ends
@@ -93,6 +101,7 @@ export function shop(game, kit, x, z, yaw, name, color, opts = {}) {
   const w = opts.w || 14, d = opts.d || 11, h = opts.h || 5.5;
   const P = frame(x, z, yaw);
   const wall = opts.wall || pick(WALLS);
+  if (opts.interior) return interiorShop(game, kit, x, z, yaw, name, color, wall, { w, d, h });
   kit.box(x, h / 2, z, w, h, d, wall, { yaw });
   kit.deco(x, h + 0.25, z, w + 0.4, 0.5, d + 0.4, 0xffffff, { yaw });
   // shop window
@@ -172,18 +181,18 @@ export function buildTown(game, kit) {
     // along the N/S avenue
     for (const d of [30, 46]) {
       const [name, col] = shops[si++ % shops.length];
-      shop(game, kit, bx * 15.5, bz * d, facingX, name, col, { w: 13, d: 10 });
+      shop(game, kit, bx * 15.5, bz * d, facingX, name, col, { w: 13, d: 10, interior: si <= 12 && ENTERABLE.has(name) });
     }
     // along the E/W avenue
     for (const d of [32, 47]) {
       const [name, col] = shops[si++ % shops.length];
-      shop(game, kit, bx * d, bz * 15.5, facingZ, name, col, { w: 13, d: 10 });
+      shop(game, kit, bx * d, bz * 15.5, facingZ, name, col, { w: 13, d: 10, interior: si <= 12 && ENTERABLE.has(name) });
     }
     // back corner: town hall, apartments or houses facing the outer town roads
     const cx = bx * 40, cz = bz * 40;
     if (bx < 0 && bz < 0) townHall(game, kit, -42, -38, 0);
     else if (bx > 0 && bz < 0) { apartments(kit, 42, -42, 0, 6); }
-    else if (bx < 0 && bz > 0) { house(kit, -38, 47, 0, { garden: false }); house(kit, -48, 34, Math.PI / 2, { garden: false }); kit.tree(cx + 6, cz - 8); kit.tree(cx - 8, cz - 10, 0, 1); }
+    else if (bx < 0 && bz > 0) { house(kit, -38, 47, 0, { garden: false, interior: game }); house(kit, -48, 34, Math.PI / 2, { garden: false }); kit.tree(cx + 6, cz - 8); kit.tree(cx - 8, cz - 10, 0, 1); }
     else { apartments(kit, 42, 42, Math.PI, 5); kit.tree(28, 30); kit.tree(52, 26, 0, 1); }
     // street trees + lamps along the sidewalks of the outer town roads
     for (let t = -50; t <= 50; t += 16) {

@@ -141,7 +141,11 @@ export class Physics {
     const f = Math.min(1, (depth + bu.r) / (2 * bu.r));
     obj.wet = f;
     const m = b.mass();
-    const up = f * bu.volume * WATER_DENSITY * 9.81 * DT * (bu.scale ?? 1);
+    // Light floaters (beach balls, rings) would get a buoyancy "spring" too stiff
+    // for a 60 Hz step and get launched out of the water: cap its stiffness so
+    // omega * DT <= 0.4 (k = V * rho * g / 2r <= m * (0.4 / DT)^2).
+    const vol = Math.min(bu.volume, m * bu.r * 2 * (0.4 / DT) ** 2 / (WATER_DENSITY * 9.81));
+    const up = f * vol * WATER_DENSITY * 9.81 * DT * (bu.scale ?? 1);
     const v = b.linvel();
     const drag = Math.min(1, f * (bu.drag ?? 2.0) * DT);
     b.applyImpulse({ x: -v.x * m * drag, y: up - v.y * m * drag, z: -v.z * m * drag }, true);

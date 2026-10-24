@@ -150,7 +150,7 @@ export class Game {
       if (p.seat) p.leaveSeat();
       else if (p.state !== 'limp') {
         const s = this.nearestSeat(p);
-        if (s) p.sitIn(s);
+        if (s) { if (s.use) s.use(p); else p.sitIn(s); } // use spots: buttons, machines
       }
     }
     if (p.seat?.vehicle && p.seat.kind === 'driver') {
