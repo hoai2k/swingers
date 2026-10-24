@@ -1,0 +1,16 @@
+<!doctype html><html><body style="margin:0;background:#888"><script type="module">
+import { THREE } from '../src/util.js';
+import { UNITS } from '../src/units.js';
+import { buildUnitVisual, poseVisual, setExpression } from '../src/visual.js';
+const q = new URLSearchParams(location.search);
+const r = new THREE.WebGLRenderer({antialias:true}); r.setSize(1600,800); document.body.appendChild(r.domElement);
+r.shadowMap.enabled=true;
+const scene = new THREE.Scene(); scene.background=new THREE.Color('#bcd');
+scene.add(new THREE.HemisphereLight('#fff','#664',2)); const dl=new THREE.DirectionalLight('#fff',2); dl.position.set(3,6,8); dl.castShadow=true; scene.add(dl);
+const gr=new THREE.Mesh(new THREE.PlaneGeometry(80,80), new THREE.MeshLambertMaterial({color:'#7a5'})); gr.rotation.x=-Math.PI/2; gr.receiveShadow=true; scene.add(gr);
+const attack=q.get('attack'); const t=+(q.get('t')||0.5); const yaw=+(q.get('yaw')||0.4);
+UNITS.forEach((d,i)=>{ const v=buildUnitVisual(d,i%2); scene.add(v.root);
+ poseVisual(v,(i-8.5)*1.6*(d.build.scale>2?1:1),0,0,yaw,{phase:+(q.get('ph')||0),amp:+(q.get('amp')||0),style:d.weapon.style,attack:attack==='1'?d.weapon.anim:null,attackT:t,headPitch:0,headYaw:0,mode:q.get('mode')||'normal',t:0}); setExpression(v,i%6);});
+const cam=new THREE.PerspectiveCamera(35,2,0.1,200); const cx=+(q.get('cx')||0); cam.position.set(cx,+(q.get('cy')||4),+(q.get('d')||22)); cam.lookAt(cx,1.2,0);
+r.render(scene,cam); window.done=true;
+</script></body></html>
