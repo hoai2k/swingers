@@ -4,9 +4,15 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/RoundedBoxGeometry.js';
+import { addGlow } from './look.js';
 
-export const matVC = new THREE.MeshLambertMaterial({ vertexColors: true });
-export const matVCDouble = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+export const matVC = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true }));
+export const matVCDouble = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+
+// Colours that light up at night (see look.js addGlow): 1 = window (most
+// windows lit, warm), 2 = lamp globe (always lit, bright). World code can add
+// its own: GLOW.set(0xrrggbb, 1).
+export const GLOW = new Map([[0x8fcfff, 1], [0x9fd8ff, 1], [0xfff4c2, 2]]);
 export const matGlass = new THREE.MeshPhongMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.45, shininess: 80, specular: 0xffffff });
 
 const _c = new THREE.Color();
@@ -15,6 +21,19 @@ const _q = new THREE.Quaternion();
 const _e = new THREE.Euler();
 const _s = new THREE.Vector3();
 const _p = new THREE.Vector3();
+
+function setGlow(g, color) {
+  const n = g.attributes.position.count, a = new Float32Array(n);
+  let k = GLOW.get(color) || 0;
+  if (k === 1) { // leave ~1 in 4 windows dark, decided by where the window is
+    g.computeBoundingBox();
+    const c = g.boundingBox.getCenter(_p);
+    const h = Math.sin(Math.round(c.x * 2) * 12.9898 + Math.round(c.y * 2) * 4.1414 + Math.round(c.z * 2) * 78.233) * 43758.5453;
+    if (h - Math.floor(h) < 0.27) k = 0;
+  }
+  if (k) a.fill(k);
+  g.setAttribute('glow', new THREE.BufferAttribute(a, 1));
+}
 
 function prep(geo, color) {
   let g = geo;
@@ -46,11 +65,12 @@ export class Builder {
     if (scale) _s.set(scale[0], scale[1], scale[2]); else _s.set(1, 1, 1);
     _m.compose(_p, _q, _s);
     g.applyMatrix4(_m);
+    setGlow(g, typeof color === 'number' ? color : _c.set(color).getHex());
     this.parts.push(g);
     return this;
   }
   addMatrix(geo, color, matrix) {
-    const g = prep(geo, color); g.applyMatrix4(matrix); this.parts.push(g); return this;
+    const g = prep(geo, color); g.applyMatrix4(matrix); setGlow(g, typeof color === 'number' ? color : _c.set(color).getHex()); this.parts.push(g); return this;
   }
   box(w, h, d, color, pos, rot) { return this.add(new THREE.BoxGeometry(w, h, d), color, pos, rot); }
   rbox(w, h, d, r, color, pos, rot, seg = 2) {
