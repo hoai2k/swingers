@@ -61,6 +61,12 @@ around them:
 | --- | --- | --- | --- | --- |
 | `tile_spider_frost_ice.png` | 512 × 512, seamless PNG | Fills every ice solid (Glacier Rift's big slopes, the ice bridge, icicles), tiled at half size; outlines and the white top edge are drawn over it. Must read as slippery, not as steps. | Seamless tileable texture of glossy glacier ice: translucent pale-cyan to mid-blue, soft diagonal light streaks and a few thin white cracks and trapped air bubbles; no horizontal bands, no stripes, no hard edges; even brightness across the tile so the repeat doesn't show. | Delivered |
 
+**Integration check (ice tile):** delivered and in use on every ice solid.
+On its own the tile is bright, fine-grained and reads a little like pool
+water, so the game lays it at full size (not half), 62 % opaque over deep
+blue, with a few broad light streaks on top; in Glacier Rift's night scene
+that reads as glossy ice. No replacement needed.
+
 ## 3. Optional extras — would each need a small loader hook
 
 These are nice-to-haves; the procedural versions work. Ask before

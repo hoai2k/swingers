@@ -54,6 +54,9 @@ function themeImage(kind, key) {
 // spiders-specific art (image-requests.md); optional, only requested once
 // listed in assets/web/manifest.json (see optional-art.js), so no 404s
 export function spiderImage(file) { return optionalImage(file).img; }
+// delivered terrain tiles: requested at boot (through the loading bar)
+const ICE_TILE = 'tile_spider_frost_ice.png';
+optionalImage(ICE_TILE);
 // preload the shared theme art
 for (const t of Object.keys(THEMES)) { themeImage('bg', t); themeImage('tex', t); }
 const MAT = {
@@ -142,7 +145,7 @@ export class Board {
     ctx.fillStyle = fill;
     ctx.fill(path);
     // texture
-    const iceTex = mat === 'ice' ? spiderImage('tile_spider_frost_ice.png') : null;
+    const iceTex = mat === 'ice' ? spiderImage(ICE_TILE) : null;
     const tex = mat === 'lava' ? MAT.lava : mat === 'ice' ? iceTex : themeImage('tex', s.def.tex || this.theme);
     if (mat === 'ice' && !ready(tex)) drawIce(ctx, path, s);
     if (ready(tex) && mat !== 'glass') {
@@ -150,15 +153,22 @@ export class Board {
       if (tex._pat) {
         ctx.save();
         ctx.clip(path);
-        ctx.globalAlpha = mat === 'lava' || mat === 'ice' ? 1 : s.def.color ? 0.3 : 0.85;
+        if (mat === 'ice') {
+          // the delivered ice tile is bright and fine-grained: lay it larger and
+          // partly see-through over deep blue so it sits in the night scenes
+          ctx.fillStyle = '#21557d';
+          ctx.fill(path);
+        }
+        ctx.globalAlpha = mat === 'lava' ? 1 : mat === 'ice' ? 0.62 : s.def.color ? 0.3 : 0.85;
         // patterns follow moving platforms
-        const m = new DOMMatrix().translate(s.x, s.y).scale(0.5);
+        const m = new DOMMatrix().translate(s.x, s.y).scale(mat === 'ice' ? 1 : 0.5);
         tex._pat.setTransform(m);
         ctx.fillStyle = tex._pat;
         ctx.fill(path);
         ctx.restore();
       }
     }
+    if (mat === 'ice' && ready(tex)) iceSheen(ctx, path, s);
     if (mat === 'glass') {
       ctx.fillStyle = 'rgba(170,230,255,0.35)';
       ctx.fill(path);
@@ -286,7 +296,10 @@ export class Board {
     for (const s of this.world.solids) if (!s.dynamic && !s.broken) this.fillSolid(x, s);
     this.staticCanvas = c;
     // textures may still be loading: redraw once more later
-    this.dirty = !(ready(themeImage('tex', this.theme)));
+    // textures may still be loading: redraw once more later (theme tile, and a
+    // delivered ice tile that's listed but not in yet)
+    const ice = this.world.solids.some((q) => q.mat === 'ice') ? optionalImage(ICE_TILE).img : null;
+    this.dirty = !ready(themeImage('tex', this.theme)) || !!(ice && !ready(ice));
   }
 }
 
@@ -647,6 +660,22 @@ export const DECOR = {
     }
   },
 };
+
+// a few broad diagonal light streaks so ice reads glossy and slippery
+function iceSheen(ctx, path, s) {
+  const bb = s.bb, h = bb.y1 - bb.y0;
+  const rnd = mulberry(s.i * 97 + 3);
+  ctx.save();
+  ctx.clip(path);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = 'rgba(200,240,255,0.14)';
+  ctx.lineCap = 'round';
+  for (let x = bb.x0 - h; x < bb.x1; x += 150 + rnd() * 120) {
+    ctx.lineWidth = 10 + rnd() * 22;
+    ctx.beginPath(); ctx.moveTo(x, bb.y1); ctx.lineTo(x + h * 0.8, bb.y0); ctx.stroke();
+  }
+  ctx.restore();
+}
 
 // glossy procedural ice: a cold gradient, diagonal sheen streaks and a few
 // cracks (until tile_spider_frost_ice.png is delivered)
