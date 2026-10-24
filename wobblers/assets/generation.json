@@ -785,6 +785,46 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-672d65d7-4b26-4565-baef-17f891f46b98.png",
       "prompt": "Use case: stylized-concept. Wobblers square facial-feature decal, 512x512. Small eyes behind big thick round glasses, buck-tooth grin. Only isolated facial features floating on genuinely transparent background. Front view centered in middle 70% of canvas. Bold FLAT CARTOON, thick dark rounded outlines, solid fills, at most one simple white highlight per eye, simple flat pink blush optional. No gradients, realism, anime eyes, thin lashes, skin shading, skin fill, head, head outline, hair, hat, body, text or watermark. Cheerful toy-like game expression, readable when tiny. Will overlay peach #ffd9b8 head.",
       "round": 5
+    },
+    {
+      "index": 79,
+      "file": "posters/pets_adopt.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-cc594fb0-dfad-4cc5-8e2c-b5bcbd9c2b27.png",
+      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Pet-shop poster with exact heading \"ADOPT A PAL!\", a cute toy-like dog, cat, bunny and penguin together. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+      "round": 5
+    },
+    {
+      "index": 80,
+      "file": "posters/clothes_fashion.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5e9952fa-46fe-44a8-bdf4-3710b8f46bc4.png",
+      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Fashion poster with exact heading \"NEW LOOKS\", a wobbly bean person posing in a sombrero and heart sunglasses. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+      "round": 5
+    },
+    {
+      "index": 81,
+      "file": "posters/homes_cottage.png",
+      "width": 768,
+      "height": 528,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2e837617-df1b-4cd8-a99f-faf78faeeb67.png",
+      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, exact words \"FOR SALE\" on a tag in one corner. Output aspect 768:528. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+      "round": 5
+    },
+    {
+      "index": 82,
+      "file": "posters/cars_sale.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9a844b4-e5a3-4f80-a18e-db360233cbc3.png",
+      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Car-dealer poster with exact heading \"BIG DEALS\", a chunky toy sports car and a helicopter. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+      "round": 5
     }
   ]
 }

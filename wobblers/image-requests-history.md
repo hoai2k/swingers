@@ -4,22 +4,35 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
-<!-- round5-progress -->
-## Delivered round 5 batches (in progress)
+## Delivered round 5 — shops, homes and pets (12 images)
 
-Generated with built-in imagegen; sizes, alpha, manifest and browser loader checked.
+All twelve images were delivered at their requested sizes and verified through the game asset loader.
+
+### Signs (`assets/signs/`, 1024 × 256, exact words)
 
 - `clothes.png` — **CLOTHES**: chunky rounded letters on a pink board, small coat-hanger and T-shirt icon.
 - `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
 - `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
 - `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
+
+### Faces (`assets/faces/`, 512 × 512, transparent, features only — new clothes-shop faces)
+
 - `face_heart_eyes.png` — two big red heart-shaped eyes and a wide happy smile.
 - `face_tongue_out.png` — round eyes, open grin with a pink tongue sticking out.
 - `face_dizzy.png` — spiral swirl eyes and a wavy zig-zag mouth.
 - `face_nerd.png` — small eyes behind big thick round glasses, buck-tooth grin.
-<!-- /round5-progress -->
 
-Summary: round 4 — 16 images (6 region/ferry signs + 10 reference sheets);
+### Posters (`assets/posters/`)
+
+- `pets_adopt.png` (512 × 716) — pet-shop poster saying **ADOPT A PAL!**, a cute toy-like dog, cat, bunny and penguin together.
+- `clothes_fashion.png` (512 × 716) — fashion poster saying **NEW LOOKS**, a wobbly bean person posing in a sombrero and heart sunglasses.
+- `homes_cottage.png` (768 × 528) — estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, a **FOR SALE** tag in one corner.
+- `cars_sale.png` (512 × 716) — car-dealer poster saying **BIG DEALS**, a chunky toy sports car and a helicopter.
+
+Delivered 2026-10-24 with built-in imagegen. Prompts are in `assets/generation.json`.
+
+Summary: round 5 — 12 images (4 signs + 4 faces + 4 posters);
+round 4 — 16 images (6 region/ferry signs + 10 reference sheets);
 round 3 — 3 replacement faces; round 2 — 4 unlockable faces; round 1 — 51 images
 (45 in game + 6 reference sheets). All delivered and checked in game, 2026-10-24.
 
