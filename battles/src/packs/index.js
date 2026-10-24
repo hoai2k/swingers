@@ -9,3 +9,6 @@ import './pirate.js';
 import './renaissance.js';
 import './prehistoric.js';
 import './big-beasts.js';
+import './good.js';
+import './evil.js';
+import './secret.js';
