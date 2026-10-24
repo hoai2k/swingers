@@ -48,7 +48,7 @@ invert Y, blood, music.
 
 Watching the battle: **A** follows the unit in the crosshair (its stats card shows
 health, kills and damage), **X** takes control of it (TABS's *Take control*: left
-stick walks relative to the camera, right stick looks, **RT** attacks, **LT** aims
+stick walks relative to the camera, right stick looks, **RT** attacks, **LT** blocks (ranged units: aims)
 (zoom), **A** jumps), **B** on the free camera hands over to the cinematic camera,
 **Y** eases into slow motion, **R3** cycles tips / HUD off (photo mode). In shared
 screen either pad does all of this; in split screen each pad drives its own view.

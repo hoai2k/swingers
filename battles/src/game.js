@@ -1508,8 +1508,9 @@ export class Game {
       }
       if (rig.mode === 'possess') this.possessControl(v, rig, s, units);
       const slow = rig.mode === 'free' || rig.mode === 'follow' ? clamp((s.lt - 0.15) / 0.7, 0, 1) : 0;
-      // possessing: LT aims (zooms in, finer look)
-      const aiming = rig.mode === 'possess' && s.lt > 0.3;
+      // possessing: LT aims (zooms in, finer look) with ranged units, blocks with the rest
+      const ranged = rig.unit?.def.weapon.kind === 'ranged';
+      const aiming = rig.mode === 'possess' && s.lt > 0.3 && ranged;
       rig.aimZoom = lerp(rig.aimZoom || 0, aiming ? 1 : 0, damp(10, dt));
       const look = this.lookOpts;
       if (rig.mode === 'possess') look.lookSpeed *= 1 - 0.55 * rig.aimZoom;
@@ -1546,6 +1547,7 @@ export class Game {
       rig.aimInfo = { dist: dx, ok: reach };
     } else c.aimPitch = clamp(rig.pitch + 0.35, 0.05, 1.1);
     c.attack = s.rt > 0.4;
+    c.block = w.kind !== 'ranged' && s.lt > 0.3;
     if (this.vPressed(v, 'a')) c.jump = true;
     if (rig.lastHp !== undefined && u.hp < rig.lastHp - 0.5) {
       const f = clamp((rig.lastHp - u.hp) / u.maxHp * 4, 0.15, 1);
@@ -1558,7 +1560,7 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} aim &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
+        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${rig.unit?.def.weapon.kind === 'ranged' ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
       case 'cine':
