@@ -25,7 +25,7 @@ export const SP = {
   airAccel: 1100,
   airMax: 430,
   stickRange: 10,
-  jumpSpeed: 800,
+  jumpSpeed: 860,
   maxSpeed: 2200,
   coyote: 0.1,
   webSpeed: 3600,
@@ -34,18 +34,20 @@ export const SP = {
   webReel: 520,
   webYank: 0.9,          // rope length snaps to this fraction of the hit distance
   webPump: 1500,
-  legLen: 23,            // each of the two leg bones
+  legLen: 25,            // each of the two leg bones
 };
 
 const LEGS = [
   // side (+1 = along tangent), rest offset along the surface (x r), group, far (drawn darker)
-  { side: 1, off: 0.55, g: 0, far: true }, { side: 1, off: 1.05, g: 1, far: false },
-  { side: 1, off: 1.55, g: 0, far: true }, { side: 1, off: 2.0, g: 1, far: false },
-  { side: -1, off: 0.55, g: 1, far: true }, { side: -1, off: 1.05, g: 0, far: false },
-  { side: -1, off: 1.55, g: 1, far: true }, { side: -1, off: 2.0, g: 0, far: false },
+  { side: 1, off: 0.7, g: 0, far: true }, { side: 1, off: 1.2, g: 1, far: false },
+  { side: 1, off: 1.7, g: 0, far: true }, { side: 1, off: 2.15, g: 1, far: false },
+  { side: -1, off: 0.7, g: 1, far: true }, { side: -1, off: 1.2, g: 0, far: false },
+  { side: -1, off: 1.7, g: 1, far: true }, { side: -1, off: 2.15, g: 0, far: false },
 ];
 
 let NEXT_ID = 1;
+
+const clingable = (solid) => solid.mat !== 'ice' && solid.mat !== 'bouncy' && solid.mat !== 'lava';
 
 export class Spider {
   constructor(game, { slot = 0, castIndex = 0, color, inputId = null, team = null, name = '' } = {}) {
@@ -196,18 +198,49 @@ export class Spider {
     if (speed > SP.maxSpeed) { this.vx *= SP.maxSpeed / speed; this.vy *= SP.maxSpeed / speed; }
 
     if (this.ground) {
+      // climbing into a wall ahead: switch onto it before moving
+      if (this.circ) {
+        const g0 = this.ground;
+        const hit = world.raycast(this.x, this.y, -g0.ny * this.circ, g0.nx * this.circ, this.r + 4);
+        if (hit && hit.nx * g0.nx + hit.ny * g0.ny < 0.7 && clingable(hit.solid)) {
+          this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
+        }
+      }
+      // in a corner, the stick may run along the other surface: hop onto it
+      if (move.mag > 0.25) {
+        const g0 = this.ground;
+        const dx = move.x / move.mag, dy = move.y / move.mag;
+        const continuing = this.circ && this.circStick && dx * this.circStick.x + dy * this.circStick.y > 0.9;
+        if (!continuing && Math.abs(dx * -g0.ny + dy * g0.nx) < 0.38) {
+          for (const sgn of [1, -1]) {
+            const hit = world.raycast(this.x, this.y, -dy * sgn, dx * sgn, this.r + 5);
+            if (hit && clingable(hit.solid) && Math.abs(dx * -hit.ny + dy * hit.nx) > 0.6) {
+              this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
+              break;
+            }
+          }
+        }
+      }
       const g = this.ground;
       const nx = g.nx, ny = g.ny;
       const tx = -ny, ty = nx;            // consistent circulation around a solid
       const sv = g.solid.velAt(g.x, g.y, world.dt);
-      // direction memory: keep circulating while the stick stays put
+      // direction memory: keep circulating (up walls you walk into, around
+      // ledges you walk off) while the stick stays put and doesn't oppose it
       let target = 0;
       if (move.mag > 0.25) {
-        const s = move.x * tx + move.y * ty;
-        const into = -(move.x * nx + move.y * ny);
-        const stuck = this.circStick && (move.x * this.circStick.x + move.y * this.circStick.y) > 0.8;
-        if (Math.abs(s) > 0.38) { this.circ = Math.sign(s); this.circStick = { x: move.x / move.mag, y: move.y / move.mag }; }
-        else if (!(stuck && this.circ * s > -0.3 && into > -0.2)) this.circ = 0;
+        const dx = move.x / move.mag, dy = move.y / move.mag;
+        const s = dx * tx + dy * ty;
+        const same = this.circStick && dx * this.circStick.x + dy * this.circStick.y > 0.9;
+        if (!same) {
+          this.circStick = { x: dx, y: dy };
+          this.circ = Math.abs(s) > 0.38 ? Math.sign(s) : 0;
+          this.circBlocked = false;
+        } else if (this.circ && this.circ * s < -0.3) {
+          // the surface turned against the stick (e.g. a ceiling corner): stop
+          // there until the stick changes, instead of flipping back
+          this.circ = 0; this.circBlocked = true;
+        } else if (!this.circ && !this.circBlocked && Math.abs(s) > 0.38) this.circ = Math.sign(s);
         target = this.circ * SP.walkSpeed * this.speedMul * Math.min(1, move.mag * 1.2);
       } else { this.circ = 0; this.circStick = null; }
       // walking speed along the tangent
@@ -218,13 +251,6 @@ export class Spider {
       if (g.solid.mat === 'ice') vt += SP.gravity * ty * h;   // slide down icy slopes
       this.vx = sv.x + tx * vt - nx * 40;
       this.vy = sv.y + ty * vt - ny * 40;
-      // climbing into a wall ahead: switch to it
-      if (this.circ) {
-        const hit = world.raycast(this.x, this.y, tx * this.circ, ty * this.circ, this.r + 4);
-        if (hit && hit.nx * nx + hit.ny * ny < 0.7 && hit.solid.mat !== 'ice') {
-          this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
-        }
-      }
     } else {
       this.vy += SP.gravity * h;
       // air control
@@ -249,7 +275,7 @@ export class Spider {
     else {
       const n = world.nearest(this.x, this.y, this.r + SP.stickRange);
       const webPull = this.web && this.web.state === 'stuck' ? this.webDir() : null;
-      let ok = n && n.solid.mat !== 'ice' && n.solid.mat !== 'bouncy' && n.solid.mat !== 'lava';
+      let ok = n && clingable(n.solid);
       if (ok && webPull && webPull.x * n.nx + webPull.y * n.ny > 0.25 && this.web.taut) ok = false;
       if (n && n.solid.mat === 'ice' && n.ny < -0.5) {
         // ice: you can stand on top, slipping, but not cling
@@ -464,7 +490,7 @@ export class Spider {
         L.planted = false;
         // airborne: legs spread and trail the motion
         const spread = L.side * (0.6 + L.off * 0.5);
-        const ax = this.x + spread * r * 1.0 - this.vx * 0.02, ay = this.y + r * (0.9 + 0.25 * Math.sin(this.time * 9 + i)) - this.vy * 0.015;
+        const ax = this.x + spread * r * 1.05 - clamp(this.vx * 0.02, -14, 14), ay = this.y + r * (0.95 + 0.25 * Math.sin(this.time * 9 + i)) - clamp(this.vy * 0.015, -10, 12);
         L.tx = ax; L.ty = ay;
         L.fx = lerp(L.fx, ax, Math.min(1, dt * 14)); L.fy = lerp(L.fy, ay, Math.min(1, dt * 14));
         L.t = 1;
@@ -505,15 +531,17 @@ export class Spider {
       const s1 = Math.cos(k1) * ux + Math.sin(k1) * uy, s2 = Math.cos(k2) * ux + Math.sin(k2) * uy;
       const ka = s1 > s2 ? k1 : k2;
       const kx = hipX + Math.cos(ka) * SP.legLen, ky = hipY + Math.sin(ka) * SP.legLen;
-      ctx.strokeStyle = far ? shade(c.dark, 0.55) : c.dark;
-      ctx.lineWidth = far ? 4.2 : 5;
+      ctx.strokeStyle = far ? '#0c0c12' : '#15151d';
+      ctx.lineWidth = far ? 5.5 : 6.5;
       ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = far ? shade(c.color, 0.6) : c.color;
-      ctx.lineWidth = far ? 2 : 2.4;
+      ctx.strokeStyle = far ? shade(c.dark, 0.6) : c.dark;
+      ctx.lineWidth = far ? 2.6 : 3.2;
       ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
       if (!far) {
         ctx.fillStyle = c.accent;
-        ctx.beginPath(); ctx.arc(kx, ky, 2.6, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(kx, ky, 2.4, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#15151d';
+        ctx.beginPath(); ctx.arc(fx, fy, 2.6, 0, TAU); ctx.fill();
       }
     }
   }
