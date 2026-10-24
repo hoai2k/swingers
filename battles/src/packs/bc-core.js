@@ -350,7 +350,7 @@ export const heightOf = (b, o) => o.pos.y - b.terrain.height(o.pos.x, o.pos.z);
 // is o an ordinary ragdoll on foot (not a beast, a rider on a mount or a crewed engine)?
 export const onFoot = (o) => !o.bc && !(o.sm && (o.sm.mounted || o.sm.cart || o.sm.flying));
 // small enough to be picked up / pinned
-export const small = (o, k = 1.35) => onFoot(o) && o.s <= k;
+export const small = (o, k = 1.35) => onFoot(o) && o.s <= k && o.M <= 110 * (k / 1.35) ** 3;
 
 // ------------------------------------------------------------------ grabbing and dropping
 // Pull a held unit's chest to a point (velocity servo through impulses, weight carried).
@@ -445,6 +445,15 @@ export function trampleBeast(b, m, R, dmg, every = 1.2) {
     b.emit('dust', o.pos.x, o.pos.y - 0.5, o.pos.z, 2);
     b.sound('thud', o.pos, 0.5 + 0.4 * k, 0.6);
   });
+}
+
+// A rider who lost its mount is an ordinary target again (mountInit set its combat
+// radius to the mount's; enemies would otherwise swing at the air around it).
+export function unmountedRadius(m) {
+  if (m.mounted || m.radiusReset) return;
+  m.radiusReset = true;
+  const u = m.u;
+  u.skel.radius = Math.max(u.skel.rChest, 0.25 * u.s);
 }
 
 // ------------------------------------------------------------------ register (once)

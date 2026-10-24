@@ -14,10 +14,10 @@ import { GUARD } from '../pose.js';
 import { THREE, clamp, rand, PART, EXPR, addStatus, addProjectile, launchVel } from './common.js';
 import {
   V, V3, Q4, BC, beastLayout, beastInit, beastUnitStep, beastHit, beastDie, animLegs, setRot, partPoint, footfalls,
-  countEnemies, heightOf, onFoot, fling, quake, inField, S, hurtBig, shoveBig, closestOnSeg, yawOf, angleDiff,
-  placeExtra, qYaw, qPitch, qRoll,
+  onFoot, fling, quake, inField, S, hurtBig, shoveBig, closestOnSeg, yawOf, angleDiff,
+  placeExtra, qYaw, qPitch, qRoll, unmountedRadius,
 } from './bc-core.js';
-import { mountLayout, mountInit, mammothThink, cavalryThink, riderHit, riderDie, riderStep, setupRidePoses } from './sm-mounts.js';
+import { mountLayout, mountInit, mammothThink, riderHit, riderDie, riderStep, setupRidePoses } from './sm-mounts.js';
 import { RIDE, setArm, addBig, updateBig, rangedEvent, footMelee } from './sm-core.js';
 import * as M from './bc-meshes.js';
 
@@ -119,7 +119,7 @@ function trunkZone(b, m, test) {
     if (along < -0.5 || along > 3.6 || Math.abs(side) > 2.4) return;
     n++; sd += side;
     if (test) return;
-    const s = m.bb.trunkSd, lx = -fz * s, lz = fx * s;
+    const s = m.bb.trunkSd, lx = fz * s, lz = -fx * s; // (batted the way the trunk sweeps)
     o.hit(35, PART.chest, 0, 0, 0, u, 'trunk');
     fling(o, lx * 8 + fx * 2, 3.5, lz * 8 + fz * 2, 1.5);
     b.emit('dust', o.pos.x, o.pos.y - 0.5, o.pos.z, 1);
@@ -236,6 +236,14 @@ const footMeleeK = (u, ctx) => footMelee(u, ctx, u.def.weapon.cooldown);
 
 function stepEles(b, dt) {
   for (const m of BC(b).eles || []) {
+    unmountedRadius(m);
+    // a dead elephant goes all the way over onto its side
+    if (!m.alive && !m.bb.toppled) {
+      m.bb.toppled = true;
+      const f = V(0, 0, 1).applyQuaternion(m.torso.quat), w = m.torso.body.angvel();
+      const sd = Math.sign(f.x * w.x + f.z * w.z) || 1;
+      m.torso.body.setAngvel({ x: f.x * 1.15 * sd, y: w.y, z: f.z * 1.15 * sd }, true);
+    }
     if (!m.alive && m.torso.body.isSleeping()) { if (m.bb.a2 && !m.bb.a2.dead && m.bb.a2.ground) stepArcher2(b, m, dt); continue; }
     if (m.bb.a2) stepArcher2(b, m, dt);
     if (!m.alive || !m.mounted || !m.u.alive || b.over) { m.bb.trunkT = -1; continue; }
@@ -365,19 +373,19 @@ function fireCone(b, m) {
   const u = m.u, o = mouthD(m, _p);
   const dir = _a.set(0, 0, 1).applyQuaternion(m.parts[DHEAD].e.quat);
   // a stream of flame along the cone, and fire splashing where it meets the ground
-  for (let i = 0; i < 4; i++) {
-    const s = Math.random() ** 0.7 * FIRE.range, w = s * 0.32;
+  for (let i = 0; i < 8; i++) {
+    const s = Math.random() ** 0.6 * FIRE.range, w = s * 0.3;
     const x = o.x + dir.x * s + rand(-w, w), y = o.y + dir.y * s + rand(-w, w) * 0.6, z = o.z + dir.z * s + rand(-w, w);
     const gy = b.terrain.height(x, z);
     b.emit('trail', x, Math.max(y, gy + 0.15), z, Math.random() < 0.4 ? 1 : 0);
   }
   m.fxT = (m.fxT || 0) - 1;
   if (m.fxT <= 0) {
-    m.fxT = 14;
+    m.fxT = 22;
     // where does the cone hit the ground?
     const k = dir.y < -0.05 ? Math.min(FIRE.range, (o.y - b.terrain.height(o.x, o.z)) / -dir.y) : FIRE.range;
     const gx = o.x + dir.x * k, gz = o.z + dir.z * k;
-    b.emit('explode', gx, b.terrain.height(gx, gz), gz, 1.4, 2);
+    b.emit('explode', gx, b.terrain.height(gx, gz), gz, 1.1, 2);
     b.sound('fire', o, 1.1, rand(0.55, 0.7));
   }
   m.tick = (m.tick || 0) - 1 / 60;

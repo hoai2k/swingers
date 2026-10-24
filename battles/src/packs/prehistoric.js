@@ -11,7 +11,7 @@ import { THREE, clamp, rand, PART, EXPR } from './common.js';
 import {
   V, V3, Q4, BC, beastLayout, beastInit, beastUnitStep, beastHit, beastDie, animLegs, setRot, partPoint, footfalls,
   nearestEnemy, countEnemies, heightOf, trampleBeast, onFoot, small, carry, trackFall, fling, quake, inField, holdUpright,
-  chainLayout, chainInit, placeChain, S, hurtBig, shoveBig, closestOnSeg, yawOf, angleDiff,
+  chainLayout, chainInit, placeChain, S, hurtBig, shoveBig, closestOnSeg, yawOf, angleDiff, unmountedRadius,
 } from './bc-core.js';
 import { mountLayout, mountInit, riderHit, riderDie, riderStep, setupRidePoses } from './sm-mounts.js';
 import { RIDE, setArm, footMelee } from './sm-core.js';
@@ -202,8 +202,8 @@ const RAPTOR_MOUNT = {
   H0: 0.95 * RK, saddle: VK(0, 0.33, -0.08),
   hips: [VK(0.16, -0.08, -0.02), VK(-0.16, -0.08, -0.02)], legOff: [0, PI], legAmp: 0.9, stride: 2.3,
   speed: 10, accel: 9, turn: 2.6, turnSlow: 0.5, grip: 16, alpha: 45,
-  seg: [VK(0, 0, -0.35), VK(0, 0.3, 0.6)], segR: 0.4, hp: 650,
-  front: 0.75, trR: 0.75, trDmg: 14, trK: 1, knock: 0.25, share: 0.55, combatR: 0.6, pitch: 1.3,
+  seg: [VK(0, 0, -0.35), VK(0, 0.3, 0.6)], segR: 0.4, hp: 800,
+  front: 0.75, trR: 0.75, trDmg: 14, trK: 1, knock: 0.2, share: 0.8, combatR: 0.6, pitch: 1.3,
   torsoMesh: (H, t) => M.raptorTorso(H, t, RK), legMesh: (H, t) => M.raptorLeg(H, t, RK),
 };
 // head, jaw and tail on the ridden raptor: extra kinematic parts after the mount's own
@@ -240,6 +240,7 @@ function riderThink(u, dt, ctx) {
 }
 function stepRiders(b, dt) {
   for (const m of BC(b).riders || []) {
+    unmountedRadius(m);
     const rr = m.rr, P = rr.parts;
     if (m.torso.body.isSleeping() && !m.alive) continue;
     rr.biteA = Math.max(0, rr.biteA - dt * 4);
@@ -269,7 +270,7 @@ function stepRiders(b, dt) {
       if (hit) {
         rr.biteA = 1; rr.biteCd = rand(0.6, 0.8);
         const c = hit.chestPos;
-        hit.hit(36, PART.chest, 0, 1, 0, m.u, 'bite');
+        hit.hit(42, PART.chest, 0, 1, 0, m.u, 'bite');
         b.emit('blood', c.x, c.y, c.z, 5, 0, 0);
         b.sound('crunch', c, 0.5, 1.4);
       }
@@ -372,14 +373,14 @@ function peck(b, m, v) {
   if (onFoot(v)) fling(v, vel.x * 0.4, 2, vel.z * 0.4, 1);
   b.emit('blood', c.x, c.y, c.z, 6, vel.x * 0.1, vel.z * 0.1);
   b.sound('stab', c, 0.8, 1.3);
-  m.swoopCd = rand(2.5, 3.5);
+  m.swoopCd = rand(2, 2.8);
 }
 function drop(b, m) {
   const v = m.held;
   m.held = null;
   if (v) { v.bcHeld = null; if (v.alive) { trackFall(b, v, m.u, 14); b.voice(v, 'scream', true); } }
   m.state = 'climb'; m.t = 0;
-  m.swoopCd = rand(2.8, 4.2);
+  m.swoopCd = rand(2.2, 3.2);
 }
 function pteroAct(b, m, dt) {
   if (m.held) {
@@ -549,8 +550,8 @@ function rexAct(b, m, dt) {
       if (small(v, 1.7) && !v.bcHeld) { m.held = v; v.bcHeld = m; v.hit(60, PART.chest, 0, 0, 0, u, 'bite'); }
       else {
         // too big to pick up: a huge bite and a shove
-        v.hit(160, PART.chest, 0, 0, 0, u, 'bite');
-        if (!v.bc && v.sm && v.sm.big) hurtBig(b, v.sm.big, 80, u);
+        v.hit(110, PART.chest, 0, 0, 0, u, 'bite');
+        if (!v.bc && v.sm && v.sm.big) hurtBig(b, v.sm.big, 50, u);
       }
       b.emit('blood', c.x, c.y, c.z, 12, 0, 0);
     }
@@ -612,7 +613,7 @@ function rexDie(b, m) { if (m.held) { m.held.bcHeld = null; m.held = null; } b.s
 // ======================================================================= units
 const units = [
   {
-    id: 'pr_caveman', name: 'Caveman', faction: 'prehistoric', cost: 55, hp: 80, speed: 4.6,
+    id: 'pr_caveman', name: 'Caveman', faction: 'prehistoric', cost: 55, hp: 90, speed: 4.6,
     build: { scale: 0.98, girth: 1.08, head: 1.05, arms: 1.05 },
     weapon: { line: 'Melee · two-handed bone club knocks people over', kind: 'melee', style: 'twohand', anim: 'slam', item: 'pr_femur', damage: 30, reach: 1.25, cooldown: 1.35, force: 420 },
     look: { skin: '#d9a57c', hat: 'pr_shag', top: 'fur', legs: '#6b4a2b', bare: true, beard: '#4a3020', brow: true },
@@ -628,17 +629,17 @@ const units = [
     desc: 'Clever girl. Hunts in packs: leaps on its prey, pins it down and bites.',
   },
   {
-    id: 'pr_raptor_rider', name: 'Raptor Rider', faction: 'prehistoric', cost: 400, hp: 160, speed: 4.6,
+    id: 'pr_raptor_rider', name: 'Raptor Rider', faction: 'prehistoric', cost: 370, hp: 180, speed: 4.6,
     build: { scale: 1, girth: 1.05, radius: 1.0 },
-    weapon: { line: 'Mounted · clubs from a sprinting raptor that bites · fights on if thrown', kind: 'pr_rrider', style: 'pr_rclub', footStyle: 'sword', anim: 'overhead', item: 'club', damage: 40, reach: 1.4, cooldown: 1.0, force: 320 },
+    weapon: { line: 'Mounted · clubs from a sprinting raptor that bites · fights on if thrown', kind: 'pr_rrider', style: 'pr_rclub', footStyle: 'sword', anim: 'overhead', item: 'club', damage: 46, reach: 1.4, cooldown: 1.0, force: 320 },
     look: { skin: '#d9a57c', hat: 'skullcap', top: 'fur', legs: '#6b4a2b', bare: true, beard: '#4a3020', paint: true },
     personality: { aggro: 1, bravery: 0, voice: 0.9, chatter: 0.8, cry: 'ooga', idle: 'bounce' },
     desc: 'A caveman on a raptor. Very fast; the raptor bites while he clubs.',
   },
   {
-    id: 'pr_ptero', name: 'Pterodactyl', faction: 'prehistoric', cost: 420, hp: 230, speed: 9,
+    id: 'pr_ptero', name: 'Pterodactyl', faction: 'prehistoric', cost: 350, hp: 330, speed: 9,
     build: { scale: 1, radius: 1.2 },
-    weapon: { line: 'Flying · swoops, carries small units up high and drops them', kind: 'pr_ptero', style: 'none', anim: 'punch', item: 'none', damage: 40, reach: 1.0, cooldown: 3, force: 80 },
+    weapon: { line: 'Flying · swoops, carries small units up high and drops them', kind: 'pr_ptero', style: 'none', anim: 'punch', item: 'none', damage: 48, reach: 1.0, cooldown: 3, force: 80 },
     look: { skin: M.PTERO_C.skin, hat: 'none', top: 'none', legs: M.PTERO_C.skin },
     personality: { aggro: 1, bravery: 0, voice: 1.5, chatter: 0.6, cry: 'cackle', idle: 'bounce' },
     desc: 'Snatches small units, flies them up high and lets go.',
@@ -654,7 +655,7 @@ const units = [
 ];
 const DEF = Object.fromEntries(units.map((d) => [d.id, d]));
 const BEAST_CFG = { pr_raptor: RAPTOR, pr_ptero: PTERO, pr_trex: REX };
-Object.assign(RAPTOR, { anim: raptorAnim, act: raptorAct, command: (b, m) => { if (m.leapCd <= 0 && m.prey) leap(b, m, m.prey); } });
+Object.assign(RAPTOR, { anim: raptorAnim, act: raptorAct, command: (b, m) => { const t = m.prey && m.prey.alive ? m.prey : nearestEnemy(b, m.u.team, m.torso.pos); if (m.leapCd <= 0 && m.state === 'run' && t) leap(b, m, t); } });
 Object.assign(PTERO, { anim: pteroAnim, act: pteroAct, onDie: pteroDie });
 Object.assign(REX, { anim: rexAnim, act: rexAct, onDie: rexDie, command: (b, m) => { if (m.state === 'walk') { m.state = 'bite'; m.t = 0; m.held = null; m.throwSd = 1; m.biteYaw = 0; } } });
 RAPTOR.init = (m) => { m.state = 'run'; };
