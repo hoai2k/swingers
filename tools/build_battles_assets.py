@@ -12,13 +12,19 @@ from PIL import Image, ImageOps
 ROOT = Path(__file__).resolve().parent.parent / "battles"
 SIZES = {"logo": (1200, 525), "icon": (512, 512), "loading": (1920, 1080)}
 FACTIONS = ("tribal", "farmer", "medieval", "legacy", "viking", "ancient",
-            "dynasty", "wildwest", "spooky")
+            "dynasty", "wildwest", "spooky", "pirate", "renaissance", "prehistoric",
+            "good", "evil", "secret")
 SIZES.update({f"faction-{name}": (128, 128) for name in FACTIONS})
 SIZES.update({f"map-{name}": (640, 360) for name in ("grass", "desert", "winter", "autumn")})
 SIZES.update({f"victory-{name}": (1200, 400) for name in ("blue", "red")})
 
+built = set()
 for name, size in SIZES.items():
     source = ROOT / "assets/originals/ui" / f"{name}.png"
+    if not source.exists():
+        print(f"  (not delivered yet: {source.name})")
+        continue
+    built.add(name)
     with Image.open(source) as image:
         opaque = name.startswith("map-") or name == "loading"
         if opaque:
@@ -33,9 +39,9 @@ for name, size in SIZES.items():
 
 # Preloaded at boot (src/assets.js). loading.jpg is used by the loading screen itself,
 # before the manifest is read, so it is not listed.
-files = ["assets/ui/logo.png", "assets/ui/icon.png"]
-files += [f"assets/ui/faction-{name}.png" for name in FACTIONS]
-files += [f"assets/ui/map-{name}.jpg" for name in ("grass", "desert", "winter", "autumn")]
-files += [f"assets/ui/victory-{name}.png" for name in ("blue", "red")]
+files = [f"assets/ui/{n}.png" for n in ("logo", "icon") if n in built]
+files += [f"assets/ui/faction-{name}.png" for name in FACTIONS if f"faction-{name}" in built]
+files += [f"assets/ui/map-{name}.jpg" for name in ("grass", "desert", "winter", "autumn") if f"map-{name}" in built]
+files += [f"assets/ui/victory-{name}.png" for name in ("blue", "red") if f"victory-{name}" in built]
 (ROOT / "assets/manifest.json").write_text(json.dumps({"files": files}, indent=2) + "\n")
-print(f"Built {len(SIZES)} UI images; registered {len(files)} in the preload manifest.")
+print(f"Built {len(built)} UI images; registered {len(files)} in the preload manifest.")

@@ -7,7 +7,16 @@ as soon as the file is listed in `assets/manifest.json` (I add it when the image
 arrives; the game preloads only what the manifest lists, so missing files never cause
 broken images or 404s).
 
-**Status: all 31 requested files delivered** (18 UI images and 13 reference sheets).
+**Status: round 3 open — items 31–42 requested** (six new faction emblems and six
+reference sheets for the Pirate, Renaissance, Prehistoric, Good, Evil and Secret
+factions and the big beasts). All 31 earlier files are delivered and in use.
+
+To deliver round 3, save the full-size generated originals as
+`assets/originals/ui/faction-<id>.png` (emblems) and `reference/<name>.png` (sheets),
+then run `python3 tools/build_battles_assets.py`. It builds the 128×128 emblems and
+lists them in the manifest, and it skips anything not delivered yet.
+
+Earlier rounds: all 31 requested files delivered (18 UI images and 13 reference sheets).
 Generated with the built-in imagegen tool. Exact prompts and final dimensions are in
 `assets/generation.json`; high-resolution UI originals are in `assets/originals/ui/`.
 Run `python3 tools/build_battles_assets.py` (Pillow) to rebuild the requested sizes.
@@ -50,6 +59,18 @@ the TABS logo.
 | 11 | `assets/ui/loading.jpg` | 1920×1080 JPG | **wired** (loading screen, logo on top) | Loading-screen key art: two bean armies (blue left, red right) charging at each other across a green field, with a giant in the red army, an arrow volley in the sky and a bomb going off. Leave the centre third calm so a logo and progress text can sit on top. |
 | 12 | `assets/ui/victory-blue.png`, `assets/ui/victory-red.png` | 1200×400, transparent PNG | **wired** (result screen; the title sits on the ribbon) | Banner art behind the result text: a ribbon banner in the team colour with a few bean soldiers cheering and jumping in front of it. No text. |
 
+
+### Round 3: new faction emblems
+
+| # | File | Size / format | Status | What |
+|---|---|---|---|---|
+| 31 | `assets/ui/faction-pirate.png` | 128×128, transparent PNG | **wired** once delivered | Skull wearing a tricorn hat over two crossed cutlasses, sea green (#2a9d7c) and gold. Flat sticker style like the other emblems. |
+| 32 | `assets/ui/faction-renaissance.png` | 128×128, transparent PNG | **wired** once delivered | Vermilion (#d0503c) shield with a gold quill crossed with a halberd, a small Vitruvian-style circle behind. |
+| 33 | `assets/ui/faction-prehistoric.png` | 128×128, transparent PNG | **wired** once delivered | T-Rex skull over a crossed bone club, jungle green (#3daa6e) with ivory and gold. |
+| 34 | `assets/ui/faction-good.png` | 128×128, transparent PNG | **wired** once delivered | Golden halo over a white tower shield with a sun emblem, soft gold (#ffe680). |
+| 35 | `assets/ui/faction-evil.png` | 128×128, transparent PNG | **wired** once delivered | Purple (#8e4fd6) horned skull with a spiked flail and a small hourglass behind it. Comedic, not scary. |
+| 36 | `assets/ui/faction-secret.png` | 128×128, transparent PNG | **wired** once delivered | A big question mark made from a banana, with a chicken peeking round it, mint (#3fd0a0). |
+
 ## 2. Reference art (not shipped, guides future model and colour work)
 
 The units are built procedurally from primitives in `src/visual.js`. These sheets show
@@ -71,6 +92,12 @@ background, with its weapon.
 | 27 | `reference/dynasty.png` | Monk (orange robe, bald, palm strike), Samurai (lacquered armour, katana in parry stance), Firework Archer (bow with a rocket arrow), Hwacha (soldier carrying a rack of 16 rockets on his back). |
 | 28 | `reference/wildwest.png` | Cactus (a living cactus with a cartoon face and cowboy hat), Gunslinger (cowboy hat, poncho, revolver with smoke), Blunderbuss (flared shotgun), Lasso (spinning rope), Dynamite (miner with lit sticks). |
 | 29 | `reference/spooky.png` | Skeleton and Skeleton Archer (goofy bones, one falling apart), Candlehead (head is a lit candle), Vampire (cape with high collar, fangs), Reaper (hooded black robe, giant scythe, skull face). Comedic, not scary. |
+| 37 | `reference/pirate.png` | Flintlock Pirate (smoking pistol), Harpooner (barbed harpoon and line), Bomb Thrower, Pirate Captain (tricorn, cutlass and pistol), Pirate Queen (two pistols, big hat), and the crewed Cannon on a wheeled carriage with its gunner. |
+| 38 | `reference/renaissance.png` | Halberd, Fencer (rapier lunge), Musketeer (volley pose), Balloon Archer (an archer hanging under a striped balloon), Painter (beret, palette, paint splats), and the Da Vinci Tank (wooden cone tank with cannons round the rim, engineer in the hatch). |
+| 39 | `reference/prehistoric.png` | Caveman (femur club, shaggy hair, team headband), Velociraptor (olive with a team-coloured feather crest and stripes, mid-leap), Raptor Rider (skull cap, club), Pterodactyl (team-coloured wing membranes and crest, carrying a soldier), T-Rex (team war-paint bands, roaring). |
+| 40 | `reference/big-beasts.png` | Ancient War Elephant (bronze armour, team caparison, howdah with two archers), Dynasty Battle Elephant (lacquered plates, spiked head-plate, mahout, banners), Dynasty Dragon (team-coloured scales, gold belly, orange flame mane, ivory horns, bat wings, breathing fire). |
+| 41 | `reference/good-evil.png` | Good: Shield Bearer (huge tower shield), Cleric (heal beam), Angel (wings, halo, holy sword), Phoenix (fire bird), Super Peasant (flying fist-first). Evil: Fan Bearer, Mace Spinner (two flails), Necromancer with a zombie, Chronomancer with a slow-time bubble, Tree Giant throwing a tree. |
+| 42 | `reference/secret.png` | Banana Thrower with peels on the ground, Cheerleader (pom-poms), Bomb on a Stick, Chicken Man throwing chickens, Lightning Gun with chained arcs, Ullr (archer god on skis with frost arrows). |
 | 30 | `reference/siege-mounts.png` | Cavalry knight on a chunky toy horse with a couched lance; a woolly Mammoth with tusks, a rider and a drummer on top; a wooden Catapult cart with its crewman; a Ballista bolt-thrower; show the same bean-soldier proportions as the rest. |
 
 All listed files have arrived. Remaining integration: map select previews, loading
