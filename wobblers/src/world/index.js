@@ -16,6 +16,7 @@ import { buildDetail } from './detail.js';
 import { buildGarage } from './garage.js';
 import { buildFun } from './fun.js';
 import { InteriorLights } from './lights.js';
+import { buildPresents } from './presents.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -35,6 +36,7 @@ export function buildWorld(game) {
   scatterProps(game, kit);
   buildGarage(game, kit);
   buildFun(game, kit);
+  buildPresents(game); // after everything static (it rays down onto it) and the rafts
   kit.finish();
   game.interiorLights.finish();
   buildDetail(game); // grass, flowers, road edges, lamp glow

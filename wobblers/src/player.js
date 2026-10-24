@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { RAPIER } from './physics.js';
 import { DT, ALL, groups, playerBit, G_VEH, HATS, PLAYER_COLORS } from './config.js';
+import { buildExtraHat } from './hats.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 
 export const S = 0.8; // overall character scale
@@ -288,7 +289,7 @@ export class Player {
     } else if (kind === 'bucket') {
       b.cyl(R * 0.78, R * 1.05, R * 0.55, c, [0, R * 0.75, 0], null, 18);
       b.cyl(R * 1.25, R * 1.25, 0.02, c, [0, R * 0.5, 0], null, 18);
-    }
+    } else buildExtraHat(b, kind, R, c, hm); // unlockable hats (src/hats.js)
     hm.add(b.mesh());
   }
 

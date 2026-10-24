@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
 import { Builder } from '../mesh.js';
+import { VEH_GROUPS } from '../config.js';
 
 const C = RAPIER.ColliderDesc;
 const WOOD = 0xb5773d, DARK = 0x6b4a2a;
@@ -144,12 +145,71 @@ const FURN = {
   },
 };
 
+// Seats on furniture, body-local: [hips x, y, z] per seat (facing body +Z) and
+// how far in front you stand up (exit [y, z]); if another piece of furniture
+// (a table) is in the way, you get up beside or behind it instead (exitWorld).
+// Sittable furniture uses the vehicle/ride
+// collision group, so a seated player (who ignores that group) doesn't fight
+// the chair; everyone else still bumps it as usual.
+const SEATS = {
+  chair: { at: [[0, 0.21, 0.02]], exit: [0.2, 0.75] },
+  stool: { at: [[0, 0.23, 0]], exit: [0.2, 0.7] },
+  sofa: { at: [[-0.42, 0.49, 0.06], [0.42, 0.49, 0.06]], exit: [0.3, 1.0] },
+  armchair: { at: [[0, 0.39, 0.04]], exit: [0.3, 0.95] },
+  beanbag: { at: [[0, 0.38, -0.05]], exit: [0.2, 0.8] },
+};
+
 export function furn(game, kind, x, y, z, yaw = 0, ...args) {
   const p = FURN[kind](...args);
   const rot = { x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) };
-  const o = game.physics.dynamic({ x, y: y + p.h + 0.01, z }, p.d, p.b.mesh(), { rot, angDamp: 0.4, linDamp: 0.1 });
+  const st = SEATS[kind];
+  const o = game.physics.dynamic({ x, y: y + p.h + 0.01, z }, p.d, p.b.mesh(), { rot, angDamp: 0.4, linDamp: 0.1, ...(st ? { groups: VEH_GROUPS } : {}) });
   game.scene.add(o.mesh);
+  (game.furniture ||= []).push(o.body);
+  if (st) {
+    const seats = st.at.map((at) => ({
+      body: o.body, pos: at, yaw: 0, kind: 'passenger', label: 'Sit', hint: 'Y Get up', occupant: null,
+      get exitWorld() { return exitSpot(game, o.body, at, st.exit); }, // read by Player.leaveSeat
+      // a beanbag is a ball: don't let it roll out from under its sitter
+      ...(kind === 'beanbag' ? { onEnter: () => o.body.lockRotations(true, true), onExit: () => o.body.lockRotations(false, true) } : {}),
+    }));
+    for (const s of seats) game.seats.push(s);
+    sittable(game).push({ body: o.body, seats });
+  }
   return o;
+}
+
+// First free spot of: in front, right, left, behind (body-local), skipping any
+// within reach of another piece of furniture's centre.
+const _q = new THREE.Quaternion(), _v = new THREE.Vector3();
+function exitSpot(game, body, at, [ey, ez]) {
+  const r = body.rotation(), t = body.translation();
+  _q.set(r.x, r.y, r.z, r.w);
+  let first = null;
+  for (const [lx, lz] of [[at[0], ez], [at[0] + 0.7, 0.1], [at[0] - 0.7, 0.1], [at[0], -0.8]]) {
+    const w = _v.set(lx, ey, lz).applyQuaternion(_q).add(t);
+    const p = { x: w.x, y: w.y, z: w.z };
+    first ||= p;
+    if (!game.furniture.some((b) => b !== body && Math.hypot(b.translation().x - p.x, b.translation().z - p.z) < 0.6 && Math.abs(b.translation().y - p.y) < 1.2)) return p;
+  }
+  return first;
+}
+
+// Knocked-over furniture can't be sat on until it's stood back up.
+function sittable(game) {
+  if (!game.sittable) {
+    game.sittable = [];
+    let n = 0;
+    game.steppers.push(() => {
+      if (++n % 20) return;
+      for (const f of game.sittable) {
+        if (f.body.isSleeping()) continue;
+        const r = f.body.rotation(), up = 1 - 2 * (r.x * r.x + r.z * r.z); // body Y axis . world Y
+        for (const s of f.seats) s.disabled = up < 0.8;
+      }
+    });
+  }
+  return game.sittable;
 }
 
 // Furniture placed in a building's local frame (L: common.Local).

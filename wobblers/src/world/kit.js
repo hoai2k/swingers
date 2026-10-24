@@ -142,7 +142,14 @@ export class Kit {
     b.box(1.8, 0.4, 0.08, 0xb5773d, P(0, 0.8, -0.24), [0, yaw, 0]);
     b.box(0.08, 0.48, 0.45, 0x444444, P(-0.8, 0.24, 0), [0, yaw, 0]);
     b.box(0.08, 0.48, 0.45, 0x444444, P(0.8, 0.24, 0), [0, yaw, 0]);
-    this.phys.box(...P(0, 0.4, 0), 1.8, 0.8, 0.5, { yaw });
+    // seat block + backrest (not one solid block, so sitters rest on the planks)
+    this.phys.box(...P(0, 0.26, 0), 1.8, 0.52, 0.5, { yaw });
+    this.phys.box(...P(0, 0.8, -0.24), 1.8, 0.56, 0.08, { yaw });
+    // two seats (Y to sit), facing out the front; get up a step in front
+    for (const lx of [-0.45, 0.45]) {
+      const [sx, sy, sz] = P(lx, 0.71, 0.02), [ex, ey, ez] = P(lx, 0.75, 0.95);
+      this.game.seats.push({ body: this.phys.staticBody, pos: [sx, sy, sz], yaw, kind: 'passenger', label: 'Sit', hint: 'Y Get up', exit: [ex, ey, ez], occupant: null });
+    }
     return this;
   }
 

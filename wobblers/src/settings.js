@@ -1,11 +1,11 @@
 // Persistent settings (localStorage). Global audio/video settings plus
 // per-device preferences (camera invert / sensitivity) and the last look a
-// device chose in the customiser. Every storage access is guarded: a private
+// device chose in the customiser, and the presents found (unlocked cosmetics). Every storage access is guarded: a private
 // window or blocked storage just means nothing is remembered.
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {} });
+const DEFAULTS = () => ({ music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [] });
 
 function load() {
   const s = DEFAULTS();
@@ -17,6 +17,8 @@ function load() {
         for (const k of ['music', 'sfx', 'res']) if (typeof o[k] === 'number' && isFinite(o[k])) s[k] = o[k];
         if (typeof o.shadows === 'boolean') s.shadows = o.shadows;
         if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
+        // ids of the presents found so far (src/unlocks.js)
+        if (Array.isArray(o.presents)) s.presents = o.presents.filter((v) => typeof v === 'string');
       }
     }
   } catch (e) { /* storage unavailable */ }
