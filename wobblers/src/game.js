@@ -116,9 +116,18 @@ export class Game {
   nearestSeat(p, maxD = 2.6) {
     const c = p.chest.translation();
     let best = null, bd = maxD;
-    const q = new THREE.Quaternion(), v = new THREE.Vector3();
+    const q = new THREE.Quaternion(), v = new THREE.Vector3(), sb = this.physics.staticBody;
     for (const s of this.seats) {
       if (s.occupant || s.disabled) continue;
+      // cheap reject before the full transform (there are hundreds of seats):
+      // static seats store world positions, others sit within |pos| of their
+      // body, whose position is read from Rapier at most once per physics step
+      if (s.body === sb) { if (Math.abs(s.pos[0] - c.x) > maxD + 1.6 || Math.abs(s.pos[2] - c.z) > maxD + 1.6) continue; }
+      else {
+        if (s.seenStep !== this.stepCount) { s.seen = s.body.translation(); s.seenStep = this.stepCount; }
+        const R = maxD + 1.6 + (s.reach ??= Math.hypot(s.pos[0], s.pos[1], s.pos[2]));
+        if (Math.abs(s.seen.x - c.x) > R || Math.abs(s.seen.z - c.z) > R) continue;
+      }
       const t = s.body.translation(), r = s.body.rotation();
       v.set(s.pos[0], s.pos[1], s.pos[2]).applyQuaternion(q.set(r.x, r.y, r.z, r.w)).add(new THREE.Vector3(t.x, t.y, t.z));
       const d = v.distanceTo(new THREE.Vector3(c.x, c.y, c.z)) - (s.kind === 'driver' ? 1.5 : 0);
@@ -145,6 +154,7 @@ export class Game {
   }
 
   step() {
+    this.stepCount = (this.stepCount || 0) + 1; // nearestSeat's position cache
     const blank = { state: {}, pressed: {} };
     for (const p of this.players) {
       const d = this.paused ? null : this.input.get(p.deviceId);

@@ -7,8 +7,11 @@ import { headMaterials } from './player.js';
 import { paintFace } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { devicePrefs, saveSettings } from './settings.js';
+import { EXTRA_HAT_NAMES } from './hats.js';
+import { isLocked } from './unlocks.js';
 
-export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy'];
+// The last four faces / trousers and HATS past the first eight are unlocked by presents (src/unlocks.js).
+export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy', 'Star eyes', 'Winky', 'Robot', 'Moustache'];
 export const PANTS = [
   { name: 'Matching', color: null },
   { name: 'Denim', color: 0x3b5c9a },
@@ -19,8 +22,12 @@ export const PANTS = [
   { name: 'Green', color: 0x3c8a3c },
   { name: 'Purple', color: 0x6a3c9a },
   { name: 'Orange', color: 0xe07a2a },
+  { name: 'Gold', color: 0xf2c230 },
+  { name: 'Pink', color: 0xff8ac8 },
+  { name: 'Sky', color: 0x7ad0ff },
+  { name: 'Plaid red', color: 0x9a2a3a },
 ];
-export const HAT_NAMES = { none: 'No hat', cap: 'Cap', tophat: 'Top hat', beanie: 'Beanie', crown: 'Crown', party: 'Party hat', cowboy: 'Cowboy hat', bucket: 'Bucket hat' };
+export const HAT_NAMES = { none: 'No hat', cap: 'Cap', tophat: 'Top hat', beanie: 'Beanie', crown: 'Crown', party: 'Party hat', cowboy: 'Cowboy hat', bucket: 'Bucket hat', ...EXTRA_HAT_NAMES };
 export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Teal', 'Pink', 'White', 'Charcoal'];
 
 // Same layout as mesh.js faceCanvas: 512x256, the face centred at u = 0.25.
@@ -96,6 +103,40 @@ function drawFace(kind) {
       g.strokeStyle = '#5a2a2a'; g.lineWidth = 6; g.beginPath(); g.arc(cx, H * 0.72, 18, 1.2 * Math.PI, 1.8 * Math.PI); g.stroke();
       break;
     }
+    case 'Star eyes': {
+      const star = (x, y, r) => {
+        g.beginPath();
+        for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+        g.closePath(); g.fill();
+      };
+      g.fillStyle = '#ffc21a'; for (const x of ex) star(x, ey, 25);
+      g.fillStyle = '#fff6b0'; for (const x of ex) star(x - 3, ey - 3, 9);
+      g.fillStyle = '#7a2a2a'; g.beginPath(); g.arc(cx, H * 0.6, 22, 0, Math.PI); g.closePath(); g.fill();
+      break;
+    }
+    case 'Winky': {
+      eye(ex[0], ey);
+      g.strokeStyle = '#1c1c28'; g.lineWidth = 7; g.beginPath(); g.arc(ex[1], ey + 4, 15, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke();
+      smile(22, 6);
+      g.fillStyle = '#ff6a7a'; g.beginPath(); g.ellipse(cx + 4, H * 0.6 + 24, 10, 13, 0, 0, 7); g.fill();
+      g.strokeStyle = '#d0405a'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx + 4, H * 0.6 + 16); g.lineTo(cx + 4, H * 0.6 + 32); g.stroke();
+      break;
+    }
+    case 'Robot': {
+      g.fillStyle = '#c8ccd6'; g.beginPath(); g.roundRect(cx - 70, ey - 32, 140, 64, 14); g.fill();
+      g.fillStyle = '#2a2f3a'; g.beginPath(); g.roundRect(cx - 62, ey - 24, 124, 48, 10); g.fill();
+      g.fillStyle = '#3af0ff'; for (const x of ex) { g.beginPath(); g.roundRect(x - 14, ey - 10, 28, 20, 5); g.fill(); }
+      g.fillStyle = '#9aa3ad'; g.fillRect(cx - 30, H * 0.66, 60, 16);
+      g.fillStyle = '#2a2f3a'; for (let k = 0; k < 5; k++) g.fillRect(cx - 26 + k * 12, H * 0.66 + 3, 6, 10);
+      break;
+    }
+    case 'Moustache': {
+      eye(ex[0], ey); eye(ex[1], ey); brows();
+      g.fillStyle = '#5a3a22';
+      for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 20, H * 0.6, 24, 10, s * 0.25, 0, 7); g.fill(); g.beginPath(); g.ellipse(cx + s * 42, H * 0.57, 9, 6, s * -0.6, 0, 7); g.fill(); }
+      g.strokeStyle = '#5a2a2a'; g.lineWidth = 5; g.beginPath(); g.arc(cx, H * 0.66, 12, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+      break;
+    }
     default: {
       eye(ex[0], ey); eye(ex[1], ey); smile(); brows();
     }
@@ -135,6 +176,26 @@ export function setPants(p, i) {
   p.setColor(p.colorIndex); // rebuilds the meshes
 }
 
+// ---- locked items (found in presents) --------------------------------------
+export const hatLocked = (i) => isLocked('hat:' + HATS[i]);
+export const faceLocked = (i) => isLocked('face:' + FACES[i]);
+export const pantsLocked = (i) => isLocked('pants:' + PANTS[i].name);
+// Next unlocked index from i in direction d (wraps; i itself if nothing else is free).
+function nextFree(i, d, n, locked) {
+  for (let k = 1; k <= n; k++) { const j = (((i + d * k) % n) + n) % n; if (!locked(j)) return j; }
+  return i;
+}
+export const cycleHat = (p, d) => setHat(p, nextFree(p.hat, d, HATS.length, hatLocked));
+export const cycleFace = (p, d) => setFace(p, nextFree(p.face || 0, d, FACES.length, faceLocked));
+export const cyclePants = (p, d) => setPants(p, nextFree(p.pantsIndex || 0, d, PANTS.length, pantsLocked));
+// Display name of a reward key ('hat:viking' -> 'Viking helmet').
+export function rewardName(key) {
+  const [type, id] = key.split(':');
+  if (type === 'hat') return HAT_NAMES[id] || id;
+  if (type === 'face') return id + ' face';
+  return id + ' trousers';
+}
+
 export function setHat(p, i) {
   p.hat = (i + HATS.length) % HATS.length;
   p.buildHat();
@@ -153,19 +214,19 @@ export function saveLook(p) {
 export function restoreLook(p) {
   const L = devicePrefs(p.deviceId).look;
   if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; return false; }
-  const n = (v, m) => (Number.isInteger(v) && v >= 0 && v < m ? v : 0);
-  p.hat = n(L.hat, HATS.length); p.buildHat();
-  p.pantsIndex = n(L.pants, PANTS.length);
+  const n = (v, m, locked) => (Number.isInteger(v) && v >= 0 && v < m && !locked(v) ? v : 0); // locked again after a progress reset
+  p.hat = n(L.hat, HATS.length, hatLocked); p.buildHat();
+  p.pantsIndex = n(L.pants, PANTS.length, pantsLocked);
   p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
   p.setColor(n(L.color, PLAYER_COLORS.length));
-  setFace(p, n(L.face, FACES.length));
+  setFace(p, n(L.face, FACES.length, faceLocked));
   return true;
 }
 
 export function randomLook(p) {
-  const r = (m) => (Math.random() * m) | 0;
-  p.hat = r(HATS.length); p.buildHat();
-  p.pantsIndex = r(PANTS.length); p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
+  const r = (m, locked = () => false) => { const free = []; for (let i = 0; i < m; i++) if (!locked(i)) free.push(i); return free[(Math.random() * free.length) | 0] ?? 0; };
+  p.hat = r(HATS.length, hatLocked); p.buildHat();
+  p.pantsIndex = r(PANTS.length, pantsLocked); p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
   p.setColor(r(PLAYER_COLORS.length));
-  setFace(p, r(FACES.length));
+  setFace(p, r(FACES.length, faceLocked));
 }

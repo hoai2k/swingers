@@ -22,7 +22,15 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Static scenery goes through `world/kit.js` so it is merged into per-chunk meshes;
   every new static thing should be added with the kit (visual + collider in one call).
 - Rides are kinematic bodies animated in `physics.animators`; anything a player can sit
-  on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`).
+  on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`). Seats on
+  `physics.staticBody` keep world positions in `pos` (`nearestSeat` relies on that for its
+  quick reject). `kit.bench` adds two seats per bench; `furn()` adds seats to chairs, stools,
+  sofas, armchairs and beanbags (table `SEATS` in `world/furniture.js`; those pieces use the
+  vehicle collision group so a seated player doesn't fight them, and tipped-over ones are disabled).
+- Presents (`world/presents.js`, `src/unlocks.js`): spots are `[x, z, ray start]` — the box
+  sits on the first static surface a ray from that height hits. New cosmetic rewards go in
+  `unlocks.js` `PRESENTS` (reward keys `hat:` / `face:` / `pants:`); anything listed there starts
+  locked. New hats are built in `src/hats.js`.
 - Rendering (`src/sky.js`, `src/look.js`, `world/water.js`, `world/detail.js`, `game.render`):
   read `game.timeOfDay` (hours), `game.dayLight` (0..1), `game.nightLight` (0..1) and
   `game.isNight` for anything that should react to the day/night cycle (headlights, lit

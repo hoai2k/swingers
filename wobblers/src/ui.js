@@ -7,7 +7,8 @@ import * as THREE from 'three';
 import { HATS, PLAYER_CSS, MAX_PLAYERS, PLAYER_COLORS } from './config.js';
 import { settings, saveSettings, devicePrefs } from './settings.js';
 import { glyph, formatHint, promptRow, deviceKind } from './glyphs.js';
-import { FACES, PANTS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace } from './cosmetics.js';
+import { FACES, PANTS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace, cycleHat, cycleFace, cyclePants } from './cosmetics.js';
+import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, resetPresents } from './unlocks.js';
 import { buildTitleCrowd } from './title.js';
 import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
 import { PhonePanel } from './phone.js';
@@ -130,9 +131,9 @@ class Customiser extends Panel {
   adjust(d) {
     const p = this.p, r = this.rows[this.sel];
     if (r === 'Colour') p.setColor(p.colorIndex + d);
-    else if (r === 'Hat') setHat(p, p.hat + d);
-    else if (r === 'Face') setFace(p, (p.face || 0) + d);
-    else if (r === 'Trousers') setPants(p, (p.pantsIndex || 0) + d);
+    else if (r === 'Hat') cycleHat(p, d); // skips items still locked in presents
+    else if (r === 'Face') cycleFace(p, d);
+    else if (r === 'Trousers') cyclePants(p, d);
     else return;
     this.ui.sfx('uiChange', { dir: d });
     this.draw();
@@ -169,11 +170,13 @@ class Customiser extends Panel {
       if (r === 'Done') return `<div class="item done ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${glyph('A', k)} Let's go!</span></div>`;
       let extra = '';
       if (r === 'Colour') extra = `<div class="swatches">${PLAYER_COLORS.map((c, j) => `<i class="${j === p.colorIndex ? 'on' : ''}" style="background:${PLAYER_CSS(c)}"></i>`).join('')}</div>`;
+      const nl = r === 'Colour' ? 0 : lockedCount({ Hat: 'hat', Face: 'face', Trousers: 'pants' }[r]);
+      if (nl) extra = `<div class="lockline">🔒 ${nl} more locked – find presents</div>`;
       return `<div class="item ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${r}</span><span class="val"><span class="arrows">◀</span><b>${this.value(r)}</b><span class="arrows">▶</span></span>${extra}</div>`;
     }).join('');
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
       <div class="phead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">Player ${p.index + 1}<small>${DEV_NAME(p.deviceId)}</small></div>
-      <h2>Make your Wobbler</h2>${rows}
+      <h2>Make your Wobbler</h2><div class="presents">🎁 Presents ${foundCount()}/${PRESENTS_TOTAL}</div>${rows}
       <div class="foot">${promptRow([['LS', 'Choose'], ['X', 'Surprise me'], ['A', 'Done']], k)}</div>
       <div class="mousebtns"><span data-act="random">Surprise me</span><span data-act="done">Done</span></div></div>`;
   }
@@ -195,6 +198,10 @@ class PauseMenu extends Panel {
         { label: 'Shadows', value: g.shadows ? 'On' : 'Off', adj: () => { g.shadows = !g.shadows; settings.shadows = g.shadows; saveSettings(); } },
         { label: 'Resolution', value: Math.round(g.resScale * 100) + '%', adj: (d) => { const v = [0.5, 0.75, 1], i = Math.max(0, Math.min(2, v.indexOf(nearest(v, g.resScale)) + d)); g.setResScale(v[i]); settings.res = v[i]; saveSettings(); } },
         { label: 'Invert camera Y', value: pf.invertY ? 'On' : 'Off', adj: () => { pf.invertY = !pf.invertY; saveSettings(); } },
+        { label: this.confirmReset ? 'Press again to reset!' : 'Reset presents', danger: true, act: () => {
+          if (!this.confirmReset) { this.confirmReset = true; return; }
+          this.confirmReset = false; resetPresents(); g.presents?.reset(); ui.toast('Presents reset: hide-and-seek starts over');
+        } },
         { label: 'Camera sensitivity', slider: (pf.sens - 0.25) / 2.25, adj: (d) => { pf.sens = Math.max(0.25, Math.min(2.5, pf.sens + d * 0.25)); saveSettings(); } },
         { label: 'Back', act: () => this.back() },
       ];
@@ -202,6 +209,7 @@ class PauseMenu extends Panel {
     return [
       { label: 'Resume', act: () => ui.closePanel(p) },
       { label: 'Customise', act: () => ui.openCustomiser(p, false) },
+      { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
       { label: 'Respawn', act: () => { p.respawn(); ui.closePanel(p); } },
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Controls', sub: true, act: () => ui.openHelp(p.deviceId) },

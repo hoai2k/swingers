@@ -1,4 +1,5 @@
 // Shared constants: collision groups, player colours, world tuning.
+import { EXTRA_HATS } from './hats.js';
 
 export const DT = 1 / 60;
 export const GRAVITY = -9.81;
@@ -35,6 +36,7 @@ export const PLAYER_COLORS = [
 ];
 export const PLAYER_CSS = (c) => '#' + c.toString(16).padStart(6, '0');
 
-export const HATS = ['none', 'cap', 'tophat', 'beanie', 'crown', 'party', 'cowboy', 'bucket'];
+// The first eight are always available; EXTRA_HATS (src/hats.js) are unlocked by presents.
+export const HATS = ['none', 'cap', 'tophat', 'beanie', 'crown', 'party', 'cowboy', 'bucket', ...EXTRA_HATS];
 
 export const SPAWN = { x: 0, y: 1.2, z: 14 };

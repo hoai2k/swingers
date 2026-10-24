@@ -19,7 +19,11 @@ cd wobblers && python3 -m http.server 8123   # then open http://localhost:8123
 Press **A** on a controller (or **Enter** / **Space** on the keyboard) to join. More players
 join the same way at any time; the screen splits 2 / 4 / 6 / 8 ways. Each new player first
 gets a customiser in their own view (colour, hat, face, trousers; **X** for a random look);
-the look is remembered per controller / keyboard. **Y** (or **E** / **F1**) on the title
+the look is remembered per controller / keyboard. **24 presents** are hidden around the
+island (rooftops, towers, under the pier, on a raft...): touch one to open it and unlock a new
+hat, face or pair of trousers for everyone (16 hats, 4 faces, 4 trousers; progress is saved, and
+shown in the customiser and menu; *Settings → Reset presents* starts over). Locked items are
+skipped in the customiser. **Y** (or **E** / **F1**) on the title
 opens the controls overlay.
 
 **Start** / **Esc** opens that player's own menu (resume, customise, respawn, settings,
@@ -55,6 +59,7 @@ player has one called vehicle; calling another sends the old one away unless som
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
 players, ledges, bars) until you let go. Punch while holding (or standing at) a ball, can
 or teddy to throw it; facing a hoop, the cans or the bowling pins aims the throw. Y also
+sits you on benches, chairs, stools, sofas, armchairs and beanbags, and
 works machines and buttons (vending machines, jukebox, game resets). Push toward a ladder
 to climb it. Grab with both hands and jump to pull yourself
 up. Look up with the camera to reach higher.
@@ -106,7 +111,8 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
-| `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks; persistent settings |
+| `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks (locked items skipped); persistent settings |
+| `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |
 | `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
 | `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
