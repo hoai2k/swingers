@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent / "battles"
-SIZES = {"logo": (1600, 700), "icon": (512, 512), "loading": (1920, 1080)}
+SIZES = {"logo": (1200, 525), "icon": (512, 512), "loading": (1920, 1080)}
 FACTIONS = ("tribal", "farmer", "medieval", "legacy", "viking", "ancient",
             "dynasty", "wildwest", "spooky")
 SIZES.update({f"faction-{name}": (128, 128) for name in FACTIONS})
@@ -26,13 +26,16 @@ for name, size in SIZES.items():
         else:
             result = ImageOps.pad(image.convert("RGBA"), size, Image.Resampling.LANCZOS,
                                   color=(0, 0, 0, 0))
-        ext = "jpg" if name == "loading" else "png"
-        options = {"quality": 88, "optimize": True} if opaque and ext == "jpg" else {"optimize": True}
+        # opaque art ships as JPEG (a fraction of the PNG size); transparent art stays PNG
+        ext = "jpg" if opaque else "png"
+        options = {"quality": 86, "optimize": True, "progressive": True} if opaque else {"optimize": True}
         result.save(ROOT / "assets/ui" / f"{name}.{ext}", **options)
 
-# Only art with existing consumers is preloaded. Other delivered art is ready
-# for the map-preview, loading-screen and result-screen work described in requests.
+# Preloaded at boot (src/assets.js). loading.jpg is used by the loading screen itself,
+# before the manifest is read, so it is not listed.
 files = ["assets/ui/logo.png", "assets/ui/icon.png"]
 files += [f"assets/ui/faction-{name}.png" for name in FACTIONS]
+files += [f"assets/ui/map-{name}.jpg" for name in ("grass", "desert", "winter", "autumn")]
+files += [f"assets/ui/victory-{name}.png" for name in ("blue", "red")]
 (ROOT / "assets/manifest.json").write_text(json.dumps({"files": files}, indent=2) + "\n")
 print(f"Built {len(SIZES)} UI images; registered {len(files)} in the preload manifest.")

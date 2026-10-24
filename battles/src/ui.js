@@ -67,7 +67,7 @@ export class UI {
 
   menuHtml(items, sel) {
     return items.map((it, i) => `<div class="mi ${i === sel ? 'sel' : ''} ${it.cls || ''}">${it.value !== undefined
-      ? `<span class="ml">${it.label}</span><span class="mv">${i === sel ? '◀ ' : ''}${it.value}${i === sel ? ' ▶' : ''}</span>`
+      ? `<span class="ml">${it.label}</span><span class="mv">${i === sel ? '◀ ' : ''}${it.value}${i === sel ? ' ▶' : ''}</span>${it.preview && i === sel ? `<img class="mprev" src="${it.preview}" alt="">` : ''}`
       : `<span class="ml big">${it.label}${it.note ? `<small class="mnote">${it.note}</small>` : ''}</span>`}</div>`).join('');
   }
 
@@ -136,7 +136,7 @@ export class UI {
     const L = d.level;
     this.setText(v.detail, `<div class="lvd-top" style="--wc:${L.color}"><span class="lvd-name">${L.name}</span><span class="lvd-stars">${stars(L.stars)}</span></div>
       <div class="lvd-tip">${L.unlocked ? L.tip : '🔒 Locked — beat the level before it first.'}</div>
-      <div class="lvd-row"><span>🗺 ${L.map}</span><span><span class="coin"></span> budget <b>${fmt(L.budget)}</b></span><span>👥 up to <b>${L.cap}</b> units</span>
+      ${L.mapImg ? `<img class="lvd-map" src="${L.mapImg}" alt="">` : ''}<div class="lvd-row"><span>🗺 ${L.map}</span><span><span class="coin"></span> budget <b>${fmt(L.budget)}</b></span><span>👥 up to <b>${L.cap}</b> units</span>
         ${L.best !== undefined ? `<span>best: <b>${fmt(L.best)}</b> gold</span>` : ''}</div>
       <div class="lvd-row lvd-enemy"><span style="color:${tc(1)}"><b>Enemy</b></span>${L.enemy.map((r) => `<span class="rc"><img src="${this.portraits[r.id + ':1'] || ''}" alt="">×${r.n}</span>`).join('')}
         <small>${L.enemyCount} units · ${fmt(L.enemyValue)} gold</small></div>
@@ -377,7 +377,9 @@ export class UI {
     }
     const names = d.names || [`${TEAM_NAMES[0]} <small>P1</small>`, `${TEAM_NAMES[1]} <small>P2</small>`];
     if (d.coop) names[0] = `${TEAM_NAMES[0]} <small>P1 + P2</small>`;
-    L.innerHTML = `<div class="victory" style="--tc:${col}">${title}</div>
+    const ban = d.winner >= 0 && hasAsset(`assets/ui/victory-${d.winner ? 'red' : 'blue'}.png`) && !(lv && !lv.won)
+      ? `assets/ui/victory-${d.winner ? 'red' : 'blue'}.png` : '';
+    L.innerHTML = `<div class="victory ${ban ? 'banner' : ''}" style="--tc:${col}${ban ? `;--ban:url(${ban});--fit:${Math.min(1, 13 / title.length).toFixed(2)}` : ''}"><span>${title}</span></div>
       <div class="rsub">${d.duration ? `Battle lasted ${ftime(d.duration)}` : ''}</div>${extra}
       <div class="rstats">${[0, 1].map((t) => `<div class="rs" style="--tc:${tc(t)}"><b>${names[t]}</b>
         <div>${d.stats[t].alive} / ${d.stats[t].total} survived</div><div>${fmt(d.stats[t].startValue - d.stats[t].value)} gold lost</div></div>`).join('')}</div>

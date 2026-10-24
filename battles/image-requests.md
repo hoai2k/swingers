@@ -11,9 +11,11 @@ broken images or 404s).
 Generated with the built-in imagegen tool. Exact prompts and final dimensions are in
 `assets/generation.json`; high-resolution UI originals are in `assets/originals/ui/`.
 Run `python3 tools/build_battles_assets.py` (Pillow) to rebuild the requested sizes.
-The logo, browser icon and all nine faction emblems are registered in the preload
-manifest and verified in the browser. Map previews, loading art and victory banners
-are delivered at the paths below; their future UI hooks are still pending as noted.
+All 18 UI images are now used in the game and were checked in the browser. The map
+previews ship as JPEGs (`map-*.jpg`, ~50 KB each instead of ~300 KB) and the logo at
+1200×525. The reference sheets were reviewed against their briefs. No replacements are
+needed: every image matches its brief, the team colours are right and the transparency
+is clean.
 Reference sheets stay at generated resolution in `reference/`.
 
 ## Shared style
@@ -30,7 +32,7 @@ the TABS logo.
 
 | # | File | Size / format | Status | What |
 |---|---|---|---|---|
-| 1 | `assets/ui/logo.png` | ~1600×700, transparent PNG | **wired** (title screen; replaces the text logo) | The words **WOBBLY BATTLES** on two stacked lines, chunky rounded cartoon letters, slightly wobbly/tilted, "WOBBLY" in light blue (#7fd0ff) and "BATTLES" in red-orange (#ff7b6e), thick dark-navy outline (#1e2c48), small drop shadow. A tiny bean soldier with a sword peeks over one letter and another one is falling off the end. Must read clearly at 600 px wide. |
+| 1 | `assets/ui/logo.png` | 1200×525, transparent PNG | **wired** (title screen; replaces the text logo) | The words **WOBBLY BATTLES** on two stacked lines, chunky rounded cartoon letters, slightly wobbly/tilted, "WOBBLY" in light blue (#7fd0ff) and "BATTLES" in red-orange (#ff7b6e), thick dark-navy outline (#1e2c48), small drop shadow. A tiny bean soldier with a sword peeks over one letter and another one is falling off the end. Must read clearly at 600 px wide. |
 | 2 | `assets/ui/icon.png` | 512×512, transparent PNG | **wired** (browser tab icon) | Square app icon: one blue bean-soldier head with a dented helmet and an angry face, a red soldier's club bonking it from the side, a round coloured background. Readable at 32 px. |
 | 3 | `assets/ui/faction-tribal.png` | 128×128, transparent PNG | **wired** (setup unit-bar tab) | Faction emblem: crossed wooden club and bone with a feather. Flat, bold, no text. |
 | 4 | `assets/ui/faction-farmer.png` | 128×128, transparent PNG | **wired** | Faction emblem: pitchfork stuck in a hay bale. |
@@ -41,12 +43,12 @@ the TABS logo.
 | 22 | `assets/ui/faction-dynasty.png` | 128×128, transparent PNG | **wired** | Faction emblem: a katana crossed with a lit firework rocket, red and gold (#e2556b). |
 | 23 | `assets/ui/faction-wildwest.png` | 128×128, transparent PNG | **wired** | Faction emblem: cowboy hat on a revolver with a stick of dynamite, sandy gold (#e8b84a). |
 | 24 | `assets/ui/faction-spooky.png` | 128×128, transparent PNG | **wired** | Faction emblem: a grinning cartoon skull with a lit candle on top, cool grey (#8c95a8). Comedic, not scary. |
-| 7 | `assets/ui/map-grass.png` | 640×360 PNG/JPG | not wired yet | Map preview card, "Simulation Grassland": rolling green hills, low-poly round trees, flowers, blue sky, empty battlefield in the middle. |
-| 8 | `assets/ui/map-desert.png` | 640×360 | not wired yet | Map preview, "Dusty Dunes": sandy dunes, cacti, sandstone rocks, warm sky. |
-| 9 | `assets/ui/map-winter.png` | 640×360 | not wired yet | Map preview, "Frozen Pass": snowy field, snow-capped pines, light snowfall. |
-| 10 | `assets/ui/map-autumn.png` | 640×360 | not wired yet | Map preview, "Autumn Valley": orange and red trees, golden grass, haystacks. |
-| 11 | `assets/ui/loading.jpg` | 1920×1080 JPG | not wired yet | Loading-screen key art: two bean armies (blue left, red right) charging at each other across a green field, with a giant in the red army, an arrow volley in the sky and a bomb going off. Leave the centre third calm so a logo and progress text can sit on top. |
-| 12 | `assets/ui/victory-blue.png`, `assets/ui/victory-red.png` | 1200×400, transparent PNG | not wired yet | Banner art behind the result text: a ribbon banner in the team colour with a few bean soldiers cheering and jumping in front of it. No text. |
+| 7 | `assets/ui/map-grass.jpg` | 640×360 JPG | **wired** (preview beside the Map option; campaign level card) | Map preview card, "Simulation Grassland": rolling green hills, low-poly round trees, flowers, blue sky, empty battlefield in the middle. |
+| 8 | `assets/ui/map-desert.jpg` | 640×360 JPG | **wired** | Map preview, "Dusty Dunes": sandy dunes, cacti, sandstone rocks, warm sky. |
+| 9 | `assets/ui/map-winter.jpg` | 640×360 JPG | **wired** | Map preview, "Frozen Pass": snowy field, snow-capped pines, light snowfall. |
+| 10 | `assets/ui/map-autumn.jpg` | 640×360 JPG | **wired** | Map preview, "Autumn Valley": orange and red trees, golden grass, haystacks. |
+| 11 | `assets/ui/loading.jpg` | 1920×1080 JPG | **wired** (loading screen, logo on top) | Loading-screen key art: two bean armies (blue left, red right) charging at each other across a green field, with a giant in the red army, an arrow volley in the sky and a bomb going off. Leave the centre third calm so a logo and progress text can sit on top. |
+| 12 | `assets/ui/victory-blue.png`, `assets/ui/victory-red.png` | 1200×400, transparent PNG | **wired** (result screen; the title sits on the ribbon) | Banner art behind the result text: a ribbon banner in the team colour with a few bean soldiers cheering and jumping in front of it. No text. |
 
 ## 2. Reference art (not shipped, guides future model and colour work)
 

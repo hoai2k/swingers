@@ -10,6 +10,12 @@
     "assets/ui/faction-ancient.png",
     "assets/ui/faction-dynasty.png",
     "assets/ui/faction-wildwest.png",
-    "assets/ui/faction-spooky.png"
+    "assets/ui/faction-spooky.png",
+    "assets/ui/map-grass.jpg",
+    "assets/ui/map-desert.jpg",
+    "assets/ui/map-winter.jpg",
+    "assets/ui/map-autumn.jpg",
+    "assets/ui/victory-blue.png",
+    "assets/ui/victory-red.png"
   ]
 }

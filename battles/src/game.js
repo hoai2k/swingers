@@ -15,6 +15,8 @@ import { ProjViz } from './projviz.js';
 import { Recorder, Player } from './replay.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
+import { hasAsset } from './assets.js';
+const mapImg = (id) => (hasAsset(`assets/ui/map-${id}.jpg`) ? `assets/ui/map-${id}.jpg` : '');
 const BUDGETS = [1000, 2500, 5000, 10000, 25000, Infinity];
 const CAPS = [40, 80, 120, 180];
 const SPEEDS = [0, 0.1, 0.25, 0.5, 1, 2]; // battle time scales (0 = frozen, photo mode)
@@ -436,7 +438,7 @@ export class Game {
     const s = this.settings;
     const money = (b) => (b === Infinity ? 'Unlimited' : b.toLocaleString('en-US'));
     const common = [
-      { label: 'Map', value: MAPS[s.map].name, key: 'map' },
+      { label: 'Map', value: MAPS[s.map].name, key: 'map', preview: mapImg(MAPS[s.map].id) },
       { label: 'Budget per army', value: money(BUDGETS[s.budget]), key: 'budget' },
       { label: 'Unit limit per army', value: CAPS[s.cap], key: 'cap' },
     ];
@@ -640,7 +642,7 @@ export class Game {
         levels: w.levels.map((l) => ({ name: l.name, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
       })),
       level: {
-        name: L.name, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name,
+        name: L.name, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name, mapImg: mapImg((MAPS.find((m) => m.id === L.map) || MAPS[0]).id),
         budget: L.budget, cap: L.cap, enemyValue: armyValue(enemy), enemyCount: enemy.length,
         enemy: [...counts].map(([id, n]) => ({ id, n })), stars: pr.stars[L.id] || 0, best: pr.best[L.id],
         starGold: starGold(L), unlocked: levelUnlocked(pr, L),
@@ -988,7 +990,7 @@ export class Game {
     items.push({ label: 'Random army', key: 'random' });
     items.push({ label: `Clear ${this.mode === 'campaign' ? 'my' : TEAM_NAMES[ps.team]} army…`, key: 'clear' });
     if (this.mode !== 'campaign') {
-      items.push({ label: 'Map', value: MAPS[s.map].name, key: 'map' });
+      items.push({ label: 'Map', value: MAPS[s.map].name, key: 'map', preview: mapImg(MAPS[s.map].id) });
       items.push({ label: 'Budget', value: money(BUDGETS[s.budget]), key: 'budget' });
       items.push({ label: 'Unit limit', value: CAPS[s.cap], key: 'cap' });
       if (this.mode === 'versus') items.push({ label: 'Blind setup', value: onOff(s.blind), key: 'blind' });
