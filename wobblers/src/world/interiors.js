@@ -31,7 +31,11 @@ function shell(game, L, o) {
   L.deco(0, 0.035, 0, w - 2 * T, 0.05, d - 2 * T, o.floor ?? 0xd8c8a8);
   if (o.roof !== false) {
     L.box(0, h - 0.1, 0, w, 0.2, d, o.roofColor ?? 0xdddddd);
-    L.deco(0, h - 0.21, 0, w * 0.3, 0.02, d * 0.3, 0xfffbe8); // ceiling light panel
+    // ceiling lights (real lights from the interior light pool)
+    for (const [lx, lz, opts] of o.lights ?? [[-w / 4, 0], [w / 4, 0]]) {
+      const p = L.v3(lx, h - 0.2, lz);
+      game.interiorLights.add(p.x, p.y, p.z, { yaw: L.yaw, ...opts });
+    }
   }
   if (door) {
     const [hx, hz] = L.w(door.lx - door.w / 2, fz);
@@ -177,6 +181,11 @@ const SHOPS = {
   ARCADE(game, L, w, d, h, wall, color, name) {
     shell(game, L, {
       w, d, h, wall: 0x7a62b8, floor: 0x4a3f7a, roofColor: 0x5a4a8a,
+      lights: [
+        [-w / 4, 0.5, { color: 0xff3a9a, intensity: 6, fixture: 'neon' }],
+        [w / 4, 0.5, { color: 0x3af0ff, intensity: 6, fixture: 'neon' }],
+        [0, -d / 2 + 1.2, { color: 0xc9b8ff, intensity: 4, fixture: 'panel' }],
+      ],
       door: { lx: w * 0.25, w: 1.6, h: 2.4, color: 0xb46cff },
       windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0, glass: 0xd9b0ff }],
     });
@@ -254,7 +263,11 @@ export function interiorHouse(game, kit, x, z, yaw, wall, roof, doorCol) {
   L.box(0, H1 - 0.1, (zr + iz) / 2, 2 * ix, 0.2, iz - zr, 0xb98a5a);
   L.box((-ix - 1.2) / 2, H1 - 0.1, (-iz + zr) / 2, ix - 1.2, 0.2, zr + iz, 0xb98a5a);
   L.box(ix - 0.3, H1 - 0.1, (-iz + zr) / 2, 0.6, 0.2, zr + iz, 0xb98a5a);
-  L.deco(0, H1 - 0.21, 0.5, 2.5, 0.02, 1.5, 0xfffbe8);
+  {
+    const g = L.v3(0.8, H1 - 0.2, 0.8), u = L.v3(0, h - 0.4, 0.3);
+    game.interiorLights.add(g.x, g.y, g.z, { fixture: 'pendant', intensity: 6, range: 8 });
+    game.interiorLights.add(u.x, u.y, u.z, { fixture: 'pendant', intensity: 5, range: 7, color: 0xffd6a0 });
+  }
   // stairs: from lx -0.9 on the ground up to the landing at lx ix-0.6
   L.stairs(-0.9, -3.6, 0, ix - 0.6, -3.6, H1, 1.2, 0xd9a066, 0xc8955a);
   // banister around the stairwell opening (gap at the top end)

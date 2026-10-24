@@ -15,11 +15,13 @@ import { scatterProps } from './props.js';
 import { buildDetail } from './detail.js';
 import { buildGarage } from './garage.js';
 import { buildFun } from './fun.js';
+import { InteriorLights } from './lights.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
   game.kit = kit;
   game.waterMats = [];
+  game.interiorLights = new InteriorLights(game);
   buildTerrain(game.scene, game.physics);
   buildSea(game);
   buildRoads(game, kit);
@@ -34,6 +36,7 @@ export function buildWorld(game) {
   buildGarage(game, kit);
   buildFun(game, kit);
   kit.finish();
+  game.interiorLights.finish();
   buildDetail(game); // grass, flowers, road edges, lamp glow
   animateWater(game, game.waterMats);
 }

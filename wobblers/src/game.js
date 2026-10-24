@@ -282,6 +282,7 @@ export class Game {
       setFog(cam, under);
       sky.view(cam, under, fog.color);
       this.cullSmall(cam, h);
+      this.interiorLights?.view(cam);
       this.detail?.view(cam);
       this.scene.userData.terrainLOD?.view(cam);
       r.setViewport(x, H - y - h, w, h);
