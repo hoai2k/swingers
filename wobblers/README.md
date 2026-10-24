@@ -35,7 +35,10 @@ join the same way at any time; the screen splits 2 / 4 / 6 / 8 ways.
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
-players, ledges, bars) until you let go. Grab with both hands and jump to pull yourself
+players, ledges, bars) until you let go. Punch while holding (or standing at) a ball, can
+or teddy to throw it; facing a hoop, the cans or the bowling pins aims the throw. Y also
+works machines and buttons (vending machines, jukebox, game resets). Push toward a ladder
+to climb it. Grab with both hands and jump to pull yourself
 up. Look up with the camera to reach higher.
 
 Browsers on Windows expose at most four XInput (Xbox) pads, so 8 players means mixing
@@ -44,17 +47,22 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 ## The island
 
 - **Town** — plaza with a fountain (spawn), shops, town hall, apartments, suburbs, parked cars,
-  bins, cones, crates, shopping carts.
+  bins, cones, crates, shopping trolleys you can ride, wheelie bins you can hide in.
+  Walk into the **cafe** (jukebox, rooftop terrace up the outside stairs), the **market**
+  (trolleys, vending machine) and the **arcade** (air hockey); the two-storey house by the
+  town hall has a playable piano downstairs and a bedroom upstairs. Doors swing on hinges.
 - **Playground** (NE) — swings (pump with the stick), slide, see-saws, merry-go-round,
   monkey bars, trampolines, spring riders, sandbox.
 - **Swimming pool** (SE) — shallow and deep ends, springy diving board, 5 m high-dive,
   twisting water slide, pool toys and a giant rubber duck.
 - **Fun Park** (west) — ferris wheel, carousel, roller coaster, swing ride, drop tower,
-  bumper cars, bouncy castle, food stalls.
+  bumper cars, bouncy castle, food stalls, a can-toss stall (win a teddy) and a bowling lane.
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
-- **Sports field** (NW) — football pitch with a giant ball, basketball court, parking lot.
+- **Sports field** (NW) — football pitch with a giant ball, basketball court with working
+  hoops and a scoreboard, parking lot.
 - **Kart track** (east) with six go-karts; **farm** with hay bales and a pickup;
-  **mountain** with a lookout, boulders to roll and quad bikes; **lake** with a camp and boats;
+  **mountain** with a lookout, boulders to roll, quad bikes and a **zip line** down to the
+  lake; **lake** with a camp, boats, log rafts and a rope swing;
   **beach** with a pier, boats, palms and a lighthouse.
 
 ## Code map
@@ -70,4 +78,7 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
 | `src/terrain.js` | island height function, terrain mesh + collider |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
+| `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
+| `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
+| `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |
 | `src/ui.js`, `src/audio.js` | HUD/menus, synthesized sound |

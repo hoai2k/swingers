@@ -92,7 +92,7 @@ export class Local {
     const ly = Math.atan2(ux, uz), depth = run / n;
     for (let i = 0; i < n; i++) {
       const top = ay + (i + 1) * (by - ay) / n, m = (i + 0.5) * depth;
-      this.box(ax + ux * m, top - 0.12, az + uz * m, width, 0.24, depth + 0.02, i % 2 ? cB : cA, { yaw: ly - Math.PI / 2 * 0 });
+      this.box(ax + ux * m, top - 0.12, az + uz * m, width, 0.24, depth + 0.02, i % 2 ? cB : cA, { yaw: ly });
     }
     return this;
   }

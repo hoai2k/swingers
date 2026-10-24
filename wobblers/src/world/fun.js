@@ -126,7 +126,7 @@ function canToss(game, kit) {
   L.box(0, shelfY / 2, -1.2, 3.8, shelfY, 0.7, 0x8a5a3a);
   L.box(0, 0.5, counterZ, 4.0, 1.0, 0.5, 0xff3a3a);
   L.deco(0, 1.01, counterZ, 4.0, 0.03, 0.5, 0xffd23f);
-  const s = signMesh('KNOCK EM DOWN!', 3.8, '#ff3a3a');
+  const s = signMesh('CAN TOSS', 3.8, '#ff3a3a');
   const sp = L.v3(0, 3.95, counterZ + 0.15); s.position.set(sp.x, sp.y, sp.z); s.rotation.y = L.yaw; game.scene.add(s);
   // prize shelf on the back wall
   for (let i = 0; i < 5; i++) L.sphere(-1.6 + i * 0.8, 2.3, -1.65, 0.22, [0xff7fc8, 0x6ac8ff, 0xffd23f, 0x55d85a, 0xb46cff][i]);

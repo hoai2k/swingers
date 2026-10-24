@@ -23,3 +23,8 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   every new static thing should be added with the kit (visual + collider in one call).
 - Rides are kinematic bodies animated in `physics.animators`; anything a player can sit
   on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`).
+- World helpers live in `world/common.js`: `Local` (building-local kit placement, `wall`
+  with door holes, `stairs`, `rail`), `addDoor` (hinged physics door), `useSpot` (a seat with
+  `use(player)` that Y triggers instead of sitting), `throwable` (punch to throw, optional
+  `aim`), `ladder`, and `groundAt(x, z)` — the exact terrain mesh height. Place things on
+  hills with `groundAt`, not `heightAt` (the analytic surface can be ~0.5 m off the mesh).
