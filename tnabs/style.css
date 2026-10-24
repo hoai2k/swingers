@@ -147,7 +147,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .rhead { position: absolute; top: -4px; width: 6px; height: 22px; margin-left: -3px; background: #fff; border-radius: 3px; box-shadow: 0 0 0 2px rgba(0,0,0,0.5); }
 .rmarks { position: absolute; inset: 0; }
 .rmarks i { position: absolute; top: -8px; width: 3px; height: 8px; margin-left: -1px; background: var(--tc); border-radius: 1px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); }
-.rmarks b { position: absolute; top: -28px; margin-left: -6px; font-size: 16px; color: #fff; text-shadow: 0 1px 2px #000; }
+.rmarks b { position: absolute; top: -9px; width: 3px; height: 32px; margin-left: -1px; background: repeating-linear-gradient(#fff 0 4px, transparent 4px 7px); }
 .rend { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); background: rgba(20,24,34,0.85); padding: 14px 24px; border-radius: 16px; font-weight: 800; text-align: center; }
 .rend div { font-family: var(--font); font-size: 34px; }
 .layer-replay .rlabel small { font-family: var(--ui); font-size: 15px; }

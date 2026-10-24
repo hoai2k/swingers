@@ -1383,8 +1383,11 @@ export class Game {
   updateReplay(dt) {
     const I = this.input, P = this.player;
     if (I.anyPressed('start')) { this.openPause(); return; }
-    const camsFree = this.rigs.every((r) => r.mode === 'free');
-    if (I.anyPressed('b') && camsFree) { this.exitReplay(); return; }
+    // B exits once the presser's own camera is already free (otherwise it frees it)
+    for (let p = 0; p < 2; p++) {
+      const mine = this.split ? [this.rigs[p]] : [this.rigs[0]];
+      if (I.pressed(p, 'b') && mine.every((r) => r.mode === 'free')) { this.exitReplay(); return; }
+    }
     this.globalCamKeys();
     const ended = !P.playing && P.t >= P.duration - 1e-3;
     let scrub = 0;

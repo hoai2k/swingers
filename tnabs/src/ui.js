@@ -281,7 +281,7 @@ export class UI {
     const D = Math.max(0.01, dur);
     // cluster deaths that would overlap into one taller tick
     const ticks = deaths.map((d) => `<i style="left:${(d.t / D) * 100}%;--tc:${tc(d.team)}"></i>`).join('');
-    const over = overT ? `<b style="left:${(overT / D) * 100}%" title="battle over">⚑</b>` : '';
+    const over = overT ? `<b style="left:${(overT / D) * 100}%" title="battle over"></b>` : '';
     this.rmarks.innerHTML = ticks + over;
   }
 
