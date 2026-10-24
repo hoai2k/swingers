@@ -26,18 +26,65 @@ const PARTS = [
 ];
 const HAND_OFF = -0.13 * S;   // hand centre below the lower-arm centre
 const HAND_R = 0.1 * S;
+const GRAB_R = HAND_R * 1.75; // how far from the mitten a grab can catch
+const ARM_LEN = 0.505 * S;    // shoulder to mitten centre, arm straight
+const CARRY_MAX = 30;         // kg of a held object the arms can fully lift
+const ARM_MASS = 2.9;         // upper + lower arm + mitten
 const STAND_H = 0.62 * S;     // hover height of the hips centre above ground
 const RAY_LEN = 1.05 * S;
 
 const WALK = 3.4, RUN = 6.2, SWIM = 2.6, JUMP_V = 5.6;
+const GETUP_T = 0.95;         // seconds to stand back up after going limp
+
+// ---- look -----------------------------------------------------------------
+const SKIN = 0xffd9b8;
+const HEAD_R = 0.31 * S;
+// soft plastic sheen so the rounded shapes read
+const PLAYER_MAT = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 24, specular: 0x2a2a2a });
+let _headMats = null;
+function headMaterials() {
+  if (!_headMats) {
+    const f = faceMaterials();
+    const mk = (src) => new THREE.MeshPhongMaterial({ map: src.map, shininess: 24, specular: 0x2a2a2a });
+    _headMats = { normal: mk(f.normal), ko: mk(f.ko) };
+  }
+  return _headMats;
+}
+// Smooth profile (r, y) through control points, unscaled units.
+function smoothProfile(ctrl, n = 36) {
+  const curve = new THREE.CatmullRomCurve3(ctrl.map(([r, y]) => new THREE.Vector3(r, y, 0)), false, 'centripetal');
+  return curve.getPoints(n).map((v) => [Math.max(0, v.x), v.y]);
+}
+// Lathe a slice [i0..i1] of a profile into a geometry scaled by S.
+function latheGeo(prof, i0, i1, seg = 28) {
+  const pts = prof.slice(i0, i1 + 1).map(([r, y]) => new THREE.Vector2(r * S, y * S));
+  return new THREE.LatheGeometry(pts, seg);
+}
+// Capsule with different end radii (top r0, bottom r1), centred, unscaled length.
+function taperGeo(r0, r1, len) {
+  const pts = [];
+  const N = 8;
+  for (let i = 0; i <= N; i++) { const a = -Math.PI / 2 + (i / N) * Math.PI / 2; pts.push([Math.cos(a) * r1, -len / 2 + Math.sin(a) * r1]); }
+  for (let i = 0; i <= N; i++) { const a = (i / N) * Math.PI / 2; pts.push([Math.cos(a) * r0, len / 2 + Math.sin(a) * r0]); }
+  return latheGeo(pts, 0, pts.length - 1, 18);
+}
+// Torso (chest-local): wide soft belly and shoulders, tapering into the hips,
+// closing under the head. Its foot sits inside the hips mesh.
+const TORSO_PROFILE = smoothProfile([
+  [0, -0.43], [0.13, -0.415], [0.205, -0.375], [0.245, -0.3], [0.272, -0.18], [0.288, -0.05],
+  [0.284, 0.08], [0.264, 0.18], [0.222, 0.26], [0.152, 0.315], [0.07, 0.345], [0, 0.355]]);
+const TORSO_SPLIT = TORSO_PROFILE.reduce((best, p, i) => (Math.abs(p[1] + 0.17) < Math.abs(TORSO_PROFILE[best][1] + 0.17) ? i : best), 0);
+const HIPS_PROFILE = smoothProfile([
+  [0, -0.2], [0.12, -0.188], [0.205, -0.13], [0.238, -0.04], [0.236, 0.05], [0.2, 0.13], [0.11, 0.185], [0, 0.2]], 24);
 
 // scratch
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _qd = new THREE.Quaternion();
 const _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
 const _e = new THREE.Euler();
+const _hA = new THREE.Vector3(), _hB = new THREE.Vector3();
 const qx = (a) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), a);
 const qz = (a) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a);
-const qeul = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, 'XYZ'));
+const qeul = (x, y, z, o = 'XYZ') => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, o));
 const toQ = (r, q = _qa) => q.set(r.x, r.y, r.z, r.w);
 const toV = (r, v = _va) => v.set(r.x, r.y, r.z);
 
@@ -81,6 +128,22 @@ export class Player {
     this.airTime = 0;
     this.prevChestVel = new THREE.Vector3();
     this.impactGrace = 0;
+    this.t = 0;            // own clock (game.time only advances with rendering)
+    this.lean = 0;         // filtered forward lean (rad)
+    this.roll = 0;         // filtered side lean into turns (rad)
+    this.prevYaw = 0;
+    this.yawRate = 0;
+    this.prevVy = 0;
+    this.landDip = 0;      // 0..1 knees give after a landing
+    this.sq = 0; this.sqV = 0; // visual squash & stretch spring
+    this.getUp = -1;       // >=0: seconds into standing back up
+    this.getUpH = 0;       // hips height above ground when the get-up started
+    this.stumble = 0;      // >0: wobbly after a bump
+    this.mantle = null;    // climbing over a ledge
+    this.hangPush = 0;     // time the stick has been held forward while hanging
+    this.accFwd = 0;       // forward acceleration commanded last step
+    this.reachDown = 0;    // 0..1 bending over to reach the floor
+    this.reachArm = { L: false, R: false }; // arm is reaching out to grab
     this.cam = null;
     this.lastInput = null;
     this.parts = {};
@@ -143,23 +206,28 @@ export class Player {
     }
   }
 
+  // One mesh per physics part, shaped so the parts read as a single soft
+  // "bean": the torso is a lathed jelly-bean that tapers down into the hips
+  // (its lower end hides inside the hips mesh, so bending at the waist never
+  // opens a seam), a big round head, stubby tapered limbs and mitten hands.
   partMesh(p) {
     const b = new Builder();
     const shirt = this.color;
     const pants = new THREE.Color(this.color).multiplyScalar(0.55).getHex();
-    const skin = 0xffd9b8;
+    const skin = SKIN;
     const shoe = 0x3a3340;
-    let mat = matVC;
     const g = new THREE.Group();
+    const side = p.n.endsWith('L') ? 1 : -1;
     if (p.n === 'hips') {
-      b.sphere(0.235 * S, pants, [0, 0, 0], [1, 0.9, 0.95], 16);
-      b.box(0.2 * S, 0.05 * S, 0.1 * S, 0x2b2b2b, [0, 0.12 * S, 0.17 * S]);
+      // rounded seat: a squashed ball, slightly wider than deep
+      b.add(latheGeo(HIPS_PROFILE, 0, HIPS_PROFILE.length - 1), pants, [0, 0, 0], null, [1, 1, 0.9]);
     } else if (p.n === 'chest') {
-      b.capsule(0.27 * S, 0.24 * S, shirt, [0, 0, 0]);
-      b.sphere(0.06 * S, 0xffffff, [0, 0.03 * S, 0.255 * S], [1, 1, 0.4]);
-      b.sphere(0.04 * S, 0xffffff, [0, -0.12 * S, 0.25 * S], [1, 1, 0.4]);
+      const split = TORSO_SPLIT;
+      b.add(latheGeo(TORSO_PROFILE, 0, split), pants, [0, 0, 0], null, [1, 1, 0.88]);
+      b.add(latheGeo(TORSO_PROFILE, split, TORSO_PROFILE.length - 1), shirt, [0, 0, 0], null, [1, 1, 0.88]);
     } else if (p.n === 'head') {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.28 * S, 24, 18), faceMaterials().normal);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 32, 24), headMaterials().normal);
+      m.scale.set(1, 0.97, 0.98);
       m.castShadow = true;
       this.headMesh = m;
       g.add(m);
@@ -168,18 +236,23 @@ export class Player {
       this.buildHat();
       return g;
     } else if (p.n.startsWith('uArm')) {
-      b.capsule(0.075 * S, 0.12 * S, shirt, [0, 0, 0]);
+      // short sleeve: fat at the shoulder, tapering to the elbow
+      b.add(taperGeo(0.085, 0.068, 0.2), shirt, [0, 0.005 * S, 0]);
     } else if (p.n.startsWith('lArm')) {
-      b.capsule(0.065 * S, 0.1 * S, skin, [0, 0, 0]);
-      b.sphere(HAND_R * 1.05, 0xffffff, [0, HAND_OFF, 0], [1, 1.05, 0.9]);
-      b.sphere(0.045 * S, 0xffffff, [p.n.endsWith('L') ? -0.06 * S : 0.06 * S, HAND_OFF + 0.03 * S, 0.04 * S]);
+      b.add(taperGeo(0.066, 0.058, 0.16), skin, [0, 0.01 * S, 0]);
+      // mitten: a fat rounded paddle with a thumb pointing forward-in
+      b.sphere(HAND_R * 1.08, 0xffffff, [0, HAND_OFF, 0], [0.95, 1.12, 0.82], 16);
+      b.sphere(HAND_R * 0.48, 0xffffff, [-side * 0.045 * S, HAND_OFF + 0.035 * S, 0.055 * S], [1, 1.25, 1], 10);
+      b.cyl(HAND_R * 0.82, HAND_R * 0.9, 0.035 * S, 0xf1f1f1, [0, HAND_OFF + 0.075 * S, 0], null, 14);
     } else if (p.n.startsWith('uLeg')) {
-      b.capsule(0.09 * S, 0.1 * S, pants, [0, 0, 0]);
+      b.add(taperGeo(0.105, 0.088, 0.21), pants, [0, 0.01 * S, 0]);
     } else if (p.n.startsWith('lLeg')) {
-      b.capsule(0.085 * S, 0.08 * S, pants, [0, 0.02 * S, 0]);
-      b.sphere(0.1 * S, shoe, [0, -0.08 * S, 0.05 * S], [1, 0.7, 1.45]);
+      b.add(taperGeo(0.088, 0.082, 0.17), pants, [0, 0.03 * S, 0]);
+      // round chunky shoe, toe forward
+      b.sphere(0.105 * S, shoe, [0, -0.075 * S, 0.045 * S], [1, 0.68, 1.45], 16);
+      b.sphere(0.102 * S, 0xe8e8e8, [0, -0.098 * S, 0.045 * S], [1, 0.3, 1.47], 16);
     }
-    const m = b.mesh(mat);
+    const m = b.mesh(PLAYER_MAT);
     g.add(m);
     return g;
   }
@@ -189,7 +262,7 @@ export class Player {
     while (hm.children.length) { const c = hm.children.pop(); c.geometry?.dispose(); }
     const kind = HATS[this.hat];
     if (kind === 'none') return;
-    const b = new Builder(), R = 0.28 * S, c = this.color;
+    const b = new Builder(), R = HEAD_R, c = this.color;
     const dark = new THREE.Color(c).multiplyScalar(0.6).getHex();
     if (kind === 'cap') {
       b.sphere(R * 1.02, c, [0, R * 0.35, 0], [1, 0.62, 1], 16);
@@ -266,24 +339,45 @@ export class Player {
   knockOut(t) {
     if (this.state === 'seated') return;
     this.releaseAll();
+    this.mantle = null;
     this.state = 'limp';
     this.limpTimer = Math.max(this.limpTimer, t);
-    this.headMesh.material = faceMaterials().ko;
+    this.headMesh.material = headMaterials().ko;
     this.game.audio?.play('ko', this.pos());
   }
 
-  wake() {
+  // Back to normal control. With getUp the body stands up from wherever it
+  // lies over GETUP_T seconds instead of popping straight up.
+  wake(getUp = true) {
     this.state = 'normal';
     this.limpTimer = 0;
-    this.recover = 0;
-    this.headMesh.material = faceMaterials().normal;
+    this.recover = getUp ? 1 : 0;
+    this.getUp = getUp ? 0 : -1;
+    this.getUpH = Math.max(0.05, Math.min(STAND_H, this.groundDist ?? STAND_H));
+    this.headMesh.material = headMaterials().normal;
   }
 
-  releaseHand(h) {
+  // Let go. With fling, a light object we were swinging keeps the arm's
+  // swing (plus a bit) so releasing mid-swing throws it.
+  releaseHand(h, fling = false) {
     const hand = this.hands[h];
     if (hand.joint) {
       if (hand.joint.isValid()) this.world.removeImpulseJoint(hand.joint, true);
-      hand.joint = null; hand.body = null;
+      const b = hand.body;
+      if (fling && b && b.isDynamic() && !(hand.owner instanceof Player) && b.mass() < 60 && this.flung !== b) {
+        // the swing we give it, relative to our body, gets a boost along our facing
+        const cv = this.chest.linvel(), bv = b.linvel();
+        const rx = bv.x - cv.x, ry = bv.y - cv.y, rz = bv.z - cv.z;
+        const rs = Math.hypot(rx, ry, rz);
+        if (rs > 1.2) {
+          const k = Math.min(1, (rs - 1.2) / 2.5);
+          const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+          b.setLinvel({ x: bv.x + (rx * 0.4 + fx * rs * 0.7) * k, y: bv.y + (ry * 0.2 + rs * 0.35) * k, z: bv.z + (rz * 0.4 + fz * rs * 0.7) * k }, true);
+          this.flung = b;
+          this.game.audio?.play('swish', b.translation());
+        }
+      }
+      hand.joint = null; hand.body = null; hand.owner = null;
     }
   }
   releaseAll() { this.releaseHand('L'); this.releaseHand('R'); }
@@ -298,7 +392,8 @@ export class Player {
   // ---- seats ------------------------------------------------------------
   sitIn(seat) {
     this.releaseAll();
-    if (this.state === 'limp') this.wake();
+    this.mantle = null;
+    if (this.state === 'limp') this.wake(false);
     this.seat = seat;
     seat.occupant = this;
     this.state = 'seated';
@@ -416,24 +511,45 @@ export class Player {
   step(inp, pressed) {
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
+    this.t += DT;
+    this.flung = null;
     this.jumpCool -= DT; this.impactGrace -= DT;
     this.hands.L.cool -= DT; this.hands.R.cool -= DT;
     if (this.punch.t > 0) this.punch.t -= DT;
+    if (this.stumble > 0) this.stumble -= DT;
 
     // --- state transitions
     if (this.state === 'limp') {
       if (this.limpTimer > 0) { this.limpTimer -= DT; if (this.limpTimer <= 0) this.wake(); }
       else if (pressed.ragdoll || pressed.jump) this.wake();
     } else if (this.state === 'normal' && pressed.ragdoll) {
-      this.state = 'limp'; this.limpTimer = 0; this.releaseAll();
+      this.state = 'limp'; this.limpTimer = 0; this.releaseAll(); this.mantle = null;
     }
     if (this.recover < 1) this.recover = Math.min(1, this.recover + DT * 1.6);
+
+    const limp = this.state === 'limp';
+    const seated = this.state === 'seated';
+
+    // getting up: balance comes back on an ease-in curve while the hover
+    // height climbs from where we lie, so the body rises through a crouch
+    let rise = 1, riseUp = 1;
+    if (this.getUp >= 0) {
+      if (limp || seated) this.getUp = -1;
+      else {
+        this.getUp += DT;
+        const u = Math.min(1, this.getUp / GETUP_T);
+        rise = u * u * (3 - 2 * u);
+        const u2 = Math.min(1, u * 1.7);
+        riseUp = 0.2 + 0.8 * u2 * u2 * (3 - 2 * u2);
+        if (u >= 1) this.getUp = -1;
+      }
+    }
 
     const cam = this.cam;
     const camYaw = cam ? cam.yaw : this.yaw;
     // camera-relative stick: forward is away from camera
     const fx = Math.sin(camYaw), fz = Math.cos(camYaw);
-    let mx = inp.moveX, my = inp.moveY;
+    let mx = inp.moveX || 0, my = inp.moveY || 0;
     const mvx = fx * my - fz * mx, mvz = fz * my + fx * mx;
     const mag = Math.min(1, Math.hypot(mx, my));
 
@@ -443,18 +559,33 @@ export class Player {
     // wading is not swimming: needs about a metre of water over the ground
     const floorY = this.groundDist < 50 ? this.hips.translation().y - this.groundDist : -1e9;
     const wasSwimming = this.swimming;
-    this.swimming = water != null && cp.y < water + 0.05 && water - floorY > 0.85 && this.state !== 'seated';
+    this.swimming = water != null && cp.y < water + 0.05 && water - floorY > 0.85 && !seated;
     if (this.swimming && !wasSwimming && chest.linvel().y < -2) this.game.audio?.play('splash', cp, Math.min(1.5, -chest.linvel().y / 6));
     this.waterLevel = water;
 
-    const limp = this.state === 'limp';
-    const seated = this.state === 'seated';
+    // --- landings: knees give, the body squashes
+    const v = hips.linvel();
+    if (!this.grounded && !this.swimming && !seated) this.airTime += DT;
+    else {
+      if (this.airTime > 0.18 && !limp && !seated && this.grounded) {
+        const lv = Math.max(0, -this.prevVy);
+        this.landDip = Math.max(this.landDip, Math.min(1, lv / 7));
+        this.sqV += Math.min(5, lv * 0.6);
+      }
+      this.airTime = 0;
+    }
+    this.landDip = Math.max(0, this.landDip - DT * 3.2);
 
     // --- grabbing
-    if (!seated && !limp) this.updateHands(inp);
+    if (!seated && !limp) { this.updateHands(inp); this.carryAssist(); }
+    // looking down while reaching bends over to pick things off the floor
+    const camPitch = cam ? cam.pitch : 0.2;
+    const reachingNow = !limp && !seated && ((inp.grabL || 0) > 0.3 || (inp.grabR || 0) > 0.3);
+    const rdT = reachingNow && this.grounded && !this.swimming ? Math.max(0, Math.min(1, (camPitch - 0.45) / 0.75)) : 0;
+    this.reachDown += (rdT - this.reachDown) * Math.min(1, DT * 6);
 
     // --- facing
-    if (!limp && !seated && mag > 0.1) {
+    if (!limp && !seated && mag > 0.1 && !this.mantle) {
       const want = Math.atan2(mvx, mvz);
       let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
       const rate = (this.grounded || this.swimming ? 9 : 4) * DT;
@@ -465,24 +596,43 @@ export class Player {
       _e.setFromQuaternion(_qa, 'YXZ');
       this.yaw = _e.y + (this.seat.yaw || 0);
     }
+    let dyaw = this.yaw - this.prevYaw; dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
+    this.prevYaw = this.yaw;
+    this.yawRate += (dyaw / DT - this.yawRate) * Math.min(1, DT * 12);
 
     // --- balance
-    const v = hips.linvel();
     const gv = this.groundVelocity(new THREE.Vector3());
-    const strength = limp ? 0 : this.recover;
-    let lean = 0;
+    const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
+    const strength = limp ? 0 : this.recover * riseUp * stumbleK;
     const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK);
     const hv = _vc.set(v.x - gv.x, 0, v.z - gv.z);
+    const hspeed = hv.length();
     const fwdSpeed = hv.x * Math.sin(this.yaw) + hv.z * Math.cos(this.yaw);
-    if (!limp && !seated) lean = this.swimming ? (mag > 0.1 ? 1.15 : 0.5) : Math.max(-0.15, Math.min(0.3, fwdSpeed * 0.045));
-    const hanging = !this.grounded && (this.hands.L.joint || this.hands.R.joint);
+    const hanging = !this.grounded && !!(this.hands.L.joint || this.hands.R.joint);
+    const amp = Math.min(1, Math.abs(fwdSpeed) / 5.5) * 0.95;
+
+    // lean into speed and acceleration, bank into turns, waddle with each step
+    let leanT = 0, rollT = 0, waddle = 0, twist = 0;
+    if (!limp && !seated) {
+      if (this.swimming) leanT = mag > 0.1 ? 1.15 : 0.5;
+      else if (this.grounded) {
+        leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0;
+        rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05));
+        waddle = Math.sin(this.phase) * 0.1 * Math.max(amp, mag > 0.1 ? 0.3 : 0);
+        twist = Math.sin(this.phase) * 0.14 * amp;
+      } else if (!hanging) leanT = 0.12;
+      if (this.mantle) leanT = 0.5;
+    }
+    const lk = Math.min(1, DT * (this.swimming ? 4 : 9));
+    this.lean += (leanT - this.lean) * lk;
+    this.roll += (rollT - this.roll) * lk;
 
     if (!limp) {
-      const yq = new THREE.Quaternion().setFromAxisAngle(UP, this.yaw);
-      const chestT = yq.clone().multiply(qx(lean));
-      const hipsT = yq.clone().multiply(qx(lean * 0.4));
+      const yq = _qb.setFromAxisAngle(UP, this.yaw);
+      const chestT = yq.clone().multiply(qeul(this.lean, -twist * 0.6, this.roll + waddle, 'YXZ'));
+      const hipsT = yq.clone().multiply(qeul(this.lean * 0.4, twist, (this.roll + waddle) * 0.5, 'YXZ'));
       const air = this.grounded || this.swimming || seated ? 1 : 0.55;
-      const k = strength * air * (hanging ? 0.35 : 1);
+      const k = strength * air * (hanging ? 0.35 : 1) * (this.mantle ? 0.5 : 1);
       this.upright(chest, chestT, 260 * k, 26 * Math.sqrt(k), parts.chest.I * 4.5);
       this.upright(hips, hipsT, 200 * k, 22 * Math.sqrt(k), parts.hips.I * 4.5);
     }
@@ -507,12 +657,13 @@ export class Player {
         for (const b of this.bodies) { const bv = b.linvel(); b.applyImpulse({ x: 0, y: (up - bv.y) * b.mass(), z: 0 }, true); }
         this.jumpCool = 0.25;
         this.impactGrace = 0.3;
+        this.sqV -= 2.5;
         this.game.audio?.play('boing', cp, Math.min(1, -v.y / 8));
       }
     }
 
     // --- hover spring / swimming lift
-    if (!limp && !seated) {
+    if (!limp && !seated && !this.mantle) {
       if (this.swimming) {
         const target = water - 0.12;
         const err = target - cp.y;
@@ -521,10 +672,14 @@ export class Player {
         chest.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.75, z: 0 }, true);
         hips.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.25, z: 0 }, true);
       } else if (this.grounded && this.jumpCool <= 0) {
-        const err = STAND_H - this.groundDist;
+        // bouncy walk: the hips bob up as the legs pass each other
+        const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
+        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S;
+        if (this.getUp >= 0) h = this.getUpH + (h - this.getUpH) * rise;
+        const err = h - this.groundDist;
         const vy = v.y - gv.y;
         let a = 140 * err - 16 * vy + 9.81;
-        a = Math.max(0, Math.min(45, a)) * strength;
+        a = Math.max(0, Math.min(45, a)) * Math.max(strength, this.getUp >= 0 ? 1 : 0);
         const imp = a * this.totalMass * DT;
         hips.applyImpulse({ x: 0, y: imp * 0.7, z: 0 }, true);
         chest.applyImpulse({ x: 0, y: imp * 0.3, z: 0 }, true);
@@ -534,13 +689,25 @@ export class Player {
       }
     }
 
+    // --- climbing over a ledge
+    if (this.mantle) this.updateMantle();
+
     // --- locomotion
-    if (!limp && !seated) {
+    this.accFwd = 0;
+    if (!limp && !seated && !this.mantle) {
       const slippery = this.grounded && this.groundCollider && this.physics.slippery.has(this.groundCollider.handle);
-      let ctrl = this.swimming ? 6 : this.grounded ? (slippery ? 0.6 : 14) : (hanging ? 1.5 : 6.0);
       const tvx = mvx * speed + gv.x, tvz = mvz * speed + gv.z;
       let dvx = (mag > 0.05 ? tvx : (this.grounded ? gv.x : v.x)) - v.x;
       let dvz = (mag > 0.05 ? tvz : (this.grounded ? gv.z : v.z)) - v.z;
+      // snappy but not instant: ~0.25 s to walking pace, quicker to turn round
+      let accel;
+      if (this.swimming) accel = 6;
+      else if (!this.grounded) accel = hanging ? 5 : 6;
+      else if (slippery) accel = 1;
+      else {
+        const opp = hspeed > 0.5 && mag > 0.05 ? Math.max(0, -(hv.x * mvx + hv.z * mvz) / (hspeed * mag)) : 0;
+        accel = (mag > 0.05 ? 14 : 12) + 12 * opp;
+      }
       if (slippery) {
         // slide down the slope: tangential part of gravity
         const n = this.groundNormal;
@@ -550,15 +717,28 @@ export class Player {
         if (mag < 0.05) { dvx = 0; dvz = 0; }
       }
       if (this.punch.t > 0.12 && mag < 0.05) { dvx = 0; dvz = 0; } // don't brake the lunge
-      const maxDv = ctrl * DT * (this.grounded ? 1.6 : 1);
+      const maxDv = accel * DT;
       const dl = Math.hypot(dvx, dvz);
       if (dl > maxDv) { dvx *= maxDv / dl; dvz *= maxDv / dl; }
-      const M = this.totalMass * strength;
+      const M = this.totalMass * strength * (this.getUp >= 0 ? rise : 1);
       hips.applyImpulse({ x: dvx * M * 0.55, y: 0, z: dvz * M * 0.55 }, true);
       chest.applyImpulse({ x: dvx * M * 0.45, y: 0, z: dvz * M * 0.45 }, true);
+      if (this.grounded) this.accFwd = (dvx * Math.sin(this.yaw) + dvz * Math.cos(this.yaw)) / DT;
+
+      // climbing: hold forward (or press jump) while hanging off a ledge
+      const bothHeld = !!(this.hands.L.joint && this.hands.R.joint);
+      const pushing = bothHeld && mag > 0.5 && (mvx * Math.sin(this.yaw) + mvz * Math.cos(this.yaw)) / mag > 0.5;
+      this.hangPush = pushing ? this.hangPush + DT : 0;
+      // a ledge under our grip: jump (or keep pushing forward) to climb over it
+      const wantClimb = bothHeld && this.jumpCool <= 0 && (pressed.jump || this.hangPush > 0.35);
+      const ledge = wantClimb ? this.findLedge() : null;
 
       // jump
-      if (pressed.jump && this.jumpCool <= 0) {
+      if (ledge != null) {
+        this.startMantle(ledge);
+        this.hangPush = 0;
+        this.game.audio?.play('jump', cp);
+      } else if (pressed.jump && this.jumpCool <= 0 && (this.getUp < 0 || this.getUp > GETUP_T * 0.6)) {
         if (this.grounded || this.swimming) {
           const jv = this.swimming ? 4.2 : JUMP_V;
           for (const b of this.bodies) {
@@ -566,12 +746,15 @@ export class Player {
             b.applyImpulse({ x: 0, y: (gv.y + jv - bv.y) * b.mass(), z: 0 }, true);
           }
           this.jumpCool = 0.35;
+          this.sqV -= 3;
+          this.landDip = 0;
           this.game.audio?.play('jump', cp);
         } else if (hanging) {
-          // pull up and over the ledge
+          // let go and fling yourself up and forward (monkey bars, ropes)
           this.releaseAll();
           this.hands.L.cool = this.hands.R.cool = 0.4;
           for (const b of this.bodies) b.applyImpulse({ x: Math.sin(this.yaw) * 2.5 * b.mass(), y: 6.5 * b.mass(), z: Math.cos(this.yaw) * 2.5 * b.mass() }, true);
+          this.sqV -= 2;
           this.jumpCool = 0.35;
           this.game.audio?.play('jump', cp);
         }
@@ -593,8 +776,9 @@ export class Player {
     if (this.punch.t > 0.08 && this.punch.t < 0.26 && !this.punch.hit && !limp) this.punchHit();
 
     // --- pose
-    this.animate(inp, fwdSpeed, limp, seated, mag);
+    this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
+    if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
     for (const n in parts) {
       const p = parts[n];
@@ -604,30 +788,113 @@ export class Player {
       this.drive(p, kp, kd, p.maxT);
     }
 
-    // --- impacts knock you out
+    // --- impacts: big ones knock you out, smaller ones make you stumble
     const cv = chest.linvel();
     _va.set(cv.x, cv.y, cv.z);
     const dv = _va.distanceTo(this.prevChestVel);
     this.prevChestVel.copy(_va);
-    if (!seated && this.impactGrace <= 0 && dv > 9) this.knockOut(Math.min(4, 1.2 + (dv - 9) * 0.25));
+    if (!seated && this.impactGrace <= 0) {
+      if (dv > 9) this.knockOut(Math.min(4, 1.2 + (dv - 9) * 0.25));
+      else if (dv > 4.5 && !limp) { this.stumble = Math.max(this.stumble, 0.25 + (dv - 4.5) * 0.08); this.sqV += 1.5; }
+    }
+    this.prevVy = hips.linvel().y;
+
+    // --- squash & stretch spring (visual only)
+    this.sqV += (-260 * this.sq - 10 * this.sqV) * DT;
+    this.sq += this.sqV * DT;
+    this.sq = Math.max(-0.2, Math.min(0.22, this.sq));
 
     // respawn if lost
     if (cp.y < -25) this.respawn();
   }
 
-  animate(inp, fwdSpeed, limp, seated, mag) {
+  // A ledge under one of our grips: returns the height of its top surface, or null.
+  findLedge() {
+    let best = null;
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    for (const h of ['L', 'R']) {
+      const hand = this.hands[h];
+      if (!hand.joint || !hand.body || hand.owner instanceof Player) continue;
+      if (hand.body.isDynamic() && hand.body.mass() < 150) continue;
+      const gp = this.handPos(h, new THREE.Vector3());
+      for (const off of [0.12, 0.3]) {
+        const o = { x: gp.x + fx * off, y: gp.y + 0.95, z: gp.z + fz * off };
+        const hit = this.world.castRayAndGetNormal(new RAPIER.Ray(o, { x: 0, y: -1, z: 0 }), 1.35, true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
+        if (!hit || hit.normal.y < 0.6) continue;
+        const top = o.y - hit.timeOfImpact;
+        if (top > gp.y - 0.3 && top < gp.y + 0.8) { best = Math.max(best ?? -1e9, top); break; }
+      }
+    }
+    return best;
+  }
+
+  startMantle(top) {
+    this.mantle = { t: 0, top, stage: 0 };
+    this.sqV -= 1.5;
+  }
+
+  // Pull up until the hips clear the ledge, then let go and flop forward over it.
+  updateMantle() {
+    const m = this.mantle;
+    m.t += DT;
+    const chest = this.chest, hips = this.hips;
+    const cpos = chest.translation();
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    const hy = hips.translation().y;
+    // stage 0: pull up on the arms until the shoulders are over the edge (or we stall)
+    if (m.stage === 0) {
+      const vy = chest.linvel().y;
+      m.stall = vy < 0.4 && m.t > 0.25 ? (m.stall || 0) + DT : 0;
+      if (cpos.y > m.top + 0.12 || m.stall > 0.12 || m.t > 0.9) {
+        m.stage = 1; m.t1 = m.t;
+        const h0 = hips.translation(); m.x1 = h0.x; m.z1 = h0.z;
+        this.releaseAll();
+        this.hands.L.cool = this.hands.R.cool = 0.45;
+      }
+    }
+    // stage 1: hands off, hips up over the edge and flop forward onto the top
+    if (m.stage === 1) {
+      const hp = hips.translation();
+      const moved = (hp.x - m.x1) * fx + (hp.z - m.z1) * fz;
+      m.done = m.t - m.t1 > 0.8 || (hy > m.top + 0.15 && moved > 0.4);
+    }
+    if (m.stage === 1 && m.done) { this.mantle = null; this.jumpCool = 0.2; return; }
+    let vt;
+    if (m.stage === 0) vt = { x: -fx * 0.15, y: 3.4, z: -fz * 0.15 };
+    else {
+      const over = hy > m.top - 0.05;
+      vt = { x: fx * (over ? 2.4 : 0.1), y: hy < m.top + 0.2 ? 3.2 : 0.4, z: fz * (over ? 2.4 : 0.1) };
+    }
+    // carry our own weight (the hover spring is off in the air) and steer the velocity
+    const k = Math.min(1, DT * 14);
+    for (const [b, share] of [[chest, 0.55], [hips, 0.45]]) {
+      const bv = b.linvel(), M = this.totalMass * share;
+      b.applyImpulse({ x: (vt.x - bv.x) * M * k, y: (vt.y - bv.y) * M * k + M * 9.81 * DT, z: (vt.z - bv.z) * M * k }, true);
+    }
+  }
+
+  animate(inp, fwdSpeed, limp, seated, mag, amp, hanging) {
     const P = this.parts;
     const set = (n, q, kp, kd, maxT = 1e9, float = true) => { const p = P[n]; p.target.copy(q); p.kp = kp; p.kd = kd; p.maxT = maxT; p.float = float; };
     const sp = Math.abs(fwdSpeed);
+    const prevC = Math.cos(this.phase);
     if (this.grounded && !limp && !seated) this.phase += DT * (sp * 2.6 + (mag > 0.1 ? 1.5 : 0));
     else if (this.swimming) this.phase += DT * 5;
     const ph = this.phase;
     const s = Math.sin(ph), c = Math.cos(ph);
-    const amp = Math.min(1, sp / 4) * 0.75;
+    // a little squash on each footfall
+    if (this.grounded && !limp && !seated && sp > 0.8 && Math.sign(c) !== Math.sign(prevC)) this.sqV += 0.5 * amp;
     const camPitch = this.cam ? this.cam.pitch : 0.2;
+    const T = this.t;
+    const vy = this.hips.linvel().y;
+    const getUp = this.getUp >= 0 ? 1 - Math.min(1, this.getUp / (GETUP_T * 0.85)) : 0;
 
-    // head bobbles on a soft spring
-    set('head', qx(this.swimming ? -0.7 : 0), 70, 7);
+    // head: soft spring so it bobbles; keeps looking ahead as the body leans,
+    // and looks up with the camera while reaching
+    const reaching = (inp.grabL > 0.3 || inp.grabR > 0.3) && !limp;
+    const headPitch = this.swimming ? -0.7 : -this.lean * 0.55 - (reaching ? Math.max(0, 0.35 - camPitch) * 0.6 : 0);
+    set('head', qeul(headPitch, 0, -this.roll * 0.4), 300, 15);
 
     if (seated) {
       set('uLegL', qeul(-1.45, 0, 0.08), 120, 12); set('uLegR', qeul(-1.45, 0, -0.08), 120, 12);
@@ -646,61 +913,173 @@ export class Player {
     }
 
     // legs
+    const flail = !this.grounded && !this.swimming && !hanging && !limp;
+    const fall = flail ? Math.min(1, Math.max(0, (-vy - 1) / 5)) * Math.min(1, this.airTime / 0.35) : 0;
     if (this.swimming) {
       const k = Math.sin(ph * 2) * 0.45;
       set('uLegL', qx(-0.15 + k), 90, 9); set('uLegR', qx(-0.15 - k), 90, 9);
       set('lLegL', qx(0.3), 70, 7); set('lLegR', qx(0.3), 70, 7);
+    } else if (this.mantle) {
+      // knees up to clear the edge
+      set('uLegL', qx(-1.5), 160, 14); set('uLegR', qx(-1.3), 160, 14);
+      set('lLegL', qx(1.7), 140, 12); set('lLegR', qx(1.6), 140, 12);
+    } else if (getUp > 0) {
+      // crouch and push up from the floor
+      const g = getUp;
+      set('uLegL', qx(-1.35 * g), 170, 14); set('uLegR', qx(-1.25 * g), 170, 14);
+      set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
-      set('uLegL', qx(-s * amp * 1.1), 160, 14); set('uLegR', qx(s * amp * 1.1), 160, 14);
-      set('lLegL', qx(Math.max(0, c) * amp * 1.4 + 0.05), 130, 12); set('lLegR', qx(Math.max(0, -c) * amp * 1.4 + 0.05), 130, 12);
+      const dip = Math.max(this.landDip, this.reachDown * 0.7);
+      set('uLegL', qx(-s * amp * 1.15 - dip * 0.6), 160, 14); set('uLegR', qx(s * amp * 1.15 - dip * 0.6), 160, 14);
+      set('lLegL', qx(Math.max(0, c) * amp * 1.7 + 0.05 + dip * 1.1), 130, 12);
+      set('lLegR', qx(Math.max(0, -c) * amp * 1.7 + 0.05 + dip * 1.1), 130, 12);
     } else {
-      // tucked, slightly flailing in the air
-      const f = Math.sin(this.game.time * 9) * 0.25;
+      // tucked on the way up, pedalling as we fall
+      const f = Math.sin(T * 13) * (0.25 + 0.45 * fall);
       set('uLegL', qx(-0.55 + f), 90, 9); set('uLegR', qx(-0.3 - f), 90, 9);
-      set('lLegL', qx(0.9), 80, 8); set('lLegR', qx(0.6), 80, 8);
+      set('lLegL', qx(0.9 - f * 0.6), 80, 8); set('lLegR', qx(0.6 + f * 0.6), 80, 8);
     }
 
     // arms
     const reach = -(Math.PI / 2 + 0.25 - camPitch * 0.9);
+    this.reachArm.L = this.reachArm.R = false;
+    const stumbling = this.stumble > 0 && !limp;
     for (const h of ['L', 'R']) {
       const sign = h === 'L' ? 1 : -1;
       const grab = (h === 'L' ? inp.grabL : inp.grabR) > 0.3 && !limp;
       const punching = this.punch.t > 0 && this.punch.hand === h && !limp;
+      const ph2 = h === 'L' ? 0 : 2.1;
       if (punching) {
         const ext = this.punch.t > 0.12;
         set('uArm' + h, qeul(ext ? -1.55 : -0.9, 0, -sign * 0.45), 1000, 30);
         set('lArm' + h, qx(ext ? -0.05 : -1.2), 800, 26);
-      } else if (grab) {
+      } else if (grab || (this.mantle && this.mantle.stage === 0)) {
         const held = this.hands[h].joint;
-        set('uArm' + h, qeul(Math.max(-3.0, reach), 0, -sign * 0.12), held ? 660 : 540, 36, 600);
+        this.reachArm[h] = grab;
+        const r = this.mantle ? -0.6 : Math.max(-3.0, reach);
+        set('uArm' + h, qeul(r, 0, -sign * 0.12), held ? 660 : 540, 36, 600);
         set('lArm' + h, qx(-0.1), held ? 540 : 420, 30, 500);
       } else if (this.swimming) {
         const a = ph + (h === 'L' ? 0 : Math.PI);
         set('uArm' + h, qeul(-1.6 + Math.sin(a) * 1.1, 0, sign * (0.6 + Math.cos(a) * 0.5)), 480, 20);
         set('lArm' + h, qx(-0.3), 320, 16);
+      } else if (getUp > 0.3) {
+        // hands push on the floor
+        set('uArm' + h, qeul(-0.9, 0, sign * 0.35), 300, 14);
+        set('lArm' + h, qx(-0.3), 240, 12);
+      } else if (stumbling) {
+        // windmill to catch our balance
+        const a = T * 15 + ph2;
+        set('uArm' + h, qeul(-1.4 + Math.sin(a) * 0.9, 0, sign * (1.0 + Math.cos(a) * 0.4)), 260, 12);
+        set('lArm' + h, qx(-0.5), 200, 10);
       } else if (this.grounded) {
-        const sw = (h === 'L' ? s : -s) * amp * 0.9;
-        set('uArm' + h, qeul(sw, 0, sign * 0.12), 200, 10, 1e9, false);
-        set('lArm' + h, qx(-0.25 - Math.abs(sw) * 0.3), 160, 8, 1e9, false);
+        const sw = (h === 'L' ? s : -s) * amp * 0.95;
+        const idle = Math.sin(T * 2.1 + ph2) * 0.04;
+        set('uArm' + h, qeul(sw, 0, sign * (0.14 + idle + amp * 0.12)), 200, 10, 1e9, false);
+        set('lArm' + h, qx(-0.25 - Math.abs(sw) * 0.35), 160, 8, 1e9, false);
       } else {
-        // flail
-        const f = Math.sin(this.game.time * 11 + (h === 'L' ? 0 : 2)) * 0.5;
-        set('uArm' + h, qeul(-0.6 + f, 0, sign * 1.2), 240, 12);
-        set('lArm' + h, qx(-0.4), 180, 10);
+        // flail: arms up and out, faster and wilder the longer we fall
+        const a = T * (10 + 6 * fall) + ph2;
+        const f = Math.sin(a) * (0.45 + 0.5 * fall);
+        set('uArm' + h, qeul(-0.6 - fall * 1.6 + f, 0, sign * (1.15 + Math.cos(a) * 0.35 * fall)), 240, 12);
+        set('lArm' + h, qx(-0.4 - fall * 0.4), 180, 10);
       }
     }
+  }
+
+  // Carried things follow the arms. The arm drives are deliberately soft (they
+  // only move the limb's own inertia), so on their own they can't lift or
+  // swing a crate. Instead the grip point of a held loose object is pulled
+  // toward where the posed hand would be, with the reaction on the chest:
+  // carrying, lifting and throwing by swinging the arms then just work.
+  carryAssist() {
+    const chest = this.chest;
+    for (const h of ['L', 'R']) {
+      const hand = this.hands[h];
+      const b = hand.body;
+      if (!hand.joint || !b || !b.isDynamic() || hand.owner instanceof Player || !hand.local || b.mass() > CARRY_MAX * 3) continue;
+      const share = (this.hands.L.body === b && this.hands.R.body === b) ? 0.5 : 1;
+      const m = Math.min(b.mass(), CARRY_MAX) * share;
+      // where the posed hand would be: shoulder + arm direction * arm length
+      const tgt = this.poseHand(h, _hA);
+      // current grip point and its velocity
+      toQ(b.rotation(), _qc);
+      const gp = _vc.set(hand.local.x, hand.local.y, hand.local.z).applyQuaternion(_qc);
+      const bt = b.translation(), bv = b.linvel(), bw = b.angvel();
+      const gvx = bv.x + bw.y * gp.z - bw.z * gp.y, gvy = bv.y + bw.z * gp.x - bw.x * gp.z, gvz = bv.z + bw.x * gp.y - bw.y * gp.x;
+      gp.x += bt.x; gp.y += bt.y; gp.z += bt.z;
+      const cv = chest.linvel();
+      let fx = (tgt.x - gp.x) * 110 + (cv.x - gvx) * 16;
+      let fy = (tgt.y - gp.y) * 110 + (cv.y - gvy) * 16 + 9.81;
+      let fz = (tgt.z - gp.z) * 110 + (cv.z - gvz) * 16;
+      const a = Math.hypot(fx, fy, fz), amax = 60;
+      if (a > amax) { fx *= amax / a; fy *= amax / a; fz *= amax / a; }
+      const imp = { x: fx * m * DT, y: fy * m * DT, z: fz * m * DT };
+      b.applyImpulse(imp, true);
+      // reaction: the load's weight and swing push on us, but pressing a
+      // stuck object down never lifts us off the ground
+      chest.applyImpulse({ x: -imp.x, y: Math.min(0, -imp.y), z: -imp.z }, true);
+    }
+  }
+
+  // Where the posed mitten would be: shoulder + arm direction * arm length.
+  poseHand(h, out) {
+    const u = this.parts['uArm' + h], chest = this.chest;
+    toQ(chest.rotation(), _qa);
+    out.copy(u.rest).add(u.anchor).sub(this.parts.chest.rest).applyQuaternion(_qa).add(toV(chest.translation(), _vc));
+    _qb.copy(_qa).multiply(u.target);
+    return out.add(_vc.set(0, -ARM_LEN, 0).applyQuaternion(_qb));
+  }
+
+  // A reaching arm is a light chain hanging off a soft joint drive and
+  // whirls about for a second before it settles. Steer the mitten straight
+  // to where the pose puts it (reaction on the chest) so grabs land.
+  handAssist(h, k) {
+    const la = this.parts['lArm' + h].body, chest = this.chest;
+    const tgt = this.poseHand(h, _hA);
+    const hp = this.handPos(h, _hB);
+    const hv = la.linvel(), cv = chest.linvel();
+    let fx = (tgt.x - hp.x) * 160 + (cv.x - hv.x) * 18;
+    let fy = (tgt.y - hp.y) * 160 + (cv.y - hv.y) * 18;
+    let fz = (tgt.z - hp.z) * 160 + (cv.z - hv.z) * 18;
+    const a = Math.hypot(fx, fy, fz), amax = 90;
+    if (a > amax) { fx *= amax / a; fy *= amax / a; fz *= amax / a; }
+    const m = ARM_MASS * k * DT;
+    const imp = { x: fx * m, y: fy * m, z: fz * m };
+    la.applyImpulseAtPoint(imp, { x: hp.x, y: hp.y, z: hp.z }, true);
+    chest.applyImpulse({ x: -imp.x, y: -imp.y, z: -imp.z }, true);
+  }
+
+  // Is this upper arm pointing roughly where its drive wants it?
+  armReady(h) {
+    const u = this.parts['uArm' + h];
+    toQ(this.chest.rotation(), _qa).multiply(u.target);
+    _va.set(0, -1, 0).applyQuaternion(_qa);
+    _vb.set(0, -1, 0).applyQuaternion(toQ(u.body.rotation(), _qb));
+    return _va.dot(_vb) > 0.8;
   }
 
   updateHands(inp) {
     for (const h of ['L', 'R']) {
       const hand = this.hands[h];
       const want = (h === 'L' ? inp.grabL : inp.grabR) > 0.5;
-      if (hand.joint && (!want || !hand.joint.isValid())) this.releaseHand(h);
-      if (want && !hand.joint && hand.cool <= 0) {
+      if (hand.joint && !hand.joint.isValid()) this.releaseHand(h);
+      if (hand.joint && !want) this.releaseHand(h, true);
+      hand.hold = want ? (hand.hold || 0) + DT : 0;
+      // the mitten only closes once the arm is up where it is reaching (or
+      // has been pressing on something for a moment), so walking into a
+      // wall with the trigger held doesn't grab it at the hip
+      if (want && !hand.joint && hand.cool <= 0 && !this.mantle && (hand.hold > 0.4 || this.armReady(h))) {
         const hp = this.handPos(h, new THREE.Vector3());
-        let found = null;
-        this.world.intersectionsWithShape({ x: hp.x, y: hp.y, z: hp.z }, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(HAND_R * 1.35),
-          (col) => { found = col; return false; }, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
+        // nearest thing within reach of the mitten
+        let found = null, bestD = 1e9;
+        this.world.intersectionsWithShape({ x: hp.x, y: hp.y, z: hp.z }, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(GRAB_R),
+          (col) => {
+            const pr = col.projectPoint({ x: hp.x, y: hp.y, z: hp.z }, false);
+            const d = pr ? Math.hypot(pr.point.x - hp.x, pr.point.y - hp.y, pr.point.z - hp.z) : 0;
+            if (d < bestD) { bestD = d; found = col; }
+            return true;
+          }, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
         if (found) {
           const tb = found.parent();
           if (!tb) continue;
@@ -715,8 +1094,8 @@ export class Player {
           hand.joint.setContactsEnabled(false);
           hand.body = tb;
           hand.owner = this.physics.handleOwner.get(found.handle) || null;
+          hand.local = { x: _vb.x, y: _vb.y, z: _vb.z };
           this.game.audio?.play('grab', hp);
-          // grabbing another player's chest/head makes them easier to drag
         }
       }
     }
@@ -750,13 +1129,20 @@ export class Player {
   respawn() {
     if (this.seat) this.leaveSeat();
     this.releaseAll();
-    this.wake();
+    this.mantle = null;
+    this.wake(false);
+    this.recover = 1;
     const sp = this.game.spawnPoint(this.index);
     this.teleport(sp.x, sp.y, sp.z, sp.yaw);
   }
 
   sync() {
     for (const n in this.parts) { const p = this.parts[n]; this.physics.pose(p.rec, p.mesh); }
+    // squash & stretch the torso about the shoulders so the neck stays covered
+    const q = this.sq, m = this.parts.chest.mesh.children[0];
+    if (m) { m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q; }
+    const hm = this.parts.hips.mesh.children[0];
+    if (hm) hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
