@@ -50,8 +50,9 @@ export function paintFace(tex, name) {
     const W = cv.width, H = cv.height;
     g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
     // the head's texture is equirectangular with square pixels (0.7 degrees
-    // each), so a square image stays square; ~105 degrees of the head
-    const s = W * 0.29;
-    g.drawImage(im, W * 0.25 - s / 2, H * 0.5 - s / 2, s, s);
+    // each), so a square image stays square. The art leaves a margin round the
+    // features, so draw it over ~145 degrees of the head
+    const s = W * 0.4;
+    g.drawImage(im, W * 0.25 - s / 2, H * 0.47 - s / 2, s, s);
   });
 }

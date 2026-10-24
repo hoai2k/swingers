@@ -13,7 +13,7 @@ files = sorted(
     for p in root.rglob('*')
     if p.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')
     and not any(part.startswith('.') for part in p.relative_to(root).parts)
-    and p.relative_to(root).parts[0] != 'reference'
+    and p.relative_to(root).parts[0] not in ('reference', 'originals')
 )
 (root / 'manifest.json').write_text(json.dumps(files, indent=1) + '\n')
 print(f'{len(files)} image(s) listed in {root / "manifest.json"}')
