@@ -5,3 +5,6 @@ import './ancient.js';
 import './dynasty.js';
 import './wildwest.js';
 import './spooky.js';
+import './good.js';
+import './evil.js';
+import './secret.js';
