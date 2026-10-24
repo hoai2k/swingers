@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 3 delivered — 3 replacement faces, 2026-10-24.** Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+**Status: no open requests.** Round 3 delivered — 3 replacement faces, 2026-10-24, checked in game. Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
 
 ## Delivered round 3: replace three faces (3 images) — `assets/faces/`
 
@@ -9,6 +9,11 @@ thick dark outlines and solid fills at the same file names. All three are
 transparent 512 × 512 images, framed within the middle ~65% of the square,
 and verified through the game's face-texture hook. Final prompts and prior
 generation records are preserved in `assets/generation.json`.
+
+In-game review: on-style and readable. They were framed smaller than the
+round 1 faces, so the game now crops every face to its visible features and
+scales them to the same width — framing no longer needs to match between
+images.
 
 | File | Size | Expression |
 | --- | --- | --- |
