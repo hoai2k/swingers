@@ -11,9 +11,20 @@
 //     { type: 'choice', label, key, options: [[value, label], ...] }
 //     { type: 'slider', label, key, step: 0.1 }            0..1 setting
 //     { type: 'html', html }                               static content (not focusable)
+//   any item may also have: desc (small second line), and instead of `key`
+//   get() / set(v) for values that live inside an object setting; an action
+//   may have value() (a summary shown on the right, e.g. a sub-page's state)
 
 import { settings, setSetting, onSettingsChange } from './settings.js';
 import { sfx } from './audio.js';
+import { WEAPONS } from './weapons.js';
+import { POOLS, mixValue } from './pool.js';
+import { MODIFIERS } from './modifiers.js';
+import { SQUEEZE_SPEEDS } from './squeeze.js';
+
+let currentUI = null;   // the UI instance (sub-pages push onto it)
+const openSub = (makeDef) => { if (currentUI) currentUI.push(makeDef()); };
+const getV = (it) => (it.get ? it.get() : settings[it.key]);
 
 const svg = (body) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 export const ICONS = {
@@ -59,13 +70,81 @@ export function settingsMenu(extra = {}) {
       { type: 'slider', label: 'Music volume', key: 'musicVolume', step: 0.1, fmt: pct },
       { type: 'toggle', label: 'Screen shake', key: 'screenShake' },
       { type: 'choice', label: 'Weapon drops', key: 'dropRate', options: [['off', 'Off'], ['normal', 'Normal'], ['frequent', 'Frequent']] },
-      { type: 'choice', label: 'Rounds to win', key: 'winScore', options: [[3, '3'], [5, '5'], [7, '7'], [10, '10']] },
+      { type: 'choice', label: 'Rounds to win', key: 'winScore', options: [...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => [n, String(n)])] },
+      { type: 'action', label: 'Versus rules', run: () => openSub(versusMenu), value: versusSummary },
+      { type: 'action', label: 'Modifiers', run: () => openSub(modifiersMenu), value: modsSummary },
       { type: 'toggle', label: 'Survival friendly fire', key: 'friendlyFire' },
       { type: 'toggle', label: 'Slow-mo on last kill', key: 'slowmo' },
       ...(fsEnabled() ? [{ type: 'action', label: 'Toggle fullscreen', run: () => toggleFullscreen() }] : []),
       { type: 'action', label: 'Back', back: true },
     ],
     ...extra,
+  };
+}
+
+// ---- VS sub-pages: the Squeeze + weapon pool, the custom weapon mix, modifiers
+const SQUEEZE_LABELS = { off: 'Off', static: 'Static edge', normal: 'Normal', fast: 'Fast', fastest: 'Fastest' };
+function versusSummary() {
+  const sq = SQUEEZE_LABELS[settings.squeezeSpeed] || settings.squeezeSpeed;
+  const pool = (POOLS.find((q) => q[0] === settings.weaponPool) || [0, 'Everything'])[1];
+  return `Squeeze ${sq.toLowerCase()} · ${pool}`;
+}
+function modsSummary() {
+  const n = MODIFIERS.filter((m) => settings.mods && settings.mods[m.id]).length;
+  return n ? `${n} on` : 'none';
+}
+
+export function versusMenu() {
+  return {
+    id: 'versus-rules',
+    title: 'Versus rules',
+    sub: 'The Squeeze closes in on the arena during a round. Touching it is a knockout.',
+    items: [
+      { type: 'choice', label: 'The Squeeze', key: 'squeezeSpeed', options: Object.keys(SQUEEZE_SPEEDS).map((k) => [k, SQUEEZE_LABELS[k] || k]) },
+      { type: 'choice', label: 'Closes from', key: 'squeezeSides', options: [['one', 'One side'], ['several', 'Several sides'], ['all', 'All sides']] },
+      { type: 'choice', label: 'Starts after', key: 'squeezeDelay', options: [10, 15, 20, 25, 30, 40, 60, 90].map((n) => [n, n + ' s']) },
+      { type: 'choice', label: 'Weapon pool', key: 'weaponPool', options: POOLS, desc: 'Blades: melee · Demolition: explosives · Sharpshooters: guns' },
+      { type: 'action', label: 'Custom weapon mix', run: () => openSub(weaponMixMenu), value: () => (settings.weaponPool === 'custom' ? 'in use' : 'edit') },
+      { type: 'action', label: 'Back', back: true },
+    ],
+  };
+}
+
+const KIND_LABELS = { melee: 'Blade', gun: 'Gun', throwable: 'Throwable', special: 'Special' };
+export function weaponMixMenu() {
+  const opts = [[0, 'Off'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5']];
+  const weapons = [...WEAPONS.values()].sort((a, b) => (a.kind > b.kind ? 1 : a.kind < b.kind ? -1 : a.label.localeCompare(b.label)));
+  const setMix = (id, v) => {
+    setSetting('weaponMix', { ...(settings.weaponMix || {}), [id]: v });
+    if (settings.weaponPool !== 'custom') setSetting('weaponPool', 'custom');
+  };
+  return {
+    id: 'weapon-mix',
+    title: 'Custom weapon mix',
+    sub: 'How often each weapon drops (Off - 5). Changing one switches the pool to Custom.',
+    items: [
+      ...weapons.map((C) => ({ type: 'choice', label: C.label, desc: KIND_LABELS[C.kind] || C.kind, options: opts, get: () => mixValue(C.id), set: (v) => setMix(C.id, v) })),
+      { type: 'action', label: 'Reset to defaults', run: () => setSetting('weaponMix', {}) },
+      { type: 'action', label: 'Back', back: true },
+    ],
+  };
+}
+
+export function modifiersMenu() {
+  const setMod = (id, v) => {
+    const m = { ...(settings.mods || {}) };
+    if (v) m[id] = true; else delete m[id];
+    setSetting('mods', m);
+  };
+  return {
+    id: 'modifiers',
+    title: 'Modifiers',
+    sub: 'Match mutators for Versus. Mix freely.',
+    items: [
+      ...MODIFIERS.map((d) => ({ type: 'toggle', label: d.name, desc: d.desc, get: () => !!(settings.mods && settings.mods[d.id]), set: (v) => setMod(d.id, v) })),
+      { type: 'action', label: 'All off', run: () => setSetting('mods', {}) },
+      { type: 'action', label: 'Back', back: true },
+    ],
   };
 }
 
@@ -115,6 +194,7 @@ export class UI {
     this.idle = 0;
     this.navMem = new Map();  // per input id: held direction + repeat timer
     this.onChange = null;     // called when menus open/close (pause.js)
+    currentUI = this;
     this.build();
     onSettingsChange(() => this.refresh());
     this.refresh();
@@ -268,8 +348,12 @@ export class UI {
   renderRows(m) {
     for (const row of m.rows) {
       const it = row._item;
-      if (it.type === 'action') { row.innerHTML = `<span class="lbl">${it.label}</span>`; continue; }
-      const v = settings[it.key];
+      if (it.type === 'action') {
+        if (it.value) { row.style.justifyContent = 'space-between'; row.innerHTML = `<span class="lbl">${it.label}</span><span class="ctl"><span class="val small">${it.value()}</span><span class="arr">▶</span></span>`; }
+        else row.innerHTML = `<span class="lbl">${it.label}</span>`;
+        continue;
+      }
+      const v = getV(it);
       let val = '';
       if (it.type === 'toggle') val = `<span class="pill ${v ? 'on' : ''}">${v ? 'ON' : 'OFF'}</span>`;
       else if (it.type === 'choice') {
@@ -282,7 +366,8 @@ export class UI {
         for (let i = 1; i <= n; i++) bars += `<i class="${i <= k ? 'on' : ''}"></i>`;
         val = `<span class="arr">◀</span><span class="bars">${bars}</span><span class="val small">${it.fmt ? it.fmt(v) : v}</span><span class="arr">▶</span>`;
       }
-      row.innerHTML = `<span class="lbl">${it.label}</span><span class="ctl">${val}</span>`;
+      const desc = it.desc ? `<small style="display:block;font-size:.66em;opacity:.6;font-weight:400;line-height:1.1">${it.desc}</small>` : '';
+      row.innerHTML = `<span class="lbl">${it.label}${desc}</span><span class="ctl">${val}</span>`;
     }
   }
 
@@ -318,9 +403,9 @@ export class UI {
   }
 
   adjust(it, dir) {
-    if (it.type === 'toggle') { this.setValue(it, !settings[it.key]); return; }
+    if (it.type === 'toggle') { this.setValue(it, !getV(it)); return; }
     if (it.type === 'choice') {
-      const i = it.options.findIndex((q) => q[0] === settings[it.key]);
+      const i = it.options.findIndex((q) => q[0] === getV(it));
       const n = it.options.length;
       this.setValue(it, it.options[((i < 0 ? 0 : i) + dir + n) % n][0]);
       return;
@@ -332,7 +417,7 @@ export class UI {
   }
 
   setValue(it, v) {
-    setSetting(it.key, v);
+    if (it.set) it.set(v); else setSetting(it.key, v);
     sfx.ensure();
     sfx.ui();
   }

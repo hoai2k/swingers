@@ -72,6 +72,7 @@ export class Game {
     this.paused = false;
     this.view = { s: 1, ox: 0, oy: 0, cw: 0, ch: 0, dpr: 1 };
     this.acc = 0;
+    this.mods = {};            // match modifiers in effect (modifiers.js): boomMul, bladeExtra, ...
     this.applySettings();
     onSettingsChange(() => this.applySettings());
     window.addEventListener('resize', () => this.resize());
@@ -126,6 +127,7 @@ export class Game {
     this.blades = []; this.nextBlades = [];
     this.fx.clear();
     this.corpses = [];
+    this.mods = {};            // a mode re-applies its modifiers after loading
     for (const p of this.players) p.spider = null;
     return this.board;
   }
@@ -319,6 +321,8 @@ export class Game {
   }
 
   explode(x, y, { radius = 120, owner = null, force = 900, damage = 3, selfOk = true, color } = {}) {
+    radius *= (this.mods && this.mods.boomMul) || 1;
+    if (owner && owner.blastMul) radius *= owner.blastMul;   // survival perk (Big Bang)
     this.fx.explosion(x, y, radius, color);
     sfx.boom(radius / 120);
     for (const a of this.actors()) {

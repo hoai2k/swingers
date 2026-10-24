@@ -212,6 +212,17 @@ export class Enemy {
       this.meleeCd.set(from, 0.3);
     }
     if (this.block && this.block(info)) return false;
+    // armor plates (survival stages / trials): each one soaks a whole hit
+    if (this.armor > 0 && !info.bonk) {
+      this.armor--;
+      this.flash = 1;
+      if (info.ix || info.iy) this.impulse((info.ix || 0) * 0.5, (info.iy || 0) * 0.5);
+      const fx = this.game.fx;
+      fx.ring(this.x, this.y, this.r * 1.8, '#d8e0f0', 0.25, 4);
+      for (let i = 0; i < 5; i++) fx.add({ kind: 'shard', x: this.x, y: this.y, vx: rand(-300, 300), vy: rand(-380, -60), color: '#b8c2d8', size: 5, life: 0.6, g: 1200, drag: 0.5, rot: rand(0, TAU), vr: rand(-12, 12) });
+      sfx.deflect();
+      return true;
+    }
     let amt = info.bonk ? 1 : (info.amount ?? 1);
     if (from && from.dmgMul) amt *= from.dmgMul;
     this.hp -= amt;
@@ -240,7 +251,8 @@ export class Enemy {
     game.fx.shake(3 + big * 3);
     sfx.enemyDie();
     if (Math.random() < C.dropChance) {
-      const id = C.dropId || randomWeaponId();
+      const sc = game.scene;
+      const id = (sc && sc.enemyDropId && sc.enemyDropId(C)) || C.dropId || randomWeaponId();
       const w = id && game.createWeapon(id);
       if (w) { const p = game.spawnPickup(w, this.x, this.y, rand(-120, 120), -380); p.spawnGlow = 1; }
     }
@@ -260,6 +272,20 @@ export class Enemy {
       ctx.beginPath(); ctx.arc(this.x, this.y, this.r * 1.1, 0, TAU); ctx.fill();
     }
     ctx.restore();
+    // armor plates: a riveted steel ring, one segment per plate
+    if (this.armor > 0) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      const n = this.armor, seg = TAU / Math.max(3, n * 3);
+      for (let k = 0; k < n * 3; k++) {
+        const a0 = this.t * 0.8 + k * (TAU / (n * 3));
+        ctx.strokeStyle = 'rgba(20,24,34,0.8)'; ctx.lineWidth = 7;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 5, a0, a0 + seg * 0.7); ctx.stroke();
+        ctx.strokeStyle = '#c8d2e6'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 5, a0, a0 + seg * 0.7); ctx.stroke();
+      }
+      ctx.restore();
+    }
     // small hp pips for tougher bugs once hurt
     if (this.maxHp > 2 && this.hp < this.maxHp && !this.isBoss) {
       const w = this.r * 2, k = Math.max(0, this.hp / this.maxHp);

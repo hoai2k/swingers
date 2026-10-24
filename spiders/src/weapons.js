@@ -33,12 +33,22 @@ export function createWeapon(id, game) {
   const C = WEAPONS.get(id);
   return C ? new C(game) : null;
 }
-export function randomWeaponId(exclude = []) {
-  const list = [...WEAPONS.values()].filter((C) => !exclude.includes(C.id) && (C.weight ?? 1) > 0);
+// weaponPool.weight(C, game) -> drop weight, set by pool.js (the weapon-pool
+// setting + the "blades only" modifier). When the pool leaves nothing at all,
+// the static weights are used so a drop always produces a weapon.
+export const weaponPool = { weight: null };
+export function randomWeaponId(exclude = [], game = null) {
+  const all = [...WEAPONS.values()];
+  let wOf = (C) => C.weight ?? 1;
+  if (weaponPool.weight) {
+    const pw = (C) => Math.max(0, weaponPool.weight(C, game) || 0);
+    if (all.some((C) => pw(C) > 0)) wOf = pw;
+  }
+  const list = all.filter((C) => !exclude.includes(C.id) && wOf(C) > 0);
   let total = 0;
-  for (const C of list) total += C.weight ?? 1;
+  for (const C of list) total += wOf(C);
   let r = Math.random() * total;
-  for (const C of list) { r -= C.weight ?? 1; if (r <= 0) return C.id; }
+  for (const C of list) { r -= wOf(C); if (r <= 0) return C.id; }
   return list.length ? list[list.length - 1].id : null;
 }
 
@@ -254,7 +264,7 @@ export class DropSpawner {
   }
 
   nextId() {
-    const id = randomWeaponId(this.recent.slice(-4)) || randomWeaponId();
+    const id = randomWeaponId(this.recent.slice(-4), this.game) || randomWeaponId([], this.game);
     this.recent.push(id);
     return id;
   }

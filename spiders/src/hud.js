@@ -168,6 +168,11 @@ export function drawPlayerTags(ctx, game) {
 
 // pip row for a score
 function pips(ctx, x, y, n, filled, color, { r = 5, gap = 14 } = {}) {
+  if (n > 10) {
+    // long matches (15 / 20 rounds): a score readout instead of a pip row
+    text(ctx, `${filled} / ${n}`, x - r, y + r * 1.1, { size: Math.round(r * 3.2), align: 'left', color, sw: Math.max(3, r * 0.7) });
+    return;
+  }
   for (let k = 0; k < n; k++) {
     const on = k < filled;
     ctx.beginPath(); ctx.arc(x + k * gap, y, r, 0, TAU);
@@ -184,7 +189,7 @@ export function drawScoreboard(ctx, game, { compact = false, big = false, highli
     // one pill per player along the top edge
     const n = ps.length;
     const pipGap = target > 7 ? 11 : 14;
-    const pillW = Math.min(230, 70 + target * pipGap + 16);
+    const pillW = target > 10 ? 150 : Math.min(230, 70 + target * pipGap + 16);
     const gap = 10;
     const total = n * pillW + (n - 1) * gap;
     const x0 = W / 2 - total / 2;

@@ -92,12 +92,22 @@ export class Spider {
     this.stun = 0;             // can't act (s)
     this.speedMul = 1;         // perks
     this.jumpMul = 1;
+    this.gravMul = 1;          // match modifiers (modifiers.js)
+    this.sz = 1;               // body + leg scale (setSize)
     this.legs = LEGS.map((L) => ({ ...L, F: SP.femur * (L.far ? 0.85 : 0.9), T: SP.tibia * (L.far ? 1.1 : 1.35), fx: 0, fy: 0, sx: 0, sy: 0, tx: 0, ty: 0, t: 1, planted: false, solid: null, lx: 0, ly: 0 }));
     this.ctl = null;
     this.recallable = null;   // thrown weapon that answers RT (saber)
   }
 
   get webColor() { return '#f4f7ff'; }
+  get lift() { return SP.lift * this.sz; }
+
+  // scale the body and legs (tiny / giant modifiers)
+  setSize(k) {
+    this.sz = k;
+    this.r = SP.r * k;
+    for (const L of this.legs) { L.F = SP.femur * (L.far ? 0.85 : 0.9) * k; L.T = SP.tibia * (L.far ? 1.1 : 1.35) * k; }
+  }
 
   place(x, y) {
     this.x = x; this.y = y; this.vx = 0; this.vy = 0;
@@ -166,7 +176,7 @@ export class Spider {
     }
 
     // ---- web
-    if (inp && inp.pressed.lt && !this.web) this.shootWeb();
+    if (inp && inp.pressed.lt && !this.web && !this.noWeb) this.shootWeb();   // noWeb: survival trials
     if (this.web && (!inp || !(inp.lt > 0.3))) this.releaseWeb(false);
     if (this.web) this.updateWeb(dt, move);
 
@@ -210,7 +220,7 @@ export class Spider {
       // climbing into a wall ahead: switch onto it before moving
       if (this.circ) {
         const g0 = this.ground;
-        const hit = world.raycast(this.x, this.y, -g0.ny * this.circ, g0.nx * this.circ, this.r + SP.lift + 4);
+        const hit = world.raycast(this.x, this.y, -g0.ny * this.circ, g0.nx * this.circ, this.r + this.lift + 4);
         if (hit && hit.nx * g0.nx + hit.ny * g0.ny < 0.7 && clingable(hit.solid)) {
           this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
         }
@@ -222,7 +232,7 @@ export class Spider {
         const continuing = this.circ && this.circStick && dx * this.circStick.x + dy * this.circStick.y > 0.9;
         if (!continuing && Math.abs(dx * -g0.ny + dy * g0.nx) < 0.38) {
           for (const sgn of [1, -1]) {
-            const hit = world.raycast(this.x, this.y, -dy * sgn, dx * sgn, this.r + SP.lift + 5);
+            const hit = world.raycast(this.x, this.y, -dy * sgn, dx * sgn, this.r + this.lift + 5);
             if (hit && clingable(hit.solid) && Math.abs(dx * -hit.ny + dy * hit.nx) > 0.6) {
               this.ground = { nx: hit.nx, ny: hit.ny, x: hit.x, y: hit.y, solid: hit.solid };
               break;
@@ -261,7 +271,7 @@ export class Spider {
       this.vx = sv.x + tx * vt - nx * 40;
       this.vy = sv.y + ty * vt - ny * 40;
     } else {
-      this.vy += SP.gravity * h;
+      this.vy += SP.gravity * this.gravMul * h;
       // air control
       const ax = move.x * SP.airAccel * h;
       if ((ax > 0 && this.vx < SP.airMax) || (ax < 0 && this.vx > -SP.airMax)) this.vx += ax;
@@ -282,7 +292,7 @@ export class Spider {
     // find the surface to cling to
     if (this.jumpLock > 0) { this.ground = null; }
     else {
-      const n = world.nearest(this.x, this.y, this.r + SP.lift + SP.stickRange);
+      const n = world.nearest(this.x, this.y, this.r + this.lift + SP.stickRange);
       const webPull = this.web && this.web.state === 'stuck' ? this.webDir() : null;
       let ok = n && clingable(n.solid);
       if (ok && webPull && webPull.x * n.nx + webPull.y * n.ny > 0.25 && this.web.taut) ok = false;
@@ -293,7 +303,7 @@ export class Spider {
       } else if (ok) {
         this.ground = { nx: n.nx, ny: n.ny, x: n.x, y: n.y, solid: n.solid };
         // stand on the legs: hold the body at r + lift from the surface
-        let gap = (n.inside ? -n.d : n.d) - this.r - SP.lift;
+        let gap = (n.inside ? -n.d : n.d) - this.r - this.lift;
         if (gap < 0) gap *= 0.35;   // rise smoothly (and give way under low ceilings)
         this.x -= this.ground.nx * gap; this.y -= this.ground.ny * gap;
         if (!this.wasGround) {
@@ -473,7 +483,7 @@ export class Spider {
   updateLegs(dt) {
     const world = this.game.world;
     const r = this.r;
-    const reach = (SP.femur + SP.tibia) * 0.97;
+    const reach = (SP.femur + SP.tibia) * 0.97 * this.sz;
     const g = this.ground;
     const nx = g ? g.nx : this.up.x, ny = g ? g.ny : this.up.y;
     const tx = -ny, ty = nx;
@@ -500,7 +510,7 @@ export class Spider {
         // ideal foothold: along the surface, leading in the walk direction
         const lead = clamp(((this.vx * tx + this.vy * ty) * 0.07), -r, r);
         const ox = this.x + tx * (L.side * L.off * r + lead) * 0.9, oy = this.y + ty * (L.side * L.off * r + lead) * 0.9;
-        let hit = world.raycast(ox, oy, -nx, -ny, (r + SP.lift) * 2.2);
+        let hit = world.raycast(ox, oy, -nx, -ny, (r + this.lift) * 2.2);
         if (!hit) hit = world.raycast(this.x, this.y, tx * L.side * 0.8 - nx, ty * L.side * 0.8 - ny, reach + r);
         if (hit) {
           L.tx = hit.x; L.ty = hit.y;
@@ -547,7 +557,7 @@ export class Spider {
       const d = this.flingDir;
       const side = Math.sign(d.x * tx + d.y * ty) || this.facing;
       const i = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
-      const ext = (SP.femur + SP.tibia) * 0.85 * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
+      const ext = (SP.femur + SP.tibia) * 0.85 * this.sz * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
       out.set(i, { x: this.x + d.x * ext, y: this.y + d.y * ext });
       return out;
     }
@@ -575,7 +585,7 @@ export class Spider {
     const hs = L.side * r * (0.4 + 0.25 * k), hu = r * (0.25 - 0.3 * k);
     const hipX = this.x + tx * hs + nx * hu, hipY = this.y + ty * hs + ny * hu;
     const ex = tx * L.side * (0.25 + 0.55 * k) + nx * (1 - 0.3 * k), ey = ty * L.side * (0.25 + 0.55 * k) + ny * (1 - 0.3 * k), m = Math.hypot(ex, ey);
-    const len = SP.coxa * (0.8 + 0.4 * k);
+    const len = SP.coxa * (0.8 + 0.4 * k) * this.sz;
     return { hipX, hipY, cx: hipX + ex / m * len, cy: hipY + ey / m * len };
   }
 
@@ -606,7 +616,7 @@ export class Spider {
       const ux = nx + tx * L.side * 0.5, uy = ny + ty * L.side * 0.5;
       const ka = Math.cos(k1) * ux + Math.sin(k1) * uy > Math.cos(k2) * ux + Math.sin(k2) * uy ? k1 : k2;
       const kx = cx + Math.cos(ka) * F, ky = cy + Math.sin(ka) * F;
-      const w = back ? 0.85 : 1;
+      const w = (back ? 0.85 : 1) * this.sz;
       // outline pass, then colour: base + thigh thick, the shin tapers to a point
       for (const pass of [0, 1]) {
         const o = pass ? 0 : 2.2;
