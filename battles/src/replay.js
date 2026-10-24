@@ -7,6 +7,11 @@ import { PROJ_TYPES } from './battle.js';
 import { placeHeld } from './visual.js';
 
 export const REC_HZ = 30;
+function restingStuck(s) {
+  if (s.held) return !!s.held.body && s.held.body.isSleeping();
+  if (s.unit) return !s.unit.alive && s.unit.rag.bodies[0].isSleeping();
+  return true;
+}
 const q16 = (x) => Math.max(-32767, Math.min(32767, Math.round(x)));
 
 export class Recorder {
@@ -16,6 +21,7 @@ export class Recorder {
     this.frames = [];
     this.events = [];
     this.statics = [];
+    this.restDrops = [];
     this.next = 0;
     this.maxFrames = REC_HZ * 60 * 6; // 6 minutes
   }
@@ -47,11 +53,16 @@ export class Recorder {
       us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0);
       hp[i] = Math.round(255 * Math.max(0, u.hp) / u.maxHp);
     });
-    // arrows stuck in the ground never move: recorded once with their lifetime
+    // arrows stuck in the ground (or in a corpse / dropped shield at rest) don't
+    // move: recorded once per resting spell, with its start and end time
     const fno = this.frames.length;
     let nd = 0;
     for (const s of b.stuck) {
-      if (s.unit || s.held) { nd++; continue; }
+      s.moving = !restingStuck(s);
+      if (s.moving) {
+        if (s.rec) { if (s.rec.t1 === Infinity) s.rec.t1 = b.time; s.rec = null; }
+        nd++; continue;
+      }
       if (!s.rec) {
         s.rec = { id: s.id, type: PROJ_TYPES.indexOf(s.type), p: s.pos.clone(), q: s.quat.clone(), t0: b.time, t1: Infinity, seen: fno };
         this.statics.push(s.rec);
@@ -68,21 +79,31 @@ export class Recorder {
       proj[j++] = q.x; proj[j++] = q.y; proj[j++] = q.z; proj[j++] = q.w;
     };
     for (const p of b.projectiles) put(p.id, p.type, p.pos, p.quat);
-    for (const s of b.stuck) if (s.unit || s.held) put(s.id, s.type, s.pos, s.quat);
+    for (const s of b.stuck) if (s.moving) put(s.id, s.type, s.pos, s.quat);
     // weapons and shields that have been let go of: [unit, slot, x, y, z (cm), quat]
-    let ndrop = 0;
-    for (const u of b.units) for (const h of u.held) if (h.body) ndrop++;
-    const drops = new Int16Array(ndrop * 9);
-    let d = 0;
+    // while moving; once at rest, one record per resting spell (restDrops)
+    const moving = [];
     b.units.forEach((u, ui) => {
       for (const h of u.held) {
         if (!h.body) continue;
-        drops[d++] = ui; drops[d++] = h.slot;
-        drops[d++] = q16(h.pos.x * 100); drops[d++] = q16(h.pos.y * 100); drops[d++] = q16(h.pos.z * 100);
-        drops[d++] = Math.round(h.quat.x * 32767); drops[d++] = Math.round(h.quat.y * 32767);
-        drops[d++] = Math.round(h.quat.z * 32767); drops[d++] = Math.round(h.quat.w * 32767);
+        if (!h.body.isSleeping()) {
+          if (h.rec) { if (h.rec.t1 === Infinity) h.rec.t1 = b.time; h.rec = null; }
+          moving.push(ui, h);
+        } else if (!h.rec) {
+          h.rec = { ui, slot: h.slot, p: h.pos.clone(), q: h.quat.clone(), t0: b.time, t1: Infinity };
+          this.restDrops.push(h.rec);
+        }
       }
     });
+    const drops = new Int16Array(moving.length / 2 * 9);
+    let d = 0;
+    for (let k = 0; k < moving.length; k += 2) {
+      const h = moving[k + 1];
+      drops[d++] = moving[k]; drops[d++] = h.slot;
+      drops[d++] = q16(h.pos.x * 100); drops[d++] = q16(h.pos.y * 100); drops[d++] = q16(h.pos.z * 100);
+      drops[d++] = Math.round(h.quat.x * 32767); drops[d++] = Math.round(h.quat.y * 32767);
+      drops[d++] = Math.round(h.quat.z * 32767); drops[d++] = Math.round(h.quat.w * 32767);
+    }
     this.frames.push({ t: b.time, bodies, us, hp, proj, drops, counts: b.stats().map((s) => s.alive) });
   }
 
@@ -175,7 +196,12 @@ export class Player {
       }
       for (let i = 0; i < (vis.held?.length || 0); i++) placeHeld(vis, i, null);
     }
-    // dropped weapons
+    // dropped weapons: at rest, then moving
+    for (const r of this.rec.restDrops) {
+      if (r.t0 > this.t + 1e-6 || r.t1 <= this.t) continue;
+      const vis = visuals[r.ui];
+      if (vis) placeHeld(vis, r.slot, r.p, r.q);
+    }
     const da = a.drops, db = b.drops;
     if (da && da.length) {
       const idx = new Map();
