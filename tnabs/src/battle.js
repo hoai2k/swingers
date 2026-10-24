@@ -75,6 +75,7 @@ export class Battle {
     this.overT = 0;
     this.voiceBudget = 0;
     this.delayed = [];
+    this.front = [null, null];
     for (let t = 0; t < 2; t++) {
       for (const a of armies[t]) {
         const def = UNIT_BY_ID[a.type];
@@ -110,7 +111,10 @@ export class Battle {
     let best = null, bd = Infinity;
     for (const o of this.teams[1 - u.team]) {
       if (!o.alive) continue;
-      const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 * rand(0.9, 1.1);
+      // nearest, but spread out: enemies already mobbed by several of our
+      // units look further away (so a blob splits over the enemy line)
+      const crowd = o === u.target ? 0 : o.mobbed || 0;
+      const d = ((o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2) * rand(0.9, 1.1) * (1 + 0.35 * crowd / Math.max(1, o.s));
       if (d < bd) { bd = d; best = o; }
     }
     return best;
@@ -141,6 +145,24 @@ export class Battle {
     return best;
   }
 
+  // Each team's centre and the direction to the enemy centre (for keeping a line).
+  updateFront() {
+    const c = [[0, 0, 0], [0, 0, 0]];
+    for (const u of this.units) {
+      if (!u.alive) continue;
+      const a = c[u.team];
+      a[0] += u.pos.x; a[1] += u.pos.z; a[2]++;
+    }
+    for (let t = 0; t < 2; t++) {
+      const a = c[t], e = c[1 - t];
+      if (!a[2] || !e[2]) { this.front[t] = null; continue; }
+      const x = a[0] / a[2], z = a[1] / a[2];
+      const dx = e[0] / e[2] - x, dz = e[1] / e[2] - z;
+      const d = Math.hypot(dx, dz) || 1;
+      this.front[t] = { x, z, dx: dx / d, dz: dz / d };
+    }
+  }
+
   projGravity(type) { return PROJ[type]?.g ?? 9.81; }
 
   // ------------------------------------------------------------------ step
@@ -153,7 +175,9 @@ export class Battle {
       if (d[0] <= 0) { this.delayed.splice(i, 1); d[1](); }
     }
     this.grid.clear();
-    for (const u of this.units) if (u.alive) this.grid.insert(u);
+    for (const u of this.units) { u.mobbed = 0; if (u.alive) this.grid.insert(u); }
+    for (const u of this.units) if (u.alive && u.target && u.def.weapon.kind === 'melee') u.target.mobbed++;
+    this.updateFront();
     for (const u of this.units) u.step(dt);
     this.stepProjectiles(dt);
     this.world.timestep = dt;
@@ -208,9 +232,10 @@ export class Battle {
       if (best < 0) return;
       att.hitSet.add(v);
       hitAny = true;
-      const k = clamp(tipSpeed / 7, 0.55, 1.4) * (att.buff > 0 ? 1.25 : 1);
+      const k = clamp(tipSpeed / 7, 0.55, 1.4) * (att.buff > 0 ? 1.15 : 1);
       let dmg = w.damage * k;
-      let force = w.force * k;
+      // knockback: big and funny, but a slap should send a peasant ~10-20 m, not off the map
+      let force = Math.min(w.force * k, v.M * 15);
       // shields
       let blocked = false;
       const vw = v.def.weapon;
@@ -237,6 +262,24 @@ export class Battle {
       // part of the push goes to the struck part, the rest to the body
       v.hit(dmg, best, _a.x * force * 0.35, _a.y * force * 0.35, _a.z * force * 0.35, att, 'melee');
       v.rag.impulseAll(_a.x * force * 0.65, _a.y * force * 0.65, _a.z * force * 0.65);
+    });
+  }
+
+  // A giant's footfall: shakes the ground, squashes and kicks away small fry
+  // under and around the foot (also frees anyone pinned beneath it).
+  stomp(u, at) {
+    const r = 0.55 * u.s;
+    this.emit('dust', at.x, at.y, at.z, 3);
+    this.sound('thump', at, 0.5, 0.6);
+    this.grid.query(at.x, at.z, r + 1, (v) => {
+      if (v === u || !v.alive || v.s > u.s * 0.7) return;
+      const dx = v.pos.x - at.x, dz = v.pos.z - at.z, d = Math.hypot(dx, dz);
+      if (d > r + v.skel.radius || v.pos.y - at.y > 1.4 * v.s) return;
+      const k = 1 - d / (r + v.skel.radius + 0.01);
+      const imp = v.M * (3 + 4 * k);
+      if (v.team !== u.team) v.hit(u.def.weapon.damage * 0.15 * k, PART.pelvis, 0, 0, 0, u, 'stomp');
+      v.rag.impulseAll((dx / (d || 1)) * imp, imp * 0.7, (dz / (d || 1)) * imp);
+      v.stun = Math.max(v.stun, 0.5 * k);
     });
   }
 
@@ -363,6 +406,19 @@ export class Battle {
         const dmg = pr.damage * dmgK;
         const f = pr.force * dmgK;
         _a.copy(pr.vel).normalize();
+        // a raised shield catches most arrows and spears that come from the front
+        if (vw.shield && P.stick && v.stun <= 0 && !v.isDown() &&
+            -(_a.x * Math.sin(v.heading) + _a.z * Math.cos(v.heading)) > 0.3 && Math.random() < 0.85) {
+          const fa = rag.pos[PART.farmL];
+          this.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 4);
+          this.sound('block', pr.pos, 0.7, 1);
+          v.rag.impulse(PART.farmL, _a.x * pr.force * 0.2, 0, _a.z * pr.force * 0.2);
+          const lp = _b.set(rag.skel.parts[PART.farmL].r * 1.4, 0, 0);
+          const lq = _q.copy(rag.quat[PART.farmL]).invert().multiply(pr.quat).clone();
+          this.stuck.push({ type: pr.type, unit: v, part: PART.farmL, lp: lp.clone(), lq, pos: fa.clone(), quat: pr.quat.clone(), t: 25, id: pr.id });
+          hit = true;
+          return;
+        }
         if (P.explode) {
           this.explode(pr.pos, pr.blast, pr.damage, pr.force, pr.owner, P.explode);
           hit = true;

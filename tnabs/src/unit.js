@@ -132,7 +132,9 @@ export class Unit {
     const b = this.battle, def = this.def, w = def.weapon, p = this.pos;
     this.desired.set(0, 0, 0);
     let face = null;
-    const spd = def.speed * (1 + (this.buff > 0 ? 0.3 : 0));
+    // berserkers get faster and angrier the more they are hurt
+    this.frenzy = def.frenzy ? clamp(1 - this.hp / this.maxHp, 0, 1) : 0;
+    const spd = def.speed * (1 + (this.buff > 0 ? 0.2 : 0) + this.frenzy * 0.4);
 
     if (b.over) {
       this.st.mode = b.winner === this.team ? 'cheer' : 'cower';
@@ -176,17 +178,28 @@ export class Unit {
       face = t;
       this.expr = gap < 6 ? EXPR.angry : EXPR.normal;
       const near = dist - t.skel.radius;
-      if (near > this.reachDist * 0.8) this.desired.set(dirx * spd, 0, dirz * spd);
+      // advance more or less in line: careful units ahead of their team's front ease off
+      let pace = 1;
+      if (gap > 8 && pers.aggro < 1 && !def.frenzy) {
+        const f = b.front[this.team];
+        if (f && (p.x - f.x) * f.dx + (p.z - f.z) * f.dz > 2.5) pace = 0.65;
+      }
+      if (near > this.reachDist * 0.8) this.desired.set(dirx * spd * pace, 0, dirz * spd * pace);
       else if (near < this.reachDist * 0.4) this.desired.set(-dirx * spd * 0.3, 0, -dirz * spd * 0.3);
-      if (near < this.reachDist + 0.35 && this.cooldown <= 0 && !this.st.attack) this.startAttack();
+      if (near < this.reachDist + 0.35 && this.cooldown <= 0 && !this.st.attack && !this.isDown()) this.startAttack();
       if (this.st.attack) this.desired.multiplyScalar(0.35);
     } else if (w.kind === 'ranged') {
       face = t;
       this.expr = EXPR.normal;
       const shy = pers.aggro < 0.5;
-      if (dist > w.range * 0.9) this.desired.set(dirx * spd, 0, dirz * spd);
-      else if (shy && dist < w.minRange * 0.6) this.desired.set(-dirx * spd * 0.6, 0, -dirz * spd * 0.6);
-      if (dist < w.range && !this.st.attack && this.cooldown <= 0 && (dist > w.minRange * 0.4 || !shy)) {
+      // close to firing range; shy shooters back off from melee, but only for a
+      // limited time and never off the field (no endless kiting)
+      this.kiteT = Math.min(3, (this.kiteT ?? 3) + dt * 0.4);
+      const cornered = Math.abs(p.x) > FIELD.x - 2 || Math.abs(p.z) > FIELD.z - 2;
+      const kiting = shy && dist < w.minRange * 0.6 && this.kiteT > 0 && !cornered && t.def.weapon.kind === 'melee';
+      if (dist > w.range * 0.85) this.desired.set(dirx * spd, 0, dirz * spd);
+      else if (kiting) { this.desired.set(-dirx * spd * 0.75, 0, -dirz * spd * 0.75); this.kiteT -= dt * 1.4; }
+      if (dist < w.range && !this.st.attack && this.cooldown <= 0 && (dist > w.minRange * 0.4 || !kiting)) {
         this.startAttack();
         this.aimAt = t;
       }
@@ -217,6 +230,18 @@ export class Unit {
       if (w.kind === 'bard' && !this.st.attack) this.st.mode = 'play';
     }
     this.separate(spd);
+    // unstick: wanting to move but going nowhere for a while -> sidestep
+    const want = Math.hypot(this.desired.x, this.desired.z);
+    const v0 = this.rag.vel[PART.pelvis];
+    if (this.sideT > 0) {
+      this.sideT -= dt;
+      const dx0 = this.desired.x, dz0 = this.desired.z;
+      this.desired.x = dx0 * 0.4 - dz0 * this.sideDir;
+      this.desired.z = dz0 * 0.4 + dx0 * this.sideDir;
+    } else if (want > spd * 0.5 && Math.hypot(v0.x, v0.z) < spd * 0.15 && !this.st.attack) {
+      this.stuckT = (this.stuckT || 0) + dt;
+      if (this.stuckT > 1.2) { this.stuckT = 0; this.sideT = rand(0.6, 1.1); this.sideDir = Math.random() < 0.5 ? -1 : 1; }
+    } else this.stuckT = 0;
     // stay on the battlefield
     const bx = FIELD.x + 8, bz = FIELD.z + 6;
     if (Math.abs(p.x) > bx) this.desired.x -= Math.sign(p.x) * (Math.abs(p.x) - bx) * 2;
@@ -267,7 +292,7 @@ export class Unit {
     this.hitSet.clear();
     this.released = false;
     const w = this.def.weapon;
-    this.cooldown = w.cooldown * rand(0.85, 1.15) * (this.buff > 0 ? 0.8 : 1);
+    this.cooldown = w.cooldown * rand(0.85, 1.15) * (this.buff > 0 ? 0.88 : 1) * (1 - 0.35 * (this.frenzy || 0));
     if (Math.random() < 0.35 * this.def.personality.chatter) this.battle.voice(this, 'attack');
     if (w.kind === 'melee') this.battle.sound('whoosh', this.pos, 0.5 * Math.min(2, this.s), 1 / Math.sqrt(this.s));
   }
@@ -351,6 +376,7 @@ export class Unit {
           const e = Math.hypot(l.foot.x - l.to.x, l.foot.z - l.to.z);
           if (e < 0.25 * s) l.plant.set(l.foot.x, 0, l.foot.z); else l.plant.copy(l.to);
           l.plant.y = ter.height(l.plant.x, l.plant.z);
+          if (s > 1.6 && this.battle.stomp) this.battle.stomp(this, l.plant);
         }
       }
       if (l.state === 'stance') {
@@ -463,6 +489,11 @@ export class Unit {
       if (this.stun <= 0) this.stun = 0;
     } else this.recover = Math.min(1, this.recover + dt * 1.4);
 
+    // stuck lying down (pinned, wedged): heave up with a wobbly hop
+    if (this.stun <= 0 && this.isDown()) {
+      this.downT = (this.downT || 0) + dt;
+      if (this.downT > 3) { this.downT = 0; this.rag.impulseAll(rand(-1, 1) * this.M, this.M * 4.5, rand(-1, 1) * this.M); }
+    } else this.downT = 0;
     const gap = this.groundGap();
     const airborne = gap > 0.7 * this.s;
     this.airT = airborne ? this.airT + dt : 0;
