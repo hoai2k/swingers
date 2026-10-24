@@ -82,6 +82,32 @@ export class Ragdoll {
     this.read();
   }
 
+  // Add a collider (a held weapon, a shield) to part i's body. The part's muscle
+  // works against the combined inertia about its joint, so a heavy weapon is held
+  // steadily but swings no faster than the arm's torque cap allows.
+  // The parent part (the upper arm) has to swing the load too, so its muscle gets
+  // the load's inertia about the shoulder as well.
+  // loadK[i] scales part i's torque cap with its load (the unit is strong enough to
+  // wield its weapon, but not by much: a heavy one still lags and overshoots).
+  attach(i, colliderDesc, mass, at) {
+    if (!this.inertia0) { this.inertia0 = Float32Array.from(this.inertia); this.loadK = new Float32Array(NPARTS).fill(1); }
+    const col = this.world.createCollider(colliderDesc, this.bodies[i]);
+    const b = this.bodies[i];
+    const I = b.principalInertia(), m = b.mass(), c = b.localCom();
+    const j = this.skel.parentJoint[i];
+    const d2 = j ? (c.x - j.anchorB.x) ** 2 + (c.y - j.anchorB.y) ** 2 + (c.z - j.anchorB.z) ** 2 : 0;
+    this.inertia[i] = (I.x + I.y + I.z) / 3 + m * d2 * (globalThis.TUNE?.fk ?? 0.5);
+    const jp = j && this.skel.parentJoint[j.a];
+    if (jp && mass > 0) {
+      // load position relative to the shoulder, arm hanging straight
+      _v.set(at.x - j.anchorB.x + j.anchorA.x - jp.anchorB.x, at.y - j.anchorB.y + j.anchorA.y - jp.anchorB.y, at.z - j.anchorB.z + j.anchorA.z - jp.anchorB.z);
+      this.inertia[j.a] += mass * _v.lengthSq() * (globalThis.TUNE?.uk ?? 0.5);
+    }
+    const p = globalThis.TUNE?.lp ?? 0.8;
+    for (const k of [i, j ? j.a : i]) this.loadK[k] = Math.min(globalThis.TUNE?.lmax ?? 6, (this.inertia[k] / this.inertia0[k]) ** p);
+    return col;
+  }
+
   read() {
     for (let i = 0; i < NPARTS; i++) {
       const b = this.bodies[i];

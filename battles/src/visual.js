@@ -4,7 +4,7 @@
 // a (specular, emissive) pair so metal shines and orbs/lenses glow.
 import { THREE, clamp, lerp } from './util.js';
 import { PART, NPARTS, makeSkeleton, forwardKinematics } from './body.js';
-import { ITEMS, gripDir } from './items.js';
+import { ITEMS, gripDir, heldLayout } from './items.js';
 import { EXT } from './ext.js';
 import { computePose, newPose } from './pose.js';
 
@@ -949,24 +949,24 @@ export function buildUnitVisual(def, team, opts = {}) {
     }
   }
   // weapons
-  const items = [];
-  const w = def.weapon;
-  const mount = (name, part) => {
-    const it = ITEMS[name];
-    if (!it || name === 'none') return;
-    const obj = buildItem(name, s, team);
-    obj.position.set(0, -skel.handOffset, 0);
-    obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), gripDir(it, new THREE.Vector3()));
-    parts[part].add(obj);
-    items.push(obj);
-  };
-  if (w.style === 'dual') { mount(w.item, PART.farmL); mount(w.item2 || w.item, PART.farmR); }
-  else if (w.item) mount(w.item, w.style === 'bow' ? PART.farmL : PART.farmR);
-  if (w.shield) {
-    const sh = buildShield(w.shield, s, team);
-    sh.position.set(skel.parts[PART.farmL].r * 1.7, 0, 0);
-    parts[PART.farmL].add(sh);
+  // held items and shields: own objects (not baked into the forearm) so they can be
+  // let go of when the unit dies; vis.held[i] matches Unit.held[i]
+  const items = [], held = [];
+  for (const l of heldLayout(def)) {
+    let obj;
+    if (l.shield) {
+      obj = buildShield(l.name, s, team);
+      obj.position.set(skel.parts[l.part].r * 1.7, 0, 0);
+    } else {
+      obj = buildItem(l.name, s, team);
+      obj.position.set(0, -skel.handOffset, 0);
+      obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), gripDir(ITEMS[l.name], new THREE.Vector3()));
+      items.push(obj);
+    }
+    parts[l.part].add(obj);
+    held.push({ obj, part: l.part, lp: obj.position.clone(), lq: obj.quaternion.clone() });
   }
+  const heldObjs = held.map((h) => h.obj);
   // packs: extra meshes on parts, and extra bodies (vis.extraParts: {group, pos, quat})
   const extraParts = [];
   for (const f of EXT.decorate) f(def, team, { root, parts, items, skel, extraParts }, H);
@@ -975,8 +975,8 @@ export function buildUnitVisual(def, team, opts = {}) {
   if (!opts.noBake) {
     root.updateMatrixWorld(true);
     for (const g of parts) {
-      for (const it of [...g.children]) if (items.includes(it)) bake(it, it);
-      bake(g, g, (o) => o !== g.userData.face && !items.some((it) => isDesc(o, it)));
+      for (const it of [...g.children]) if (heldObjs.includes(it)) bake(it, it);
+      bake(g, g, (o) => o !== g.userData.face && !heldObjs.some((it) => isDesc(o, it)));
     }
     for (const e of extraParts) bake(e.group, e.group);
   }
@@ -993,7 +993,7 @@ export function buildUnitVisual(def, team, opts = {}) {
     }
     root.userData.ghostMat = gm;
   }
-  const vis = { root, parts, items, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id) };
+  const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id) };
   if (!opts.ghost && !opts.portrait) LIVE_VIS.add(vis);
   return vis;
 }
@@ -1127,6 +1127,7 @@ const _yq = new THREE.Quaternion();
 const _pp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
 export function poseVisual(vis, x, y, z, yaw, st) {
+  for (let i = 0; i < (vis.held?.length || 0); i++) placeHeld(vis, i, null);
   computePose(st, _pose);
   _pp.set(0, vis.skel.standHeight + (st.bob || 0), 0);
   forwardKinematics(vis.skel, _pp, _pose, _pos);
@@ -1142,6 +1143,21 @@ export function poseVisual(vis, x, y, z, yaw, st) {
     e.group.position.x += x; e.group.position.y += y; e.group.position.z += z;
     e.group.quaternion.copy(_yq).multiply(e.quat);
   }
+}
+
+// Held item i of a unit: in its hand (pos null), or let go of and lying at a world
+// transform (it moves from its forearm's group to the unit's root group).
+export function placeHeld(vis, i, pos, quat) {
+  const h = vis.held[i];
+  if (!h) return;
+  const o = h.obj;
+  if (!pos) {
+    if (o.parent !== vis.parts[h.part]) { vis.parts[h.part].add(o); o.position.copy(h.lp); o.quaternion.copy(h.lq); }
+    return;
+  }
+  if (o.parent !== vis.root) vis.root.add(o);
+  o.position.copy(pos);
+  o.quaternion.copy(quat);
 }
 
 // ---------------------------------------------------------------- portraits

@@ -3,10 +3,10 @@ import { THREE, clamp, lerp, rand, angleDiff, damp, pick, ballisticAngle, eulerY
 import { makeSkeleton, NPARTS, PART } from './body.js';
 import { computePose, newPose, STYLE_ANIM } from './pose.js';
 import { Ragdoll } from './ragdoll.js';
-import { ITEMS, gripDir } from './items.js';
+import { ITEMS, gripDir, heldLayout, shieldDef, itemMass, itemSpan } from './items.js';
 import { FIELD } from './world.js';
 import { EXT } from './ext.js';
-import { RAPIER, GROUPS } from './physics.js';
+import { RAPIER, GROUPS, itemGroups } from './physics.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -63,6 +63,7 @@ export class Unit {
     this.M = this.skel.totalMass;
     this.s = this.skel.scale;
     this.initLegs();
+    this.initHeld();
 
     this.target = null;
     this.retarget = rand(0, 0.5);
@@ -583,7 +584,7 @@ export class Unit {
         ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
       }
       rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
-        m[2] * Mk * strength * (1 + arm * 1.2), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
+        m[2] * Mk * strength * (1 + arm * 1.2) * (rag.loadK ? rag.loadK[i] : 1), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
     this.hasPrev = true;
     if (!support || strength < 0.05) return;
@@ -679,6 +680,114 @@ export class Unit {
     }
   }
 
+  // ----------------------------------------------------------------- held items
+  // Each held weapon / shield is a collider on its forearm's body while the unit
+  // lives (mass, inertia, clashes with enemy weapons and shields), and becomes a
+  // rigid body of its own when the unit dies. h.pos/h.quat are its world transform
+  // (item origin = the hand; long axis local +Y), kept up to date every step.
+  initHeld() {
+    const s = this.s, sk = this.skel;
+    this.held = heldLayout(this.def).map((l, slot) => {
+      const h = { slot, shield: l.shield, name: l.name, part: l.part, lp: new THREE.Vector3(), lq: new THREE.Quaternion(),
+        phys: false, shape: null, mass: 0, collider: null, body: null, dropped: false,
+        pos: new THREE.Vector3(), quat: new THREE.Quaternion() };
+      if (l.shield) {
+        const sd = shieldDef(l.name);
+        h.lp.set(sk.parts[l.part].r * 1.7, 0, 0);
+        h.shape = { box: sd.half.map((x) => x * s), cy: 0 };
+        h.mass = sd.mass * s * s * s;
+        h.phys = true;
+      } else {
+        const it = ITEMS[l.name];
+        h.lp.set(0, -sk.handOffset, 0);
+        h.lq.setFromUnitVectors(UP, gripDir(it, _v));
+        const [y0, y1] = itemSpan(it, s);
+        const r = Math.max(0.03 * s, Math.min(it.r * 0.6, 0.09) * s);
+        h.phys = it.phys !== false && y1 - y0 > 0.1;
+        h.shape = { r, hh: Math.max(0.01, (y1 - y0) / 2 - r), cy: (y0 + y1) / 2 };
+        h.mass = itemMass(it, s);
+      }
+      if (h.phys) {
+        const at = new THREE.Vector3(0, h.shape.cy, 0).applyQuaternion(h.lq).add(h.lp);
+        h.collider = this.rag.attach(h.part, this.heldCollider(h, true), h.mass, at);
+      }
+      return h;
+    });
+    this.readHeld();
+  }
+
+  // the shield this unit still carries, if any
+  shield() {
+    for (const h of this.held) if (h.shield && !h.dropped) return h;
+    return null;
+  }
+
+  heldCollider(h, onArm) {
+    const sh = h.shape;
+    const cd = sh.box ? RAPIER.ColliderDesc.cuboid(sh.box[0], sh.box[1], sh.box[2]) : RAPIER.ColliderDesc.capsule(sh.hh, sh.r);
+    cd.setMass(h.mass).setFriction(0.6).setRestitution(0.15);
+    if (onArm) {
+      _v.set(0, sh.cy, 0).applyQuaternion(h.lq).add(h.lp);
+      cd.setTranslation(_v.x, _v.y, _v.z).setRotation({ x: h.lq.x, y: h.lq.y, z: h.lq.z, w: h.lq.w });
+      cd.setCollisionGroups(itemGroups(this.team));
+    } else {
+      cd.setTranslation(0, sh.cy, 0).setCollisionGroups(GROUPS.dropped);
+    }
+    return cd;
+  }
+
+  readHeld(dt = 1 / 60) {
+    const r = this.rag;
+    for (const h of this.held) {
+      if (h.body) {
+        const b = h.body;
+        if (b.isSleeping()) continue;
+        const t = b.translation(), q = b.rotation();
+        h.pos.set(t.x, t.y, t.z); h.quat.set(q.x, q.y, q.z, q.w);
+        // once it has landed a round haft would roll down slopes for ever: damp
+        // its spin hard and put it to sleep when it has come to rest
+        h.t += dt;
+        const gy = this.battle.terrain.height(t.x, t.z);
+        if (!h.landed && h.t > 0.15 && t.y - gy < 0.5 * this.s) { h.landed = true; b.setAngularDamping(6); b.setLinearDamping(0.6); }
+        const lv = b.linvel(), av = b.angvel();
+        const slow = lv.x * lv.x + lv.y * lv.y + lv.z * lv.z < 0.15 && av.x * av.x + av.y * av.y + av.z * av.z < 1;
+        h.restT = slow ? h.restT + dt : 0;
+        if (h.restT > 0.3 || h.t > 10) { b.sleep(); h.restT = 0; h.t = 0.5; }
+        // (no CCD, it is costly: a blade that tunnelled into the ground pops back out)
+        if (t.y < gy - 0.05) { b.setTranslation({ x: t.x, y: gy + 0.15 * this.s, z: t.z }, true); b.setLinvel({ x: 0, y: 0, z: 0 }, true); }
+      } else {
+        h.quat.copy(r.quat[h.part]).multiply(h.lq);
+        h.pos.copy(h.lp).applyQuaternion(r.quat[h.part]).add(r.pos[h.part]);
+      }
+    }
+  }
+
+  // Let go of everything held: each item flies off with the velocity its hand had.
+  dropHeld() {
+    const r = this.rag, world = this.battle.world;
+    for (const h of this.held) {
+      if (h.dropped) continue;
+      h.dropped = true;
+      if (!h.phys) continue;
+      this.readHeld();
+      world.removeCollider(h.collider, true);
+      h.collider = null;
+      const bd = RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(h.pos.x, h.pos.y, h.pos.z)
+        .setRotation({ x: h.quat.x, y: h.quat.y, z: h.quat.z, w: h.quat.w })
+        .setLinearDamping(0.1).setAngularDamping(0.8);
+      const body = world.createRigidBody(bd);
+      world.createCollider(this.heldCollider(h, false), body);
+      // velocity of the item's centre as carried by the forearm, plus a little spin
+      const w = r.angvel[h.part], v = r.vel[h.part];
+      _v2.set(0, h.shape.cy, 0).applyQuaternion(h.quat).add(h.pos).sub(r.pos[h.part]);
+      _v3.crossVectors(w, _v2).add(v);
+      body.setLinvel({ x: _v3.x, y: _v3.y + rand(0.5, 2), z: _v3.z }, true);
+      body.setAngvel({ x: w.x + rand(-4, 4), y: w.y + rand(-4, 4), z: w.z + rand(-4, 4) }, true);
+      h.body = body; h.t = 0; h.restT = 0; h.landed = false;
+    }
+  }
+
   // ----------------------------------------------------------------- extra bodies
   // Packs can give a unit extra rigid bodies (a horse, a catapult, a wing...). pos/quat
   // are in the unit frame relative to its ground point at spawn; they must match the
@@ -734,6 +843,7 @@ export class Unit {
     this.hp = 0;
     this.expr = EXPR.dead;
     this.st.attack = null;
+    this.dropHeld();
     if (killer) killer.kills++;
     this.battle.onDeath(this, killer);
   }
