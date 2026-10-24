@@ -705,6 +705,46 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d660c668-4c40-4812-9376-afcd35a7777e.png",
       "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. An illustrated top-down map of the whole archipelago: the green home island in the middle (town, fun park, lake, mountain), a city island to the east linked by a long bridge, a snowy mountain island to the north, a desert island to the west, a volcano jungle island to the south-west and a scatter of tropical islets to the south-east, with dotted ferry routes between them. Labels optional.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
       "round": 4
+    },
+    {
+      "index": 71,
+      "file": "signs/clothes.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-89075cff-1a2f-45fc-9bf7-0a3d558d9207.png",
+      "prompt": "Use case: stylized-concept. Wobblers game shop sign. Bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words \"CLOTHES\": chunky rounded letters on a pink board, small coat-hanger and T-shirt icon. One front-facing horizontal 4:1 signboard intended 1024x256, bold legible lettering spelled EXACTLY as requested. Board fills canvas, safe margin, one small icon. Transparent outside board. No scene, other words, logos, brands or watermark.",
+      "round": 5
+    },
+    {
+      "index": 72,
+      "file": "signs/pet_shop.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7cec400b-42f3-42cd-bec1-55443292ad00.png",
+      "prompt": "Use case: stylized-concept. Wobblers game shop sign. Bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words \"PET SHOP\": rounded letters on a sky-blue board, small paw-print icon. One front-facing horizontal 4:1 signboard intended 1024x256, bold legible lettering spelled EXACTLY as requested. Board fills canvas, safe margin, one small icon. Transparent outside board. No scene, other words, logos, brands or watermark.",
+      "round": 5
+    },
+    {
+      "index": 73,
+      "file": "signs/homes.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7de5156e-4ee0-4619-91ff-093ec93b10d3.png",
+      "prompt": "Use case: stylized-concept. Wobblers game shop sign. Bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words \"HOMES\": rounded letters on a green board, small house-and-key icon (estate agent). One front-facing horizontal 4:1 signboard intended 1024x256, bold legible lettering spelled EXACTLY as requested. Board fills canvas, safe margin, one small icon. Transparent outside board. No scene, other words, logos, brands or watermark.",
+      "round": 5
+    },
+    {
+      "index": 74,
+      "file": "signs/car_dealer.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a1af10a-c04c-4a66-b76b-0fe846c2e6b1.png",
+      "prompt": "Use case: stylized-concept. Wobblers game shop sign. Bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words \"CAR DEALER\": rounded letters on an orange board, small toy-car icon. One front-facing horizontal 4:1 signboard intended 1024x256, bold legible lettering spelled EXACTLY as requested. Board fills canvas, safe margin, one small icon. Transparent outside board. No scene, other words, logos, brands or watermark.",
+      "round": 5
     }
   ]
 }

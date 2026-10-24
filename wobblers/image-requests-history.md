@@ -4,6 +4,17 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+<!-- round5-progress -->
+## Delivered round 5 batches (in progress)
+
+Generated with built-in imagegen; sizes, alpha, manifest and browser loader checked.
+
+- `clothes.png` — **CLOTHES**: chunky rounded letters on a pink board, small coat-hanger and T-shirt icon.
+- `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
+- `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
+- `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
+<!-- /round5-progress -->
+
 Summary: round 4 — 16 images (6 region/ferry signs + 10 reference sheets);
 round 3 — 3 replacement faces; round 2 — 4 unlockable faces; round 1 — 51 images
 (45 in game + 6 reference sheets). All delivered and checked in game, 2026-10-24.

@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 5 open (12 images).** Rounds 1–4 are delivered and integrated;
+**Status: round 5 open (8 images remaining; 4 delivered).** Rounds 1–4 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -52,10 +52,6 @@ The game draws a procedural stand-in for each until the art arrives.
 
 ### Signs (`assets/signs/`, 1024 × 256, exact words)
 
-- `clothes.png` — **CLOTHES**: chunky rounded letters on a pink board, small coat-hanger and T-shirt icon.
-- `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
-- `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
-- `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
 
 ### Faces (`assets/faces/`, 512 × 512, transparent, features only — new clothes-shop faces)
 
