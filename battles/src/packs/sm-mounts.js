@@ -84,6 +84,7 @@ export function mountInit(u, cfg) {
   setRiderGroups(u, true);
   const jd = RAPIER.JointData.spherical({ x: cfg.saddle.x, y: cfg.saddle.y, z: cfg.saddle.z }, { x: 0, y: 0, z: 0 });
   m.joint = b.world.createImpulseJoint(jd, torso.body, u.rag.bodies[PART.pelvis], true);
+  m.footRadius = u.skel.radius;
   u.skel.radius = cfg.combatR;
   u.sm = m;
   s.mounts.push(m);
@@ -98,6 +99,7 @@ export function dismount(b, m) {
   m.restored = false;
   if (m.joint) { b.world.removeImpulseJoint(m.joint, true); m.joint = null; }
   const u = m.u;
+  if (m.footRadius) u.skel.radius = m.footRadius; // fight on foot at a person's size
   if (!u.alive) return;
   u.st.style = u.def.weapon.footStyle;
   u.stun = Math.max(u.stun, 1.1);

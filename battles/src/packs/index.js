@@ -7,3 +7,5 @@ import './wildwest.js';
 import './spooky.js';
 import './pirate.js';
 import './renaissance.js';
+import './prehistoric.js';
+import './big-beasts.js';
