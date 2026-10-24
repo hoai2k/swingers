@@ -311,6 +311,16 @@ export class Audio {
       }
       case 'clack': this.burst(0.03, 0.18 * v, 1800, 3, 'bandpass', 0, out); this.tone('square', 240, 200, 0.03, 0.03 * v, 0, out); break;
       case 'pop': this.tone('sine', 900, 1800, 0.08, 0.15 * v, 0, out); break;
+      // ---- life sim (src/life/): coins, shop tills, pets
+      case 'coin': { const f = 1320 * (1 + (extra.pitch || 0) * 0.06); this.tone('square', f, f, 0.05, 0.05 * v, 0, out, 0.002); this.tone('square', f * 1.335, f * 1.335, 0.16, 0.05 * v, 0.05, out, 0.002); break; }
+      case 'coinBig': [1047, 1319, 1568, 2093].forEach((f, i) => { this.tone('square', f, f, 0.09, 0.045 * v, i * 0.05, out, 0.002); this.tone('sine', f * 2, f * 2, 0.12, 0.03 * v, i * 0.05, out); }); break;
+      case 'buy': this.burst(0.05, 0.12 * v, 2500, 2, 'bandpass', 0, out); [1568, 2093].forEach((f, i) => this.tone('triangle', f, f, 0.22, 0.09 * v, 0.06 + i * 0.08, out, 0.002)); this.tone('sine', 220, 110, 0.12, 0.12 * v, 0, out); break;
+      case 'nope': this.tone('square', 220, 200, 0.12, 0.05 * v, 0, out); this.tone('square', 180, 160, 0.16, 0.05 * v, 0.13, out); break;
+      case 'bark': { const k = extra.pitch || 1; for (let i = 0; i < (extra.n || 1); i++) { this.voice(420 * k, 300 * k, 0.11, 0.2 * v, out, 'a', i * 0.18); this.burst(0.06, 0.06 * v, 900 * k, 1.5, 'bandpass', i * 0.18, out); } break; }
+      case 'meow': { const k = extra.pitch || 1; this.voice(520 * k, 700 * k, 0.14, 0.14 * v, out, 'i'); this.voice(700 * k, 430 * k, 0.32, 0.14 * v, out, 'o', 0.12); break; }
+      case 'squeak': { const k = extra.pitch || 1; this.tone('sine', 1500 * k, 2300 * k, 0.07, 0.1 * v, 0, out); this.tone('sine', 2100 * k, 1700 * k, 0.07, 0.08 * v, 0.08, out); break; }
+      case 'quack': { const k = extra.pitch || 1; this.voice(330 * k, 260 * k, 0.16, 0.18 * v, out, 'a'); this.voice(360 * k, 280 * k, 0.12, 0.14 * v, out, 'a', 0.2); break; }
+      case 'snore': this.voice(110, 90, 0.9, 0.12 * v, out, 'o'); this.burst(0.8, 0.04 * v, 400, 1, 'lowpass', 0.1, out); break;
       case 'join': [523, 659, 784, 1047].forEach((f, i) => { this.tone('triangle', f, f, 0.16, 0.12, i * 0.07, out); this.tone('sine', f * 2, f * 2, 0.1, 0.03, i * 0.07, out); }); break;
       case 'leave': [784, 659, 523].forEach((f, i) => this.tone('triangle', f, f, 0.14, 0.1, i * 0.07, out)); break;
       case 'uiMove': this.tone('sine', 1250, 1350, 0.04, 0.07, 0, out, 0.002); break;

@@ -169,6 +169,7 @@ export function buildPresents(game) {
     game.audio?.play('pop', pos);
     chime(game, pos, [72, 76, 79, 84, 88], 0.25);
     const n = list.filter((q) => q.found).length;
+    game.wallet?.add(p, 25, 'Present bonus');
     game.ui?.toast(`P${p.index + 1} found a present: ${rewardName(key)}! <small>${n}/${TOTAL}</small>`, p.color);
     for (const pn of game.ui?.panels?.values?.() || []) pn.draw?.(); // live progress in open menus
   }

@@ -17,6 +17,7 @@ import { buildGarage } from './garage.js';
 import { buildFun } from './fun.js';
 import { InteriorLights } from './lights.js';
 import { buildPresents } from './presents.js';
+import { buildLife } from '../life/index.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -37,6 +38,7 @@ export function buildWorld(game) {
   buildGarage(game, kit);
   buildFun(game, kit);
   buildPresents(game); // after everything static (it rays down onto it) and the rafts
+  buildLife(game); // money, shops, homes, pets (src/life/); coins ray down onto the static world too
   kit.finish();
   game.interiorLights.finish();
   buildDetail(game); // grass, flowers, road edges, lamp glow

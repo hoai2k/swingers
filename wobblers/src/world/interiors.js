@@ -10,11 +10,12 @@ import { lfurn } from './furniture.js';
 import { jukebox, piano, vendingMachine } from './music.js';
 import { trolley } from './fun.js';
 import { poster } from './posters.js';
+import { homeFixtures } from './estate.js';
 
 const T = 0.25; // wall thickness
 
 // Hollow box building: four walls (front door hole + windows), roof slab.
-function shell(game, L, o) {
+export function shell(game, L, o) {
   const { w, d, h, wall } = o, hw = w / 2, hd = d / 2;
   const fz = hd - T / 2, bz = -hd + T / 2, sx = hw - T / 2;
   const door = o.door; // { lx, w, h, color }
@@ -47,7 +48,7 @@ function shell(game, L, o) {
 }
 
 // Awning + sign on the front (same look as town.js shop()).
-function shopFront(game, L, w, d, h, name, color) {
+export function shopFront(game, L, w, d, h, name, color) {
   const c = new THREE.Color(color).getHex();
   const n = Math.round(w / 1.2);
   for (let i = 0; i < n; i++) {
@@ -320,5 +321,7 @@ export function interiorHouse(game, kit, x, z, yaw, wall, roof, doorCol) {
   lfurn(game, L, 'box', 3.0, U, iz - 0.5, -0.2, 0xd9b07a, 0.5);
   lfurn(game, L, 'box', 3.4, U + 0.5, iz - 0.5, 0.1, 0xc8955a, 0.45);
   lfurn(game, L, 'teddy', -3.2, U + 0.5, -0.3, 0, 0xffb7d5);
+  // a home you can buy (world/estate.js): name plate over the door, bed and wardrobe use spots
+  homeFixtures(game, L, { id: 'townhouse', door: [-1.5, hd], doorH: 2.25, bed: [-3.2, U, 0.9], wardrobe: [1.2, U, iz - 0.35, Math.PI] });
   L.deco(-1.0, U + 0.005, 1.0, 2.4, 0.01, 2.0, 0x55d85a);
 }
