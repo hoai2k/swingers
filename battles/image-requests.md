@@ -1,6 +1,7 @@
 # Wobbly Battles — image requests
 
-**Open requests: 7 (round 4, items 43–49: six new map previews and one map mood board).**
+**Open requests: 9 (round 4, items 43–49: six new map previews and one map mood board;
+round 5, items 50–51: Unit Creator emblem and illustration).**
 Everything earlier (items 1–42) is delivered and in use.
 See `image-requests-history.md` for the delivered briefs.
 
@@ -51,3 +52,15 @@ to the 640×360 JPG. The new ids are already in that script's map list.
 | # | File | What |
 |---|---|---|
 | 49 | `reference/maps-2.png` | One sheet with a colour-palette and mood board for each of the six new maps (castle, river, cove, volcano, canyon, graveyard): ground, path/paving, water (where the map has it), rock/stone, wood, trees, sky gradient and fog colour, plus a small sketch of each map's signature obstacle (wall with gate and towers, plank bridge, boardwalk and wreck, mesa and tar pit, ruined columns, tombstones and mausoleum). Same layout as `reference/maps.png`. |
+
+### Round 5: Unit Creator
+
+The Unit Creator (title menu → *Unit Creator*) builds custom units that appear in a new
+**Custom** faction tab in army setup. Both files are optional: the game shows a plain tab
+and a text-only empty list until they arrive. `tools/build_battles_assets.py` needs the
+two names added to its size table and manifest list when they are delivered.
+
+| # | File | Size / format | Status | What |
+|---|---|---|---|---|
+| 50 | `assets/ui/faction-custom.png` | 128×128, transparent PNG | **wired** (setup unit-bar tab for the Custom faction; the creator's header) | Faction emblem for player-made units: a tailor's dummy (mannequin bust) in a bean-soldier shape with a measuring tape round its middle, and a sewing needle and a little wrench crossed behind it. Warm orange (#ffb84a) and gold, flat sticker style like the other 15 emblems, bold outline, no text. Must read at 28 px. |
+| 51 | `assets/ui/creator-empty.png` | 640×400, transparent PNG | **wired** (shown on the creator's unit list while no custom unit is saved) | A comedic workshop scene: a chubby bean-soldier tailor in an apron, a tape measure round its neck, stitching together a half-finished bean soldier on a workbench. Spare helmets, a sword, a bow and a feathered hat lie about, and bolts of blue and red cloth sit in a basket. Clean flat colours with soft shading, transparent around the scene (no background box), no text. |
