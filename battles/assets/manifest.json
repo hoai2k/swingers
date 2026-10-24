@@ -1,1 +1,15 @@
-{ "files": [] }
+{
+  "files": [
+    "assets/ui/logo.png",
+    "assets/ui/icon.png",
+    "assets/ui/faction-tribal.png",
+    "assets/ui/faction-farmer.png",
+    "assets/ui/faction-medieval.png",
+    "assets/ui/faction-legacy.png",
+    "assets/ui/faction-viking.png",
+    "assets/ui/faction-ancient.png",
+    "assets/ui/faction-dynasty.png",
+    "assets/ui/faction-wildwest.png",
+    "assets/ui/faction-spooky.png"
+  ]
+}

@@ -1,0 +1,346 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "assets/ui/faction-ancient.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: crested Greek hoplite helmet in front of a laurel wreath, marble/cream and bronze #f2e4b8. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-ancient.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-dynasty.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: katana crossed with a lit firework rocket, red and gold #e2556b. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-dynasty.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-farmer.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 faction emblem. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Faction emblem: pitchfork stuck in a hay bale. Centered bold readable silhouette, flat and simple, fill 85% of a square frame, generous clear border, no text. Transparent background.",
+      "transparent": true,
+      "mode": "built-in",
+      "original": "assets/originals/ui/faction-farmer.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-legacy.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: lit cartoon bomb with a wizard hat on it. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-legacy.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-medieval.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: heater shield with a crown on it, crossed with a sword. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-medieval.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-spooky.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: grinning cartoon skull with a lit candle on top, cool grey #8c95a8. Comedic not scary. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-spooky.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-tribal.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 faction emblem. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Faction emblem: crossed wooden club and bone with a feather. Centered bold readable silhouette, flat and simple, fill 85% of a square frame, generous clear border, no text. Transparent background.",
+      "transparent": true,
+      "mode": "built-in",
+      "original": "assets/originals/ui/faction-tribal.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-viking.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: horned helmet over a round wooden shield, icy-blue accents #5ec8e0. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-viking.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/faction-wildwest.png",
+      "prompt": "Use case: stylized-concept. Asset type: 128x128 game faction emblem. Bright toy-like comedic medieval fantasy, clean flat colours with soft shading, bold dark navy outline. No brands. Faction emblem: cowboy hat on a revolver with a stick of dynamite, sandy gold #e8b84a. Flat bold simple shape, centered filling 85% of square frame, readable when tiny. No text, true transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/faction-wildwest.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "file": "assets/ui/icon.png",
+      "prompt": "Use case: stylized-concept. Asset type: 512x512 app icon. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Square app icon: one blue bean-soldier head with a dented helmet and an angry face, a red soldier club bonking it from the side, round coloured background. Readable at 32px. Centered bold readable silhouette, flat and simple, fill 85% of a square frame, generous clear border, no text. Transparent background.",
+      "transparent": true,
+      "mode": "built-in",
+      "original": "assets/originals/ui/icon.png",
+      "size": [
+        512,
+        512
+      ]
+    },
+    {
+      "file": "assets/ui/loading.jpg",
+      "prompt": "Use case: illustration-story. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Wide 16:9 loading-screen key art, 1920x1080. Two bean armies (blue left, red right) charging at each other across a green field, with a giant in the red army, an arrow volley in the sky and a bomb going off. Leave centre third calm for logo and progress text overlay. Clean flat colours and soft shading. No text. Opaque background.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "assets/originals/ui/loading.png",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "file": "assets/ui/logo.png",
+      "prompt": "Use case: logo-brand. Asset type: transparent PNG game title logo, wide approximately 1600x700. Primary request: The words \"WOBBLY BATTLES\" on two stacked lines, chunky rounded cartoon letters, slightly wobbly/tilted, \"WOBBLY\" in light blue (#7fd0ff) and \"BATTLES\" in red-orange (#ff7b6e), thick dark-navy outline (#1e2c48), small drop shadow. A tiny bean soldier with a sword peeks over one letter and another one is falling off the end. Must read clearly at 600 px wide. Style: bright toy-like comedic medieval fantasy; chubby bean-shaped soldiers, stubby limbs, big round heads, white eyes with black pupils, thick eyebrows, no noses or fingers. Clean flat colours with soft shading. No other text, no real brands, no TABS logo. True transparent background.",
+      "transparent": true,
+      "mode": "built-in",
+      "original": "assets/originals/ui/logo.png",
+      "size": [
+        1600,
+        700
+      ]
+    },
+    {
+      "file": "assets/ui/map-autumn.png",
+      "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: orange and red trees, golden grass, haystacks. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "assets/originals/ui/map-autumn.png",
+      "size": [
+        640,
+        360
+      ]
+    },
+    {
+      "file": "assets/ui/map-desert.png",
+      "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: sandy dunes, cacti, sandstone rocks, warm sky. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "assets/originals/ui/map-desert.png",
+      "size": [
+        640,
+        360
+      ]
+    },
+    {
+      "file": "assets/ui/map-grass.png",
+      "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: rolling green hills, low-poly round trees, tiny flowers, bright blue sky. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "assets/originals/ui/map-grass.png",
+      "size": [
+        640,
+        360
+      ]
+    },
+    {
+      "file": "assets/ui/map-winter.png",
+      "prompt": "Use case: stylized-concept. Asset type: 640x360 16:9 scenery-only map preview card for Wobbly Battles. Landscape: snowy field, snow-capped pines, light snowfall. Empty battlefield in the middle. Bright toy-like low-poly shapes, clean flat colours and soft shading, readable landscape thumbnail. Absolutely no characters, no people, no soldiers, no armies, no weapons, no flags, no buildings, no text or logos anywhere. Scenery only. Opaque.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "assets/originals/ui/map-winter.png",
+      "size": [
+        640,
+        360
+      ]
+    },
+    {
+      "file": "reference/ancient.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Hoplite (crested helmet, round bronze shield, spear); Sarissa (very long pike); Snake Archer (snake-scale hood, green poison arrows); Minotaur (bull head, horns, charging); Zeus (toga, huge white beard, floating, lightning in hand). One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/ancient.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "reference/dynasty.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Monk (orange robe, bald, palm strike); Samurai (lacquered armour, katana in parry stance); Firework Archer (bow with a rocket arrow); Hwacha (soldier carrying a rack of 16 rockets on his back). One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/dynasty.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "reference/faces.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. Face expression sheet on round heads. Exactly seven labelled expressions: Normal, Angry, Scared (sweat drop), Hurt (squeezed >< eyes), Dead (X eyes, tongue out), Happy/cheering, Blink. Show each in both blue and red. Plain round bean heads only.  Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/faces.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/farmer.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. Halfling (tiny, curly hair, little pitchfork); Farmer (straw hat, overalls, pitchfork); Hay Baler (big, flat cap, throwing a hay bale); Potion Seller (hooded old man with white beard, green potions). Use one labelled row per unit, with four full-body views in columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include each weapon, entire silhouettes in frame, ample separation. Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/farmer.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/legacy.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. Berserker (bare-chested, horned helmet, orange beard, two axes); Bomber (goggles, apron, holding a lit bomb); Wizard (tall blue hat, white beard, staff with glowing orb); Giant (green-skinned ogre, 2.3x soldier height, loincloth, bare fists). Use one labelled row per unit, with four full-body views in columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include each weapon, entire silhouettes in frame, ample separation. Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/legacy.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "reference/maps.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like medieval fantasy landscape colours, clean flat shading. A colour palette and mood board with FOUR clearly separated panels: GRASS (green rolling hills, round trees, flowers, blue sky); DESERT (sandy dunes, cacti, sandstone rocks, warm sky); WINTER (snowy field, snowy pine trees, cool sky, snowfall); AUTUMN (orange/red trees, golden grass, haystacks). Each panel includes ground, tree and rock samples, sky gradient, fog colour swatches and a landscape thumbnail. No soldiers or characters.  Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/maps.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/medieval.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. Bard (feathered cap, lute); Squire (round shield and sword, metal cap); Archer (green hood, longbow, quiver); Healer (white nun robe with red cross); Knight (full plate, bucket helm with plume, greatsword); King (crown, beard, cape, enormous sword). Use one labelled row per unit, with four full-body views in columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include each weapon, entire silhouettes in frame, ample separation. Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/medieval.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "reference/siege-mounts.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Cavalry knight on a chunky toy horse with a couched lance; woolly Mammoth with tusks, a rider and a drummer on top; wooden Catapult cart with its crewman; Ballista bolt-thrower with crewman. Same bean soldier proportions. One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/siege-mounts.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/spooky.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Skeleton and Skeleton Archer (goofy bones, one falling apart); Candlehead (head is a lit candle); Vampire (cape with high collar, fangs); Reaper (hooded black robe, giant scythe, skull face). Comedic, not scary. One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/spooky.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "reference/style-sheet.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. One sheet of body proportions. A plain bean soldier shown front, side and back in BLUE, then front, side and back in RED. Clearly show head about 40% of height, bean torso, stubby limbs, ball hands, boots, and team-colour locations. Six full-body views aligned at identical scale.  Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/style-sheet.png",
+      "size": [
+        1774,
+        887
+      ]
+    },
+    {
+      "file": "reference/tribal.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution character reference sheet for procedural 3D models, plain light background. Bright toy-like comedic medieval fantasy game concept art. Chubby bean-shaped bodies, stubby arms and legs, big round heads (40% total height), white eyes with black pupils, thick eyebrows, no noses or fingers, ball hands, chunky boots. Clean flat colours and soft shading. Blue team #3d72e3, Red #e2403b, gold #f2c230. No real brands or logos. Clubber (huge club, fur); Protector (big wooden plank shield, skull cap); Spear Thrower (feather headband, war paint, javelins); Chieftain (antler headdress, giant stone axe). Use one labelled row per unit, with four full-body views in columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include each weapon, entire silhouettes in frame, ample separation. Clear practical model-sheet layout, no scenery. Labels limited to unit/view names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/tribal.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/viking.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Brawler (hammer, wooden shield); Headbutter (huge horned helmet, mid-headbutt); Ice Archer (fur hood, frosty bow, ice arrows); Jarl (big beard, cape, axe, leaping); Valkyrie (winged helmet, feathered wings, sword, flying). One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/viking.png",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "file": "reference/wildwest.png",
+      "prompt": "Use case: stylized-concept. Asset type: high-resolution practical model reference sheet on plain light background. Bright toy-like comedic medieval fantasy. Chubby bean bodies, stubby limbs, ball hands, big round heads about 40% height, white eyes with black pupils, thick eyebrows. No noses, fingers, realistic anatomy, brands or logos. Clean flat colours, soft shading. Blue #3d72e3 and Red #e2403b teams, gold #f2c230. Cactus (a living cactus with a cartoon face and cowboy hat); Gunslinger (cowboy hat, poncho, revolver with smoke); Blunderbuss (flared shotgun); Lasso (spinning rope); Dynamite (miner with lit sticks). One labelled row per unit, four full-body columns: BLUE front, BLUE three-quarter, RED front, RED three-quarter. Include weapons and mounts fully inside frame. Clear separation. Labels limited to unit, view and palette names.",
+      "mode": "built-in",
+      "transparent": false,
+      "original": "reference/wildwest.png",
+      "size": [
+        1312,
+        1199
+      ]
+    },
+    {
+      "file": "assets/ui/victory-blue.png",
+      "prompt": "Use case: illustration-story. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Very wide 3:1 transparent banner 1200x400. Ribbon in blue #3d72e3 with a few blue bean soldiers cheering and jumping in front of it. Contain entire ribbon and soldiers inside frame with clear margins. Clean flat colours and soft shading. No text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/victory-blue.png",
+      "size": [
+        1200,
+        400
+      ]
+    },
+    {
+      "file": "assets/ui/victory-red.png",
+      "prompt": "Use case: illustration-story. Bright toy-like comedic medieval fantasy game art. Soldiers have chubby bean bodies, stubby arms and legs, big round heads, simple white eyes and black pupils, thick eyebrows, no noses, fingers, or realistic anatomy. Clean flat colours, soft shading, blue #3d72e3 and red #e2403b teams, gold #f2c230. No real brands, real people, or TABS logo. Very wide 3:1 transparent banner 1200x400. Ribbon in red #e2403b with a few red bean soldiers cheering and jumping in front of it. Contain entire ribbon and soldiers inside frame with clear margins. Clean flat colours and soft shading. No text. True transparent background.",
+      "mode": "built-in",
+      "transparent": true,
+      "original": "assets/originals/ui/victory-red.png",
+      "size": [
+        1200,
+        400
+      ]
+    }
+  ]
+}

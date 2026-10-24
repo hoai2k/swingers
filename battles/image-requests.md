@@ -7,9 +7,14 @@ as soon as the file is listed in `assets/manifest.json` (I add it when the image
 arrives; the game preloads only what the manifest lists, so missing files never cause
 broken images or 404s).
 
-**Status (round 2):** nothing delivered yet. Round 2 adds emblems for the five new
-factions (items 20–24) and reference sheets for the new factions and the siege,
-mount and flying units (items 25–30).
+**Status: all 31 requested files delivered** (18 UI images and 13 reference sheets).
+Generated with the built-in imagegen tool. Exact prompts and final dimensions are in
+`assets/generation.json`; high-resolution UI originals are in `assets/originals/ui/`.
+Run `python3 tools/build_battles_assets.py` (Pillow) to rebuild the requested sizes.
+The logo, browser icon and all nine faction emblems are registered in the preload
+manifest and verified in the browser. Map previews, loading art and victory banners
+are delivered at the paths below; their future UI hooks are still pending as noted.
+Reference sheets stay at generated resolution in `reference/`.
 
 ## Shared style
 
@@ -66,6 +71,5 @@ background, with its weapon.
 | 29 | `reference/spooky.png` | Skeleton and Skeleton Archer (goofy bones, one falling apart), Candlehead (head is a lit candle), Vampire (cape with high collar, fangs), Reaper (hooded black robe, giant scythe, skull face). Comedic, not scary. |
 | 30 | `reference/siege-mounts.png` | Cavalry knight on a chunky toy horse with a couched lance; a woolly Mammoth with tusks, a rider and a drummer on top; a wooden Catapult cart with its crewman; a Ballista bolt-thrower; show the same bean-soldier proportions as the rest. |
 
-When you add images, put them at these paths and tell me which ones arrived. I'll wire up the "not wired yet"
-ones (map select previews, loading screen, victory banners) and tune the models
-against the reference sheets.
+All listed files have arrived. Remaining integration: map select previews, loading
+screen, victory banners, and model refinement against the reference sheets.
