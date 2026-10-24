@@ -1,5 +1,7 @@
 // Game: renderer, split-screen views, fixed-step physics loop, players.
 import * as THREE from 'three';
+import './look.js';
+import { Sky } from './sky.js';
 import { Physics, RAPIER } from './physics.js';
 import { DT, MAX_PLAYERS, CAMERA_QUERY, SPAWN, HATS } from './config.js';
 import { Input } from './input.js';
@@ -26,6 +28,7 @@ export class Game {
 
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(0xbfe6ff, 140, 620);
+    this.renderStats = { calls: 0, triangles: 0 };
     this.time = 0;
     this.players = [];
     this.vehicles = [];
@@ -51,32 +54,10 @@ export class Game {
   }
 
   setupLights() {
-    const hemi = new THREE.HemisphereLight(0xcfeaff, 0x6a8a4a, 1.25);
-    this.scene.add(hemi);
-    const sun = this.sun = new THREE.DirectionalLight(0xfff1d6, 2.4);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    const sc = sun.shadow.camera;
-    sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 400;
-    sun.shadow.bias = -0.0004;
-    sun.shadow.normalBias = 0.04;
-    this.sunDir = new THREE.Vector3(0.45, 0.8, 0.35).normalize();
-    this.scene.add(sun, sun.target);
-    // sky dome
-    const skyGeo = new THREE.SphereGeometry(800, 32, 16);
-    const skyMat = new THREE.ShaderMaterial({
-      side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { top: { value: new THREE.Color(0x3d9cff) }, bottom: { value: new THREE.Color(0xd8f1ff) }, sun: { value: this.sunDir } },
-      vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-      fragmentShader: `uniform vec3 top; uniform vec3 bottom; uniform vec3 sun; varying vec3 vP;
-        void main(){ float h = clamp(vP.y*1.4+0.15,0.0,1.0); vec3 c = mix(bottom, top, pow(h,0.8));
-        float s = max(dot(normalize(vP), sun),0.0); c += vec3(1.0,0.9,0.6)*pow(s,400.0)*1.5 + vec3(1.0,0.85,0.5)*pow(s,8.0)*0.18;
-        gl_FragColor = vec4(c,1.0); }`,
-    });
-    this.sky = new THREE.Mesh(skyGeo, skyMat);
-    this.sky.renderOrder = -1;
-    this.sky.frustumCulled = false;
-    this.scene.add(this.sky);
+    this.skyRig = new Sky(this);
+    this.sun = this.skyRig.sun;
+    this.sunDir = this.skyRig.sunDir;
+    this.sky = this.skyRig.dome;
   }
 
   setResScale(s) {
@@ -223,47 +204,128 @@ export class Game {
     return out;
   }
 
+  // Players whose cameras are close share one shadow-map render; each
+  // further group re-renders the (world-space) shadow map before its views.
+  shadowGroups(views) {
+    const groups = [];
+    const R = this.players.length > 4 ? 28 : 36;
+    this.players.forEach((p, i) => {
+      const t = p.camera.target;
+      let g = groups.find((q) => Math.hypot(q.x - t.x, q.z - t.z) < R);
+      if (!g) { g = { x: t.x, y: t.y, z: t.z, sx: 0, sz: 0, n: 0, views: [] }; groups.push(g); }
+      g.views.push(i); g.n++; g.sx += t.x; g.sz += t.z;
+    });
+    for (const g of groups) { g.x = g.sx / g.n; g.z = g.sz / g.n; }
+    return groups;
+  }
+
+  placeShadow(c, half) {
+    const sun = this.sun, sc = sun.shadow.camera;
+    const size = sun.shadow.mapSize.x;
+    if (sc.right !== half) { sc.left = sc.bottom = -half; sc.right = sc.top = half; sc.updateProjectionMatrix(); }
+    // snap to the shadow texel grid so edges don't shimmer as the centre moves
+    const snap = (half * 2) / size;
+    const x = Math.round(c.x / snap) * snap, z = Math.round(c.z / snap) * snap;
+    sun.target.position.set(x, c.y || 0, z);
+    sun.position.set(x, c.y || 0, z).addScaledVector(this.sunDir, 200);
+    sun.target.updateMatrixWorld(); sun.updateMatrixWorld();
+  }
+
+  // Hide small dynamic things (props, parked cars) that would be a few pixels
+  // in this view; the static world is merged into chunks and never culled here.
+  cullSmall(cam, viewH) {
+    this.cullAge = (this.cullAge || 0) + 1;
+    if (!this.cullList || this.cullList.n !== this.scene.children.length || this.cullAge > 600) {
+      this.cullAge = 0;
+      if (this.cullList) for (const it of this.cullList.list) if (it.hid) it.o.visible = true;
+      const list = [];
+      const box = new THREE.Box3(), sph = new THREE.Sphere();
+      for (const o of this.scene.children) {
+        if (o.isLight || o === this.sky || o.userData.noCull) continue;
+        if (o.isMesh && o.position.lengthSq() === 0 && !o.userData.dynamic) continue; // merged static chunk
+        if (this.players.some((p) => p.group === o)) continue;
+        box.setFromObject(o);
+        if (box.isEmpty()) continue;
+        box.getBoundingSphere(sph);
+        if (sph.radius > 9) continue;
+        list.push({ o, r: Math.max(sph.radius, 0.3) });
+      }
+      this.cullList = { n: this.scene.children.length, list };
+    }
+    const k = 260 * viewH / 720; // pixels-ish: cull when radius / distance < 1/k
+    const cp = cam.position;
+    for (const it of this.cullList.list) {
+      const p = it.o.position, d2 = (p.x - cp.x) ** 2 + (p.z - cp.z) ** 2 + (p.y - cp.y) ** 2;
+      const lim = it.r * k, show = d2 < lim * lim;
+      // only undo our own hiding: other code may hide objects too
+      if (it.hid) { if (show) { it.o.visible = true; it.hid = false; } }
+      else if (!show && it.o.visible) { it.o.visible = false; it.hid = true; }
+    }
+  }
+
   render(dt) {
     const r = this.renderer;
     const views = this.views();
-    // shadow follows the players' centre
-    const c = new THREE.Vector3();
-    if (this.players.length) {
-      for (const p of this.players) { const t = p.chest.translation(); c.add(new THREE.Vector3(t.x, t.y, t.z)); }
-      c.divideScalar(this.players.length);
-    } else c.copy(this.idleTarget || new THREE.Vector3());
-    // snap to texel grid to avoid shimmering
-    const snap = 120 / 2048;
-    c.x = Math.round(c.x / snap) * snap; c.z = Math.round(c.z / snap) * snap;
-    this.sun.position.copy(c).addScaledVector(this.sunDir, 200);
-    this.sun.target.position.copy(c);
-    this.sun.castShadow = this.shadows;
-    r.shadowMap.needsUpdate = this.shadows;
+    const sky = this.skyRig;
+    sky.update(this.paused ? 0 : dt);
     const H = innerHeight;
+    const fog = this.scene.fog;
+    const setFog = (cam, under) => {
+      // underwater: murky blue that dims with the daylight
+      if (under) { fog.color.set(0x1f7fa8).multiplyScalar(0.35 + 0.65 * this.dayLight); fog.near = 1; fog.far = 30; }
+      else { fog.color.copy(sky.fogColor); fog.near = 70 + 70 * this.dayLight; fog.far = sky.fogFar; }
+    };
+    r.info.autoReset = false;
+    r.info.reset();
+    this.sun.castShadow = this.shadows;
+    const viewDraw = (cam, x, y, w, h, under) => {
+      setFog(cam, under);
+      sky.view(cam, under, fog.color);
+      this.cullSmall(cam, h);
+      this.detail?.view(cam);
+      this.scene.userData.terrainLOD?.view(cam);
+      r.setViewport(x, H - y - h, w, h);
+      r.setScissor(x, H - y - h, w, h);
+      r.render(this.scene, cam);
+      r.shadowMap.needsUpdate = false;
+    };
     if (!this.players.length) {
       const cam = this.idleCam;
       const t = this.time * 0.05;
       cam.position.set(Math.sin(t) * 60, 28, Math.cos(t) * 60 + 10);
       cam.lookAt(0, 4, 0);
       cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix();
-      this.sky.position.copy(cam.position);
-      r.setViewport(0, 0, innerWidth, innerHeight); r.setScissor(0, 0, innerWidth, innerHeight);
-      r.render(this.scene, cam);
+      if (this.shadows) { this.placeShadow(this.idleTarget || new THREE.Vector3(), 60); r.shadowMap.needsUpdate = true; }
+      viewDraw(cam, 0, 0, innerWidth, innerHeight, false);
     }
+    // cameras first, so shadow groups use this frame's targets
     this.players.forEach((p, i) => {
-      const [x, y, w, h] = views[i];
+      const [, , w, h] = views[i];
       const d = this.input.get(p.deviceId);
       p.camera.update(d && !this.paused ? d.state : { lookX: 0, lookY: 0 }, dt);
       const cam = p.camera.cam;
       cam.aspect = w / h; cam.updateProjectionMatrix();
-      this.sky.position.copy(cam.position);
-      this.scene.fog.color.set(p.camera.underwater ? 0x2a7fb0 : 0xbfe6ff);
-      this.scene.fog.near = p.camera.underwater ? 1 : 140; this.scene.fog.far = p.camera.underwater ? 28 : 620;
-      r.setViewport(x, H - y - h, w, h);
-      r.setScissor(x, H - y - h, w, h);
-      r.render(this.scene, cam);
-      r.shadowMap.needsUpdate = false;
     });
+    if (this.players.length) {
+      const groups = this.shadowGroups(views);
+      // with many separate groups use a smaller map so 8 shadow passes stay cheap
+      const want = groups.length > 2 ? 1024 : 2048;
+      if (this.sun.shadow.mapSize.x !== want) {
+        this.sun.shadow.mapSize.set(want, want);
+        if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+      }
+      const half = groups.length > 2 ? 42 : 60;
+      for (const g of groups) {
+        if (this.shadows) { this.placeShadow(g, half); r.shadowMap.needsUpdate = true; }
+        for (const i of g.views) {
+          const p = this.players[i], [x, y, w, h] = views[i];
+          viewDraw(p.camera.cam, x, y, w, h, p.camera.underwater);
+        }
+      }
+    }
+    this.renderStats.calls = r.info.render.calls;
+    this.renderStats.triangles = r.info.render.triangles;
+    r.info.autoReset = true;
     this.ui.update(views);
   }
 

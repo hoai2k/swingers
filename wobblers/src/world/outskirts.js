@@ -17,7 +17,7 @@ export function buildOutskirts(game, kit) {
   mountainTop(game, kit);
   lighthouse(game, kit, 214, 222);
   forests(game, kit);
-  clouds(game);
+  // clouds: drawn by src/sky.js (they follow the day/night cycle)
 }
 
 // ---- kart track -------------------------------------------------------------

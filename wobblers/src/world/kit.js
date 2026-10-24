@@ -127,6 +127,7 @@ export class Kit {
 
   lamp(x, z, y = 0) {
     const b = this.b(x, z);
+    (this.game.lamps ||= []).push([x, y + 4.35, z]); // night glow (world/detail.js)
     b.cyl(0.08, 0.12, 4.2, 0x3b4a5a, [x, y + 2.1, z], null, 8);
     b.sphere(0.32, 0xfff4c2, [x, y + 4.35, z], null, 10);
     b.cyl(0.36, 0.2, 0.15, 0x3b4a5a, [x, y + 4.62, z], null, 10);
