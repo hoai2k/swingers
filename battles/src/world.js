@@ -2,6 +2,9 @@
 // lighting and scenery.
 import { THREE, clamp, rand, lerp, smooth } from './util.js';
 import { RAPIER, GROUPS } from './physics.js';
+import { buildFeatures, TerrainFeatures, addFeatureColliders } from './features.js';
+import { NEW_MAPS } from './maps-new.js';
+import { buildFeatureScene } from './mapscene.js';
 
 export const FIELD = { x: 42, z: 32 }; // half extents of the battle area
 export const ZONE_GAP = 3; // no man's land half width around x = 0
@@ -37,9 +40,11 @@ export const MAPS = [
     hills: 1.1, bumps: 0.7, trees: ['autumn', 'autumn', 'pine'], grass: '#a8ae48', grassTip: '#e2c662',
     flowers: ['#ff9a3a', '#ffd34a', '#e2483a', '#ffffff'], bushes: '#b5612e', props: 'farm', mountains: '#b49a88',
   },
+  // maps with terrain features (walls, water, bridges, plateaus): src/maps-new.js
+  ...NEW_MAPS,
 ];
 
-const SIZE = 240, SEG = 160;
+const SIZE = 240, SEG = 200; // 1.2 m cells (fine enough for walls, banks and bridges)
 
 // cheap smooth value noise (deterministic, for colouring and scatter)
 function hash(x, z) { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -78,6 +83,7 @@ export class Terrain {
         let y = small * 0.35 * map.bumps;
         y += ring * (6 + small * 4) * map.hills;
         y += Math.pow(clamp(out / 70, 0, 1), 2) * 18 * map.hills;
+        if (map.shape) y = map.shape(x, z, y, out);
         this.h[iz * n + ix] = y;
       }
     }
@@ -92,6 +98,8 @@ export class Terrain {
       const i = iz * n + ix, j = (SEG - iz) * n + (SEG - ix);
       this.h[i] = lerp(src[i], (src[i] + src[j]) / 2, k);
     }
+    // hills, plateaus, water and obstacles (point-symmetric too: src/features.js)
+    this.feat = buildFeatures(map, this, FIELD);
   }
 
   height(x, z) {
@@ -149,6 +157,7 @@ export class Terrain {
       tmp.lerp(high, smooth(clamp((y - 9) / 10, 0, 1)) * 0.5);
       tmp.lerp(rock, smooth(clamp((slope - 0.32) * 5, 0, 1)));
       tmp.lerp(far, clamp((o - 20) / 70, 0, 0.45));
+      if (this.feat) this.paintFeatures(i, x, z, tmp, n1, n3);
       col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -162,29 +171,61 @@ export class Terrain {
   addCollider(world) {
     const cd = RAPIER.ColliderDesc.trimesh(this.positions, this.indices)
       .setFriction(0.9).setCollisionGroups(GROUPS.ground);
-    return world.createCollider(cd);
+    const c = world.createCollider(cd);
+    addFeatureColliders(this, world);
+    return c;
+  }
+
+  // ground tints from the map's features: painted areas, wet banks and river beds
+  paintFeatures(i, x, z, tmp, n1, n3) {
+    const F = this.feat;
+    for (const p of F.paints) {
+      const dx = x - p.x, dz = z - p.z;
+      let out;
+      if (p.round) out = Math.hypot(dx, dz) - p.hw;
+      else {
+        const c = Math.cos(p.rot), s = Math.sin(p.rot);
+        out = Math.max(Math.abs(dx * c - dz * s) - p.hw, Math.abs(dx * s + dz * c) - p.hd);
+      }
+      const f = (1 - smooth(clamp(out / p.soft + 0.5, 0, 1))) * p.k;
+      if (f > 0) tmp.lerp(_pc.copy(p.color).multiplyScalar(1 - p.noise * 0.5 + p.noise * (n1 * 0.6 + n3 * 0.4)), f);
+    }
+    const wd = F.wd[i], ws = F.ws[i];
+    if (ws === ws) {
+      // damp, darker bank just above the waterline, sandy-muddy bed below it
+      const bank = smooth(clamp(1 - (this.h[i] - ws) / 0.6, 0, 1));
+      tmp.multiplyScalar(1 - bank * 0.22);
+      if (wd > 0) tmp.lerp(_pc.set(this.map.bed || '#a89268'), smooth(clamp(wd / 0.35, 0, 1)) * 0.85);
+    }
   }
 }
+Object.assign(Terrain.prototype, TerrainFeatures);
+const _pc = new THREE.Color();
 
 // The setup-zone overlay: hugs the terrain over a rectangle with a soft team tint,
 // a 2 m grid and a bright dashed border that fades inward.
 export function zoneMesh(terrain, x0, x1, z0, z1, color) {
-  const nx = Math.ceil((x1 - x0) / 1.5), nz = Math.ceil((z1 - z0) / 1.5);
+  const res = terrain.feat ? 0.8 : 1.5;
+  const nx = Math.ceil((x1 - x0) / res), nz = Math.ceil((z1 - z0) / res);
   const geo = new THREE.PlaneGeometry(1, 1, nx, nz);
   geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position;
   const uv = geo.attributes.uv;
+  // where units can't be placed (walls, water) the overlay goes faint and hatched
+  const blk = new Float32Array(p.count);
   for (let i = 0; i < p.count; i++) {
     const x = lerp(x0, x1, p.getX(i) + 0.5), z = lerp(z0, z1, p.getZ(i) + 0.5);
-    p.setXYZ(i, x, terrain.height(x, z) + 0.06, z);
+    p.setXYZ(i, x, Math.max(terrain.height(x, z), terrain.feat ? terrain.height(x, z) + terrain.waterDepth(x, z) : 0) + 0.06, z);
     uv.setXY(i, x - x0, z - z0);
+    blk[i] = terrain.feat && terrain.blocked(x, z, 0.1) ? 1 : 0;
   }
+  geo.setAttribute('blk', new THREE.BufferAttribute(blk, 1));
   geo.computeVertexNormals();
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     uniforms: { color: { value: new THREE.Color(color) }, size: { value: new THREE.Vector2(x1 - x0, z1 - z0) } },
-    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: `uniform vec3 color; uniform vec2 size; varying vec2 vUv;
+    vertexShader: 'attribute float blk; varying vec2 vUv; varying float vB; void main(){ vUv = uv; vB = blk; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: `uniform vec3 color; uniform vec2 size; varying vec2 vUv; varying float vB;
       void main(){
         vec2 d2 = min(vUv, size - vUv); float d = min(d2.x, d2.y);
         vec2 g = abs(fract(vUv / 2.0 + 0.5) - 0.5) * 2.0;
@@ -195,6 +236,10 @@ export function zoneMesh(terrain, x0, x1, z0, z1, color) {
         float glow = exp(-d * 0.45);
         float a = 0.14 + glow * 0.22 + gl * 0.16 + edge * (0.55 + 0.35 * dash);
         vec3 c = mix(color, vec3(1.0), edge * 0.55 + gl * 0.25);
+        float b = smoothstep(0.35, 0.65, vB);
+        float hatch = step(0.5, fract((vUv.x - vUv.y) * 1.25));
+        a = mix(a, edge * 0.6 + hatch * 0.16, b);
+        c = mix(c, vec3(0.18, 0.12, 0.12), b * 0.5);
         gl_FragColor = vec4(c, a);
       }`,
   });
@@ -302,6 +347,51 @@ const TREES = {
     [new THREE.CapsuleGeometry(0.22, 0.8, 3, 8), '#5aa64e', T(-0.85, 3.0, 0)],
     [new THREE.SphereGeometry(0.16, 6, 4), '#ff6a8a', T(0, 3.75, 0)],
   ]),
+  palm: () => {
+    const p = [];
+    // a gently curved trunk of tapering rings, fronds drooping from the top
+    let x = 0, y = 0, r = 0.3;
+    for (let i = 0; i < 7; i++) {
+      const lean = 0.06 + i * 0.03;
+      p.push([new THREE.CylinderGeometry(r * 0.88, r, 0.9, 7), i % 2 ? '#9a7448' : '#86643c', T(x, y + 0.45, 0, 1, 1, 1, 0, 0, -lean)]);
+      x += Math.sin(lean) * 0.9; y += Math.cos(lean) * 0.88; r *= 0.93;
+    }
+    for (let k = 0; k < 7; k++) {
+      const a = (k / 7) * Math.PI * 2;
+      const leaf = new THREE.ConeGeometry(0.45, 3.2, 4);
+      leaf.scale(1, 1, 0.18);
+      p.push([leaf, k % 2 ? '#3f9a3a' : '#52b046', T(x + Math.cos(a) * 1.3, y - 0.25, Math.sin(a) * 1.3, 1, 1, 1, 0, -a, 0).multiply(T(0, 0, 0, 1, 1, 1, 0, 0, Math.PI / 2 + 0.35))]);
+    }
+    for (let k = 0; k < 3; k++) p.push([new THREE.SphereGeometry(0.17, 6, 4), '#6a4a26', T(x + Math.cos(k * 2.1) * 0.25, y - 0.3, Math.sin(k * 2.1) * 0.25)]);
+    return merged(p);
+  },
+  jungle: () => merged([
+    [new THREE.CylinderGeometry(0.28, 0.5, 5.5, 7), '#6a5236', T(0, 2.75, 0)],
+    [new THREE.CylinderGeometry(0.12, 0.2, 2.2, 5), '#6a5236', T(0.8, 4.6, 0.2, 1, 1, 1, 0, 0, -0.8)],
+    [new THREE.CylinderGeometry(0.12, 0.2, 2.0, 5), '#6a5236', T(-0.7, 4.8, -0.3, 1, 1, 1, 0.3, 0, 0.8)],
+    [lumpy(2.3, 1, 0.3, 31), '#2f7d32', T(0, 6.4, 0, 1.25, 0.5, 1.25)],
+    [lumpy(1.6, 1, 0.3, 32), '#3c9440', T(1.6, 5.7, 0.4, 1.2, 0.5, 1.2)],
+    [lumpy(1.5, 1, 0.3, 33), '#28702e', T(-1.5, 5.9, -0.5, 1.2, 0.5, 1.2)],
+    [lumpy(1.2, 1, 0.3, 34), '#46a046', T(0.2, 7.1, -0.2, 1.2, 0.5, 1.2)],
+  ]),
+  willow: () => {
+    const p = [[new THREE.CylinderGeometry(0.3, 0.5, 3.0, 7), '#6b5236', T(0, 1.5, 0)],
+      [lumpy(2.1, 1, 0.25, 41), '#7ab048', T(0, 4.0, 0, 1.15, 0.8, 1.15)]];
+    // hanging curtains of leaves
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * Math.PI * 2;
+      p.push([new THREE.CylinderGeometry(0.55, 0.3, 2.6, 5), k % 2 ? '#8cc052' : '#6fa242', T(Math.cos(a) * 1.7, 2.9, Math.sin(a) * 1.7)]);
+    }
+    return merged(p);
+  },
+  dead: () => merged([
+    [new THREE.CylinderGeometry(0.2, 0.42, 3.4, 6), '#4a4048', T(0, 1.7, 0, 1, 1, 1, 0, 0, 0.06)],
+    [new THREE.CylinderGeometry(0.07, 0.14, 1.8, 5), '#4a4048', T(0.75, 3.4, 0, 1, 1, 1, 0, 0, -0.9)],
+    [new THREE.CylinderGeometry(0.06, 0.12, 1.6, 5), '#4a4048', T(-0.6, 3.6, 0.2, 1, 1, 1, 0.2, 0, 0.8)],
+    [new THREE.CylinderGeometry(0.05, 0.1, 1.2, 5), '#4a4048', T(0.1, 4.0, -0.5, 1, 1, 1, -0.7, 0, 0.1)],
+    [new THREE.CylinderGeometry(0.04, 0.07, 0.8, 4), '#4a4048', T(1.35, 4.15, 0, 1, 1, 1, 0, 0, 0.3)],
+    [new THREE.CylinderGeometry(0.04, 0.07, 0.7, 4), '#4a4048', T(-1.15, 4.25, 0.3, 1, 1, 1, 0, 0, -0.4)],
+  ]),
 };
 const PROPS = {
   log: () => merged([
@@ -389,7 +479,7 @@ export function buildScene(scene, map, terrain) {
   const group = new THREE.Group();
   scene.add(group);
   scene.background = new THREE.Color(map.fog);
-  scene.fog = new THREE.Fog(map.fog, 110, 480);
+  scene.fog = new THREE.Fog(map.fog, map.fogNear ?? 110, map.fogFar ?? 480);
   const sunPos = new THREE.Vector3(-40, 80, 30);
   group.add(skyDome(map, sunPos));
 
@@ -483,7 +573,7 @@ export function buildScene(scene, map, terrain) {
     group.add(rm);
     // pebbles in the field: tiny, no shadows, purely decorative
     const peb = [];
-    for (let i = 0; i < 260; i++) { const x = rand(-110, 110), z = rand(-110, 110); const s = rand(0.06, 0.16); peb.push(comp(x, terrain.height(x, z) + s * 0.2, z, s, s * 0.6)); }
+    for (let i = 0; i < 260; i++) { const x = rand(-110, 110), z = rand(-110, 110); const s = rand(0.06, 0.16); if (terrain.feat && terrain.blocked(x, z, 0)) continue; peb.push(comp(x, terrain.height(x, z) + s * 0.2, z, s, s * 0.6)); }
     group.add(instanced(lumpy(1, 0, 0.4, 3, false), new THREE.MeshLambertMaterial({ color: map.rock, flatShading: true }), peb, false));
   }
 
@@ -530,6 +620,7 @@ export function buildScene(scene, map, terrain) {
       const x = rand(-112, 112), z = rand(-112, 112);
       const inField = outDist(x, z) === 0;
       if (inField && Math.random() < 0.55) continue;
+      if (terrain.feat && (terrain.blocked(x, z, 0) || terrain.waterDepth(x, z + 0.8) > 0 || (inField && map.tufts !== undefined && Math.random() > map.tufts))) continue;
       const big = vnoise(x * 0.08, z * 0.08);
       const k = inField ? 0.7 : 1;
       tufts.push(comp(x, terrain.height(x, z) - 0.02, z, rand(0.8, 1.3) * (0.7 + big * 0.8) * k, rand(0.4, 0.9) * (0.6 + big * 0.9) * k));
@@ -553,6 +644,7 @@ export function buildScene(scene, map, terrain) {
       const ci = Math.floor(Math.random() * cols.length);
       for (let i = 0; i < 12; i++) {
         const x = cx + rand(-2.5, 2.5), z = cz + rand(-2.5, 2.5);
+        if (terrain.feat && terrain.blocked(x, z, 0.2)) continue;
         fl.push(comp(x, terrain.height(x, z), z, rand(0.8, 1.3)));
         fcol.push(cols[Math.random() < 0.8 ? ci : Math.floor(Math.random() * cols.length)]);
       }
@@ -567,10 +659,10 @@ export function buildScene(scene, map, terrain) {
       const ms = scatter(terrain, n, minO, maxO, (x, y, z) => comp(x, y - 0.05, z, rand(s0, s1)), 0.18);
       if (ms.length) group.add(instanced(PROPS[kind](), pmat, ms));
     };
-    if (map.props === 'farm') { place('hay', 10, 6, 40); place('log', 10, 5, 60); place('stump', 14, 5, 70); }
+    if (map.props === 'farm' || map.props === 'river') { place('hay', 10, 6, 40); place('log', 10, 5, 60); place('stump', 14, 5, 70); }
     if (map.props === 'desert') { place('skull', 10, 5, 50); place('log', 6, 5, 50); }
     if (map.props === 'winter') { place('snowman', 6, 6, 35); place('log', 8, 5, 50); place('stump', 10, 5, 60); }
-    if (map.props === 'farm') { // fence runs along the far edges of the field
+    if (map.props === 'farm' || map.props === 'river') { // fence runs along the far edges of the field
       const ms = [];
       for (const sz of [-1, 1]) for (let x = -36; x <= 36; x += 3.4) {
         if (Math.random() < 0.25) continue;
@@ -580,5 +672,7 @@ export function buildScene(scene, map, terrain) {
       group.add(instanced(PROPS.fence(), pmat, ms));
     }
   }
+  // walls, water, bridges and the map's own set dressing
+  buildFeatureScene(group, map, terrain, { merged, T, lumpy, TREES, PROPS, instanced, vcMat, comp, scatter, groves, outDist, FIELD, SIZE });
   return { group, sun, hemi };
 }

@@ -248,7 +248,7 @@ export class Game {
     this.setupVis = [[], []];
     for (let t = 0; t < 2; t++) {
       const keep = [];
-      for (const a of this.armies[t]) if (UNIT_BY_ID[a.type]) { keep.push(a); this.addSetupVis(t, a); }
+      for (const a of this.armies[t]) if (UNIT_BY_ID[a.type] && !this.terrain.blocked(a.x, a.z, 0)) { keep.push(a); this.addSetupVis(t, a); }
       this.armies[t] = keep;
     }
     for (const p of this.ps) { p.ghosts = []; p.ghostId = null; }
@@ -849,8 +849,15 @@ export class Game {
       const perRow = clamp(Math.floor((FIELD.z * 2 - 4) / sp), 1, 12);
       while (todo > 0 && d <= FIELD.x - 1) {
         const k = Math.min(todo, perRow);
-        for (let i = 0; i < k; i++) added.push({ type: def.id, x: sx * d, z: (i - (k - 1) / 2) * sp });
-        todo -= k;
+        // fill the row from the middle out, skipping spots in walls or water
+        let placed = 0;
+        for (let i = 0; i < perRow && placed < k; i++) {
+          const z = (i % 2 ? -1 : 1) * Math.ceil(i / 2) * sp + (k % 2 ? 0 : sp / 2);
+          if (Math.abs(z) > FIELD.z - 1 || this.terrain.blocked(sx * d, z, skelOf(def).radius)) continue;
+          added.push({ type: def.id, x: sx * d, z });
+          placed++;
+        }
+        todo -= placed;
         if (todo > 0) d += sp;
       }
       prevSp = sp;
@@ -1128,6 +1135,7 @@ export class Game {
       sl.ok = false;
       let w = '';
       if (!this.inZone(t, sl.x, sl.z)) w = `Place units in the ${TEAM_NAMES[t]} zone`;
+      else if (this.terrain.blocked(sl.x, sl.z, skel.radius)) w = "Can't place units in water or walls";
       else {
         let clash = false;
         for (const a of army) {
