@@ -209,6 +209,7 @@ export class Game {
   takePickup(sp, p) {
     p.removed = true;
     const w = p.weapon;
+    w.x = p.x; w.y = p.y;          // it eases from here into the spider's grip
     sp.giveWeapon(w);
     w.angle = sp.aimAngle;
     sfx.pickup();

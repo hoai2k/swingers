@@ -24,6 +24,8 @@ export class TwinSaber extends Saber {
   static throwSpeed = 1250;
   static throwCenter = 0;           // spins about the middle of the staff
 
+  hands() { return [this.along(-7), this.along(7)]; }
+
   constructor(game) {
     super(game);
     this.turnRate = 27;

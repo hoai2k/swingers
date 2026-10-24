@@ -92,9 +92,28 @@ export class Weapon {
     this.angle = angApproach(this.angle, ctl.angle, this.turnRate * dt);
     this.av = angDiff(prev, this.angle) / Math.max(dt, 1e-4);
     const d = o.r + this.holdDist - this.kick;
-    this.x = o.x + Math.cos(this.angle) * d;
-    this.y = o.y + Math.sin(this.angle) * d;
+    // held by the legs: a slow breathing sway, a bounce while walking
+    const walk = o.ground ? Math.min(1, Math.hypot(o.vx, o.vy) / 300) : 0;
+    const sway = Math.sin(this.time * 2.6) * 1.2 + Math.sin(this.time * 15) * 1.8 * walk;
+    let x = o.x + Math.cos(this.angle) * d + o.up.x * sway;
+    let y = o.y + Math.sin(this.angle) * d + o.up.y * sway;
+    // just picked up: ease in from where it lay into the grip
+    if (this.equipT < 1) {
+      this.equipT = Math.min(1, this.equipT + dt / 0.2);
+      const e = 1 - (1 - this.equipT) ** 3;
+      x = lerp(this.fromX, x, e); y = lerp(this.fromY, y, e);
+    }
+    this.x = x; this.y = y;
   }
+
+  // where the spider's legs hold it: [grip, support?] in world space.
+  // Long guns take two legs; blades and throwables one. Override as needed.
+  hands() {
+    const h = [{ x: this.x, y: this.y }];
+    if (this.kind === 'gun' && this.length >= 34) h.push(this.along(Math.min(this.length * 0.55, 30), 2));
+    return h;
+  }
+
 
   // fire helpers ---------------------------------------------------------
   recoil(force, kick = 6) {

@@ -23,6 +23,8 @@ export class Glaive extends Saber {
   static color = '#ffe066';
   static blades = [{ from: 74, to: 112 }];
 
+  hands() { return [{ x: this.x, y: this.y }, this.along(30, 1)]; }
+
   constructor(game) {
     super(game);
     this.turnRate = 13;

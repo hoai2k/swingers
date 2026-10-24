@@ -426,12 +426,18 @@ export class Spider {
     if (this.weapon) this.dropWeapon();
     this.weapon = w;
     w.owner = this;
+    w.fromX = Number.isFinite(w.x) && (w.x || w.y) ? w.x : this.x;
+    w.fromY = Number.isFinite(w.y) && (w.x || w.y) ? w.y : this.y;
+    w.equipT = 0;
+    this.reachT = 0.18;                // the holding leg reaches out to take it
     if (w.onEquip) w.onEquip(this);
   }
 
   dropWeapon(vx = 0, vy = -100) {
     const w = this.weapon;
     if (!w) return null;
+    // a hard toss (saber throws included) gets an arm follow-through
+    if (Math.hypot(vx, vy) > 600 && !(this.flingT > 0)) { const m = Math.hypot(vx, vy); this.flingT = 0.22; this.flingDir = { x: vx / m, y: vy / m }; }
     this.weapon = null;
     if (w.onUnequip) w.onUnequip(this);
     w.owner = null;
@@ -444,6 +450,7 @@ export class Spider {
     if (!w) return;
     if (w.onThrow && w.onThrow(this.ctl) === true) return; // weapon handled it (e.g. saber throw)
     const sp = 1300;
+    this.flingT = 0.22; this.flingDir = { x: this.aim.x, y: this.aim.y };
     const p = this.dropWeapon(this.aim.x * sp, this.aim.y * sp);
     if (p) { p.thrown = true; p.thrower = this; p.spin = 18 * this.facing; }
     sfx.throwIt();
@@ -466,13 +473,23 @@ export class Spider {
     const tx = -ny, ty = nx;
     const speed = Math.hypot(this.vx, this.vy);
     let anyStep = [false, false];
-    for (const L of this.legs) if (L.t < 1) anyStep[L.g] = true;
+    for (const L of this.legs) if (L.t < 1 && !L.hold) anyStep[L.g] = true;
+    const holds = this.holdTargets(tx, ty);
     for (let i = 0; i < this.legs.length; i++) {
       const L = this.legs[i];
       // planted feet ride their surface
       if (L.planted && L.solid && L.solid.dynamic) { const p = L.solid.tx({ x: L.lx, y: L.ly }); L.fx = p.x; L.fy = p.y; }
       if (L.planted && L.solid && L.solid.broken) L.planted = false;
       const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
+      // front legs lift off the ground to hold the weapon (or follow through a throw)
+      const hold = holds.get(i);
+      if (hold) {
+        const k = Math.min(1, dt * (L.hold ? 30 : 16));
+        L.fx = lerp(L.fx, hold.x, k); L.fy = lerp(L.fy, hold.y, k);
+        L.hold = true; L.planted = false; L.t = 1; L.solid = null;
+        continue;
+      }
+      if (L.hold) { L.hold = false; L.planted = false; L.t = 1; }
       if (g) {
         // ideal foothold: along the surface, leading in the walk direction
         const lead = clamp(((this.vx * tx + this.vy * ty) * 0.07), -r, r);
@@ -513,6 +530,36 @@ export class Spider {
     }
   }
 
+  // which legs hold what: Map(legIndex -> world point). The front legs on the
+  // side the weapon points to take the grip (and a long gun's barrel); after a
+  // throw the gripping leg stays stretched out after it for a moment.
+  holdTargets(tx, ty) {
+    const out = new Map();
+    this.reachT = Math.max(0, (this.reachT || 0) - this.game.world.dt);
+    if (this.flingT > 0) {
+      this.flingT -= this.game.world.dt;
+      const d = this.flingDir;
+      const side = Math.sign(d.x * tx + d.y * ty) || this.facing;
+      const i = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
+      const ext = SP.legLen * 1.7 * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
+      out.set(i, { x: this.x + d.x * ext, y: this.y + d.y * ext });
+      return out;
+    }
+    const w = this.weapon;
+    if (!w || !w.hands) return out;
+    const ax = Math.cos(w.angle), ay = Math.sin(w.angle);
+    let side = Math.sign(ax * tx + ay * ty);
+    if (!side) side = this.facing;
+    // hysteresis: don't swap legs while the weapon points straight up/down
+    if (this.holdSide && Math.abs(ax * tx + ay * ty) < 0.25) side = this.holdSide;
+    this.holdSide = side;
+    const hands = w.hands();
+    const grip = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
+    out.set(grip, hands[0]);
+    if (hands[1]) out.set(this.legs.findIndex((L) => L.side === side && L.off === LEGS[0].off), hands[1]);
+    return out;
+  }
+
   drawLegs(ctx, far) {
     const c = castAt(this.castIndex);
     const r = this.r;
@@ -521,7 +568,7 @@ export class Spider {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     for (const L of this.legs) {
-      if (L.far !== far) continue;
+      if (far === 'hold' ? !L.hold : (L.far !== far || L.hold)) continue;
       const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
       let fx = L.fx, fy = L.fy;
       let dx = fx - hipX, dy = fy - hipY;
@@ -537,18 +584,19 @@ export class Spider {
       const ka = s1 > s2 ? k1 : k2;
       const kx = hipX + Math.cos(ka) * SP.legLen, ky = hipY + Math.sin(ka) * SP.legLen;
       // thick thigh, thin shin: an outline pass then the colour pass
-      const outline = far ? '#0c0c12' : '#15151d', fill = far ? shade(c.dark, 0.6) : c.dark;
+      const back = far === true;
+      const outline = back ? '#0c0c12' : '#15151d', fill = back ? shade(c.dark, 0.6) : c.dark;
       ctx.strokeStyle = outline;
-      ctx.lineWidth = far ? 5.5 : 6.5;
+      ctx.lineWidth = back ? 5.5 : 6.5;
       ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-      ctx.lineWidth = far ? 3.8 : 4.4;
+      ctx.lineWidth = back ? 3.8 : 4.4;
       ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
       ctx.strokeStyle = fill;
-      ctx.lineWidth = far ? 2.6 : 3.2;
+      ctx.lineWidth = back ? 2.6 : 3.2;
       ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-      ctx.lineWidth = far ? 1.4 : 1.8;
+      ctx.lineWidth = back ? 1.4 : 1.8;
       ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
-      if (!far) {
+      if (!back) {
         ctx.fillStyle = c.accent;
         ctx.beginPath(); ctx.arc(kx, ky, 2.4, 0, TAU); ctx.fill();
         ctx.fillStyle = '#15151d';
@@ -588,6 +636,7 @@ export class Spider {
     this.drawWeb(ctx);
     this.drawLegs(ctx, true);
     this.drawLegs(ctx, false);
+    this.drawLegs(ctx, 'hold');     // behind the body: only the reaching part shows
     // player ring
     ctx.strokeStyle = this.color.main;
     ctx.lineWidth = 3;
