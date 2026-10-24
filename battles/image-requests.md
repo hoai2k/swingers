@@ -12,6 +12,8 @@ Round 3 (items 31–42) delivered six faction emblems and six reference sheets f
 Pirate, Renaissance, Prehistoric, Good, Evil, Secret and the big beasts.
 The six new emblems are built at 128×128 and registered in the preload manifest.
 Full-size originals are in `assets/originals/ui/`; sheets are in `reference/`.
+Reviewed in the game: all 15 faction emblems load in the setup tabs for both players,
+and every round-3 sheet matches its brief. No replacements needed.
 Exact built-in imagegen prompts, style references and dimensions are recorded in
 `assets/generation.json`. Rebuild with `python3 tools/build_battles_assets.py`.
 
