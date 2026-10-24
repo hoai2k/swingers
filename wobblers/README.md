@@ -39,7 +39,8 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Enter / exit seat | Y | E | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
-| Colour / hat | D-pad left-right / up-down | 1 2 / 3 4 | Numpad / * and - |
+| Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
+| Quick emotes: wave / cheer / dance | D-pad up / left / right | 2 / 3 / 4 | |
 | Menu | Start | Esc | Numpad Enter |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
@@ -94,6 +95,7 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
+| `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
 | `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks; persistent settings |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |

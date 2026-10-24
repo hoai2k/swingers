@@ -469,6 +469,7 @@ export class UI {
     });
     for (let i = ti; i < this.pool.length; i++) this.pool[i].style.display = 'none';
     this.emptySlots(views);
+    this.game.emotes?.draw(views); // emote wheels
     this.watchDevices();
   }
 

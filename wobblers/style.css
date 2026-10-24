@@ -152,3 +152,22 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; fon
   background: radial-gradient(circle at 50% 40%, #6fc3ff, #2a62c9); text-shadow: 0 2px 0 rgba(0,0,0,.25); box-sizing: border-box; border: 2px solid rgba(255,255,255,.9); }
 .emptyslot .ejoin { font-size: 26px; display: flex; align-items: center; gap: .3em; animation: pulse 1.2s ease-in-out infinite; }
 .emptyslot .esub { font-size: 13px; font-weight: 700; opacity: .9; }
+
+/* ---------- emote wheel (src/emotes.js) ---------- */
+.ewheel { position: absolute; width: var(--d); height: var(--d); transform: translate(-50%, -50%); --acc: var(--blue); color: #fff; animation: ewin .22s cubic-bezier(.3,1.6,.5,1); }
+@keyframes ewin { from { transform: translate(-50%, -50%) scale(.6); opacity: 0; } }
+.ewheel .edisc { position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0 21%, rgba(20,30,60,0) 21.5%), radial-gradient(circle, rgba(20,34,70,.62) 0 70%, rgba(20,34,70,0) 70.5%); }
+.ewheel .eptr { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-origin: 0 0; }
+.ewheel .eptr::before { content: ""; position: absolute; left: calc(var(--d) * -.035); top: calc(var(--d) * -.265); border: calc(var(--d) * .035) solid transparent; border-top: 0; border-bottom: calc(var(--d) * .05) solid var(--acc); }
+.ewheel .eslice { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -.36)) rotate(calc(var(--a) * -1)); }
+.ewheel .eitem { position: absolute; width: calc(var(--d) * .2); height: calc(var(--d) * .2); left: calc(var(--d) * -.1); top: calc(var(--d) * -.1); border-radius: 50%;
+  background: rgba(255,255,255,.16); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform .1s, background .1s; }
+.ewheel .eicon { width: 58%; height: 58%; } .ewheel .eicon svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.ewheel .elabel { font-weight: 900; font-size: calc(var(--d) * .042); line-height: 1; margin-top: 1px; text-shadow: 0 1px 0 rgba(0,0,0,.45); white-space: nowrap; }
+.ewheel .eslice.sel .eitem { background: var(--acc); transform: scale(1.22); box-shadow: 0 0 0 calc(var(--d) * .01) #fff, 0 4px 0 rgba(0,0,0,.25); }
+.ewheel .ehub { position: absolute; left: 50%; top: 50%; width: 40%; transform: translate(-50%, -50%); text-align: center; color: var(--ink); }
+.ewheel .ename { font-weight: 900; font-size: calc(var(--d) * .075); line-height: 1.05; }
+.ewheel .ehint { font-weight: 800; font-size: calc(var(--d) * .042); margin-top: .2em; display: flex; align-items: center; justify-content: center; gap: .15em; white-space: nowrap; }
+.ewheel.small .elabel { display: none; } .ewheel.small .eicon { width: 70%; height: 70%; }
+.ewheel.small .ehint { font-size: 9px; }

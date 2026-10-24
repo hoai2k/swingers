@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { RAPIER } from './physics.js';
 import { DT, ALL, groups, playerBit, G_VEH, HATS, PLAYER_COLORS } from './config.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
+import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
 
 export const S = 0.8; // overall character scale
 const UP = new THREE.Vector3(0, 1, 0);
@@ -622,6 +623,8 @@ export class Player {
         twist = Math.sin(this.phase) * 0.14 * amp;
       } else if (!hanging) leanT = 0.12;
       if (this.mantle) leanT = 0.5;
+      const eb = this.emoteBody; // emotes: body lean / sway / twist
+      if (eb) { leanT += eb.lean; waddle += eb.roll; twist += eb.twist; }
     }
     const lk = Math.min(1, DT * (this.swimming ? 4 : 9));
     this.lean += (leanT - this.lean) * lk;
@@ -674,7 +677,7 @@ export class Player {
       } else if (this.grounded && this.jumpCool <= 0) {
         // bouncy walk: the hips bob up as the legs pass each other
         const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
-        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S;
+        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0);
         if (this.getUp >= 0) h = this.getUpH + (h - this.getUpH) * rise;
         const err = h - this.groundDist;
         const vy = v.y - gv.y;
@@ -780,6 +783,7 @@ export class Player {
 
     // --- pose
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
+    if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);

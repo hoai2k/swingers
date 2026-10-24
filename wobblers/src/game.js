@@ -11,6 +11,7 @@ import { Audio } from './audio.js';
 import { UI } from './ui.js';
 import { buildWorld } from './world/index.js';
 import { Vehicle } from './vehicles.js';
+import { Emotes } from './emotes.js';
 
 export class Game {
   constructor(canvas) {
@@ -46,6 +47,7 @@ export class Game {
     this.setupLights();
     buildWorld(this);
     this.ui = new UI(this);
+    this.emotes = new Emotes(this); // emote wheel + quick emotes
     this.physics.world.step(); // build broad-phase so first queries work
     addEventListener('resize', () => this.resize());
     this.resize();
@@ -126,6 +128,7 @@ export class Game {
   }
 
   handlePlayerInput(p, d) {
+    this.emotes?.input(p, d); // may zero move/look while the emote wheel is open
     const inp = d.state, pr = d.pressed;
     if (pr.interact) {
       if (p.seat) p.leaveSeat();
