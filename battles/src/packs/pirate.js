@@ -12,7 +12,7 @@ import {
 } from './common.js';
 import { ballisticAngle } from '../util.js';
 import { yawOf, shoveBig, angleDiff, rangedEvent } from './sm-core.js';
-import { siegeLayout, siegeInit, siegeThink, siegeCrewDie } from './sm-siege.js';
+import { siegeLayout, siegeInit, siegeThink, siegeControl, siegeCrewDie } from './sm-siege.js';
 import { PROJ as PRP, shoot, addReel, reeling, wheel, barrel, ballMesh } from './pr-shared.js';
 
 const V3 = THREE.Vector3;
@@ -53,6 +53,12 @@ function fireCannon(b, c) {
     const a = ballisticAngle(Math.hypot(px - from.x, pz - from.z), tp.y - 0.2 - from.y, sp, g, false);
     if (a !== null) ang = clamp(a, -0.12, 0.4);
     yaw = yaw0 + clamp(angleDiff(yaw0, Math.atan2(px - from.x, pz - from.z)), -0.1, 0.1);
+  } else if (c.aimPt) {
+    // a possessed gunner fires at the crosshair point
+    const tp = c.aimPt;
+    const a = ballisticAngle(Math.hypot(tp.x - from.x, tp.z - from.z), tp.y - from.y, sp, g, false);
+    if (a !== null) ang = clamp(a, -0.12, 0.4);
+    yaw = yaw0 + clamp(angleDiff(yaw0, Math.atan2(tp.x - from.x, tp.z - from.z)), -0.1, 0.1);
   }
   yaw += rand(-1, 1) * w.spread; ang += rand(-1, 1) * w.spread * 0.4;
   const fx = Math.sin(yaw), fz = Math.cos(yaw);
@@ -430,7 +436,7 @@ register({
   kinds: {
     pi_harpoon: harpooner,
     pi_captain: captain,
-    pi_cannon: { melee: true, init: (u) => siegeInit(u, CANNON), think: siegeThink, event: cannonEvent, die: siegeCrewDie },
+    pi_cannon: { melee: true, init: (u) => siegeInit(u, CANNON), think: siegeThink, event: cannonEvent, die: siegeCrewDie, control: siegeControl },
   },
   proj: { pi_harpoon: harpoon },
   buildItem, buildHat, decorate, buildProj,

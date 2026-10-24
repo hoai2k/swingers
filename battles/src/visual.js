@@ -1241,7 +1241,9 @@ export function renderPortraits(defs, size = 128) {
       const box3 = new THREE.Box3().setFromObject(vis.root);
       const ctr = box3.getCenter(new THREE.Vector3());
       const ext = box3.getSize(new THREE.Vector3());
-      const d = Math.max(ext.y, ext.x * 1.1) / (2 * Math.tan((15 * Math.PI) / 180)) * 1.02;
+      // frame the height (or the width, up to 1.3x the height: a very wide unit - the
+      // Pterodactyl's wings - is framed on its body and lets the wingtips run off the edge)
+      const d = Math.max(ext.y, Math.min(ext.x * 1.1, ext.y * 1.3)) / (2 * Math.tan((15 * Math.PI) / 180)) * 1.02;
       cam.position.set(ctr.x + d * 0.25, ctr.y + hgt * 0.06, ctr.z + d);
       cam.lookAt(ctr);
       r.render(scene, cam);

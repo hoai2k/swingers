@@ -15,16 +15,27 @@ const parry = {
   init(u) { u.parryT = 0; },
   think: meleeThink,
   step(u, dt) { u.parryT -= dt; },
-  // catches blows and arrows from the front, then answers at once
-  hit(u, amount, part, attacker, kind) {
-    if (!attacker || u.parryT > 0 || u.stun > 0 || u.isDown() || kind === 'blast' || kind === 'poison' || kind === 'burn') return amount;
-    if (!inFront(u, attacker.pos.x, attacker.pos.z, 0.25) || Math.random() > u.def.weapon.parry) return amount;
+  // catches blows and arrows from the front, then answers at once. kind.parry is asked
+  // before a hit lands (battle.js melee and projectiles, common.js strike), so a parried
+  // blow draws no blood and knocks nothing back; hit() covers the pack attacks that
+  // don't ask first.
+  parry(u, attacker, kind) {
+    u.parryAsk = attacker; u.parryAskT = u.battle.time;
+    if (!attacker || u.parryT > 0 || u.stun > 0 || u.isDown() || kind === 'blast' || kind === 'poison' || kind === 'burn') return false;
+    if (!inFront(u, attacker.pos.x, attacker.pos.z, 0.25) || Math.random() > u.def.weapon.parry) return false;
     u.parryT = 0.45;
+    u.parriedAt = u.battle.time;
     u.cooldown = Math.min(u.cooldown, 0.05);
     const b = u.battle, h = u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset * 2, 0, _v);
     b.emit('spark', h.x, h.y, h.z, 8);
     b.sound('clang', h, 0.9, 1.4);
-    return amount * 0.1;
+    return true;
+  },
+  hit(u, amount, part, attacker, kind) {
+    const t = u.battle.time;
+    if (u.parriedAt === t) return amount * 0.1;
+    if (u.parryAskT === t && u.parryAsk === attacker) return amount; // (asked already: not parried)
+    return parry.parry(u, attacker, kind) ? amount * 0.1 : amount;
   },
 };
 

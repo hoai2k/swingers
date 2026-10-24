@@ -58,6 +58,16 @@ const skelOf = (def) => {
   return s;
 };
 const teamTag = (t) => `<b style="color:${TEAM_COLORS[t]}">${TEAM_NAMES[t]}</b>`;
+// Possessed, does this unit shoot where the crosshair points (LT aims instead of
+// blocking)? Core ranged units, and pack kinds that say so (kind.aim) or that have a
+// range and no melee (guns, Zeus, a mammoth's spear thrower...); kind.aim: false opts out.
+function aims(u) {
+  const w = u?.def.weapon, k = u?.kind;
+  if (!w) return false;
+  if (w.kind === 'ranged') return true;
+  if (k && k.aim !== undefined) return !!k.aim;
+  return !!k && !k.melee && w.range > 0 && !u.bc;
+}
 const onOff = (b) => (b ? 'On' : 'Off');
 
 export class Game {
@@ -301,6 +311,10 @@ export class Game {
       case 'replay': this.updateReplay(dt); break;
       case 'paused': this.updatePause(dt); break;
     }
+    // slow motion slows the sound too (pitch of new sounds, a muffling low-pass)
+    const ts = this.state === 'battle' || this.state === 'result' ? this.timeScale
+      : this.state === 'replay' && this.player ? (this.player.playing ? this.player.speed : 1) : this.state === 'paused' ? this.audio.wantScale ?? 1 : 1;
+    this.audio.setTimeScale(ts);
     if (this.snow) {
       const p = this.snow.geometry.attributes.position;
       const c = this.rigs[0].pos;
@@ -1364,7 +1378,9 @@ export class Game {
       for (let j = 0; j < u.held.length; j++) { const h = u.held[j]; placeHeld(vis, j, h.body ? h.pos : null, h.quat); }
       setExpression(vis, u.expr);
       const w = u.def.weapon;
-      if (w.kind === 'ranged' && w.style === 'throw') {
+      // a thrown weapon leaves the hand (core throwers, and pack kinds that throw their
+      // held item: the Mammoth rider's spear, the Harpooner's harpoon...)
+      if (w.anim === 'throw' && w.proj) {
         u.itemHidden = u.st.attack ? u.st.attackT > (w.releaseAt || 0.7) : u.released && u.cooldown > w.cooldown * 0.4;
         for (const it of vis.items) it.visible = !u.itemHidden;
       }
@@ -1511,8 +1527,7 @@ export class Game {
       if (rig.mode === 'possess') this.possessControl(v, rig, s, units);
       const slow = rig.mode === 'free' || rig.mode === 'follow' ? clamp((s.lt - 0.15) / 0.7, 0, 1) : 0;
       // possessing: LT aims (zooms in, finer look) with ranged units, blocks with the rest
-      const ranged = rig.unit?.def.weapon.kind === 'ranged';
-      const aiming = rig.mode === 'possess' && s.lt > 0.3 && ranged;
+      const aiming = rig.mode === 'possess' && s.lt > 0.3 && aims(rig.unit);
       rig.aimZoom = lerp(rig.aimZoom || 0, aiming ? 1 : 0, damp(10, dt));
       const look = this.lookOpts;
       if (rig.mode === 'possess') look.lookSpeed *= 1 - 0.55 * rig.aimZoom;
@@ -1537,19 +1552,26 @@ export class Game {
     const tgt = rig.aimPoint(this.terrain, units, u, 90);
     const cp = u.chestPos;
     c.aimYaw = Math.atan2(tgt.x - cp.x, tgt.z - cp.z);
-    const w = u.def.weapon;
+    // the crosshair point itself: pack kinds aim their shots / spells at it
+    // (common.js aimPoint), siege crews lay their engine on it
+    c.aimPt = (c.aimPt || new THREE.Vector3()).copy(tgt);
+    const w = u.def.weapon, aimer = aims(u);
     rig.aimInfo = null;
-    if (w.kind === 'ranged' && w.speed) {
-      const dx = Math.hypot(tgt.x - cp.x, tgt.z - cp.z), dy = tgt.y - (cp.y + 0.3 * (u.s || 1));
+    const dx = Math.hypot(tgt.x - cp.x, tgt.z - cp.z);
+    if (aimer && w.speed) {
+      const dy = tgt.y - (cp.y + 0.3 * (u.s || 1));
       const g = PROJ[w.proj]?.g ?? 9.81;
       let ang = g <= 0.01 ? Math.atan2(dy, dx) : ballisticAngle(dx, dy, w.speed, g, w.arc === 'high');
-      const reach = ang !== null;
+      const reach = ang !== null && !(w.range && dx > w.range * 1.5);
       if (ang === null) ang = Math.PI / 4;
       c.aimPitch = clamp(ang, -0.7, 1.45);
       rig.aimInfo = { dist: dx, ok: reach };
-    } else c.aimPitch = clamp(rig.pitch + 0.35, 0.05, 1.1);
+    } else {
+      c.aimPitch = clamp(rig.pitch + 0.35, 0.05, 1.1);
+      if (aimer && w.range) rig.aimInfo = { dist: dx, ok: dx <= w.range * 1.2 };
+    }
     c.attack = s.rt > 0.4;
-    c.block = w.kind !== 'ranged' && s.lt > 0.3;
+    c.block = !aimer && s.lt > 0.3;
     if (this.vPressed(v, 'a')) c.jump = true;
     if (rig.lastHp !== undefined && u.hp < rig.lastHp - 0.5) {
       const f = clamp((rig.lastHp - u.hp) / u.maxHp * 4, 0.15, 1);
@@ -1562,7 +1584,7 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${rig.unit?.def.weapon.kind === 'ranged' ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
+        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
       case 'cine':
@@ -1835,7 +1857,7 @@ export class Game {
     for (const r of this.rigs) { if (r.unit && r.unit.control) r.unit.control = null; r.release(); }
     // camera proxies so you can follow units in the replay
     this.proxies = this.battleVis.map((vis, i) => ({
-      vis, team: this.rec.units[i].team, def: UNIT_BY_ID[this.rec.units[i].type], s: vis.skel.scale,
+      vis, team: this.rec.units[i].team, def: UNIT_BY_ID[this.rec.units[i].type], def0: UNIT_BY_ID[this.rec.units[i].type], s: vis.skel.scale,
       get chestPos() { return vis.parts[PART.chest].position; }, alive: true, hp: 1, maxHp: 1,
     }));
     const overT = this.overTime || P.duration;
@@ -1921,6 +1943,9 @@ export class Game {
         for (const it of vis.items) it.visible = !hide;
         const px = this.proxies[i];
         px.alive = !!(f & 8);
+        // a raised zombie fights for the side that raised it from then on
+        px.team = f & 32 ? 1 : 0;
+        px.def = f & 64 ? px.zdef || (px.zdef = { ...px.def0, name: 'Zombie ' + px.def0.name }) : px.def0;
         px.maxHp = px.def.hp;
         px.hp = (fr.hp[i] / 255) * px.def.hp;
       });

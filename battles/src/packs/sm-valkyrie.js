@@ -100,6 +100,57 @@ export function valkThink(u, dt, ctx) {
   }
 }
 
+// Possessed (kind.control): the stick flies her about at cruise height; the attack
+// button dives on the crosshair point (control.aimPt, at most 14 m off) and swings
+// as she gets there, then she climbs away as the AI does.
+export function diveTarget(u, c, out, maxD = 14) {
+  const p = u.pos;
+  if (c.aimPt) out.copy(c.aimPt);
+  else out.set(p.x + Math.sin(u.heading) * 8, u.battle.terrain.height(p.x, p.z), p.z + Math.cos(u.heading) * 8);
+  const dx = out.x - p.x, dz = out.z - p.z, d = Math.hypot(dx, dz);
+  if (d > maxD) { out.x = p.x + dx / d * maxD; out.z = p.z + dz / d * maxD; out.y = Math.min(out.y, u.battle.terrain.height(out.x, out.z) + 1.5); }
+  return out;
+}
+export function valkControl(u, dt, c) {
+  const f = u.sm, b = u.battle, p = u.pos;
+  f.t += dt;
+  // the dive follows the crosshair (taken over mid-dive too)
+  if (f.state === 'dive' || f.state === 'strike') { f.diveAt = diveTarget(u, c, f.diveAt || new V3()); }
+  if (f.state === 'dive') {
+    const at = f.diveAt, dx = at.x - p.x, dz = at.z - p.z, dist = Math.hypot(dx, dz) || 1;
+    const gy = b.terrain.height(at.x, at.z);
+    const low = Math.max(0.5, at.y - gy - (u.chestPos.y - p.y) - 0.1);
+    f.alt = low + (VALK.alt - low) * clamp((dist - 3.5) / 7, 0, 1);
+    const d3 = u.chestPos.distanceTo(at);
+    // (close in but still high above it: hold back and drop onto it)
+    const dy = u.chestPos.y - at.y;
+    const sp = clamp((d3 - 1.5) * 2.2, 3.5, VALK.dive) * (dist < 6 ? clamp(1 - (dy - 0.8) / 2.5, 0.3, 1) : 1);
+    u.desired.set(dx / dist * sp, 0, dz / dist * sp);
+    u.faceYaw = Math.atan2(dx, dz);
+    const vh = Math.hypot(u.rag.vel[PART.pelvis].x, u.rag.vel[PART.pelvis].z);
+    // swing once down at the target's height and about to reach it
+    if (((dist < u.reachDist + 0.5 + vh * 0.3 && dy < 1.0) || f.t > 3) && !u.st.attack) {
+      u.startAttack(); b.sound('whoosh', p, 0.8, 0.8); f.state = 'strike'; f.t = 0;
+    }
+    return true;
+  }
+  if (f.state === 'strike') {
+    // swoop through toward the target
+    const dx = f.diveAt.x - p.x, dz = f.diveAt.z - p.z, d = Math.hypot(dx, dz) || 1;
+    u.desired.set(dx / d * 5, 0, dz / d * 5);
+    if (!u.st.attack || u.st.attackT > 0.82 || f.t > 1.4) { f.state = 'climb'; f.t = 0; }
+    return true;
+  }
+  if (f.state === 'climb' && f.t < 1) f.alt = VALK.alt + 1;
+  else { f.state = 'cruise'; f.alt = VALK.alt; }
+  if (c.attack && f.state === 'cruise' && u.cooldown <= 0 && u.stun <= 0 && !u.st.attack) {
+    f.state = 'dive'; f.t = 0;
+    f.diveAt = diveTarget(u, c, f.diveAt || new V3());
+    b.sound('whoosh', p, 0.7, 0.7);
+  }
+  return true;
+}
+
 export function valkStep(u, dt) {
   const f = u.sm, b = u.battle, rag = u.rag, p = u.pos, v = rag.vel[PART.pelvis];
   const stunned = u.stun > 0.3;
