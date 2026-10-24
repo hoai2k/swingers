@@ -29,8 +29,8 @@ export class FollowCam {
 
     let tgt, wantDist;
     if (veh) {
-      const t = veh.body.translation();
-      tgt = new THREE.Vector3(t.x, t.y + veh.def.camH, t.z);
+      tgt = this.game.physics.ipos(veh.rec, new THREE.Vector3());
+      tgt.y += veh.def.camH;
       wantDist = veh.def.camDist;
       // swing behind the car when the player isn't steering the camera
       if (this.idle > 1.2 && Math.abs(veh.speed) > 2) {
@@ -40,8 +40,8 @@ export class FollowCam {
         this.pitch += (0.25 - this.pitch) * Math.min(1, dt * 1.5);
       }
     } else {
-      const c = p.chest.translation();
-      tgt = new THREE.Vector3(c.x, c.y + 0.55, c.z);
+      tgt = p.viewPos(new THREE.Vector3());
+      tgt.y += 0.55;
       wantDist = ride ? 7.5 : 5.2;
     }
     if (this.first) { this.target.copy(tgt); this.first = false; }

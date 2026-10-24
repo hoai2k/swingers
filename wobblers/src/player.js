@@ -107,7 +107,7 @@ export class Player {
         cols.push(this.world.createCollider(hd, body));
       }
       for (const c of cols) this.physics.handleOwner.set(c.handle, this);
-      const part = { def: p, body, cols, mesh: this.partMesh(p), target: new THREE.Quaternion(), kp: 0, kd: 0, maxT: 1e9,
+      const part = { def: p, body, cols, mesh: this.partMesh(p), target: new THREE.Quaternion(), kp: 0, kd: 0, maxT: 1e9, rec: this.physics.track(body),
         rest: new THREE.Vector3(p.pos[0] * S, p.pos[1] * S, p.pos[2] * S) };
       const I = body.principalInertia();
       part.I = (I.x + I.y + I.z) / 3;
@@ -253,6 +253,7 @@ export class Player {
       p.body.setRotation(rot, true);
       p.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
       p.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      p.rec.snap = true;
     }
     this.prevChestVel.set(0, 0, 0);
     this.impactGrace = 0.3;
@@ -743,12 +744,10 @@ export class Player {
   }
 
   sync() {
-    for (const n in this.parts) {
-      const p = this.parts[n], t = p.body.translation(), r = p.body.rotation();
-      p.mesh.position.set(t.x, t.y, t.z);
-      p.mesh.quaternion.set(r.x, r.y, r.z, r.w);
-    }
+    for (const n in this.parts) { const p = this.parts[n]; this.physics.pose(p.rec, p.mesh); }
   }
+  // Interpolated chest position (for cameras and tags).
+  viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
     if (this.seat) this.leaveSeat();
@@ -756,6 +755,7 @@ export class Player {
     for (const n in this.parts) {
       const p = this.parts[n];
       for (const c of p.cols) this.physics.handleOwner.delete(c.handle);
+      this.physics.untrack(p.rec);
       this.world.removeRigidBody(p.body);
     }
     this.game.scene.remove(this.group);

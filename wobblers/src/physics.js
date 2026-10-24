@@ -29,6 +29,8 @@ export class Physics {
     this.waterBoxes = [];     // {minX,maxX,minZ,maxZ,minY,level}
     this.handleOwner = new Map(); // collider handle -> owner object (player/vehicle/prop)
     this.time = 0;
+    this.records = new Set(); // render interpolation between physics steps
+    this.alpha = 1;
     this.events = new RAPIER.EventQueue(true);
     this.onContactForce = null;
   }
@@ -152,18 +154,42 @@ export class Physics {
     for (const a of this.animators) a(this.time, DT);
     for (const o of this.objects) this.applyBuoyancy(o);
     this.world.step(this.events);
+    this.capture();
     if (this.onContactForce) {
       this.events.drainContactForceEvents((e) => this.onContactForce(e));
     } else this.events.drainContactForceEvents(() => {});
     this.events.clear?.();
   }
 
+  // ---- render interpolation ------------------------------------------------
+  track(body) {
+    const t = body.translation(), r = body.rotation();
+    const rec = { body, p0: new THREE.Vector3(t.x, t.y, t.z), q0: new THREE.Quaternion(r.x, r.y, r.z, r.w), snap: false };
+    rec.p1 = rec.p0.clone(); rec.q1 = rec.q0.clone();
+    this.records.add(rec);
+    return rec;
+  }
+  untrack(rec) { this.records.delete(rec); }
+  capture() {
+    for (const r of this.records) {
+      r.p0.copy(r.p1); r.q0.copy(r.q1);
+      const t = r.body.translation(), q = r.body.rotation();
+      r.p1.set(t.x, t.y, t.z); r.q1.set(q.x, q.y, q.z, q.w);
+      if (r.snap) { r.p0.copy(r.p1); r.q0.copy(r.q1); r.snap = false; }
+    }
+  }
+  // Interpolated pose of a tracked body onto an Object3D.
+  pose(rec, obj) {
+    obj.position.lerpVectors(rec.p0, rec.p1, this.alpha);
+    obj.quaternion.slerpQuaternions(rec.q0, rec.q1, this.alpha);
+  }
+  ipos(rec, out) { return out.lerpVectors(rec.p0, rec.p1, this.alpha); }
+
   sync() {
     for (const o of this.objects) {
       if (!o.mesh) continue;
-      const t = o.body.translation(), r = o.body.rotation();
-      o.mesh.position.set(t.x, t.y, t.z);
-      o.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+      if (!o.rec) o.rec = this.track(o.body);
+      this.pose(o.rec, o.mesh);
     }
   }
 

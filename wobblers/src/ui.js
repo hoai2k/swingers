@@ -84,7 +84,7 @@ export class UI {
       const cam = p.camera.cam;
       for (const q of ps) {
         if (q === p) continue;
-        const hd = q.parts.head.body.translation();
+        const hd = q.viewPos(new THREE.Vector3(), 'head');
         v3.set(hd.x, hd.y + 0.45, hd.z).project(cam);
         if (v3.z > 1 || v3.x < -1 || v3.x > 1 || v3.y < -1 || v3.y > 1) continue;
         const dist = cam.position.distanceTo(new THREE.Vector3(hd.x, hd.y, hd.z));
@@ -111,13 +111,13 @@ export class UI {
     for (const p of g.players) {
       const d = inp.get(p.deviceId);
       if (!d) continue;
-      const startPressed = p.deviceId === 'kb1' ? (d.pressed.start && inp.keys.has('Escape')) : d.pressed.start;
+      const startPressed = p.deviceId === 'kb1' ? (d.pressed.start && inp.held().has('Escape')) : d.pressed.start;
       if (startPressed) { this.openMenu(p); return; }
     }
     const taken = new Set(g.players.map((p) => p.deviceId));
     for (const id of inp.joinPresses()) {
       if (taken.has(id)) continue;
-      if (id === 'kb1' && inp.keys.has('Escape')) continue;
+      if (id === 'kb1' && inp.held().has('Escape')) continue;
       const p = g.addPlayer(id);
       if (p) {
         this.title.classList.add('hidden');

@@ -20,6 +20,10 @@ const dead = (v, d = 0.18) => {
 export class Input {
   constructor(canvas) {
     this.keys = new Set();
+    this.taps = new Set(); // keys pressed since the last poll (so quick taps aren't lost)
+    this.mouseTaps = 0;
+    this.pollTaps = new Set();
+    this.pollMouseTaps = 0;
     this.mouseDX = 0; this.mouseDY = 0;
     this.mouseButtons = 0;
     this.devices = new Map(); // id -> {state, prev}
@@ -27,6 +31,7 @@ export class Input {
     this.mock = null; // tests: { id: partialState }
     addEventListener('keydown', (e) => {
       this.keys.add(e.code);
+      this.taps.add(e.code);
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
     });
     addEventListener('keyup', (e) => this.keys.delete(e.code));
@@ -34,7 +39,7 @@ export class Input {
     addEventListener('mousemove', (e) => {
       if (document.pointerLockElement === canvas) { this.mouseDX += e.movementX; this.mouseDY += e.movementY; }
     });
-    addEventListener('mousedown', (e) => { this.mouseButtons |= (1 << e.button); });
+    addEventListener('mousedown', (e) => { this.mouseButtons |= (1 << e.button); this.mouseTaps |= (1 << e.button); });
     addEventListener('mouseup', (e) => { this.mouseButtons &= ~(1 << e.button); });
     addEventListener('contextmenu', (e) => e.preventDefault());
   }
@@ -43,8 +48,11 @@ export class Input {
     if (document.pointerLockElement !== this.canvas) this.canvas.requestPointerLock?.();
   }
 
+  // A key counts as held if it is down now or was tapped since the last poll.
+  held() { const k = this.keys, t = this.pollTaps; return { has: (c) => k.has(c) || t.has(c) }; }
+
   kb1() {
-    const k = this.keys, s = blank();
+    const k = this.held(), s = blank();
     s.moveX = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
     s.moveY = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0);
     const l = Math.hypot(s.moveX, s.moveY); if (l > 1) { s.moveX /= l; s.moveY /= l; }
@@ -56,8 +64,9 @@ export class Input {
     s.sprint = k.has('ShiftLeft') || k.has('ShiftRight');
     s.start = k.has('Escape') || k.has('Enter');
     s.back = k.has('Backspace');
-    s.grabL = (this.mouseButtons & 1) || k.has('KeyQ') ? 1 : 0;
-    s.grabR = (this.mouseButtons & 4) || k.has('KeyC') ? 1 : 0;
+    const mb = this.mouseButtons | this.pollMouseTaps;
+    s.grabL = (mb & 1) || k.has('KeyQ') ? 1 : 0;
+    s.grabR = (mb & 4) || k.has('KeyC') ? 1 : 0;
     s.horn = k.has('KeyH');
     s.dLeft = k.has('Digit1'); s.dRight = k.has('Digit2'); s.dUp = k.has('Digit3'); s.dDown = k.has('Digit4');
     // Driving: W/S also act as gas/brake, Space handbrake.
@@ -67,7 +76,7 @@ export class Input {
   }
 
   kb2() {
-    const k = this.keys, s = blank();
+    const k = this.held(), s = blank();
     s.moveX = (k.has('ArrowRight') ? 1 : 0) - (k.has('ArrowLeft') ? 1 : 0);
     s.moveY = (k.has('ArrowUp') ? 1 : 0) - (k.has('ArrowDown') ? 1 : 0);
     const l = Math.hypot(s.moveX, s.moveY); if (l > 1) { s.moveX /= l; s.moveY /= l; }
@@ -107,6 +116,8 @@ export class Input {
   }
 
   poll() {
+    this.pollTaps = this.taps; this.taps = new Set();
+    this.pollMouseTaps = this.mouseTaps; this.mouseTaps = 0;
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const seen = new Set();
     const set = (id, s) => {
@@ -136,7 +147,7 @@ export class Input {
   joinPresses() {
     const out = [];
     for (const [id, d] of this.devices) {
-      if (id === 'kb1' && (d.pressed.start && this.keys.has('Enter') || d.pressed.jump)) out.push(id);
+      if (id === 'kb1' && (d.pressed.start && this.held().has('Enter') || d.pressed.jump)) out.push(id);
       else if (id === 'kb2' && (d.pressed.start || d.pressed.jump)) out.push(id);
       else if (id.startsWith('gp') && (d.pressed.jump || d.pressed.start)) out.push(id);
       else if (id.startsWith('mock') && d.pressed.start) out.push(id);

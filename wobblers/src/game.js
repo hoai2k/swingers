@@ -179,7 +179,7 @@ export class Game {
   }
 
   frame(dt) {
-    dt = Math.min(dt, 0.1);
+    dt = Math.max(0, Math.min(dt, 0.1));
     this.time += dt;
     this.input.poll();
     this.ui.handleInput();
@@ -196,7 +196,8 @@ export class Game {
       while (this.acc >= DT && n < 3) { this.step(); this.acc -= DT; n++; }
       if (n === 3) this.acc = 0;
       this.physics.recover();
-    }
+      this.physics.alpha = Math.min(1, this.acc / DT);
+    } else this.physics.alpha = 1;
     for (const f of this.updaters) f(dt, this.time);
     this.physics.sync();
     for (const p of this.players) p.sync();

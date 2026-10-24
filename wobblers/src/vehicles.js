@@ -10,21 +10,21 @@ const CAR_COLORS = [0xff4d4d, 0x3d7dff, 0xffd23f, 0x4fd16a, 0xff8a3d, 0xb46cff, 
 // Vehicle definitions. Dimensions in metres, body frame: +Z forward, +X left.
 export const VEHICLES = {
   car: {
-    mass: 1000, half: [0.95, 0.32, 2.05], cabin: { half: [0.85, 0.38, 1.05], off: [0, 0.68, -0.25] },
+    mass: 1000, half: [0.95, 0.32, 2.05], cabin: { half: [0.88, 0.47, 1.1], off: [0, 0.78, -0.3] },
     wheels: { x: 0.86, y: -0.1, zf: 1.35, zr: -1.3, r: 0.4, rest: 0.32 }, engine: 5200, brake: 90, maxSpeed: 27, steer: 0.55,
-    seats: [{ pos: [0.38, 0.32, -0.15], kind: 'driver' }, { pos: [-0.38, 0.32, -0.15] }, { pos: [0.38, 0.32, -1.05] }, { pos: [-0.38, 0.32, -1.05] }],
+    seats: [{ pos: [0.4, 0.14, 0.05], kind: 'driver' }, { pos: [-0.4, 0.14, 0.05] }, { pos: [0.4, 0.14, -0.95] }, { pos: [-0.4, 0.14, -0.95] }],
     camH: 1.5, camDist: 8.5,
   },
   pickup: {
-    mass: 1300, half: [1.0, 0.36, 2.5], cabin: { half: [0.9, 0.42, 0.75], off: [0, 0.78, 0.55] }, bed: true,
+    mass: 1300, half: [1.0, 0.36, 2.5], cabin: { half: [0.92, 0.5, 0.8], off: [0, 0.86, 0.5] }, bed: true,
     wheels: { x: 0.92, y: -0.12, zf: 1.7, zr: -1.6, r: 0.48, rest: 0.38 }, engine: 6600, brake: 110, maxSpeed: 25, steer: 0.5,
-    seats: [{ pos: [0.4, 0.38, 0.5], kind: 'driver' }, { pos: [-0.4, 0.38, 0.5] }, { pos: [0.5, 0.45, -1.4], yaw: Math.PI / 2 }, { pos: [-0.5, 0.45, -1.4], yaw: -Math.PI / 2 }],
+    seats: [{ pos: [0.42, 0.18, 0.5], kind: 'driver' }, { pos: [-0.42, 0.18, 0.5] }, { pos: [0.5, 0.45, -1.4], yaw: Math.PI / 2 }, { pos: [-0.5, 0.45, -1.4], yaw: -Math.PI / 2 }],
     camH: 1.8, camDist: 9.5,
   },
   van: {
     mass: 1500, half: [1.05, 0.38, 2.4], cabin: { half: [1.0, 0.75, 1.75], off: [0, 1.1, -0.45] }, icecream: false,
     wheels: { x: 0.95, y: -0.12, zf: 1.6, zr: -1.55, r: 0.45, rest: 0.36 }, engine: 7000, brake: 120, maxSpeed: 22, steer: 0.5,
-    seats: [{ pos: [0.42, 0.42, 1.0], kind: 'driver' }, { pos: [-0.42, 0.42, 1.0] }, { pos: [0.42, 0.42, -0.4] }, { pos: [-0.42, 0.42, -0.4] }, { pos: [0.42, 0.42, -1.4] }, { pos: [-0.42, 0.42, -1.4] }],
+    seats: [{ pos: [0.45, 0.3, 0.95], kind: 'driver' }, { pos: [-0.45, 0.3, 0.95] }, { pos: [0.45, 0.3, -0.4] }, { pos: [-0.45, 0.3, -0.4] }, { pos: [0.45, 0.3, -1.5] }, { pos: [-0.45, 0.3, -1.5] }],
     camH: 2.2, camDist: 10,
   },
   kart: {
@@ -129,6 +129,7 @@ export class Vehicle {
     this.idleTimer = 0;
     this.buildMesh();
     game.scene.add(this.mesh);
+    this.rec = game.physics.track(this.body);
   }
 
   driver() { return this.seats.find((s) => s.kind === 'driver')?.occupant || null; }
@@ -186,9 +187,22 @@ export class Vehicle {
       }
       if (def.cabin) {
         const ch = def.cabin.half, co = def.cabin.off;
-        b.rbox(ch[0] * 2, ch[1] * 2, ch[2] * 2, 0.2, c, co, null, 3);
-        if (def.icecream || this.type === 'van') {
-          b.box(ch[0] * 2 + 0.02, 0.18, ch[2] * 2 + 0.02, 0xffffff, [co[0], co[1] - 0.15, co[2]]);
+        const top = co[1] + ch[1], bot = h[1];
+        if (this.type === 'van') {
+          // boxy body with a window band
+          const winB = co[1] + 0.05;
+          b.rbox(ch[0] * 2, winB - bot, ch[2] * 2, 0.12, c, [co[0], (winB + bot) / 2, co[2]]);
+          b.rbox(ch[0] * 2, 0.22, ch[2] * 2, 0.1, c, [co[0], top - 0.11, co[2]]);
+          for (const sx of [-1, 1]) for (const sz of [-1, 0, 1]) b.box(0.1, top - winB, 0.14, c, [sx * (ch[0] - 0.05), (top + winB) / 2, co[2] + sz * (ch[2] - 0.07)]);
+          b.box(ch[0] * 2 + 0.02, 0.16, ch[2] * 2 + 0.02, 0xffffff, [co[0], winB - 0.12, co[2]]);
+        } else {
+          // pillars and a roof so you can see who's driving
+          b.rbox(ch[0] * 2, 0.12, ch[2] * 2, 0.05, c, [co[0], top - 0.06, co[2]]);
+          for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+            b.box(0.09, top - bot, 0.09, c, [sx * (ch[0] - 0.05), (top + bot) / 2, co[2] + sz * (ch[2] - 0.05)], [sz * -0.12, 0, 0]);
+          }
+          b.rbox(ch[0] * 2, 0.16, 0.3, 0.06, 0x33333a, [co[0], bot + 0.16, co[2] + ch[2] - 0.1]);
+          b.cyl(0.17, 0.17, 0.04, 0x22222a, [0.4, bot + 0.42, co[2] + ch[2] - 0.35], [1.1, 0, 0], 14);
         }
       }
       if (def.bed) {
@@ -201,11 +215,14 @@ export class Vehicle {
     g.add(body);
     // windows (separate glass material)
     if (def.cabin && !def.boat) {
-      const ch = def.cabin.half, co = def.cabin.off;
-      const gb = new Builder();
-      gb.box(ch[0] * 2 + 0.04, ch[1] * 1.1, ch[2] * 2 - 0.3, 0, [co[0], co[1] + 0.05, co[2]]);
-      gb.box(ch[0] * 2 - 0.25, ch[1] * 1.1, ch[2] * 2 + 0.04, 0, [co[0], co[1] + 0.05, co[2]]);
+      const ch = def.cabin.half, co = def.cabin.off, top = co[1] + ch[1];
+      const bot = this.type === 'van' ? co[1] + 0.05 : h[1];
+      const gb = new Builder(), wh = top - bot - 0.12, wy = (top + bot) / 2 - 0.03;
+      gb.box(ch[0] * 2 - 0.12, wh, 0.03, 0, [co[0], wy, co[2] + ch[2] - 0.05]);
+      gb.box(ch[0] * 2 - 0.12, wh, 0.03, 0, [co[0], wy, co[2] - ch[2] + 0.05]);
+      for (const sx of [-1, 1]) gb.box(0.03, wh, ch[2] * 2 - 0.12, 0, [sx * (ch[0] - 0.04), wy, co[2]]);
       const gm = new THREE.Mesh(gb.geometry(), matGlass);
+      gm.renderOrder = 2;
       g.add(gm);
     }
     // wheels
@@ -330,12 +347,11 @@ export class Vehicle {
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     this.idleTimer = 0;
+    this.rec.snap = true;
   }
 
   sync() {
-    const t = this.body.translation(), r = this.body.rotation();
-    this.mesh.position.set(t.x, t.y, t.z);
-    this.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+    this.game.physics.pose(this.rec, this.mesh);
     if (!this.ctrl) return;
     const vc = this.ctrl;
     for (let i = 0; i < 4; i++) {
