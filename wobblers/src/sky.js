@@ -40,7 +40,7 @@ function blend3(arr, night, twi, out) {
 const skyVert = `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position.z = gl_Position.w * 0.99999; }`;
 const skyFrag = `
 uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 sunCol; uniform vec3 moonDir;
-uniform float night; uniform float sunset; uniform float time;
+uniform float night; uniform float sunset; uniform float time; uniform float under; uniform vec3 underCol;
 varying vec3 vP;
 float h31(vec3 p){ p = fract(p*0.3183099+0.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
 void main(){
@@ -66,6 +66,7 @@ void main(){
     c += vec3(1.0) * step(0.985, st) * smoothstep(0.25, 0.0, length(f)) * night * tw * smoothstep(0.0, 0.25, y);
   }
   // written raw, like three's fog colour, so distant fogged things melt into the sky
+  if (under > 0.5) c = underCol * (0.8 + 0.4 * clamp(y + 0.3, 0.0, 1.0));
   gl_FragColor = vec4(c, 1.0);
 }`;
 
@@ -120,7 +121,7 @@ export class Sky {
     this.u = {
       top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() },
       sunDir: { value: this.trueSun }, moonDir: { value: this.moonDir }, sunCol: { value: new THREE.Color() },
-      night: { value: 0 }, sunset: { value: 0 }, time: { value: 0 },
+      night: { value: 0 }, sunset: { value: 0 }, time: { value: 0 }, under: { value: 0 }, underCol: { value: new THREE.Color() },
     };
     const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: this.u, vertexShader: skyVert, fragmentShader: skyFrag });
     this.dome = new THREE.Mesh(new THREE.SphereGeometry(800, 32, 16), skyMat);
@@ -214,5 +215,9 @@ export class Sky {
   }
 
   // per view: keep the dome round the camera
-  view(cam) { this.dome.position.copy(cam.position); }
+  view(cam, under = false, underCol = null) {
+    this.dome.position.copy(cam.position);
+    this.u.under.value = under ? 1 : 0;
+    if (underCol) this.u.underCol.value.copy(underCol);
+  }
 }

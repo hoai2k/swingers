@@ -23,3 +23,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   every new static thing should be added with the kit (visual + collider in one call).
 - Rides are kinematic bodies animated in `physics.animators`; anything a player can sit
   on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`).
+- Rendering (`src/sky.js`, `src/look.js`, `world/water.js`, `world/detail.js`, `game.render`):
+  read `game.timeOfDay` (hours), `game.dayLight` (0..1), `game.nightLight` (0..1) and
+  `game.isNight` for anything that should react to the day/night cycle (headlights, lit
+  signs); `game.setTimeOfDay(h)` and `game.daySpeed` (0 freezes time) drive it. Builder
+  colours listed in `GLOW` (`mesh.js`) light up at night; `kit.lamp` lamps get halos.
+  Small top-level scene objects are hidden per view by on-screen size (`game.cullSmall`);
+  set `userData.noCull` to opt out. Check draw calls with `game.renderStats` for 1 and 8
+  players after adding many meshes.

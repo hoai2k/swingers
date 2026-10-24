@@ -62,12 +62,16 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | File | What |
 |---|---|
 | `src/main.js` | boot: init Rapier, create the game |
-| `src/game.js` | renderer, split-screen views, fixed 60 Hz physics loop, seats |
+| `src/game.js` | renderer, split-screen views (shared/per-group shadows, per-view culling), fixed 60 Hz physics loop, seats |
+| `src/sky.js` | sky dome, clouds, sun/moon lights and the 16-minute day/night cycle |
+| `src/look.js` | soft wrapped shading + rim light for all Lambert materials, night glow of windows/lamps |
 | `src/player.js` | the active ragdoll: hover spring, upright torques, joint drives, grabbing, punching, swimming, seats |
 | `src/vehicles.js` | ray-cast cars, karts, quads, bumper cars, boats |
 | `src/camera.js` | third-person orbit camera |
 | `src/input.js` | gamepads + two keyboard schemes |
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
-| `src/terrain.js` | island height function, terrain mesh + collider |
+| `src/terrain.js` | island height function, ground colours, LOD terrain tiles + collider |
+| `src/world/water.js` | sea / lake / pool water shader: depth tint, foam, reflections |
+| `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
 | `src/ui.js`, `src/audio.js` | HUD/menus, synthesized sound |

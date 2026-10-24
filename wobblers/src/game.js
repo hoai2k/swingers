@@ -271,15 +271,16 @@ export class Game {
     const H = innerHeight;
     const fog = this.scene.fog;
     const setFog = (cam, under) => {
-      if (under) { fog.color.set(0x1f7fa8); fog.near = 1; fog.far = 30; }
+      // underwater: murky blue that dims with the daylight
+      if (under) { fog.color.set(0x1f7fa8).multiplyScalar(0.35 + 0.65 * this.dayLight); fog.near = 1; fog.far = 30; }
       else { fog.color.copy(sky.fogColor); fog.near = 70 + 70 * this.dayLight; fog.far = sky.fogFar; }
     };
     r.info.autoReset = false;
     r.info.reset();
     this.sun.castShadow = this.shadows;
     const viewDraw = (cam, x, y, w, h, under) => {
-      sky.view(cam);
       setFog(cam, under);
+      sky.view(cam, under, fog.color);
       this.cullSmall(cam, h);
       this.detail?.view(cam);
       this.scene.userData.terrainLOD?.view(cam);
