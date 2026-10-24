@@ -215,7 +215,7 @@ function gesPose(st, pose) {
     eulerYZX(pose[PART.thighL], 0, 0.08, 0.1); eulerYZX(pose[PART.shinL], 0, 0.08, 0.35);
     eulerYZX(pose[PART.thighR], 0, -0.08, 0.05); eulerYZX(pose[PART.shinR], 0, -0.08, 0.15);
     eulerYZX(pose[PART.head], 0, 0, -1.0);
-    _tilt.setFromAxisAngle(_ax, 1.05);
+    _tilt.setFromAxisAngle(_ax, 0.9 - (st.lean || 0) * 0.5);
     for (let i = 0; i < NPARTS; i++) pose[i].premultiply(_tilt);
   }
 }

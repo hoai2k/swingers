@@ -52,6 +52,7 @@ export function zombify(b, u, team, necro) {
   };
   u.kind = EXT.kinds.ev_zombie;
   u.zombie = true;
+  u.evSlowed = 0;
   u.necro = necro;
   u.status = null;
   fists(u);
@@ -411,7 +412,7 @@ const units = [
     desc: 'The fallen get back up and fight for it, whichever side they died on.',
   },
   {
-    id: 'ev_chronomancer', name: 'Chronomancer', faction: 'evil', cost: 800, hp: 300, speed: 3.8,
+    id: 'ev_chronomancer', name: 'Chronomancer', faction: 'evil', cost: 1000, hp: 300, speed: 3.8,
     build: { scale: 1.02, girth: 0.95, head: 1.05 },
     weapon: { line: 'Magic · bubbles of slow time cripple enemies inside', kind: 'ev_chrono', style: 'staff', anim: 'cast', item: 'ev_hourglass', damage: 12, range: 24, minRange: 6, cooldown: 5.5, force: 0, spread: 0, releaseAt: 0.62, windup: 1.1, radius: 4.2, duration: 5 },
     look: { skin: '#d8c8d8', hat: 'ev_chrono', top: 'ev_robe_chrono', legs: '#20182a', beard: '#cfcfe0' },

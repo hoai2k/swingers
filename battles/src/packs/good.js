@@ -425,7 +425,7 @@ const units = [
     desc: 'Keeps a beam of holy light on whoever is hurt the most.',
   },
   {
-    id: 'gd_angel', name: 'Angel', faction: 'good', cost: 950, hp: 540, speed: 6.5,
+    id: 'gd_angel', name: 'Angel', faction: 'good', cost: 900, hp: 540, speed: 6.5,
     build: { scale: 1.05, girth: 0.95 },
     weapon: { line: 'Flying · holy sword dives · revives one fallen ally', kind: 'gd_angel', style: 'sword', anim: 'overhead', item: 'gd_holy_sword', damage: 85, reach: 1.45, cooldown: 1.4, force: 480, sweep: true, revives: 1 },
     look: { skin: '#f6d8bc', hat: 'gd_halo', top: 'gd_robe', legs: '#f4f0e4' },
@@ -434,7 +434,7 @@ const units = [
     desc: 'Swoops down with a holy blade, and raises one fallen friend back to the fight.',
   },
   {
-    id: 'gd_phoenix', name: 'Phoenix', faction: 'good', cost: 900, hp: 380, speed: 7,
+    id: 'gd_phoenix', name: 'Phoenix', faction: 'good', cost: 950, hp: 380, speed: 7,
     build: { scale: 1.05, girth: 0.9, head: 1.0, mass: 0.9 },
     weapon: { line: 'Flying · fiery dive explosion · rises from its ashes once', kind: 'gd_phoenix', style: 'none', anim: 'punch', item: 'none', damage: 170, blast: 4.2, force: 950, cooldown: 1.2, reach: 1.0, burn: 9, burnTime: 4 },
     look: { skin: '#ff9a3a', hat: 'gd_phoenix', top: 'gd_feathers', legs: '#e8572a' },
