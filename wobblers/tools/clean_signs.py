@@ -24,6 +24,8 @@ def close(a, b):
     return max(abs(a[0] - b[0]), abs(a[1] - b[1]), abs(a[2] - b[2])) <= TOL
 
 for f in sorted(src_dir.glob('*.png')):
+    if f.name.startswith('.'):
+        continue
     orig = orig_dir / f.name
     if not orig.exists():
         shutil.copy2(f, orig)

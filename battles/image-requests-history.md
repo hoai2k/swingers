@@ -1,8 +1,45 @@
 # Wobbly Battles — image request history
 
-Delivered and accepted requests (rounds 1–3, items 1–42). Kept for the record: the
+Delivered requests (rounds 1–4, items 1–49). Kept for the record: the
 briefs, final paths and where each image is used. Open requests live in
 `image-requests.md`.
+
+## Delivered round 4 — new map art (7 images)
+
+Delivered 2026-10-24 with built-in imagegen. Exact prompts and original paths are
+in `assets/generation.json`. Six previews were checked through the game preload
+loader at 640 × 360; the mood board was checked against all six map briefs.
+The Volcano panel uses jungle mesas and dark tar pits.
+
+
+### Round 4: new battle maps
+
+Six new maps with terrain that changes the fight: walls, rivers, bridges, plateaus and
+breakable crates and fences. Each preview card shows that map's **empty battlefield**
+from a raised three-quarter view, with no soldiers, no text and no UI. The game shows
+the card beside the Map option and on campaign level cards, so the map's key feature
+must read at 320 px wide. Each field is laid out point-symmetrically, so the two
+halves mirror each other through the centre. The art can be loose, but it should feel
+balanced and not favour a left or right side. Deliver each card as a full-size 16:9
+original at `assets/originals/ui/map-<id>.png`. `tools/build_battles_assets.py` crops it
+to the 640×360 JPG. The new ids are already in that script's map list.
+
+| # | File | Size / format | Status | What |
+|---|---|---|---|---|
+| 43 | `assets/ui/map-castle.jpg` | 640×360 JPG | **wired** (map preview card; campaign card) | "Castle Courtyard": a grassy castle courtyard with grey-beige cobbles in the middle. Two long, crenellated stone walls run across the field, one on each side, each with two open gateways flanked by round towers. A stone well sits in the centre. There are wooden crates and barrels by the walls, and a low raised stone platform behind each wall. Big outer curtain walls and towers ring the scene, with green hills and blue sky beyond. Neutral grey stone and brown wood; no team colours. |
+| 44 | `assets/ui/map-river.jpg` | 640×360 JPG | **wired** | "River Crossing": a gently winding, shallow blue river runs through the middle of a summer meadow, separating the two halves. Two wooden plank bridges with rails cross it, one near each end, and there is a pebbly shallow ford in the middle. There is a soft rounded hill on each bank, low wooden fences near the banks, reeds, round oak trees and willows. |
+| 45 | `assets/ui/map-cove.jpg` | 640×360 JPG | **wired** | "Pirate Cove": a sunny sandy beach around a round turquoise lagoon in the centre. A tiny sand island with one palm tree and a treasure chest sits in the middle of the lagoon, and two wooden boardwalks cross the lagoon either side of it. There is a half-buried wrecked wooden hull on each side, stacks of crates and barrels, and palm trees. The open sea is in the background with a cartoon pirate ship (plain sails, no flags or skull). |
+| 46 | `assets/ui/map-volcano.jpg` | 640×360 JPG | **wired** | "Volcano Jungle": a lush jungle clearing with rich greens and brown earth. There is a flat-topped rocky mesa with sloped sides on each half, a bubbling dark tar pit on each side, and scattered boulders, palms and big broadleaf jungle trees. A huge cartoon volcano smokes in the distance with a glowing orange crater. Prehistoric mood, slightly warm and hazy sky. |
+| 47 | `assets/ui/map-canyon.jpg` | 640×360 JPG | **wired** | "Canyon Ruins": a sandy desert canyon floor between two tall red-orange rock rims (one on each long edge) with sloped ramps up to them. In the middle is a low flat mesa, a king-of-the-hill spot. There are ancient sandstone ruins: broken walls, a ring of standing and toppled columns, and clay pots. Tall rock pillars and a warm sky beyond. |
+| 48 | `assets/ui/map-graveyard.jpg` | 640×360 JPG | **wired** | "Spooky Graveyard": a moonlit graveyard at night in deep blue and purple with a soft violet fog. There are rows of grey tombstones and crosses on both halves, a stone mausoleum with columns in the dead centre, short black iron fences, gnarled dead trees, a few jack-o'-lanterns and a crooked church silhouette with a big pale moon. Comedic and cosy-spooky, not scary; keep the ground readable (blue-grey grass), not pitch black. |
+
+### Round 4 reference
+
+| # | File | What |
+|---|---|---|
+| 49 | `reference/maps-2.png` | One sheet with a colour-palette and mood board for each of the six new maps (castle, river, cove, volcano, canyon, graveyard): ground, path/paving, water (where the map has it), rock/stone, wood, trees, sky gradient and fog colour, plus a small sketch of each map's signature obstacle (wall with gate and towers, plank bridge, boardwalk and wreck, mesa and tar pit, ruined columns, tombstones and mausoleum). Same layout as `reference/maps.png`. |
+
+## Rounds 1–3 delivery and review
 
 **Status: all 43 requested files delivered. No open image requests.**
 Round 3 (items 31–42) delivered six faction emblems and six reference sheets for
