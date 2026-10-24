@@ -137,3 +137,5 @@ background, with its weapon.
 
 All 43 listed files have arrived. All 24 UI assets are wired into the game.
 Reference sheets remain available for future procedural model refinement.
+
+Round 4 review: all six map previews and `reference/maps-2.png` match their briefs (point-symmetric layouts, readable at preview size) and preload in the game; they appear on the map cards once the new maps are merged. Accepted, no replacements.
