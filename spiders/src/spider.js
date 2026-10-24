@@ -34,16 +34,19 @@ export const SP = {
   webReel: 520,
   webYank: 0.9,          // rope length snaps to this fraction of the hit distance
   webPump: 1500,
-  legLen: 37,            // each of the two leg bones
-  lift: 14,              // the body stands this far above the surface (r + lift)
+  coxa: 9,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
+  femur: 34,
+  tibia: 46,
+  legLen: 40,            // average segment (reach = femur + tibia)
+  lift: 17,              // the body stands this far above the surface (r + lift)
 };
 
 const LEGS = [
   // side (+1 = along tangent), rest offset along the surface (x r), group, far (drawn darker)
-  { side: 1, off: 0.95, g: 0, far: true }, { side: 1, off: 1.75, g: 1, far: false },
-  { side: 1, off: 2.5, g: 0, far: true }, { side: 1, off: 3.15, g: 1, far: false },
-  { side: -1, off: 0.95, g: 1, far: true }, { side: -1, off: 1.75, g: 0, far: false },
-  { side: -1, off: 2.5, g: 1, far: true }, { side: -1, off: 3.15, g: 0, far: false },
+  { side: 1, off: 1.1, g: 0, far: true }, { side: 1, off: 2.0, g: 1, far: false },
+  { side: 1, off: 2.9, g: 0, far: true }, { side: 1, off: 3.7, g: 1, far: false },
+  { side: -1, off: 1.1, g: 1, far: true }, { side: -1, off: 2.0, g: 0, far: false },
+  { side: -1, off: 2.9, g: 1, far: true }, { side: -1, off: 3.7, g: 0, far: false },
 ];
 
 let NEXT_ID = 1;
@@ -467,7 +470,7 @@ export class Spider {
   updateLegs(dt) {
     const world = this.game.world;
     const r = this.r;
-    const reach = SP.legLen * 2 * 0.98;
+    const reach = (SP.femur + SP.tibia) * 0.97;
     const g = this.ground;
     const nx = g ? g.nx : this.up.x, ny = g ? g.ny : this.up.y;
     const tx = -ny, ty = nx;
@@ -541,7 +544,7 @@ export class Spider {
       const d = this.flingDir;
       const side = Math.sign(d.x * tx + d.y * ty) || this.facing;
       const i = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
-      const ext = SP.legLen * 1.7 * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
+      const ext = (SP.femur + SP.tibia) * 0.85 * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
       out.set(i, { x: this.x + d.x * ext, y: this.y + d.y * ext });
       return out;
     }
@@ -565,42 +568,44 @@ export class Spider {
     const r = this.r;
     const nx = this.up.x, ny = this.up.y;
     const tx = -ny, ty = nx;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    const back = far === true;
+    const outline = back ? '#0b0b10' : '#14141c';
+    const fill = back ? shade(c.dark, 0.75) : c.color;
+    const shin = back ? shade(c.dark, 0.6) : c.dark;
+    const F = SP.femur, T = SP.tibia;
     for (const L of this.legs) {
       if (far === 'hold' ? !L.hold : (L.far !== far || L.hold)) continue;
+      // hip on the body, then a short base segment angled up and out
       const hipX = this.x + tx * L.side * r * 0.3 - nx * r * 0.15, hipY = this.y + ty * L.side * r * 0.3 - ny * r * 0.15;
+      const cx = hipX + (tx * L.side * 0.8 + nx * 0.6) * SP.coxa, cy = hipY + (ty * L.side * 0.8 + ny * 0.6) * SP.coxa;
       let fx = L.fx, fy = L.fy;
-      let dx = fx - hipX, dy = fy - hipY;
+      let dx = fx - cx, dy = fy - cy;
       let d = Math.hypot(dx, dy) || 1;
-      const max = SP.legLen * 2 * 0.999;
-      if (d > max) { fx = hipX + dx / d * max; fy = hipY + dy / d * max; dx = fx - hipX; dy = fy - hipY; d = max; }
-      const a = Math.acos(clamp(d / (2 * SP.legLen), -1, 1));
+      const max = (F + T) * 0.999;
+      if (d > max) { fx = cx + dx / d * max; fy = cy + dy / d * max; dx = fx - cx; dy = fy - cy; d = max; }
+      // two-bone IK, knee bent up/out: away from the surface, outward from the body
+      const a = Math.acos(clamp((F * F + d * d - T * T) / (2 * F * d), -1, 1));
       const base = Math.atan2(dy, dx);
-      // knee bends up/out: away from the surface, outward from the body
       const k1 = base + a, k2 = base - a;
-      const ux = nx + tx * L.side * 0.6, uy = ny + ty * L.side * 0.6;
-      const s1 = Math.cos(k1) * ux + Math.sin(k1) * uy, s2 = Math.cos(k2) * ux + Math.sin(k2) * uy;
-      const ka = s1 > s2 ? k1 : k2;
-      const kx = hipX + Math.cos(ka) * SP.legLen, ky = hipY + Math.sin(ka) * SP.legLen;
-      // thick thigh, thin shin: an outline pass then the colour pass
-      const back = far === true;
-      const outline = back ? '#0c0c12' : '#15151d', fill = back ? shade(c.dark, 0.6) : c.dark;
-      ctx.strokeStyle = outline;
-      ctx.lineWidth = back ? 5.5 : 6.5;
-      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-      ctx.lineWidth = back ? 3.8 : 4.4;
-      ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = fill;
-      ctx.lineWidth = back ? 2.6 : 3.2;
-      ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-      ctx.lineWidth = back ? 1.4 : 1.8;
-      ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+      const ux = nx + tx * L.side * 0.5, uy = ny + ty * L.side * 0.5;
+      const ka = Math.cos(k1) * ux + Math.sin(k1) * uy > Math.cos(k2) * ux + Math.sin(k2) * uy ? k1 : k2;
+      const kx = cx + Math.cos(ka) * F, ky = cy + Math.sin(ka) * F;
+      const w = back ? 0.85 : 1;
+      // outline pass, then colour: base + thigh thick, the shin tapers to a point
+      for (const pass of [0, 1]) {
+        const o = pass ? 0 : 2.2;
+        ctx.fillStyle = pass ? fill : outline;
+        taper(ctx, hipX, hipY, cx, cy, 6.5 * w + o, 6 * w + o);
+        taper(ctx, cx, cy, kx, ky, 6 * w + o, 5 * w + o);
+        ctx.fillStyle = pass ? shin : outline;
+        taper(ctx, kx, ky, fx, fy, 5 * w + o, 0.6 + o * 0.6);
+      }
+      // joints
       if (!back) {
         ctx.fillStyle = c.accent;
-        ctx.beginPath(); ctx.arc(kx, ky, 2.4, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#15151d';
-        ctx.beginPath(); ctx.arc(fx, fy, 2, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(kx, ky, 2.6, 0, TAU); ctx.fill();
+        ctx.fillStyle = shade(c.dark, 0.8);
+        ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, TAU); ctx.fill();
       }
     }
   }
@@ -672,4 +677,19 @@ export function shade(hex, k) {
   v = `rgb(${r},${g},${b})`;
   shadeCache.set(key, v);
   return v;
+}
+
+// a filled segment from (x1,y1) width w1 to (x2,y2) width w2, rounded joints
+function taper(ctx, x1, y1, x2, y2, w1, w2) {
+  const dx = x2 - x1, dy = y2 - y1, m = Math.hypot(dx, dy) || 1;
+  const px = -dy / m, py = dx / m;
+  ctx.beginPath();
+  ctx.moveTo(x1 + px * w1 / 2, y1 + py * w1 / 2);
+  ctx.lineTo(x2 + px * w2 / 2, y2 + py * w2 / 2);
+  ctx.lineTo(x2 - px * w2 / 2, y2 - py * w2 / 2);
+  ctx.lineTo(x1 - px * w1 / 2, y1 - py * w1 / 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath(); ctx.arc(x1, y1, w1 / 2, 0, TAU); ctx.fill();
+  if (w2 > 1.5) { ctx.beginPath(); ctx.arc(x2, y2, w2 / 2, 0, TAU); ctx.fill(); }
 }
