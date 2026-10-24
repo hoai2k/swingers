@@ -197,3 +197,81 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 #hud[data-hud=off] .layer-battle, #hud[data-hud=off] .layer-replay, #hud[data-hud=off] .layer-toast { display: none !important; }
 
 .tab .ficon { height: 1.2em; width: auto; vertical-align: -0.2em; margin-right: 4px; }
+
+/* menu item notes (title mode list) */
+.mi .ml.big .mnote { display: block; font-family: var(--ui); font-weight: 800; font-size: 13px; letter-spacing: 0; opacity: 0.75; margin-top: -3px; }
+
+/* campaign level select */
+.layer-levels { display: flex; flex-direction: column; align-items: center; padding-top: 2.5vh; background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.5)); }
+.lvhead { font-family: var(--font); font-size: 46px; text-shadow: 0 4px 0 rgba(0,0,0,0.45); }
+.lvtotal { font-size: 24px; color: var(--gold); vertical-align: 6px; margin-left: 10px; }
+.lvworlds { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.lvworld { display: flex; align-items: stretch; gap: 6px; }
+.lvwname { width: 170px; display: flex; align-items: center; justify-content: flex-end; text-align: right; font-family: var(--font); font-size: 19px; color: var(--wc); text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.5); padding-right: 4px; }
+.lvworld.locked .lvwname { color: #bbb; }
+.lvtile { width: 150px; background: rgba(20,24,34,0.72); border: 3px solid transparent; border-top: 5px solid var(--wc); border-radius: 10px; padding: 3px 8px; font-weight: 800; font-size: 14px; display: flex; flex-direction: column; line-height: 1.15; }
+.lvtile b { font-family: var(--font); font-weight: normal; font-size: 13px; opacity: 0.7; }
+.lvtile .lvn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvtile.locked { opacity: 0.5; }
+.lvtile.sel { background: var(--paper); color: var(--ink); border-color: var(--ink); transform: scale(1.06); box-shadow: 0 5px 0 rgba(0,0,0,0.3); opacity: 1; }
+.lvs i, .lvd-stars i, .rstars i { font-style: normal; color: rgba(255,255,255,0.25); }
+.lvtile.sel .lvs i { color: rgba(0,0,0,0.18); }
+.lvs i.on, .lvd-stars i.on, .rstars i.on { color: var(--gold); text-shadow: 0 1px 0 #8a6000; }
+.lvdetail { margin-top: 10px; width: min(900px, 94vw); background: rgba(255,248,234,0.94); color: var(--ink); border-radius: 14px; padding: 8px 16px; box-shadow: 0 5px 0 rgba(0,0,0,0.3); font-weight: 800; }
+.lvd-top { display: flex; align-items: baseline; gap: 12px; border-bottom: 3px solid var(--wc); padding-bottom: 2px; }
+.lvd-name { font-family: var(--font); font-size: 28px; }
+.lvd-stars { font-size: 26px; } .lvd-stars i { color: rgba(0,0,0,0.15); }
+.lvd-tip { margin: 4px 0; font-size: 15px; }
+.lvd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: 14px; margin-top: 3px; }
+.lvd-row small { opacity: 0.75; }
+.lvd-enemy .rc { display: inline-flex; align-items: center; background: rgba(0,0,0,0.08); border-radius: 16px; padding-right: 8px; font-weight: 900; }
+.lvd-enemy .rc img { width: 34px; height: 34px; }
+.lvplayers { margin-top: 10px; display: flex; gap: 10px; align-items: center; font-weight: 900; font-size: 16px; text-shadow: 0 1px 2px #000; }
+.lvplayers span { background: rgba(20,24,34,0.6); padding: 4px 12px; border-radius: 10px; opacity: 0.6; text-shadow: none; }
+.lvplayers span.on { background: var(--paper); color: var(--ink); opacity: 1; box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+.lvplayers small { opacity: 0.7; }
+#hud[data-state=levels] .tsc { top: auto; bottom: 90px; }
+#hud[data-state=result] .tsc { top: auto; bottom: 46px; }
+
+/* setup: solo (one player, full width), timer, overview, hold-to-clear */
+.layer-setup.solo .half0 { width: 100%; }
+.layer-setup.solo .half1, .layer-setup.solo .divider { display: none; }
+.layer-setup.solo .uinfo { width: min(380px, 30%); }
+.layer-setup.solo .roster { max-width: 40%; }
+.stimer { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); z-index: 2; font-family: var(--font); font-size: 30px; background: rgba(0,0,0,0.55); padding: 2px 16px 0; border-radius: 12px; text-shadow: 0 3px 0 rgba(0,0,0,0.4); }
+.stimer.low { color: #ff8a80; animation: blink 0.8s infinite; }
+.roster .rc small { font-size: 11px; opacity: 0.75; margin-left: 4px; }
+.roster .rrow { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; width: 100%; }
+.roster .rrow.other { margin-top: 4px; align-items: center; }
+.roster .rrow.other b { font-family: var(--font); font-weight: normal; color: var(--oc); text-shadow: 0 1px 2px #000; margin-right: 2px; }
+.roster .rrow.other .rc { opacity: 0.85; }
+.team-name .lvname { font-size: 0.6em; opacity: 0.9; margin-right: 2px; }
+.gold.over .gv { color: #ff8a80; }
+.status .hold { display: inline-block; width: 120px; height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden; vertical-align: middle; }
+.status .hold i { display: block; height: 100%; background: #ff6a5e; }
+
+/* battle: banner (round score / level name), unit card */
+.bbanner { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); font-weight: 900; font-size: 15px; background: rgba(0,0,0,0.45); padding: 2px 12px; border-radius: 9px; white-space: nowrap; }
+.tscale { top: 88px; }
+.ucard { position: absolute; left: 16px; bottom: 86px; display: flex; gap: 8px; align-items: center; background: rgba(255,248,234,0.9); color: var(--ink); border-radius: 12px; padding: 4px 12px 4px 4px; max-width: min(420px, 44%); box-shadow: 0 4px 0 rgba(0,0,0,0.25); font-weight: 800; }
+.ucard img { width: 58px; height: 58px; flex: 0 0 auto; }
+.uc-name { font-family: var(--font); font-size: 19px; line-height: 1.1; } .uc-name em { font-family: var(--ui); font-size: 12px; color: #b22; }
+.uc-hp { font-size: 12px; } .uc-hp .hp { margin-left: 0; }
+.uc-stats { font-size: 12px; } .uc-weap { font-size: 11px; color: #6a4d10; }
+.layer-battle.split .ucard.v1 { left: calc(50% + 16px); }
+#hud[data-state=replay] .ucard { bottom: 112px; }
+
+/* result: stars / match score */
+.rlevel, .rmatch { margin-top: 6px; text-align: center; font-weight: 800; background: rgba(0,0,0,0.5); padding: 6px 18px; border-radius: 12px; }
+.rstars { font-size: 44px; line-height: 1; }
+.rlevel .ok { color: #8dff86; }
+.rmatch { font-size: 20px; }
+
+@media (max-width: 1400px), (max-height: 800px) {
+  .lvtile { width: 128px; font-size: 13px; } .lvwname { width: 150px; font-size: 17px; }
+  .lvhead { font-size: 36px; } .lvdetail { padding: 6px 12px; } .lvd-name { font-size: 24px; }
+  .ucard img { width: 46px; height: 46px; } .uc-name { font-size: 16px; }
+  .rstars { font-size: 34px; }
+  .rhint { display: none; } /* the bottom hint line already says it */
+  .layer-result { padding-top: 8vh; }
+}
