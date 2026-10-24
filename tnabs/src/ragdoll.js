@@ -53,6 +53,15 @@ export class Ragdoll {
       const I = body.principalInertia();
       this.inertia[i] = (I.x + I.y + I.z) / 3;
     }
+    // Limbs swing about their joint and drag the rest of the chain along, so their
+    // muscles work against the inertia about the joint, not the part's own.
+    const P = PART, parts = skel.parts;
+    const about = (i, d) => this.inertia[i] + parts[i].mass * d * d;
+    for (const [up, lo] of [[P.thighL, P.shinL], [P.thighR, P.shinR]]) {
+      const iu = about(up, parts[up].hh), il = about(lo, parts[lo].hh);
+      this.inertia[up] = (iu + parts[lo].mass * (2 * parts[up].hh + parts[lo].hh) ** 2 * 0.6) * ((globalThis.TUNE || {}).ic ?? 0.3);
+      this.inertia[lo] = il * ((globalThis.TUNE || {}).ic2 ?? 0.3);
+    }
     this.joints = [];
     for (const j of skel.joints) {
       const a = { x: j.anchorA.x, y: j.anchorA.y, z: j.anchorA.z };
@@ -85,7 +94,8 @@ export class Ragdoll {
 
   // Drive part i toward world quaternion target with a velocity servo.
   // gain: rad/s per rad of error; rate: how quickly (1/s) the servo acts; maxT: torque cap (N·m).
-  muscle(i, target, gain, rate, maxT, dt, maxW = 14) {
+  // ff: optional feed-forward angular velocity (how fast the target itself turns).
+  muscle(i, target, gain, rate, maxT, dt, maxW = 14, ff = null) {
     const q = this.quat[i];
     _qi.copy(q).invert();
     _qt.copy(target).multiply(_qi);
@@ -96,7 +106,9 @@ export class Ragdoll {
     const k = Math.min(ang * gain, maxW) / s;
     const av = this.angvel[i];
     const f = 1 - Math.exp(-rate * dt);
-    let ix = (_qt.x * k - av.x) * f, iy = (_qt.y * k - av.y) * f, iz = (_qt.z * k - av.z) * f;
+    let tx = _qt.x * k, ty = _qt.y * k, tz = _qt.z * k;
+    if (ff) { tx += ff.x; ty += ff.y; tz += ff.z; }
+    let ix = (tx - av.x) * f, iy = (ty - av.y) * f, iz = (tz - av.z) * f;
     const I = this.inertia[i];
     ix *= I; iy *= I; iz *= I;
     const m = Math.hypot(ix, iy, iz), cap = maxT * dt;

@@ -2,7 +2,7 @@
 // Emits events ([kind, x, y, z, a, b, c]) for effects/sound so that the live view
 // and the replay player can share the same presentation code.
 import { THREE, clamp, rand, pick, segSegDist2 } from './util.js';
-import { createWorld } from './physics.js';
+import { createWorld, RAPIER, GROUPS } from './physics.js';
 import { Unit, EXPR } from './unit.js';
 import { PART, NPARTS } from './body.js';
 import { UNIT_BY_ID } from './units.js';
@@ -39,6 +39,18 @@ class Grid {
   }
 }
 
+// The ground as a Rapier heightfield built from the terrain's height grid: much
+// cheaper contacts than the render trimesh, same surface.
+function addHeightfield(world, terrain) {
+  const n = terrain.seg + 1;
+  const hf = new Float32Array(n * n);
+  // Rapier heights are column-major (rows run along Z, columns along X)
+  for (let iz = 0; iz < n; iz++) for (let ix = 0; ix < n; ix++) hf[iz + ix * n] = terrain.h[iz * n + ix];
+  const cd = RAPIER.ColliderDesc.heightfield(terrain.seg, terrain.seg, hf, { x: terrain.size, y: 1, z: terrain.size })
+    .setFriction(0.9).setCollisionGroups(GROUPS.ground);
+  return world.createCollider(cd);
+}
+
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _c = new THREE.Vector3(), _d = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 let projId = 1;
@@ -48,7 +60,8 @@ export class Battle {
   constructor(terrain, armies, sink) {
     this.terrain = terrain;
     this.world = createWorld();
-    terrain.addCollider(this.world);
+    if ((globalThis.TUNE || {}).hf && terrain.h && terrain.seg) addHeightfield(this.world, terrain);
+    else terrain.addCollider(this.world);
     this.sink = sink; // (event) => void
     this.units = [];
     this.teams = [[], []];

@@ -144,11 +144,13 @@ export function computePose(st, pose) {
     // strum
     arms[1][2] += Math.sin(st.t * 18) * 0.25;
     arms[1][3] += Math.sin(st.t * 18) * 0.3;
-  } else if (st.style === 'none' || st.style === 'throw' || st.style === 'staff' || st.style === 'heal') {
-    // natural arm swing while walking (only free arms)
-    swingL = sn * amp * 0.7;
-    swingR = -sn * amp * 0.7;
-    if (st.style !== 'none' && !st.attack) swingR *= 0.3;
+  } else {
+    // arm swing while walking, opposite to the feet (st.swing comes from the
+    // stepping feet; the phase is the fallback for previews). Weapon arms swing less.
+    const sw = st.swing !== undefined ? st.swing : sn * amp;
+    const free = st.style === 'none' || st.style === 'throw' || st.style === 'staff' || st.style === 'heal';
+    swingL = sw * (free ? 0.8 : 0.3);
+    swingR = -sw * (free && st.style === 'none' ? 0.8 : 0.25);
   }
   setArm(pose, 1, arms[0], st.attack ? 0 : swingL);
   setArm(pose, -1, arms[1], st.attack ? 0 : swingR);
@@ -167,8 +169,12 @@ export function computePose(st, pose) {
 
   // Torso
   const bob = st.mode === 'cheer' ? 0 : Math.sin(ph * 2) * 0.04 * amp;
-  eulerYZX(pose[P.pelvis], -twist * 0.3 + sn * 0.12 * amp, 0, lean * 0.3);
-  eulerYZX(pose[P.chest], twist - sn * 0.1 * amp, Math.sin(ph) * 0.05 * amp, lean + bob);
+  const sw = st.swing !== undefined ? st.swing : sn * amp;
+  // hips twist with the stride, shoulders counter-twist, body rocks side to side (waddle)
+  const rock = st.rock !== undefined ? st.rock : Math.sin(ph) * amp;
+  // (rock > 0: weight on the right foot; positive roll leans toward -X = right)
+  eulerYZX(pose[P.pelvis], -twist * 0.3 - sw * 0.22, rock * 0.05, lean * 0.3);
+  eulerYZX(pose[P.chest], twist + sw * 0.16, rock * 0.1, lean + bob);
   eulerYZX(pose[P.head], (st.headYaw || 0) + twist * 0.3, 0, (st.headPitch || 0) - lean * 0.4);
   return pose;
 }

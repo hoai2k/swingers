@@ -21,6 +21,9 @@ export const GROUPS = {
 export function createWorld() {
   const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   world.timestep = 1 / 60;
-  world.numSolverIterations = 4;
+  const T = globalThis.TUNE || {};
+  world.numSolverIterations = T.it ?? 4;
+  if (T.pgs) world.numInternalPgsIterations = T.pgs;
+  if (T.fr !== undefined) world.numAdditionalFrictionIterations = T.fr;
   return world;
 }
