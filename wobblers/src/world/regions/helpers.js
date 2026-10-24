@@ -15,12 +15,17 @@
 //   R.npc(role | def, x, z, opts)               an NPC (see src/npc.js; opts.area, opts.path...)
 //   R.label(name, x, z, big)                    a label on the map
 //   R.docks               this region's ferry docks (piers are built by world/ferries.js)
+//   R.present(id, rewardKey, x, z, from, note)  a hidden present (ids unique; reward keys as in
+//                         unlocks.js; new cosmetics go at the END of HATS / FACES / PANTS lists)
+//   R.coins(x, z, from, shape, n, size, opts)   a coin cluster (format of life/coins.js CLUSTERS)
 import { heightAt, meshHeight, biomeAt, regionAt } from '../../terrain.js';
 import { signMesh } from '../../mesh.js';
 import { Vehicle } from '../../vehicles.js';
 import * as common from '../common.js';
 import { addSeat } from '../playground.js';
 import { addWater } from '../water.js';
+import { addRegionPresent } from '../presents.js';
+import { addCoinCluster } from '../../life/coins.js';
 
 const SIGN_COLORS = {
   city: ['#2a62c9', '#ffffff', 0x3a3f4a], snow: ['#3f8cff', '#ffffff', 0x7a5032], desert: ['#b5532c', '#ffe8b0', 0x7a5032],
@@ -55,6 +60,8 @@ export function regionHelpers(game, kit, region) {
     },
     npc(role, x, z, opts = {}) { return game.npcs?.spawn(role, x, z, { region: region.id, ...opts }); },
     label(name, x, z, big = false) { (region.labels ||= []).push({ name, x, z, big }); },
+    present(id, rewardKey, x, z, from = null, note = '') { addRegionPresent(id, rewardKey, x, z, from, note); },
+    coins(...c) { addCoinCluster(...c); },
   };
   return R;
 }

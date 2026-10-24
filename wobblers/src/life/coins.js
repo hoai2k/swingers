@@ -9,6 +9,9 @@ import { SEA_LEVEL } from '../config.js';
 // [x, z, ray start (null: just above the terrain), shape, count, size, opts]
 //   shape 'ring' (radius size), 'line' (length size along opts.yaw, default +x),
 //   'one'; opts.big: 10-coin pieces; opts.y: fixed height (no ray); opts.lift: extra height.
+// Regions add clusters with R.coins(x, z, from, shape, n, size, opts) while they build.
+const REGION_CLUSTERS = [];
+export const addCoinCluster = (...c) => REGION_CLUSTERS.push(c);
 const CLUSTERS = [
   // town
   [0, 0, 2, 'ring', 10, 9.5],
@@ -74,7 +77,7 @@ const RESPAWN = [75, 240]; // seconds (small, big)
 export function buildCoins(game) {
   game.physics.world.updateSceneQueries?.();
   const coins = [];
-  for (const [x, z, from, shape, n, size, o = {}] of CLUSTERS) {
+  for (const [x, z, from, shape, n, size, o = {}] of [...CLUSTERS, ...REGION_CLUSTERS]) {
     const pts = [];
     if (shape === 'one') pts.push([x, z]);
     else if (shape === 'ring') for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; pts.push([x + Math.sin(a) * size, z + Math.cos(a) * size]); }

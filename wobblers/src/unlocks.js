@@ -32,7 +32,7 @@ export const PRESENTS = [
   ['lake-dock', 'hat:fez'],
   ['campfire', 'face:Moustache'],
 ];
-export const TOTAL = PRESENTS.length;
+export let TOTAL = PRESENTS.length; // live: regions add presents with addPresent()
 
 // Cosmetics sold in the town's clothes shop (src/life/shops.js): [reward key, price].
 // A separate set from the present rewards, so presents stay the only way to get theirs.
@@ -50,6 +50,17 @@ const LOCKABLE = new Set(PRESENTS.map((p) => p[1]));
 let unlocked = new Set();
 function refresh() { unlocked = new Set(settings.presents.filter((id) => REWARD.has(id)).map((id) => REWARD.get(id))); }
 refresh();
+
+// Region presents: world/regions call R.present(...) while they build (before
+// world/presents.js places the boxes), which registers the id and reward here.
+export function addPresent(id, rewardKey) {
+  if (REWARD.has(id)) throw new Error(`present id '${id}' is already used`);
+  PRESENTS.push([id, rewardKey]);
+  REWARD.set(id, rewardKey);
+  LOCKABLE.add(rewardKey);
+  TOTAL = PRESENTS.length;
+  refresh();
+}
 
 export const isFound = (id) => settings.presents.includes(id);
 export const foundCount = () => settings.presents.filter((id) => REWARD.has(id)).length;

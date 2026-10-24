@@ -3,7 +3,7 @@
 // pop and unlocks a cosmetic for everyone (src/unlocks.js keeps the progress).
 import * as THREE from 'three';
 import { Builder } from '../mesh.js';
-import { PRESENTS, TOTAL, isFound, findPresent } from '../unlocks.js';
+import { PRESENTS, TOTAL, isFound, findPresent, addPresent } from '../unlocks.js';
 import { rewardName } from '../cosmetics.js';
 import { chime, groundAt } from './common.js';
 
@@ -11,6 +11,11 @@ import { chime, groundAt } from './common.js';
 // surface a downward ray from (x, start, z) hits first (game.groundHeight), so
 // a start just under a roof finds the floor inside (null: 2 m above the terrain). `raft` presents ride the
 // log raft that starts nearest to (x, z).
+// Regions add theirs with R.present(id, rewardKey, x, z, from, note) -> addRegionPresent.
+export function addRegionPresent(id, rewardKey, x, z, from = null, note = '') {
+  addPresent(id, rewardKey);
+  SPOTS[id] = [x, z, from, note];
+}
 const SPOTS = {
   'fountain': [3.6, 0, 1.0, 'in the plaza fountain'],
   'cafe-roof': [19.5, -25, 9, 'cafe rooftop terrace'],
