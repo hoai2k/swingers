@@ -1,6 +1,51 @@
 # Wobblers image requests
 
-**Status: no open requests.** Round 3 delivered — 3 replacement faces, 2026-10-24, checked in game. Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+**Status: round 4 open — 16 images (6 signs used in game + 10 reference sheets).** Round 3 delivered — 3 replacement faces, 2026-10-24, checked in game. Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+
+
+## OPEN round 4: new regions — signs and reference sheets (16 images)
+
+The world is growing into an archipelago around the home island: **Bigtown**
+(a skyscraper city to the east, over a long bridge), **Frostpeak** (icy
+mountains and a ski village to the north), **Dusty Dunes** (desert, canyon,
+oasis and a Wild-West town to the west), **Tiki Jungle** (volcano jungle
+island with a waterfall, temple ruins and a stilt village to the south-west)
+and **Coconut Cove** (tropical beach islets with a resort and fishing harbour
+to the south-east). Ferries sail between them.
+
+### Signs (6 images) — `assets/signs/`, used in game
+
+Same format as the round 1 signs: 1024 × 256, the exact words spelled
+correctly in big chunky rounded letters, one small icon. A plain background
+around the board is fine (`tools/clean_signs.py` keys it out).
+
+| File | Words | Board look + icon |
+| --- | --- | --- |
+| `bigtown.png` | BIGTOWN | glossy city blue and silver, a little skyscraper skyline |
+| `frostpeak.png` | FROSTPEAK | icy white-blue with snow on top of the board, a snowy peak |
+| `dusty_dunes.png` | DUSTY DUNES | weathered wooden plank board, sandy orange letters, a cactus |
+| `tiki_jungle.png` | TIKI JUNGLE | carved jungle wood with leaves and vines, a tiki mask |
+| `coconut_cove.png` | COCONUT COVE | bright turquoise and sand, a palm tree with coconuts |
+| `ferry.png` | FERRY | navy and white nautical, a little ferry boat and a life ring |
+
+### Reference sheets (10 images) — `assets/reference/`, not loaded by the game
+
+They guide the people building these regions so everything stays in the
+toy-like *Wobbly Life* style of `ref_town.png` and `ref_character_sheet.png`.
+Any 16:9 size around 1920 × 1080, no text needed.
+
+| File | Prompt |
+| --- | --- |
+| `ref_region_city.png` | Bigtown concept: a toy-like cartoon downtown with chunky rounded skyscrapers in candy colours, rooftop helipad and water towers, a glass office tower, a construction crane, wide streets with yellow taxis and buses, a park with a pond, a long suspension bridge leading in over the sea. Three-quarter elevated view. |
+| `ref_region_snow.png` | Frostpeak concept: big rounded icy mountains with snow caps, a cosy ski village of wooden chalets with snowy roofs, a chairlift going up the slope, a frozen lake used as an ice rink, pine trees, skiers and sledders, snowmobiles. |
+| `ref_region_desert.png` | Dusty Dunes concept: golden sand dunes, red-rock mesas and a canyon, a palm oasis with a pool, a toy-like pyramid, and a little Wild-West town (saloon with swinging doors, sheriff's office, water tower, wooden boardwalks), dune buggies and jeeps, cacti and tumbleweeds. |
+| `ref_region_jungle.png` | Tiki Jungle concept: a lush volcano island with a gentle smoking peak, a tall waterfall into a lagoon, mossy stone temple ruins with steps, hanging vines and rope bridges, a stilt-house village on the water's edge with tiki torches, a jungle jeep on a dirt track. |
+| `ref_region_tropical.png` | Coconut Cove concept: small tropical islets with white sand, turquoise lagoons, palm trees, a colourful beach resort with cabanas and a pool bar, a fishing harbour with wooden jetties and little boats, jet skis and a sailboat. |
+| `ref_npcs_city_snow.png` | A character lineup in the game's wobbly bean-person style (round head, pear body, stubby limbs, mitten hands): city folk — businessperson with briefcase, taxi driver with cap, construction worker with hard hat, police officer, chef; snow folk — skier with goggles and bobble hat, snowboarder, ski-lift operator, hot-cocoa vendor, mountain rescuer. |
+| `ref_npcs_desert_jungle.png` | Same style lineup: desert folk — cowboy, sheriff with badge, prospector with pickaxe, desert explorer, camel herder; jungle folk — explorer with safari hat and binoculars, tiki villager with flower necklace, fisher, park ranger, adventurer with a backpack. |
+| `ref_npcs_beach.png` | Same style lineup: beach folk — surfer with board, lifeguard, sunbather with sunglasses, fisher with rod, resort waiter with tray, sailor with captain's hat, ice-cream seller. |
+| `ref_vehicles_regions.png` | A sheet of toy-like rounded vehicles for the new regions, side and three-quarter views: yellow taxi, city bus, delivery truck, snowmobile, snowcat groomer, dune buggy, desert jeep, jungle jeep with roll bar, jet ski, small sailboat, fishing boat, island ferry with an open passenger deck. |
+| `ref_archipelago_map.png` | An illustrated top-down map of the whole archipelago: the green home island in the middle (town, fun park, lake, mountain), a city island to the east linked by a long bridge, a snowy mountain island to the north, a desert island to the west, a volcano jungle island to the south-west and a scatter of tropical islets to the south-east, with dotted ferry routes between them. Labels optional. |
 
 ## Delivered round 3: replace three faces (3 images) — `assets/faces/`
 
