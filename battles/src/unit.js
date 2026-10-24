@@ -58,7 +58,7 @@ export class Unit {
     this.hasPrev = false;
     this.st = {
       phase: rand(0, 6), amp: 0, lean: 0, style: def.weapon.style, attack: null, attackT: 0,
-      headPitch: 0, headYaw: 0, mode: 'normal', t: rand(0, 10), crouch: 0,
+      headPitch: 0, headYaw: 0, mode: 'normal', t: rand(0, 10), crouch: 0, seed: rand(0, 10),
     };
     computePose(this.st, this.pose);
     const gy = battle.terrain.height(x, z);
@@ -270,11 +270,14 @@ export class Unit {
 
   possessed(dt, spd) {
     const c = this.control;
-    this.desired.set(c.mx * spd * 1.15, 0, c.mz * spd * 1.15);
+    // control.block (optional): raise the shield / weapon and brace, moving slowly
+    this.blocking = !!c.block && !this.st.attack;
+    const mv = this.blocking ? 0.45 : 1.15;
+    this.desired.set(c.mx * spd * mv, 0, c.mz * spd * mv);
     this.faceYaw = c.aimYaw;
     this.expr = EXPR.angry;
     this.st.mode = 'normal';
-    if (c.attack && !this.st.attack && this.cooldown <= 0) {
+    if (c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
       this.startAttack();
       this.aimAt = null;
     }
@@ -555,17 +558,33 @@ export class Unit {
     this.st.amp = lerp(this.st.amp, clamp(hs / Math.max(2, this.def.speed * 0.8), 0, 1), damp(8, dt));
     this.st.phase += dt * (hs / stride) * Math.PI;
     this.st.lean = clamp(hs * 0.04, 0, 0.3);
-    if (this.target) {
+    // heads look at their target (ahead of the body as it turns)
+    const st = this.st;
+    if (this.target && this.target.alive && st.mode !== 'cheer') {
       const tp = this.target.headPos;
       const hp = this.headPos;
-      this.st.headPitch = clamp(-Math.atan2(tp.y - hp.y, Math.hypot(tp.x - hp.x, tp.z - hp.z) + 0.1), -0.5, 0.5);
-    }
-    this.st.swing = this.gaitSwing;
+      st.headPitch = clamp(-Math.atan2(tp.y - hp.y, Math.hypot(tp.x - hp.x, tp.z - hp.z) + 0.1), -0.5, 0.5);
+      st.headYaw = lerp(st.headYaw, clamp(angleDiff(this.heading, Math.atan2(tp.x - hp.x, tp.z - hp.z)), -0.9, 0.9), damp(10, dt));
+    } else { st.headPitch = lerp(st.headPitch, 0, damp(4, dt)); st.headYaw = lerp(st.headYaw, 0, damp(4, dt)); }
+    // shield bearers brace behind the shield when an enemy is close; a possessed
+    // unit blocks on command
+    const near = this.target && this.target.alive && Math.hypot(this.target.pos.x - p.x, this.target.pos.z - p.z) - this.target.skel.radius < 3.5 * this.s;
+    const brace = this.def.weapon.shield && near && !st.attack && st.mode === 'normal' ? 1 : 0;
+    st.brace = lerp(st.brace || 0, brace, damp(8, dt));
+    st.block = lerp(st.block || 0, this.blocking ? 1 : 0, damp(12, dt));
+    st.flinch = Math.max(0, (st.flinch || 0) - dt * 3.5);
+    // groggy for a moment after getting back up
+    if (this.stun > 0) this.groggyT = Math.min(1.6, 0.6 + this.stun);
+    else this.groggyT = Math.max(0, (this.groggyT || 0) - dt);
+    st.wobble = this.stun > 0 ? 0 : clamp(this.groggyT, 0, 1) * 0.9;
+    st.swing = this.gaitSwing;
     this.st.rock = this.gaitRock || 0;
     computePose(this.st, this.pose);
     this.updateLegs(dt, !airborne && this.stun <= 0 && this.recover > 0.6 && this.st.mode !== 'flail');
 
     const strength = this.recover * (this.stun > 0 ? 0.08 : 1);
+    // knocked flying: the arms keep enough strength to windmill
+    this.armStrength = st.mode === 'flail' ? Math.max(strength, 0.35) : strength;
     this.drive(dt, strength, !airborne && this.stun <= 0);
 
     // melee hits
@@ -597,8 +616,9 @@ export class Unit {
         const kk = Math.min(a / dt, 30) / sn * ffk;
         ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
       }
-      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
-        m[2] * Mk * strength * (1 + arm * 1.2) * (rag.loadK ? rag.loadK[i] : 1), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
+      const sk = i >= PART.uarmL && this.alive ? Math.max(strength, this.armStrength || 0) : strength;
+      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, sk) * (1 + arm * 0.5),
+        m[2] * Mk * sk * (1 + arm * 1.2) * (rag.loadK ? rag.loadK[i] : 1), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
     this.hasPrev = true;
     if (!support || strength < 0.05) return;
@@ -606,7 +626,7 @@ export class Unit {
     const p = rag.pos[PART.pelvis];
     const gy = this.battle.terrain.height(p.x, p.z);
     const h = p.y - gy;
-    const target = this.hipH * (1 - (this.st.crouch || 0) * 0.3);
+    const target = this.hipH * (1 - (this.st.crouchOut ?? this.st.crouch ?? 0) * 0.3);
     const vy = rag.vel[PART.pelvis].y;
     const k = strength;
     if (h < target + 0.5 * this.s) {
@@ -844,6 +864,15 @@ export class Unit {
     if (st > 0.2) this.stun = Math.max(this.stun, st);
     if (this.def.frenzy) this.stun = Math.min(this.stun, 0.3);
     this.expr = EXPR.hurt;
+    // flinch along the push (unit frame: +Z forward, +X left)
+    const jm = Math.hypot(ix, iz);
+    if (jm > 1e-3) {
+      const hx = Math.sin(this.heading), hz = Math.cos(this.heading);
+      const k = clamp(jm * 2.5 / this.M / 3, 0.35, 1);
+      this.st.flinch = Math.max(this.st.flinch || 0, k);
+      this.st.flinchZ = (ix * hx + iz * hz) / jm;
+      this.st.flinchX = (ix * hz - iz * hx) / jm;
+    }
     this.lastHitBy = attacker;
     if (attacker && attacker.alive) attacker.damageDealt += amount;
     if (this.hp <= 0) this.die(attacker);

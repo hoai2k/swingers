@@ -24,8 +24,8 @@ export const GROUPS = {
   // them, so a corpse can go to sleep without being woken by its neighbours
   dead: groups(G_DEAD, G_GROUND | G_PROP),
   deadLimb: groups(G_DEAD, G_GROUND | G_PROP),
-  // a dropped weapon clatters on the ground and on other dropped things
-  dropped: groups(G_DEAD, G_GROUND | G_PROP | G_DEAD),
+  // a dropped weapon clatters on the ground (not on other dropped things: piles cost)
+  dropped: groups(G_DEAD, G_GROUND | G_PROP),
 };
 
 export function createWorld() {

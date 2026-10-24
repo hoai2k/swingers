@@ -408,8 +408,8 @@ export function buildItem(name, s, team) {
       mesh(tg, mat('#8a5226', { spec: 0.3 }), 0, 0, 0, g);
       mesh(cyl(0.036 * s, 0.036 * s, 0.16 * s, 8), leather(), 0, 0, 0, g);
       for (const sd of [-1, 1]) mesh(sphere(0.03 * s, 6, 5), tc, 0, sd * R * Math.sin(half), -R * (1 - Math.cos(half)), g);
-      const str = mesh(cyl(0.005 * s, 0.005 * s, 2 * R * Math.sin(half), 3), mat('#f4f4f4'), 0, 0, -R * (1 - Math.cos(half)), g);
-      str.castShadow = false;
+      // the string is a separate, live object (see updateBow): it is drawn back to the hand
+      g.userData.bowTips = [new THREE.Vector3(0, R * Math.sin(half), -R * (1 - Math.cos(half))), new THREE.Vector3(0, -R * Math.sin(half), -R * (1 - Math.cos(half)))];
       break;
     }
     case 'staff': { // gnarled staff with prongs holding a glowing orb
@@ -967,6 +967,19 @@ export function buildUnitVisual(def, team, opts = {}) {
     held.push({ obj, part: l.part, lp: obj.position.clone(), lq: obj.quaternion.clone() });
   }
   const heldObjs = held.map((h) => h.obj);
+  // a bow gets a live string (two segments meeting at the nock) and a nocked arrow
+  const bi = held.findIndex((h) => h.obj.userData.bowTips);
+  if (bi >= 0 && !opts.portrait) {
+    const sm = mat('#f4f4f4');
+    const seg = () => { const m = new THREE.Mesh(cyl(0.011 * s, 0.011 * s, 1, 4), sm); m.castShadow = false; root.add(m); return m; };
+    const arrow = new THREE.Group();
+    mesh(cyl(0.012 * s, 0.012 * s, 0.78 * s, 5), mat('#9a6332'), 0, 0, 0, arrow);
+    mesh(cone(0.03 * s, 0.1 * s, 4), mat('#b9c2cc', { emissive: '#1a1d22' }), 0, 0.42 * s, 0, arrow);
+    mesh(box(0.004 * s, 0.13 * s, 0.05 * s), mat('#e2403b'), 0, -0.32 * s, 0, arrow);
+    arrow.visible = false;
+    root.add(arrow);
+    held[bi].bow = { tips: held[bi].obj.userData.bowTips, segs: [seg(), seg()], arrow, s };
+  }
   // packs: extra meshes on parts, and extra bodies (vis.extraParts: {group, pos, quat})
   const extraParts = [];
   for (const f of EXT.decorate) f(def, team, { root, parts, items, skel, extraParts }, H);
@@ -1127,7 +1140,6 @@ const _yq = new THREE.Quaternion();
 const _pp = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
 export function poseVisual(vis, x, y, z, yaw, st) {
-  for (let i = 0; i < (vis.held?.length || 0); i++) placeHeld(vis, i, null);
   computePose(st, _pose);
   _pp.set(0, vis.skel.standHeight + (st.bob || 0), 0);
   forwardKinematics(vis.skel, _pp, _pose, _pos);
@@ -1143,6 +1155,7 @@ export function poseVisual(vis, x, y, z, yaw, st) {
     e.group.position.x += x; e.group.position.y += y; e.group.position.z += z;
     e.group.quaternion.copy(_yq).multiply(e.quat);
   }
+  for (let i = 0; i < (vis.held?.length || 0); i++) placeHeld(vis, i, null);
 }
 
 // Held item i of a unit: in its hand (pos null), or let go of and lying at a world
@@ -1153,11 +1166,55 @@ export function placeHeld(vis, i, pos, quat) {
   const o = h.obj;
   if (!pos) {
     if (o.parent !== vis.parts[h.part]) { vis.parts[h.part].add(o); o.position.copy(h.lp); o.quaternion.copy(h.lq); }
-    return;
+  } else {
+    if (o.parent !== vis.root) vis.root.add(o);
+    o.position.copy(pos);
+    o.quaternion.copy(quat);
   }
-  if (o.parent !== vis.root) vis.root.add(o);
-  o.position.copy(pos);
-  o.quaternion.copy(quat);
+  if (h.bow) updateBow(vis, h, !pos);
+}
+
+// The bow string runs tip - nock - tip; the nock is the drawing (right) hand when
+// that is behind the string, where a nocked arrow then points at the grip.
+const _bq = new THREE.Quaternion(), _bp = new THREE.Vector3(), _ta = new THREE.Vector3(), _tb = new THREE.Vector3();
+const _hand = new THREE.Vector3(), _mid = new THREE.Vector3(), _bk = new THREE.Vector3(), _d = new THREE.Vector3();
+function updateBow(vis, h, held) {
+  const o = h.obj, b = h.bow;
+  // bow world transform
+  if (held) {
+    const p = vis.parts[h.part];
+    _bq.copy(p.quaternion).multiply(o.quaternion);
+    _bp.copy(o.position).applyQuaternion(p.quaternion).add(p.position);
+  } else { _bq.copy(o.quaternion); _bp.copy(o.position); }
+  _ta.copy(b.tips[0]).applyQuaternion(_bq).add(_bp);
+  _tb.copy(b.tips[1]).applyQuaternion(_bq).add(_bp);
+  _mid.addVectors(_ta, _tb).multiplyScalar(0.5);
+  let nock = _mid, drawn = 0;
+  if (held) {
+    const fr = vis.parts[PART.farmR];
+    _hand.set(0, -vis.skel.handOffset, 0).applyQuaternion(fr.quaternion).add(fr.position);
+    _bk.subVectors(_mid, _bp).normalize(); // grip -> string
+    _d.subVectors(_hand, _mid);
+    drawn = _d.dot(_bk);
+    // (the hand hooks the string a little before it is behind it: short arms)
+    if (drawn > -0.2 * b.s && _d.length() < 0.8 * b.s) { nock = _hand; drawn += 0.2 * b.s; } else drawn = 0;
+  }
+  const put = (m, a, c) => {
+    _d.subVectors(c, a);
+    const L = _d.length();
+    m.position.addVectors(a, c).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, _d.multiplyScalar(1 / Math.max(L, 1e-6)));
+    m.scale.set(1, Math.max(L, 1e-3), 1);
+  };
+  put(b.segs[0], _ta, nock);
+  put(b.segs[1], _tb, nock);
+  // nocked arrow: from the nock toward the grip
+  b.arrow.visible = drawn > 0.06 * b.s;
+  if (b.arrow.visible) {
+    _d.subVectors(_bp, nock).normalize();
+    b.arrow.quaternion.setFromUnitVectors(UP, _d);
+    b.arrow.position.copy(nock).addScaledVector(_d, 0.36 * b.s);
+  }
 }
 
 // ---------------------------------------------------------------- portraits

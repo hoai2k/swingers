@@ -192,7 +192,7 @@ export class Battle {
       this.overT += dt;
       // winners hop about
       for (const u of this.units) {
-        if (u.alive && u.team === this.winner && u.stun <= 0 && Math.random() < dt * 0.8 && u.groundGap() < 0.2) {
+        if (u.alive && u.team === this.winner && u.stun <= 0 && Math.random() < dt * 1.3 && u.groundGap() < 0.2) {
           u.rag.impulseAll(0, u.M * rand(3, 5), 0);
         }
       }
@@ -237,16 +237,21 @@ export class Battle {
       const vw = v.def.weapon;
       const sh = v.shield();
       let hitPos = v.rag.pos[best];
-      if (sh && v.stun <= 0) {
+      // (a braced or blocking bearer covers a wider arc; a possessed unit blocking
+      // without a shield parries blows from the front with its weapon)
+      const guardUp = v.blocking && v.stun <= 0;
+      if ((sh || guardUp) && v.stun <= 0) {
         const fx = Math.sin(v.heading), fz = Math.cos(v.heading);
         const tx = p.x - v.pos.x, tz = p.z - v.pos.z;
         const sr = 0.45 * v.s + r;
-        const onBoard = segSegDist2(A, B, sh.pos, sh.pos) < sr * sr;
-        if (onBoard || (fx * tx + fz * tz > 0.35 * Math.hypot(tx, tz) && !v.isDown())) {
-          dmg *= 1 - (vw.blockMelee || 0.3);
-          force *= 0.6;
+        const onBoard = sh && segSegDist2(A, B, sh.pos, sh.pos) < sr * sr;
+        const arc = guardUp ? -0.1 : (v.st.brace || 0) > 0.5 ? 0.1 : 0.35;
+        if (onBoard || (fx * tx + fz * tz > arc * Math.hypot(tx, tz) && !v.isDown())) {
+          const bm = sh ? vw.blockMelee || 0.3 : 0.4;
+          dmg *= 1 - (guardUp && sh ? Math.max(bm, 0.85) : bm);
+          force *= guardUp ? 0.4 : 0.6;
           blocked = true;
-          hitPos = sh.pos;
+          hitPos = sh ? sh.pos : v.rag.pos[PART.farmR];
         }
       }
       _a.copy(tipVel).normalize();
@@ -431,7 +436,7 @@ export class Battle {
         _a.copy(pr.vel).normalize();
         // a raised shield catches most arrows and spears that come from the front
         if (sh && v.stun <= 0 && !v.isDown() &&
-            -(_a.x * Math.sin(v.heading) + _a.z * Math.cos(v.heading)) > 0.3 && Math.random() < 0.85) {
+            -(_a.x * Math.sin(v.heading) + _a.z * Math.cos(v.heading)) > 0.3 && Math.random() < (v.blocking ? 0.98 : 0.85)) {
           this.shieldStick(pr, P, v, sh, _a, true);
           hit = true;
           return;
