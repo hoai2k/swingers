@@ -12,6 +12,7 @@ files = sorted(
     p.relative_to(root).as_posix()
     for p in root.rglob('*')
     if p.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')
+    and not any(part.startswith('.') for part in p.relative_to(root).parts)
     and p.relative_to(root).parts[0] != 'reference'
 )
 (root / 'manifest.json').write_text(json.dumps(files, indent=1) + '\n')
