@@ -1,8 +1,7 @@
 # Wobblers image requests
 
-**Status: no open requests.** Everything requested so far (rounds 1–4) is
-delivered and integrated; see `image-requests-history.md` for those requests and
-their review notes.
+**Status: round 5 open (12 images).** Rounds 1–4 are delivered and integrated;
+see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
 
@@ -46,3 +45,28 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
+
+## OPEN round 5 — shops, homes and pets (12 images)
+
+The game draws a procedural stand-in for each until the art arrives.
+
+### Signs (`assets/signs/`, 1024 × 256, exact words)
+
+- `clothes.png` — **CLOTHES**: chunky rounded letters on a pink board, small coat-hanger and T-shirt icon.
+- `pet_shop.png` — **PET SHOP**: rounded letters on a sky-blue board, small paw-print icon.
+- `homes.png` — **HOMES**: rounded letters on a green board, small house-and-key icon (the estate agent).
+- `car_dealer.png` — **CAR DEALER**: rounded letters on an orange board, small toy-car icon.
+
+### Faces (`assets/faces/`, 512 × 512, transparent, features only — new clothes-shop faces)
+
+- `face_heart_eyes.png` — two big red heart-shaped eyes and a wide happy smile.
+- `face_tongue_out.png` — round eyes, open grin with a pink tongue sticking out.
+- `face_dizzy.png` — spiral swirl eyes and a wavy zig-zag mouth.
+- `face_nerd.png` — small eyes behind big thick round glasses, buck-tooth grin.
+
+### Posters (`assets/posters/`)
+
+- `pets_adopt.png` (512 × 716) — pet-shop poster saying **ADOPT A PAL!**, a cute toy-like dog, cat, bunny and penguin together.
+- `clothes_fashion.png` (512 × 716) — fashion poster saying **NEW LOOKS**, a wobbly bean person posing in a sombrero and heart sunglasses.
+- `homes_cottage.png` (768 × 528) — estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, a **FOR SALE** tag in one corner.
+- `cars_sale.png` (512 × 716) — car-dealer poster saying **BIG DEALS**, a chunky toy sports car and a helicopter.
