@@ -43,7 +43,7 @@ const gun = {
     const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
     hand.x += fx * w.barrel * u.s; hand.z += fz * w.barrel * u.s; hand.y += 0.04 * u.s;
     aimPoint(u, _p, 0.4, 0.2);
-    if (!u.aimAt && u.control) _p.y = hand.y + Math.tan(u.control.aimPitch) * 14;
+    if (!u.aimAt && u.control && !u.control.aimPt) _p.y = hand.y + Math.tan(u.control.aimPitch) * 14;
     for (let i = 0; i < (w.pellets || 1); i++) {
       launchVel(hand, _p, w.speed * rand(0.95, 1.05), 1.5, false, w.spread, _v);
       addProjectile(b, 'bullet', hand, _v, u, { life: w.range / w.speed * 1.4 });

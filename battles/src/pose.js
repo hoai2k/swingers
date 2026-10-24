@@ -129,7 +129,7 @@ const BLOCK_WEAPON = [0.55, 0.1, -1.25, -2.45];
 
 // st: { phase, amp (0..1 walking), lean, style, attack (anim name or null), attackT,
 //       headPitch, headYaw, mode ('normal'|'cheer'|'flail'|'play'|'cower'), t,
-//       optional: swing, rock (gait), brace (0..1 raise the guard / shield),
+//       optional: airborne (flung: windmill), swing, rock (gait), brace (0..1 raise the guard / shield),
 //       block (0..1 full block), flinch (0..1) with flinchX/flinchZ (unit-frame push
 //       direction: +X left, +Z forward), wobble (0..1 groggy), seed }
 // Writes st.crouchOut (how much the pose wants to crouch, for the balance controller).
@@ -171,8 +171,18 @@ export function computePose(st, pose) {
     headPitch -= 0.35;
     lean -= 0.12;
     roll += Math.sin(t * 4 + seed) * 0.08;
+  } else if (st.mode === 'flail' && st.airborne) {
+    // flung through the air: TABS windmilling - both arms whirl round in big circles
+    // out to the sides, out of step with each other (and the legs pedal, below)
+    const c = t * 10 + seed;
+    for (let n = 0; n < 2; n++) {
+      const a = c * (n ? 1.13 : 1) + n * 2.4, A = arms[n];
+      A[0] = 0.2; A[1] = 0.75 + Math.sin(a * 0.5) * 0.3;
+      A[2] = -(a % (Math.PI * 2)); A[3] = A[2] - 0.35 - Math.sin(a) * 0.25;
+    }
+    headPitch -= 0.3;
   } else if (st.mode === 'flail') {
-    // windmilling
+    // knocked about on the ground: arms flap
     const c = t * 14 + seed;
     arms[0][0] = 0; arms[0][1] = 1.3 + Math.sin(c) * 0.5; arms[0][2] = -1.4 + Math.cos(c * 1.3) * 1.2; arms[0][3] = arms[0][2] - 0.4;
     arms[1][0] = 0; arms[1][1] = 1.3 + Math.cos(c) * 0.5; arms[1][2] = -1.4 + Math.sin(c * 1.1) * 1.2; arms[1][3] = arms[1][2] - 0.4;
@@ -222,9 +232,15 @@ export function computePose(st, pose) {
 
   // Legs
   const stride = 0.75 * amp;
-  const thL = -sn * stride, thR = sn * stride;
-  const bendL = 0.12 + Math.max(0, cs) * 1.1 * amp;
-  const bendR = 0.12 + Math.max(0, -cs) * 1.1 * amp;
+  let thL = -sn * stride, thR = sn * stride;
+  let bendL = 0.12 + Math.max(0, cs) * 1.1 * amp;
+  let bendR = 0.12 + Math.max(0, -cs) * 1.1 * amp;
+  if (st.mode === 'flail' && st.airborne) {
+    // pedalling in the air
+    const c = t * 9 + seed;
+    thL = -0.35 + Math.sin(c) * 0.6; thR = -0.35 - Math.sin(c) * 0.6;
+    bendL = 0.5 + Math.max(0, Math.cos(c)) * 0.9; bendR = 0.5 + Math.max(0, -Math.cos(c)) * 0.9;
+  }
   const spread = 0.06 + (st.mode === 'flail' ? 0.4 : 0);
   st.crouchOut = crouch;
   eulerYZX(pose[P.thighL], 0, spread, thL - crouch);

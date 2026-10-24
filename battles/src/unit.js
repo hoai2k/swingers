@@ -277,7 +277,10 @@ export class Unit {
     this.faceYaw = c.aimYaw;
     this.expr = EXPR.angry;
     this.st.mode = 'normal';
-    if (c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
+    // pack kinds can take over (steer a mount, crew an engine, dive...); true means
+    // the attack button was handled there
+    const own = this.kind?.control ? this.kind.control(this, dt, c) : false;
+    if (!own && c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
       this.startAttack();
       this.aimAt = null;
     }
@@ -366,11 +369,14 @@ export class Unit {
     const h = this.heading, ch = Math.cos(h), sh = Math.sin(h);
     const hipX = Math.abs(legs[0].hip.anchorA.x) * 1.15;
     const sq = Math.sqrt(s);
-    const dur = clamp(0.24 - spd * 0.02, 0.13, 0.24) * sq;
     const base = 0.14 * s;
     // how far a foot can be from under the hip at the current hip height
     const vert = Math.max(0.05, this.hipH - 0.05 * s - this.footR);
     const reach = Math.max(0.2 * s, Math.sqrt(Math.max(0.0025, (this.legLen * 0.98) ** 2 - vert * vert)));
+    // swing time; short legs moving fast (halflings) step quicker still: a planted foot
+    // only lasts about 2 reaches of travel, and a swing slower than that drags the
+    // feet along the ground instead of stepping
+    const dur = Math.min(clamp(0.24 - spd * 0.02, 0.13, 0.24) * sq, Math.max(0.055, 2.1 * reach / Math.max(0.5, spd)));
     const lead = Math.min(0.06 * sq, reach * 0.8 / Math.max(0.5, spd));
     for (const l of legs) {
       // ideal spot: under the hip, a little ahead along the velocity
@@ -417,12 +423,15 @@ export class Unit {
     const a = legs[0], b = legs[1];
     const thr = Math.min(base + spd * lead, reach * 1.6);
     let cand = null;
+    // fast for the length of its legs (a sprinting halfling): run with a flight phase,
+    // lifting a foot before the other has landed, or the planted foot gets dragged
+    const flight = spd > this.legLen * 10;
     for (const l of legs) {
       if (l.state !== 'stance') continue;
       const o = l === a ? b : a;
       const need = l.ahead ? l.hd > reach * 1.6 : l.err > thr || l.hd > reach;
       if (!need) continue;
-      const otherOk = o.state === 'stance' && o.stanceT > 0.02;
+      const otherOk = o.state === 'stance' ? o.stanceT > 0.02 : flight && o.state === 'swing' && o.t > 0.55;
       const desperate = l.hd > reach * 1.5 + 0.1 * s;
       if ((otherOk || desperate) && (!cand || l.err > cand.err)) cand = l;
     }
@@ -529,6 +538,7 @@ export class Unit {
     this.think(dt);
     if (this.kind?.step) this.kind.step(this, dt);
     if (this.airT > 0.25 || this.stun > 0.3) this.st.mode = 'flail';
+    this.st.airborne = this.airT > 0.25;
 
     // talk
     this.talkT -= dt;
@@ -584,7 +594,8 @@ export class Unit {
 
     const strength = this.recover * (this.stun > 0 ? 0.08 : 1);
     // knocked flying: the arms keep enough strength to windmill
-    this.armStrength = st.mode === 'flail' ? Math.max(strength, 0.35) : strength;
+    // (flung through the air they windmill hard)
+    this.armStrength = st.mode === 'flail' ? Math.max(strength, st.airborne ? 0.7 : 0.35) : strength;
     this.drive(dt, strength, !airborne && this.stun <= 0);
 
     // melee hits
@@ -617,7 +628,10 @@ export class Unit {
         ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
       }
       const sk = i >= PART.uarmL && this.alive ? Math.max(strength, this.armStrength || 0) : strength;
-      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, sk) * (1 + arm * 0.5),
+      // small units' legs are quicker (a pendulum's swing time goes with sqrt(length)):
+      // without this a halfling's feet lag their fast steps and drag along the ground
+      const lk = this.s < 1 && i >= PART.thighL && i <= PART.shinR ? 1 / Math.sqrt(this.s) : 1;
+      rag.muscle(i, wt, m[0] * (1 + arm * 0.4) * lk, m[1] * Math.max(0.2, sk) * (1 + arm * 0.5) * lk,
         m[2] * Mk * sk * (1 + arm * 1.2) * (rag.loadK ? rag.loadK[i] : 1), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
     this.hasPrev = true;
@@ -856,6 +870,8 @@ export class Unit {
     const armor = this.def.armor || 0;
     amount *= 1 - armor;
     this.hp -= amount;
+    // parried (kind.parry, e.g. the Samurai): the blade took it, no push or flinch
+    if (this.parriedAt === this.battle.time) { ix = iy = iz = 0; }
     this.rag.impulse(part, ix, iy, iz);
     // the caller also pushes the whole body by ~2x this; stun on big shoves
     const dv = (Math.hypot(ix, iy, iz) * 2.5) / this.M;

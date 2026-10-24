@@ -15,7 +15,7 @@ import { THREE, clamp, rand, PART, EXPR, addStatus, addProjectile, launchVel } f
 import {
   V, V3, Q4, BC, beastLayout, beastInit, beastUnitStep, beastHit, beastDie, animLegs, setRot, partPoint, footfalls,
   onFoot, fling, quake, inField, S, hurtBig, shoveBig, closestOnSeg, yawOf, angleDiff,
-  placeExtra, qYaw, qPitch, qRoll, unmountedRadius,
+  placeExtra, qYaw, qPitch, qRoll, unmountedRadius, upOf,
 } from './bc-core.js';
 import { mountLayout, mountInit, mammothThink, riderHit, riderDie, riderStep, setupRidePoses } from './sm-mounts.js';
 import { RIDE, setArm, addBig, updateBig, rangedEvent, footMelee } from './sm-core.js';
@@ -191,6 +191,44 @@ function stepRam(b, m) {
   }
 }
 
+// The second archer fights on after the rider (the unit) has fallen: the battle goes on
+// while it stands (kind.standing), and enemies go for it (kind.standIn: a stand-in
+// target; their blows and shots reach it through its big target - the elephant while
+// it is up in the howdah, its own once it has tumbled out).
+const archer2Standing = (u) => { const a = u.sm?.bb?.a2; return !!a && !a.dead; };
+function archer2StandIn(u) {
+  const m = u.sm, a = m?.bb?.a2;
+  if (!a || a.dead) return null;
+  const b = u.battle, e = m.r2;
+  let si = m.bb.si;
+  if (!si) {
+    const vel = Array.from({ length: 11 }, () => new V3()), pos = Array.from({ length: 11 }, () => new V3());
+    si = m.bb.si = {
+      standIn: true, team: u.team, s: 1, M: 70, stun: 0, mobbed: 0, hp: ARCHER2.hp, maxHp: ARCHER2.hp,
+      heading: 0, cooldown: 0, airT: 0, st: {}, hitSet: new Set(),
+      // (riding, as far as grabs and shoves go: nothing picks it up or flings it)
+      sm: { mounted: true, get big() { return a.big && a.big.alive ? a.big : m.big; } },
+      def: { id: u.def.id, name: 'Howdah Archer', cost: 0, armor: 0, stagger: 1, speed: 0, weapon: { kind: 'ranged' }, personality: u.def.personality },
+      skel: { radius: 0.4, rHead: 0.2, standHeight: STAND },
+      pos: new V3(), chestPos: new V3(), headPos: new V3(),
+      rag: { vel, pos, quat: Array.from({ length: 11 }, () => new Q4()), impulseAll() {}, impulse() {} },
+      get alive() { return !a.dead && !b.over; },
+      hit(amount, part, ix, iy, iz, att) {
+        const g = a.big && a.big.alive ? a.big : m.alive ? m.big : null;
+        if (g) hurtBig(b, g, amount, att && att.alive ? att : null);
+      },
+      isDown: () => false, groundGap: () => 0,
+    };
+  }
+  const p = a.ground ? a.pos : e.pos;
+  si.pos.set(p.x, p.y - (a.ground ? 0 : 0.2), p.z);
+  si.chestPos.set(p.x, p.y + 0.35, p.z);
+  si.headPos.set(p.x, p.y + 0.8, p.z);
+  for (let i = 0; i < 11; i++) si.rag.pos[i].copy(si.chestPos);
+  si.hp = a.big ? a.big.hp : ARCHER2.hp;
+  return si;
+}
+
 // charge through the line, brawl with tusks for a few seconds, back off for a run-up, again
 function battleEleThink(u, dt, ctx) {
   const m = u.sm;
@@ -240,9 +278,23 @@ function stepEles(b, dt) {
     // a dead elephant goes all the way over onto its side
     if (!m.alive && !m.bb.toppled) {
       m.bb.toppled = true;
+      m.bb.topT = 0;
       const f = V(0, 0, 1).applyQuaternion(m.torso.quat), w = m.torso.body.angvel();
       const sd = Math.sign(f.x * w.x + f.z * w.z) || 1;
+      m.bb.topSd = sd;
       m.torso.body.setAngvel({ x: f.x * 1.15 * sd, y: w.y, z: f.z * 1.15 * sd }, true);
+    }
+    // the body is a capsule, round about its long axis: friction and damping can stop
+    // the roll part way over (~55 degrees), or it rolls on onto its back. Steer the roll
+    // rate so it comes to rest lying on its side (90 degrees).
+    if (!m.alive && m.bb.topT < 3.5) {
+      m.bb.topT += dt;
+      const q = m.torso.quat, body = m.torso.body;
+      const f = _a.set(0, 0, 1).applyQuaternion(q), up = upOf(q, _b), w = body.angvel();
+      const along = f.x * w.x + f.y * w.y + f.z * w.z;
+      const want = m.bb.topSd * clamp(up.y * 3, -0.9, 0.9);
+      const k = (want - along) * Math.min(1, dt * 8);
+      body.setAngvel({ x: w.x + f.x * k, y: w.y + f.y * k, z: w.z + f.z * k }, true);
     }
     if (!m.alive && m.torso.body.isSleeping()) { if (m.bb.a2 && !m.bb.a2.dead && m.bb.a2.ground) stepArcher2(b, m, dt); continue; }
     if (m.bb.a2) stepArcher2(b, m, dt);
@@ -534,7 +586,7 @@ register({
   units,
   items: { bb_glaive: { len: 2.3, r: 0.09, grip: 90, back: 0.4, metal: true, mass: 3 } },
   kinds: {
-    bb_welephant: { init: (u) => eleInit(u, WAR_ELE), think: mammothThink, step: riderStep, hit: riderHit, die: riderDie, event: rangedEvent },
+    bb_welephant: { init: (u) => eleInit(u, WAR_ELE), think: mammothThink, step: riderStep, hit: riderHit, die: riderDie, event: rangedEvent, standing: archer2Standing, standIn: archer2StandIn },
     bb_belephant: { melee: true, init: (u) => eleInit(u, BATTLE_ELE), think: battleEleThink, step: riderStep, hit: riderHit, die: riderDie },
     bb_dragon: { init: (u) => beastInit(u, DRAGON), think: dragonThink, step: beastUnitStep, hit: beastHit, die: beastDie },
   },

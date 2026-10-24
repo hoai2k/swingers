@@ -69,13 +69,15 @@ export function inFront(u, x, z, k = 0.15) {
 }
 
 // Where a ranged unit wants its shot to land (the aimed target, led a little), or
-// a point ahead of a possessed unit.
+// for a possessed unit the crosshair point (control.aimPt, set by game.js), else a
+// point ahead of it.
 export function aimPoint(u, out, lead = 0.6, tof = 0.6) {
   const t = u.aimAt;
   if (t && t.alive) {
     const c = t.chestPos, v = t.rag.vel[PART.chest];
     return out.set(c.x + v.x * tof * lead, c.y, c.z + v.z * tof * lead);
   }
+  if (u.control && u.control.aimPt) return out.copy(u.control.aimPt);
   const d = 14;
   return out.set(u.pos.x + Math.sin(u.heading) * d, u.pos.y, u.pos.z + Math.cos(u.heading) * d);
 }
@@ -110,6 +112,8 @@ export const handPos = (u, out = new THREE.Vector3()) => u.rag.worldPoint(PART.f
 // Hit a victim from a pack projectile/effect: damage, push, blood or sparks.
 export function strike(b, v, dmg, dir, force, attacker, kind, part = PART.chest, sound = 'stab') {
   const c = v.rag.pos[part];
+  // parried (kind.parry): the hit lands on the blade, no blood or push
+  if (v.kind?.parry && v.kind.parry(v, attacker, kind)) { v.hit(dmg, part, 0, 0, 0, attacker, kind); return; }
   v.hit(dmg, part, dir.x * force * 0.5, dir.y * force * 0.5 + force * 0.1, dir.z * force * 0.5, attacker, kind);
   v.rag.impulseAll(dir.x * force * 0.5, dir.y * force * 0.5, dir.z * force * 0.5);
   if (v.def.armor > 0.3) { b.emit('spark', c.x, c.y, c.z, 4); b.sound('clang', c, 0.5, 1.3); }
@@ -138,11 +142,17 @@ export function stickTo(b, pr, v, part, t = 25) {
 
 // Find the first enemy part the projectile's last move passed through (like the core
 // test for arrows; the core only tests the chest for projectiles with a hit()).
+// A beast (bc-core.js) is hit on its body capsule and reported as its chest.
 const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 export function sweepParts(b, pr, r) {
   let best = null;
-  b.grid.query(pr.pos.x, pr.pos.z, 5, (v) => {
+  b.grid.query(pr.pos.x, pr.pos.z, 8, (v) => {
     if (best || !v.alive || v.team === pr.team || pr.hits.has(v)) return;
+    if (v.bc) {
+      const g = v.bc.big, rr = g.r + r;
+      if (g.alive && segSegDist2(pr.prev, pr.pos, g.A, g.B) < rr * rr) best = { v, part: PART.chest };
+      return;
+    }
     for (let i = 0; i < NPARTS; i++) {
       const part = v.skel.parts[i], c = v.rag.pos[i];
       if (part.shape === 'ball') { _a.copy(c); _b.copy(c); }
@@ -181,6 +191,25 @@ export function arrowProj(over) {
   };
 }
 
+// ------------------------------------------------------------------ beasts
+// A beast (bc-core.js) is a rigid body steered by velocity servos with a kinematic
+// pilot ragdoll hidden inside, so impulses on the pilot do nothing. Drags (ropes,
+// reels) go to the body as the same change of velocity, less for heavy beasts.
+export function pushUnit(v, ix, iy, iz) {
+  const m = v.bc;
+  if (!m) { v.rag.impulseAll(ix, iy, iz); return; }
+  const k = (m.cfg.mass / v.M) * clamp(250 / m.cfg.mass, 0.08, 1);
+  m.torso.body.applyImpulse({ x: ix * k, y: iy * k, z: iz * k }, true);
+}
+// Slows (frost, paint, a rope) hold a beast's goal speed down to k for t seconds.
+export function slowBeast(v, k = 0.5, t = 0.1) {
+  const m = v.bc;
+  if (!m) return false;
+  if (!(m.slowT > 0)) m.slowK = k; else m.slowK = Math.min(m.slowK, k);
+  m.slowT = Math.max(m.slowT || 0, t);
+  return true;
+}
+
 // ------------------------------------------------------------------ status effects
 // kind: 'slow' (frost), 'poison', 'burn'. dps for damage over time; src gets the kill.
 const MARK = { slow: ['st_frost', PART.chest], poison: ['st_venom', PART.head], burn: null };
@@ -211,7 +240,8 @@ function stepStatus(b, u, dt) {
     if (!u.alive) { s.t = 0; if (s.mark) s.mark.t = 0; continue; }
     if (k === 'slow') {
       // drag on the feet and slower attacks
-      if (u.airT <= 0) {
+      if (slowBeast(u, 0.5)) { /* a beast's legs (or wings) slow down */ }
+      else if (u.airT <= 0) {
         const v0 = u.rag.vel[PART.pelvis];
         u.rag.impulseAll(-v0.x * u.M * 0.12, 0, -v0.z * u.M * 0.12);
       }
@@ -263,11 +293,12 @@ function stepRopes(b, dt) {
     }
     // drag the victim (living or dead) toward the owner
     if (v.alive) v.stun = Math.max(v.stun, 0.3);
+    if (v.alive) slowBeast(v, 0.35);
     const k = r.pull * dt * v.M * clamp(d / 3, 0.4, 1) / Math.max(1, v.s * v.s);
-    v.rag.impulseAll((A.x - B.x) / d * k, Math.max(0, (A.y - B.y) / d) * k + v.M * 2.5 * dt, (A.z - B.z) / d * k);
+    pushUnit(v, (A.x - B.x) / d * k, Math.max(0, (A.y - B.y) / d) * k + v.M * 2.5 * dt, (A.z - B.z) / d * k);
     // segments
     const n = Math.min(40, Math.ceil(d / SEG));
-    while (r.segs.length < n) { const s = { type: 'rope', unit: null, part: -1, pos: new THREE.Vector3(), quat: new THREE.Quaternion(), t: 99, id: newId() }; r.segs.push(s); b.stuck.push(s); }
+    while (r.segs.length < n) { const s = { type: 'rope', unit: null, part: -1, dyn: true, pos: new THREE.Vector3(), quat: new THREE.Quaternion(), t: 99, id: newId() }; r.segs.push(s); b.stuck.push(s); }
     while (r.segs.length > n) r.segs.pop().t = 0;
     const sag = Math.min(0.6, d * 0.03);
     for (let j = 0; j < n; j++) {
