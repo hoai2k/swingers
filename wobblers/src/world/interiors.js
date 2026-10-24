@@ -176,7 +176,7 @@ const SHOPS = {
 
   ARCADE(game, L, w, d, h, wall, color, name) {
     shell(game, L, {
-      w, d, h, wall: 0x3a2a5a, floor: 0x2a2440, roofColor: 0x2a2440,
+      w, d, h, wall: 0x7a62b8, floor: 0x4a3f7a, roofColor: 0x5a4a8a,
       door: { lx: w * 0.25, w: 1.6, h: 2.4, color: 0xb46cff },
       windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0, glass: 0xd9b0ff }],
     });

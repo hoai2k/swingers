@@ -2,7 +2,8 @@
 // farm, mountain lookout, lighthouse, forests and clouds.
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { heightAt, FLAT, LAKE, MOUNTAIN, fbm } from '../terrain.js';
+import { FLAT, LAKE, MOUNTAIN, fbm } from '../terrain.js';
+import { groundAt as heightAt } from './common.js';
 import { Builder, signMesh } from '../mesh.js';
 import { Vehicle } from '../vehicles.js';
 

@@ -6,9 +6,9 @@ import * as THREE from 'three';
 import { RAPIER, yawQuat } from '../physics.js';
 import { DT, SEA_LEVEL, groups, G_VEH, G_STATIC, ALL } from '../config.js';
 import { Builder, signMesh } from '../mesh.js';
-import { heightAt, LAKE, MOUNTAIN } from '../terrain.js';
+import { LAKE, MOUNTAIN } from '../terrain.js';
 import { addSeat } from './playground.js';
-import { Local, NO_STATIC, VEH_GROUPS, useSpot, throwable, lob, place, chime, clunk, tone, liveSign } from './common.js';
+import { Local, NO_STATIC, VEH_GROUPS, useSpot, throwable, lob, place, chime, clunk, tone, liveSign, groundAt as heightAt } from './common.js';
 import { furn } from './furniture.js';
 import { vendingMachine } from './music.js';
 
@@ -16,6 +16,7 @@ const C = RAPIER.ColliderDesc;
 const _q = new THREE.Quaternion(), _v = new THREE.Vector3();
 
 export function buildFun(game, kit) {
+  game.groundAt = heightAt; // exact terrain-mesh height (see common.js groundAt)
   const W0 = new Local(kit, 0, 0, 0);
   // vending machines around the island
   vendingMachine(game, W0, 90, 71.2, 0, 0x3f8cff);           // pool lawn
