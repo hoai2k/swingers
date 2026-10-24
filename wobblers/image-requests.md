@@ -1,13 +1,13 @@
 # Wobblers image requests
 
-**Status: round 2 open — 4 faces.** Round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+**Status: round 2 delivered — 4 faces, 2026-10-24.** Round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
 
-## OPEN round 2: unlockable faces (4 images) — `assets/faces/`
+## Delivered round 2: unlockable faces (4 images) — `assets/faces/`
 
-Four new faces unlock from the hidden presents and currently use procedural
-stand-ins. Same format and style as the round 1 faces (512 × 512, transparent,
-features only, no head outline or skin): run `python3 tools/build_manifest.py`
-after adding them.
+Four new faces unlock from the hidden presents and replace their procedural
+stand-ins. Delivered in the same format and style as the round 1 faces
+(512 × 512, transparent, features only, no head outline or skin). The manifest
+has been rebuilt, and all four were verified through the game's face-texture hook.
 
 | File | Size | Expression |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ after adding them.
 
 Generated with the built-in image generation tool and saved at the paths and
 dimensions below. The final prompts and source files are recorded in
-`assets/generation.json`. The game manifest lists the 45 in-game images;
+`assets/generation.json`. The game manifest lists the 49 in-game images;
 the six reference sheets remain outside the runtime manifest.
 
 Everything already has a procedural stand-in, so these are upgrades, not
