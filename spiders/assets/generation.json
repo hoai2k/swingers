@@ -65,6 +65,11 @@
       "file": "bg_dunes.jpg",
       "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Desert ruins at dusk: broken sandstone arches and columns silhouetted at the left and right edges, low dunes on the horizon, warm amber-to-violet sky with the first stars, a low sun glowing lower right. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
       "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-cca1429f-4205-4d6d-ade8-20b559ef9db2.png"
+    },
+    {
+      "file": "tile_spider_frost_ice.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless square 512 × 512 opaque PNG texture for a 2D cartoon game's glacier ice solids, tiled in both directions at half size. Primary request: Seamless tileable texture of glossy glacier ice: translucent pale-cyan to mid-blue, soft diagonal light streaks and a few thin white cracks and trapped air bubbles; no horizontal bands, no stripes, no hard edges; even brightness across the tile so the repeat doesn't show. Style: glossy, bold-outlined painterly cartoon finish matching Swingers / Rounders game art, but texture only with no perimeter outline. Texture fills the entire square, no borders, no framing, no objects, no perspective, no text. Opposite edges must match for seamless repetition. Subtle slippery smooth surface, low contrast, sparse fine details; avoid large fracture polygons, steps, tile grid, snow caps or bright edge highlights.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-c4e5caa1-60c7-4c80-afde-000ab20a3089.png"
     }
   ]
 }

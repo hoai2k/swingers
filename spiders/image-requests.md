@@ -1,6 +1,6 @@
 # Spider Swingers — image requests
 
-**Status: all 13 hook-ready images delivered and checked in game; 1 new request open (section 4).**
+**Status: all 14 hook-ready images delivered and listed in the manifest; no open requests.**
 Title/lobby art and all 10 board backgrounds are delivered. Optional extras
 below remain deferred. Exact prompts are recorded in `assets/generation.json`.
 The final logo uses ice blue and pink/magenta, with no orange or spider character.
@@ -41,7 +41,7 @@ backdrop for its theme.
 | `bg_storm.jpg` | Eye of the Storm (storm) | A towering storm vortex with its eye slightly above centre, dark misty mountains at the bottom, rain streaks throughout, lightning glowing inside the clouds at the far left and right. |
 | `bg_dunes.jpg` | Sunken Ruins (desert) | Desert ruins at dusk: broken sandstone arches and columns silhouetted at the left and right edges, low dunes on the horizon, warm amber-to-violet sky with the first stars, a low sun glowing lower right. |
 
-## 4. NEW: integration review of the delivered art (1 request open)
+## 4. NEW: integration review of the delivered art (delivered)
 
 All 13 delivered images were checked in the game (title, lobby, every board
 mid-round). They load through the boot bar (board backdrops are now
@@ -54,12 +54,12 @@ around them:
 - Stalactite Hollow and Gumdrop Grove are busier behind the action, so their
   backdrops are darkened a little more (`bgDim` in `src/boards.js`).
 - The glacier's ice slopes no longer use the shared striped water tile (it
-  read as stairs); they are drawn as procedural glossy ice until the texture
-  below arrives. Its hook is ready.
+  read as stairs); they are drawn as procedural glossy ice as a fallback. The texture
+  below is now delivered and registered.
 
 | File | Size | How the game uses it | Prompt | Status |
 | --- | --- | --- | --- | --- |
-| `tile_spider_frost_ice.png` | 512 × 512, seamless PNG | Fills every ice solid (Glacier Rift's big slopes, the ice bridge, icicles), tiled at half size; outlines and the white top edge are drawn over it. Must read as slippery, not as steps. | Seamless tileable texture of glossy glacier ice: translucent pale-cyan to mid-blue, soft diagonal light streaks and a few thin white cracks and trapped air bubbles; no horizontal bands, no stripes, no hard edges; even brightness across the tile so the repeat doesn't show. | Requested |
+| `tile_spider_frost_ice.png` | 512 × 512, seamless PNG | Fills every ice solid (Glacier Rift's big slopes, the ice bridge, icicles), tiled at half size; outlines and the white top edge are drawn over it. Must read as slippery, not as steps. | Seamless tileable texture of glossy glacier ice: translucent pale-cyan to mid-blue, soft diagonal light streaks and a few thin white cracks and trapped air bubbles; no horizontal bands, no stripes, no hard edges; even brightness across the tile so the repeat doesn't show. | Delivered |
 
 ## 3. Optional extras — would each need a small loader hook
 
