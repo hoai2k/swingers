@@ -67,6 +67,32 @@ up. Look up with the camera to reach higher.
 Browsers on Windows expose at most four XInput (Xbox) pads, so 8 players means mixing
 pads with the two keyboard schemes (or using controllers that show up as generic HID).
 
+## Coins, shops, homes and pets
+
+Everybody playing on the machine shares one **coin purse** (the counter in the top-right
+corner of every view). Earn coins by collecting the spinning coins scattered around the
+island (trails along the roads, rings in the parks, little stacks on rooftops and other
+hard-to-reach spots, a line in the air over the stunt-park jump; they come back after a
+while, and big ones are worth 10), opening presents (+25), discovering a map area for the
+first time (+10), big air in a car ("Stunt!", +5 or more), scoring baskets, bowling strikes
+and knocking down the cans. Spend them in the four shops on the north-east town block. Walk
+up to the till and press **Y**:
+
+- **CLOTHES**: hats, faces and trousers that you can only buy here (presents keep their own
+  rewards). You try on whatever you highlight, and anything bought unlocks for everyone.
+- **PET SHOP**: a dog, cat, bunny or penguin of your own. It follows you everywhere: it
+  hops up kerbs, paddles through water, sits when you stop, jumps into your car with you,
+  and you can pick it up and carry it. Your menu can call it back to you.
+- **HOMES** (the estate agent): three bungalows in the suburbs and the two-storey house by
+  the town hall. Your home is where you join and respawn. Its name plate shows your colour,
+  the wardrobe opens the customiser, and the bed skips to morning (or to the evening).
+  The FOR SALE board in each garden sells the house too.
+- **CAR DEALER**: the sports car, ice-cream van, bus, police car, fire truck and helicopter.
+  Once bought they show up in everyone's phone.
+
+Coins, purchases, homes, pets and discovered areas are saved. *Settings → Reset coins,
+homes & pets* starts over.
+
 ## The island
 
 - **Town** — plaza with a fountain (spawn), shops, town hall, apartments, suburbs, parked cars,
@@ -141,3 +167,5 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/lights.js`, `posters.js` | interior light pool (per-view nearest lights) and framed posters |
 | `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |
 | `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |
+| `src/life/` | life sim: `state.js` (saved coins/purchases/homes/pets), `wallet.js` (shared purse, `game.wallet`), `hud.js` (coin counters, floaters), `coins.js` (pickups), `earn.js` (areas, stunts, mini-game prizes), `shops.js` (shop panels, vehicle locks), `pets.js` (pets), `index.js` (wiring) |
+| `src/world/estate.js` | the CLOTHES / PET SHOP / HOMES / CAR DEALER buildings, the bungalows for sale, name plates, beds, wardrobes, `game.homes` |

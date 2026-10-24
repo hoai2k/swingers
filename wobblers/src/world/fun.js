@@ -196,6 +196,7 @@ function canToss(game, kit) {
       won[pi] = true;
       const pp = L.v3(piles[pi], 1.6, counterZ);
       chime(game, pp);
+      game.life?.reward(game.lastThrower, 5, 'Cans down!', pp);
       // a teddy bear prize pops onto the counter
       let t;
       if (prizes.length < 3) { t = furn(game, 'teddy', pp.x, 1.05, pp.z, L.yaw, [0xff7fc8, 0x6ac8ff, 0xffd23f][prizes.length]); prizes.push(t); throwable(game, t, { r: 0.35, speed: 6, up: 0.6 }); }
@@ -298,7 +299,7 @@ function bowling(game, kit) {
     if (state.t > 7) {
       const n = 10 - standing();
       board.set(n === 10 ? 'STRIKE!' : n === 0 ? 'GUTTER!' : n + ' PINS');
-      if (n === 10) chime(game, L.v3(0, 1, pinZ), [72, 76, 79, 84, 88]);
+      if (n === 10) { chime(game, L.v3(0, 1, pinZ), [72, 76, 79, 84, 88]); game.life?.reward(game.lastThrower, 10, 'Strike!', L.v3(0, 1, 0)); }
       else if (n > 0) chime(game, L.v3(0, 1, pinZ), [72, 76]);
       reset();
     }

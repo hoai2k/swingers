@@ -65,6 +65,17 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `labels` / `R.label()` for a new area; `game.mapFeatures` holds vector lines (bridge, ferry
   routes). Map and phone are per-player UI panels (`ui.openMap` / `ui.openPhone`), like the
   pause menu.
+- Life sim (`src/life/`, `world/estate.js`; wired by one `buildLife(game)` call in `world/index.js`):
+  one shared coin purse, `game.wallet.add(player, amount, reason)` (pays with sound, a floating
+  "+N" over that player and a counter bump; use it for mission rewards), `spend(n, player)`,
+  `canAfford(n)`, `onChange(fn)`. Mini-game prizes: `game.life?.reward(player | null, n, reason, pos)`
+  (null pays the nearest player to `pos`). Saved state lives in `settings.life` (`life/state.js`).
+  Shop items: cosmetics in `unlocks.js` `SHOP_COSMETICS` (append new hats to `EXTRA_HATS`, faces/
+  trousers at the end of `FACES` / `PANTS`, so saved looks keep their indices); pets in `pets.js`
+  `PET_KINDS`; homes in `estate.js` `HOME_DEFS` (+ `homeFixtures` on the building); vehicles in
+  `shops.js` `VEHICLE_PRICES` (the phone asks `game.vehicleLock(id)`). Coin pickup spots are
+  `CLUSTERS` in `life/coins.js` (`[x, z, ray start, shape, count, size]`, like present spots).
+  Home respawn wraps `game.spawnPoint`; pets are synced from the saved choice every 15 steps.
 
 ## Regions / NPCs / ferries / registerVehicle (the archipelago)
 

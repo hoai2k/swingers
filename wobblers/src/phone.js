@@ -152,7 +152,7 @@ export class PhonePanel {
     const off = Math.max(0, Math.min(N - vis, this.sel - 2.5)) * per;
     const items = CALLABLE.map((c, i) => {
       const vd = VEHICLES[c.type] || {};
-      const note = vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli ? 'needs space' : '';
+      const note = this.ui.game.vehicleLock?.(c.id) ? '🔒 car dealer' : vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli ? 'needs space' : '';
       const off2 = vd.boat && !this.water;
       return `<div class="phitem ${i === this.sel ? 'sel' : ''} ${off2 ? 'off' : ''}" data-i="${i}"><svg viewBox="0 0 24 14">${ICONS[c.icon] || ICONS.car}</svg>${c.name}${note ? `<small>${note}</small>` : ''}</div>`;
     }).join('');
@@ -251,6 +251,7 @@ export function findSpot(game, player, def, excludeBody) {
 export function callVehicle(game, player, entry) {
   if (typeof entry === 'string') entry = CALLABLE.find((c) => c.id === entry || c.type === entry);
   if (!entry) return { ok: false, msg: 'Unknown vehicle' };
+  const locked = game.vehicleLock?.(entry.id); if (locked) return { ok: false, msg: locked }; // car dealer (src/life/shops.js)
   const def = VEHICLES[entry.type];
   const calls = game.calledVehicles ||= new Map();
   let prev = calls.get(player);

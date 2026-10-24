@@ -2,6 +2,7 @@
 // cosmetics they unlock. Finding one unlocks its reward for every player and
 // is remembered in localStorage (settings.presents holds the found ids).
 import { settings, saveSettings } from './settings.js';
+import { isBought } from './life/state.js';
 
 // [present id, reward key]. Reward keys are 'hat:<HATS name>', 'face:<FACES name>'
 // or 'pants:<PANTS name>'; every key listed here starts locked.
@@ -32,6 +33,17 @@ export const PRESENTS = [
   ['campfire', 'face:Moustache'],
 ];
 export const TOTAL = PRESENTS.length;
+
+// Cosmetics sold in the town's clothes shop (src/life/shops.js): [reward key, price].
+// A separate set from the present rewards, so presents stay the only way to get theirs.
+export const SHOP_COSMETICS = [
+  ['hat:beret', 40], ['hat:bowler', 50], ['hat:sombrero', 70], ['hat:frog', 80],
+  ['hat:antlers', 90], ['hat:tiara', 110], ['hat:pumpkin', 120], ['hat:jester', 140],
+  ['face:Heart eyes', 60], ['face:Tongue out', 50], ['face:Dizzy', 60], ['face:Nerd', 70],
+  ['pants:Lime', 25], ['pants:Navy', 25], ['pants:Teal', 30], ['pants:Lilac', 30], ['pants:Cream', 30],
+];
+const BUYABLE = new Map(SHOP_COSMETICS);
+export const priceOf = (key) => BUYABLE.get(key);
 const REWARD = new Map(PRESENTS);
 const LOCKABLE = new Set(PRESENTS.map((p) => p[1]));
 
@@ -43,8 +55,10 @@ export const isFound = (id) => settings.presents.includes(id);
 export const foundCount = () => settings.presents.filter((id) => REWARD.has(id)).length;
 export const rewardOf = (id) => REWARD.get(id);
 // true for a reward that hasn't been found yet (base items are never locked)
-export const isLocked = (key) => LOCKABLE.has(key) && !unlocked.has(key);
+// (shop items stay locked until bought)
+export const isLocked = (key) => (LOCKABLE.has(key) && !unlocked.has(key)) || (BUYABLE.has(key) && !isBought(key));
 export const lockedCount = (type) => [...LOCKABLE].filter((k) => k.startsWith(type + ':') && !unlocked.has(k)).length;
+export const shopLockedCount = (type) => [...BUYABLE.keys()].filter((k) => k.startsWith(type + ':') && !isBought(k)).length;
 
 // Marks a present as found; returns its reward key (null if it was already found).
 export function findPresent(id) {

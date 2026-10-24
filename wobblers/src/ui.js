@@ -8,10 +8,12 @@ import { HATS, PLAYER_CSS, MAX_PLAYERS, PLAYER_COLORS } from './config.js';
 import { settings, saveSettings, devicePrefs } from './settings.js';
 import { glyph, formatHint, promptRow, deviceKind } from './glyphs.js';
 import { FACES, PANTS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace, cycleHat, cycleFace, cyclePants } from './cosmetics.js';
-import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, resetPresents } from './unlocks.js';
+import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, shopLockedCount, resetPresents } from './unlocks.js';
 import { buildTitleCrowd } from './title.js';
 import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
 import { PhonePanel } from './phone.js';
+import { ShopPanel } from './life/shops.js';
+import { life } from './life/state.js';
 
 const DEV_NAME = (id) => id === 'kb1' ? 'Keyboard' : id === 'kb2' ? 'Keyboard 2' : id.startsWith('gp') ? 'Controller ' + (+id.slice(2) + 1) : id;
 const textCol = (c) => (c === 0xffffff || c === 0xffc233 || c === 0x3fe0d0) ? '#234' : '#fff';
@@ -170,8 +172,9 @@ class Customiser extends Panel {
       if (r === 'Done') return `<div class="item done ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${glyph('A', k)} Let's go!</span></div>`;
       let extra = '';
       if (r === 'Colour') extra = `<div class="swatches">${PLAYER_COLORS.map((c, j) => `<i class="${j === p.colorIndex ? 'on' : ''}" style="background:${PLAYER_CSS(c)}"></i>`).join('')}</div>`;
-      const nl = r === 'Colour' ? 0 : lockedCount({ Hat: 'hat', Face: 'face', Trousers: 'pants' }[r]);
-      if (nl) extra = `<div class="lockline">🔒 ${nl} more locked – find presents</div>`;
+      const ty = { Hat: 'hat', Face: 'face', Trousers: 'pants' }[r];
+      const nl = r === 'Colour' ? 0 : lockedCount(ty), ns = r === 'Colour' ? 0 : shopLockedCount(ty);
+      if (nl || ns) extra = `<div class="lockline">🔒 ${[nl && `${nl} in presents`, ns && `${ns} in the clothes shop`].filter(Boolean).join(' · ')}</div>`;
       return `<div class="item ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${r}</span><span class="val"><span class="arrows">◀</span><b>${this.value(r)}</b><span class="arrows">▶</span></span>${extra}</div>`;
     }).join('');
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
@@ -202,6 +205,10 @@ class PauseMenu extends Panel {
           if (!this.confirmReset) { this.confirmReset = true; return; }
           this.confirmReset = false; resetPresents(); g.presents?.reset(); ui.toast('Presents reset: hide-and-seek starts over');
         } },
+        { label: this.confirmLife ? 'Press again: lose all coins & buys!' : 'Reset coins, homes & pets', danger: true, act: () => {
+          if (!this.confirmLife) { this.confirmLife = true; return; }
+          this.confirmLife = false; g.life?.reset(); ui.toast('Coins, shopping, homes and pets reset');
+        } },
         { label: 'Camera sensitivity', slider: (pf.sens - 0.25) / 2.25, adj: (d) => { pf.sens = Math.max(0.25, Math.min(2.5, pf.sens + d * 0.25)); saveSettings(); } },
         { label: 'Back', act: () => this.back() },
       ];
@@ -210,7 +217,9 @@ class PauseMenu extends Panel {
       { label: 'Resume', act: () => ui.closePanel(p) },
       { label: 'Customise', act: () => ui.openCustomiser(p, false) },
       { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
-      { label: 'Respawn', act: () => { p.respawn(); ui.closePanel(p); } },
+      { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
+      { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
+      ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Controls', sub: true, act: () => ui.openHelp(p.deviceId) },
       { label: 'Reset vehicles', act: () => { for (const v of g.vehicles) if (!v.seats.some((s) => s.occupant)) v.respawn(); ui.toast('Vehicles are back home'); ui.closePanel(p); } },
@@ -458,7 +467,7 @@ export class UI {
       ve.mouse.classList.toggle('hidden', !needMouse);
       if (needMouse) Object.assign(ve.mouse.style, { left: x + w / 2 + 'px', top: y + 14 + 'px' });
       // customiser: swing the camera round to face the character
-      if (panel?.kind === 'custom' && p.camera) {
+      if ((panel?.kind === 'custom' || panel?.faceCam) && p.camera) {
         const c = p.camera;
         c.yaw = p.yaw + Math.PI + 0.35; c.pitch = 0.1;
         if ('dist' in c) c.dist = 3.0;
@@ -487,6 +496,7 @@ export class UI {
     this.emptySlots(views);
     this.game.npcs?.drawBubbles(views); // NPC speech bubbles
     this.game.emotes?.draw(views); // emote wheels
+    this.game.lifeHud?.update(views); // coin counters and floaters (life/hud.js)
     this.watchDevices();
   }
 
@@ -604,6 +614,7 @@ export class UI {
   openMenu(p) { this.sfx('uiOpen'); this.setPanel(p, new PauseMenu(this, p)); }
   openMap(p) { this.sfx('uiOpen'); this.setPanel(p, new MapPanel(this, p)); }
   openPhone(p) { this.setPanel(p, new PhonePanel(this, p)); }
+  openShop(p, shop) { this.setPanel(p, new ShopPanel(this, p, shop)); } // life/shops.js
   closePanel(p) {
     this.setPanel(p, null);
     if (p.deviceId === 'kb1') this.game.input.lockMouse();

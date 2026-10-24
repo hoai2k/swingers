@@ -6,13 +6,17 @@
 import * as THREE from 'three';
 
 export const EXTRA_HATS = ['viking', 'chef', 'pirate', 'wizard', 'flowers', 'headphones', 'bunny', 'propeller',
-  'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears'];
+  'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears',
+  // sold in the clothes shop (unlocks.js SHOP_COSMETICS); keep appending so saved looks keep their index
+  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester'];
 
 export const EXTRA_HAT_NAMES = {
   viking: 'Viking helmet', chef: 'Chef hat', pirate: 'Pirate hat', wizard: 'Wizard hat', flowers: 'Flower crown',
   headphones: 'Headphones', bunny: 'Bunny ears', propeller: 'Propeller cap', astronaut: 'Astronaut helmet',
   trafficcone: 'Traffic cone', halo: 'Halo', santa: 'Santa hat', hardhat: 'Hard hat', mortarboard: 'Graduation cap',
   fez: 'Fez', catears: 'Cat ears',
+  beret: 'Beret', bowler: 'Bowler hat', sombrero: 'Sombrero', frog: 'Frog hat', antlers: 'Antlers', tiara: 'Tiara',
+  pumpkin: 'Pumpkin head', jester: 'Jester hat',
 };
 
 const glassMat = new THREE.MeshPhongMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, shininess: 120, specular: 0xffffff, depthWrite: false });
@@ -133,6 +137,71 @@ export function buildExtraHat(b, kind, R, c, group) {
         b.cone(R * 0.17, R * 0.3, 0xffb7d5, [s * R * 0.52, R * 1.02, R * 0.06], [0, 0, -s * 0.35], 4);
       }
       return true;
+    case 'beret':
+      b.sphere(R * 1.0, c, [R * 0.12, R * 0.72, -R * 0.05], [1.15, 0.35, 1.1], 18);
+      b.torus(R * 0.82, R * 0.07, dark, [0, R * 0.6, 0], [Math.PI / 2, 0, 0], 20);
+      b.cyl(R * 0.03, R * 0.06, R * 0.15, dark, [R * 0.15, R * 0.98, -R * 0.05], null, 6);
+      return true;
+    case 'bowler':
+      b.cyl(R * 1.18, R * 1.18, 0.025, 0x2a2a2a, [0, R * 0.72, 0], null, 20);
+      b.sphere(R * 0.78, 0x2a2a2a, [0, R * 0.88, 0], [1, 0.85, 1], 16);
+      b.cyl(R * 0.8, R * 0.8, R * 0.14, 0x8a2a2a, [0, R * 0.82, 0], null, 18);
+      return true;
+    case 'sombrero': {
+      const straw = 0xe8c060, band = 0xd9342b;
+      b.cyl(R * 1.9, R * 2.0, 0.03, straw, [0, R * 0.72, 0], null, 24);
+      b.torus(R * 1.95, R * 0.09, straw, [0, R * 0.8, 0], [Math.PI / 2, 0, 0], 26);
+      b.cyl(R * 0.45, R * 0.72, R * 0.9, straw, [0, R * 1.18, 0], null, 18);
+      b.cyl(R * 0.68, R * 0.7, R * 0.16, band, [0, R * 0.86, 0], null, 18);
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; b.sphere(R * 0.07, i % 2 ? 0x3a8a4a : band, [Math.sin(a) * R * 1.6, R * 0.76, Math.cos(a) * R * 1.6], null, 6); }
+      return true;
+    }
+    case 'frog': {
+      const g = 0x5fc050;
+      b.sphere(R * 1.06, g, [0, R * 0.3, 0], [1, 0.72, 1], 16);
+      for (const s of [-1, 1]) {
+        b.sphere(R * 0.3, g, [s * R * 0.42, R * 0.95, R * 0.3], null, 12);
+        b.sphere(R * 0.2, 0xffffff, [s * R * 0.42, R * 1.0, R * 0.46], null, 10);
+        b.sphere(R * 0.11, 0x111111, [s * R * 0.42, R * 1.02, R * 0.6], null, 8);
+      }
+      b.torus(R * 0.3, R * 0.03, 0xd94a6a, [0, R * 0.62, R * 0.86], [0.3, 0, 0], 12);
+      return true;
+    }
+    case 'antlers':
+      b.cyl(R * 0.04, R * 0.04, R * 1.7, 0x6b4a2a, [0, R * 0.95, 0], [0, 0, Math.PI / 2], 6);
+      for (const s of [-1, 1]) {
+        b.cyl(R * 0.07, R * 0.09, R * 0.8, 0x9a6a3a, [s * R * 0.62, R * 1.3, 0], [0, 0, -s * 0.45], 8);
+        b.cyl(R * 0.05, R * 0.07, R * 0.45, 0x9a6a3a, [s * R * 0.62, R * 1.38, R * 0.15], [0.9, 0, -s * 0.2], 6);
+        b.cyl(R * 0.05, R * 0.07, R * 0.5, 0x9a6a3a, [s * R * 1.05, R * 1.65, 0], [0, 0, -s * 1.1], 6);
+        b.cyl(R * 0.04, R * 0.06, R * 0.38, 0x9a6a3a, [s * R * 0.85, R * 1.85, 0], [0, 0, s * 0.2], 6);
+      }
+      b.sphere(R * 0.15, 0xff3a3a, [0, R * 0.05, R * 1.0], null, 10); // red nose
+      return true;
+    case 'tiara':
+      b.torus(R * 0.72, R * 0.05, 0xdfe6ef, [0, R * 0.78, 0], [Math.PI / 2 - 0.2, 0, 0], 22);
+      for (let i = -2; i <= 2; i++) {
+        const a = i * 0.32, h = (3 - Math.abs(i)) * 0.09 + 0.12;
+        b.cone(R * 0.08, R * h * 2, 0xdfe6ef, [Math.sin(a) * R * 0.72, R * (0.92 + h * 0.5), Math.cos(a) * R * 0.66], [-0.2, 0, 0], 4);
+        b.sphere(R * 0.07, [0xff5a8a, 0x6ac8ff, 0xb46cff][Math.abs(i) % 3], [Math.sin(a) * R * 0.74, R * 0.86, Math.cos(a) * R * 0.7], null, 6);
+      }
+      return true;
+    case 'pumpkin': {
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; b.sphere(R * 0.62, 0xff8a1a, [Math.sin(a) * R * 0.55, R * 0.45, Math.cos(a) * R * 0.55], [0.75, 1, 0.75], 12); }
+      b.cyl(R * 0.08, R * 0.12, R * 0.4, 0x4a7a2a, [0, R * 1.2, 0], [0.2, 0, 0.1], 6);
+      b.sphere(R * 0.22, 0x5fc050, [R * 0.22, R * 1.08, 0], [1.4, 0.3, 0.8], 8);
+      return true;
+    }
+    case 'jester': {
+      const cols = [0xd9342b, 0x3f8cff, 0xffd23f];
+      b.sphere(R * 1.05, c, [0, R * 0.3, 0], [1, 0.7, 1], 16);
+      b.torus(R * 0.95, R * 0.1, 0xffd23f, [0, R * 0.32, 0], [Math.PI / 2, 0, 0], 20);
+      [[-1, 0], [1, 1], [0, 2]].forEach(([s, k]) => {
+        const tip = k === 2 ? [0, R * 1.75, -R * 0.55] : [s * R * 1.25, R * 1.25, -R * 0.1];
+        b.cone(R * 0.3, R * 1.0, cols[k], [tip[0] * 0.6, R * 0.9 + (tip[1] - R * 0.9) * 0.4, tip[2] * 0.6], k === 2 ? [-0.7, 0, 0] : [0, 0, -s * 1.0], 10);
+        b.sphere(R * 0.14, 0xffd23f, tip, null, 8);
+      });
+      return true;
+    }
   }
   return false;
 }

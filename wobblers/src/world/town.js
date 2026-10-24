@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { signMesh } from '../mesh.js';
 import { interiorShop, interiorHouse } from './interiors.js';
+import { LIFE_SHOPS, lifeShop, bungalow } from './estate.js';
 
 // Shops you can walk into (first occurrence of each name) and the house with an upstairs.
 const ENTERABLE = new Set(['CAFE', 'MARKET', 'ARCADE']);
@@ -56,6 +57,10 @@ export function house(kit, x, z, yaw, opts = {}) {
     const doorCol = pick([0x8a4a2a, 0x2a62c9, 0xd9534f, 0x3a8a4a]);
     return interiorHouse(opts.interior, kit, x, z, yaw, wall, roof, doorCol);
   }
+  if (opts.home) { // a bungalow for sale (world/estate.js)
+    const doorCol = pick([0x8a4a2a, 0x2a62c9, 0xd9534f, 0x3a8a4a]);
+    return bungalow(opts.home.game, kit, x, z, yaw, wall, roof, doorCol, opts.home.id);
+  }
   const P = frame(x, z, yaw);
   kit.box(x, h / 2, z, w, h, d, wall, { yaw });
   // gable roof: two slabs + gable ends
@@ -102,6 +107,7 @@ export function shop(game, kit, x, z, yaw, name, color, opts = {}) {
   const P = frame(x, z, yaw);
   const wall = opts.wall || pick(WALLS);
   if (opts.interior) return interiorShop(game, kit, x, z, yaw, name, color, wall, { w, d, h });
+  if (opts.life) return lifeShop(game, kit, x, z, yaw, name, color, wall, { w, d, h });
   kit.box(x, h / 2, z, w, h, d, wall, { yaw });
   kit.deco(x, h + 0.25, z, w + 0.4, 0.5, d + 0.4, 0xffffff, { yaw });
   // shop window
@@ -173,20 +179,22 @@ export function buildTown(game, kit) {
   const shops = SHOPS.slice();
   // four central blocks: interior roughly 8..52 from the centre lines
   const blocks = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-  let si = 0;
+  let si = 0, li = 0;
+  // the NE block (a repeat of the first four shops) holds the life-sim shops instead (world/estate.js)
+  const next = (bx, bz) => (bx > 0 && bz > 0 && li < LIFE_SHOPS.length ? [...LIFE_SHOPS[li++], true] : [...shops[si++ % shops.length], false]);
   for (const [bx, bz] of blocks) {
     // shops facing the avenue (x = 0 side), shops facing z = 0 side
     const facingX = bx > 0 ? -Math.PI / 2 : Math.PI / 2; // front toward x = 0
     const facingZ = bz > 0 ? Math.PI : 0;                 // front toward z = 0
     // along the N/S avenue
     for (const d of [30, 46]) {
-      const [name, col] = shops[si++ % shops.length];
-      shop(game, kit, bx * 15.5, bz * d, facingX, name, col, { w: 13, d: 10, interior: si <= 12 && ENTERABLE.has(name) });
+      const [name, col, , life] = next(bx, bz);
+      shop(game, kit, bx * 15.5, bz * d, facingX, name, col, { w: 13, d: 10, interior: !life && si <= 12 && ENTERABLE.has(name), life });
     }
     // along the E/W avenue
     for (const d of [32, 47]) {
-      const [name, col] = shops[si++ % shops.length];
-      shop(game, kit, bx * d, bz * 15.5, facingZ, name, col, { w: 13, d: 10, interior: si <= 12 && ENTERABLE.has(name) });
+      const [name, col, , life] = next(bx, bz);
+      shop(game, kit, bx * d, bz * 15.5, facingZ, name, col, { w: 13, d: 10, interior: !life && si <= 12 && ENTERABLE.has(name), life });
     }
     // back corner: town hall, apartments or houses facing the outer town roads
     const cx = bx * 40, cz = bz * 40;
@@ -207,20 +215,26 @@ export function buildTown(game, kit) {
   // suburbs along the avenues between the town and the ring road
   const sub = [];
   for (let t = 78; t <= 140; t += 18) sub.push(t);
+  // three of them are bungalows for sale (world/estate.js HOME_DEFS)
+  const forSale = { '78,17': 'maple', '17,96': 'acorn', '-96,-17': 'sunny' };
+  const H = (x, z, yaw) => { const id = forSale[x + ',' + z]; house(kit, x, z, yaw, id ? { home: { game, id } } : {}); };
   for (const t of sub) {
     for (const s of [-1, 1]) {
       // east and west avenue (z = 0): houses at z = ±16 facing the road
-      house(kit, t, s * 17, s > 0 ? Math.PI : 0);
-      house(kit, -t, s * 17, s > 0 ? Math.PI : 0);
+      H(t, s * 17, s > 0 ? Math.PI : 0);
+      H(-t, s * 17, s > 0 ? Math.PI : 0);
       // north and south avenue (x = 0)
-      house(kit, s * 17, -t, s > 0 ? -Math.PI / 2 : Math.PI / 2);
-      house(kit, s * 17, t, s > 0 ? -Math.PI / 2 : Math.PI / 2);
+      H(s * 17, -t, s > 0 ? -Math.PI / 2 : Math.PI / 2);
+      H(s * 17, t, s > 0 ? -Math.PI / 2 : Math.PI / 2);
     }
   }
   // street trees along the suburbs
+  // (not right in front of a home for sale: it would hide the door and the FOR SALE board)
+  const clear = (x, z) => !Object.keys(forSale).some((k) => { const [hx, hz] = k.split(',').map(Number); return Math.hypot(hx - x, hz - z) < 10; });
+  const tree = (x, z) => { if (clear(x, z)) kit.tree(x, z, 0, 0, 0.7); };
   for (let t = 72; t <= 132; t += 12) for (const s of [-1, 1]) {
-    kit.tree(t + 6, s * 7.8, 0, 0, 0.7); kit.tree(-t - 6, s * 7.8, 0, 0, 0.7);
-    kit.tree(s * 7.8, t + 6, 0, 0, 0.7); kit.tree(s * 7.8, -t - 6, 0, 0, 0.7);
+    tree(t + 6, s * 7.8); tree(-t - 6, s * 7.8);
+    tree(s * 7.8, t + 6); tree(s * 7.8, -t - 6);
   }
   // trees lining the ring road
   for (let t = -140; t <= 140; t += 14) {

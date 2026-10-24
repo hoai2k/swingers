@@ -226,6 +226,7 @@ function throwStep(game) {
     b.wakeUp();
     p.punch.hit = true;
     best.onThrow?.(p);
+    (game.throwers ||= new Map()).set(b.handle, p); game.lastThrower = p; // who to pay for a basket / strike (src/life/earn.js)
     game.audio?.play('swish', b.translation());
   }
 }
