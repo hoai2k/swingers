@@ -746,6 +746,7 @@ export class Player {
             b.applyImpulse({ x: 0, y: (gv.y + jv - bv.y) * b.mass(), z: 0 }, true);
           }
           this.jumpCool = 0.35;
+          this.impactGrace = Math.max(this.impactGrace, 0.08);
           this.sqV -= 3;
           this.landDip = 0;
           this.game.audio?.play('jump', cp);
@@ -755,6 +756,7 @@ export class Player {
           this.hands.L.cool = this.hands.R.cool = 0.4;
           for (const b of this.bodies) b.applyImpulse({ x: Math.sin(this.yaw) * 2.5 * b.mass(), y: 6.5 * b.mass(), z: Math.cos(this.yaw) * 2.5 * b.mass() }, true);
           this.sqV -= 2;
+          this.impactGrace = Math.max(this.impactGrace, 0.08);
           this.jumpCool = 0.35;
           this.game.audio?.play('jump', cp);
         }
@@ -764,6 +766,7 @@ export class Player {
         if (inp.grabL > 0.5 && inp.grabR <= 0.5) this.punch.hand = 'R';
         if (inp.grabR > 0.5 && inp.grabL <= 0.5) this.punch.hand = 'L';
         this.punch.t = 0.32; this.punch.hit = false;
+        this.impactGrace = Math.max(this.impactGrace, 0.08);
         const la = parts['lArm' + this.punch.hand].body;
         la.applyImpulse({ x: Math.sin(this.yaw) * 1.5, y: 0, z: Math.cos(this.yaw) * 1.5 }, true);
         // lunge into the punch
@@ -797,6 +800,7 @@ export class Player {
       if (dv > 9) this.knockOut(Math.min(4, 1.2 + (dv - 9) * 0.25));
       else if (dv > 4.5 && !limp) { this.stumble = Math.max(this.stumble, 0.25 + (dv - 4.5) * 0.08); this.sqV += 1.5; }
     }
+    if (!seated && !limp && this.impactGrace <= 0) this.hitCheck();
     this.prevVy = hips.linvel().y;
 
     // --- squash & stretch spring (visual only)
@@ -806,6 +810,29 @@ export class Player {
 
     // respawn if lost
     if (cp.y < -25) this.respawn();
+  }
+
+  // Loose things flying into our upper body: a stumble, or a knockout when
+  // it's heavy and fast (a thrown crate, a rolling boulder...). Vehicles are
+  // handled by the game's contact-force events.
+  hitCheck() {
+    const chest = this.chest, cv = chest.linvel();
+    let worst = 0;
+    for (const n of ['chest', 'head']) {
+      this.world.contactPairsWith(this.parts[n].cols[0], (other) => {
+        const b = other.parent();
+        if (!b || !b.isDynamic() || this.bodies.includes(b)) return;
+        if (b === this.hands.L.body || b === this.hands.R.body) return;
+        const owner = this.physics.handleOwner.get(other.handle);
+        if (owner && owner.constructor?.name === 'Vehicle') return;
+        const v = b.linvel();
+        const rv = Math.hypot(v.x - cv.x, v.y - cv.y, v.z - cv.z);
+        const m = Math.min(b.mass(), 200);
+        if (rv > 3.5) worst = Math.max(worst, m * rv);
+      });
+    }
+    if (worst > 160) { this.knockOut(Math.min(3, 1 + worst / 300)); this.impactGrace = 0.4; }
+    else if (worst > 35) { this.stumble = Math.max(this.stumble, 0.3 + Math.min(0.4, worst / 300)); this.sqV += 1.5; this.impactGrace = 0.25; }
   }
 
   // A ledge under one of our grips: returns the height of its top surface, or null.
@@ -831,6 +858,7 @@ export class Player {
 
   startMantle(top) {
     this.mantle = { t: 0, top, stage: 0 };
+    this.impactGrace = Math.max(this.impactGrace, 0.3);
     this.sqV -= 1.5;
   }
 
@@ -931,8 +959,8 @@ export class Player {
     } else if (this.grounded) {
       const dip = Math.max(this.landDip, this.reachDown * 0.7);
       set('uLegL', qx(-s * amp * 1.15 - dip * 0.6), 160, 14); set('uLegR', qx(s * amp * 1.15 - dip * 0.6), 160, 14);
-      set('lLegL', qx(Math.max(0, c) * amp * 1.7 + 0.05 + dip * 1.1), 130, 12);
-      set('lLegR', qx(Math.max(0, -c) * amp * 1.7 + 0.05 + dip * 1.1), 130, 12);
+      set('lLegL', qx(Math.max(0, c) * amp * 1.25 + 0.05 + dip * 1.1), 130, 12);
+      set('lLegR', qx(Math.max(0, -c) * amp * 1.25 + 0.05 + dip * 1.1), 130, 12);
     } else {
       // tucked on the way up, pedalling as we fall
       const f = Math.sin(T * 13) * (0.25 + 0.45 * fall);
