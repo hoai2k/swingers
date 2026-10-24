@@ -1,6 +1,13 @@
 // Two players, each an Xbox-style pad (standard mapping) merged with a keyboard
 // layout so the game is also playable/testable without controllers.
+//
+// Pads are bound to player slots: a pad that connects (or is already connected at
+// boot) takes the first free slot and keeps it until it disconnects, so pulling
+// P1's pad never turns P2 into P1. `swap()` exchanges the two slots (swap sides).
 const BTN = ['a', 'b', 'x', 'y', 'lb', 'rb', 'lt', 'rt', 'back', 'start', 'l3', 'r3', 'up', 'down', 'left', 'right', 'guide'];
+// left stick as digital directions (with hysteresis) so menus can repeat on it
+const VIRT = ['sup', 'sdown', 'sleft', 'sright'];
+const ALL = [...BTN, ...VIRT];
 
 const KEYS = [
   { // Player 1 keyboard (left side)
@@ -25,15 +32,25 @@ const KEYS = [
 
 function blank() {
   const b = {};
-  for (const k of BTN) b[k] = false;
+  for (const k of ALL) b[k] = false;
   return { lx: 0, ly: 0, rx: 0, ry: 0, lt: 0, rt: 0, b };
 }
 
 function dead(x, y, dz = 0.16) {
   const m = Math.hypot(x, y);
   if (m < dz) return [0, 0];
-  const k = Math.min(1, (m - dz) / (1 - dz)) / m;
+  // radial dead zone with a gentle response curve (fine aim near the centre)
+  const n = Math.min(1, (m - dz) / (1 - dz));
+  const k = (n * (0.35 + 0.65 * n)) / m;
   return [x * k, y * k];
+}
+
+// Short human name for a pad id ("Xbox Wireless Controller (STANDARD GAMEPAD ...)").
+export function padLabel(id) {
+  if (!id) return '';
+  let s = id.replace(/\(.*?\)/g, '').replace(/Vendor:.*$/i, '').replace(/\s+/g, ' ').trim();
+  if (/xbox|xinput|045e/i.test(id)) s = /series|wireless/i.test(id) ? 'Xbox Wireless Controller' : (s || 'Xbox Controller');
+  return (s || 'Controller').slice(0, 30);
 }
 
 export class Input {
@@ -43,6 +60,9 @@ export class Input {
     this.inject = [null, null];
     this.mouse = { dx: 0, dy: 0, right: false, left: false, wheel: 0 };
     this.padNames = [null, null];
+    this.slots = [null, null]; // gamepad index bound to each player
+    this.events = []; // {type: 'connect'|'disconnect', player, name}
+    this.lastKeyboard = [0, 0];
     addEventListener('keydown', (e) => {
       if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
       this.keys.add(e.code);
@@ -68,16 +88,56 @@ export class Input {
 
   mk() { return { cur: blank(), prev: blank(), held: {}, source: 'keyboard' }; }
 
+  // Exchange which physical pad drives which player (and so which army / side).
+  swap() {
+    this.slots.reverse();
+    this.padNames.reverse();
+    for (const pl of this.players) { pl.prev = blank(); pl.cur = blank(); pl.held = {}; }
+  }
+
+  hasPad(p) { return this.slots[p] !== null; }
+
+  rumble(p, strong = 0.5, weak = 0.5, ms = 120) {
+    const idx = this.slots[p];
+    if (idx === null || !navigator.getGamepads) return;
+    const pad = navigator.getGamepads()[idx];
+    const act = pad && pad.vibrationActuator;
+    if (act && act.playEffect) act.playEffect('dual-rumble', { duration: ms, strongMagnitude: Math.min(1, strong), weakMagnitude: Math.min(1, weak) }).catch(() => {});
+  }
+
+  bindPads() {
+    const list = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+    const byIndex = new Map();
+    list.forEach((p, i) => { if (p && p.connected) byIndex.set(p.index ?? i, p); });
+    // drop pads that went away
+    for (let s = 0; s < 2; s++) {
+      if (this.slots[s] !== null && !byIndex.has(this.slots[s])) {
+        this.events.push({ type: 'disconnect', player: s, name: this.padNames[s] });
+        this.slots[s] = null;
+        this.padNames[s] = null;
+      }
+    }
+    // bind new pads to free slots, lowest index first
+    for (const [idx, pad] of [...byIndex].sort((a, b) => a[0] - b[0])) {
+      if (this.slots.includes(idx)) continue;
+      const s = this.slots.indexOf(null);
+      if (s < 0) break;
+      this.slots[s] = idx;
+      this.padNames[s] = pad.id;
+      this.events.push({ type: 'connect', player: s, name: pad.id, standard: pad.mapping === 'standard' });
+    }
+    return byIndex;
+  }
+
   poll(dt) {
-    const pads = (navigator.getGamepads ? Array.from(navigator.getGamepads()) : []).filter((p) => p && p.connected);
+    const pads = this.bindPads();
     for (let i = 0; i < 2; i++) {
       const pl = this.players[i];
       const prev = pl.prev; pl.prev = pl.cur; pl.cur = prev;
       const s = pl.cur;
       const z = blank();
       Object.assign(s, z); s.b = z.b;
-      const pad = pads[i];
-      this.padNames[i] = pad ? pad.id : null;
+      const pad = this.slots[i] !== null ? pads.get(this.slots[i]) : null;
       pl.source = pad ? 'pad' : 'keyboard';
       if (pad) {
         const ax = pad.axes;
@@ -114,8 +174,20 @@ export class Input {
       }
       s.b.lt = s.b.lt || s.lt > 0.5;
       s.b.rt = s.b.rt || s.rt > 0.5;
-      for (const k of BTN) pl.held[k] = s.b[k] ? (pl.held[k] || 0) + dt : 0;
+      // stick as d-pad: on past 0.55, off below 0.35
+      const pb = pl.prev.b;
+      s.b.sup = s.ly < (pb.sup ? -0.35 : -0.55);
+      s.b.sdown = s.ly > (pb.sdown ? 0.35 : 0.55);
+      s.b.sleft = s.lx < (pb.sleft ? -0.35 : -0.55);
+      s.b.sright = s.lx > (pb.sright ? 0.35 : 0.55);
+      for (const k of ALL) pl.held[k] = s.b[k] ? (pl.held[k] || 0) + dt : 0;
     }
+  }
+
+  // Forget presses made this frame (after a screen change, so the same press
+  // isn't read again by the new screen).
+  swallow() {
+    for (const pl of this.players) for (const k of ALL) pl.prev.b[k] = pl.cur.b[k];
   }
 
   // queries
@@ -124,6 +196,7 @@ export class Input {
   released(p, k) { return !this.players[p].cur.b[k] && this.players[p].prev.b[k]; }
   held(p, k) { return this.players[p].held[k] || 0; }
   anyPressed(k) { return this.pressed(0, k) || this.pressed(1, k); }
+  anyDown(k) { return this.down(0, k) || this.down(1, k); }
   state(p) { return this.players[p].cur; }
   // auto-repeat for menus / unit bar: true on press and then every `rate` s while held
   repeat(p, k, delay = 0.35, rate = 0.12) {
@@ -135,7 +208,11 @@ export class Input {
     }
     return false;
   }
-  // stick as discrete direction with repeat (for menus)
+  // menu navigation: d-pad or left stick, with repeat. dir: 'up'|'down'|'left'|'right'
+  nav(p, dir, stick = true) {
+    return this.repeat(p, dir) || (stick && this.repeat(p, 's' + dir));
+  }
+  // legacy edge-only stick direction
   stickDir(p, axis, sign) {
     const s = this.players[p];
     const v = s.cur[axis] * sign, pv = s.prev[axis] * sign;

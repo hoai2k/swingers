@@ -86,7 +86,10 @@ export class Player {
     return { a, b, k: (t - a.t) / Math.max(1e-6, b.t - a.t) };
   }
 
-  // advance time; returns list of events crossed (only when moving forward smoothly)
+  // Advance time; returns the events crossed while moving forward by a small step
+  // (normal play or a forward scrub). Any jump (backwards, or a skip) sets
+  // `this.jumped` so the caller can clear lingering effects instead of showing
+  // particles from another moment.
   advance(dt, scrub) {
     const t0 = this.t;
     if (scrub) this.t += scrub * dt * 3;
@@ -94,17 +97,24 @@ export class Player {
     this.t = Math.max(0, Math.min(this.duration, this.t));
     const out = [];
     const ev = this.rec.events;
-    if (this.t > t0 && this.t - t0 < 0.5 && !scrub) {
+    this.jumped = !!this.seeked;
+    this.seeked = false;
+    if (this.t >= t0 && this.t - t0 < 0.5) {
       while (this.evIdx < ev.length && ev[this.evIdx].t <= this.t) {
         if (ev[this.evIdx].t > t0) out.push(ev[this.evIdx].e);
         this.evIdx++;
       }
-    } else this.resyncEvents();
-    if (this.t >= this.duration) this.playing = false;
+    } else { this.resyncEvents(); this.jumped = true; }
+    if (this.t >= this.duration && !scrub) this.playing = false;
     return out;
   }
 
-  seek(t) { this.t = Math.max(0, Math.min(this.duration, t)); this.resyncEvents(); }
+  // Unit deaths for timeline markers: [{t, team}]
+  deaths() {
+    return this.rec.events.filter((x) => x.e[0] === 'death').map((x) => ({ t: x.t, team: x.e[4], x: x.e[1], y: x.e[2], z: x.e[3] }));
+  }
+
+  seek(t) { this.t = Math.max(0, Math.min(this.duration, t)); this.resyncEvents(); this.seeked = true; }
 
   resyncEvents() {
     const ev = this.rec.events;
