@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 6 open (4 signs).** Rounds 1–5 are delivered and integrated;
+**Status: all requested images delivered; no open requests.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -45,14 +45,3 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
-
-## OPEN round 6 — ferry nameplates and saloon (4 signs)
-
-The game draws a procedural stand-in for each until the art arrives.
-
-### Signs (`assets/signs/`, 1024 × 256, exact words)
-
-- `island_hopper.png` — **ISLAND HOPPER**: ferry hull nameplate (red-trimmed ferry): white board, navy rounded letters, small anchor.
-- `frostpeak_ferry.png` — **FROSTPEAK FERRY**: same nameplate style (blue-trimmed ferry), small snowflake.
-- `desert_ferry.png` — **DESERT FERRY**: same nameplate style (yellow-trimmed ferry), small cactus.
-- `saloon.png` — **SALOON**: Dusty Dunes saloon front: weathered wood-plank board, cream western-style letters.

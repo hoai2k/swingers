@@ -27,6 +27,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # Generated art originals and reference sheets are source material that no
+      # game loads (~100 MB); leave them out of the site so deploys stay small.
+      - name: Drop art source files from the site
+        run: rm -rf */assets/originals */reference */assets/reference assets/originals assets/reference
       - uses: actions/configure-pages@v5
         with:
           enablement: true

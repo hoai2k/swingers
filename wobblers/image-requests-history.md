@@ -4,6 +4,19 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 6 — ferry nameplates and saloon (4 signs)
+
+The game draws a procedural stand-in for each until the art arrives.
+
+### Signs (`assets/signs/`, 1024 × 256, exact words)
+
+- `island_hopper.png` — **ISLAND HOPPER**: ferry hull nameplate (red-trimmed ferry): white board, navy rounded letters, small anchor.
+- `frostpeak_ferry.png` — **FROSTPEAK FERRY**: same nameplate style (blue-trimmed ferry), small snowflake.
+- `desert_ferry.png` — **DESERT FERRY**: same nameplate style (yellow-trimmed ferry), small cactus.
+- `saloon.png` — **SALOON**: Dusty Dunes saloon front: weathered wood-plank board, cream western-style letters.
+
+Delivered 2026-10-24 with built-in imagegen; exact dimensions, transparency and game loader verified. Prompts and sources are in `assets/generation.json`.
+
 ## Delivered round 5 — shops, homes and pets (12 images)
 
 All twelve images were delivered at their requested sizes and verified through the game asset loader.
@@ -31,7 +44,8 @@ All twelve images were delivered at their requested sizes and verified through t
 
 Delivered 2026-10-24 with built-in imagegen. Prompts are in `assets/generation.json`.
 
-Summary: round 5 — 12 images (4 signs + 4 faces + 4 posters);
+Summary: round 6 — 4 ferry/saloon signs;
+round 5 — 12 images (4 signs + 4 faces + 4 posters);
 round 4 — 16 images (6 region/ferry signs + 10 reference sheets);
 round 3 — 3 replacement faces; round 2 — 4 unlockable faces; round 1 — 51 images
 (45 in game + 6 reference sheets). All delivered and checked in game, 2026-10-24.

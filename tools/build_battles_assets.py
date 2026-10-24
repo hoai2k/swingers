@@ -10,13 +10,16 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent / "battles"
+MAPS = ("grass", "desert", "winter", "autumn", "castle", "river", "cove", "volcano",
+        "canyon", "graveyard")
 SIZES = {"logo": (1200, 525), "icon": (512, 512), "loading": (1920, 1080)}
 FACTIONS = ("tribal", "farmer", "medieval", "legacy", "viking", "ancient",
             "dynasty", "wildwest", "spooky", "pirate", "renaissance", "prehistoric",
-            "good", "evil", "secret")
+            "good", "evil", "secret", "custom")
 SIZES.update({f"faction-{name}": (128, 128) for name in FACTIONS})
-SIZES.update({f"map-{name}": (640, 360) for name in ("grass", "desert", "winter", "autumn")})
+SIZES.update({f"map-{name}": (640, 360) for name in MAPS})
 SIZES.update({f"victory-{name}": (1200, 400) for name in ("blue", "red")})
+SIZES.update({"creator-empty": (640, 400)})
 
 built = set()
 for name, size in SIZES.items():
@@ -41,7 +44,8 @@ for name, size in SIZES.items():
 # before the manifest is read, so it is not listed.
 files = [f"assets/ui/{n}.png" for n in ("logo", "icon") if n in built]
 files += [f"assets/ui/faction-{name}.png" for name in FACTIONS if f"faction-{name}" in built]
-files += [f"assets/ui/map-{name}.jpg" for name in ("grass", "desert", "winter", "autumn") if f"map-{name}" in built]
+files += [f"assets/ui/map-{name}.jpg" for name in MAPS if f"map-{name}" in built]
 files += [f"assets/ui/victory-{name}.png" for name in ("blue", "red") if f"victory-{name}" in built]
+files += ["assets/ui/creator-empty.png"] if "creator-empty" in built else []
 (ROOT / "assets/manifest.json").write_text(json.dumps({"files": files}, indent=2) + "\n")
 print(f"Built {len(built)} UI images; registered {len(files)} in the preload manifest.")

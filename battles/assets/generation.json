@@ -485,6 +485,99 @@
         1254,
         1254
       ]
+    },
+    {
+      "file": "assets/ui/map-castle.jpg",
+      "original": "assets/originals/ui/map-castle.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"Castle Courtyard\": a grassy castle courtyard with grey-beige cobbles in the middle. Two long, crenellated stone walls run across the field, one on each side, each with two open gateways flanked by round towers. A stone well sits in the centre. There are wooden crates and barrels by the walls, and a low raised stone platform behind each wall. Big outer curtain walls and towers ring the scene, with green hills and blue sky beyond. Neutral grey stone and brown wood; no team colours. Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-77385db4-d746-4690-8e1c-9ac3f33a97fb.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "assets/ui/map-river.jpg",
+      "original": "assets/originals/ui/map-river.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"River Crossing\": a gently winding, shallow blue river runs through the middle of a summer meadow, separating the two halves. Two wooden plank bridges with rails cross it, one near each end, and there is a pebbly shallow ford in the middle. There is a soft rounded hill on each bank, low wooden fences near the banks, reeds, round oak trees and willows. Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-323123df-a576-4a55-a29d-3870fb3320e2.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "assets/ui/map-cove.jpg",
+      "original": "assets/originals/ui/map-cove.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"Pirate Cove\": a sunny sandy beach around a round turquoise lagoon in the centre. A tiny sand island with one palm tree and a treasure chest sits in the middle of the lagoon, and two wooden boardwalks cross the lagoon either side of it. There is a half-buried wrecked wooden hull on each side, stacks of crates and barrels, and palm trees. The open sea is in the background with a cartoon pirate ship (plain sails, no flags or skull). Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-45b03f56-6fb4-4536-95c9-9c61093764bd.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "assets/ui/map-volcano.jpg",
+      "original": "assets/originals/ui/map-volcano.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"Volcano Jungle\": a lush jungle clearing with rich greens and brown earth. There is a flat-topped rocky mesa with sloped sides on each half, a bubbling dark tar pit on each side, and scattered boulders, palms and big broadleaf jungle trees. A huge cartoon volcano smokes in the distance with a glowing orange crater. Prehistoric mood, slightly warm and hazy sky. Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-efbc2d4d-36c7-4748-a1bb-5ee592d2dc10.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "assets/ui/map-canyon.jpg",
+      "original": "assets/originals/ui/map-canyon.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"Canyon Ruins\": a sandy desert canyon floor between two tall red-orange rock rims (one on each long edge) with sloped ramps up to them. In the middle is a low flat mesa, a king-of-the-hill spot. There are ancient sandstone ruins: broken walls, a ring of standing and toppled columns, and clay pots. Tall rock pillars and a warm sky beyond. Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-10c7f667-ea82-43f3-aa98-e13c6e003c8c.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "assets/ui/map-graveyard.jpg",
+      "original": "assets/originals/ui/map-graveyard.png",
+      "prompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. \"Spooky Graveyard\": a moonlit graveyard at night in deep blue and purple with a soft violet fog. There are rows of grey tombstones and crosses on both halves, a stone mausoleum with columns in the dead centre, short black iron fences, gnarled dead trees, a few jack-o'-lanterns and a crooked church silhouette with a big pale moon. Comedic and cosy-spooky, not scary; keep the ground readable (blue-grey grass), not pitch black. Empty battlefield, NO soldiers, people, text, UI, labels or team colours. Raised three-quarter view. Both halves of field balanced point-symmetrically through center, signature terrain features clearly readable at 320 pixels wide. Landscape 16:9, full image edge to edge, target 1920x1080 or larger.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9afef141-4494-4ccf-afd2-1a9944d7c2a1.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        640,
+        360
+      ],
+      "round": 4
+    },
+    {
+      "file": "reference/maps-2.png",
+      "original": "reference/maps-2.png",
+      "prompt": "Use case: precise-object-edit. Edit ONLY the lower-left VOLCANO panel of this six-map reference sheet. Preserve the CASTLE, RIVER, COVE, CANYON and GRAVEYARD panels exactly. VOLCANO means Volcano Jungle, a lush prehistoric jungle clearing: rich greens and brown earth, flat-topped rocky mesas with sloped sides, bubbling DARK TAR pits, scattered boulders, palms and broadleaf jungle trees, a huge smoking cartoon volcano far away with a small orange crater. Replace the current lava wasteland with this lush jungle setting. NO lava rivers or lava-covered battlefield. Update that panel's swatches to green ground, brown dirt path, dark tar as water/hazard, grey-brown stone, brown wood, lush green trees, warm hazy blue sky and pale warm fog. The signature obstacle sketch must show a jungle mesa and BLACK TAR PIT (not lava). Preserve six-panel layout, heading VOLCANO and same toy-like style. All other five panels stay unchanged.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4dd96562-3f3d-47b9-b98a-0d722ef0a481.png",
+      "mode": "built-in",
+      "transparent": false,
+      "size": [
+        1672,
+        941
+      ],
+      "round": 4,
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3ea358c9-106d-4fce-88a6-e47aa74cba10.png",
+      "initialPrompt": "Use case: stylized-concept. Wobbly Battles, bright toy-like comedic medieval fantasy, clean flat colours and soft shading, rounded low-poly scenery, no real brands, people or logos. One sheet with a colour-palette and mood board for each of the six new maps (castle, river, cove, volcano, canyon, graveyard): ground, path/paving, water (where the map has it), rock/stone, wood, trees, sky gradient and fog colour, plus a small sketch of each map's signature obstacle (wall with gate and towers, plank bridge, boardwalk and wreck, mesa and tar pit, ruined columns, tombstones and mausoleum). Same layout as `reference/maps.png`. Landscape 16:9 reference sheet, six clearly separated labelled panels, one per named map, each with palette swatches for the requested materials and a sketch of the signature obstacle. Include all six maps."
     }
   ]
 }

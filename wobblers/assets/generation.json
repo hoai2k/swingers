@@ -825,6 +825,46 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9a844b4-e5a3-4f80-a18e-db360233cbc3.png",
       "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Car-dealer poster with exact heading \"BIG DEALS\", a chunky toy sports car and a helicopter. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
       "round": 5
+    },
+    {
+      "index": 83,
+      "file": "signs/island_hopper.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2e34d04d-d97f-4b56-99ca-0e2cf39df007.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign: bright soft toy-like Wobbly Life cartoon, chunky rounded shapes, clean shading, cheerful and silly, never realistic. Exact text \"ISLAND HOPPER\". Ferry hull nameplate, white board with red trim, navy rounded lettering and a small anchor. One front-facing horizontal 4:1 signboard intended 1024x256. Requested words must be spelled exactly and readable at small size. Board fills frame with safe border, transparent outside board. No scene, characters, extra words, brands or watermark.",
+      "round": 6
+    },
+    {
+      "index": 84,
+      "file": "signs/frostpeak_ferry.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-412fc483-b507-47ea-84ee-29f8446856b6.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign: bright soft toy-like Wobbly Life cartoon, chunky rounded shapes, clean shading, cheerful and silly, never realistic. Exact text \"FROSTPEAK FERRY\". Ferry hull nameplate, white board with blue trim, navy rounded lettering and a small snowflake. One front-facing horizontal 4:1 signboard intended 1024x256. Requested words must be spelled exactly and readable at small size. Board fills frame with safe border, transparent outside board. No scene, characters, extra words, brands or watermark.",
+      "round": 6
+    },
+    {
+      "index": 85,
+      "file": "signs/desert_ferry.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e9ee9645-464d-4d73-812b-a91a4b09bd60.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign: bright soft toy-like Wobbly Life cartoon, chunky rounded shapes, clean shading, cheerful and silly, never realistic. Exact text \"DESERT FERRY\". Ferry hull nameplate, white board with yellow trim, navy rounded lettering and a small cactus. One front-facing horizontal 4:1 signboard intended 1024x256. Requested words must be spelled exactly and readable at small size. Board fills frame with safe border, transparent outside board. No scene, characters, extra words, brands or watermark.",
+      "round": 6
+    },
+    {
+      "index": 86,
+      "file": "signs/saloon.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-114931bd-b573-482d-a607-6553b48ae3fe.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign: bright soft toy-like Wobbly Life cartoon, chunky rounded shapes, clean shading, cheerful and silly, never realistic. Exact text \"SALOON\". Dusty Dunes saloon front sign, weathered wood-plank board and big cream western-style lettering. One front-facing horizontal 4:1 signboard intended 1024x256. Requested words must be spelled exactly and readable at small size. Board fills frame with safe border, transparent outside board. No scene, characters, extra words, brands or watermark.",
+      "round": 6
     }
   ]
 }
