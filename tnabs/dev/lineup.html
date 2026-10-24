@@ -1,16 +1,49 @@
 <!doctype html><html><body style="margin:0;background:#888"><script type="module">
+// Renders every unit for quick visual checks. Params:
+//   d, cx, cy        camera distance / x / height        yaw   unit facing
+//   attack=1 t=0.5   pose mid attack                     ph, amp, mode  walk phase / amplitude / pose mode
+//   team=0|1         force a team (default alternates)    rows=2 two rows (team 0 front, team 1 behind)
+//   expr=n           expression for all (default cycles)  ghost=1 render as placement ghosts
+//   faces=1          draw the face atlas (all variants x expressions) instead
+//   only=id,id       just these units                    w,h   canvas size
 import { THREE } from '../src/util.js';
 import { UNITS } from '../src/units.js';
-import { buildUnitVisual, poseVisual, setExpression } from '../src/visual.js';
+import { buildUnitVisual, poseVisual, setExpression, initFaces, FACE_MATS, TEAM_COLORS } from '../src/visual.js';
 const q = new URLSearchParams(location.search);
-const r = new THREE.WebGLRenderer({antialias:true}); r.setSize(1600,800); document.body.appendChild(r.domElement);
-r.shadowMap.enabled=true;
-const scene = new THREE.Scene(); scene.background=new THREE.Color('#bcd');
-scene.add(new THREE.HemisphereLight('#fff','#664',2)); const dl=new THREE.DirectionalLight('#fff',2); dl.position.set(3,6,8); dl.castShadow=true; scene.add(dl);
-const gr=new THREE.Mesh(new THREE.PlaneGeometry(80,80), new THREE.MeshLambertMaterial({color:'#7a5'})); gr.rotation.x=-Math.PI/2; gr.receiveShadow=true; scene.add(gr);
-const attack=q.get('attack'); const t=+(q.get('t')||0.5); const yaw=+(q.get('yaw')||0.4);
-UNITS.forEach((d,i)=>{ const v=buildUnitVisual(d,i%2); scene.add(v.root);
- poseVisual(v,(i-8.5)*1.6*(d.build.scale>2?1:1),0,0,yaw,{phase:+(q.get('ph')||0),amp:+(q.get('amp')||0),style:d.weapon.style,attack:attack==='1'?d.weapon.anim:null,attackT:t,headPitch:0,headYaw:0,mode:q.get('mode')||'normal',t:0}); setExpression(v,i%6);});
-const cam=new THREE.PerspectiveCamera(35,2,0.1,200); const cx=+(q.get('cx')||0); cam.position.set(cx,+(q.get('cy')||4),+(q.get('d')||22)); cam.lookAt(cx,1.2,0);
-r.render(scene,cam); window.done=true;
+const W = +(q.get('w') || 1600), H = +(q.get('h') || 800);
+if (q.get('faces')) {
+  initFaces();
+  const c = document.createElement('canvas'); c.width = W; c.height = H; document.body.appendChild(c);
+  const g = c.getContext('2d'); g.fillStyle = '#e8b48a'; g.fillRect(0, 0, W, H);
+  const tw = W / 8, th = tw / 2;
+  FACE_MATS.forEach((m, i) => g.drawImage(m.map.image, (i % 8) * tw, Math.floor(i / 8) * th, tw, th));
+  window.done = true;
+} else {
+  const r = new THREE.WebGLRenderer({ antialias: true }); r.setSize(W, H); document.body.appendChild(r.domElement);
+  r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#9cc8f0');
+  scene.add(new THREE.HemisphereLight('#bfe0ff', '#5a7a3a', 1.5));
+  const dl = new THREE.DirectionalLight('#fff3dc', 2.6); dl.position.set(-6, 10, 7); dl.castShadow = true;
+  dl.shadow.mapSize.set(2048, 2048); Object.assign(dl.shadow.camera, { left: -20, right: 20, top: 10, bottom: -10 }); dl.shadow.bias = -0.0004; dl.shadow.normalBias = 0.02;
+  scene.add(dl);
+  const gr = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshLambertMaterial({ color: '#79b443' })); gr.rotation.x = -Math.PI / 2; gr.receiveShadow = true; scene.add(gr);
+  const attack = q.get('attack'); const t = +(q.get('t') || 0.5); const yaw = +(q.get('yaw') || 0.4);
+  const only = q.get('only') ? q.get('only').split(',') : null;
+  const list = UNITS.filter((d) => !only || only.includes(d.id));
+  const rows = +(q.get('rows') || 1);
+  const n = list.length;
+  list.forEach((d, i) => {
+    for (let row = 0; row < rows; row++) {
+      const team = rows > 1 ? row : q.get('team') !== null ? +q.get('team') : i % 2;
+      const v = buildUnitVisual(d, team, { ghost: !!q.get('ghost'), ghostColor: TEAM_COLORS[team] });
+      scene.add(v.root);
+      const gap = +(q.get('gap') || 1.6);
+      poseVisual(v, (i - (n - 1) / 2) * gap, 0, -row * 3, yaw, { phase: +(q.get('ph') || 0), amp: +(q.get('amp') || 0), style: d.weapon.style, attack: attack === '1' ? d.weapon.anim : null, attackT: t, headPitch: 0, headYaw: 0, mode: q.get('mode') || 'normal', t: 0 });
+      setExpression(v, q.get('expr') !== null ? +q.get('expr') : i % 6);
+    }
+  });
+  const cam = new THREE.PerspectiveCamera(+(q.get('fov') || 35), W / H, 0.1, 200); const cx = +(q.get('cx') || 0);
+  cam.position.set(cx, +(q.get('cy') || 4), +(q.get('d') || 22)); cam.lookAt(cx, +(q.get('ly') || 1.2), 0);
+  r.render(scene, cam); window.done = true;
+}
 </script></body></html>
