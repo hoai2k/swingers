@@ -53,14 +53,15 @@ export class Ragdoll {
       const I = body.principalInertia();
       this.inertia[i] = (I.x + I.y + I.z) / 3;
     }
-    // Limbs swing about their joint and drag the rest of the chain along, so their
-    // muscles work against the inertia about the joint, not the part's own.
+    // Legs swing about their joint and drag the shin along, so their muscles work
+    // against (part of) the inertia about the joint, not the part's own. Using all
+    // of it makes the servo overshoot and buzz; 0.3 tracks well and stays calm.
     const P = PART, parts = skel.parts;
     const about = (i, d) => this.inertia[i] + parts[i].mass * d * d;
     for (const [up, lo] of [[P.thighL, P.shinL], [P.thighR, P.shinR]]) {
       const iu = about(up, parts[up].hh), il = about(lo, parts[lo].hh);
-      this.inertia[up] = (iu + parts[lo].mass * (2 * parts[up].hh + parts[lo].hh) ** 2 * 0.6) * ((globalThis.TUNE || {}).ic ?? 0.3);
-      this.inertia[lo] = il * ((globalThis.TUNE || {}).ic2 ?? 0.3);
+      this.inertia[up] = (iu + parts[lo].mass * (2 * parts[up].hh + parts[lo].hh) ** 2 * 0.6) * 0.3;
+      this.inertia[lo] = il * 0.3;
     }
     this.joints = [];
     for (const j of skel.joints) {

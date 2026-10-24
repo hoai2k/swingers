@@ -416,7 +416,7 @@ export class Unit {
         F.y = ter.height(F.x, F.z) + Math.sin(Math.PI * clamp(l.t, 0, 1)) * lift;
       } else {
         F.copy(l.plant);
-        F.y -= ((globalThis.TUNE || {}).press ?? 0.03) * s; // press into the ground so the planted leg bears weight
+        F.y -= 0.03 * s; // press into the ground so the planted leg bears weight
       }
       F.y += this.footR;
       this.hipPoint(l, _v3);
@@ -554,8 +554,7 @@ export class Unit {
     _yawQ.setFromAxisAngle(UP, this.heading);
     const Mk = M * Math.max(1, this.s);
     const atk = this.st.attack ? 1 : 0;
-    const T = globalThis.TUNE || {};
-    const ffk = T.ff ?? 0.5;
+    const ffk = 0.5;
     for (let i = 0; i < NPARTS; i++) {
       const m = MUSCLE[i];
       const arm = i >= PART.uarmL ? atk : 0;
@@ -572,8 +571,7 @@ export class Unit {
         const kk = Math.min(a / dt, 30) / sn * ffk;
         ff = _v.set(_q.x * kk, _q.y * kk, _q.z * kk);
       }
-      const isLeg = i >= PART.thighL && i <= PART.shinR;
-      rag.muscle(i, wt, m[0] * (1 + arm * 0.4) * (isLeg ? T.lg ?? 1 : 1), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5) * (isLeg ? T.lr ?? 1 : 1),
+      rag.muscle(i, wt, m[0] * (1 + arm * 0.4), m[1] * Math.max(0.2, strength) * (1 + arm * 0.5),
         m[2] * Mk * strength * (1 + arm * 1.2), dt, (arm ? 17 : m[3] || 12) / Math.sqrt(this.s), ff);
     }
     this.hasPrev = true;
