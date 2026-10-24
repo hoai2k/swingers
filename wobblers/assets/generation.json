@@ -1,0 +1,550 @@
+{
+  "tool": "built-in image_gen",
+  "images": [
+    {
+      "index": 0,
+      "file": "faces/face_happy.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f9a059b9-8e48-4307-b373-dc6fb2191e2d.png",
+      "prompt": "Use case: stylized-concept. Game face decal, square. Bright soft toy-like Wobbly Life cartoon style, clean flat shading with gentle highlights. Only facial features: big round eyes looking forward with white highlights, small closed happy smile, soft pink cheeks. Center features in middle 70% of square; eyes around 40% from top, mouth around 70%. Transparent background. No head outline, skin fill, hair, hat, body, text, border or other objects. To overlay peach skin #ffd9b8. Generate one asset."
+    },
+    {
+      "index": 1,
+      "file": "faces/face_joyful.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-06fe3cd2-2b21-47dc-98fd-2c68f2ba1d68.png",
+      "prompt": "undefinedOnly facial features: eyes squeezed into happy upside-down arcs, wide open laughing mouth showing a little tongue.undefined"
+    },
+    {
+      "index": 2,
+      "file": "faces/face_cool_shades.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e0f4d787-dd8a-4d6c-a949-b40c9be1af24.png",
+      "prompt": "undefinedOnly facial features: black rounded sunglasses with a white glint, confident lopsided smirk.undefined"
+    },
+    {
+      "index": 3,
+      "file": "faces/face_sleepy.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-001881a5-54b2-4013-8b82-b716a85a412b.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 3,
+          "file": "faces/face_sleepy.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-11b95ef5-0d86-4023-9403-1e0bae1328cf.png",
+          "prompt": "undefinedOnly facial features: droopy half-closed eyelids, tiny relaxed smile, drowsy look, no z or text.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c4dfdbe1-4448-4e0a-b7d0-a7b32561157d.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: Heavy half-closed eyelids drawn as thick flat dark lines over half-circle eyes, tiny relaxed smile. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
+    },
+    {
+      "index": 4,
+      "file": "faces/face_surprised.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-6bfb3d26-d729-4e74-80c7-1112792c626c.png",
+      "prompt": "undefinedOnly facial features: huge wide eyes with tiny pupils, raised eyebrows, small round o mouth.undefined"
+    },
+    {
+      "index": 5,
+      "file": "faces/face_cheeky.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a7ba5d9-1df4-43fa-a0c2-0ddaec666379.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 5,
+          "file": "faces/face_cheeky.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f7b70b61-9996-4afc-a6d9-9aa849c16236.png",
+          "prompt": "undefinedOnly facial features: one eye winking, the other open, tongue poking out of a grin.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2032c34c-267b-481b-b7ba-431a2829db18.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: One eye winking as a single thick happy arc, the other a big round cartoon eye; wide grin with a pink tongue poking out. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
+    },
+    {
+      "index": 6,
+      "file": "faces/face_lashes.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a592222-6a9d-4f97-814b-e329a6b6a07e.png",
+      "prompt": "Use case: precise-object-edit. This exact facial decal is the edit target. Preserve every eye, lash, mouth, colour and thick flat cartoon stroke exactly. Change ONLY the overall scale and position of the complete feature group: shrink ALL existing opaque content as ONE group to occupy approximately 65% of the full canvas width (from x=18% to x=82%), centered horizontally, with its bounding box centered at y=52% of canvas. Add generous completely transparent margins. Keep square canvas and true transparent background. Do not crop, redraw, add details, gradients, skin, a head or text. Output a square facial feature texture for 512x512 delivery.",
+      "round": 3,
+      "previousGenerations": [
+        {
+          "index": 6,
+          "file": "faces/face_lashes.png",
+          "width": 512,
+          "height": 512,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5fd06f29-da45-456e-a366-04b04310504c.png",
+          "prompt": "undefinedOnly facial features: big sparkly eyes with long curled eyelashes, sweet smile, rosy cheeks.undefined"
+        }
+      ],
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e3d99de8-0800-46d5-8c9c-9695908bfbbb.png",
+      "initialPrompt": "Use case: stylized-concept. Generate ONE replacement facial-features decal for WOBBLERS game. Reference images are approved style/composition examples only, not edit targets. Expression: Big round cartoon eyes with exactly THREE thick, simple curled lashes on EACH upper lid, sweet small smile, solid pink blush ovals. REQUIRED STYLE: extremely simple FLAT CARTOON features with thick dark rounded outlines and SOLID fills. At most ONE simple white highlight per eye. Clean bold shapes readable at tiny game distance. No gradients, no 3D gloss, no realism, no anime eyes, no detailed shaded irises, no thin individual eyelashes, no skin-coloured shading. The lashes face must have exactly three bold simplified lashes per upper lid, never a fan of thin lashes. Features only on genuinely transparent background: NO head, head outline, skin fill, hair, hat, body, nose unless specified, text or watermark. Square 512 x 512 composition. Center all features together inside the middle 65% of the square, from about x=90 to422 and y=90 to422, ample transparent margins on all sides. Eye line around 40% from top, mouth around 68%. Follow the compact feature framing of the happy reference, but use solid flat ink and fills. Will overlay the game's peach #ffd9b8 head."
+    },
+    {
+      "index": 7,
+      "file": "faces/face_grumpy.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2a6dba68-ce91-4402-939f-ed121cf6d208.png",
+      "prompt": "undefinedOnly facial features: frowning angled eyebrows, half-lidded eyes, wobbly frown.undefined"
+    },
+    {
+      "index": 8,
+      "file": "faces/face_ko.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9e655f4-3483-4f88-9452-267dd2de7569.png",
+      "prompt": "undefinedOnly facial features: knocked out, two cartoon X eyes, wobbly open mouth.undefined"
+    },
+    {
+      "index": 9,
+      "file": "signs/burgers.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e945b191-a7c1-4bfd-b67a-e01b42b0eae2.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"BURGERS\". Board colour and small icon: red-orange `#ff5a3c`, a stacked burger. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 10,
+      "file": "signs/pizza.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e35f6526-8369-4323-b9b3-42da03c5499a.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"PIZZA\". Board colour and small icon: golden `#e8a12a`, a pizza slice. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 11,
+      "file": "signs/ice_cream.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bf0c8fdd-199f-41ab-bfda-e5597460c3a6.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"ICE CREAM\". Board colour and small icon: pink `#ff7fc8`, a swirl cone. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 12,
+      "file": "signs/toys.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5c33c3e4-bd67-47ad-a8ab-ab94599b52d0.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"TOYS\". Board colour and small icon: blue `#3f8cff`, a teddy bear. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 13,
+      "file": "signs/cafe.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-67a0a9cc-edf4-4c5f-8972-2ac961614fb1.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"CAFE\". Board colour and small icon: coffee brown `#8a5a3a`, a steaming cup. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 14,
+      "file": "signs/bank.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7d16d4a8-ebc1-4d1d-a6ec-021e615fc0cf.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"BANK\". Board colour and small icon: green `#2a8a5a`, a piggy bank. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 15,
+      "file": "signs/gym.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-22463fee-15fc-4717-b72e-0c78c6b14b5a.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"GYM\". Board colour and small icon: slate `#444a6a`, a dumbbell. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 16,
+      "file": "signs/market.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8504b606-00be-42da-a072-2d34079cac80.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"MARKET\". Board colour and small icon: leaf green `#4fae45`, a basket of fruit. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 17,
+      "file": "signs/bakery.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3c11596e-5ec6-424a-bc5c-80b287721911.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"BAKERY\". Board colour and small icon: warm orange `#d9824a`, a loaf and croissant. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 18,
+      "file": "signs/arcade.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1448a75d-41b3-4089-995c-920fea11d70c.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"ARCADE\". Board colour and small icon: purple `#b46cff`, a joystick, neon glow edges. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 19,
+      "file": "signs/donuts.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-acaea61d-646e-4b01-b8d2-aea0875ebb70.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"DONUTS\". Board colour and small icon: hot pink `#ff6fae`, a sprinkled donut. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 20,
+      "file": "signs/post.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-44e75a11-5b9e-43f5-ae1d-57f98ccab5ff.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"POST\". Board colour and small icon: red `#d9534f`, an envelope. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 21,
+      "file": "signs/town_hall.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e78740d6-8987-426d-acae-983e65b80e2e.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"TOWN HALL\". Board colour and small icon: royal blue `#2a62c9`, a little clock. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 22,
+      "file": "signs/playground.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f819f0a7-acc0-4767-98e9-794d0ec78aa8.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"PLAYGROUND\". Board colour and small icon: orange `#ff7f3d`, a slide. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 23,
+      "file": "signs/swimming_pool.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-55f51838-0bdf-402e-b5b4-d78349f3da8e.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"SWIMMING POOL\". Board colour and small icon: aqua `#2a9ad9`, a rubber ring. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 24,
+      "file": "signs/fun_park.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-33114b5f-7fc8-4d96-81c8-24bdbdb2c52c.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"FUN PARK\". Board colour and small icon: pink `#ff5a8a`, a ferris wheel, light bulbs around the edge. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 25,
+      "file": "signs/bumper_cars.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-0385209a-9301-4770-a784-e1804e6208c8.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"BUMPER CARS\". Board colour and small icon: blue `#3f8cff`, a bumper car. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 26,
+      "file": "signs/loopy_coaster.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-989c302e-a2c1-4541-86e3-156a06315366.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"LOOPY COASTER\". Board colour and small icon: purple `#b46cff`, a coaster loop. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 27,
+      "file": "signs/stunt_park.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-314a05b0-d227-4d06-a99d-d7a83291477f.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"STUNT PARK\". Board colour and small icon: orange `#ff8a3d`, a ramp with a flying car. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 28,
+      "file": "signs/kart_racing.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e9222c9e-ac70-47f6-bc7a-72b852f09423.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"KART RACING\". Board colour and small icon: red `#ff3a3a`, a chequered flag. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 29,
+      "file": "signs/surf_shack.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-06368298-9931-4c33-8efc-3039d8dc6937.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"SURF SHACK\". Board colour and small icon: sky blue `#3f8cff`, a surfboard. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 30,
+      "file": "signs/zip_line.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-936da679-ecda-478a-9f23-4a72f4e26c02.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"ZIP LINE\". Board colour and small icon: as you like, a pulley on a cable. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 31,
+      "file": "signs/can_toss.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-615d3f97-fad3-48b9-aad4-6b338bc0bf9d.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"CAN TOSS\". Board colour and small icon: carnival red and white stripes, a pyramid of cans. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 32,
+      "file": "signs/bowling.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-830fdcc7-2203-4e6a-85e3-59c99c8d174b.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"BOWLING\". Board colour and small icon: as you like, a pin and ball. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 33,
+      "file": "signs/hot_dogs.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-6b7d6df7-7402-438d-80fd-da542f930e78.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"HOT DOGS\". Board colour and small icon: red-orange `#ff5a3c`, a hot dog. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 34,
+      "file": "signs/candy.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-089db07b-1a7f-4662-a05d-9d6213d80ec3.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"CANDY\". Board colour and small icon: pink `#ff7fc8`, candy floss. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 35,
+      "file": "signs/drinks.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9b6e529c-95da-4061-8704-b6817bf7989f.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"DRINKS\". Board colour and small icon: blue `#3f8cff`, a soda cup with straw. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 36,
+      "file": "signs/prizes.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3ca4e121-115d-482d-9f2e-9aec33afa448.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"PRIZES\". Board colour and small icon: purple `#b46cff`, a star. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 37,
+      "file": "signs/tickets.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4d4f8245-e45a-4b74-ab23-c036c775ee42.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"TICKETS\". Board colour and small icon: green `#55a84a`, a ticket stub. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
+    },
+    {
+      "index": 38,
+      "file": "posters/cafe_coffee.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2b4f3f84-cad6-4f68-bc7b-98c837b21291.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A retro cafe advert: a giant steaming mug of coffee with a happy face, a wobbly bean person hugging it, the words \"COFFEE\" at the top. Warm browns and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+    },
+    {
+      "index": 39,
+      "file": "posters/cafe_cake.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4dd48057-e700-4b64-a057-147822620fef.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cheerful bakery poster: a tall pink layer cake with a cherry on top and sprinkles, the word \"CAKE!\" at the top. Pinks and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+    },
+    {
+      "index": 40,
+      "file": "posters/arcade_space.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-be44019e-4ab1-4b55-8685-d7a9eb870d8e.png",
+      "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"SPACE BLOBBERS\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-18f0d1c5-a9d1-4f51-a99e-2c051840df49.png",
+      "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An 80s arcade game poster for \"SPACE BLOBBERS\": a bean person in a bubble space helmet flying a tiny rocket past planets, neon pink and cyan on deep purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+    },
+    {
+      "index": 41,
+      "file": "posters/arcade_racer.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d2815090-5540-4c45-805a-7b766a168bb4.png",
+      "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"TURBO WOBBLE KART\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e11aac59-d1b4-4ea0-984f-86455b7e506b.png",
+      "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An arcade racing poster for \"TURBO WOBBLE KART\": a bean person drifting a go-kart, motion lines, chequered flag, orange and purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+    },
+    {
+      "index": 42,
+      "file": "posters/painting_island.png",
+      "width": 768,
+      "height": 528,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5619c13b-12af-4489-b0d8-4d48695123ac.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cosy painted landscape of a sunny toy-like island: green hills, a little town, a ferris wheel and a lighthouse by a blue sea. Soft storybook painting. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 768 x 528 pixels. Generate this one asset only."
+    },
+    {
+      "index": 43,
+      "file": "posters/portrait_family.png",
+      "width": 512,
+      "height": 666,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2f4f6768-0ef9-4221-a76b-f35892132a10.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A silly family portrait: three wobbly bean people (two adults and a small one) posing proudly, one wearing a top hat, in front of a plain warm background. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 666 pixels. Generate this one asset only."
+    },
+    {
+      "index": 44,
+      "file": "ui/logo.png",
+      "width": 1600,
+      "height": 500,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-583b4939-35ed-4353-b7e9-fde2b884d3fb.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. The word **WOBBLERS** as a big bubbly 3D cartoon game logo: chunky rounded letters in yellow, pink and green, thick dark-blue outline, glossy highlights, letters slightly tilted and bouncing at different heights as if wobbling. No other text. Replaces the CSS logo on the title screen. Wide 3.2:1 composition, logo fills image with safe padding, transparent background. Intended output 1600 x 500 pixels. Generate this one asset only."
+    },
+    {
+      "index": 45,
+      "file": "reference/ref_character_sheet.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e5bfa325-3984-41f3-afcc-5fdee6bbc871.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Character turnaround sheet in the *Wobbly Life* style: one bean-shaped wobbly person shown front, side, back and three-quarter, plus a row of poses (running with arms flailing, jumping, ragdolled flat on the ground, carrying a box over their head, driving). Round head merged softly into a pear-shaped body, stubby limbs, mitten hands, chunky shoes. Plain light background. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "index": 46,
+      "file": "reference/ref_outfits.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d39473dd-577a-4684-848b-40bcd891d55b.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A lineup of eight of those characters in different outfits and hats (cap, top hat, beanie, crown, party hat, cowboy hat, bucket hat, none), different shirt and trouser colours. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "index": 47,
+      "file": "reference/ref_vehicles.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-be964643-7e03-469e-8bdd-0a328daa20ee.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A sheet of toy-like rounded vehicles in the same style: family car, pickup, ice-cream van, city bus, police car, fire truck, tractor, go-kart, quad bike, scooter, speedboat, helicopter. Side views plus one three-quarter view each, chunky wheels, glossy candy colours. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "index": 48,
+      "file": "reference/ref_town.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5c7ed901-52ad-4e65-9a65-ac987e3a5807.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A colourful toy-town street concept: shops with striped awnings and big signs, a town hall with a clock tower, a plaza with a fountain, lamp posts, rounded trees, wobbly people walking about. Three-quarter elevated view. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "index": 49,
+      "file": "reference/ref_funpark.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a73e6745-819c-428f-8c57-0cea580a033e.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cartoon amusement park concept: ferris wheel, carousel, roller coaster with a loop, swing ride, drop tower, bouncy castle, food stalls with bunting. Bright and busy. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "index": 50,
+      "file": "reference/ref_island_map.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-58163fa5-2a7e-466d-bc24-410a17e1ba1c.png",
+      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A top-down illustrated map of the island: town in the middle with a grid of roads and a ring road, playground NE, swimming pool SE, stunt park SW, sports field NW, fun park far west, kart track far east, snowy mountain and a lake to the north, beach with a pier and lighthouse to the south. Labels optional. Wide 16:9 composition. Intended output 1920 x 1080 pixels. Generate this one asset only."
+    },
+    {
+      "file": "faces/face_star_eyes.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-38df0f1e-a709-4822-ac45-e478e4d06503.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Starstruck: big yellow five-point stars for eyes with a white sparkle, huge open delighted smile. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 51
+    },
+    {
+      "file": "faces/face_winky.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ba7abe82-5c79-4c7f-ac29-9aaafdc31960.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Playful wink: one eye closed in a happy arc, the other big and round with a white highlight, a cheeky grin with one raised eyebrow. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 52
+    },
+    {
+      "file": "faces/face_robot.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f665e575-0b15-4609-b58a-554611687e92.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: Toy robot: two glowing cyan square LED eyes, a flat rectangular grille mouth with little lines, a tiny antenna-free bolt on each cheek. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 53
+    },
+    {
+      "file": "faces/face_moustache.png",
+      "width": 512,
+      "height": 512,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f7f14939-ba45-4ee4-9054-53b06da619bc.png",
+      "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: A big curly brown handlebar moustache under a round nose, friendly round eyes with white highlights, small smile peeking out. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
+      "round": 2,
+      "index": 54
+    }
+  ]
+}
