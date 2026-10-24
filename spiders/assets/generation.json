@@ -1,0 +1,70 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "logo.png",
+      "prompt": "Use case: logo-brand. Create a game logo asset, wide 1600 × 640 composition, genuine transparent background. Game logo reading exactly \"SPIDER SWINGERS\", chunky rounded bubble letters; \"SPIDER\" in white-to-ice-blue letters each dangling from a silk thread; \"SWINGERS\" large below in a bright pink-to-hot-magenta gradient with a thick dark purple outline and 3D extrusion; a small cute round purple spider hanging off the G; glossy white and cyan highlights. Glossy, bold-outlined painterly cartoon party-game art. Entire logo visible with a small clear margin. No other text. No orange anywhere; no amber, coral, peach or warm yellow tones.\nFinal edit: Edit the attached logo. Remove the entire spider character and the hanging cord tied to the G; restore a clean uninterrupted G where necessary. Keep the exact text SPIDER SWINGERS, all lettering, typography, arrangement, ice-blue SPIDER letters, pink/magenta SWINGERS letters, purple extrusions, highlights, and silk threads suspending the SPIDER letters. No characters or creatures anywhere. No orange. Preserve genuine transparent background. Only lettering and the upper silk threads remain.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-0d7c6643-2f94-4a37-88aa-d8f93e26c7d5.png"
+    },
+    {
+      "file": "title_bg.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Moonlit cartoon night forest for a game title screen: huge glowing cream moon upper right, purple-blue gradient sky with stars, layered silhouette hills and spiky pines, soft pink horizon glow, fireflies, giant dewy cobwebs in both top corners. Centre and top-centre empty and darker for the logo. No characters, no text. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-4358440e-3766-4de7-a22b-8d8aff9eec2a.png"
+    },
+    {
+      "file": "lobby_bg.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Cozy cartoon spider-hideout night scene for a game lobby: deep indigo sky, distant gothic town and bridge silhouettes, lanterns and silk threads hanging from the top edge, soft pink glow on the left and cyan glow on the right; low contrast and slightly dark so floating platforms read on top. No characters, no text. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-0cfbc711-485c-4b41-be7c-c83fb6e9a395.png"
+    },
+    {
+      "file": "bg_canopy.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Looking down into a deep misty jungle gorge at dusk; giant tree trunks frame the left and right edges, lianas hang in the top corners, soft green light shafts from top centre; the bottom fades into dark green fog so it reads as bottomless. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-b5f3f832-7469-4f33-9ec3-29fbefff9ed5.png"
+    },
+    {
+      "file": "bg_hollow.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Inside a huge violet crystal cave: distant rock spires and a faint underground lake in the lower third, glowing cyan and magenta crystal clusters in the lower corners, soft blue glow in the centre, dim cavern depth above. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-9cebc518-8347-47d4-9d56-34968c90a3f5.png"
+    },
+    {
+      "file": "bg_caldera.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Inside a volcano crater: jagged black crater walls at the sides, distant lava falls, a glowing orange lava lake along the bottom edge, hazy red smoke in the middle, embers and a dark smoky sky at the top. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-99ad2d69-5a20-4009-90c8-d2161784c04f.png"
+    },
+    {
+      "file": "bg_foundry.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. A dim industrial hall: giant background gears silhouetted in the centre and corners, pipes, catwalk silhouettes and cyan indicator lights on the far walls, amber work-lamp haze in the middle, darker steel at the bottom. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-f88d000a-119b-4793-8f64-c0993bb96b69.png"
+    },
+    {
+      "file": "bg_skyway.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Bright high-altitude sky: small distant floating islands at the edges, a thick sea of clouds across the bottom fifth, gentle blue gradient with soft wispy clouds above, a couple of tiny distant kites or birds. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-f3f1f355-0d3f-47b8-be90-e6cbe40661af.png"
+    },
+    {
+      "file": "bg_glasshouse.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. A moonlit Victorian conservatory seen from inside: gothic city skyline behind the glass at the sides, large pale moon upper right, lush dark ferns and palms in the lower corners, indigo starry sky behind faint iron glazing bars. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-ac714cab-b9ae-462b-9d0a-8dd2e8a5b644.png"
+    },
+    {
+      "file": "bg_glacier.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Polar night with green and teal aurora in the upper sky, distant snowy peaks in the middle distance, a deep blue ice canyon dropping away in the bottom centre, fine snowfall throughout. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-e707931c-a642-4bbe-b958-a7b31b6fc6fd.png"
+    },
+    {
+      "file": "bg_sweets.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Candy land at sunset: lollipop trees, swirl clouds and frosted hills in the side thirds, warm pink-purple sky, a chocolate horizon at the bottom; keep the centre column plain. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-163cbdaf-1838-4ed9-b56c-07de7fb9ad66.png"
+    },
+    {
+      "file": "bg_storm.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. A towering storm vortex with its eye slightly above centre, dark misty mountains at the bottom, rain streaks throughout, lightning glowing inside the clouds at the far left and right. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-cd962cbd-b8cd-4258-82ee-6a0ae892e9df.png"
+    },
+    {
+      "file": "bg_dunes.jpg",
+      "prompt": "Use case: stylized-concept. Asset type: 1920 × 1080 landscape 16:9 game background. Desert ruins at dusk: broken sandstone arches and columns silhouetted at the left and right edges, low dunes on the horizon, warm amber-to-violet sky with the first stars, a low sun glowing lower right. Style: glossy, bold-outlined painterly cartoon look of Swingers / Rounders art. No text, no logos, no characters. Keep arena middle calm and low contrast, detail at edges and in distance; avoid hard horizontal lines where terrain sits.",
+      "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-cca1429f-4205-4d6d-ade8-20b559ef9db2.png"
+    }
+  ]
+}

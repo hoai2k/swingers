@@ -1,7 +1,9 @@
 # Spider Swingers — image requests
 
-**Status: nothing delivered yet. Everything below is optional — the game
-draws procedural stand-ins for all of it.**
+**Status: all 13 hook-ready images delivered and listed in the manifest.**
+Title/lobby art and all 10 board backgrounds are delivered. Optional extras
+below remain deferred. Exact prompts are recorded in `assets/generation.json`.
+The final logo uses ice blue and pink/magenta, with no orange or spider character.
 
 How to deliver: put the file in `spiders/assets/web/` and add its filename
 to the `images` list in `spiders/assets/web/manifest.json`. Unlisted files
@@ -17,7 +19,7 @@ the Swingers / Rounders art. No text, no characters unless stated.
 
 | File | Size | Prompt |
 | --- | --- | --- |
-| `logo.png` | 1600 × 640, transparent | Game logo "SPIDER SWINGERS", chunky rounded bubble letters; "SPIDER" in white-to-ice-blue letters each dangling from a silk thread; "SWINGERS" large below in a yellow→orange→hot-pink gradient with a thick dark purple outline and 3D extrusion; a small cute round spider hanging off the G; glossy highlights; transparent background; no other text. |
+| `logo.png` | 1600 × 640, transparent | Game logo "SPIDER SWINGERS", chunky rounded bubble letters; "SPIDER" in white-to-ice-blue letters each dangling from a silk thread; "SWINGERS" large below in a pink→hot-magenta gradient with a thick dark purple outline and 3D extrusion; no spider character; glossy highlights; transparent background; no other text. |
 | `title_bg.jpg` | 1920 × 1080 | Moonlit cartoon night forest for a game title screen: huge glowing cream moon upper right, purple-blue gradient sky with stars, layered silhouette hills and spiky pines, soft pink horizon glow, fireflies, giant dewy cobwebs in both top corners. Centre and top-centre empty and darker for the logo. No characters, no text. |
 | `lobby_bg.jpg` | 1920 × 1080 | Cozy cartoon spider-hideout night scene for a game lobby: deep indigo sky, distant gothic town and bridge silhouettes, lanterns and silk threads hanging from the top edge, soft pink glow on the left and cyan glow on the right; low contrast and slightly dark so floating platforms read on top. No characters, no text. |
 
