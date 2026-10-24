@@ -176,8 +176,9 @@ function farm(game, kit) {
     b.cyl(0.7, 0.7, 1.2, 0xe8c45a, [0, 0, 0], [0, 0, Math.PI / 2], 14);
     b.cyl(0.71, 0.71, 0.1, 0xd4ae45, [0.3, 0, 0], [0, 0, Math.PI / 2], 14);
     const x = fx - 10 + (i % 4) * 5, z = fz + 13 + Math.floor(i / 4) * 5;
-    const o = game.physics.dynamic({ x, y: heightAt(x, z) + 0.8, z }, [RAPIER.ColliderDesc.cylinder(0.6, 0.7).setRotation({ x: 0, y: 0, z: Math.SQRT1_2, w: Math.SQRT1_2 }).setMass(30)], b.mesh());
+    const o = game.physics.dynamic({ x, y: heightAt(x, z) + 0.68, z }, [RAPIER.ColliderDesc.cylinder(0.6, 0.7).setRotation({ x: 0, y: 0, z: Math.SQRT1_2, w: Math.SQRT1_2 }).setMass(30)], b.mesh(), { angDamp: 1.2 });
     game.scene.add(o.mesh);
+    o.body.sleep(); // the field slopes: stay put until someone pushes it
   }
   game.vehicles.push(new Vehicle(game, 'pickup', fx - 12, fh + 1.5, fz - 2, Math.PI / 2, 0x3f7f3f));
   // crops
@@ -200,8 +201,9 @@ function mountainTop(game, kit) {
     const bx = x - 8 + i * 5, bz = z + 9, r = 1.1 + (i % 2) * 0.5;
     const bb = new Builder();
     bb.add(new THREE.DodecahedronGeometry(r, 1), 0x9a958a, [0, 0, 0]);
-    const o = game.physics.dynamic({ x: bx, y: heightAt(bx, bz) + r + 0.3, z: bz }, [RAPIER.ColliderDesc.ball(r).setMass(60 * r * r * r).setFriction(0.9)], bb.mesh(), { angDamp: 0.3 });
+    const o = game.physics.dynamic({ x: bx, y: heightAt(bx, bz) + r - 0.05, z: bz }, [RAPIER.ColliderDesc.ball(r).setMass(60 * r * r * r).setFriction(0.9)], bb.mesh(), { angDamp: 0.3 });
     game.scene.add(o.mesh);
+    o.body.sleep(); // waits on the slope until someone gives it a shove
   }
   // quads at the foot of the mountain
   for (let i = 0; i < 3; i++) {
