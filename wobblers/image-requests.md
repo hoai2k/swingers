@@ -1,6 +1,11 @@
 # Wobblers image requests
 
-**Status: round 1 open — 51 images (45 used in game + 6 reference sheets).**
+**Status: round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.**
+
+Generated with the built-in image generation tool and saved at the paths and
+dimensions below. The final prompts and source files are recorded in
+`assets/generation.json`. The game manifest lists the 45 in-game images;
+the six reference sheets remain outside the runtime manifest.
 
 Everything already has a procedural stand-in, so these are upgrades, not
 blockers. The hooks are built and were tested with placeholder images: drop a
