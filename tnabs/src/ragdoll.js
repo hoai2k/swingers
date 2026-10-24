@@ -133,6 +133,23 @@ export class Ragdoll {
     return out.set(lx, ly, lz).applyQuaternion(this.quat[i]).add(this.pos[i]);
   }
 
+  maxSpeed() {
+    let m = 0;
+    for (let i = 0; i < NPARTS; i++) {
+      const v = this.vel[i];
+      m = Math.max(m, v.x * v.x + v.y * v.y + v.z * v.z);
+    }
+    return Math.sqrt(m);
+  }
+
+  corpse() {
+    for (let i = 0; i < NPARTS; i++) this.colliders[i].setCollisionGroups(this.skel.parts[i].limb ? GROUPS.deadLimb : GROUPS.dead);
+  }
+
+  sleep() {
+    for (const b of this.bodies) b.sleep();
+  }
+
   setDamping(lin, ang) {
     for (const b of this.bodies) { b.setLinearDamping(lin); b.setAngularDamping(ang); }
   }

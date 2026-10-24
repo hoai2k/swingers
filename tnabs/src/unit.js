@@ -439,9 +439,19 @@ export class Unit {
 
     if (!this.alive) {
       this.deadT += dt;
-      // a short twitch then limp
-      if (this.deadT < 0.4) this.drive(dt, 0.15 * (1 - this.deadT / 0.4), false);
-      if (this.deadT > 4 && !this.settled) { rag.setDamping(0.6, 2.5); this.settled = true; }
+      // a short twitch then fully limp; once the body has come to rest it is
+      // put to sleep (costs nothing until something hits it again)
+      if (this.deadT < 0.3) this.drive(dt, 0.12 * (1 - this.deadT / 0.3), false);
+      if (this.deadT > 1.5) {
+        if (!this.settled) { rag.setDamping(0.8, 3.0); rag.corpse(); this.settled = true; this.awakeT = 0; }
+        if (!rag.bodies[0].isSleeping()) {
+          // (also when a sleeping corpse is woken by a blast or a bale it settles again)
+          const ms = rag.maxSpeed();
+          this.awakeT += dt;
+          this.restT = ms < 0.5 ? (this.restT || 0) + dt : 0;
+          if (this.restT > 0.3 || (this.awakeT > 3 && ms < 2)) { rag.sleep(); this.restT = 0; this.awakeT = 0; }
+        }
+      }
       return;
     }
 
