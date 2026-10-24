@@ -68,7 +68,12 @@ and deploying.
   (off / normal / frequent).
 - Settings (`src/settings.js`, localStorage) — Original Swingers defaults
   OFF. Sound must stay muted while the tab is hidden/unfocused.
-- Image asset requests for the owner live in `image-requests.md`. Generated
+- Image asset requests for the owner live in `image-requests.md` (each game folder
+  has its own, e.g. `battles/image-requests.md`, with delivered rounds in a history
+  doc). Commit new requests **early**, in their own small commit that touches only
+  the requests doc, before building the feature that uses them, so the art can be
+  generated in parallel; agents in worktrees should tell the coordinator so it can
+  push that commit right away. Generated
   originals are in `assets/{bg,heads,tiles,ui}`; after any change there run
   `python3 tools/build_assets.py` to rebuild the web copies in
   `assets/web/` that `src/art.js` actually loads. Every image the game loads
