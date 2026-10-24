@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/RoundedBoxGeometry.js';
+import { paintFace, loadImage, slug } from './assets.js';
 import { addGlow } from './look.js';
 
 export const matVC = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true }));
@@ -127,6 +128,7 @@ function faceCanvas(kind) {
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
+  paintFace(t, kind === 'ko' ? 'ko' : 'happy');
   return t;
 }
 
@@ -154,6 +156,8 @@ export function signTexture(text, bg = '#ff5a8a', fg = '#fff', w = 512, h = 128)
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(text, w / 2, h / 2 + 4);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  // painted sign art, if delivered (assets/signs/<text>.png, 4:1)
+  loadImage(`signs/${slug(text)}.png`)?.then((im) => { t.dispose(); t.image = im; t.needsUpdate = true; }).catch(() => {});
   return t;
 }
 

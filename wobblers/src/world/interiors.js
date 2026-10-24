@@ -9,6 +9,7 @@ import { Local, addDoor, useSpot } from './common.js';
 import { lfurn } from './furniture.js';
 import { jukebox, piano, vendingMachine } from './music.js';
 import { trolley } from './fun.js';
+import { poster } from './posters.js';
 
 const T = 0.25; // wall thickness
 
@@ -96,6 +97,9 @@ const SHOPS = {
     L.deco(1.8, 3.2, -4.68, 3.6, 1.2, 0.06, 0x223322);
     for (let i = 0; i < 4; i++) L.deco(0.6 + i * 0.8, 3.2, -4.64, 0.5, 0.08, 0.04, 0xffffff);
     for (const lx of [0.2, 1.6, 3.0]) lfurn(game, L, 'stool', lx, 0, -2.75, 0, 0x8a5a3a);
+    const cwx = -w / 2 + T + 0.04;
+    poster(game, L, 'cafe_coffee', cwx, 2.3, -3.2, Math.PI / 2, 1.0, 1.4, { bg: '#8a5a3a', title: 'COFFEE', sub: 'wobbly good', blob: '#ff5a3c' });
+    poster(game, L, 'cafe_cake', cwx, 2.3, 3.2, Math.PI / 2, 1.0, 1.4, { bg: '#ff8ab8', title: 'CAKE!', sub: 'fresh today', fg: '#5a1a3a' });
     // tables and chairs
     for (const [tx, tz] of [[-4.3, 2.0], [-1.4, 2.0], [-4.3, -1.6], [-1.4, -1.4]]) {
       lfurn(game, L, 'roundTable', tx, 0, tz, 0, 0xffffff);
@@ -232,6 +236,9 @@ const SHOPS = {
     lfurn(game, L, 'beanbag', 4.6, 0, 2.6, 0, 0xff3a9a);
     lfurn(game, L, 'beanbag', 5.5, 0, 1.5, 0, 0x3af0ff);
     lfurn(game, L, 'beanbag', -4.8, 0, 3.5, 0, 0xffe03a);
+    const awx = w / 2 - T - 0.04;
+    poster(game, L, 'arcade_space', awx, 2.4, 0.2, -Math.PI / 2, 1.0, 1.4, { bg: '#1a1040', title: 'SPACE', sub: 'BLOBBERS', fg: '#3af0ff', blob: '#ff3a9a', frame: 0x222244 });
+    poster(game, L, 'arcade_racer', awx, 2.4, 2.8, -Math.PI / 2, 1.0, 1.4, { bg: '#ff8a3d', title: 'TURBO', sub: 'WOBBLE KART', fg: '#1a1040', frame: 0x222244 });
     lfurn(game, L, 'stool', -1.6, 0, -2.9, 0, 0xff3a9a);
     lfurn(game, L, 'stool', 0.5, 0, -2.9, 0, 0x3af0ff);
     // neon strips
@@ -296,6 +303,8 @@ export function interiorHouse(game, kit, x, z, yaw, wall, roof, doorCol) {
   lfurn(game, L, 'table', -2.9, 0, 1.6, 0, 0xb5773d, 1.4, 0.85);
   for (const [cx, cz, cy] of [[-3.3, 0.85, 0], [-2.5, 0.85, 0], [-3.3, 2.35, Math.PI], [-2.5, 2.35, Math.PI]]) lfurn(game, L, 'chair', cx, 0, cz, cy, 0xffffff);
   piano(game, L, -ix + 0.35, -1.3, Math.PI / 2);
+  poster(game, L, 'painting_island', ix - 0.04, 1.8, -1.8, -Math.PI / 2, 1.6, 1.1, { bg: '#8fd3ff', sun: true, hills: true, frame: 0xc8a050 });
+  poster(game, L, 'portrait_family', -ix + 0.04, H1 + 1.6, -2.5, Math.PI / 2, 1.0, 1.3, { bg: '#ffe9b0', blob: '#3f8cff', frame: 0xc8a050 });
   lfurn(game, L, 'bookshelf', -3.1, 0, -iz + 0.2, 0);
   lfurn(game, L, 'plant', -ix + 0.4, 0, iz - 0.4);
 

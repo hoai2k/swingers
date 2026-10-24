@@ -99,4 +99,6 @@ pads with the two keyboard schemes (or using controllers that show up as generic
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |
 | `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
 | `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
+| `src/world/lights.js`, `posters.js` | interior light pool (per-view nearest lights) and framed posters |
+| `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |
 | `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |

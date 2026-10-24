@@ -4,6 +4,7 @@
 // normal face (the knocked-out face still comes from mesh.js).
 import * as THREE from 'three';
 import { headMaterials } from './player.js';
+import { paintFace } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { devicePrefs, saveSettings } from './settings.js';
 
@@ -102,6 +103,7 @@ function drawFace(kind) {
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
+  paintFace(t, kind);
   return t;
 }
 

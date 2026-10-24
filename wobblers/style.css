@@ -39,6 +39,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; fon
 .logowrap { margin-top: max(4vh, 18px); display: flex; flex-direction: column; align-items: center; z-index: 2; animation: logoin .9s cubic-bezier(.3,1.6,.5,1) both; }
 @keyframes logoin { from { transform: scale(.2) rotate(-10deg); opacity: 0; } }
 .logo { font-size: min(15vw, 22vh, 150px); font-weight: 900; letter-spacing: .02em; display: flex; line-height: 1.05; }
+.logoimg { height: min(26vh, 220px); max-width: 92vw; object-fit: contain; animation: wob 2.4s ease-in-out infinite; filter: drop-shadow(0 6px 0 rgba(0,0,0,.15)); }
 .logo span { display: inline-block; animation: wob 1.6s ease-in-out infinite; -webkit-text-stroke: .07em #2a62c9; paint-order: stroke fill; filter: drop-shadow(0 .06em 0 #1d4799); }
 .logo span:nth-child(odd) { color: var(--yellow); } .logo span:nth-child(even) { color: var(--pink); } .logo span:nth-child(3n) { color: var(--green); }
 .logo span:nth-child(1) { animation-delay: 0s } .logo span:nth-child(2) { animation-delay: .1s } .logo span:nth-child(3) { animation-delay: .2s } .logo span:nth-child(4) { animation-delay: .3s }

@@ -36,3 +36,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `use(player)` that Y triggers instead of sitting), `throwable` (punch to throw, optional
   `aim`), `ladder`, and `groundAt(x, z)` — the exact terrain mesh height. Place things on
   hills with `groundAt`, not `heightAt` (the analytic surface can be ~0.5 m off the mesh).
+- Painted art is optional: `src/assets.js` loads only files listed in `assets/manifest.json`
+  (regenerate with `python3 tools/build_manifest.py` after adding/removing images). Hooks:
+  faces (`faces/face_<name>.png`), signs (`signs/<text>.png`, any `signMesh` text), posters
+  (`world/posters.js`, `posters/<name>.png`) and the title logo (`ui/logo.png`). Open
+  requests are in `image-requests.md`.
+- Interior lights: rooms call `game.interiorLights.add(x, y, z, opts)` (`world/lights.js`); a
+  pool of 6 point lights follows each view's camera, so adding spots costs nothing per frame.
