@@ -1,9 +1,13 @@
 # Wobblers image requests
 
-**Status: round 4 open — 16 images (6 signs used in game + 10 reference sheets).** Round 3 delivered — 3 replacement faces, 2026-10-24, checked in game. Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
+**Status: round 4 delivered — 16 images (6 signs used in game + 10 reference sheets), 2026-10-24.** Round 3 delivered — 3 replacement faces, 2026-10-24, checked in game. Round 2 delivered — 4 faces; round 1 delivered — 51 images (45 used in game + 6 reference sheets), 2026-10-24.
 
 
-## OPEN round 4: new regions — signs and reference sheets (16 images)
+## Delivered round 4: new regions — signs and reference sheets (16 images)
+
+All six signs and ten reference sheets are saved below. Sign originals are kept
+in `assets/originals/signs/`, and cleaned 1024 × 256 copies are registered in
+the game manifest. Exact prompts are recorded in `assets/generation.json`.
 
 The world is growing into an archipelago around the home island: **Bigtown**
 (a skyscraper city to the east, over a long bridge), **Frostpeak** (icy
@@ -100,8 +104,8 @@ has been rebuilt, and all four were verified through the game's face-texture hoo
 
 Generated with the built-in image generation tool and saved at the paths and
 dimensions below. The final prompts and source files are recorded in
-`assets/generation.json`. The game manifest lists the 49 in-game images;
-the six reference sheets remain outside the runtime manifest.
+`assets/generation.json`. The game manifest lists the 55 in-game images;
+the sixteen reference sheets remain outside the runtime manifest.
 
 Everything already has a procedural stand-in, so these are upgrades, not
 blockers. The hooks are built and were tested with placeholder images: drop a

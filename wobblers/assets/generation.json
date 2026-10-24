@@ -545,6 +545,166 @@
       "prompt": "Use case: stylized-concept. Asset: square facial-feature decal for WOBBLERS. Create one NEW expression; attached happy face is a STYLE REFERENCE only. Match its cheerful bright soft toy-like Wobbly Life look, rounded chunky features, clean shading and gentle glossy highlights. Expression: A big curly brown handlebar moustache under a round nose, friendly round eyes with white highlights, small smile peeking out. Front view, centered, features fill middle 70% of square; eyes around 40% from top, mouth around 70%. Only facial features floating on a truly TRANSPARENT background; no head, head outline, skin fill, hair, hat, body, background glow panel, text or watermark. Will be overlaid on peach skin #ffd9b8. Intended delivery 512 x 512 pixels. Do not reproduce the happy reference expression.",
       "round": 2,
       "index": 54
+    },
+    {
+      "index": 55,
+      "file": "signs/bigtown.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-6fbe7a74-2008-4a72-9491-eb57271ed810.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"BIGTOWN\". Board appearance and small icon: glossy city blue and silver, a little skyscraper skyline. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 56,
+      "file": "signs/frostpeak.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a88442f0-150b-48f8-9677-a5c1a28aba6f.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"FROSTPEAK\". Board appearance and small icon: icy white-blue with snow on top of the board, a snowy peak. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 57,
+      "file": "signs/dusty_dunes.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-19e35cf3-efc4-4cdd-bcf2-a7dcb94536e0.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"DUSTY DUNES\". Board appearance and small icon: weathered wooden plank board, sandy orange letters, a cactus. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 58,
+      "file": "signs/tiki_jungle.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5f9cb9fb-e240-401f-9138-795efd2ed3de.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"TIKI JUNGLE\". Board appearance and small icon: carved jungle wood with leaves and vines, a tiki mask. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 59,
+      "file": "signs/coconut_cove.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b58877f1-715b-441e-9984-1640c63e8d76.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"COCONUT COVE\". Board appearance and small icon: bright turquoise and sand, a palm tree with coconuts. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 60,
+      "file": "signs/ferry.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2853e347-e946-4233-94f8-9c6be0dd84fe.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Exact text: \"FERRY\". Board appearance and small icon: navy and white nautical, a little ferry boat and a life ring. One front-facing 4:1 horizontal signboard artwork, intended 1024x256. Big chunky rounded lettering with EXACT requested text, spelled correctly and readable from far away. Only one small icon beside lettering. Board fills image, safe border, no surrounding scene, no extra words. Transparent outside board.",
+      "round": 4
+    },
+    {
+      "index": 61,
+      "file": "reference/ref_region_city.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-32788607-934d-405b-a4fc-df1e6bfc8258.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Bigtown concept: a toy-like cartoon downtown with chunky rounded skyscrapers in candy colours, rooftop helipad and water towers, a glass office tower, a construction crane, wide streets with yellow taxis and buses, a park with a pond, a long suspension bridge leading in over the sea. Three-quarter elevated view.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 62,
+      "file": "reference/ref_region_snow.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d44ef174-4f77-462e-93fb-1f9c43ee1b40.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Frostpeak concept: big rounded icy mountains with snow caps, a cosy ski village of wooden chalets with snowy roofs, a chairlift going up the slope, a frozen lake used as an ice rink, pine trees, skiers and sledders, snowmobiles.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 63,
+      "file": "reference/ref_region_desert.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-88459305-3651-4333-89c4-5aeaf0376d24.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Dusty Dunes concept: golden sand dunes, red-rock mesas and a canyon, a palm oasis with a pool, a toy-like pyramid, and a little Wild-West town (saloon with swinging doors, sheriff's office, water tower, wooden boardwalks), dune buggies and jeeps, cacti and tumbleweeds.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 64,
+      "file": "reference/ref_region_jungle.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-00dc601f-f00f-47dc-9f4d-901048190da7.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Tiki Jungle concept: a lush volcano island with a gentle smoking peak, a tall waterfall into a lagoon, mossy stone temple ruins with steps, hanging vines and rope bridges, a stilt-house village on the water's edge with tiki torches, a jungle jeep on a dirt track.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 65,
+      "file": "reference/ref_region_tropical.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-806c1c67-4641-44c8-bac5-59a495f53cef.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Coconut Cove concept: small tropical islets with white sand, turquoise lagoons, palm trees, a colourful beach resort with cabanas and a pool bar, a fishing harbour with wooden jetties and little boats, jet skis and a sailboat.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 66,
+      "file": "reference/ref_npcs_city_snow.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-27205c2f-3c81-4791-b28e-19c0fa8e245b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. A character lineup in the game's wobbly bean-person style (round head, pear body, stubby limbs, mitten hands): city folk \u2014 businessperson with briefcase, taxi driver with cap, construction worker with hard hat, police officer, chef; snow folk \u2014 skier with goggles and bobble hat, snowboarder, ski-lift operator, hot-cocoa vendor, mountain rescuer.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 67,
+      "file": "reference/ref_npcs_desert_jungle.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5612c29f-7c8c-400e-8930-233528765d3e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Same style lineup: desert folk \u2014 cowboy, sheriff with badge, prospector with pickaxe, desert explorer, camel herder; jungle folk \u2014 explorer with safari hat and binoculars, tiki villager with flower necklace, fisher, park ranger, adventurer with a backpack.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 68,
+      "file": "reference/ref_npcs_beach.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8d84c371-b9e5-4e38-a33e-98ce36032b6f.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. Same style lineup: beach folk \u2014 surfer with board, lifeguard, sunbather with sunglasses, fisher with rod, resort waiter with tray, sailor with captain's hat, ice-cream seller.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 69,
+      "file": "reference/ref_vehicles_regions.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a601c79c-b9db-4ba5-9783-a0369b34016e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. A sheet of toy-like rounded vehicles for the new regions, side and three-quarter views: yellow taxi, city bus, delivery truck, snowmobile, snowcat groomer, dune buggy, desert jeep, jungle jeep with roll bar, jet ski, small sailboat, fishing boat, island ferry with an open passenger deck.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
+    },
+    {
+      "index": 70,
+      "file": "reference/ref_archipelago_map.png",
+      "width": 1672,
+      "height": 941,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d660c668-4c40-4812-9376-afcd35a7777e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art: bright soft toy-like Wobbly Life style, chunky rounded forms, saturated candy colours, cheerful and silly, clean shading. People have round heads, pear-shaped bean bodies, stubby limbs and mitten hands. No company logos, brands or watermark. An illustrated top-down map of the whole archipelago: the green home island in the middle (town, fun park, lake, mountain), a city island to the east linked by a long bridge, a snowy mountain island to the north, a desert island to the west, a volcano jungle island to the south-west and a scatter of tropical islets to the south-east, with dotted ferry routes between them. Labels optional.. Landscape 16:9 concept/reference sheet around 1920x1080, no text needed. Include every listed subject and keep all elements clearly readable.",
+      "round": 4
     }
   ]
 }
