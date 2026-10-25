@@ -1,8 +1,11 @@
-// Island map (Wobbly Life's M / View map). An illustrated top-down picture of
-// the island is painted once at load (terrain colours + hill shading from the
-// terrain grid, sea depth, roads, park zones, buildings and trees read from the
-// static colliders); each player's map panel then draws its part of that picture
-// in their own split-screen view, with labels, vehicles and every player on top.
+// Archipelago map (Wobbly Life's M / View map). Every island gets an
+// illustrated top-down picture (terrain colours + hill shading from its terrain
+// grid, sea depth, buildings and trees read from the static colliders; the home
+// island also gets its roads and park zones), painted once: the home island at
+// load, the others the first time a map shows them. Each player's map panel
+// draws the visible part of those pictures in their own split-screen view, with
+// vector features (the bridge, ferry routes: game.mapFeatures), labels (AREAS,
+// every region's name and `labels`), vehicles, ferries and players on top.
 //
 // The panel is a UI panel (see ui.js setPanel): it captures its device, so the
 // player stands still while reading the map. Controls: LS pan, LT/RT zoom
@@ -10,15 +13,17 @@
 // P switches to the phone.
 import { RAPIER } from './physics.js';
 import { SEA_LEVEL, PLAYER_CSS } from './config.js';
-import { terrainGrid, heightAt, PITS, MOUNTAIN, LAKE } from './terrain.js';
+import { terrainGrids, heightAt, PITS, MOUNTAIN, LAKE, REGIONS, WORLD, regionAt } from './terrain.js';
 import { ROADS } from './world/roads.js';
 import { POOL } from './world/pool.js';
 import { HELIPADS } from './world/garage.js';
 import { glyph, promptRow, deviceKind } from './glyphs.js';
 
-const EXT = 400;          // world half-size covered by the picture (m)
-const S = 2048;           // picture size (px)
-const K = S / (EXT * 2);  // picture px per metre
+const EXT = 400;          // home island half-size (m)
+const S = 2048;           // home picture size (px)
+let K = S / (EXT * 2);    // px per metre of the picture being painted (2.56 for home)
+let PX0 = -EXT, PZ0 = -EXT; // world corner of the picture being painted
+const K_REGION = 1.4;     // px per metre for the other islands' pictures
 
 export const AREAS = [
   { name: 'Town', x: -36, z: -40, big: true },
@@ -64,35 +69,48 @@ export function injectCSS(css) {
 const mix = (a, b, t) => a + (b - a) * t;
 const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
+// The pictures: { region, bounds: [x0, x1, z0, z1], K (px per m), cv (null until painted) }.
+// The home island's is painted at load (ui.js), the others on first use.
 export function buildMapImage(game) {
   if (!cssDone) { injectCSS(CSS); cssDone = true; }
   if (game.islandMap) return game.islandMap;
+  const pics = REGIONS.map((r) => ({ region: r, bounds: r.bounds, K: r.legacy ? S / (EXT * 2) : K_REGION, cv: null }));
+  game.islandMap = { pics };
+  for (const p of pics) if (p.region.legacy) paintPicture(game, p);
+  return game.islandMap;
+}
+
+function paintPicture(game, pic) {
+  const [x0, x1, z0, z1] = pic.bounds;
+  K = pic.K; PX0 = x0; PZ0 = z0;
+  const W = Math.round((x1 - x0) * K), Hh = Math.round((z1 - z0) * K);
   const cv = document.createElement('canvas');
-  cv.width = cv.height = S;
+  cv.width = W; cv.height = Hh;
   const ctx = cv.getContext('2d');
-  paintTerrain(ctx);
-  paintZones(ctx);
-  paintRoads(ctx);
-  paintStatics(ctx, game);
-  game.islandMap = cv;
+  const grid = terrainGrids.find((g) => g.region === pic.region);
+  if (grid) paintTerrain(ctx, grid, W, Hh);
+  if (pic.region.legacy) { paintZones(ctx); paintRoads(ctx); }
+  paintStatics(ctx, game, pic.bounds);
+  pic.cv = cv;
+  K = S / (EXT * 2); PX0 = PZ0 = -EXT;
   return cv;
 }
 
-function paintTerrain(ctx) {
-  const { n, step, ext, pos, col } = terrainGrid;
-  const img = ctx.createImageData(S, S), D = img.data;
-  const H = new Float32Array(S * S);
-  const C = new Float32Array(S * S * 3);
+function paintTerrain(ctx, grid, SW, SH) {
+  const { nx: n, nz, step, pos, col } = grid;
+  const img = ctx.createImageData(SW, SH), D = img.data;
+  const H = new Float32Array(SW * SH);
+  const C = new Float32Array(SW * SH * 3);
   // bilinear samples of the terrain grid (heights + vertex colours)
-  for (let py = 0; py < S; py++) {
-    const z = (py + 0.5) / K - EXT;
-    const gz = (z + ext) / step, j = Math.max(0, Math.min(n - 2, Math.floor(gz))), fz = Math.min(1, Math.max(0, gz - j));
-    for (let px = 0; px < S; px++) {
-      const x = (px + 0.5) / K - EXT;
-      const gx = (x + ext) / step, i = Math.max(0, Math.min(n - 2, Math.floor(gx))), fx = Math.min(1, Math.max(0, gx - i));
+  for (let py = 0; py < SH; py++) {
+    const z = (py + 0.5) / K + PZ0;
+    const gz = (z - grid.z0) / step, j = Math.max(0, Math.min(nz - 2, Math.floor(gz))), fz = Math.min(1, Math.max(0, gz - j));
+    for (let px = 0; px < SW; px++) {
+      const x = (px + 0.5) / K + PX0;
+      const gx = (x - grid.x0) / step, i = Math.max(0, Math.min(n - 2, Math.floor(gx))), fx = Math.min(1, Math.max(0, gx - i));
       const a = j * n + i, b = a + 1, c = a + n, d = c + 1;
       const w0 = (1 - fx) * (1 - fz), w1 = fx * (1 - fz), w2 = (1 - fx) * fz, w3 = fx * fz;
-      const k = py * S + px;
+      const k = py * SW + px;
       H[k] = pos[a * 3 + 1] * w0 + pos[b * 3 + 1] * w1 + pos[c * 3 + 1] * w2 + pos[d * 3 + 1] * w3;
       for (let q = 0; q < 3; q++) C[k * 3 + q] = col[a * 3 + q] * w0 + col[b * 3 + q] * w1 + col[c * 3 + q] * w2 + col[d * 3 + q] * w3;
     }
@@ -100,9 +118,9 @@ function paintTerrain(ctx) {
   // shading, contours, sea
   const lin2s = (v) => Math.round(255 * Math.pow(Math.min(1, Math.max(0, v)), 1 / 2.2));
   const shallow = [0.50, 0.88, 0.90], deep = [0.16, 0.52, 0.80], foam = [0.93, 0.98, 1];
-  for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
-    const k = py * S + px, h = H[k];
-    const hl = H[k - (px > 0 ? 1 : 0)], hr = H[k + (px < S - 1 ? 1 : 0)], hu = H[k - (py > 0 ? S : 0)], hd = H[k + (py < S - 1 ? S : 0)];
+  for (let py = 0; py < SH; py++) for (let px = 0; px < SW; px++) {
+    const k = py * SW + px, h = H[k];
+    const hl = H[k - (px > 0 ? 1 : 0)], hr = H[k + (px < SW - 1 ? 1 : 0)], hu = H[k - (py > 0 ? SW : 0)], hd = H[k + (py < SH - 1 ? SW : 0)];
     let r, g, b;
     const depth = SEA_LEVEL - h;
     if (depth > 0) {
@@ -111,7 +129,7 @@ function paintTerrain(ctx) {
       const f = 1 - sm(0.05, 0.45, depth);
       r = mix(r, foam[0], f * 0.75); g = mix(g, foam[1], f * 0.75); b = mix(b, foam[2], f * 0.75);
       // gentle ripples in deep water
-      const x = px / K, z = py / K;
+      const x = px / K + PX0 + EXT, z = py / K + PZ0 + EXT;
       const rip = Math.sin(x * 0.21 + Math.sin(z * 0.05) * 3) * Math.sin(z * 0.17 + Math.sin(x * 0.04) * 2);
       if (rip > 0.93 && depth > 2.5) { r += 0.07; g += 0.07; b += 0.06; }
       // srgb-ish: colours above are already display values
@@ -136,7 +154,8 @@ function paintTerrain(ctx) {
   ctx.putImageData(img, 0, 0);
 }
 
-const P = (x) => (x + EXT) * K;
+const P = (x) => (x + EXT) * K;           // home picture (zones, roads)
+const PX = (x) => (x - PX0) * K, PZ = (z) => (z - PZ0) * K; // any picture
 function rrect(ctx, x0, z0, x1, z1, r) {
   const a = P(Math.min(x0, x1)), b = P(Math.min(z0, z1)), w = Math.abs(x1 - x0) * K, h = Math.abs(z1 - z0) * K;
   ctx.beginPath();
@@ -228,14 +247,16 @@ function paintRoads(ctx) {
 }
 
 // Buildings, walls and trees from the static colliders.
-function paintStatics(ctx, game) {
+function paintStatics(ctx, game, bounds) {
   const ph = game.physics, sb = ph.staticBody;
+  const [bx0, bx1, bz0, bz1] = bounds;
   const boxes = [], trees = [];
   const inPit = (x, z) => PITS.some((p) => x >= p[0] - 5 && x <= p[1] + 5 && z >= p[2] - 5 && z <= p[3] + 5);
   ph.world.forEachCollider((c) => {
     const par = c.parent();
     if (!par || par.handle !== sb.handle || c.isSensor()) return;
     const t = c.translation(), ty = c.shapeType();
+    if (t.x < bx0 || t.x > bx1 || t.z < bz0 || t.z > bz1) return;
     if (ty === RAPIER.ShapeType.Cuboid) {
       const he = c.halfExtents(), r = c.rotation();
       // only upright boxes (yaw); tilted ones are ramps and roofs slabs
@@ -256,7 +277,7 @@ function paintStatics(ctx, game) {
   for (const pass of [0, 1]) for (const b of boxes) {
     ctx.save();
     const off = pass ? 0 : Math.min(3, 0.6 + b.top * 0.12) * K;
-    ctx.translate(P(b.x) + off, P(b.z) + off);
+    ctx.translate(PX(b.x) + off, PZ(b.z) + off);
     ctx.rotate(-b.yaw);
     const w = b.hx * 2 * K, d = b.hz * 2 * K, thin = Math.min(w, d) < 1.2 * K;
     ctx.beginPath();
@@ -272,11 +293,11 @@ function paintStatics(ctx, game) {
   }
   for (const t of trees) {
     const r = 1.9 * t.s * K;
-    ctx.beginPath(); ctx.arc(P(t.x) + 0.7 * K, P(t.z) + 0.7 * K, r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,60,30,.25)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(P(t.x), P(t.z), r, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(PX(t.x) + 0.7 * K, PZ(t.z) + 0.7 * K, r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(20,60,30,.25)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(PX(t.x), PZ(t.z), r, 0, Math.PI * 2);
     ctx.fillStyle = (Math.abs(t.x * 7 + t.z * 13) | 0) % 2 ? '#3f9e45' : '#4bb04c'; ctx.fill();
     ctx.lineWidth = 0.3 * K; ctx.strokeStyle = 'rgba(25,80,35,.6)'; ctx.stroke();
-    ctx.beginPath(); ctx.arc(P(t.x) - r * 0.3, P(t.z) - r * 0.3, r * 0.35, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(PX(t.x) - r * 0.3, PZ(t.z) - r * 0.3, r * 0.35, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill();
   }
   ctx.restore();
 }
@@ -291,13 +312,15 @@ export class MapPanel {
   constructor(ui, player) {
     if (!cssDone) { injectCSS(CSS); cssDone = true; }
     this.ui = ui; this.p = player; this.kind = 'map';
-    this.img = buildMapImage(ui.game);
+    this.map = buildMapImage(ui.game);
+    const c0 = player.chest.translation();
+    this.region = regionAt(c0.x, c0.z) || REGIONS[0];
     this.t0 = performance.now(); this.last = this.t0;
     this.el = document.createElement('div');
     this.el.className = 'ppanel map';
     const p = player, k = deviceKind(p.deviceId);
     this.el.innerHTML = `<div class="mapcard" style="--acc:${accent(p.color)}">
-      <div class="mhead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">Wobbly Island<small>Player ${p.index + 1}</small></div>
+      <div class="mhead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">${this.region.name}<small>Player ${p.index + 1}</small></div>
       <canvas></canvas>
       <div class="foot">${promptRow([['LS', 'Pan'], ['LT', 'Zoom out'], ['RT', 'Zoom in'], ['OK', 'Me'], ['MENUBACK', 'Close']], k)}</div></div>`;
     this.card = this.el.firstElementChild;
@@ -306,7 +329,11 @@ export class MapPanel {
     ui.hud.appendChild(this.el);
     // view: centre (x, z) in metres, zoom in screen px per metre (null = fit the island)
     const c = player.chest.translation();
-    this.cx = 0; this.cz = 10; this.zoom = null; this.me = { x: c.x, z: c.z };
+    // opens on the island you are on (the home island as before); LT zooms out to the whole archipelago
+    const rb = this.region.bounds;
+    this.cx = this.region.legacy ? 0 : (rb[0] + rb[1]) / 2; this.cz = this.region.legacy ? 10 : (rb[2] + rb[3]) / 2;
+    this.span = this.region.legacy ? 760 : Math.max(rb[1] - rb[0], rb[3] - rb[2]) * 0.95;
+    this.zoom = null; this.me = { x: c.x, z: c.z };
     this.el.addEventListener('wheel', (e) => { this.zoomBy(e.deltaY > 0 ? 1 / 1.25 : 1.25); e.preventDefault(); }, { passive: false });
     let drag = null;
     this.cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; this.cv.setPointerCapture?.(e.pointerId); });
@@ -320,11 +347,12 @@ export class MapPanel {
   }
   remove() { this.el.remove(); }
   draw() {}
-  fit() { return Math.min(this.W, this.H) / 760; }
+  fit() { return Math.min(this.W, this.H) / this.span; }
+  worldFit() { return Math.min(this.W, this.H) / (WORLD.x1 - WORLD.x0 + 100); }
   zoomNow() { return this.zoom ?? this.fit(); }
   zoomBy(f) {
     const fit = this.fit();
-    this.zoom = Math.max(fit * 0.9, Math.min(8, this.zoomNow() * f));
+    this.zoom = Math.max(Math.min(fit * 0.9, this.worldFit()), Math.min(8, this.zoomNow() * f));
   }
 
   input(n) {
@@ -368,7 +396,7 @@ export class MapPanel {
     this.cz -= (st.moveY || 0) * speed * dt;
     const zin = (st.grabR || 0) - (st.grabL || 0);
     if (Math.abs(zin) > 0.1) this.zoomBy(Math.pow(2.2, zin * dt));
-    this.cx = Math.max(-EXT, Math.min(EXT, this.cx)); this.cz = Math.max(-EXT, Math.min(EXT, this.cz));
+    this.cx = Math.max(WORLD.x0, Math.min(WORLD.x1, this.cx)); this.cz = Math.max(WORLD.z0, Math.min(WORLD.z1, this.cz));
   }
 
   render() {
@@ -379,11 +407,30 @@ export class MapPanel {
     // the picture: source rect for the visible window
     const x0 = this.cx - W / 2 / z, z0 = this.cz - H / 2 / z;
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(this.img, (x0 + EXT) * K, (z0 + EXT) * K, W / z * K, H / z * K, 0, 0, W, H);
+    const x1 = x0 + W / z, z1 = z0 + H / z;
+    for (const pic of this.map.pics) {
+      const [bx0, bx1, bz0, bz1] = pic.bounds;
+      const ix0 = Math.max(x0, bx0), ix1 = Math.min(x1, bx1), iz0 = Math.max(z0, bz0), iz1 = Math.min(z1, bz1);
+      if (ix0 >= ix1 || iz0 >= iz1) continue;
+      const cv = pic.cv || paintPicture(g, pic), k = pic.K;
+      ctx.drawImage(cv, (ix0 - bx0) * k, (iz0 - bz0) * k, (ix1 - ix0) * k, (iz1 - iz0) * k, sx(ix0), sy(iz0), (ix1 - ix0) * z, (iz1 - iz0) * z);
+    }
+    // vector features: the bridge, ferry routes
+    for (const f of g.mapFeatures || []) {
+      ctx.beginPath();
+      f.pts.forEach(([x, wz], i) => (i ? ctx.lineTo(sx(x), sy(wz)) : ctx.moveTo(sx(x), sy(wz))));
+      ctx.lineWidth = Math.max(f.minPx || 1, (f.w || 1) * z); ctx.strokeStyle = f.color || '#5b5f69';
+      ctx.setLineDash(f.dash ? f.dash.map((d) => d * Math.max(1, z * 0.6)) : []);
+      ctx.lineCap = 'round'; ctx.stroke();
+    }
+    ctx.setLineDash([]);
     // labels
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const tiny = Math.min(W, H) < 280 && z < this.fit() * 1.8; // small split views: only the big names
-    for (const a of AREAS) {
+    const far = z < this.fit() * 0.7; // zoomed out over the archipelago: island names only
+    const labels = far ? REGIONS.map((r) => ({ name: r.name, x: r.centre[0], z: r.centre[1] + (r.legacy ? 0 : 0), big: true }))
+      : [...AREAS, ...REGIONS.filter((r) => !r.legacy).flatMap((r) => [{ name: r.name, x: r.centre[0], z: r.bounds[2] + 40, big: true }, ...(r.labels || [])])];
+    for (const a of labels) {
       if (tiny && !a.big) continue;
       const X = sx(a.x), Y = sy(a.z);
       if (X < -80 || X > W + 80 || Y < -20 || Y > H + 20) continue;
@@ -402,6 +449,16 @@ export class MapPanel {
     ctx.beginPath(); ctx.moveTo(0, cr * 0.8); ctx.lineTo(cr * 0.32, 0); ctx.lineTo(-cr * 0.32, 0); ctx.closePath(); ctx.fillStyle = '#9aa7b5'; ctx.fill();
     ctx.font = `900 ${Math.round(cr * 0.62)}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText('N', 0, -cr * 1.32);
     ctx.restore();
+    // ferries
+    for (const fe of g.ferries || []) {
+      const t = fe.pos, X = sx(t.x), Y = sy(t.z);
+      if (X < -20 || X > W + 20 || Y < -20 || Y > H + 20) continue;
+      const r = 6 * Math.max(0.7, s);
+      ctx.save(); ctx.translate(X, Y); ctx.rotate(-fe.yaw);
+      ctx.beginPath(); ctx.moveTo(0, r * 1.6); ctx.lineTo(r, 0); ctx.lineTo(r, -r * 1.3); ctx.lineTo(-r, -r * 1.3); ctx.lineTo(-r, 0); ctx.closePath();
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#e2393a'; ctx.stroke();
+      ctx.restore();
+    }
     // vehicles
     const mine = g.calledVehicles?.get(this.p);
     for (const v of g.vehicles) {
@@ -412,6 +469,9 @@ export class MapPanel {
       ctx.fillStyle = own ? PLAYER_CSS(this.p.color) : '#fff'; ctx.fill();
       ctx.lineWidth = own ? 2 : 1.2; ctx.strokeStyle = '#1f3354'; ctx.stroke();
     }
+    // overlays from other modules (missions/index.js: job givers and job targets)
+    for (const f of g.mapOverlays || []) f(ctx, sx, sy, this.p, z / this.fit(), s);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     // players: others first, me on top
     const t = performance.now() / 1000;
     const ps = [...g.players].sort((a, b) => (a === this.p) - (b === this.p));

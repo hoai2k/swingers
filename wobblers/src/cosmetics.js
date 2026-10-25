@@ -10,8 +10,10 @@ import { devicePrefs, saveSettings } from './settings.js';
 import { EXTRA_HAT_NAMES } from './hats.js';
 import { isLocked } from './unlocks.js';
 
-// The last four faces / trousers and HATS past the first eight are unlocked by presents (src/unlocks.js).
-export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy', 'Star eyes', 'Winky', 'Robot', 'Moustache'];
+// Faces 8-11, trousers 9-12 and HATS past the first eight are unlocked by presents; the
+// ones after those are sold in the clothes shop (both lists in src/unlocks.js).
+export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy', 'Star eyes', 'Winky', 'Robot', 'Moustache',
+  'Heart eyes', 'Tongue out', 'Dizzy', 'Nerd'];
 export const PANTS = [
   { name: 'Matching', color: null },
   { name: 'Denim', color: 0x3b5c9a },
@@ -26,6 +28,20 @@ export const PANTS = [
   { name: 'Pink', color: 0xff8ac8 },
   { name: 'Sky', color: 0x7ad0ff },
   { name: 'Plaid red', color: 0x9a2a3a },
+  { name: 'Lime', color: 0x9be03a },
+  { name: 'Navy', color: 0x22305a },
+  { name: 'Teal', color: 0x2ab5a5 },
+  { name: 'Lilac', color: 0xc9a6ff },
+  { name: 'Cream', color: 0xf2e4c0 },
+  // region presents (keep appending)
+  { name: 'Sandstone', color: 0xd9a066 },
+  { name: 'Cactus', color: 0x5a9a3c },
+  // Bigtown presents (world/regions/city)
+  { name: 'Taxi yellow', color: 0xffc81e },
+  { name: 'Pinstripe grey', color: 0x5a5f6a },
+  { name: 'Brick red', color: 0xa8452e },
+  // Frostpeak present (world/regions/snow)
+  { name: 'Glacier', color: 0x8fd8f0 },
 ];
 export const HAT_NAMES = { none: 'No hat', cap: 'Cap', tophat: 'Top hat', beanie: 'Beanie', crown: 'Crown', party: 'Party hat', cowboy: 'Cowboy hat', bucket: 'Bucket hat', ...EXTRA_HAT_NAMES };
 export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Teal', 'Pink', 'White', 'Charcoal'];
@@ -137,6 +153,41 @@ function drawFace(kind) {
       g.strokeStyle = '#5a2a2a'; g.lineWidth = 5; g.beginPath(); g.arc(cx, H * 0.66, 12, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
       break;
     }
+    case 'Heart eyes': {
+      const heart = (x, y, r) => {
+        g.beginPath(); g.moveTo(x, y + r * 0.9);
+        g.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.7, y - r * 1.4, x, y - r * 0.45);
+        g.bezierCurveTo(x + r * 0.7, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r * 0.9); g.fill();
+      };
+      g.fillStyle = '#ff3a6a'; for (const x of ex) heart(x, ey, 22);
+      g.fillStyle = 'rgba(255,255,255,.7)'; for (const x of ex) { g.beginPath(); g.arc(x - 9, ey - 9, 4, 0, 7); g.fill(); }
+      smile(24, 6);
+      break;
+    }
+    case 'Tongue out': {
+      eye(ex[0], ey); eye(ex[1], ey); brows();
+      g.fillStyle = '#7a2a2a'; g.beginPath(); g.arc(cx, H * 0.6, 20, 0, Math.PI); g.closePath(); g.fill();
+      g.fillStyle = '#ff6a7a'; g.beginPath(); g.ellipse(cx + 3, H * 0.6 + 22, 12, 15, 0, 0, 7); g.fill();
+      g.strokeStyle = '#d0405a'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx + 3, H * 0.6 + 12); g.lineTo(cx + 3, H * 0.6 + 32); g.stroke();
+      break;
+    }
+    case 'Dizzy': {
+      g.strokeStyle = '#1c1c28'; g.lineWidth = 5;
+      for (const x of ex) { g.beginPath(); for (let a = 0; a < 14; a += 0.3) { const r = 2 + a * 1.4; g.lineTo(x + Math.cos(a) * r, ey + Math.sin(a) * r); } g.stroke(); }
+      g.strokeStyle = '#5a2a2a'; g.lineWidth = 6; g.beginPath();
+      for (let i = 0; i <= 8; i++) g.lineTo(cx - 24 + i * 6, H * 0.64 + (i % 2 ? 5 : -5));
+      g.stroke();
+      break;
+    }
+    case 'Nerd': {
+      eye(ex[0], ey, 14, 19); eye(ex[1], ey, 14, 19);
+      g.strokeStyle = '#2a2a33'; g.lineWidth = 7;
+      for (const x of ex) { g.beginPath(); g.roundRect(x - 24, ey - 22, 48, 44, 12); g.stroke(); }
+      g.beginPath(); g.moveTo(cx - 6, ey - 4); g.lineTo(cx + 6, ey - 4); g.stroke();
+      g.fillStyle = '#7a2a2a'; g.beginPath(); g.arc(cx, H * 0.62, 16, 0, Math.PI); g.closePath(); g.fill();
+      g.fillStyle = '#fff'; g.fillRect(cx - 7, H * 0.62, 6, 8); g.fillRect(cx + 1, H * 0.62, 6, 8);
+      break;
+    }
     default: {
       eye(ex[0], ey); eye(ex[1], ey); smile(); brows();
     }
@@ -177,6 +228,7 @@ export function setPants(p, i) {
 }
 
 // ---- locked items (found in presents) --------------------------------------
+export { HATS };
 export const hatLocked = (i) => isLocked('hat:' + HATS[i]);
 export const faceLocked = (i) => isLocked('face:' + FACES[i]);
 export const pantsLocked = (i) => isLocked('pants:' + PANTS[i].name);
@@ -214,7 +266,7 @@ export function saveLook(p) {
 export function restoreLook(p) {
   const L = devicePrefs(p.deviceId).look;
   if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; return false; }
-  const n = (v, m, locked) => (Number.isInteger(v) && v >= 0 && v < m && !locked(v) ? v : 0); // locked again after a progress reset
+  const n = (v, m, locked = () => false) => (Number.isInteger(v) && v >= 0 && v < m && !locked(v) ? v : 0); // locked again after a progress reset
   p.hat = n(L.hat, HATS.length, hatLocked); p.buildHat();
   p.pantsIndex = n(L.pants, PANTS.length, pantsLocked);
   p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;

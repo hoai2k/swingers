@@ -2,7 +2,7 @@
 // farm, mountain lookout, lighthouse, forests and clouds.
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { FLAT, LAKE, MOUNTAIN, fbm } from '../terrain.js';
+import { FLAT, LAKE, MOUNTAIN, fbm, homeMeshHeightOriginal, inHomeExtraFlat } from '../terrain.js';
 import { groundAt as heightAt } from './common.js';
 import { Builder, signMesh } from '../mesh.js';
 import { Vehicle } from '../vehicles.js';
@@ -74,13 +74,14 @@ function beach(game, kit) {
   // parking at the end of the road
   kit.deco(0, 0.04, 302, 40, 0.08, 14, 0x5a5d66);
   for (let i = 0; i <= 8; i++) kit.deco(-20 + i * 5, 0.085, 302, 0.15, 0.01, 12, 0xffffff);
-  // pier
-  const px = 24, z0 = 300, z1 = 368, y = 1.3;
+  // pier: the deck is high enough (~2.2 m clear over the sand) to walk and
+  // swim underneath it, where a present and some coins are hidden
+  const px = 24, z0 = 300, z1 = 368, y = 2.3;
   kit.box(px, y, (z0 + z1) / 2, 4.5, 0.25, z1 - z0, 0xb98a5a);
   for (let z = z0 + 2; z < z1; z += 5) for (const s of [-1, 1]) kit.cyl(px + s * 2.1, (y - 6) / 2, z, 0.2, y + 6, 0x8a6a4a);
   for (let z = z0; z < z1; z += 2.5) for (const s of [-1, 1]) kit.cyl(px + s * 2.2, y + 0.5, z, 0.06, 1.0, 0x8a6a4a, { collide: false });
   kit.box(px - 2.2, y + 0.9, (z0 + z1) / 2, 0.1, 0.12, z1 - z0, 0x8a6a4a); kit.box(px + 2.2, y + 0.9, (z0 + z1) / 2, 0.1, 0.12, z1 - z0, 0x8a6a4a);
-  kit.wedge(px, 0, z0 - 3, 4.5, 6, y + 0.12, 0xb98a5a, { yaw: 0 });
+  kit.wedge(px, 0, z0 - 4.5, 4.5, 9, y + 0.12, 0xb98a5a, { yaw: 0 });
   // boats moored alongside
   game.vehicles.push(new Vehicle(game, 'boat', px - 5, 0.2, 345, 0, 0xff5a5a));
   game.vehicles.push(new Vehicle(game, 'boat', px + 5, 0.2, 352, Math.PI, 0x3f8cff));
@@ -225,6 +226,10 @@ function inFlat(x, z, m) {
   return false;
 }
 function forests(game, kit) {
+  // Decisions use the ground as it was before the bridge road was flattened
+  // (HOME_EXTRA_FLAT) so the random layout is unchanged; things are placed on
+  // the actual ground, and none on the road itself.
+  const H0 = homeMeshHeightOriginal, onRoad = (x, z) => inHomeExtraFlat(x, z, 4);
   let placed = 0, tries = 0;
   while (placed < 420 && tries < 6000) {
     tries++;
@@ -234,22 +239,25 @@ function forests(game, kit) {
     if (r > 312) continue;
     if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r + 6) continue;
     if (Math.abs(x - 215) < 40 && Math.abs(z + 160) < 30) continue;
-    const h = heightAt(x, z);
+    const h = H0(x, z);
     if (h < 0.4 || h > 40) continue;
-    const slope = Math.abs(heightAt(x + 2, z) - heightAt(x - 2, z)) + Math.abs(heightAt(x, z + 2) - heightAt(x, z - 2));
+    const slope = Math.abs(H0(x + 2, z) - H0(x - 2, z)) + Math.abs(H0(x, z + 2) - H0(x, z - 2));
     if (slope > 3.2) continue;
     // clumps: prefer areas with higher noise
     if (fbm(x / 40, z / 40) < 0.42) continue;
     const kind = h > 14 || rnd() < 0.35 ? 1 : 0;
-    kit.tree(x, z, h - 0.1, kind, 0.8 + rnd() * 0.6);
+    const sc = 0.8 + rnd() * 0.6;
+    if (!onRoad(x, z)) kit.tree(x, z, heightAt(x, z) - 0.1, kind, sc);
     placed++;
   }
   for (let i = 0; i < 80; i++) {
     const x = (rnd() * 2 - 1) * 320, z = (rnd() * 2 - 1) * 320;
     if (inFlat(x, z, 4) || Math.hypot(x, z) > 315) continue;
-    const h = heightAt(x, z);
+    const h = H0(x, z);
     if (h < 0) continue;
-    if (rnd() < 0.5) kit.rock(x, z, h, 0.6 + rnd() * 1.6); else kit.bush(x, z, h, 0.8 + rnd() * 0.6);
+    const rock = rnd() < 0.5, sc = rock ? 0.6 + rnd() * 1.6 : 0.8 + rnd() * 0.6;
+    if (onRoad(x, z)) continue;
+    if (rock) kit.rock(x, z, heightAt(x, z), sc); else kit.bush(x, z, heightAt(x, z), sc);
   }
 }
 

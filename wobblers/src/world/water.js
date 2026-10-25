@@ -7,7 +7,7 @@
 // needed and it stays cheap in every split-screen view.
 import * as THREE from 'three';
 import { SEA_LEVEL } from '../config.js';
-import { heightAt, PITS } from '../terrain.js';
+import { terrainGrids, REGIONS, WORLD, SEA_FLOOR } from '../terrain.js';
 
 let normalTex = null;
 function waveNormals() {
@@ -36,18 +36,40 @@ function waveNormals() {
   return normalTex;
 }
 
-// Sea depth below SEA_LEVEL over the island, encoded (depth + 2) / 14 in a byte.
-const DEPTH_EXT = 420, DEPTH_N = 384;
+// Sea depth below SEA_LEVEL over the whole archipelago (WORLD, square around
+// the origin), encoded (depth + 2) / 14 in a byte, read from the terrain mesh.
+const DEPTH_EXT = WORLD.x1, DEPTH_N = 2048;
 let depthTex = null;
 function seaDepthTexture() {
   if (depthTex) return depthTex;
-  const N = DEPTH_N, data = new Uint8Array(N * N);
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const x = -DEPTH_EXT + (i + 0.5) / N * 2 * DEPTH_EXT, z = -DEPTH_EXT + (j + 0.5) / N * 2 * DEPTH_EXT;
-    let pit = false;
-    for (const p of PITS) if (x >= p[0] - 3 && x <= p[1] + 3 && z >= p[2] - 3 && z <= p[3] + 3) pit = true;
-    const d = pit ? -2 : SEA_LEVEL - heightAt(x, z);
-    data[j * N + i] = Math.max(0, Math.min(255, Math.round((d + 2) / 14 * 255)));
+  const N = DEPTH_N, data = new Uint8Array(N * N), texel = 2 * DEPTH_EXT / N;
+  const enc = (d) => Math.max(0, Math.min(255, Math.round((d + 2) / 14 * 255)));
+  data.fill(enc(SEA_LEVEL - SEA_FLOOR));
+  const pits = REGIONS.flatMap((r) => r.pits || []);
+  // only texels over a terrain grid differ from the open sea: sample those grids directly
+  for (const g of terrainGrids) {
+    const i0 = Math.max(0, Math.ceil((g.x0 + DEPTH_EXT) / texel - 0.5)), i1 = Math.min(N - 1, Math.floor((g.x1 + DEPTH_EXT) / texel - 0.5));
+    const j0 = Math.max(0, Math.ceil((g.z0 + DEPTH_EXT) / texel - 0.5)), j1 = Math.min(N - 1, Math.floor((g.z1 + DEPTH_EXT) / texel - 0.5));
+    const { pos, nx, nz, step } = g;
+    for (let j = j0; j <= j1; j++) {
+      const z = -DEPTH_EXT + (j + 0.5) * texel, gz = (z - g.z0) / step;
+      const jj = Math.max(0, Math.min(nz - 2, Math.floor(gz))), fz = gz - jj;
+      for (let i = i0; i <= i1; i++) {
+        const x = -DEPTH_EXT + (i + 0.5) * texel, gx = (x - g.x0) / step;
+        const ii = Math.max(0, Math.min(nx - 2, Math.floor(gx))), fx = gx - ii;
+        const k = (jj * nx + ii) * 3 + 1;
+        const a = pos[k], b = pos[k + 3], d = pos[k + nx * 3];
+        const h = fx + fz <= 1 ? a + (b - a) * fx + (d - a) * fz : pos[k + nx * 3 + 3] + (d - pos[k + nx * 3 + 3]) * (1 - fx) + (b - pos[k + nx * 3 + 3]) * (1 - fz);
+        data[j * N + i] = enc(SEA_LEVEL - h);
+      }
+    }
+  }
+  for (const p of pits) { // inside a pit: no sea surface (the pool has its own water)
+    for (let j = Math.max(0, Math.floor((p[2] - 3 + DEPTH_EXT) / texel)); j <= Math.min(N - 1, Math.ceil((p[3] + 3 + DEPTH_EXT) / texel)); j++)
+      for (let i = Math.max(0, Math.floor((p[0] - 3 + DEPTH_EXT) / texel)); i <= Math.min(N - 1, Math.ceil((p[1] + 3 + DEPTH_EXT) / texel)); i++) {
+        const x = -DEPTH_EXT + (i + 0.5) * texel, z = -DEPTH_EXT + (j + 0.5) * texel;
+        if (x >= p[0] - 3 && x <= p[1] + 3 && z >= p[2] - 3 && z <= p[3] + 3) data[j * N + i] = enc(-2);
+      }
   }
   depthTex = new THREE.DataTexture(data, N, N, THREE.RedFormat, THREE.UnsignedByteType);
   depthTex.magFilter = depthTex.minFilter = THREE.LinearFilter;

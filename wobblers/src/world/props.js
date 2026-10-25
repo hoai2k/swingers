@@ -2,6 +2,7 @@
 import { RAPIER } from '../physics.js';
 import { Builder } from '../mesh.js';
 import { Vehicle } from '../vehicles.js';
+import { furn } from './furniture.js';
 
 let seed = 4242;
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -46,13 +47,6 @@ const PROPS = {
     for (const [x, z] of [[-0.25, -0.38], [0.25, -0.38], [-0.25, 0.38], [0.25, 0.38]]) b.sphere(0.08, 0x222222, [x, -0.35, z], null, 8);
     return { b, desc: () => RAPIER.ColliderDesc.cuboid(0.3, 0.3, 0.45).setTranslation(0, 0.05, 0).setMass(8).setFriction(0.05), h: 0.43 };
   },
-  chair: () => {
-    const b = new Builder(), c = [0xffffff, 0xff5a5a, 0x3f8cff][(rnd() * 3) | 0];
-    b.box(0.45, 0.06, 0.45, c, [0, 0, 0]);
-    b.box(0.45, 0.5, 0.05, c, [0, 0.27, -0.2]);
-    for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) b.cyl(0.02, 0.02, 0.45, 0x888888, [x, -0.22, z], null, 5);
-    return { b, desc: () => RAPIER.ColliderDesc.cuboid(0.22, 0.25, 0.22).setTranslation(0, -0.1, 0).setMass(3), h: 0.45 };
-  },
 };
 
 export function spawnProp(game, kind, x, z, y = 0, yaw = 0) {
@@ -78,8 +72,11 @@ export function scatterProps(game) {
   for (let i = 0; i < 6; i++) spawnProp(game, 'cart', 26 + i * 0.75, -24);
   // plaza fun
   for (let i = 0; i < 6; i++) spawnProp(game, 'ball', -8 + i * 3, 15 + (i % 2) * 2);
-  // cafe chairs
-  for (let i = 0; i < 6; i++) spawnProp(game, 'chair', -24 + (i % 3) * 1.2, -24 - Math.floor(i / 3) * 1.4, 0, rnd() * 6);
+  // cafe chairs: sittable (Y), like the furniture chairs indoors (same rnd() draws as before)
+  for (let i = 0; i < 6; i++) {
+    const yaw = rnd() * 6, col = [0xffffff, 0xff5a5a, 0x3f8cff][(rnd() * 3) | 0];
+    furn(game, 'cafeChair', -24 + (i % 3) * 1.2, 0, -24 - Math.floor(i / 3) * 1.4, yaw, col);
+  }
   // more crates in the stunt park and at the farm road
   for (let i = 0; i < 12; i++) spawnProp(game, 'barrel', -82 + (i % 4) * 0.9, 125 + Math.floor(i / 4) * 0.9);
   for (let i = 0; i < 8; i++) spawnProp(game, 'ball', -40 + i * 12, 318);

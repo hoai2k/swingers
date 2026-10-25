@@ -3,7 +3,7 @@
 // pop and unlocks a cosmetic for everyone (src/unlocks.js keeps the progress).
 import * as THREE from 'three';
 import { Builder } from '../mesh.js';
-import { PRESENTS, TOTAL, isFound, findPresent } from '../unlocks.js';
+import { PRESENTS, TOTAL, isFound, findPresent, addPresent } from '../unlocks.js';
 import { rewardName } from '../cosmetics.js';
 import { chime, groundAt } from './common.js';
 
@@ -11,6 +11,11 @@ import { chime, groundAt } from './common.js';
 // surface a downward ray from (x, start, z) hits first (game.groundHeight), so
 // a start just under a roof finds the floor inside (null: 2 m above the terrain). `raft` presents ride the
 // log raft that starts nearest to (x, z).
+// Regions add theirs with R.present(id, rewardKey, x, z, from, note) -> addRegionPresent.
+export function addRegionPresent(id, rewardKey, x, z, from = null, note = '') {
+  addPresent(id, rewardKey);
+  SPOTS[id] = [x, z, from, note];
+}
 const SPOTS = {
   'fountain': [3.6, 0, 1.0, 'in the plaza fountain'],
   'cafe-roof': [19.5, -25, 9, 'cafe rooftop terrace'],
@@ -58,7 +63,9 @@ function glowTexture() {
   if (glowTex) return glowTex;
   const cv = document.createElement('canvas'); cv.width = cv.height = 64;
   const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gr.addColorStop(0, 'rgba(255,250,210,0.9)'); gr.addColorStop(0.35, 'rgba(255,230,140,0.45)'); gr.addColorStop(1, 'rgba(255,220,120,0)');
+  // soft centre: the glow is depth-biased in front of the box (see buildPresents),
+  // so a bright core would wash the wrapping paper out
+  gr.addColorStop(0, 'rgba(255,250,210,0.2)'); gr.addColorStop(0.3, 'rgba(255,240,180,0.55)'); gr.addColorStop(0.45, 'rgba(255,230,140,0.4)'); gr.addColorStop(1, 'rgba(255,220,120,0)');
   g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   glowTex = new THREE.CanvasTexture(cv); glowTex.colorSpace = THREE.SRGBColorSpace;
   return glowTex;
@@ -108,6 +115,20 @@ export function buildPresents(game) {
   const list = [];
   game.physics.world.updateSceneQueries?.(); // colliders were just added: let rays see them
   const glowMat = new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  // The glow is a camera-facing disc around the box: its lower half reaches
+  // into the floor and was cut off flat by it. Depth-test it as if it sat
+  // GLOW_BIAS metres nearer the camera (same size and place on screen), so the
+  // floor under the box and a wall right behind it no longer clip it.
+  const GLOW_BIAS = 1.3;
+  glowMat.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <logdepthbuf_vertex>', `{
+      float dl = length(mvPosition.xyz);
+      vec4 nearer = projectionMatrix * vec4(mvPosition.xyz * max(0.02, 1.0 - ${GLOW_BIAS.toFixed(2)} / max(dl, 1e-3)), 1.0);
+      gl_Position.z = nearer.z / nearer.w * gl_Position.w;
+    }
+    #include <logdepthbuf_vertex>`);
+  };
+  glowMat.customProgramCacheKey = () => 'presentGlow';
   PRESENTS.forEach(([id], i) => {
     const sp = SPOTS[id];
     if (!sp) return;
@@ -169,6 +190,7 @@ export function buildPresents(game) {
     game.audio?.play('pop', pos);
     chime(game, pos, [72, 76, 79, 84, 88], 0.25);
     const n = list.filter((q) => q.found).length;
+    game.wallet?.add(p, 25, 'Present bonus');
     game.ui?.toast(`P${p.index + 1} found a present: ${rewardName(key)}! <small>${n}/${TOTAL}</small>`, p.color);
     for (const pn of game.ui?.panels?.values?.() || []) pn.draw?.(); // live progress in open menus
   }

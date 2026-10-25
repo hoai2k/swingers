@@ -5,7 +5,7 @@
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [] });
+const DEFAULTS = () => ({ music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [], life: {}, missions: {} });
 
 function load() {
   const s = DEFAULTS();
@@ -19,6 +19,10 @@ function load() {
         if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
         // ids of the presents found so far (src/unlocks.js)
         if (Array.isArray(o.presents)) s.presents = o.presents.filter((v) => typeof v === 'string');
+        // wallet, shop purchases, homes, pets, discovered areas (src/life/state.js checks the fields)
+        if (o.life && typeof o.life === 'object' && !Array.isArray(o.life)) s.life = o.life;
+        // job medals and best times (src/missions/state.js checks the fields)
+        if (o.missions && typeof o.missions === 'object' && !Array.isArray(o.missions)) s.missions = o.missions;
       }
     }
   } catch (e) { /* storage unavailable */ }

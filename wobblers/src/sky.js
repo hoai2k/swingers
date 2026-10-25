@@ -124,13 +124,13 @@ export class Sky {
       night: { value: 0 }, sunset: { value: 0 }, time: { value: 0 }, under: { value: 0 }, underCol: { value: new THREE.Color() },
     };
     const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: this.u, vertexShader: skyVert, fragmentShader: skyFrag });
-    this.dome = new THREE.Mesh(new THREE.SphereGeometry(800, 32, 16), skyMat);
+    this.dome = new THREE.Mesh(new THREE.SphereGeometry(1900, 32, 16), skyMat);
     this.dome.renderOrder = -1;
     this.dome.frustumCulled = false;
     scene.add(this.dome);
 
     // clouds: one instanced mesh drifting with the wind, wrapped round the island
-    const N = 34;
+    const N = 48;
     this.cloudMat = new THREE.MeshBasicMaterial({ vertexColors: true, fog: false });
     this.cloudMat.onBeforeCompile = (sh) => {
       sh.uniforms.uTop = { value: this.cloudTop = new THREE.Color() };
@@ -147,7 +147,7 @@ export class Sky {
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < N; i++) {
       const s = 9 + rnd() * 12;
-      this.cloudData.push({ x: (rnd() * 2 - 1) * 650, z: (rnd() * 2 - 1) * 650, y: 110 + rnd() * 70, s, yaw: rnd() * 6.28, sy: s * (0.8 + rnd() * 0.5) });
+      this.cloudData.push({ x: (rnd() * 2 - 1) * 1500, z: (rnd() * 2 - 1) * 1500, y: 110 + rnd() * 70, s, yaw: rnd() * 6.28, sy: s * (0.8 + rnd() * 0.5) });
     }
     scene.add(this.clouds);
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._v = new THREE.Vector3(); this._s = new THREE.Vector3();
@@ -199,11 +199,12 @@ export class Sky {
     blend3(PAL.cloudSh, night, twi, this.cloudBot);
     // the fog melts into the horizon
     this.fogColor.copy(this.u.horizon.value).lerp(this.u.top.value, 0.12);
-    this.fogFar = 420 + 260 * dayLight;
+    // far enough that the other islands (and Bigtown's towers) read as silhouettes across the sea
+    this.fogFar = 700 + 900 * dayLight;
     g.renderer.toneMappingExposure = 1.0 + 0.15 * (1 - dayLight);
 
     // clouds drift and wrap
-    const W = 650;
+    const W = 1500;
     this.clouds.instanceMatrix.needsUpdate = true;
     this.cloudData.forEach((c, i) => {
       c.x += this.wind.x * dt; c.z += this.wind.y * dt;

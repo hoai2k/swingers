@@ -12,6 +12,24 @@ const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const pick = (arr) => arr[(Math.random() * arr.length) | 0];
 
+// Rough distance (m) from (x, z) to open water (ground under the sea plane:
+// the sea, the lake, sea-level rivers), sampling the terrain on a few rings
+// round the listener. ~33 height samples at worst, a few times a second.
+const WATER_Y = -0.6, RINGS = [10, 25, 45, 70, 100];
+export function waterDistance(x, z) {
+  if (heightAt(x, z) < WATER_Y) return 0;
+  for (const r of RINGS) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k + (r % 2) * 0.5) * Math.PI / 4;
+      if (heightAt(x + Math.sin(a) * r, z + Math.cos(a) * r) < WATER_Y) return r;
+    }
+  }
+  return Infinity;
+}
+// Waves + surf weight for a listener: loud on the shore, gone ~100 m inland
+// (on every island, not just the home one) and fading with height.
+export const seaWeight = (p) => smooth(105, 15, waterDistance(p.x, p.z)) * smooth(40, 5, p.y);
+
 // Calliope waltz for the fun park (scale steps over C major, 3/4).
 const ORGAN = [
   [72, 2], [76, 1], [79, 2], [76, 1], [74, 2], [77, 1], [81, 2], [77, 1],
@@ -311,6 +329,16 @@ export class Audio {
       }
       case 'clack': this.burst(0.03, 0.18 * v, 1800, 3, 'bandpass', 0, out); this.tone('square', 240, 200, 0.03, 0.03 * v, 0, out); break;
       case 'pop': this.tone('sine', 900, 1800, 0.08, 0.15 * v, 0, out); break;
+      // ---- life sim (src/life/): coins, shop tills, pets
+      case 'coin': { const f = 1320 * (1 + (extra.pitch || 0) * 0.06); this.tone('square', f, f, 0.05, 0.05 * v, 0, out, 0.002); this.tone('square', f * 1.335, f * 1.335, 0.16, 0.05 * v, 0.05, out, 0.002); break; }
+      case 'coinBig': [1047, 1319, 1568, 2093].forEach((f, i) => { this.tone('square', f, f, 0.09, 0.045 * v, i * 0.05, out, 0.002); this.tone('sine', f * 2, f * 2, 0.12, 0.03 * v, i * 0.05, out); }); break;
+      case 'buy': this.burst(0.05, 0.12 * v, 2500, 2, 'bandpass', 0, out); [1568, 2093].forEach((f, i) => this.tone('triangle', f, f, 0.22, 0.09 * v, 0.06 + i * 0.08, out, 0.002)); this.tone('sine', 220, 110, 0.12, 0.12 * v, 0, out); break;
+      case 'nope': this.tone('square', 220, 200, 0.12, 0.05 * v, 0, out); this.tone('square', 180, 160, 0.16, 0.05 * v, 0.13, out); break;
+      case 'bark': { const k = extra.pitch || 1; for (let i = 0; i < (extra.n || 1); i++) { this.voice(420 * k, 300 * k, 0.11, 0.2 * v, out, 'a', i * 0.18); this.burst(0.06, 0.06 * v, 900 * k, 1.5, 'bandpass', i * 0.18, out); } break; }
+      case 'meow': { const k = extra.pitch || 1; this.voice(520 * k, 700 * k, 0.14, 0.14 * v, out, 'i'); this.voice(700 * k, 430 * k, 0.32, 0.14 * v, out, 'o', 0.12); break; }
+      case 'squeak': { const k = extra.pitch || 1; this.tone('sine', 1500 * k, 2300 * k, 0.07, 0.1 * v, 0, out); this.tone('sine', 2100 * k, 1700 * k, 0.07, 0.08 * v, 0.08, out); break; }
+      case 'quack': { const k = extra.pitch || 1; this.voice(330 * k, 260 * k, 0.16, 0.18 * v, out, 'a'); this.voice(360 * k, 280 * k, 0.12, 0.14 * v, out, 'a', 0.2); break; }
+      case 'snore': this.voice(110, 90, 0.9, 0.12 * v, out, 'o'); this.burst(0.8, 0.04 * v, 400, 1, 'lowpass', 0.1, out); break;
       case 'join': [523, 659, 784, 1047].forEach((f, i) => { this.tone('triangle', f, f, 0.16, 0.12, i * 0.07, out); this.tone('sine', f * 2, f * 2, 0.1, 0.03, i * 0.07, out); }); break;
       case 'leave': [784, 659, 523].forEach((f, i) => this.tone('triangle', f, f, 0.14, 0.1, i * 0.07, out)); break;
       case 'uiMove': this.tone('sine', 1250, 1350, 0.04, 0.07, 0, out, 0.002); break;
@@ -509,7 +537,7 @@ export class Audio {
       heli: { w1: 'sawtooth', w2: 'triangle', base: 30, range: 0.6, ratio: 2.0, lp: 500, vol: 0.12, am: 13 },
     };
     VOICES.police = VOICES.car;
-    const V = VOICES[type] || VOICES.car;
+    const V = veh.def?.engineVoice || VOICES[veh.def?.voice || type] || VOICES.car;
     const o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
     o.type = V.w1; o2.type = V.w2; f.type = 'lowpass'; f.frequency.value = V.lp; f.Q.value = 2;
     g.gain.value = 0;
@@ -527,7 +555,7 @@ export class Audio {
     let tail = g;
     if (c.createStereoPanner) { const pn = c.createStereoPanner(); g.connect(pn); tail = pn; e.pan = pn; }
     tail.connect(this.sfx);
-    if (type === 'boat') {
+    if (type === 'boat' || veh.def?.boat) {
       const n = c.createBufferSource(); n.buffer = this.noise; n.loop = true;
       const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.7;
       const ng = c.createGain(); ng.gain.value = 0;
@@ -573,11 +601,7 @@ export class Audio {
       const W = { sea: 0, park: 0, organ: 0, fountain: 0, wind: 0, lake: 0 };
       for (const cam of cams) {
         const p = cam.position;
-        const r = Math.hypot(p.x, p.z * 0.95);
-        let sea = smooth(250, 335, r);
-        // near low ground by the coast
-        if (sea > 0 && sea < 1) { const h = heightAt(p.x, p.z); sea *= smooth(12, 1, h); }
-        W.sea = Math.max(W.sea, sea * smooth(40, 5, p.y));
+        W.sea = Math.max(W.sea, seaWeight(p));
         W.park = Math.max(W.park, smooth(150, 50, Math.hypot(p.x - PARK.x, p.z - PARK.z)));
         W.organ = Math.max(W.organ, smooth(90, 10, Math.hypot(p.x - CAROUSEL.x, p.z - CAROUSEL.z)));
         W.fountain = Math.max(W.fountain, smooth(22, 4, Math.hypot(p.x - FOUNTAIN.x, p.z - FOUNTAIN.z)));

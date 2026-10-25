@@ -175,6 +175,7 @@ function basketball(game, kit, bx, bz) {
         for (const h of hoops) {
           if (Math.hypot(t.x - h.x, t.z - h.z) < RR - 0.05 && b.body.linvel().y < 0) {
             h.score++; show(); chime(game, h, [76, 79, 84]);
+            game.life?.reward(game.throwers?.get(b.body.handle), 3, 'Basket!', h);
           }
         }
       }

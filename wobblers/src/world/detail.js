@@ -7,7 +7,7 @@
 //  - night glow for street lamps: halos and light pools (instanced, additive).
 // Nothing here has physics.
 import * as THREE from 'three';
-import { meshHeight, meshColor, terrainGrid, isSand, fbm } from '../terrain.js';
+import { meshHeight, meshColor, isSand, fbm, regionAt, HOME_REGION } from '../terrain.js';
 import { ROADS, onRoad } from './roads.js';
 import { Builder, matVC } from '../mesh.js';
 
@@ -99,10 +99,14 @@ function detailMaterial(radius, sway, timeU) {
 }
 
 // ---- scatter rules -------------------------------------------------------------
+// Per-biome tweaks: grass size, flower chance (none on snow / desert / city
+// streets anyway: they only grow where the ground colour is green).
+const BIOME = { jungle: { grass: 1.7, dense: 0.25, flower: 0.5 }, tropical: { grass: 1.1, flower: 0.6 }, city: { flower: 0.6, pebble: 0 }, snow: { pebble: 0.4, flower: 0 }, desert: { flower: 0 } };
+
 export class Detail {
   constructor(game, mask) {
     this.game = game;
-    this.mask = mask;
+    this.masks = new Map([[HOME_REGION.id, mask]]); // region id -> coverage mask (others made on first visit)
     this.tiles = new Map();
     this.views = new Map();
     this.timeU = { value: 0 };
@@ -116,9 +120,15 @@ export class Detail {
     game.updaters.push((dt) => { this.timeU.value += dt; this.frame++; });
   }
 
-  covered(x, z) {
-    const { data, N, ext } = this.mask;
-    const i = Math.floor((x + ext) / (2 * ext) * N), j = Math.floor((z + ext) / (2 * ext) * N);
+  maskFor(r) {
+    let m = this.masks.get(r.id);
+    if (!m) { m = coverageMask(this.game, r.bounds); this.masks.set(r.id, m); }
+    return m;
+  }
+
+  covered(x, z, mask) {
+    const { data, N, ext, cx, cz } = mask;
+    const i = Math.floor((x - cx + ext) / (2 * ext) * N), j = Math.floor((z - cz + ext) / (2 * ext) * N);
     if (i < 1 || j < 1 || i >= N - 1 || j >= N - 1) return true;
     // dilated by one texel so tufts don't poke out from under the edges of things
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) if (data[(j + dj) * N + i + di]) return true;
@@ -133,8 +143,9 @@ export class Detail {
     const r = rng(hash2(ti, tj, 1));
     const x0 = ti * TILE, z0 = tj * TILE;
     const c = new THREE.Color();
-    const isl = terrainGrid.ext - 6;
-    if (Math.abs(x0) < isl && Math.abs(z0) < isl) {
+    const reg = regionAt(x0 + TILE / 2, z0 + TILE / 2), rb = reg?.bounds;
+    if (reg && x0 > rb[0] + 6 && x0 + TILE < rb[1] - 6 && z0 > rb[2] + 6 && z0 + TILE < rb[3] - 6) {
+      const mask = this.maskFor(reg), bio = BIOME[reg.biome] || {};
       const patch = fbm((x0 + 8) / 40 + 3, (z0 + 8) / 40 - 5);
       const tries = 260;
       for (let k = 0; k < tries; k++) {
@@ -143,22 +154,22 @@ export class Detail {
         if (h < -0.3) continue; // under the sea or lake
         const sand = isSand(x, z, h);
         const d = fbm(x / 11 + 7, z / 11 + 3);
-        if (this.covered(x, z)) continue;
+        if (this.covered(x, z, mask)) continue;
         if (onRoad(x, z, 0.6)) continue;
         meshColor(x, z, c);
         const greenness = c.g - Math.max(c.r, c.b);
         const roll = r();
         if (sand) {
-          if (roll < 0.03) out.pebble.push(x, h, z, 0.5 + r(), r() * 6.28, 0.72, 0.66, 0.58);
+          if (roll < 0.03 * (bio.pebble ?? 1)) out.pebble.push(x, h, z, 0.5 + r(), r() * 6.28, 0.72, 0.66, 0.58);
           continue;
         }
         if (greenness < 0.12) { // rock / snow / dirt
-          if (roll < 0.06 && h < 41) out.pebble.push(x, h, z, 0.6 + r() * 1.2, r() * 6.28, 0.5, 0.49, 0.46);
+          if (roll < 0.06 * (bio.pebble ?? 1) && h < 41) out.pebble.push(x, h, z, 0.6 + r() * 1.2, r() * 6.28, 0.5, 0.49, 0.46);
           continue;
         }
-        if (roll < 0.012) { out.pebble.push(x, h, z, 0.5 + r() * 1.3, r() * 6.28, 0.55, 0.54, 0.5); continue; }
+        if (roll < 0.012 * (bio.pebble ?? 1)) { out.pebble.push(x, h, z, 0.5 + r() * 1.3, r() * 6.28, 0.55, 0.54, 0.5); continue; }
         // flowers in patches
-        if (roll < 0.035 + 0.12 * Math.max(0, patch - 0.5) * 4 && d > 0.45) {
+        if (roll < (0.035 + 0.12 * Math.max(0, patch - 0.5) * 4) * (bio.flower ?? 1) && d > 0.45) {
           const pal = [[1, 1, 1], [1, 0.85, 0.2], [1, 0.45, 0.6], [0.75, 0.5, 1], [1, 0.35, 0.3], [0.5, 0.7, 1]];
           const p = pal[(hash2(Math.floor(x / 5), Math.floor(z / 5), 3) * pal.length) | 0];
           const cc = r() < 0.25 ? pal[(r() * pal.length) | 0] : p;
@@ -166,9 +177,9 @@ export class Detail {
           continue;
         }
         // grass: denser in lush patches, sparse elsewhere
-        if (roll > 0.12 + 0.8 * d) continue;
+        if (roll > 0.12 + 0.8 * d + (bio.dense || 0)) continue;
         const v = 0.9 + r() * 0.25;
-        out.grass.push(x, h - 0.02, z, 0.6 + r() * 0.4 + d * 0.25, r() * 6.28, c.r * v * 1.05, c.g * v, c.b * v * 0.9);
+        out.grass.push(x, h - 0.02, z, (0.6 + r() * 0.4 + d * 0.25) * (bio.grass || 1), r() * 6.28, c.r * v * 1.05, c.g * v, c.b * v * 0.9);
       }
     }
     t = { used: this.frame };
@@ -260,14 +271,17 @@ export class Detail {
 
 // Top-down coverage mask of everything static that isn't terrain (roads,
 // plazas, buildings, decks...), so detail only grows on open ground.
-function coverageMask(game) {
-  const N = 1024, ext = terrainGrid.ext;
+function coverageMask(game, bounds) {
+  const N = 1024, ext = Math.max(bounds[1] - bounds[0], bounds[3] - bounds[2]) / 2;
+  const cx = (bounds[0] + bounds[1]) / 2, cz = (bounds[2] + bounds[3]) / 2;
   const r = game.renderer, scene = game.scene;
   const rt = new THREE.WebGLRenderTarget(N, N);
   const cam = new THREE.OrthographicCamera(-ext, ext, ext, -ext, 1, 600);
-  cam.position.set(0, 300, 0); cam.up.set(0, 0, -1); cam.lookAt(0, 0, 0);
+  cam.position.set(cx, 300, cz); cam.up.set(0, 0, -1); cam.lookAt(cx, 0, cz);
   // camera "up" is -z, so image row 0 (bottom) is +z: flip below
   const shown = [];
+  const far = (game.staticChunks || []).filter((c) => !c.mesh.visible); // hidden by game.farCull
+  for (const c of far) c.mesh.visible = true;
   scene.traverse((o) => {
     if (!o.isMesh && !o.isInstancedMesh) return;
     const isStatic = o.isMesh && o.material && o.material.vertexColors && o.position.lengthSq() === 0 && !o.userData.terrain && o.parent === scene;
@@ -286,13 +300,14 @@ function coverageMask(game) {
   r.shadowMap.enabled = shadowWas;
   scene.background = bg; scene.fog = fog; scene.overrideMaterial = om;
   for (const o of shown) o.visible = true;
+  for (const c of far) c.mesh.visible = false;
   rt.dispose();
   const data = new Uint8Array(N * N);
   // pixel (i, row) -> world x = -ext + i/N*2ext ; rows run bottom-up in GL, top of image = -z
   for (let row = 0; row < N; row++) for (let i = 0; i < N; i++) {
     data[(N - 1 - row) * N + i] = px[(row * N + i) * 4] > 127 ? 1 : 0; // row 0 = bottom of the image = +z edge
   }
-  return { data, N, ext };
+  return { data, N, ext, cx, cz };
 }
 
 // Road edges: white edge lines and a gravel shoulder outside town, kerbs in town.
@@ -360,7 +375,7 @@ function lampGlows(game) {
     const m = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), mat, lamps.length);
     const mm = new THREE.Matrix4();
     lamps.forEach(([x, y, z], i) => {
-      const gy = mode ? Math.max(meshHeight(x, z), 0) + 0.1 : y;
+      const gy = mode ? Math.max(meshHeight(x, z), 0, y - 4.35) + 0.1 : y; // pool on the ground (or the deck the lamp stands on)
       m.setMatrixAt(i, mm.makeTranslation(x, gy, z));
     });
     m.computeBoundingSphere();
@@ -381,5 +396,5 @@ function lampGlows(game) {
 export function buildDetail(game) {
   roadEdges(game);
   lampGlows(game);
-  game.detail = new Detail(game, coverageMask(game));
+  game.detail = new Detail(game, coverageMask(game, HOME_REGION.bounds));
 }
