@@ -94,7 +94,7 @@ const units = [
   {
     id: 'dy_firework', name: 'Firework Archer', faction: 'dynasty', cost: 300, hp: 80, speed: 4.4,
     build: { scale: 0.97, girth: 0.95 },
-    weapon: { line: 'Ranged · exploding rocket arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'firework', speed: 26, arc: 'low', range: 32, minRange: 8, cooldown: 2.4, damage: 70, force: 420, spread: 0.05, releaseAt: 0.78, windup: 1.0, blast: 2.6 },
+    weapon: { line: 'Ranged · exploding rocket arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'firework', speed: 26, arc: 'low', range: 32, minRange: 8, cooldown: 3.0, damage: 70, force: 420, spread: 0.05, releaseAt: 0.78, windup: 1.0, blast: 2.6 },
     look: { skin: '#f0c8a0', hat: 'dy_jingasa', top: 'dy_robe', legs: '#3a3a5a', quiver: true },
     personality: { aggro: 0.3, bravery: 0.3, voice: 1.15, chatter: 0.5, cry: 'cackle', idle: 'shift' },
     desc: 'Rocket arrows that explode with a bang and sparks.',

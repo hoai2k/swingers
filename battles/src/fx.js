@@ -280,6 +280,9 @@ export class FX {
       case 'atrail': // arrow / spear streak
         this.bb(this.ss, x, y, z, 0, 0, 0, a || 0.12, 0.25, '#ffffff', { tile: T_PUFF, alpha: 0.35, grow: -0.5 });
         break;
+      case 'gtrail': // musket / pistol shot: a thin line of gun smoke that lingers and drifts
+        this.bb(this.ss, x, y, z, rand(-0.08, 0.08), rand(0.05, 0.25), rand(-0.08, 0.08), rand(0.15, 0.22), rand(0.8, 1.2), '#ece9e2', { tile: T_SMOKE, grow: 1.5, alpha: 0.62, fadeIn: 0.03, drag: 1.5 });
+        break;
       case 'ptrail': // potion fizz
         this.bb(this.gs, x, y, z, rand(-0.3, 0.3), rand(0.2, 0.8), rand(-0.3, 0.3), rand(0.06, 0.12), rand(0.3, 0.5), '#9cff6a', { tile: T_STAR, drag: 1, shrink: true, vr: 4 });
         break;
