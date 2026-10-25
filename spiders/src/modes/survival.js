@@ -158,7 +158,7 @@ export class SurvivalMode {
     const def = this.pickBoard();
     const board = game.loadBoard(def);
     this.mods = this.useMods ? applyRoundMods(game) : [];
-    game.music.match(def.music);
+    game.music.match(def.music, this.name === 'challenge' ? 'trials' : 'survival');
     game.music.setDuck(1);
     this.drops = new DropSpawner(game, board, this.dropRate);
     this.setupDrops();
@@ -512,6 +512,7 @@ export class SurvivalMode {
     const game = this.game;
     if (!game.players.length || game.spiders.some((s) => s.alive) || this.respawns.length) return false;
     this.state = 'lost'; this.t = 0;
+    this.game.music.sting('lose');
     this.lostReason = this.lostReason || 'EVERYONE IS OUT';
     sfx.lose();
     game.music.setDuck(0.4);
@@ -561,7 +562,11 @@ export class SurvivalMode {
     switch (this.state) {
       case 'break':
         this.drops.update(dt);
-        if (this.t >= 2.6) { this.state = 'wave'; this.t = 0; this.waveT = 0; sfx.go(); }
+        if (this.t >= 2.6) {
+          this.state = 'wave'; this.t = 0; this.waveT = 0; sfx.go();
+          if (this.isBossWave) this.game.music.boss();
+          else this.game.music.match(null, this.name === 'challenge' ? 'trials' : 'survival');
+        }
         break;
       case 'wave': {
         this.waveT = (this.waveT || 0) + dt;

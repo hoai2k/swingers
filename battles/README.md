@@ -92,8 +92,19 @@ the title shows which pad is which player, and **View** there swaps sides (the p
 that rumbles is Blue). Unplugging a pad pauses a battle and un-readies a player in
 setup. Armies are saved per map in `localStorage` (`wobbly-battles.v1`).
 
-Options: default battle screen (shared / split), graphics quality, look speed,
-invert Y, blood, music.
+Options: default battle screen (shared / split), the performance options, look speed,
+invert Y, blood, sound, music, recorded or synthesised sound effects, and going
+fullscreen when a game starts. The **corner buttons** (top right, hidden while the
+mouse is idle) toggle fullscreen, sound and music, and the gear opens the settings for
+the current screen. Leaving the title with a controller (or key) press goes fullscreen,
+as in the other games.
+
+Audio: the title, planning and battle songs and the victory / defeat / battle-start
+stingers are recorded files in `assets/music/` (see `music-requests.md`). Songs stream
+and loop with a crossfade before their ending. The sound effects are ElevenLabs
+recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
+`dev/sfx/generate.py` and `calibrate.cjs` remake them). Voices and the other music are
+synthesised, and every recorded sound falls back to its synth if its file is missing.
 
 Watching the battle: **A** follows the unit in the crosshair (its stats card shows
 health, kills and damage), **X** takes control of it (TABS's *Take control*: left

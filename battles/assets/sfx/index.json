@@ -1,0 +1,129 @@
+{
+ "whoosh": [
+  "assets/sfx/whoosh-1.mp3",
+  "assets/sfx/whoosh-2.mp3",
+  "assets/sfx/whoosh-3.mp3",
+  "assets/sfx/whoosh-4.mp3"
+ ],
+ "throw": [
+  "assets/sfx/throw-1.mp3",
+  "assets/sfx/throw-2.mp3"
+ ],
+ "flyby": [
+  "assets/sfx/flyby-1.mp3",
+  "assets/sfx/flyby-2.mp3",
+  "assets/sfx/flyby-3.mp3"
+ ],
+ "thud": [
+  "assets/sfx/thud-1.mp3",
+  "assets/sfx/thud-2.mp3",
+  "assets/sfx/thud-3.mp3",
+  "assets/sfx/thud-4.mp3"
+ ],
+ "crunch": [
+  "assets/sfx/crunch-1.mp3",
+  "assets/sfx/crunch-2.mp3",
+  "assets/sfx/crunch-3.mp3"
+ ],
+ "thump": [
+  "assets/sfx/thump-1.mp3",
+  "assets/sfx/thump-2.mp3",
+  "assets/sfx/thump-3.mp3"
+ ],
+ "slash": [
+  "assets/sfx/slash-1.mp3",
+  "assets/sfx/slash-2.mp3",
+  "assets/sfx/slash-3.mp3"
+ ],
+ "stab": [
+  "assets/sfx/stab-1.mp3",
+  "assets/sfx/stab-2.mp3",
+  "assets/sfx/stab-3.mp3"
+ ],
+ "clang": [
+  "assets/sfx/clang-1.mp3",
+  "assets/sfx/clang-2.mp3",
+  "assets/sfx/clang-3.mp3",
+  "assets/sfx/clang-4.mp3"
+ ],
+ "block": [
+  "assets/sfx/block-1.mp3",
+  "assets/sfx/block-2.mp3",
+  "assets/sfx/block-3.mp3"
+ ],
+ "shield": [
+  "assets/sfx/shield-1.mp3",
+  "assets/sfx/shield-2.mp3"
+ ],
+ "bow": [
+  "assets/sfx/bow-1.mp3",
+  "assets/sfx/bow-2.mp3",
+  "assets/sfx/bow-3.mp3"
+ ],
+ "fire": [
+  "assets/sfx/fire-1.mp3",
+  "assets/sfx/fire-2.mp3"
+ ],
+ "boom": [
+  "assets/sfx/boom-1.mp3",
+  "assets/sfx/boom-2.mp3",
+  "assets/sfx/boom-3.mp3"
+ ],
+ "debris": [
+  "assets/sfx/debris-1.mp3",
+  "assets/sfx/debris-2.mp3"
+ ],
+ "pop": [
+  "assets/sfx/pop-1.mp3",
+  "assets/sfx/pop-2.mp3"
+ ],
+ "heal": [
+  "assets/sfx/heal-1.mp3",
+  "assets/sfx/heal-2.mp3"
+ ],
+ "gong": [
+  "assets/sfx/gong-1.mp3"
+ ],
+ "horn": [
+  "assets/sfx/horn-1.mp3",
+  "assets/sfx/horn-2.mp3"
+ ],
+ "click": [
+  "assets/sfx/click-1.mp3"
+ ],
+ "place": [
+  "assets/sfx/place-1.mp3"
+ ],
+ "remove": [
+  "assets/sfx/remove-1.mp3"
+ ],
+ "lute": [
+  "assets/sfx/lute-1.mp3",
+  "assets/sfx/lute-2.mp3"
+ ],
+ "_levels": {
+  "whoosh": 0.189,
+  "throw": 0.124,
+  "flyby": 0.176,
+  "thud": 1.5,
+  "crunch": 1.435,
+  "thump": 0.921,
+  "slash": 0.65,
+  "stab": 0.266,
+  "clang": 0.896,
+  "block": 0.93,
+  "shield": 0.554,
+  "bow": 0.517,
+  "fire": 0.432,
+  "boom": 1.218,
+  "debris": 0.335,
+  "pop": 1.5,
+  "heal": 0.645,
+  "gong": 0.669,
+  "horn": 0.535,
+  "click": 0.108,
+  "place": 0.469,
+  "remove": 0.259,
+  "lute": 0.426
+ }
+}

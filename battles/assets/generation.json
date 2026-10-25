@@ -604,6 +604,28 @@
         400
       ],
       "round": 5
+    },
+    {
+      "file": "assets/music/victory.mp3",
+      "prompt": "Instrumental short triumphant orchestral victory fanfare for a comedic battle game, about 8 seconds, one shot with a natural ending. A bold trumpet and horn fanfare in B-flat major over a timpani roll, a rising string run, a crashing cymbal, and a final big held major chord from the full orchestra with a satisfying last timpani hit. A tiny cheeky trill on the piccolo just before the last chord. Proud, glorious and slightly over the top. No vocals.",
+      "tool": "ElevenLabs Music",
+      "requested_ms": 8000,
+      "length_s": 5.5
+    },
+    {
+      "file": "assets/music/defeat.mp3",
+      "prompt": "Instrumental short comedic defeat sting for a battle game, about 7 seconds, one shot with a natural ending. A sad, deflating \"wah-wah-wah-waaah\" on a muted trombone descending in a minor key, a droopy bassoon underneath, a slow pizzicato pluck, and a final soft, wobbly low tuba note that fades out. Funny and sorry for itself rather than truly tragic. No vocals.",
+      "tool": "ElevenLabs Music",
+      "requested_ms": 7000,
+      "length_s": 5.75
+    },
+    {
+      "file": "assets/music/battle-start.mp3",
+      "prompt": "Instrumental short battle-start sting for a comedic war game, about 4 seconds, one shot with a natural ending. A huge, slightly comical war horn blast, two massive taiko and timpani hits, a quick snare roll, and a full-orchestra \"charge!\" chord in D minor that cuts off cleanly. Loud, punchy and dramatic. Wordless \"hey!\" shouts from a group of soldiers are allowed. No sung words.",
+      "tool": "ElevenLabs Music",
+      "requested_ms": 4000,
+      "length_s": 7.75
     }
-  ]
+  ],
+  "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental); trailing silence trimmed with a 0.5 s fade"
 }

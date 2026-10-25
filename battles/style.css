@@ -367,3 +367,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .lvtile { position: relative; }
 .lvwip { position: absolute; top: 2px; right: 4px; font-size: 13px; }
 .lvd-wip { margin-left: 10px; padding: 2px 8px; border-radius: 8px; background: #ffd43b; color: #3a2a00; font-family: var(--ui); font-weight: 900; font-size: 12px; vertical-align: middle; }
+
+/* corner buttons (src/corner.js) */
+.cbar { position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); z-index: 50;
+  display: flex; gap: 8px; transition: opacity .35s, transform .35s; }
+.cbar.hidden { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+.cbtn { width: clamp(36px, 4.2vmin, 50px); height: clamp(36px, 4.2vmin, 50px); padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.25);
+  background: rgba(20,24,34,.72); color: #fff; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.35);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: transform .12s, background .12s; outline: none; }
+.cbtn svg { width: 56%; height: 56%; }
+.cbtn:hover { transform: scale(1.1); background: rgba(61,114,227,.9); border-color: #fff; }
+.cbtn:active { transform: scale(.94); }
+.cbtn.off { color: rgba(255,255,255,.5); }

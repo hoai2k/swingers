@@ -1,10 +1,12 @@
 # Wobbly Battles — music requests
 
-**Status: 20 open requests, none delivered yet.** They are listed from most to least
+**Status: 14 open requests; 6 delivered: #1 battle, #2 setup and #3 title (owner-made songs), and #4 victory, #5 defeat and #11 battle start (ElevenLabs Music stingers). All six are in the game.** They are listed from most to least
 important: the first five cover what players hear most of the time.
 
-Today all music is synthesised in `src/audio.js`: three short loops (title, army setup,
-battle). Delivered tracks will replace those loops, and the synth stays as the fallback
+The title, setup and battle music and three stingers are recorded files; the rest of
+the music is still synthesised in `src/audio.js`. Delivered songs don't need to loop
+seamlessly: the game crossfades from just before the song's ending back to the start
+(`TRACKS[mode].loop` in `src/audio.js`). Delivered tracks will replace those loops, and the synth stays as the fallback
 for any track that hasn't arrived. Wiring the files in is done when they are
 delivered.
 
@@ -30,7 +32,7 @@ cheeky wink.
 
 ---
 
-## 1. Main battle theme (loop) — `battle-1.mp3`
+## 1. Main battle theme (loop) — `battle-1.mp3` — ✅ delivered
 
 > Instrumental epic orchestral battle music for a comedic medieval fantasy war game,
 > 140 BPM, D minor, about 2 minutes 30 seconds, built to loop seamlessly with no intro
@@ -44,7 +46,7 @@ cheeky wink.
 > throughout, serious war-film intensity with a playful wink. No vocals, no choir, no
 > electronic sounds.
 
-## 2. Army setup / planning theme (loop) — `setup-1.mp3`
+## 2. Army setup / planning theme (loop) — `setup-1.mp3` — ✅ delivered
 
 > Instrumental sneaky, playful orchestral planning music for a comedic strategy war
 > game where two generals secretly place their armies, 100 BPM, D minor, about 2
@@ -57,7 +59,7 @@ cheeky wink.
 > plotting a cunning plan, and never loud enough to distract from concentrating. No
 > vocals, no electronic sounds.
 
-## 3. Title / main menu theme (loop) — `title.mp3`
+## 3. Title / main menu theme (loop) — `title.mp3` — ✅ delivered
 
 > Instrumental jaunty, heroic oom-pah march for the main menu of a comedic medieval
 > battle game, 116 BPM, F major, about 2 minutes, seamless loop with no fade. A brass
@@ -68,7 +70,7 @@ cheeky wink.
 > far too seriously, then back to the bouncy march. Welcoming, catchy, confident and
 > funny, the theme tune of the game. No vocals, no electronic sounds.
 
-## 4. Victory stinger — `victory.mp3`
+## 4. Victory stinger — `victory.mp3` — ✅ delivered
 
 > Instrumental short triumphant orchestral victory fanfare for a comedic battle game,
 > about 8 seconds, one shot with a natural ending. A bold trumpet and horn fanfare in
@@ -77,7 +79,7 @@ cheeky wink.
 > hit. A tiny cheeky trill on the piccolo just before the last chord. Proud, glorious
 > and slightly over the top. No vocals.
 
-## 5. Defeat stinger — `defeat.mp3`
+## 5. Defeat stinger — `defeat.mp3` — ✅ delivered
 
 > Instrumental short comedic defeat sting for a battle game, about 7 seconds, one shot
 > with a natural ending. A sad, deflating "wah-wah-wah-waaah" on a muted trombone
@@ -137,7 +139,7 @@ cheeky wink.
 > curious and fun, like a mad inventor building a contraption. No vocals, no
 > electronic sounds.
 
-## 11. Battle start horn and drums stinger — `battle-start.mp3`
+## 11. Battle start horn and drums stinger — `battle-start.mp3` — ✅ delivered
 
 > Instrumental short battle-start sting for a comedic war game, about 4 seconds, one
 > shot with a natural ending. A huge, slightly comical war horn blast, two massive
