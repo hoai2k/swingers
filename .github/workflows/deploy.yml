@@ -35,6 +35,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # A deploy takes a minute or two. Anything past fifteen is hung, and a hung
+    # run would otherwise bill up to six hours and hold the concurrency group,
+    # leaving the site stale without reporting a failure (as in jjkbrawler).
+    timeout-minutes: 15
     permissions:
       contents: read
       pages: write
