@@ -178,6 +178,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .tsc { left: 50%; transform: translateX(-50%); } .ts0, .ts1 { transform: translateX(-50%); top: 160px; } .ts0 { left: 25%; } .ts1 { left: 75%; }
 .toastmsg { background: rgba(20,24,34,0.85); padding: 8px 18px; border-radius: 12px; font-weight: 800; font-size: 18px; transition: opacity 0.5s, transform 0.5s; animation: tin 0.25s ease-out; white-space: nowrap; }
 .toastmsg.out { opacity: 0; transform: translateY(-10px); }
+.perfwarn { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); background: rgba(70,30,10,0.88); border: 2px solid #f2c230; color: #fff; padding: 6px 16px; border-radius: 12px; font-weight: 700; font-size: 16px; text-align: center; pointer-events: none; z-index: 5; }
+.perfwarn small { font-size: 14px; font-weight: 700; }
+.perfwarn:has(> small:only-child) { background: rgba(20,24,34,0.75); border-color: transparent; }
+.fpsmeter { position: absolute; left: 8px; bottom: 6px; background: rgba(0,0,0,0.55); color: #cfe; font: 700 12px/1.3 ui-monospace, monospace; padding: 2px 8px; border-radius: 6px; pointer-events: none; z-index: 5; }
 @keyframes tin { from { opacity: 0; transform: translateY(10px); } }
 
 /* button glyph extras */

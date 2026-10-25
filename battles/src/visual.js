@@ -987,13 +987,23 @@ export function buildUnitVisual(def, team, opts = {}) {
   for (const f of EXT.decorate) f(ddef, team, { root, parts, items, skel, extraParts }, H);
   for (const e of extraParts) root.add(e.group);
   // Merge each part's static meshes (and each held item) into one vertex-coloured mesh.
+  // opts.share: units of the same type and team share the merged geometry (a big
+  // army then costs one upload per part, not one per soldier)
   if (!opts.noBake) {
     root.updateMatrixWorld(true);
-    for (const g of parts) {
-      for (const it of [...g.children]) if (heldObjs.includes(it)) bake(it, it);
-      bake(g, g, (o) => o !== g.userData.face && !heldObjs.some((it) => isDesc(o, it)));
+    let shared = null;
+    if (opts.share) {
+      let byDef = BAKE_SHARE.get(def);
+      if (!byDef) BAKE_SHARE.set(def, (byDef = new Map()));
+      const k = `${team}|${s}`;
+      shared = byDef.get(k);
+      if (!shared) byDef.set(k, (shared = new Map()));
     }
-    for (const e of extraParts) bake(e.group, e.group);
+    parts.forEach((g, i) => {
+      [...g.children].forEach((it, j) => { if (heldObjs.includes(it)) bake(it, it, undefined, shared, `h${i}.${j}`); });
+      bake(g, g, (o) => o !== g.userData.face && !heldObjs.some((it) => isDesc(o, it)), shared, `p${i}`);
+    });
+    extraParts.forEach((e, j) => bake(e.group, e.group, undefined, shared, `e${j}`));
   }
   if (opts.ghost) {
     const gm = ghostMaterial(opts.ghostColor || tcHex);
@@ -1009,6 +1019,11 @@ export function buildUnitVisual(def, team, opts = {}) {
     root.userData.ghostMat = gm;
   }
   const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id, def) };
+  // each part's baked mesh, for the distant stand-ins (setFar)
+  if (!opts.noBake && !opts.ghost && !opts.portrait) {
+    vis.lod = [];
+    parts.forEach((g, i) => { const m = g.children.find((o) => o.isMesh && o.material === BAKED); if (m) vis.lod.push({ m, hi: m.geometry, part: skel.parts[i] }); });
+  }
   if (!opts.ghost && !opts.portrait) LIVE_VIS.add(vis);
   return vis;
 }
@@ -1051,12 +1066,19 @@ BAKED.onBeforeCompile = (sh) => {
 };
 BAKED.customProgramCacheKey = () => 'wobbly-baked';
 
+const BAKE_SHARE = new WeakMap(); // def -> "team|scale" -> part key -> merged geometry
 function isDesc(o, anc) { for (let p = o; p; p = p.parent) if (p === anc) return true; return false; }
 // Replace the meshes under `node` (filtered) with a single merged mesh added to `node`.
-function bake(node, frame, filter = () => true) {
+function bake(node, frame, filter = () => true, shared = null, key = '') {
   const meshes = [];
   node.traverse((o) => { if (o.isMesh && o !== node && filter(o)) meshes.push(o); });
   if (!meshes.length) return;
+  const have = shared?.get(key);
+  if (have && have.userData.nv === meshes.length) {
+    for (const m of meshes) m.parent.remove(m);
+    addBaked(node, have);
+    return;
+  }
   const inv = new THREE.Matrix4().copy(frame.matrixWorld).invert();
   let nv = 0, ni = 0;
   for (const m of meshes) { nv += m.geometry.attributes.position.count; ni += m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count; }
@@ -1100,7 +1122,10 @@ function bake(node, frame, filter = () => true) {
   geo.setAttribute('fx', new THREE.BufferAttribute(fx, 2));
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
   geo.computeBoundingSphere();
-  geo.userData.own = true;
+  if (shared) { geo.userData.shared = true; geo.userData.nv = meshes.length; shared.set(key, geo); } else geo.userData.own = true;
+  addBaked(node, geo);
+}
+function addBaked(node, geo) {
   const merged = new THREE.Mesh(geo, BAKED);
   merged.castShadow = true;
   merged.receiveShadow = true;
@@ -1112,7 +1137,44 @@ function bake(node, frame, filter = () => true) {
 export function disposeVisual(vis) {
   LIVE_VIS.delete(vis);
   vis.root.parent?.remove(vis.root);
-  vis.root.traverse((o) => { if (o.isMesh && o.geometry.userData.own) o.geometry.dispose(); });
+  setFar(vis, false);
+  vis.root.traverse((o) => { if (o.isMesh && o.geometry.userData.own) { o.geometry.userData.lo?.dispose(); o.geometry.dispose(); } });
+}
+
+// Distant stand-in for a baked part: its collider shape in the part's main colour
+// (~80 triangles instead of ~1000). Big battles draw far-away units with these.
+function loGeo(hi, part) {
+  if (hi.userData.lo) return hi.userData.lo;
+  const g = part.shape === 'ball' ? new THREE.SphereGeometry(part.r * 1.08, 8, 6) : new THREE.CapsuleGeometry(part.r * 1.08, part.hh * 2, 2, 7);
+  const C = hi.attributes.color, F = hi.attributes.fx;
+  const votes = new Map();
+  let best = 0, bi = 0;
+  for (let i = 0; i < C.count; i++) {
+    const k = ((C.getX(i) * 15) | 0) * 256 + ((C.getY(i) * 15) | 0) * 16 + ((C.getZ(i) * 15) | 0);
+    const n = (votes.get(k) || 0) + 1;
+    votes.set(k, n);
+    if (n > best) { best = n; bi = i; }
+  }
+  const n = g.attributes.position.count;
+  const col = new Float32Array(n * 3), fx = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    col[i * 3] = C.getX(bi); col[i * 3 + 1] = C.getY(bi); col[i * 3 + 2] = C.getZ(bi);
+    fx[i * 2] = F.getX(bi); fx[i * 2 + 1] = F.getY(bi);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('fx', new THREE.BufferAttribute(fx, 2));
+  g.deleteAttribute('uv');
+  if (hi.userData.shared) g.userData.shared = true;
+  hi.userData.lo = g;
+  return g;
+}
+
+// Draw a unit with its distant stand-ins (far = true) or its full meshes.
+export function setFar(vis, far) {
+  if (!vis.lod || !!vis.far === far) return;
+  vis.far = far;
+  for (const l of vis.lod) l.m.geometry = far ? loGeo(l.hi, l.part) : l.hi;
+  if (vis.face) vis.face.visible = !far;
 }
 
 // Expressions: see FACE_MATS. Normal and angry faces blink every few seconds.

@@ -56,6 +56,10 @@ export function padLabel(id) {
 export class Input {
   constructor() {
     this.keys = new Set();
+    // presses seen since the last poll, so a tap shorter than a (slow) frame still
+    // counts: keys from their events, pad buttons from sample() between sim steps
+    this.keysHit = new Set();
+    this.padHit = [new Set(), new Set()];
     this.players = [this.mk(), this.mk()];
     this.inject = [null, null];
     this.mouse = { dx: 0, dy: 0, right: false, left: false, wheel: 0 };
@@ -66,6 +70,7 @@ export class Input {
     addEventListener('keydown', (e) => {
       if (e.code === 'Tab' || e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
       this.keys.add(e.code);
+      this.keysHit.add(e.code);
       this.anyInput = true;
     });
     addEventListener('keyup', (e) => this.keys.delete(e.code));
@@ -75,7 +80,7 @@ export class Input {
     });
     addEventListener('mousedown', (e) => {
       if (e.button === 2) this.mouse.right = true;
-      if (e.button === 0) this.mouse.left = true;
+      if (e.button === 0) this.mouse.left = this.mouse.click = true;
       this.anyInput = true;
     });
     addEventListener('mouseup', (e) => {
@@ -129,6 +134,19 @@ export class Input {
     return byIndex;
   }
 
+  // Latch the pad buttons held right now (called during long frames, e.g. between
+  // simulation steps under heavy load, so short taps aren't lost).
+  sample() {
+    if (!navigator.getGamepads) return;
+    const list = navigator.getGamepads();
+    for (let i = 0; i < 2; i++) {
+      const pad = this.slots[i] !== null ? list[this.slots[i]] : null;
+      if (!pad || !pad.connected) continue;
+      const bt = pad.buttons;
+      for (let k = 0; k < BTN.length; k++) if (bt[k] && (bt[k].pressed || bt[k].value > 0.5)) this.padHit[i].add(BTN[k]);
+    }
+  }
+
   poll(dt) {
     const pads = this.bindPads();
     for (let i = 0; i < 2; i++) {
@@ -145,6 +163,7 @@ export class Input {
         [s.rx, s.ry] = dead(ax[2] || 0, ax[3] || 0);
         const bt = pad.buttons;
         for (let k = 0; k < BTN.length; k++) if (bt[k] && (bt[k].pressed || bt[k].value > 0.5)) s.b[BTN[k]] = true;
+        for (const k of this.padHit[i]) s.b[k] = true;
         s.lt = bt[6] ? bt[6].value : 0;
         s.rt = bt[7] ? bt[7].value : 0;
         if (s.b.a || s.b.start || Math.abs(s.lx) > 0.5) this.anyInput = true;
@@ -156,13 +175,14 @@ export class Input {
       for (const [k, v] of Object.entries(km.look)) if (this.keys.has(k)) { lx += v[0]; ly += v[1]; }
       if (mx || my) { const m = Math.hypot(mx, my); s.lx = mx / m; s.ly = my / m; }
       if (lx || ly) { s.rx = lx * 0.8; s.ry = ly * 0.8; }
-      for (const [k, v] of Object.entries(km.btn)) if (this.keys.has(k)) s.b[v] = true;
+      for (const [k, v] of Object.entries(km.btn)) if (this.keys.has(k) || this.keysHit.has(k)) s.b[v] = true;
       if (s.b.lt) s.lt = 1;
       if (s.b.rt) s.rt = 1;
       if (i === 0) {
         // mouse look / click for player 1
         if (this.mouse.right || document.pointerLockElement) { s.rx += this.mouse.dx * 0.08; s.ry += this.mouse.dy * 0.08; }
-        if (this.mouse.left) s.b.a = true;
+        if (this.mouse.left || this.mouse.click) s.b.a = true;
+        this.mouse.click = false;
         if (this.mouse.wheel > 0) s.b.right = true;
         if (this.mouse.wheel < 0) s.b.left = true;
         this.mouse.dx = 0; this.mouse.dy = 0; this.mouse.wheel = 0;
@@ -181,7 +201,9 @@ export class Input {
       s.b.sleft = s.lx < (pb.sleft ? -0.35 : -0.55);
       s.b.sright = s.lx > (pb.sright ? 0.35 : 0.55);
       for (const k of ALL) pl.held[k] = s.b[k] ? (pl.held[k] || 0) + dt : 0;
+      this.padHit[i].clear();
     }
+    this.keysHit.clear();
   }
 
   // Forget presses made this frame (after a screen change, so the same press

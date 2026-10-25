@@ -13,9 +13,16 @@ and `image-requests.md` for art (no open requests right now).
 - **Listen to the audio.** Voices, impacts, music and the slow-motion pitch drop were
   only checked offline for level, clipping and node counts.
 - **Frame rate on a real GPU**, especially in big battles, the new maps (Graveyard has
-  the most props) and split screen. Only the simulation cost was measured: about 14 ms per
-  physics step for a packed 150-unit melee on this container's CPU. Try the Low/Medium
-  quality settings on a weak machine.
+  the most props) and split screen. The tests here use a software renderer, which is far
+  slower than any GPU, so they only show that the game stays responsive, not real frame
+  rates. Measured simulation cost on this container's 4-core CPU:
+  - about 48 ms per physics step for 320 units (headless)
+  - about 95 ms per step for 600 units (in the browser)
+
+  So a 600-unit battle runs at roughly 10–15% of real time here. Check on a real GPU and
+  tune the defaults if needed:
+  - the heavy-load thresholds and the *Balanced* budget in `src/perf.js`
+  - `LOD_MIN` and `LOD_DIST` in `src/game.js`
 
 ## 2. Campaign: 11 levels under construction
 
@@ -79,8 +86,15 @@ remaining outliers need **behaviour** changes, not numbers:
   arrows or a two-row layout.
 - **Performance:** frame rate drops after switching maps many times in one session
   (`loadMap`). This predates the new maps; probably GPU resources that aren't disposed.
-- **Replay:** the recording is capped at 6 minutes (30 Hz). Longer battles stop recording
-  at that point.
+- **Replay:** the recording is capped at 6 minutes and about 450 MB (see README, *Big
+  battles*). Longer battles stop recording at that point. Skipping sleeping corpses in
+  the recording would let big battles record for much longer.
+- **Big battles, simulation:** Rapier physics is most of the cost (about 60%; the unit
+  AI and muscles are most of the rest). Possible next steps:
+  - a coarser physics step or fewer solver iterations for armies of 300+ (needs
+    checking that the ragdolls stay stable)
+  - building the battle over several frames instead of in one go
+  - instanced rendering (one draw call per part type instead of ~13 per unit)
 - **Unit Creator:** custom units aren't allowed in the campaign (worlds restrict factions).
   There's no import/export or sharing of custom units.
 
