@@ -699,7 +699,7 @@ export class Game {
     const facs = WORLDS[L.world].factions;
     this.ui.updateLevels({
       worlds: WORLDS.map((w, wi) => ({
-        name: w.name, color: w.color, unlocked: worldUnlocked(pr, wi),
+        name: w.name, color: w.color, bonus: !!w.bonus, unlocked: worldUnlocked(pr, wi),
         levels: w.levels.map((l) => ({ name: l.name, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
       })),
       level: {
@@ -707,7 +707,7 @@ export class Game {
         budget: L.budget, cap: L.cap, enemyValue: armyValue(enemy), enemyCount: enemy.length,
         enemy: [...counts].map(([id, n]) => ({ id, n })), stars: pr.stars[L.id] || 0, best: pr.best[L.id],
         starGold: starGold(L), unlocked: levelUnlocked(pr, L),
-        factions: (facs ? FACTIONS.filter((f) => facs.includes(f.id)) : FACTIONS).map((f) => f.name),
+        factions: facs ? FACTIONS.filter((f) => facs.includes(f.id)).map((f) => f.name) : ['every faction'],
       },
       coop: pr.coop, total: totalStars(pr), max: LEVELS.length * 3,
     });

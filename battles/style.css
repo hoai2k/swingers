@@ -205,12 +205,17 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .mi .ml.big .mnote { display: block; font-family: var(--ui); font-weight: 800; font-size: 13px; letter-spacing: 0; opacity: 0.75; margin-top: -3px; }
 
 /* campaign level select */
-.layer-levels { display: flex; flex-direction: column; align-items: center; padding-top: 2.5vh; background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.5)); }
+.layer-levels { display: flex; flex-direction: column; align-items: center; padding: 2.5vh 0 1.5vh; overflow: hidden; background: linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.5)); }
+.layer-levels > * { flex-shrink: 0; }
 .lvhead { font-family: var(--font); font-size: 46px; text-shadow: 0 4px 0 rgba(0,0,0,0.45); }
 .lvtotal { font-size: 24px; color: var(--gold); vertical-align: 6px; margin-left: 10px; }
-.lvworlds { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.lvworlds { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; position: relative; flex: 0 1 auto !important; min-height: 90px; overflow-y: auto; overflow-x: hidden; padding: 5px 14px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.45) transparent;
+  -webkit-mask-image: linear-gradient(transparent, #000 8px, #000 calc(100% - 8px), transparent); mask-image: linear-gradient(transparent, #000 8px, #000 calc(100% - 8px), transparent); }
+.lvworld { flex-shrink: 0; }
+.lvwname small { display: block; font-family: var(--ui); font-weight: 800; font-size: 12px; color: var(--gold); text-shadow: 0 1px 2px #000; }
+.lvwname > span { display: block; }
 .lvworld { display: flex; align-items: stretch; gap: 6px; }
-.lvwname { width: 170px; display: flex; align-items: center; justify-content: flex-end; text-align: right; font-family: var(--font); font-size: 19px; color: var(--wc); text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.5); padding-right: 4px; }
+.lvwname { width: 170px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; text-align: right; line-height: 1.05; font-family: var(--font); font-size: 19px; color: var(--wc); text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.5); padding-right: 4px; }
 .lvworld.locked .lvwname { color: #bbb; }
 .lvtile { width: 150px; background: rgba(20,24,34,0.72); border: 3px solid transparent; border-top: 5px solid var(--wc); border-radius: 10px; padding: 3px 8px; font-weight: 800; font-size: 14px; display: flex; flex-direction: column; line-height: 1.15; }
 .lvtile b { font-family: var(--font); font-weight: normal; font-size: 13px; opacity: 0.7; }
