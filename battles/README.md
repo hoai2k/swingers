@@ -4,6 +4,8 @@ A wobbly physics battle game in the style of *Totally Accurate Battle Simulator*
 screen: both players build their armies **at the same time** in split screen
 with Xbox controllers, then watch the wobbly active-ragdoll battle together.
 
+What's left to do is in `TODO.md`; unit balance notes are in `BALANCE.md`.
+
 Serve the repo root over http (ES modules) and open `/battles/`:
 
     python3 -m http.server 8123   # then http://localhost:8123/battles/
@@ -30,8 +32,10 @@ other settings.
   Worlds limit the factions you may use. Levels are data in `src/campaign.js`
   (unknown unit ids are skipped); progress and your army per level are saved in
   `localStorage` (`wobbly-battles.campaign.v1`).
-- **Sandbox** (1 player): one full-screen setup where you build both armies — tap
-  **View** to switch side — then **Y** starts the battle.
+- **Sandbox**: free play with no match score. *Players: 1* is one full-screen setup
+  where you build both armies (tap **View** to switch side, **Y** starts the battle).
+  *Players: 2* is split screen, each player builds one army and the battle starts when
+  both are ready — like Versus without rounds, timer or blind setup.
 - **Unit Creator**: design up to 24 custom units, with a live, turning 3D preview
   that shows the attack. Tabs (**LB/RB**): *Unit* (name with an on-screen keyboard
   or typed, personality/voice, rank), *Body* (size, build, head, legs), *Look* (every

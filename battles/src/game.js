@@ -79,7 +79,7 @@ export class Game {
     this.settings = Object.assign({
       map: 0, budget: 2, cap: 2, blood: true, music: true,
       quality: 2, blind: false, split: false, look: 2, invertY: false,
-      rounds: 0, bonus: false, timer: 0,
+      rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
     }, st.settings || {});
     this.mode = 'versus'; // 'versus' (2P) | 'sandbox' (1P builds both sides) | 'campaign'
     this.progress = loadProgress();
@@ -518,6 +518,7 @@ export class Game {
       ];
       case 'sandbox': return [
         { label: 'START SANDBOX', key: 'go' },
+        { label: 'Players', value: s.sandboxPlayers === 2 ? '2 — one army each' : '1 — build both armies', key: 'sbPlayers' },
         ...common,
         { label: 'Back', key: 'back' },
       ];
@@ -526,7 +527,7 @@ export class Game {
     return [
       { label: 'VERSUS', note: '2 players · build at the same time', key: 'versus' },
       { label: 'CAMPAIGN', note: `1 player or 2-player co-op · ★ ${stars} / ${LEVELS.length * 3}`, key: 'campaign' },
-      { label: 'SANDBOX', note: '1 player builds both armies', key: 'sandbox' },
+      { label: 'SANDBOX', note: 'free play: 1 player builds both armies, or 2 players one each', key: 'sandbox' },
       { label: 'UNIT CREATOR', note: 'design your own units for every mode but the campaign', key: 'creator' },
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
@@ -544,6 +545,7 @@ export class Game {
       case 'blind': s.blind = !s.blind; break;
       case 'rounds': s.rounds = cyc(s.rounds | 0, ROUNDS.length); break;
       case 'bonus': s.bonus = !s.bonus; break;
+      case 'sbPlayers': s.sandboxPlayers = s.sandboxPlayers === 2 ? 1 : 2; break;
       case 'timer': s.timer = cyc(s.timer | 0, TIMERS.length); break;
       case 'split': s.split = !s.split; this.split = s.split; break;
       case 'quality': this.quality = cyc(this.quality, QUALITY.length); s.quality = this.quality; this.applyQuality(); break;
@@ -634,7 +636,7 @@ export class Game {
       }
       items = this.titleItems();
     }
-    const heads = { options: 'OPTIONS', versus: 'VERSUS · 2 PLAYERS', sandbox: 'SANDBOX · 1 PLAYER' };
+    const heads = { options: 'OPTIONS', versus: 'VERSUS · 2 PLAYERS', sandbox: `SANDBOX · ${this.settings.sandboxPlayers === 2 ? '2 PLAYERS' : '1 PLAYER'}` };
     const startHint = this.titlePage === 'main' ? 'quick versus' : this.titlePage === 'options' ? '' : 'start';
     this.ui.updateTitle({
       head: heads[this.titlePage] || '',
@@ -700,10 +702,10 @@ export class Game {
     this.ui.updateLevels({
       worlds: WORLDS.map((w, wi) => ({
         name: w.name, color: w.color, bonus: !!w.bonus, unlocked: worldUnlocked(pr, wi),
-        levels: w.levels.map((l) => ({ name: l.name, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
+        levels: w.levels.map((l) => ({ name: l.name, wip: !!l.wip, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
       })),
       level: {
-        name: L.name, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name, mapImg: mapImg((MAPS.find((m) => m.id === L.map) || MAPS[0]).id),
+        name: L.name, wip: !!L.wip, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name, mapImg: mapImg((MAPS.find((m) => m.id === L.map) || MAPS[0]).id),
         budget: L.budget, cap: L.cap, enemyValue: armyValue(enemy), enemyCount: enemy.length,
         enemy: [...counts].map(([id, n]) => ({ id, n })), stars: pr.stars[L.id] || 0, best: pr.best[L.id],
         starGold: starGold(L), unlocked: levelUnlocked(pr, L),
@@ -773,6 +775,7 @@ export class Game {
     const [a, b] = this.ps;
     if (this.mode === 'versus') { a.team = 0; b.team = 1; b.active = true; }
     else if (this.mode === 'campaign') { a.team = 0; b.team = 0; b.active = !!this.progress.coop; }
+    else if (this.settings.sandboxPlayers === 2) { a.team = 0; b.team = 1; b.active = true; } // 2-player sandbox: one army each
     else { a.team = a.team === 1 ? 1 : 0; b.team = 1; b.active = false; }
     a.active = true;
     const nf = this.factionList().length;
@@ -949,7 +952,7 @@ export class Game {
   // what stops this player from readying up ('' if nothing)
   readyProblem(p) {
     const ps = this.ps[p];
-    const teams = this.mode === 'sandbox' ? [ps.team, 1 - ps.team] : [ps.team];
+    const teams = this.mode === 'sandbox' && this.solo ? [ps.team, 1 - ps.team] : [ps.team];
     for (const t of teams) {
       const n = this.armies[t].length, used = this.armyCost(t);
       const name = teams.length > 1 ? `${teamTag(t)} army: ` : '';
@@ -1319,7 +1322,7 @@ export class Game {
     const ot = 1 - t;
     const enemy = this.armies[ot];
     let foeTag = TEAM_NAMES[ot], foeState = '';
-    if (this.mode === 'versus') foeState = this.ps[1 - p].ready ? '<b class="ok">✔ READY</b>' : '<small class="busy">building…</small>';
+    if (this.mode === 'versus' || (this.mode === 'sandbox' && !this.solo)) foeState = this.ps[1 - p].ready ? '<b class="ok">✔ READY</b>' : '<small class="busy">building…</small>';
     else if (this.mode === 'campaign') { foeTag += ' (enemy)'; foeState = others.length ? (this.ps[others[0]].ready ? `<b class="ok">P${others[0] + 1} ✔</b>` : `<small class="busy">P${others[0] + 1} building…</small>`) : ''; }
     this.ui.updateSetup(p, {
       pad: I.hasPad(p), team: t, coop: this.mode === 'campaign' && !this.solo, solo: this.solo,
@@ -1773,7 +1776,7 @@ export class Game {
       else if (this.mode === 'versus') match = this.scoreRound(b.winner);
     }
     this.ui.only('battle', 'result');
-    const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' ? [...TEAM_NAMES] : null;
+    const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
     this.ui.showResult({ winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
     this.audio.play('fanfare', null, 0.9, 1);

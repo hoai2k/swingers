@@ -1,668 +1,55 @@
 {
- "t1": {
-  "name": "First Contact",
-  "world": "tribal",
-  "budget": 500,
-  "cap": 12,
-  "enemyValue": 420,
-  "stars": [
-   350,
-   450
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     2
-    ]
-   ],
-   "cost": 280,
-   "confirm": "6/6",
-   "avgTime": 16.7
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     2
-    ]
-   ],
-   "cost": 280,
-   "confirm": "6/6",
-   "avgTime": 16.7
-  },
-  "alt": {
-   "army": [
-    [
-     "protector",
-     5
-    ]
-   ],
-   "cost": 400,
-   "confirm": "6/6",
-   "avgTime": 17.5
-  },
-  "suggest": {
-   "g3": 400,
-   "g2": 550,
-   "budgetMin": 700
-  },
-  "tried": 37,
-  "secs": 522,
-  "date": "2026-10-24"
- },
- "t4": {
-  "name": "Hay Day",
-  "world": "tribal",
-  "budget": 1000,
-  "cap": 18,
-  "enemyValue": 760,
-  "stars": [
-   700,
-   900
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     4
-    ],
-    [
-     "protector",
-     1
-    ]
-   ],
-   "cost": 640,
-   "confirm": "5/6",
-   "avgTime": 35.7
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     6
-    ]
-   ],
-   "cost": 840,
-   "confirm": "6/6",
-   "avgTime": 23.8
-  },
-  "alt": {
-   "army": [
-    [
-     "halfling",
-     13
-    ],
-    [
-     "protector",
-     1
-    ]
-   ],
-   "cost": 730,
-   "confirm": "5/6",
-   "avgTime": 29.8
-  },
-  "suggest": {
-   "g3": 800,
-   "g2": 1050,
-   "budgetMin": 1300
-  },
-  "tried": 51,
-  "secs": 926,
-  "date": "2026-10-25"
- },
- "t2": {
-  "name": "Shield Wall",
-  "world": "tribal",
-  "budget": 700,
-  "cap": 14,
-  "enemyValue": 760,
-  "stars": [
-   490,
-   630
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     3
-    ]
-   ],
-   "cost": 420,
-   "confirm": "5/6",
-   "avgTime": 28.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     3
-    ]
-   ],
-   "cost": 420,
-   "confirm": "5/6",
-   "avgTime": 28.3
-  },
-  "alt": {
-   "army": [
-    [
-     "halfling",
-     1
-    ],
-    [
-     "protector",
-     9
-    ]
-   ],
-   "cost": 770,
-   "confirm": "5/6",
-   "avgTime": 27.3
-  },
-  "suggest": {
-   "g3": 600,
-   "g2": 700,
-   "budget": 900,
-   "need": 900
-  },
-  "tried": 48,
-  "secs": 43,
-  "date": "2026-10-25"
- },
- "t3": {
-  "name": "Spears Incoming",
-  "world": "tribal",
-  "budget": 900,
-  "cap": 16,
-  "enemyValue": 900,
-  "stars": [
-   630,
-   810
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "clubber",
-     1
-    ],
-    [
-     "protector",
-     6
-    ]
-   ],
-   "cost": 550,
-   "confirm": "6/6",
-   "avgTime": 39
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "protector",
-     8
-    ]
-   ],
-   "cost": 640,
-   "confirm": "6/6",
-   "avgTime": 34.5
-  },
-  "alt": {
-   "army": [
-    [
-     "clubber",
-     13
-    ]
-   ],
-   "cost": 910,
-   "confirm": "6/6",
-   "avgTime": 21.1
-  },
-  "suggest": {
-   "g3": 800,
-   "g2": 1050,
-   "budgetMin": 1300
-  },
-  "tried": 46,
-  "secs": 927,
-  "date": "2026-10-24"
- },
- "m1": {
-  "name": "Archer Line",
-  "world": "medieval",
-  "budget": 1000,
-  "cap": 16,
-  "enemyValue": 1120,
-  "stars": [
-   700,
-   900
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "protector",
-     6
-    ]
-   ],
-   "cost": 480,
-   "confirm": "6/6",
-   "avgTime": 41.7
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "protector",
-     6
-    ]
-   ],
-   "cost": 480,
-   "confirm": "6/6",
-   "avgTime": 41.7
-  },
-  "alt": {
-   "army": [
-    [
-     "squire",
-     7
-    ]
-   ],
-   "cost": 700,
-   "confirm": "6/6",
-   "avgTime": 18.8
-  },
-  "suggest": {
-   "g3": 700,
-   "g2": 950,
-   "budgetMin": 1150
-  },
-  "tried": 44,
-  "secs": 963,
-  "date": "2026-10-24"
- },
- "t5": {
-  "name": "The Chieftain",
-  "world": "tribal",
-  "budget": 1500,
-  "cap": 24,
-  "enemyValue": 1680,
-  "stars": [
-   1050,
-   1350
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     5
-    ],
-    [
-     "protector",
-     1
-    ]
-   ],
-   "cost": 780,
-   "confirm": "6/6",
-   "avgTime": 26.6
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     7
-    ]
-   ],
-   "cost": 980,
-   "confirm": "5/6",
-   "avgTime": 23.5
-  },
-  "alt": {
-   "army": [
-    [
-     "clubber",
-     1
-    ],
-    [
-     "protector",
-     14
-    ]
-   ],
-   "cost": 1190,
-   "confirm": "6/6",
-   "avgTime": 22.5
-  },
-  "suggest": {
-   "g3": 1100,
-   "g2": 1450,
-   "budgetMin": 1750
-  },
-  "tried": 58,
-  "secs": 1242,
-  "date": "2026-10-24"
- },
- "m3": {
-  "name": "One Knight",
-  "world": "medieval",
-  "budget": 600,
-  "cap": 14,
-  "enemyValue": 890,
-  "stars": [
-   420,
-   540
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "halfling",
-     1
-    ],
-    [
-     "hay_baler",
-     1
-    ]
-   ],
-   "cost": 190,
-   "confirm": "6/6",
-   "avgTime": 56.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     2
-    ]
-   ],
-   "cost": 280,
-   "confirm": "6/6",
-   "avgTime": 35.9
-  },
-  "alt": {
-   "army": [
-    [
-     "halfling",
-     1
-    ],
-    [
-     "protector",
-     7
-    ]
-   ],
-   "cost": 610,
-   "confirm": "5/6",
-   "avgTime": 28.6
-  },
-  "suggest": {
-   "g3": 300,
-   "g2": 350,
-   "budget": 600,
-   "need": 500
-  },
-  "tried": 43,
-  "secs": 335,
-  "date": "2026-10-25"
- },
- "m4": {
-  "name": "Potion Panic",
-  "world": "medieval",
-  "budget": 1400,
-  "cap": 24,
-  "enemyValue": 1420,
-  "stars": [
-   980,
-   1260
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "bard",
-     1
-    ],
-    [
-     "chieftain",
-     1
-    ]
-   ],
-   "cost": 460,
-   "confirm": "5/6",
-   "avgTime": 26.4
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "knight",
-     1
-    ]
-   ],
-   "cost": 650,
-   "confirm": "5/6",
-   "avgTime": 42.5
-  },
-  "alt": {
-   "army": [
-    [
-     "knight",
-     1
-    ]
-   ],
-   "cost": 650,
-   "confirm": "5/6",
-   "avgTime": 42.5
-  },
-  "suggest": {
-   "g3": 650,
-   "g2": 850,
-   "budgetMin": 1050
-  },
-  "tried": 55,
-  "secs": 805,
-  "date": "2026-10-24"
- },
- "l1": {
-  "name": "Berserk",
-  "world": "legacy",
-  "budget": 1600,
+ "a1": {
+  "name": "Phalanx",
+  "world": "ancient",
+  "budget": 2000,
   "cap": 20,
-  "enemyValue": 1680,
+  "enemyValue": 1440,
   "stars": [
-   1120,
-   1440
+   1400,
+   1650
   ],
   "cheapest": {
    "army": [
     [
-     "protector",
-     14
+     "an_minotaur",
+     2
     ]
    ],
-   "cost": 1120,
-   "confirm": "5/6",
-   "avgTime": 20.8
+   "cost": 1300,
+   "confirm": "6/6",
+   "avgTime": 47.3
   },
   "cheapestMono": {
    "army": [
     [
-     "protector",
-     14
+     "an_minotaur",
+     2
     ]
    ],
-   "cost": 1120,
-   "confirm": "5/6",
-   "avgTime": 20.8
-  },
-  "alt": {
-   "army": [
-    [
-     "hay_baler",
-     8
-    ]
-   ],
-   "cost": 1120,
+   "cost": 1300,
    "confirm": "6/6",
-   "avgTime": 13.6
-  },
-  "suggest": {
-   "g3": 1350,
-   "g2": 1800,
-   "budgetMin": 2200
-  },
-  "tried": 56,
-  "secs": 658,
-  "date": "2026-10-25"
- },
- "m2": {
-  "name": "Squire Squad",
-  "world": "medieval",
-  "budget": 1300,
-  "cap": 20,
-  "enemyValue": 1360,
-  "stars": [
-   910,
-   1170
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     5
-    ],
-    [
-     "squire",
-     1
-    ]
-   ],
-   "cost": 800,
-   "confirm": "5/6",
-   "avgTime": 48.4
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     6
-    ]
-   ],
-   "cost": 840,
-   "confirm": "6/6",
-   "avgTime": 53.1
+   "avgTime": 47.3
   },
   "alt": {
    "army": [
     [
      "squire",
-     14
+     12
     ]
    ],
-   "cost": 1400,
+   "cost": 1320,
    "confirm": "5/6",
-   "avgTime": 19.4
+   "avgTime": 16.3
   },
   "suggest": {
-   "g3": 1150,
-   "g2": 1500,
-   "budgetMin": 1800
-  },
-  "tried": 62,
-  "secs": 1103,
-  "date": "2026-10-25"
- },
- "l2": {
-  "name": "Bombs Away",
-  "world": "legacy",
-  "budget": 2200,
-  "cap": 24,
-  "enemyValue": 2280,
-  "stars": [
-   1540,
-   1980
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "sm_cavalry",
-     1
-    ]
-   ],
-   "cost": 750,
-   "confirm": "6/6",
-   "avgTime": 34.9
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "sm_cavalry",
-     1
-    ]
-   ],
-   "cost": 750,
-   "confirm": "6/6",
-   "avgTime": 34.9
-  },
-  "alt": {
-   "army": [
-    [
-     "halfling",
-     24
-    ]
-   ],
-   "cost": 1200,
-   "confirm": "5/6",
-   "avgTime": 22.2
-  },
-  "suggest": {
-   "g3": 1050,
-   "g2": 1400,
-   "budgetMin": 1700
-  },
-  "tried": 38,
-  "secs": 538,
-  "date": "2026-10-25"
- },
- "l5": {
-  "name": "Legacy Legion",
-  "world": "legacy",
-  "budget": 6500,
-  "cap": 32,
-  "enemyValue": 6680,
-  "stars": [
-   4550,
-   5850
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "king",
-     3
-    ]
-   ],
-   "cost": 4500,
-   "confirm": "5/6",
-   "avgTime": 36.5
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "king",
-     3
-    ]
-   ],
-   "cost": 4500,
-   "confirm": "5/6",
-   "avgTime": 36.5
-  },
-  "alt": {
-   "army": [
-    [
-     "berserker",
-     15
-    ]
-   ],
-   "cost": 6300,
-   "confirm": "5/6",
-   "avgTime": 17.9
-  },
-  "suggest": {
-   "g3": 6300,
-   "g2": 8200,
-   "budgetMin": 9850
+   "g3": 1600,
+   "g2": 1850,
+   "budget": 2200,
+   "need": 2200
   },
   "tried": 60,
-  "secs": 878,
+  "secs": 596,
   "date": "2026-10-25"
  },
  "a2": {
@@ -670,202 +57,774 @@
   "world": "ancient",
   "budget": 2000,
   "cap": 20,
-  "enemyValue": 1650,
+  "enemyValue": 1250,
   "stars": [
-   1400,
-   1800
+   950,
+   1100
   ],
   "cheapest": {
    "army": [
     [
-     "bard",
-     1
-    ],
-    [
-     "vk_brawler",
+     "an_hoplite",
      7
     ]
    ],
-   "cost": 760,
-   "confirm": "6/6",
-   "avgTime": 23.7
+   "cost": 840,
+   "confirm": "5/6",
+   "avgTime": 23.9
   },
   "cheapestMono": {
    "army": [
     [
-     "squire",
-     9
+     "an_hoplite",
+     7
     ]
    ],
-   "cost": 900,
-   "confirm": "6/6",
-   "avgTime": 20
+   "cost": 840,
+   "confirm": "5/6",
+   "avgTime": 23.9
   },
   "alt": {
    "army": [
     [
      "squire",
-     9
+     8
     ]
    ],
-   "cost": 900,
+   "cost": 880,
    "confirm": "6/6",
-   "avgTime": 20
+   "avgTime": 22.3
   },
   "suggest": {
-   "g3": 950,
+   "g3": 1050,
    "g2": 1250,
-   "budgetMin": 1500
+   "budget": 2000,
+   "need": 1500
   },
-  "tried": 39,
-  "secs": 670,
+  "tried": 56,
+  "secs": 471,
   "date": "2026-10-25"
  },
- "l3": {
-  "name": "Wizard's Guard",
-  "world": "legacy",
-  "budget": 2600,
-  "cap": 28,
-  "enemyValue": 2400,
+ "a3": {
+  "name": "Headbutt Hill",
+  "world": "ancient",
+  "budget": 2500,
+  "cap": 20,
+  "enemyValue": 1140,
   "stars": [
-   1820,
-   2340
+   1800,
+   2100
   ],
   "cheapest": {
    "army": [
     [
-     "hay_baler",
-     3
-    ],
-    [
-     "king",
-     1
+     "vk_headbutter",
+     13
     ]
    ],
-   "cost": 1920,
+   "cost": 1170,
    "confirm": "5/6",
-   "avgTime": 31
+   "avgTime": 47.8
   },
   "cheapestMono": {
    "army": [
     [
-     "sm_mammoth",
+     "vk_headbutter",
+     13
+    ]
+   ],
+   "cost": 1170,
+   "confirm": "5/6",
+   "avgTime": 47.8
+  },
+  "alt": {
+   "army": [
+    [
+     "vk_brawler",
+     15
+    ]
+   ],
+   "cost": 1500,
+   "confirm": "6/6",
+   "avgTime": 19.9
+  },
+  "suggest": {
+   "g3": 1500,
+   "g2": 1750,
+   "budget": 2500,
+   "need": 2100
+  },
+  "tried": 72,
+  "secs": 814,
+  "date": "2026-10-25"
+ },
+ "a4": {
+  "name": "Horns on Ice",
+  "world": "ancient",
+  "budget": 2600,
+  "cap": 22,
+  "enemyValue": 2000,
+  "stars": [
+   1900,
+   2200
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "squire",
+     14
+    ],
+    [
+     "vk_headbutter",
      1
     ]
    ],
-   "cost": 2200,
+   "cost": 1630,
+   "confirm": "5/6",
+   "avgTime": 37.7
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "squire",
+     17
+    ]
+   ],
+   "cost": 1870,
    "confirm": "6/6",
-   "avgTime": 40.7
+   "avgTime": 25.4
+  },
+  "alt": {
+   "army": [
+    [
+     "an_hoplite",
+     17
+    ]
+   ],
+   "cost": 2040,
+   "confirm": "6/6",
+   "avgTime": 29.4
+  },
+  "suggest": {
+   "g3": 2050,
+   "g2": 2400,
+   "budget": 2800,
+   "need": 2800
+  },
+  "tried": 90,
+  "secs": 989,
+  "date": "2026-10-25"
+ },
+ "a5": {
+  "name": "Thunder Gods",
+  "world": "ancient",
+  "budget": 5000,
+  "cap": 30,
+  "enemyValue": 4670,
+  "stars": [
+   3450,
+   4000
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "knight",
+     1
+    ],
+    [
+     "sm_valkyrie",
+     3
+    ]
+   ],
+   "cost": 2720,
+   "confirm": "5/6",
+   "avgTime": 53.1
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "sm_valkyrie",
+     4
+    ]
+   ],
+   "cost": 2800,
+   "confirm": "5/6",
+   "avgTime": 57.4
+  },
+  "alt": {
+   "army": [
+    [
+     "an_minotaur",
+     7
+    ]
+   ],
+   "cost": 4550,
+   "confirm": "6/6",
+   "avgTime": 52.8
+  },
+  "suggest": {
+   "g3": 3700,
+   "g2": 4300,
+   "budget": 5000,
+   "need": 5000
+  },
+  "tried": 82,
+  "secs": 1044,
+  "date": "2026-10-25"
+ },
+ "d1": {
+  "name": "Palm Strike",
+  "world": "dynasty",
+  "budget": 1600,
+  "cap": 20,
+  "enemyValue": 900,
+  "stars": [
+   1050,
+   1250
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "pr_caveman",
+     18
+    ]
+   ],
+   "cost": 900,
+   "confirm": "5/6",
+   "avgTime": 26.8
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_caveman",
+     18
+    ]
+   ],
+   "cost": 900,
+   "confirm": "5/6",
+   "avgTime": 26.8
+  },
+  "alt": {
+   "army": [
+    [
+     "pr_ptero",
+     3
+    ]
+   ],
+   "cost": 930,
+   "confirm": "6/6",
+   "avgTime": 61.7
+  },
+  "suggest": {
+   "g3": 1100,
+   "g2": 1300,
+   "budget": 1600,
+   "need": 1500
+  },
+  "tried": 67,
+  "secs": 787,
+  "date": "2026-10-25"
+ },
+ "d2": {
+  "name": "Clever Girls",
+  "world": "dynasty",
+  "budget": 2000,
+  "cap": 22,
+  "enemyValue": 1100,
+  "stars": [
+   1350,
+   1600
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "dy_monk",
+     1
+    ],
+    [
+     "pr_caveman",
+     16
+    ]
+   ],
+   "cost": 875,
+   "confirm": "5/6",
+   "avgTime": 14
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_caveman",
+     20
+    ]
+   ],
+   "cost": 1000,
+   "confirm": "6/6",
+   "avgTime": 15.6
+  },
+  "alt": {
+   "army": [
+    [
+     "dy_monk",
+     17
+    ]
+   ],
+   "cost": 1275,
+   "confirm": "5/6",
+   "avgTime": 15.9
+  },
+  "suggest": {
+   "g3": 1200,
+   "g2": 1400,
+   "budget": 2000,
+   "need": 1700
+  },
+  "tried": 76,
+  "secs": 806,
+  "date": "2026-10-25"
+ },
+ "d3": {
+  "name": "Rocket Rain",
+  "world": "dynasty",
+  "budget": 2600,
+  "cap": 24,
+  "enemyValue": 2310,
+  "stars": [
+   1800,
+   2100
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "an_snake_archer",
+     1
+    ],
+    [
+     "pr_ptero",
+     1
+    ],
+    [
+     "pr_raptor_rider",
+     3
+    ]
+   ],
+   "cost": 1550,
+   "confirm": "5/6",
+   "avgTime": 23.5
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_raptor_rider",
+     5
+    ]
+   ],
+   "cost": 1850,
+   "confirm": "5/6",
+   "avgTime": 19.7
+  },
+  "alt": {
+   "army": [
+    [
+     "pr_ptero",
+     6
+    ]
+   ],
+   "cost": 1860,
+   "confirm": "5/6",
+   "avgTime": 66.2
+  },
+  "suggest": {
+   "g3": 1900,
+   "g2": 2200,
+   "budget": 2600,
+   "need": 2600
+  },
+  "tried": 78,
+  "secs": 724,
+  "date": "2026-10-25"
+ },
+ "d4": {
+  "name": "Sky Snatchers",
+  "world": "dynasty",
+  "budget": 2600,
+  "cap": 24,
+  "enemyValue": 1290,
+  "stars": [
+   1300,
+   1500
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "dy_monk",
+     1
+    ],
+    [
+     "pr_caveman",
+     17
+    ]
+   ],
+   "cost": 925,
+   "confirm": "5/6",
+   "avgTime": 47.9
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_caveman",
+     20
+    ]
+   ],
+   "cost": 1000,
+   "confirm": "6/6",
+   "avgTime": 41.9
+  },
+  "alt": {
+   "army": [
+    [
+     "pr_raptor",
+     13
+    ]
+   ],
+   "cost": 1300,
+   "confirm": "6/6",
+   "avgTime": 13.2
+  },
+  "suggest": {
+   "g3": 1250,
+   "g2": 1450,
+   "budget": 2600,
+   "need": 1700
+  },
+  "tried": 68,
+  "secs": 780,
+  "date": "2026-10-25"
+ },
+ "d5": {
+  "name": "Lizard King",
+  "world": "dynasty",
+  "budget": 6000,
+  "cap": 30,
+  "enemyValue": 3810,
+  "stars": [
+   4000,
+   4600
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "an_snake_archer",
+     1
+    ],
+    [
+     "pr_raptor_rider",
+     1
+    ],
+    [
+     "vk_ice_archer",
+     13
+    ]
+   ],
+   "cost": 2775,
+   "confirm": "5/6",
+   "avgTime": 51.5
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_raptor_rider",
+     10
+    ]
+   ],
+   "cost": 3700,
+   "confirm": "6/6",
+   "avgTime": 25.1
+  },
+  "alt": {
+   "army": [
+    [
+     "an_hoplite",
+     1
+    ],
+    [
+     "pr_raptor_rider",
+     10
+    ]
+   ],
+   "cost": 3820,
+   "confirm": "6/6",
+   "avgTime": 24.6
+  },
+  "suggest": {
+   "g3": 3750,
+   "g2": 4350,
+   "budget": 6000,
+   "need": 5100
+  },
+  "tried": 102,
+  "secs": 1148,
+  "date": "2026-10-25"
+ },
+ "g1": {
+  "name": "Holy Wall",
+  "world": "goodevil",
+  "budget": 1500,
+  "cap": 24,
+  "enemyValue": 1685,
+  "stars": [
+   900,
+   1050
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "pr_raptor",
+     7
+    ]
+   ],
+   "cost": 700,
+   "confirm": "5/6",
+   "avgTime": 26.8
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_raptor",
+     7
+    ]
+   ],
+   "cost": 700,
+   "confirm": "5/6",
+   "avgTime": 26.8
+  },
+  "alt": {
+   "army": [
+    [
+     "clubber",
+     1
+    ],
+    [
+     "sp_skel_archer",
+     1
+    ],
+    [
+     "vk_headbutter",
+     18
+    ]
+   ],
+   "cost": 1760,
+   "confirm": "5/6",
+   "avgTime": 67.4
+  },
+  "suggest": {
+   "g3": 950,
+   "g2": 1100,
+   "budget": 1500,
+   "need": 1300
+  },
+  "tried": 106,
+  "secs": 1744,
+  "date": "2026-10-25"
+ },
+ "g2": {
+  "name": "Spin Cycle",
+  "world": "goodevil",
+  "budget": 1200,
+  "cap": 24,
+  "enemyValue": 1760,
+  "stars": [
+   650,
+   750
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "pr_raptor",
+     7
+    ],
+    [
+     "vk_headbutter",
+     1
+    ]
+   ],
+   "cost": 790,
+   "confirm": "5/6",
+   "avgTime": 19.6
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "pr_raptor",
+     8
+    ]
+   ],
+   "cost": 800,
+   "confirm": "6/6",
+   "avgTime": 15
+  },
+  "alt": {
+   "army": [
+    [
+     "ev_mace_spinner",
+     1
+    ],
+    [
+     "ww_gunslinger",
+     4
+    ]
+   ],
+   "cost": 1070,
+   "confirm": "6/6",
+   "avgTime": 25.9
+  },
+  "suggest": {
+   "g3": 1100,
+   "g2": 1300,
+   "budget": 1500,
+   "need": 1500
+  },
+  "tried": 171,
+  "secs": 2376,
+  "date": "2026-10-25"
+ },
+ "g3": {
+  "name": "Rise Again",
+  "world": "goodevil",
+  "budget": 2600,
+  "cap": 30,
+  "enemyValue": 2490,
+  "stars": [
+   1800,
+   2100
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "knight",
+     2
+    ]
+   ],
+   "cost": 1240,
+   "confirm": "6/6",
+   "avgTime": 38.9
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "knight",
+     2
+    ]
+   ],
+   "cost": 1240,
+   "confirm": "6/6",
+   "avgTime": 38.9
   },
   "alt": {
    "army": [
     [
      "berserker",
-     1
+     2
     ],
     [
-     "hay_baler",
-     10
-    ],
-    [
-     "protector",
-     1
+     "chieftain",
+     2
     ]
    ],
-   "cost": 1900,
-   "confirm": "5/6",
-   "avgTime": 20
+   "cost": 1380,
+   "confirm": "6/6",
+   "avgTime": 22.5
   },
   "suggest": {
-   "g3": 2350,
-   "g2": 3100,
-   "budgetMin": 3750
+   "g3": 1500,
+   "g2": 1750,
+   "budget": 2600,
+   "need": 2100
   },
-  "tried": 114,
-  "secs": 2086,
+  "tried": 150,
+  "secs": 2023,
   "date": "2026-10-25"
  },
- "l4": {
-  "name": "Giant Problem",
-  "world": "legacy",
-  "budget": 2600,
-  "cap": 24,
-  "enemyValue": 3620,
+ "g4": {
+  "name": "Wings of Light",
+  "world": "goodevil",
+  "budget": 3000,
+  "cap": 30,
+  "enemyValue": 1960,
   "stars": [
-   1820,
-   2340
+   1400,
+   1650
   ],
   "cheapest": {
    "army": [
     [
-     "hay_baler",
-     1
+     "pr_raptor",
+     9
     ],
     [
-     "spear_thrower",
-     5
+     "vk_headbutter",
+     1
     ]
    ],
-   "cost": 740,
-   "confirm": "5/6",
-   "avgTime": 51.9
+   "cost": 990,
+   "confirm": "6/6",
+   "avgTime": 22.4
   },
   "cheapestMono": {
    "army": [
     [
-     "archer",
-     6
+     "pr_raptor",
+     20
     ]
    ],
-   "cost": 840,
-   "confirm": "5/6",
-   "avgTime": 55.8
+   "cost": 2000,
+   "confirm": "6/6",
+   "avgTime": 16.5
   },
   "alt": {
    "army": [
     [
-     "archer",
-     6
+     "vk_headbutter",
+     24
     ]
    ],
-   "cost": 840,
+   "cost": 2160,
    "confirm": "5/6",
-   "avgTime": 55.8
+   "avgTime": 41.2
   },
   "suggest": {
-   "g3": 900,
-   "g2": 1050,
-   "budget": 2600,
-   "need": 1300
+   "g3": 1350,
+   "g2": 2300,
+   "budget": 3000,
+   "need": 2700
   },
-  "tried": 76,
-  "secs": 2067,
+  "tried": 116,
+  "secs": 1767,
   "date": "2026-10-25"
  },
- "a1": {
-  "name": "Phalanx",
-  "world": "ancient",
-  "budget": 2000,
+ "l1": {
+  "name": "Berserk",
+  "world": "legacy",
+  "budget": 1900,
   "cap": 20,
-  "enemyValue": 1680,
+  "enemyValue": 1480,
   "stars": [
-   1400,
-   1800
+   1350,
+   1600
   ],
   "cheapest": {
    "army": [
     [
-     "bard",
+     "protector",
      1
     ],
     [
      "squire",
-     11
+     9
     ]
    ],
-   "cost": 1160,
+   "cost": 1100,
    "confirm": "5/6",
-   "avgTime": 14.8
+   "avgTime": 11.1
   },
   "cheapestMono": {
    "army": [
@@ -874,9 +833,404 @@
      12
     ]
    ],
-   "cost": 1200,
+   "cost": 1320,
+   "confirm": "6/6",
+   "avgTime": 9
+  },
+  "alt": {
+   "army": [
+    [
+     "protector",
+     13
+    ]
+   ],
+   "cost": 1430,
+   "confirm": "6/6",
+   "avgTime": 18.6
+  },
+  "suggest": {
+   "g3": 1450,
+   "g2": 1700,
+   "budget": 2000,
+   "need": 2000
+  },
+  "tried": 72,
+  "secs": 329,
+  "date": "2026-10-25"
+ },
+ "l2": {
+  "name": "Bombs Away",
+  "world": "legacy",
+  "budget": 2200,
+  "cap": 24,
+  "enemyValue": 1920,
+  "stars": [
+   1050,
+   1250
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "sm_cavalry",
+     1
+    ]
+   ],
+   "cost": 640,
+   "confirm": "6/6",
+   "avgTime": 30.1
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "sm_cavalry",
+     1
+    ]
+   ],
+   "cost": 640,
+   "confirm": "6/6",
+   "avgTime": 30.1
+  },
+  "alt": {
+   "army": [
+    [
+     "knight",
+     2
+    ]
+   ],
+   "cost": 1240,
    "confirm": "5/6",
-   "avgTime": 16.1
+   "avgTime": 25.6
+  },
+  "suggest": {
+   "g3": 900,
+   "g2": 1050,
+   "budget": 2200,
+   "need": 1300
+  },
+  "tried": 37,
+  "secs": 101,
+  "date": "2026-10-25"
+ },
+ "l3": {
+  "name": "Wizard's Guard",
+  "world": "legacy",
+  "budget": 3200,
+  "cap": 28,
+  "enemyValue": 2260,
+  "stars": [
+   2350,
+   2750
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "giant",
+     1
+    ]
+   ],
+   "cost": 1600,
+   "confirm": "5/6",
+   "avgTime": 46.3
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "giant",
+     1
+    ]
+   ],
+   "cost": 1600,
+   "confirm": "5/6",
+   "avgTime": 46.3
+  },
+  "alt": {
+   "army": [
+    [
+     "berserker",
+     4
+    ],
+    [
+     "hay_baler",
+     1
+    ]
+   ],
+   "cost": 1730,
+   "confirm": "5/6",
+   "avgTime": 12.1
+  },
+  "suggest": {
+   "g3": 1950,
+   "g2": 2250,
+   "budget": 3200,
+   "need": 2600
+  },
+  "tried": 75,
+  "secs": 770,
+  "date": "2026-10-25"
+ },
+ "l4": {
+  "name": "Giant Problem",
+  "world": "legacy",
+  "budget": 1800,
+  "cap": 24,
+  "enemyValue": 3560,
+  "stars": [
+   900,
+   1050
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "farmer",
+     1
+    ],
+    [
+     "halfling",
+     1
+    ],
+    [
+     "spear_thrower",
+     8
+    ]
+   ],
+   "cost": 1265,
+   "confirm": "5/6",
+   "avgTime": 57.9
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "spear_thrower",
+     10
+    ]
+   ],
+   "cost": 1450,
+   "confirm": "5/6",
+   "avgTime": 51.1
+  },
+  "alt": {
+   "army": [
+    [
+     "archer",
+     12
+    ]
+   ],
+   "cost": 1680,
+   "confirm": "6/6",
+   "avgTime": 36.4
+  },
+  "suggest": {
+   "g3": 1700,
+   "g2": 2000,
+   "budget": 2300,
+   "need": 2300
+  },
+  "tried": 78,
+  "secs": 821,
+  "date": "2026-10-25"
+ },
+ "l5": {
+  "name": "Legacy Legion",
+  "world": "legacy",
+  "budget": 8200,
+  "cap": 32,
+  "enemyValue": 6280,
+  "stars": [
+   6100,
+   7050
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "berserker",
+     18
+    ]
+   ],
+   "cost": 6660,
+   "confirm": "5/6",
+   "avgTime": 17.3
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "berserker",
+     18
+    ]
+   ],
+   "cost": 6660,
+   "confirm": "5/6",
+   "avgTime": 17.3
+  },
+  "alt": {
+   "army": [
+    [
+     "giant",
+     5
+    ]
+   ],
+   "cost": 8000,
+   "confirm": "6/6",
+   "avgTime": 35.7
+  },
+  "suggest": {
+   "g3": 8000,
+   "g2": 9200,
+   "budget": 10700,
+   "need": 10700
+  },
+  "tried": 78,
+  "secs": 653,
+  "date": "2026-10-25"
+ },
+ "m1": {
+  "name": "Archer Line",
+  "world": "medieval",
+  "budget": 1000,
+  "cap": 16,
+  "enemyValue": 1120,
+  "stars": [
+   650,
+   750
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "squire",
+     4
+    ]
+   ],
+   "cost": 440,
+   "confirm": "5/6",
+   "avgTime": 30.5
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "squire",
+     4
+    ]
+   ],
+   "cost": 440,
+   "confirm": "5/6",
+   "avgTime": 30.5
+  },
+  "alt": {
+   "army": [
+    [
+     "clubber",
+     1
+    ],
+    [
+     "protector",
+     5
+    ]
+   ],
+   "cost": 610,
+   "confirm": "5/6",
+   "avgTime": 48.5
+  },
+  "suggest": {
+   "g3": 600,
+   "g2": 700,
+   "budget": 1000,
+   "need": 900
+  },
+  "tried": 52,
+  "secs": 0,
+  "date": "2026-10-25"
+ },
+ "m2": {
+  "name": "Squire Squad",
+  "world": "medieval",
+  "budget": 1500,
+  "cap": 20,
+  "enemyValue": 1440,
+  "stars": [
+   1100,
+   1300
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "knight",
+     1
+    ],
+    [
+     "sm_catapult",
+     1
+    ]
+   ],
+   "cost": 1070,
+   "confirm": "5/6",
+   "avgTime": 13.3
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "chieftain",
+     4
+    ]
+   ],
+   "cost": 1280,
+   "confirm": "6/6",
+   "avgTime": 7.9
+  },
+  "alt": {
+   "army": [
+    [
+     "chieftain",
+     4
+    ]
+   ],
+   "cost": 1280,
+   "confirm": "6/6",
+   "avgTime": 7.9
+  },
+  "suggest": {
+   "g3": 1300,
+   "g2": 1500,
+   "budget": 1800,
+   "need": 1800
+  },
+  "tried": 59,
+  "secs": 20,
+  "date": "2026-10-25"
+ },
+ "m3": {
+  "name": "One Knight",
+  "world": "medieval",
+  "budget": 600,
+  "cap": 14,
+  "enemyValue": 840,
+  "stars": [
+   300,
+   350
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "halfling",
+     1
+    ],
+    [
+     "hay_baler",
+     1
+    ]
+   ],
+   "cost": 295,
+   "confirm": "6/6",
+   "avgTime": 57.1
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "hay_baler",
+     2
+    ]
+   ],
+   "cost": 500,
+   "confirm": "6/6",
+   "avgTime": 36.4
   },
   "alt": {
    "army": [
@@ -885,21 +1239,79 @@
      1
     ],
     [
-     "vk_brawler",
-     11
+     "protector",
+     4
     ]
    ],
-   "cost": 1160,
+   "cost": 495,
    "confirm": "5/6",
-   "avgTime": 22.5
+   "avgTime": 31.9
   },
   "suggest": {
-   "g3": 1400,
-   "g2": 1850,
-   "budgetMin": 2250
+   "g3": 400,
+   "g2": 600,
+   "budget": 700,
+   "need": 700
   },
   "tried": 54,
-  "secs": 901,
+  "secs": 93,
+  "date": "2026-10-25"
+ },
+ "m4": {
+  "name": "Potion Panic",
+  "world": "medieval",
+  "budget": 1400,
+  "cap": 24,
+  "enemyValue": 930,
+  "stars": [
+   650,
+   750
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "chieftain",
+     1
+    ],
+    [
+     "halfling",
+     3
+    ]
+   ],
+   "cost": 455,
+   "confirm": "6/6",
+   "avgTime": 24.3
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "chieftain",
+     2
+    ]
+   ],
+   "cost": 640,
+   "confirm": "6/6",
+   "avgTime": 18.5
+  },
+  "alt": {
+   "army": [
+    [
+     "halfling",
+     16
+    ]
+   ],
+   "cost": 720,
+   "confirm": "5/6",
+   "avgTime": 18.9
+  },
+  "suggest": {
+   "g3": 650,
+   "g2": 750,
+   "budget": 1400,
+   "need": 900
+  },
+  "tried": 48,
+  "secs": 168,
   "date": "2026-10-25"
  },
  "m5": {
@@ -907,465 +1319,46 @@
   "world": "medieval",
   "budget": 3500,
   "cap": 30,
-  "enemyValue": 2740,
+  "enemyValue": 2930,
   "stars": [
    2450,
-   3150
+   2900
   ],
   "cheapest": {
    "army": [
     [
-     "hay_baler",
-     11
-    ],
-    [
-     "protector",
-     2
-    ],
-    [
-     "squire",
-     1
-    ]
-   ],
-   "cost": 1800,
-   "confirm": "5/6",
-   "avgTime": 39.6
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     18
-    ]
-   ],
-   "cost": 2520,
-   "confirm": "6/6",
-   "avgTime": 33.5
-  },
-  "alt": {
-   "army": [
-    [
-     "farmer",
-     1
-    ],
-    [
-     "protector",
+     "sm_cavalry",
      1
     ],
     [
      "spear_thrower",
-     21
-    ]
-   ],
-   "cost": 2680,
-   "confirm": "6/6",
-   "avgTime": 42.3
-  },
-  "suggest": {
-   "g3": 2450,
-   "g2": 2900,
-   "budget": 3500,
-   "need": 3400
-  },
-  "tried": 103,
-  "secs": 89,
-  "date": "2026-10-25"
- },
- "a3": {
-  "name": "Headbutt Hill",
-  "world": "ancient",
-  "budget": 1800,
-  "cap": 20,
-  "enemyValue": 1200,
-  "stars": [
-   1260,
-   1620
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "vk_headbutter",
-     15
-    ]
-   ],
-   "cost": 1500,
-   "confirm": "5/6",
-   "avgTime": 34.2
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "vk_headbutter",
-     15
-    ]
-   ],
-   "cost": 1500,
-   "confirm": "5/6",
-   "avgTime": 34.2
-  },
-  "alt": {
-   "army": [
-    [
-     "king",
-     1
-    ]
-   ],
-   "cost": 1500,
-   "confirm": "6/6",
-   "avgTime": 12.1
-  },
-  "suggest": {
-   "g3": 1800,
-   "g2": 2350,
-   "budgetMin": 2850
-  },
-  "tried": 56,
-  "secs": 828,
-  "date": "2026-10-25"
- },
- "a4": {
-  "name": "Horns on Ice",
-  "world": "ancient",
-  "budget": 2600,
-  "cap": 22,
-  "enemyValue": 1960,
-  "stars": [
-   1820,
-   2340
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "bard",
-     1
-    ],
-    [
-     "squire",
-     14
-    ],
-    [
-     "vk_headbutter",
-     1
-    ]
-   ],
-   "cost": 1560,
-   "confirm": "5/6",
-   "avgTime": 32.6
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "squire",
-     17
-    ]
-   ],
-   "cost": 1700,
-   "confirm": "6/6",
-   "avgTime": 35.3
-  },
-  "alt": {
-   "army": [
-    [
-     "vk_brawler",
-     19
-    ]
-   ],
-   "cost": 1900,
-   "confirm": "6/6",
-   "avgTime": 29.4
-  },
-  "suggest": {
-   "g3": 1900,
-   "g2": 2500,
-   "budgetMin": 3000
-  },
-  "tried": 83,
-  "secs": 1363,
-  "date": "2026-10-25"
- },
- "a5": {
-  "name": "Thunder Gods",
-  "world": "ancient",
-  "budget": 5000,
-  "cap": 30,
-  "enemyValue": 4340,
-  "stars": [
-   3500,
-   4500
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "bb_war_elephant",
-     1
-    ],
-    [
-     "knight",
-     1
-    ]
-   ],
-   "cost": 2850,
-   "confirm": "5/6",
-   "avgTime": 59
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "sm_valkyrie",
-     4
-    ]
-   ],
-   "cost": 3400,
-   "confirm": "5/6",
-   "avgTime": 56.7
-  },
-  "alt": {
-   "army": [
-    [
-     "sm_valkyrie",
-     4
-    ]
-   ],
-   "cost": 3400,
-   "confirm": "5/6",
-   "avgTime": 56.7
-  },
-  "suggest": {
-   "g3": 3450,
-   "g2": 4500,
-   "budgetMin": 5400
-  },
-  "tried": 79,
-  "secs": 189,
-  "date": "2026-10-25"
- },
- "d3": {
-  "name": "Rocket Rain",
-  "world": "dynasty",
-  "budget": 2600,
-  "cap": 24,
-  "enemyValue": 2380,
-  "stars": [
-   1820,
-   2340
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_raptor_rider",
-     4
-    ]
-   ],
-   "cost": 1480,
-   "confirm": "6/6",
-   "avgTime": 24.5
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor_rider",
-     4
-    ]
-   ],
-   "cost": 1480,
-   "confirm": "6/6",
-   "avgTime": 24.5
-  },
-  "alt": {
-   "army": [
-    [
-     "an_zeus",
-     1
-    ]
-   ],
-   "cost": 1800,
-   "confirm": "6/6",
-   "avgTime": 20.1
-  },
-  "suggest": {
-   "g3": 1800,
-   "g2": 2350,
-   "budgetMin": 2850
-  },
-  "tried": 54,
-  "secs": 265,
-  "date": "2026-10-25"
- },
- "d2": {
-  "name": "Clever Girls",
-  "world": "dynasty",
-  "budget": 2000,
-  "cap": 22,
-  "enemyValue": 1210,
-  "stars": [
-   1400,
-   1800
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_caveman",
-     16
-    ],
-    [
-     "pr_raptor",
-     1
-    ]
-   ],
-   "cost": 990,
-   "confirm": "5/6",
-   "avgTime": 11.4
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_caveman",
-     19
-    ]
-   ],
-   "cost": 1045,
-   "confirm": "5/6",
-   "avgTime": 15.4
-  },
-  "alt": {
-   "army": [
-    [
-     "dy_monk",
      16
     ]
    ],
-   "cost": 1360,
-   "confirm": "6/6",
-   "avgTime": 20.3
-  },
-  "suggest": {
-   "g3": 1400,
-   "g2": 1850,
-   "budgetMin": 2250
-  },
-  "tried": 70,
-  "secs": 673,
-  "date": "2026-10-25"
- },
- "d4": {
-  "name": "Sky Snatchers",
-  "world": "dynasty",
-  "budget": 2600,
-  "cap": 24,
-  "enemyValue": 1400,
-  "stars": [
-   1820,
-   2340
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "dy_monk",
-     1
-    ],
-    [
-     "pr_caveman",
-     18
-    ]
-   ],
-   "cost": 1075,
-   "confirm": "6/6",
-   "avgTime": 30.7
+   "cost": 2960,
+   "confirm": "5/6",
+   "avgTime": 44.6
   },
   "cheapestMono": {
    "army": [
     [
-     "pr_caveman",
+     "spear_thrower",
      22
     ]
    ],
-   "cost": 1210,
-   "confirm": "6/6",
-   "avgTime": 43.2
-  },
-  "alt": {
-   "army": [
-    [
-     "dy_monk",
-     1
-    ],
-    [
-     "pr_raptor",
-     9
-    ],
-    [
-     "vk_brawler",
-     1
-    ]
-   ],
-   "cost": 1175,
+   "cost": 3190,
    "confirm": "5/6",
-   "avgTime": 19.8
+   "avgTime": 39.1
   },
+  "alt": null,
   "suggest": {
-   "g3": 1300,
-   "g2": 1500,
-   "budget": 2600,
-   "need": 1800
+   "g3": 4000,
+   "g2": 4600,
+   "budget": 5300,
+   "need": 5300
   },
-  "tried": 96,
-  "secs": 2634,
-  "date": "2026-10-25"
- },
- "d1": {
-  "name": "Palm Strike",
-  "world": "dynasty",
-  "budget": 1600,
-  "cap": 20,
-  "enemyValue": 1020,
-  "stars": [
-   1120,
-   1440
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_ptero",
-     1
-    ],
-    [
-     "vk_brawler",
-     5
-    ]
-   ],
-   "cost": 850,
-   "confirm": "5/6",
-   "avgTime": 48.7
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "vk_brawler",
-     9
-    ]
-   ],
-   "cost": 900,
-   "confirm": "5/6",
-   "avgTime": 20
-  },
-  "alt": {
-   "army": [
-    [
-     "pr_caveman",
-     17
-    ]
-   ],
-   "cost": 935,
-   "confirm": "5/6",
-   "avgTime": 26.6
-  },
-  "suggest": {
-   "g3": 1050,
-   "g2": 1400,
-   "budgetMin": 1700
-  },
-  "tried": 72,
-  "secs": 904,
+  "tried": 90,
+  "secs": 742,
   "date": "2026-10-25"
  },
  "p1": {
@@ -1375,106 +1368,50 @@
   "cap": 20,
   "enemyValue": 1040,
   "stars": [
-   1400,
-   1800
+   1200,
+   1400
   ],
   "cheapest": {
    "army": [
     [
-     "dy_samurai",
-     1
-    ],
-    [
-     "pr_raptor_rider",
-     2
+     "pr_raptor",
+     9
     ]
    ],
-   "cost": 970,
+   "cost": 900,
    "confirm": "6/6",
-   "avgTime": 20.5
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor",
-     10
-    ]
-   ],
-   "cost": 1100,
-   "confirm": "5/6",
-   "avgTime": 10.3
-  },
-  "alt": {
-   "army": [
-    [
-     "pr_raptor",
-     10
-    ]
-   ],
-   "cost": 1100,
-   "confirm": "5/6",
-   "avgTime": 10.3
-  },
-  "suggest": {
-   "g3": 1200,
-   "g2": 1400,
-   "budget": 2000,
-   "need": 1700
-  },
-  "tried": 75,
-  "secs": 1761,
-  "date": "2026-10-25"
- },
- "p3": {
-  "name": "Powder Keg",
-  "world": "pirate",
-  "budget": 2200,
-  "cap": 24,
-  "enemyValue": 1760,
-  "stars": [
-   1540,
-   1980
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_raptor_rider",
-     2
-    ]
-   ],
-   "cost": 740,
-   "confirm": "5/6",
-   "avgTime": 19.9
+   "avgTime": 11
   },
   "cheapestMono": {
    "army": [
     [
      "pr_raptor_rider",
-     2
+     3
     ]
    ],
-   "cost": 740,
-   "confirm": "5/6",
-   "avgTime": 19.9
+   "cost": 1110,
+   "confirm": "6/6",
+   "avgTime": 18.9
   },
   "alt": {
    "army": [
     [
-     "pr_caveman",
-     18
+     "pr_raptor",
+     9
     ]
    ],
-   "cost": 990,
-   "confirm": "5/6",
-   "avgTime": 31.9
+   "cost": 900,
+   "confirm": "6/6",
+   "avgTime": 11
   },
   "suggest": {
-   "g3": 1000,
+   "g3": 1100,
    "g2": 1300,
-   "budgetMin": 1600
+   "budget": 2000,
+   "need": 1500
   },
-  "tried": 55,
-  "secs": 788,
+  "tried": 54,
+  "secs": 545,
   "date": "2026-10-25"
  },
  "p2": {
@@ -1482,10 +1419,10 @@
   "world": "pirate",
   "budget": 1800,
   "cap": 20,
-  "enemyValue": 1300,
+  "enemyValue": 1440,
   "stars": [
-   1260,
-   1620
+   1150,
+   1350
   ],
   "cheapest": {
    "army": [
@@ -1494,99 +1431,105 @@
      1
     ],
     [
-     "pi_flintlock",
-     7
+     "ww_dynamite",
+     6
     ]
    ],
-   "cost": 925,
-   "confirm": "6/6",
-   "avgTime": 27.1
+   "cost": 795,
+   "confirm": "5/6",
+   "avgTime": 23.9
   },
   "cheapestMono": {
    "army": [
     [
-     "pi_flintlock",
+     "ww_dynamite",
      8
     ]
    ],
    "cost": 960,
    "confirm": "6/6",
-   "avgTime": 22.2
+   "avgTime": 21.7
   },
   "alt": {
    "army": [
     [
+     "dy_monk",
+     1
+    ],
+    [
+     "pi_bomb",
+     6
+    ],
+    [
      "pr_caveman",
-     20
+     1
     ]
    ],
-   "cost": 1100,
-   "confirm": "5/6",
-   "avgTime": 29.8
+   "cost": 845,
+   "confirm": "6/6",
+   "avgTime": 18.2
   },
   "suggest": {
-   "g3": 1150,
-   "g2": 1500,
-   "budgetMin": 1800
+   "g3": 1000,
+   "g2": 1150,
+   "budget": 1800,
+   "need": 1400
   },
-  "tried": 64,
-  "secs": 1078,
+  "tried": 78,
+  "secs": 744,
   "date": "2026-10-25"
  },
- "d5": {
-  "name": "Lizard King",
-  "world": "dynasty",
-  "budget": 6000,
-  "cap": 30,
-  "enemyValue": 4060,
+ "p3": {
+  "name": "Powder Keg",
+  "world": "pirate",
+  "budget": 2200,
+  "cap": 24,
+  "enemyValue": 1620,
   "stars": [
-   4200,
-   5400
+   1000,
+   1150
   ],
   "cheapest": {
    "army": [
     [
-     "vk_brawler",
-     1
-    ],
-    [
-     "vk_ice_archer",
-     19
+     "pr_caveman",
+     18
     ]
    ],
-   "cost": 2950,
-   "confirm": "5/6",
-   "avgTime": 40.1
+   "cost": 900,
+   "confirm": "6/6",
+   "avgTime": 32
   },
   "cheapestMono": {
    "army": [
     [
-     "vk_ice_archer",
-     21
+     "pr_caveman",
+     18
     ]
    ],
-   "cost": 3150,
+   "cost": 900,
    "confirm": "6/6",
-   "avgTime": 46.4
+   "avgTime": 32
   },
   "alt": {
    "army": [
     [
-     "pr_raptor_rider",
-     11
+     "pr_raptor",
+     10
     ]
    ],
-   "cost": 4070,
-   "confirm": "6/6",
-   "avgTime": 22.2
+   "cost": 1000,
+   "confirm": "5/6",
+   "avgTime": 12
   },
   "suggest": {
-   "g3": 4100,
-   "g2": 5350,
-   "budgetMin": 6450
+   "g3": 1100,
+   "g2": 1300,
+   "budget": 2200,
+   "need": 1500
   },
-  "tried": 94,
-  "secs": 1887,
+  "tried": 57,
+  "secs": 517,
   "date": "2026-10-25"
  },
  "p4": {
@@ -1594,10 +1537,10 @@
   "world": "pirate",
   "budget": 2400,
   "cap": 24,
-  "enemyValue": 1770,
+  "enemyValue": 1830,
   "stars": [
-   1680,
-   2160
+   1500,
+   1750
   ],
   "cheapest": {
    "army": [
@@ -1607,103 +1550,96 @@
     ],
     [
      "pr_raptor",
-     7
-    ],
-    [
-     "pr_raptor_rider",
-     1
+     11
     ]
    ],
-   "cost": 1195,
+   "cost": 1150,
    "confirm": "5/6",
-   "avgTime": 19.4
+   "avgTime": 18.7
   },
   "cheapestMono": {
    "army": [
     [
      "pr_raptor",
-     13
+     12
     ]
    ],
-   "cost": 1430,
-   "confirm": "6/6",
-   "avgTime": 15.6
+   "cost": 1200,
+   "confirm": "5/6",
+   "avgTime": 16.7
   },
   "alt": {
    "army": [
     [
-     "pr_raptor_rider",
-     4
+     "ww_lasso",
+     24
     ]
    ],
-   "cost": 1480,
-   "confirm": "6/6",
-   "avgTime": 29.8
+   "cost": 2160,
+   "confirm": "5/6",
+   "avgTime": 45.5
   },
   "suggest": {
-   "g3": 1500,
-   "g2": 1950,
-   "budgetMin": 2350
+   "g3": 1600,
+   "g2": 1850,
+   "budget": 2400,
+   "need": 2200
   },
-  "tried": 96,
-  "secs": 1426,
+  "tried": 56,
+  "secs": 602,
   "date": "2026-10-25"
  },
  "p5": {
   "name": "The Queen's Fleet",
   "world": "pirate",
-  "budget": 5500,
+  "budget": 4000,
   "cap": 30,
-  "enemyValue": 2730,
+  "enemyValue": 2720,
   "stars": [
-   3850,
-   4950
+   2250,
+   2600
   ],
   "cheapest": {
    "army": [
     [
      "pr_raptor",
-     17
+     16
     ]
    ],
-   "cost": 1870,
+   "cost": 1600,
    "confirm": "5/6",
-   "avgTime": 14.8
+   "avgTime": 14.3
   },
   "cheapestMono": {
    "army": [
     [
      "pr_raptor",
-     17
+     16
     ]
    ],
-   "cost": 1870,
+   "cost": 1600,
    "confirm": "5/6",
-   "avgTime": 14.8
+   "avgTime": 14.3
   },
   "alt": {
    "army": [
-    [
-     "pr_caveman",
-     1
-    ],
     [
      "pr_raptor_rider",
      5
     ]
    ],
-   "cost": 1905,
+   "cost": 1850,
    "confirm": "6/6",
-   "avgTime": 24.6
+   "avgTime": 28
   },
   "suggest": {
-   "g3": 2250,
-   "g2": 2600,
-   "budget": 5500,
-   "need": 3000
+   "g3": 1950,
+   "g2": 2250,
+   "budget": 4000,
+   "need": 2600
   },
-  "tried": 73,
-  "secs": 40,
+  "tried": 68,
+  "secs": 544,
   "date": "2026-10-25"
  },
  "r1": {
@@ -1711,111 +1647,52 @@
   "world": "renaissance",
   "budget": 1600,
   "cap": 30,
-  "enemyValue": 1220,
+  "enemyValue": 1180,
   "stars": [
-   1120,
-   1440
+   1100,
+   1300
   ],
   "cheapest": {
    "army": [
     [
      "pi_captain",
-     1
-    ],
-    [
-     "sp_vampire",
-     1
+     2
     ]
    ],
-   "cost": 790,
+   "cost": 840,
    "confirm": "5/6",
-   "avgTime": 12.4
+   "avgTime": 13.4
   },
   "cheapestMono": {
    "army": [
     [
-     "rn_painter",
-     11
+     "pi_captain",
+     2
     ]
    ],
-   "cost": 1100,
+   "cost": 840,
    "confirm": "5/6",
-   "avgTime": 34.8
+   "avgTime": 13.4
   },
   "alt": {
    "army": [
     [
-     "rn_painter",
-     11
+     "sp_skeleton",
+     28
     ]
    ],
-   "cost": 1100,
+   "cost": 980,
    "confirm": "5/6",
-   "avgTime": 34.8
+   "avgTime": 21.6
   },
   "suggest": {
-   "g3": 1100,
-   "g2": 1450,
-   "budgetMin": 1750
+   "g3": 1050,
+   "g2": 1250,
+   "budget": 1600,
+   "need": 1500
   },
-  "tried": 80,
-  "secs": 1262,
-  "date": "2026-10-25"
- },
- "r3": {
-  "name": "Fire!",
-  "world": "renaissance",
-  "budget": 2400,
-  "cap": 24,
-  "enemyValue": 1760,
-  "stars": [
-   1680,
-   2160
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "rn_halberd",
-     1
-    ],
-    [
-     "ww_gunslinger",
-     8
-    ]
-   ],
-   "cost": 1740,
-   "confirm": "5/6",
-   "avgTime": 22.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "rn_musketeer",
-     12
-    ]
-   ],
-   "cost": 1800,
-   "confirm": "5/6",
-   "avgTime": 29.7
-  },
-  "alt": {
-   "army": [
-    [
-     "rn_musketeer",
-     12
-    ]
-   ],
-   "cost": 1800,
-   "confirm": "5/6",
-   "avgTime": 29.7
-  },
-  "suggest": {
-   "g3": 2100,
-   "g2": 2750,
-   "budgetMin": 3300
-  },
-  "tried": 103,
-  "secs": 1854,
+  "tried": 69,
+  "secs": 694,
   "date": "2026-10-25"
  },
  "r2": {
@@ -1825,8 +1702,8 @@
   "cap": 22,
   "enemyValue": 1260,
   "stars": [
-   1400,
-   1800
+   900,
+   1150
   ],
   "cheapest": {
    "army": [
@@ -1839,161 +1716,97 @@
      2
     ]
    ],
-   "cost": 660,
+   "cost": 670,
    "confirm": "6/6",
-   "avgTime": 17.7
+   "avgTime": 24.1
   },
   "cheapestMono": {
-   "army": [
-    [
-     "ww_gunslinger",
-     5
-    ]
-   ],
-   "cost": 1000,
-   "confirm": "6/6",
-   "avgTime": 14.5
-  },
-  "alt": {
    "army": [
     [
      "rn_balloon",
      4
     ]
    ],
-   "cost": 1040,
+   "cost": 920,
    "confirm": "6/6",
-   "avgTime": 23.6
+   "avgTime": 21.9
+  },
+  "alt": {
+   "army": [
+    [
+     "pi_flintlock",
+     1
+    ],
+    [
+     "rn_balloon",
+     3
+    ]
+   ],
+   "cost": 855,
+   "confirm": "6/6",
+   "avgTime": 25.3
   },
   "suggest": {
    "g3": 900,
-   "g2": 1150,
+   "g2": 1050,
    "budget": 2000,
-   "need": 1400
+   "need": 1300
   },
-  "tried": 81,
-  "secs": 1846,
+  "tried": 86,
+  "secs": 908,
   "date": "2026-10-25"
  },
- "r5": {
-  "name": "Leonardo's Reaper",
+ "r3": {
+  "name": "Fire!",
   "world": "renaissance",
-  "budget": 6000,
-  "cap": 30,
-  "enemyValue": 4470,
+  "budget": 2900,
+  "cap": 24,
+  "enemyValue": 1910,
   "stars": [
-   4200,
-   5400
+   2100,
+   2450
   ],
   "cheapest": {
    "army": [
-    [
-     "ww_gunslinger",
-     17
-    ]
-   ],
-   "cost": 3400,
-   "confirm": "6/6",
-   "avgTime": 21.9
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "ww_gunslinger",
-     17
-    ]
-   ],
-   "cost": 3400,
-   "confirm": "6/6",
-   "avgTime": 21.9
-  },
-  "alt": {
-   "army": [
-    [
-     "rn_fencer",
-     1
-    ],
     [
      "rn_musketeer",
-     25
-    ],
-    [
-     "sp_skel_archer",
-     1
+     12
     ]
    ],
-   "cost": 3960,
+   "cost": 1500,
    "confirm": "5/6",
-   "avgTime": 39.6
-  },
-  "suggest": {
-   "g3": 4100,
-   "g2": 5350,
-   "budgetMin": 6450
-  },
-  "tried": 74,
-  "secs": 1576,
-  "date": "2026-10-25"
- },
- "g2": {
-  "name": "Spin Cycle",
-  "world": "goodevil",
-  "budget": 2400,
-  "cap": 24,
-  "enemyValue": 2520,
-  "stars": [
-   1680,
-   2160
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     1
-    ],
-    [
-     "ww_gunslinger",
-     2
-    ]
-   ],
-   "cost": 540,
-   "confirm": "6/6",
-   "avgTime": 49.7
+   "avgTime": 26.4
   },
   "cheapestMono": {
    "army": [
     [
-     "ww_gunslinger",
-     4
+     "rn_musketeer",
+     12
     ]
    ],
-   "cost": 800,
-   "confirm": "6/6",
-   "avgTime": 23
+   "cost": 1500,
+   "confirm": "5/6",
+   "avgTime": 26.4
   },
   "alt": {
    "army": [
     [
-     "hay_baler",
-     1
-    ],
-    [
-     "pi_flintlock",
-     4
+     "pi_harpooner",
+     20
     ]
    ],
-   "cost": 620,
-   "confirm": "5/6",
-   "avgTime": 43.3
+   "cost": 2500,
+   "confirm": "6/6",
+   "avgTime": 35.9
   },
   "suggest": {
-   "g3": 650,
-   "g2": 750,
-   "budget": 2400,
-   "need": 900
+   "g3": 2050,
+   "g2": 2400,
+   "budget": 2900,
+   "need": 2800
   },
-  "tried": 123,
-  "secs": 2750,
+  "tried": 79,
+  "secs": 893,
   "date": "2026-10-25"
  },
  "r4": {
@@ -2001,881 +1814,422 @@
   "world": "renaissance",
   "budget": 2600,
   "cap": 24,
-  "enemyValue": 1820,
+  "enemyValue": 1500,
   "stars": [
-   1820,
-   2340
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "sp_skeleton",
-     1
-    ],
-    [
-     "ww_gunslinger",
-     6
-    ]
-   ],
-   "cost": 1240,
-   "confirm": "6/6",
-   "avgTime": 17.7
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "ww_gunslinger",
-     7
-    ]
-   ],
-   "cost": 1400,
-   "confirm": "6/6",
-   "avgTime": 18.1
-  },
-  "alt": {
-   "army": [
-    [
-     "pi_flintlock",
-     12
-    ],
-    [
-     "sp_skel_archer",
-     1
-    ]
-   ],
-   "cost": 1510,
-   "confirm": "5/6",
-   "avgTime": 26.3
-  },
-  "suggest": {
-   "g3": 1550,
-   "g2": 2050,
-   "budgetMin": 2500
-  },
-  "tried": 122,
-  "secs": 2484,
-  "date": "2026-10-25"
- },
- "g1": {
-  "name": "Holy Wall",
-  "world": "goodevil",
-  "budget": 2400,
-  "cap": 24,
-  "enemyValue": 2100,
-  "stars": [
-   1680,
-   2160
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_raptor",
-     6
-    ],
-    [
-     "ww_lasso",
-     1
-    ]
-   ],
-   "cost": 750,
-   "confirm": "5/6",
-   "avgTime": 34.5
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "ww_blunderbuss",
-     4
-    ]
-   ],
-   "cost": 760,
-   "confirm": "5/6",
-   "avgTime": 78.5
-  },
-  "alt": {
-   "army": [
-    [
-     "gd_shield_bearer",
-     1
-    ],
-    [
-     "ww_blunderbuss",
-     3
-    ]
-   ],
-   "cost": 750,
-   "confirm": "6/6",
-   "avgTime": 76.7
-  },
-  "suggest": {
-   "g3": 900,
-   "g2": 1050,
-   "budget": 2400,
-   "need": 1300
-  },
-  "tried": 131,
-  "secs": 3338,
-  "date": "2026-10-25"
- },
- "g3": {
-  "name": "Rise Again",
-  "world": "goodevil",
-  "budget": 2600,
-  "cap": 30,
-  "enemyValue": 2750,
-  "stars": [
-   1820,
-   2340
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "king",
-     1
-    ]
-   ],
-   "cost": 1500,
-   "confirm": "5/6",
-   "avgTime": 39.6
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "king",
-     1
-    ]
-   ],
-   "cost": 1500,
-   "confirm": "5/6",
-   "avgTime": 39.6
-  },
-  "alt": {
-   "army": [
-    [
-     "ww_gunslinger",
-     8
-    ]
-   ],
-   "cost": 1600,
-   "confirm": "6/6",
-   "avgTime": 24.1
-  },
-  "suggest": {
-   "g3": 1800,
-   "g2": 2100,
-   "budget": 2600,
-   "need": 2500
-  },
-  "tried": 133,
-  "secs": 3181,
-  "date": "2026-10-25"
- },
- "g4": {
-  "name": "Wings of Light",
-  "world": "goodevil",
-  "budget": 4000,
-  "cap": 30,
-  "enemyValue": 2570,
-  "stars": [
-   2800,
-   3600
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_ptero",
-     1
-    ],
-    [
-     "pr_raptor",
-     6
-    ]
-   ],
-   "cost": 1010,
-   "confirm": "5/6",
-   "avgTime": 23.1
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor",
-     12
-    ]
-   ],
-   "cost": 1320,
-   "confirm": "5/6",
-   "avgTime": 18.9
-  },
-  "alt": {
-   "army": [
-    [
-     "pr_raptor_rider",
-     4
-    ],
-    [
-     "sp_vampire",
-     1
-    ]
-   ],
-   "cost": 1820,
-   "confirm": "6/6",
-   "avgTime": 27.1
-  },
-  "suggest": {
-   "g3": 1400,
-   "g2": 1650,
-   "budget": 4000,
-   "need": 1900
-  },
-  "tried": 135,
-  "secs": 40,
-  "date": "2026-10-25"
- },
- "g5": {
-  "name": "End of Time",
-  "world": "goodevil",
-  "budget": 8000,
-  "cap": 36,
-  "enemyValue": 5640,
-  "stars": [
-   5600,
-   7200
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_ptero",
-     6
-    ]
-   ],
-   "cost": 2100,
-   "confirm": "5/6",
-   "avgTime": 77.2
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_ptero",
-     6
-    ]
-   ],
-   "cost": 2100,
-   "confirm": "5/6",
-   "avgTime": 77.2
-  },
-  "alt": {
-   "army": [
-    [
-     "archer",
-     22
-    ],
-    [
-     "spear_thrower",
-     1
-    ]
-   ],
-   "cost": 3200,
-   "confirm": "5/6",
-   "avgTime": 43.8
-  },
-  "suggest": {
-   "g3": 2850,
-   "g2": 3300,
-   "budget": 8000,
-   "need": 3800
-  },
-  "tried": 125,
-  "secs": 291,
-  "date": "2026-10-25"
- },
- "f1": {
-  "name": "Mixed Bag",
-  "world": "final",
-  "budget": 2800,
-  "cap": 30,
-  "enemyValue": 2940,
-  "stars": [
-   1960,
-   2520
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "bard",
-     1
-    ],
-    [
-     "protector",
-     22
-    ]
-   ],
-   "cost": 1820,
-   "confirm": "5/6",
-   "avgTime": 43.6
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "protector",
-     30
-    ]
-   ],
-   "cost": 2400,
-   "confirm": "5/6",
-   "avgTime": 32.6
-  },
-  "alt": {
-   "army": [
-    [
-     "squire",
-     24
-    ]
-   ],
-   "cost": 2400,
-   "confirm": "5/6",
-   "avgTime": 21.3
-  },
-  "suggest": {
-   "g3": 2400,
-   "g2": 2800,
-   "budget": 3300,
-   "need": 3300
-  },
-  "tried": 113,
-  "secs": 701,
-  "date": "2026-10-25"
- },
- "f2": {
-  "name": "Healing Circle",
-  "world": "final",
-  "budget": 2400,
-  "cap": 30,
-  "enemyValue": 2620,
-  "stars": [
-   1680,
-   2160
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "hay_baler",
-     10
-    ]
-   ],
-   "cost": 1400,
-   "confirm": "5/6",
-   "avgTime": 66
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "hay_baler",
-     10
-    ]
-   ],
-   "cost": 1400,
-   "confirm": "5/6",
-   "avgTime": 66
-  },
-  "alt": {
-   "army": [
-    [
-     "clubber",
-     1
-    ],
-    [
-     "protector",
-     25
-    ],
-    [
-     "sp_skeleton",
-     1
-    ]
-   ],
-   "cost": 2110,
-   "confirm": "5/6",
-   "avgTime": 73.5
-  },
-  "suggest": {
-   "g3": 1900,
-   "g2": 2200,
-   "budget": 2600,
-   "need": 2600
-  },
-  "tried": 153,
-  "secs": 3272,
-  "date": "2026-10-25"
- },
- "f4": {
-  "name": "Halfling Horde",
-  "world": "final",
-  "budget": 3000,
-  "cap": 60,
-  "enemyValue": 2400,
-  "stars": [
-   2100,
-   2700
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_caveman",
-     1
-    ],
-    [
-     "rn_halberd",
-     5
-    ],
-    [
-     "spear_thrower",
-     1
-    ]
-   ],
-   "cost": 875,
-   "confirm": "6/6",
-   "avgTime": 18.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "rn_halberd",
-     7
-    ]
-   ],
-   "cost": 980,
-   "confirm": "5/6",
-   "avgTime": 16.8
-  },
-  "alt": {
-   "army": [
-    [
-     "knight",
-     2
-    ]
-   ],
-   "cost": 1300,
-   "confirm": "6/6",
-   "avgTime": 15.7
-  },
-  "suggest": {
-   "g3": 1200,
-   "g2": 1400,
-   "budget": 3000,
-   "need": 1700
-  },
-  "tried": 154,
-  "secs": 2746,
-  "date": "2026-10-25"
- },
- "s1": {
-  "name": "Slippery Slope",
-  "world": "secret",
-  "budget": 1800,
-  "cap": 24,
-  "enemyValue": 1100,
-  "stars": [
-   1260,
-   1620
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_raptor",
-     4
-    ]
-   ],
-   "cost": 440,
-   "confirm": "5/6",
-   "avgTime": 17.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor",
-     4
-    ]
-   ],
-   "cost": 440,
-   "confirm": "5/6",
-   "avgTime": 17.3
-  },
-  "alt": {
-   "army": [
-    [
-     "hay_baler",
-     4
-    ]
-   ],
-   "cost": 560,
-   "confirm": "6/6",
-   "avgTime": 25.3
-  },
-  "suggest": {
-   "g3": 600,
-   "g2": 700,
-   "budget": 1800,
-   "need": 900
-  },
-  "tried": 110,
-  "secs": 2692,
-  "date": "2026-10-25"
- },
- "f3": {
-  "name": "Ranged Hell",
-  "world": "final",
-  "budget": 3500,
-  "cap": 36,
-  "enemyValue": 2920,
-  "stars": [
-   2450,
-   3150
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "clubber",
-     1
-    ],
-    [
-     "pr_ptero",
-     1
-    ],
-    [
-     "pr_raptor_rider",
-     4
-    ]
-   ],
-   "cost": 1900,
-   "confirm": "5/6",
-   "avgTime": 22.1
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor",
-     23
-    ]
-   ],
-   "cost": 2530,
-   "confirm": "5/6",
-   "avgTime": 13.3
-  },
-  "alt": {
-   "army": [
-    [
-     "pr_raptor",
-     19
-    ],
-    [
-     "squire",
-     1
-    ]
-   ],
-   "cost": 2190,
-   "confirm": "5/6",
-   "avgTime": 14.1
-  },
-  "suggest": {
-   "g3": 2300,
-   "g2": 2650,
-   "budget": 3500,
-   "need": 3100
-  },
-  "tried": 226,
-  "secs": 2925,
-  "date": "2026-10-25"
- },
- "s2": {
-  "name": "Gimme a W!",
-  "world": "secret",
-  "budget": 2000,
-  "cap": 24,
-  "enemyValue": 1030,
-  "stars": [
-   1400,
+   1550,
    1800
   ],
   "cheapest": {
    "army": [
     [
-     "hay_baler",
-     2
+     "rn_balloon",
+     1
     ],
     [
-     "rn_painter",
+     "rn_musketeer",
+     7
+    ]
+   ],
+   "cost": 1105,
+   "confirm": "6/6",
+   "avgTime": 25.7
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "sp_vampire",
+     6
+    ]
+   ],
+   "cost": 1560,
+   "confirm": "5/6",
+   "avgTime": 22
+  },
+  "alt": {
+   "army": [
+    [
+     "rn_halberd",
+     1
+    ],
+    [
+     "sp_vampire",
+     4
+    ]
+   ],
+   "cost": 1180,
+   "confirm": "5/6",
+   "avgTime": 24.2
+  },
+  "suggest": {
+   "g3": 1350,
+   "g2": 1600,
+   "budget": 2600,
+   "need": 1900
+  },
+  "tried": 108,
+  "secs": 1323,
+  "date": "2026-10-25"
+ },
+ "r5": {
+  "name": "Leonardo's Reaper",
+  "world": "renaissance",
+  "budget": 6000,
+  "cap": 30,
+  "enemyValue": 4510,
+  "stars": [
+   4100,
+   4750
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "pi_queen",
+     1
+    ],
+    [
+     "ww_gunslinger",
+     13
+    ]
+   ],
+   "cost": 3960,
+   "confirm": "6/6",
+   "avgTime": 32.9
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "ww_gunslinger",
+     20
+    ]
+   ],
+   "cost": 4400,
+   "confirm": "6/6",
+   "avgTime": 25.6
+  },
+  "alt": {
+   "army": [
+    [
+     "pi_queen",
+     5
+    ]
+   ],
+   "cost": 5500,
+   "confirm": "6/6",
+   "avgTime": 27.1
+  },
+  "suggest": {
+   "g3": 5350,
+   "g2": 6200,
+   "budget": 7200,
+   "need": 7200
+  },
+  "tried": 89,
+  "secs": 1319,
+  "date": "2026-10-25"
+ },
+ "t1": {
+  "name": "First Contact",
+  "world": "tribal",
+  "budget": 600,
+  "cap": 12,
+  "enemyValue": 360,
+  "stars": [
+   400,
+   500
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "hay_baler",
+     1
+    ],
+    [
+     "spear_thrower",
      1
     ]
    ],
-   "cost": 380,
-   "confirm": "6/6",
-   "avgTime": 58.7
+   "cost": 395,
+   "confirm": "5/6",
+   "avgTime": 22.8
   },
   "cheapestMono": {
    "army": [
     [
      "hay_baler",
-     4
+     2
     ]
    ],
-   "cost": 560,
+   "cost": 500,
+   "confirm": "5/6",
+   "avgTime": 14.5
+  },
+  "alt": {
+   "army": [
+    [
+     "clubber",
+     1
+    ],
+    [
+     "farmer",
+     6
+    ]
+   ],
+   "cost": 420,
+   "confirm": "5/6",
+   "avgTime": 11.2
+  },
+  "suggest": {
+   "g3": 500,
+   "g2": 600,
+   "budget": 700,
+   "need": 700
+  },
+  "tried": 43,
+  "secs": 0,
+  "date": "2026-10-25"
+ },
+ "t2": {
+  "name": "Shield Wall",
+  "world": "tribal",
+  "budget": 900,
+  "cap": 14,
+  "enemyValue": 900,
+  "stars": [
+   600,
+   700
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "hay_baler",
+     2
+    ],
+    [
+     "protector",
+     1
+    ]
+   ],
+   "cost": 610,
    "confirm": "6/6",
-   "avgTime": 50.5
+   "avgTime": 39.5
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "hay_baler",
+     3
+    ]
+   ],
+   "cost": 750,
+   "confirm": "6/6",
+   "avgTime": 28.6
+  },
+  "alt": {
+   "army": [
+    [
+     "farmer",
+     1
+    ],
+    [
+     "protector",
+     9
+    ]
+   ],
+   "cost": 1050,
+   "confirm": "6/6",
+   "avgTime": 22.3
+  },
+  "suggest": {
+   "g3": 850,
+   "g2": 1000,
+   "budget": 1200,
+   "need": 1200
+  },
+  "tried": 43,
+  "secs": 0,
+  "date": "2026-10-25"
+ },
+ "t3": {
+  "name": "Spears Incoming",
+  "world": "tribal",
+  "budget": 1100,
+  "cap": 16,
+  "enemyValue": 940,
+  "stars": [
+   750,
+   900
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "clubber",
+     1
+    ],
+    [
+     "protector",
+     6
+    ]
+   ],
+   "cost": 720,
+   "confirm": "5/6",
+   "avgTime": 37.9
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "protector",
+     7
+    ]
+   ],
+   "cost": 770,
+   "confirm": "6/6",
+   "avgTime": 40.9
+  },
+  "alt": {
+   "army": [
+    [
+     "clubber",
+     14
+    ]
+   ],
+   "cost": 840,
+   "confirm": "6/6",
+   "avgTime": 18.4
+  },
+  "suggest": {
+   "g3": 900,
+   "g2": 1050,
+   "budget": 1300,
+   "need": 1300
+  },
+  "tried": 47,
+  "secs": 0,
+  "date": "2026-10-25"
+ },
+ "t4": {
+  "name": "Hay Day",
+  "world": "tribal",
+  "budget": 1100,
+  "cap": 18,
+  "enemyValue": 860,
+  "stars": [
+   800,
+   950
+  ],
+  "cheapest": {
+   "army": [
+    [
+     "halfling",
+     14
+    ],
+    [
+     "spear_thrower",
+     1
+    ]
+   ],
+   "cost": 775,
+   "confirm": "6/6",
+   "avgTime": 23.2
+  },
+  "cheapestMono": {
+   "army": [
+    [
+     "spear_thrower",
+     8
+    ]
+   ],
+   "cost": 1160,
+   "confirm": "5/6",
+   "avgTime": 30.5
   },
   "alt": {
    "army": [
     [
      "spear_thrower",
-     7
-    ]
-   ],
-   "cost": 840,
-   "confirm": "5/6",
-   "avgTime": 66.1
-  },
-  "suggest": {
-   "g3": 550,
-   "g2": 650,
-   "budget": 2000,
-   "need": 800
-  },
-  "tried": 112,
-  "secs": 2461,
-  "date": "2026-10-25"
- },
- "s3": {
-  "name": "Special Delivery",
-  "world": "secret",
-  "budget": 2200,
-  "cap": 24,
-  "enemyValue": 1560,
-  "stars": [
-   1540,
-   1980
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pr_ptero",
-     1
-    ]
-   ],
-   "cost": 350,
-   "confirm": "6/6",
-   "avgTime": 28.5
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_ptero",
-     1
-    ]
-   ],
-   "cost": 350,
-   "confirm": "6/6",
-   "avgTime": 28.5
-  },
-  "alt": {
-   "army": [
-    [
-     "pr_raptor",
-     4
-    ]
-   ],
-   "cost": 440,
-   "confirm": "6/6",
-   "avgTime": 10.1
-  },
-  "suggest": {
-   "g3": 450,
-   "g2": 550,
-   "budget": 2200,
-   "need": 700
-  },
-  "tried": 80,
-  "secs": 759,
-  "date": "2026-10-25"
- },
- "f5": {
-  "name": "Total Battle",
-  "world": "final",
-  "budget": 11000,
-  "cap": 50,
-  "enemyValue": 11520,
-  "stars": [
-   7700,
-   9900
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "pi_queen",
-     1
-    ],
-    [
-     "rn_davinci",
-     3
-    ]
-   ],
-   "cost": 5150,
-   "confirm": "5/6",
-   "avgTime": 52.3
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pi_queen",
-     7
-    ]
-   ],
-   "cost": 7700,
-   "confirm": "6/6",
-   "avgTime": 36
-  },
-  "alt": {
-   "army": [
-    [
-     "ev_chronomancer",
-     1
-    ],
-    [
-     "pi_queen",
-     4
-    ],
-    [
-     "sm_valkyrie",
-     1
-    ]
-   ],
-   "cost": 6250,
-   "confirm": "6/6",
-   "avgTime": 45.1
-  },
-  "suggest": {
-   "g3": 6250,
-   "g2": 7200,
-   "budget": 11000,
-   "need": 8300
-  },
-  "tried": 173,
-  "secs": 3994,
-  "date": "2026-10-25"
- },
- "s4": {
-  "name": "Chicken Run",
-  "world": "secret",
-  "budget": 2800,
-  "cap": 26,
-  "enemyValue": 2170,
-  "stars": [
-   1960,
-   2520
-  ],
-  "cheapest": {
-   "army": [
-    [
-     "dy_monk",
-     1
-    ],
-    [
-     "pr_raptor",
      8
     ]
    ],
-   "cost": 965,
+   "cost": 1160,
    "confirm": "5/6",
-   "avgTime": 14.9
-  },
-  "cheapestMono": {
-   "army": [
-    [
-     "pr_raptor",
-     9
-    ]
-   ],
-   "cost": 990,
-   "confirm": "6/6",
-   "avgTime": 12.7
-  },
-  "alt": {
-   "army": [
-    [
-     "bard",
-     2
-    ],
-    [
-     "squire",
-     18
-    ]
-   ],
-   "cost": 1920,
-   "confirm": "5/6",
-   "avgTime": 17.4
+   "avgTime": 30.5
   },
   "suggest": {
-   "g3": 1350,
-   "g2": 1600,
-   "budget": 2800,
-   "need": 1900
+   "g3": 1050,
+   "g2": 1350,
+   "budget": 1600,
+   "need": 1600
   },
-  "tried": 151,
-  "secs": 166,
+  "tried": 49,
+  "secs": 0,
   "date": "2026-10-25"
  },
- "s5": {
-  "name": "Winter God",
-  "world": "secret",
-  "budget": 5000,
-  "cap": 30,
-  "enemyValue": 3520,
+ "t5": {
+  "name": "The Chieftain",
+  "world": "tribal",
+  "budget": 1500,
+  "cap": 24,
+  "enemyValue": 1560,
   "stars": [
-   3500,
-   4500
+   1100,
+   1300
   ],
   "cheapest": {
    "army": [
     [
-     "pr_raptor",
-     12
+     "clubber",
+     1
     ],
     [
-     "squire",
+     "halfling",
+     3
+    ],
+    [
+     "hay_baler",
+     2
+    ],
+    [
+     "potion_seller",
+     1
+    ],
+    [
+     "spear_thrower",
      2
     ]
    ],
-   "cost": 1520,
+   "cost": 1175,
    "confirm": "5/6",
-   "avgTime": 19.3
+   "avgTime": 27.2
   },
   "cheapestMono": {
    "army": [
     [
-     "pr_raptor",
-     15
+     "protector",
+     16
     ]
    ],
-   "cost": 1650,
-   "confirm": "5/6",
-   "avgTime": 16.9
+   "cost": 1760,
+   "confirm": "6/6",
+   "avgTime": 25.1
   },
   "alt": {
    "army": [
     [
-     "vk_brawler",
-     29
+     "protector",
+     16
     ]
    ],
-   "cost": 2900,
-   "confirm": "5/6",
-   "avgTime": 55.7
+   "cost": 1760,
+   "confirm": "6/6",
+   "avgTime": 25.1
   },
   "suggest": {
-   "g3": 2100,
-   "g2": 2450,
-   "budget": 5000,
-   "need": 2900
+   "g3": 1600,
+   "g2": 2050,
+   "budget": 2400,
+   "need": 2400
   },
-  "tried": 138,
-  "secs": 237,
+  "tried": 51,
+  "secs": 0,
   "date": "2026-10-25"
  }
 }

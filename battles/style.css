@@ -357,3 +357,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
   .cr-panel { width: auto; right: 2.2vw; bottom: 9vh; } .cr-name { display: none; }
   .layer-creator { background: rgba(10,14,24,0.5); }
 }
+.layer-setup.counting .readybadge { display: none; }
+
+/* campaign levels whose stars/budget haven't been re-tuned yet */
+.lvtile { position: relative; }
+.lvwip { position: absolute; top: 2px; right: 4px; font-size: 13px; }
+.lvd-wip { margin-left: 10px; padding: 2px 8px; border-radius: 8px; background: #ffd43b; color: #3a2a00; font-family: var(--ui); font-weight: 900; font-size: 12px; vertical-align: middle; }
