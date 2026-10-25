@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 7 and 8 open (46 signs).** Rounds 1–6 are delivered and integrated;
+**Status: 31 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -54,25 +54,10 @@ stand-in for each until the art arrives.
 
 ### Bigtown (city)
 
-- `bigtown_tower.png` — **BIGTOWN TOWER**: sky-blue glass board, white letters, tiny skyscraper icon.
-- `stadium.png` — **STADIUM**: green board, white letters, football icon.
-- `parking.png` — **PARKING**: blue board, big white letters, white "P" roundel icon.
-- `cinema.png` — **CINEMA**: red marquee board with light bulbs round the edge, yellow letters, film-reel icon.
-- `diner.png` — **DINER**: retro turquoise/teal and cream-pink roadside diner board with a chrome edge, red rounded letters, small burger-and-milkshake icon (used in Bigtown and Dusty Dunes).
-- `hotel.png` — **HOTEL**: deep purple board, gold letters, little bell icon.
-- `books.png` — **BOOKS**: warm brown board, cream letters, open-book icon.
-- `flowers.png` — **FLOWERS**: pastel pink board, white letters, tulip icon.
-- `news.png` — **NEWS**: white board, black letters, rolled newspaper icon.
-- `city_park.png` — **CITY PARK**: leafy green board, white letters, round tree icon.
-- `harbour.png` — **HARBOUR**: navy board, white letters, anchor icon.
-- `wobble_cola.png` — **WOBBLE COLA**: billboard, red board, white swirly letters, fizzy cola bottle icon (invented brand).
-- `bouncy_beans.png` — **BOUNCY BEANS**: billboard, yellow board, orange bubbly letters, smiling jelly bean icon.
-- `taxi.png` — **TAXI**: yellow board with a black-and-white checker strip, black letters.
-- `delivery.png` — **DELIVERY**: orange board, white letters, cardboard box icon.
-- `building_site.png` — **BUILDING SITE**: yellow-and-black hazard-striped board, black letters, hard-hat icon.
-- `elevator.png` — **ELEVATOR**: steel-grey board, white letters, up/down arrows icon.
-- `market_street.png` — **MARKET STREET**: gateway arch banner, orange board, white letters, shopping basket icon.
-- `city_bus.png` — **CITY BUS**: dark board, amber LED-style letters (bus destination display), small bus icon.
+- `jump.png` — **JUMP**: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower).
+- `wobblecorp.png` — **WOBBLECORP**: teal glass-office board, white letters, little wobbly-bean logo icon (invented company).
+- `police.png` — **POLICE**: navy board, white letters, gold star badge icon (also shown on the sides of the police car).
+- `play_me.png` — **PLAY ME**: pink board, white letters, piano-keys icon (street piano).
 
 ### Frostpeak (snow)
 

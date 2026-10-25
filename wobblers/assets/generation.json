@@ -865,6 +865,215 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-114931bd-b573-482d-a607-6553b48ae3fe.png",
       "prompt": "Use case: stylized-concept. Wobblers game sign: bright soft toy-like Wobbly Life cartoon, chunky rounded shapes, clean shading, cheerful and silly, never realistic. Exact text \"SALOON\". Dusty Dunes saloon front sign, weathered wood-plank board and big cream western-style lettering. One front-facing horizontal 4:1 signboard intended 1024x256. Requested words must be spelled exactly and readable at small size. Board fills frame with safe border, transparent outside board. No scene, characters, extra words, brands or watermark.",
       "round": 6
+    },
+    {
+      "index": 87,
+      "file": "signs/bigtown_tower.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-66d7eaa7-f0ad-462d-8120-ad99e243c0dc.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"BIGTOWN TOWER\". Board design: sky-blue glass board, white letters, tiny skyscraper icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 88,
+      "file": "signs/stadium.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c4032ecd-a5fe-4b93-801b-de2373673bf5.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"STADIUM\". Board design: green board, white letters, football icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 89,
+      "file": "signs/parking.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a736f791-e600-492c-bbc1-30f8d87b7ec3.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"PARKING\". Board design: blue board, big white letters, white \"P\" roundel icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 90,
+      "file": "signs/cinema.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e356c7a0-4728-4f79-847a-190c49dafd33.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"CINEMA\". Board design: red marquee board with light bulbs round the edge, yellow letters, film-reel icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 91,
+      "file": "signs/diner.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3da0659d-94b1-4492-badd-06fb15f5990b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"DINER\". Board design: retro turquoise/teal and cream-pink roadside diner board with a chrome edge, red rounded letters, small burger-and-milkshake icon (used in Bigtown and Dusty Dunes). One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 92,
+      "file": "signs/hotel.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-974694cb-90d3-4406-bcf5-f36e3c809b48.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"HOTEL\". Board design: deep purple board, gold letters, little bell icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 0
+    },
+    {
+      "index": 93,
+      "file": "signs/books.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a3175715-380c-4760-9155-b00b7b191b59.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"BOOKS\". Board design: warm brown board, cream letters, open-book icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 94,
+      "file": "signs/flowers.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d214ba36-cae1-4834-bd48-042076d9bf79.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"FLOWERS\". Board design: pastel pink board, white letters, tulip icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 95,
+      "file": "signs/news.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f87bc689-1e5b-4ea2-8e93-8163b3d9e015.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"NEWS\". Board design: white board, black letters, rolled newspaper icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 96,
+      "file": "signs/city_park.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-355f4365-98de-405c-bcde-a511702f379d.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"CITY PARK\". Board design: leafy green board, white letters, round tree icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 97,
+      "file": "signs/harbour.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5f30ff1d-8f98-4ac5-aa2e-34188bb088a3.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"HARBOUR\". Board design: navy board, white letters, anchor icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 98,
+      "file": "signs/wobble_cola.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7d8a0927-5e69-4449-8b97-abe9c380da16.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"WOBBLE COLA\". Board design: billboard, red board, white swirly letters, fizzy cola bottle icon (invented brand). One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 1
+    },
+    {
+      "index": 99,
+      "file": "signs/bouncy_beans.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-72b963df-c212-4174-955a-e3563ff33a5c.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"BOUNCY BEANS\". Board design: billboard, yellow board, orange bubbly letters, smiling jelly bean icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 100,
+      "file": "signs/taxi.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f3ae4343-5652-4de1-ad1a-94dad169a9f6.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"TAXI\". Board design: yellow board with a black-and-white checker strip, black letters. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 101,
+      "file": "signs/delivery.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-96fc60eb-5906-4feb-93c1-36c4fc0793fc.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"DELIVERY\". Board design: orange board, white letters, cardboard box icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 102,
+      "file": "signs/building_site.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-78c2a850-fcea-4029-a21b-79b4903216d4.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"BUILDING SITE\". Board design: yellow-and-black hazard-striped board, black letters, hard-hat icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 103,
+      "file": "signs/elevator.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d7964db8-35b9-4cc8-b817-34cfe9c2c325.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"ELEVATOR\". Board design: steel-grey board, white letters, up/down arrows icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 104,
+      "file": "signs/market_street.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-972c5327-8b7d-4083-add7-56ae91483783.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"MARKET STREET\". Board design: gateway arch banner, orange board, white letters, shopping basket icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
+    },
+    {
+      "index": 105,
+      "file": "signs/city_bus.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-74d680e5-ab6e-4a97-b955-a38ec055b3fa.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"CITY BUS\". Board design: dark board, amber LED-style letters (bus destination display), small bus icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 7,
+      "batch": 2
     }
   ]
 }
