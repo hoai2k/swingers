@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 23 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 18 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -64,11 +64,6 @@ stand-in for each until the art arrives.
 
 ### Dusty Dunes (desert)
 
-- `sheriff.png` — **SHERIFF**: weathered brown wood planks, cream western-style letters, small gold star.
-- `general_store.png` — **GENERAL STORE**: faded red-painted wood, cream western letters, barrel or sack icon.
-- `gas.png` — **GAS**: red roadside board, white rounded letters, fuel-pump icon.
-- `gold_mine.png` — **GOLD MINE**: rough nailed timber planks, yellow-gold letters, pickaxe icon.
-- `dig_site.png` — **DIG SITE**: sandy-beige wooden board with rope edging, dark brown letters, dinosaur-bone icon.
 
 ## OPEN round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
 

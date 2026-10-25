@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- region-round-7 -->
-## Delivered round 7 batches (27/36 signs)
+## Delivered round 7 batches (32/36 signs)
 
 Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 
@@ -36,6 +36,11 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `skating.png` — **SKATING**: light-blue board with frosty edges, white letters, ice-skate icon.
 - `sled_hire.png` — **SLED HIRE**: red-and-white striped wooden board, white letters, red sled icon.
 - `tackle_shop.png` — **TACKLE SHOP**: weathered blue-green harbour board, white letters, fish-on-a-hook icon.
+- `sheriff.png` — **SHERIFF**: weathered brown wood planks, cream western-style letters, small gold star.
+- `general_store.png` — **GENERAL STORE**: faded red-painted wood, cream western letters, barrel or sack icon.
+- `gas.png` — **GAS**: red roadside board, white rounded letters, fuel-pump icon.
+- `gold_mine.png` — **GOLD MINE**: rough nailed timber planks, yellow-gold letters, pickaxe icon.
+- `dig_site.png` — **DIG SITE**: sandy-beige wooden board with rope edging, dark brown letters, dinosaur-bone icon.
 <!-- /region-round-7 -->
 
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)
