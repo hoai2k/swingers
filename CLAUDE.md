@@ -80,6 +80,21 @@ and deploying.
   must go through `track()` (`src/preload.js`) so the boot loading bar waits
   for it — the title never shows stand-in drawings.
 
+## Invite gate
+
+- Every game (`/`, `wobblers/`, `spiders/`, `battles/`) boots through
+  `src/boot.js`, which opens the shared invite door (`gate/gate.js`) and then
+  imports `main.js`. `gate/gate.js` is a byte-identical copy of the gate the
+  `hoai2k/mini` games carry (`sites/shared/gate.js` there): never edit it
+  here — copy the new version over from mini when it changes.
+- The door is off on localhost (append `?gatetest=1` to see it), so local
+  testing and headless probes never meet it. `?gatereset=1` forgets a pass.
+- The games are prototypes (`ignorePublicAccess: true`); each game's
+  `public-access.json` (`{ "followPublicAccess": false }`) can be flipped to
+  `true` to let the owner's public-access switch open it.
+- A new game in this repo gets the same `src/boot.js` + `public-access.json`
+  and loads `src/boot.js` from its `index.html` instead of `main.js`.
+
 ## Spider Swingers (`spiders/`)
 
 - A second game in the same repo, served at `/spiders/`: a Spider Heck-style
