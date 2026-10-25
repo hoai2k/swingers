@@ -24,6 +24,7 @@ import { buildFerries } from './ferries.js';
 import { buildFolk } from './folk.js';
 import { buildLife } from '../life/index.js';
 import { buildMissions } from '../missions/index.js';
+import { buildMagicTent } from '../forms.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -50,6 +51,7 @@ export function buildWorld(game) {
     scatterProps(game, kit);
     buildGarage(game, kit);
     buildFun(game, kit);
+    buildMagicTent(game, kit); // forms.js: the Magic Tent (shape-shifting) in the Fun Park
   });
   T('bridge', () => buildBridge(game, kit));
   T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]

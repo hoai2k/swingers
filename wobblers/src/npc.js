@@ -258,6 +258,14 @@ export class NPC extends Player {
       if (d.flee !== false && ai.attacker) { ai.mode = 'flee'; ai.t = 2.5 + r01() * 1.5; }
       else { ai.mode = 'idle'; ai.t = 2; }
     }
+    // forms.js: everyone runs from a player in raptor form
+    const scare = this.game.forms?.scareOf(this);
+    if (scare && ai.mode !== 'flee' && this.def.flee !== false) {
+      if (this.seat) this.leaveSeat();
+      stopEmote(this);
+      ai.mode = 'flee'; ai.attacker = scare; ai.t = 2 + r01();
+      this.say(pick(['Aaah! A dinosaur!', 'Run!!', 'Help! A raptor!', 'Eeek!']));
+    } else if (scare && ai.mode === 'flee') { ai.attacker = scare; ai.t = Math.max(ai.t, 1); }
     if (this.state === 'seated') {
       ai.sitT -= dt;
       const np = this.nearestPlayer(5);

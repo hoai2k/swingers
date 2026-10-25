@@ -146,6 +146,12 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   twisting water slide, pool toys and a giant rubber duck.
 - **Fun Park** (west) — ferris wheel, carousel, roller coaster, swing ride, drop tower,
   bumper cars, bouncy castle, food stalls, a can-toss stall (win a teddy) and a bowling lane.
+  The striped **MAGIC TENT** (west side, between the ferris wheel and the drop tower) has a
+  crystal ball: press **Y** at it to turn into a **goat** (X: charging headbutt), a
+  **velociraptor** (X: bite; people nearby run away screaming) or a **giant grasshopper**
+  (A: enormous jumps with a long hop forward). A shape lasts one minute (the countdown in your
+  view flashes and you flicker for the last 5 seconds); animals can't grab or climb, but walk,
+  swim, flop and drive. Respawning (or the crystal ball's *Back to normal*) turns you back.
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
 - **Sports field** (NW) — football pitch with a giant ball, basketball court with working
   hoops and a scoreboard, parking lot.
@@ -217,6 +223,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
+| `src/forms.js` | the Magic Tent and shape-shifting (goat / velociraptor / giant grasshopper): animal looks on the ragdoll, attacks, timer HUD, chooser panel, magic puffs |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
 | `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks (locked items skipped); persistent settings |
