@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 9 open (3 signs, 2 posters).** Rounds 1–8 are delivered;
+**Status: rounds 9 and 10 open (8 images).** Rounds 1–8 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -60,3 +60,11 @@ The game draws a procedural stand-in for each until the art arrives.
 
 - `wanted_pete.png` — old-west WANTED poster on aged parchment: big **WANTED** at the top, a goofy wobbly bean-person outlaw with a black hat and red bandana in the middle, **WOBBLY PETE** underneath, and "REWARD 100 COINS". Toy-like and silly, not scary.
 - `wanted_kid.png` — same parchment WANTED layout: big **WANTED**, a cheeky little bean-person cowboy hugging a cactus, **CACTUS KID** underneath, and "REWARD 50 COINS".
+
+## OPEN round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
+
+The game draws a procedural stand-in for each until the art arrives.
+
+- `signs/jobs.png` (1024 × 256) — **JOBS**: bright job-board header, sunny yellow board with a chunky white rounded border, big dark-blue rounded letters, small clipboard-with-tick icon (on the job board on every island).
+- `posters/job_board.png` (716 × 512, landscape, opaque) — a cork notice board crammed with cheerful pinned job notes and doodles (a pizza slice, a fire truck, a sheep, a taxi, a snowflake, a cactus, a palm tree), coloured push-pins, a few coins drawn on the notes; toy-like, no readable small text except the word **JOBS** at the top. Hangs under the JOBS sign.
+- `ui/job_marker.png` (256 × 256, transparent) — floating quest marker: a big chunky yellow-orange exclamation mark "!" with a thick dark-blue rounded outline inside a soft white round badge, glossy toy look, centred with a little margin. Floats over job-giver NPCs and job boards.
