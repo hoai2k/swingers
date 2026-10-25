@@ -35,6 +35,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   update (game.step). At most two physics steps run per frame. Parked NPCs stay visible
   (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
   Audio starts on the first controller press too (`game.wakeAudio`).
+- Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds
+  in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
+  `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`
+  makes originals in `assets/originals/sfx/` (not deployed) and the processed `assets/sfx/` +
+  `index.json` the game loads; nothing delivered = synth only.
 - Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
   route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
   `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in
