@@ -1371,6 +1371,52 @@
       "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"LIFEGUARD\". Board design: bright red board, white letters, small red-and-white life-ring icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
       "round": 8,
       "batch": 6
+    },
+    {
+      "index": 133,
+      "file": "signs/jump.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a13ffd1f-4886-4357-8026-ccd3663b9bb9.png",
+      "prompt": "Use case: precise-object-edit. Edit only the small icon on the RIGHT of this Wobblers sign. Replace the diving-board structure with a SMALL DIVING WOBBLY BEAN PERSON icon: yellow round head, little pear-shaped body, stubby limbs and mitten hands, shown mid-air diving head-first with arms forward and legs trailing. Simple cheerful toy-like cartoon silhouette, white and yellow with blue swimming trunks. The icon must clearly depict the bean person diving, not just a diving board. Preserve red rounded signboard, exact white text JUMP, all lettering, composition, gloss, outline and transparent background. Do not add extra text or change any other part.",
+      "round": 7,
+      "batch": 7,
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8bc8b44c-6485-43b3-b41b-435883ec5d21.png",
+      "initialPrompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"JUMP\". Board design: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon."
+    },
+    {
+      "index": 134,
+      "file": "signs/wobblecorp.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ec0200e9-d2bd-4015-b6d4-5701899958a0.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"WOBBLECORP\". Board design: teal glass-office board, white letters, little wobbly-bean logo icon (invented company). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
+      "round": 7,
+      "batch": 7
+    },
+    {
+      "index": 135,
+      "file": "signs/police.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-95186492-e7c1-4796-948c-0cf41335bc96.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"POLICE\". Board design: navy board, white letters, gold star badge icon (also shown on the sides of the police car). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
+      "round": 7,
+      "batch": 7
+    },
+    {
+      "index": 136,
+      "file": "signs/play_me.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4e5b4cbb-4d4c-420c-b4a1-1f46a7410c6f.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"PLAY ME\". Board design: pink board, white letters, piano-keys icon (street piano). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
+      "round": 7,
+      "batch": 7
     }
   ]
 }

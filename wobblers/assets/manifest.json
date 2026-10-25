@@ -74,6 +74,7 @@
  "signs/ice_cave.png",
  "signs/ice_cream.png",
  "signs/island_hopper.png",
+ "signs/jump.png",
  "signs/jungle_tours.png",
  "signs/kart_racing.png",
  "signs/lifeguard.png",
@@ -86,7 +87,9 @@
  "signs/parking.png",
  "signs/pet_shop.png",
  "signs/pizza.png",
+ "signs/play_me.png",
  "signs/playground.png",
+ "signs/police.png",
  "signs/pool_bar.png",
  "signs/post.png",
  "signs/prizes.png",
@@ -114,6 +117,7 @@
  "signs/volleyball.png",
  "signs/waterfall.png",
  "signs/wobble_cola.png",
+ "signs/wobblecorp.png",
  "signs/zip_line.png",
  "ui/logo.png"
 ]

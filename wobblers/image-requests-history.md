@@ -4,7 +4,6 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
-<!-- region-round-8 -->
 ## Delivered round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
 
 All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
@@ -32,12 +31,14 @@ stand-in for each until the art arrives.
 - `lifeguard.png` — **LIFEGUARD**: bright red board, white letters, small red-and-white life-ring icon.
 
 Delivered 2026-10-24 with built-in imagegen. Exact sizes, alpha, sign text and browser asset loading checked; prompts and sources are in `assets/generation.json`.
-<!-- /region-round-8 -->
 
-<!-- region-round-7 -->
-## Delivered round 7 batches (32/36 signs)
+## Delivered round 7 — region signs: Bigtown, Frostpeak, Dusty Dunes (36 signs)
 
-Built-in imagegen; exact sizes, alpha, text and browser loader checked.
+All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
+letters plus one small icon (style rules above). The game draws a procedural
+stand-in for each until the art arrives.
+
+### Bigtown (city)
 
 - `bigtown_tower.png` — **BIGTOWN TOWER**: sky-blue glass board, white letters, tiny skyscraper icon.
 - `stadium.png` — **STADIUM**: green board, white letters, football icon.
@@ -58,6 +59,14 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `elevator.png` — **ELEVATOR**: steel-grey board, white letters, up/down arrows icon.
 - `market_street.png` — **MARKET STREET**: gateway arch banner, orange board, white letters, shopping basket icon.
 - `city_bus.png` — **CITY BUS**: dark board, amber LED-style letters (bus destination display), small bus icon.
+
+- `jump.png` — **JUMP**: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower).
+- `wobblecorp.png` — **WOBBLECORP**: teal glass-office board, white letters, little wobbly-bean logo icon (invented company).
+- `police.png` — **POLICE**: navy board, white letters, gold star badge icon (also shown on the sides of the police car).
+- `play_me.png` — **PLAY ME**: pink board, white letters, piano-keys icon (street piano).
+
+### Frostpeak (snow)
+
 - `ski_lift.png` — **SKI LIFT**: bright red board with snow on top, white letters, chairlift-chair icon.
 - `hot_cocoa.png` — **HOT COCOA**: cosy wooden-plank board, cream letters, steaming mug with marshmallows.
 - `ice_cave.png` — **ICE CAVE**: icy pale-blue board with icicles hanging off the bottom edge, white letters, ice-crystal icon.
@@ -66,12 +75,16 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `skating.png` — **SKATING**: light-blue board with frosty edges, white letters, ice-skate icon.
 - `sled_hire.png` — **SLED HIRE**: red-and-white striped wooden board, white letters, red sled icon.
 - `tackle_shop.png` — **TACKLE SHOP**: weathered blue-green harbour board, white letters, fish-on-a-hook icon.
+
+### Dusty Dunes (desert)
+
 - `sheriff.png` — **SHERIFF**: weathered brown wood planks, cream western-style letters, small gold star.
 - `general_store.png` — **GENERAL STORE**: faded red-painted wood, cream western letters, barrel or sack icon.
 - `gas.png` — **GAS**: red roadside board, white rounded letters, fuel-pump icon.
 - `gold_mine.png` — **GOLD MINE**: rough nailed timber planks, yellow-gold letters, pickaxe icon.
 - `dig_site.png` — **DIG SITE**: sandy-beige wooden board with rope edging, dark brown letters, dinosaur-bone icon.
-<!-- /region-round-7 -->
+
+Delivered 2026-10-24 with built-in imagegen. Exact sizes, alpha, sign text and browser asset loading checked; prompts and sources are in `assets/generation.json`.
 
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)
 
@@ -113,7 +126,8 @@ All twelve images were delivered at their requested sizes and verified through t
 
 Delivered 2026-10-24 with built-in imagegen. Prompts are in `assets/generation.json`.
 
-Summary: round 6 — 4 ferry/saloon signs;
+Summary: round 8 — 14 region signs; round 7 — 36 region signs;
+round 6 — 4 ferry/saloon signs;
 round 5 — 12 images (4 signs + 4 faces + 4 posters);
 round 4 — 16 images (6 region/ferry signs + 10 reference sheets);
 round 3 — 3 replacement faces; round 2 — 4 unlockable faces; round 1 — 51 images

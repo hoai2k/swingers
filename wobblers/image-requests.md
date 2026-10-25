@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 4 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: all requested images delivered; no open requests.** Rounds 1–8 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -45,21 +45,3 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
-
-## OPEN round 7 — region signs: Bigtown, Frostpeak, Dusty Dunes (32 signs)
-
-All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
-letters plus one small icon (style rules above). The game draws a procedural
-stand-in for each until the art arrives.
-
-### Bigtown (city)
-
-- `jump.png` — **JUMP**: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower).
-- `wobblecorp.png` — **WOBBLECORP**: teal glass-office board, white letters, little wobbly-bean logo icon (invented company).
-- `police.png` — **POLICE**: navy board, white letters, gold star badge icon (also shown on the sides of the police car).
-- `play_me.png` — **PLAY ME**: pink board, white letters, piano-keys icon (street piano).
-
-### Frostpeak (snow)
-
-
-### Dusty Dunes (desert)
