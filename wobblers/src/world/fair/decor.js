@@ -63,6 +63,9 @@ export function buildDecor(game, kit, R, F) {
   const rng = R.rng(77);
   const G = (x, z) => R.groundAt(x, z);
   const az = MIDWAY.z, W = AVENUE;
+  const DT = F.decorTimes = {}; let t0 = performance.now(), cur = 'start';
+  const mark = (n) => { const t = performance.now(); DT[cur] = Math.round(t - t0); t0 = t; cur = n; };
+  mark('entrance');
   // ---- entrance arch over the avenue, just inside the ring road -----------------------------
   const ax = ARCH.x, azz = ARCH.z;
   for (const k of [-1, 1]) {
@@ -80,6 +83,7 @@ export function buildDecor(game, kit, R, F) {
   for (let i = 0; i < 15; i++) kit.sphere(ax - 7 + i, Y + 9.45, azz - 0.7, 0.14, i % 2 ? BULB : BULB2, { seg: 6 });
   { const b = kit.b(ax, azz); for (let i = 0; i < 12; i++) b.cone(0.35, 0.6, AUTUMN[i % AUTUMN.length], [ax - 5.5 + i, Y + 6.9 - Math.sin(i / 11 * Math.PI) * 0.4, azz - 0.7], [Math.PI, 0, 0], 3); }
 
+  mark('fences');
   // ---- fences: one round each half, open to the avenue at the midway and by the arch ----------
   const fc = 0x8a5a36;
   for (const k of [-1, 1]) {
@@ -93,42 +97,52 @@ export function buildDecor(game, kit, R, F) {
   // east gate to the pumpkin patch
   for (const k of [-1, 1]) { kit.cyl(FAIR.x1, Y + 1.4, az + k * 5, 0.25, 2.8, fc, { seg: 8 }); pumpkin(kit.b(FAIR.x1, az), FAIR.x1, Y + 2.8, az + k * 5, 0.9); }
 
+  mark('midway');
   // ---- midway: dirt path, string lights on posts, lamps, benches, hay-bale seats ---------------
   for (const k of [-1, 1]) for (let x0 = W; x0 < FAIR.x1; x0 += 37) {
     const x1 = Math.min(FAIR.x1, x0 + 37);
     kit.deco(k * (x0 + x1) / 2, Y + 0.02, az, x1 - x0, 0.04, MIDWAY.w, 0xc9a374, { collide: false });
   }
+  mark('lights');
   const lb = kit.b(CENTRE.x, az);
+  // one string of bulbs and pennants across the midway, and one along its edge, made once and stamped
+  const across = [0, 1].map((v) => template((t) => {
+    let prev = null;
+    for (let i = 0; i <= 12; i++) {
+      const u = i / 12, zz = -7 + 14 * u, yy = 5.5 - Math.sin(u * Math.PI) * 0.9;
+      ball(t, 0.09, i % 3 === 0 ? BULB2 : BULB, [0, yy - 0.08, zz]);
+      if (prev) strut(t, prev, [0, yy, zz], 0.018, 0x2a2a2a, 3);
+      prev = [0, yy, zz];
+      if (i < 12) t.cone(0.25, 0.42, AUTUMN[(i + v * 3) % AUTUMN.length], [0, yy - 0.3, zz + 0.58], [Math.PI, 0, 0], 3);
+    }
+  }));
+  const along = template((t) => {
+    let pv = [0, 5.4, 0];
+    for (let i = 1; i <= 10; i++) {
+      const q = [i * 1.5, 5.4 - Math.sin(i / 10 * Math.PI) * 0.6, 0];
+      strut(t, pv, q, 0.015, 0x2a2a2a, 3);
+      if (i < 10) ball(t, 0.075, BULB, [q[0], q[1] - 0.07, q[2]], 5);
+      pv = q;
+    }
+  });
+  let n = 0;
   for (let x = FAIR.x0 + 10; x < FAIR.x1 - 4; x += 15) {
     if (onAvenue(x, 1)) continue;
     for (const k of [-1, 1]) kit.cyl(x, Y + 2.8, az + k * 7, 0.1, 5.6, 0x5a3a24, { seg: 6 });
-    let prev = null;
-    for (let i = 0; i <= 12; i++) {
-      const u = i / 12, zz = az - 7 + 14 * u, yy = Y + 5.5 - Math.sin(u * Math.PI) * 0.9;
-      ball(lb, 0.09, i % 3 === 0 ? BULB2 : BULB, [x, yy - 0.08, zz]);
-      if (prev) strut(lb, prev, [x, yy, zz], 0.018, 0x2a2a2a, 3);
-      prev = [x, yy, zz];
-      if (i < 12) lb.cone(0.25, 0.42, AUTUMN[Math.abs(i + x) % AUTUMN.length], [x, yy - 0.3, zz + 0.58], [Math.PI, 0, 0], 3);
-    }
-    // a string of lights along the midway edges to the next post
+    stamp(lb, across[n++ % 2], x, Y, az);
     if (x + 15 >= FAIR.x1 - 4 || onAvenue(x + 15, 1)) continue;
-    for (const k of [-1, 1]) {
-      let pv = [x, Y + 5.4, az + k * 7];
-      for (let i = 1; i <= 10; i++) {
-        const q = [x + i * 1.5, Y + 5.4 - Math.sin(i / 10 * Math.PI) * 0.6, az + k * 7];
-        strut(lb, pv, q, 0.015, 0x2a2a2a, 3);
-        if (i < 10) ball(lb, 0.075, BULB, [q[0], q[1] - 0.07, q[2]], 5);
-        pv = q;
-      }
-    }
+    for (const k of [-1, 1]) stamp(lb, along, x, Y, az + k * 7);
   }
+  mark('lamps');
   for (const x of [-100, -70, -40, 40, 70, 100]) for (const k of [-1, 1]) kit.lamp(x, az + k * 8.2, Y);
+  mark('benches');
   [-110, -82, -52, -24, 24, 52, 82, 110].forEach((x, i) => {
     const k = i % 2 ? 1 : -1;
     kit.bench(x, az + k * 8.5, k > 0 ? Math.PI : 0, Y);
     hayBale(kit, x + 6, Y, az + k * 9, k > 0 ? Math.PI : 0, true, game);
   });
 
+  mark('stalls');
   // ---- stalls (stand-in art words that already exist) ------------------------------------
   const STALLS = [[-96, 1, 'TICKETS', '#55a84a'], [-58, 1, 'CANDY', '#ff7fc8'], [48, 1, 'HOT DOGS', '#ff5a3c'], [88, 1, 'DRINKS', '#3f8cff'],
     [-92, -1, 'PRIZES', '#b46cff'], [-56, -1, 'DRINKS', '#3f8cff'], [44, -1, 'CANDY', '#ff7fc8'], [84, -1, 'HOT DOGS', '#ff5a3c']];
@@ -144,6 +158,7 @@ export function buildDecor(game, kit, R, F) {
     R.sign(name, x, Y + 3.0, z + f * 1.62, yaw, 3.8, col);
   }
 
+  mark('pumpkins');
   // ---- pumpkins, hay, fallen leaves -------------------------------------------------------
   for (let i = 0; i < 50; i++) {
     const x = FAIR.x0 + 6 + rng() * (FAIR.x1 - FAIR.x0 - 12), k = rng() < 0.5 ? -1 : 1, z = az + k * (7.6 + rng() * 1.2);
@@ -167,6 +182,7 @@ export function buildDecor(game, kit, R, F) {
     for (let j = 0; j < 4; j++) b.sphere(0.9 + rng() * 0.4, LEAVES[(i + j) % LEAVES.length], [x + (rng() - 0.5) * 1.6, Y + 0.05, z + (rng() - 0.5) * 1.6], [1.2, 0.35, 1], 7);
   }
 
+  mark('maples');
   // ---- maples in fall colours round the fair and along the avenue ---------------------------
   const tree = (x, z, s) => mapleTree(kit, x, z, G(x, z) - 0.1, s, Math.abs(x * 0.37 + z * 0.11));
   for (let z = FAIR.z0 + 2; z <= FAIR.z1; z += 11) { tree(-FAIR.x1 - 4, z, 0.9 + rng() * 0.3); if (Math.abs(z - PATCH.z) > PATCH.r + 10) tree(FAIR.x1 + 4, z, 0.9 + rng() * 0.3); }
@@ -174,6 +190,7 @@ export function buildDecor(game, kit, R, F) {
   for (let z = FAIR.z0 + 14; z < FAIR.z1; z += 16) if (Math.abs(z - az) > 12) for (const k of [-1, 1]) if (!Object.values(RIDES).some((r) => Math.hypot(r.x - k * (W + 2.5), r.z - z) < 14)) tree(k * (W + 2.5), z, 0.75);
   for (const [x, z] of [[-116, 170], [116, 170], [-116, 283], [116, 283], [-60, 170], [45, 171], [-40, 283], [80, 283]]) tree(x, z, 1.1);
 
+  mark('pumpkin');
   // ---- pumpkin patch outside the east fence: scarecrow, corn, pumpkins to kick about -------------
   { const px = PATCH.x, pz = PATCH.z, b = kit.b(px, pz);
     for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
@@ -208,6 +225,7 @@ export function buildDecor(game, kit, R, F) {
   }
   R.coins(PATCH.x, PATCH.z, G(PATCH.x, PATCH.z) + 4, 'ring', 8, 7);
   R.coins(-60, MIDWAY.z, Y + 3, 'line', 8, 40, { yaw: 0 });
+  mark('end');
 }
 
 // ---- falling leaves ---------------------------------------------------------------------------
