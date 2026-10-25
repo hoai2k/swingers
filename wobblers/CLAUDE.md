@@ -29,6 +29,16 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
   `world/common.js` (speed from `throwSpeed(mass)`).
+- Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
+  150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
+  vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
+  update (game.step). At most two physics steps run per frame. Parked NPCs stay visible
+  (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
+  Audio starts on the first controller press too (`game.wakeAudio`).
+- Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
+  route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
+  `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in
+  `world/hometraffic.js`.
 - Collision groups (`src/config.js`): static, props, vehicles/rides, one bit per player.
   Seated players stop colliding with vehicles and rides.
 - Static scenery goes through `world/kit.js` so it is merged into per-chunk meshes;

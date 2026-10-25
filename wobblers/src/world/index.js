@@ -22,6 +22,7 @@ import { buildPresents } from './presents.js';
 import { buildBridge } from './bridge.js';
 import { buildFerries } from './ferries.js';
 import { buildFolk } from './folk.js';
+import { buildHomeTraffic } from './hometraffic.js';
 import { buildLife } from '../life/index.js';
 import { buildMissions } from '../missions/index.js';
 
@@ -55,6 +56,7 @@ export function buildWorld(game) {
   T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]
   T('ferries', () => buildFerries(game, kit)); // docks from every region's `docks`, then the ferry lines
   T('folk', () => buildFolk(game));            // home island NPCs
+  T('traffic', () => buildHomeTraffic(game)); // self-driving cars on the ring road
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too
   T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)
