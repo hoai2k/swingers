@@ -469,6 +469,9 @@ export class MapPanel {
       ctx.fillStyle = own ? PLAYER_CSS(this.p.color) : '#fff'; ctx.fill();
       ctx.lineWidth = own ? 2 : 1.2; ctx.strokeStyle = '#1f3354'; ctx.stroke();
     }
+    // overlays from other modules (missions/index.js: job givers and job targets)
+    for (const f of g.mapOverlays || []) f(ctx, sx, sy, this.p, z / this.fit(), s);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     // players: others first, me on top
     const t = performance.now() / 1000;
     const ps = [...g.players].sort((a, b) => (a === this.p) - (b === this.p));

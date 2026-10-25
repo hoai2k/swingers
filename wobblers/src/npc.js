@@ -401,6 +401,17 @@ export class NPCManager {
     return n;
   }
 
+  // Remove an NPC for good (mission passengers, outlaws...): hands let go, seat freed, bodies gone.
+  despawn(n) {
+    const i = this.list.indexOf(n);
+    if (i < 0) return;
+    this.list.splice(i, 1);
+    this.awake.delete(n);
+    for (const p of this.game.players) for (const h of ['L', 'R']) if (p.hands[h].body && n.bodies.includes(p.hands[h].body)) p.releaseHand(h);
+    n.bubble = null;
+    n.destroy();
+  }
+
   step() {
     if (this.k++ % 15 === 0) this.updateLOD();
     for (const n of this.awake) n.npcStep();
@@ -411,6 +422,7 @@ export class NPCManager {
     const ps = this.game.players.map((p) => p.chest.translation());
     const cand = [];
     for (const n of this.list) {
+      if (n.pinned) { cand.push([-1, n]); continue; } // mission NPCs (src/missions/) stay awake while their job runs
       const q = n.where();
       let d = 1e9;
       for (const p of ps) d = Math.min(d, Math.hypot(q.x - p.x, q.z - p.z));

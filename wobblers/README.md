@@ -2,8 +2,8 @@
 
 An open-world physics sandbox in the spirit of **Wobbly Life**: wobbly active-ragdoll
 characters, drivable vehicles, rides and an island full of things to grab, throw, climb
-and fall off. Local split-screen for **up to 8 players** on Xbox controllers and keyboards.
-No missions — just the world.
+and fall off, plus jobs that pay coins. Local split-screen for **up to 8 players** on Xbox
+controllers and keyboards.
 
 Pure web tech, no build step: [three.js](https://threejs.org) r170 for rendering and
 [Rapier](https://rapier.rs) 0.14 (WASM) for physics, both vendored in `lib/`.
@@ -97,6 +97,40 @@ up to the till and press **Y**:
 Coins, purchases, homes, pets and discovered areas are saved. *Settings → Reset coins,
 homes & pets* starts over.
 
+## Jobs
+
+Walk up to anyone with a floating **!** over their head (or a **JOBS** board) and press **Y**
+to start a job; the givers are on the map too. Your view shows the objective, a timer and an
+arrow with the distance to the next target, and a light beam marks it in the world. Finish in
+time to get paid into the shared purse; a results card shows your time, medal (bronze, silver,
+gold: faster pays more) and best time. Jobs are repeatable; best medals and times are saved.
+In split screen, press **Y** at a giver whose job is already running to join in (each player who
+helps gets a share, and co-op pays 25% more per extra player), or do different jobs at the same
+time. Cancel a job from your menu (**Start**); the menu also shows how many jobs you've done.
+The phone's **X** opens the jobs list (all jobs with their best medal; **A** sets a waypoint).
+
+| Island | Job | What you do | Pay |
+|---|---|---|---|
+| Wobbly Island | 🍕 Pizza Rush | ride the scooter to three front doors | 40 |
+| | 🚒 Fire Brigade | drive the fire truck up to three fires and hose them | 55 |
+| | 🛟 Beach Rescue | swim (or boat) out to a struggling swimmer and bring them back | 45 |
+| | 🐑 Sheep Round-up | herd or carry four skittish sheep into the pen | 45 |
+| Bigtown | 🚕 Bigtown Cab | two taxi fares across town | 70 |
+| | 📦 Parcel Round | stop the delivery van at four drop-offs | 60 |
+| | 🏗️ Building Site | carry girders and crates to the crane's hook pad | 50 |
+| | ⚽ Stadium Shoot-out | score three goals | 40 |
+| Frostpeak | ⛷️ Downhill Dash | race down the piste through the gates | 50 |
+| | ☕ Hot Cocoa Run | find four chilly skiers | 40 |
+| | 🏔️ Mountain Rescue | fetch a climber from the ice cave on the snowmobile | 60 |
+| Dusty Dunes | 🤠 Wanted: Cactus Kid | chase the outlaw, grab him, march him to jail | 70 |
+| | 🏁 Dune Buggy Rally | checkpoint race in the buggy | 45 |
+| | 🦴 Fossil Dig | find three buried bones and bring them back | 40 |
+| Tiki Jungle | 🛶 River Rapids | raft down the river through the hoops | 50 |
+| | 🗿 Temple Treasure | climb the temple, carry the golden idol to the village | 55 |
+| Coconut Cove | 🌊 Ring Racer | jet ski through the rings round Resort Isle | 50 |
+| | 🧹 Beach Clean-up | put the litter in the bins | 45 |
+| | 🚤 Water Taxi | speedboat a guest from the jetty to the resort | 45 |
+
 ## The island
 
 - **Town** — plaza with a fountain (spawn), shops, town hall, apartments, suburbs, parked cars,
@@ -172,4 +206,5 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |
 | `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |
 | `src/life/` | life sim: `state.js` (saved coins/purchases/homes/pets), `wallet.js` (shared purse, `game.wallet`), `hud.js` (coin counters, floaters), `coins.js` (pickups), `earn.js` (areas, stunts, mini-game prizes), `shops.js` (shop panels, vehicle locks), `pets.js` (pets), `index.js` (wiring) |
+| `src/missions/` | jobs: `index.js` (manager: givers, runs, pay, map overlay), `steps.js` (objective step types), `ai.js` (mission NPC brains), `fx.js` (markers, beacons, hoops, fires, job items, cargo), `hud.js` (objective, pointer, results cards), `panel.js` (jobs list), `state.js` (saved medals), `jobs/*.js` (the jobs per island) |
 | `src/world/estate.js` | the CLOTHES / PET SHOP / HOMES / CAR DEALER buildings, the bungalows for sale, name plates, beds, wardrobes, `game.homes` |
