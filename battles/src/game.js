@@ -84,7 +84,7 @@ export class Game {
     this.canvas = canvas;
     const st = loadStore();
     this.settings = Object.assign({
-      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 3, blood: true, music: true,
+      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
       rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
       // performance options (see perfItems)
