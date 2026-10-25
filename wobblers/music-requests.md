@@ -20,8 +20,8 @@ Every prompt below is complete. Paste it into the generator as it is.
   cut off at the end, and the last bar must lead straight back into the first. If the
   generator adds an intro or an ending, trim it.
 - **Stingers** are one-shots with a natural ending. They may have a reverb tail.
-- Everything is instrumental: no vocals, lyrics or spoken words. Wordless whistling
-  and humming-free "doo" sounds only where a prompt asks for them.
+- Everything is instrumental: no vocals, lyrics or spoken words. Whistling is fine
+  where a prompt asks for it.
 - Avoid imitating any existing game's soundtrack, film score or named artist.
 - Record each track's prompt, generator and length in `assets/generation.json`, as
   for the images.
