@@ -357,3 +357,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
   .cr-panel { width: auto; right: 2.2vw; bottom: 9vh; } .cr-name { display: none; }
   .layer-creator { background: rgba(10,14,24,0.5); }
 }
+.layer-setup.counting .readybadge { display: none; }

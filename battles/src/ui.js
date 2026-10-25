@@ -298,6 +298,7 @@ export class UI {
   setCountdown(t, sub) {
     this.setText(this.countdown, t > 0 ? `<div>BATTLE IN</div><b>${Math.ceil(t)}</b>${sub ? `<em>${sub}</em>` : ''}` : '');
     this.countdown.style.display = t > 0 ? '' : 'none';
+    this.layers.setup.classList.toggle('counting', t > 0); // the countdown replaces the READY badges
   }
 
   // ------------------------------------------------------------- battle
