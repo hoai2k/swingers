@@ -141,6 +141,9 @@ function resolveDef(role, opts) {
 export class NPC extends Player {
   constructor(game, def, x, z, slot) {
     super(game, 8 + (slot % NPC_SLOTS), 'npc');
+    // the group sits at the origin (parts carry world positions), so game.cullSmall's
+    // distance test would hide every NPC far from (0, 0); parked NPCs are hidden anyway
+    this.group.userData.noCull = true;
     this.isNPC = true;
     this.def = def;
     this.npcSlot = slot;

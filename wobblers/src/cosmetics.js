@@ -33,6 +33,9 @@ export const PANTS = [
   { name: 'Teal', color: 0x2ab5a5 },
   { name: 'Lilac', color: 0xc9a6ff },
   { name: 'Cream', color: 0xf2e4c0 },
+  // region presents (keep appending)
+  { name: 'Sandstone', color: 0xd9a066 },
+  { name: 'Cactus', color: 0x5a9a3c },
   // Bigtown presents (world/regions/city)
   { name: 'Taxi yellow', color: 0xffc81e },
   { name: 'Pinstripe grey', color: 0x5a5f6a },
