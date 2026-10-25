@@ -677,6 +677,7 @@ export class UI {
     this.game.emotes?.draw(views); // emote wheels
     this.game.lifeHud?.update(views); // coin counters and floaters (life/hud.js)
     this.game.missions?.hud.update(views); // job objective, pointer, results cards (missions/hud.js)
+    this.game.forms?.hud.update(views); // shape-shift countdown (forms.js)
     this.watchDevices();
   }
 

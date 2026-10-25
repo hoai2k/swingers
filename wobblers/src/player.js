@@ -597,6 +597,7 @@ export class Player {
   // Called every physics step before world.step.
   step(inp, pressed) {
     if (this.gear?.filter) inp = this.gear.filter(inp); // gadgets: a hand holding a tool can't grab
+    if (this.form) inp = this.form.input(inp); // forms.js: animals can't grab
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
@@ -708,7 +709,7 @@ export class Player {
     const gv = this.groundVelocity(new THREE.Vector3());
     const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
     const strength = limp ? 0 : this.recover * riseUp * stumbleK;
-    const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK) * (this.gear?.speed || 1); // gadgets: speed boots, jetpack / glider flight
+    const speed = (this.swimming ? SWIM : (inp.sprint ? RUN : WALK) * (this.gear?.speed || 1)) * (this.form?.speed ?? 1); // gadgets: speed boots, flight; forms.js
     const hv = _vc.set(v.x - gv.x, 0, v.z - gv.z);
     const hspeed = hv.length();
     const fwdSpeed = hv.x * Math.sin(this.yaw) + hv.z * Math.cos(this.yaw);
@@ -870,8 +871,8 @@ export class Player {
         const footing = this.jumpCool <= 0 && (this.grounded || this.swimming || (this.offGround < COYOTE && !hanging));
         if (footing) {
           // push off: straight up, plus a little kick the way the stick points
-          const jv = this.swimming ? 4.2 : JUMP_V * (this.gear?.jump || 1), // gadgets: high-jump boots
-            kick = this.swimming ? 0 : 0.9;
+          const jv = this.swimming ? 4.2 : JUMP_V * (this.gear?.jump || 1) * (this.form?.jump ?? 1), // gadgets: high-jump boots; forms.js
+            kick = this.swimming ? 0 : 0.9 * (this.form?.kick ?? 1);
           for (const b of this.bodies) {
             const bv = b.linvel();
             b.applyImpulse({ x: mvx * kick * b.mass(), y: (gv.y + jv - bv.y) * b.mass(), z: mvz * kick * b.mass() }, true);
@@ -922,7 +923,8 @@ export class Player {
           this.game.audio?.play('jump', cp);
         }
       }
-      if (pressed.punch && this.punch.t <= 0 && !this.gear?.punch?.(this, inp)) { // gadgets: laser gun / grappling hook fire instead
+      if (pressed.punch && this.punch.t <= 0 && this.form) this.form.attack(); // forms.js: headbutt / bite / hop
+      else if (pressed.punch && this.punch.t <= 0 && !this.gear?.punch?.(this, inp)) { // gadgets: laser gun / grappling hook fire instead
         this.punch.hand = this.punch.hand === 'L' ? 'R' : 'L';
         if (inp.grabL > 0.5 && inp.grabR <= 0.5) this.punch.hand = 'R';
         if (inp.grabR > 0.5 && inp.grabL <= 0.5) this.punch.hand = 'L';
@@ -1368,6 +1370,7 @@ export class Player {
   }
 
   respawn() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
@@ -1386,11 +1389,13 @@ export class Player {
     if (m) { m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q; }
     const hm = this.parts.hips.mesh.children[0];
     if (hm) hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
+    this.form?.sync(); // forms.js: animal meshes follow the ragdoll
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     for (const n in this.parts) {

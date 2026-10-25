@@ -113,6 +113,17 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `game.gadgets.hint(p, kind)`. A new gadget: an entry in `GADGETS`, geometry in `gearGeo`, a
   step fn in `STEPS`. Probe with `setGadget(player, id)` (needs no purchase).
 
+- Shape-shifting (`src/forms.js`, the Magic Tent at `TENT` in the Fun Park; built by
+  `buildMagicTent` in `world/index.js`'s home step): `game.forms.transform(p, kind)` /
+  `revert(p)` / `of(p)`; `p.form` is the live record. Forms keep the same ragdoll: the human part
+  meshes are hidden and the form's meshes copy their poses each `Player.sync` (front legs copy the
+  opposite rear leg shifted forward; `knee` / `hip` stiffen the visual stride), so the player's look
+  is never modified and comes back exactly. Hooks marked `forms.js`: `player.js` (input filter =
+  no grabbing, `form.speed` / `jump` / `kick`, X calls `form.attack()`, sync, `respawn` and
+  `destroy` revert), `npc.js` (NPCs within `SCARE_R` of a raptor flee), `ui.js` (HUD), `map.js`
+  (label). Attack hits are collected in the Rapier query callback and applied after it (pushing
+  bodies inside the callback throws). New forms: add to `FORMS` with a look builder.
+
 ## Missions (jobs, `src/missions/`)
 
 Wobbly Life-style jobs, wired by one `buildMissions(game)` call in `world/index.js` (after life,
