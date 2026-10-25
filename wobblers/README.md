@@ -171,6 +171,14 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   (A: enormous jumps with a long hop forward). A shape lasts one minute (the countdown in your
   view flashes and you flicker for the last 5 seconds); animals can't grab or climb, but walk,
   swim, flop and drive. Respawning (or the crystal ball's *Back to normal*) turns you back.
+- **Stratford Fall Fair** (south, on the beach road just past the ring road) — an autumn
+  fairground under maples in red and gold, with falling leaves, pumpkins, hay bales, stalls and
+  lots of teenagers. Fourteen rides to sit on (Y; Y again to hop off, even mid-ride): Pirate Ship
+  and Viking Ship (swinging ships), Ring of Fire (a train that loops the loop), Gravitron and
+  Starship 2000 (spinning saucers that pin you to the wall), Zipper (flipping cages on a turning
+  boom), Top Spin, Drop Tower, Tilt-a-Whirl, Himalaya (forwards and backwards over the hills),
+  Sizzler, a Ferris Wheel, a classic Carousel with up-and-down horses and a Mini Train. A pumpkin
+  patch with a scarecrow and pumpkins to kick about outside the east fence.
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
 - **Sports field** (NW) — football pitch with a giant ball, basketball court with working
   hoops and a scoreboard, parking lot.
@@ -270,6 +278,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |
 | `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
+| `src/world/fair/` | the Stratford Fall Fair: layout, ride helpers (`common.js`), rides (`rides-a.js`, `rides-b.js`, `train.js`), decor + falling leaves, the `teen` NPCs |
 | `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
 | `src/world/lights.js`, `posters.js` | interior light pool (per-view nearest lights) and framed posters |
 | `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |

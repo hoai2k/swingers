@@ -157,6 +157,26 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   headless in node with `node tools/arcade-sim.mjs`. Marquees are `signMesh` texts (art requested
   in round 11).
 
+## Stratford Fall Fair (`src/world/fair/`)
+
+The fairground on the home island in the flat strip south of the ring road, either side of the
+south avenue (x -120..120, z 166..287, ground y = 0; the avenue |x| < 9 stays clear for traffic,
+the entrance arch spans it at z = 164, the midway crosses it at z = 227). One `buildFair(game, kit)`
+call in `world/index.js` (its own `fair` build step). Layout in `fair/layout.js` (`RIDES` centres).
+- 14 rides, each static kit scenery plus kinematic bodies posed by one animator (`fair/common.js`
+  `FairRides`: `F.body`, `F.instanced` draws many same-looking bodies (cabins, cages, cars, horses,
+  tubs) as one InstancedMesh, `F.seat` adds a ride seat with `exitPush` and `seat.fair`, `F.animate`,
+  `F.sign`; timing helpers `power` / `travel` / `vmaxFor` make each cycle end where it started).
+  `rides-a.js`: pirate / viking ship, ring of fire (`F.ringFire` is its pendulum state), ferris wheel,
+  carousel, drop tower; `rides-b.js`: gravitron, starship 2000, zipper, top spin, tilt-a-whirl,
+  himalaya, sizzler; `train.js`: mini train. Ride parts live in one scene group far-culled with the
+  kit chunks; the animators only run while a player is within 400 m (`F.active`).
+- `decor.js`: arch, fences, midway lights, stalls (existing sign words), maples (pre-merged
+  templates stamped with `stamp`), leaf litter, pumpkins, hay (some bales are seats), the pumpkin
+  patch outside the east fence, coins, and falling leaves (one Points cloud round the players).
+- `npcs.js`: the `teen` role; ~50 teens spawned lazily (one per physics step) once a player is
+  within 260 m. `game.fair` = { times, rides }.
+
 ## Missions (jobs, `src/missions/`)
 
 Wobbly Life-style jobs, wired by one `buildMissions(game)` call in `world/index.js` (after life,
@@ -228,7 +248,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   region's grass coverage mask is rendered the first time a camera comes near it.
 - **NPCs** (`src/npc.js`): `game.npcs.spawn(role | def, x, z, opts)` (or `R.npc`). Roles:
   townsfolk, lifeguard, farmer, businessman, taxi, skier, cowboy, explorer, surfer,
-  fisherman, chef; add more with `registerRole(name, def)`. def: `colors { shirt, pants,
+  fisherman, chef (and `teen`, world/fair/npcs.js); add more with `registerRole(name, def)`. def: `colors { shirt, pants,
   hat }`, `hat` (any HATS id, or an NPC hat: straw, pith, chef, helmet, sunhat; `registerHat`),
   `face` (FACES index or name), `outfit` (['tie', 'scarf', 'vest', 'backpack', 'apron', 'belt',
   'lifejacket'] or a fn), `prop` (briefcase, rod, surfboard, skis, pitchfork, lasso, map, buoy,

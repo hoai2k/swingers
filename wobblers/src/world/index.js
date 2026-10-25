@@ -26,6 +26,7 @@ import { buildHomeTraffic } from './hometraffic.js';
 import { buildLife } from '../life/index.js';
 import { buildMissions } from '../missions/index.js';
 import { buildMagicTent } from '../forms.js';
+import { buildFair } from './fair/index.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -54,6 +55,7 @@ export function buildWorld(game) {
     buildFun(game, kit);
     buildMagicTent(game, kit); // forms.js: the Magic Tent (shape-shifting) in the Fun Park
   });
+  T('fair', () => buildFair(game, kit));       // the Stratford Fall Fair south of the ring road (world/fair/)
   T('bridge', () => buildBridge(game, kit));
   T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]
   T('ferries', () => buildFerries(game, kit)); // docks from every region's `docks`, then the ferry lines

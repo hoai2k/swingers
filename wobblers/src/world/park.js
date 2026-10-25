@@ -11,16 +11,17 @@ import { Vehicle } from '../vehicles.js';
 const _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
 const UP = new THREE.Vector3(0, 1, 0);
 
-// Kinematic body with optional colliders and a mesh that follows it.
-function kinematic(game, pos, descs, mesh) {
+// Kinematic body with optional colliders and a mesh that follows it (added to
+// `parent`, the scene by default). Shared with the fair rides (regions/fair/).
+export function kinematic(game, pos, descs, mesh, parent = game.scene) {
   const W = game.physics.world;
   const body = W.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(pos.x, pos.y, pos.z));
   for (const d of descs) { d.setCollisionGroups(VEH_GROUPS); W.createCollider(d, body); }
-  if (mesh) game.scene.add(mesh);
+  if (mesh) parent.add(mesh);
   game.physics.objects.push({ body, mesh, buoy: null, kind: 'ride' });
   return body;
 }
-const setPose = (body, p, q) => {
+export const setPose = (body, p, q) => {
   body.setNextKinematicTranslation({ x: p.x, y: p.y, z: p.z });
   body.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });
 };
