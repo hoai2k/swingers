@@ -8,7 +8,9 @@ import * as THREE from 'three';
 export const EXTRA_HATS = ['viking', 'chef', 'pirate', 'wizard', 'flowers', 'headphones', 'bunny', 'propeller',
   'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears',
   // sold in the clothes shop (unlocks.js SHOP_COSMETICS); keep appending so saved looks keep their index
-  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester'];
+  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester',
+  // Frostpeak presents (world/regions/snow.js)
+  'skigoggles', 'bobble'];
 
 export const EXTRA_HAT_NAMES = {
   viking: 'Viking helmet', chef: 'Chef hat', pirate: 'Pirate hat', wizard: 'Wizard hat', flowers: 'Flower crown',
@@ -17,6 +19,7 @@ export const EXTRA_HAT_NAMES = {
   fez: 'Fez', catears: 'Cat ears',
   beret: 'Beret', bowler: 'Bowler hat', sombrero: 'Sombrero', frog: 'Frog hat', antlers: 'Antlers', tiara: 'Tiara',
   pumpkin: 'Pumpkin head', jester: 'Jester hat',
+  skigoggles: 'Ski helmet', bobble: 'Bobble hat',
 };
 
 const glassMat = new THREE.MeshPhongMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, shininess: 120, specular: 0xffffff, depthWrite: false });
@@ -191,6 +194,20 @@ export function buildExtraHat(b, kind, R, c, group) {
       b.sphere(R * 0.22, 0x5fc050, [R * 0.22, R * 1.08, 0], [1.4, 0.3, 0.8], 8);
       return true;
     }
+    case 'skigoggles': // ski helmet with rainbow goggles
+      b.sphere(R * 1.07, c, [0, R * 0.3, 0], [1, 0.82, 1.05], 18);
+      b.torus(R * 0.98, R * 0.09, 0x222228, [0, R * 0.12, 0], [Math.PI / 2 - 0.12, 0, 0], 20);
+      b.rbox(R * 1.25, R * 0.42, R * 0.3, R * 0.14, 0x222228, [0, R * 0.18, R * 0.9], [0.12, 0, 0]);
+      b.rbox(R * 1.12, R * 0.32, R * 0.12, R * 0.1, 0xff7a3a, [0, R * 0.18, R * 1.04], [0.12, 0, 0]);
+      b.rbox(R * 1.0, R * 0.12, R * 0.12, R * 0.05, 0x9a5aff, [0, R * 0.26, R * 1.08], [0.12, 0, 0]);
+      return true;
+    case 'bobble': // striped knitted hat with ear flaps and a pom-pom
+      b.sphere(R * 1.05, c, [0, R * 0.32, 0], [1, 0.78, 1.02], 16);
+      b.cyl(R * 1.04, R * 1.06, R * 0.2, 0xffffff, [0, R * 0.2, 0], null, 18);
+      b.cyl(R * 0.9, R * 0.97, R * 0.12, 0xffffff, [0, R * 0.62, 0], null, 18);
+      for (const s of [-1, 1]) b.sphere(R * 0.3, c, [s * R * 0.92, -R * 0.08, -R * 0.05], [0.45, 1, 0.8], 10);
+      b.sphere(R * 0.3, 0xffffff, [0, R * 1.15, 0], null, 10);
+      return true;
     case 'jester': {
       const cols = [0xd9342b, 0x3f8cff, 0xffd23f];
       b.sphere(R * 1.05, c, [0, R * 0.3, 0], [1, 0.7, 1], 16);
