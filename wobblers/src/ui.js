@@ -218,6 +218,7 @@ class PauseMenu extends Panel {
       { label: 'Customise', act: () => ui.openCustomiser(p, false) },
       { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
       { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
+      ...(g.missions?.menuItems(p, this) || []), // jobs list, cancel job, jobs done (missions/index.js)
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
       ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
@@ -425,7 +426,7 @@ export class UI {
     const s = g.nearestSeat(p);
     if (s) {
       const veh = s.vehicle;
-      const what = s.kind === 'driver' ? (veh?.def?.heli ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
+      const what = s.kind === 'driver' ? (veh?.def?.heli ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : s.labelFor ? s.labelFor(p) : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
       return `${G('Y')} ${what}`;
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);
@@ -497,6 +498,7 @@ export class UI {
     this.game.npcs?.drawBubbles(views); // NPC speech bubbles
     this.game.emotes?.draw(views); // emote wheels
     this.game.lifeHud?.update(views); // coin counters and floaters (life/hud.js)
+    this.game.missions?.hud.update(views); // job objective, pointer, results cards (missions/hud.js)
     this.watchDevices();
   }
 

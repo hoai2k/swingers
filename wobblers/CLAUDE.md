@@ -77,6 +77,30 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `CLUSTERS` in `life/coins.js` (`[x, z, ray start, shape, count, size]`, like present spots).
   Home respawn wraps `game.spawnPoint`; pets are synced from the saved choice every 15 steps.
 
+## Missions (jobs, `src/missions/`)
+
+Wobbly Life-style jobs, wired by one `buildMissions(game)` call in `world/index.js` (after life,
+before `kit.finish`: JOBS boards are kit scenery) plus small hooks: `ui.js` (HUD update, pause-menu
+items, per-player use-spot prompts via `seat.labelFor(p)`), `phone.js` (X opens the jobs list),
+`map.js` (`game.mapOverlays` fns draw givers and targets), `npc.js` (`n.pinned` keeps an NPC awake,
+`npcs.despawn(n)`), `settings.js` (`settings.missions`: best time + medal per job, jobs done).
+- A job is data in `missions/jobs/<island>.js` (format at the top of `jobs/index.js`): `giver`
+  (`at`, `yaw`, `npc` role/def or `board: true`), `pay` (bronze; silver x1.25, gold x1.5, +25% per
+  extra co-op player, split), `time` limit, `gold` / `silver` medal times, optional `vehicle`
+  (spawned beside the starter, removed when the job ends and it is empty), `cargo`, optional
+  `build(M, kit)` for static props (the sheep pen, beach bins) and `steps` (array or fn).
+- Step types (`missions/steps.js`): `reach` (optionally in a vehicle / stopped / hoop style; races
+  come from `jobs/race.js`), `passenger` (NPC rides in your vehicle), `follow` (rescue: reach an NPC,
+  it follows you / hops into your vehicle), `catch` (fleeing NPC: grab, punch over or corner it),
+  `items` (physical things to bring into zones; `fx.js` ITEMS, animals flee), `touch` (visit spots or
+  NPCs, optionally hidden), `fires` (fire-truck hose / drive through). Each handler has
+  `start / update / targets / count`; targets feed the beacons, the HUD pointer and the map.
+- `game.missions`: `runs`, `runOf(p)`, `start(id, p)`, `join(run, p)`, `cancel(p)`, `stepNow(run)`,
+  `complete(run)`, `track(p, job)`. Givers are use spots (Y); their NPCs spawn lazily within 170 m.
+  Mission NPCs (`ai.js`) are pinned and run their own small brain. Idle cost: a giver check every
+  30 steps and a marker bob. Probe a job by teleporting (`player.teleport`, move the run's
+  `vehicle`, drop `items` into zones) and stepping until `run.state === 'done'`.
+
 ## Regions / NPCs / ferries / registerVehicle (the archipelago)
 
 The world is an archipelago: the home island ("Wobbly Island", |x|, |z| <= 400, unchanged)

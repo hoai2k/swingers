@@ -23,6 +23,7 @@ import { buildBridge } from './bridge.js';
 import { buildFerries } from './ferries.js';
 import { buildFolk } from './folk.js';
 import { buildLife } from '../life/index.js';
+import { buildMissions } from '../missions/index.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -56,6 +57,7 @@ export function buildWorld(game) {
   T('folk', () => buildFolk(game));            // home island NPCs
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too
+  T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)
   T('kitFinish', () => { kit.finish(); game.interiorLights.finish(); });
   T('detail', () => buildDetail(game));        // grass, flowers, road edges, lamp glow
   animateWater(game, game.waterMats);

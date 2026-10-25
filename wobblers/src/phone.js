@@ -127,6 +127,7 @@ export class PhonePanel {
     const kb = this.p.deviceId === 'kb1' || this.p.deviceId === 'kb2';
     if (n.back || (kb && pr.phone) || (this.p.deviceId === 'kb1' && n.start)) { this.ui.sfx('uiBack'); this.ui.closePanel(this.p); return; }
     if (pr.map) { this.ui.openMap(this.p); return; }
+    if (n.x && this.ui.game.missions) { this.ui.game.missions.openList(this.p); return; } // jobs list (missions/panel.js)
     if (n.up || n.left) this.move(-1);
     if (n.down || n.right) this.move(1);
     if (n.ok) this.call();
@@ -163,7 +164,7 @@ export class PhonePanel {
       <div class="phtitle">Vehicles<i>${sub}</i></div>
       <div class="phlist"><div class="phin" style="transform:translateY(${-off}px)">${items}</div></div>
       <div class="phmsg ${this.msgOk ? 'ok' : ''}">${this.msg}</div></div>
-      <div class="foot">${promptRow([['OK', 'Call'], ['MENUBACK', 'Hang up']], k)}</div></div>`;
+      <div class="foot">${promptRow([['OK', 'Call'], ...(this.ui.game.missions ? [['X', 'Jobs']] : []), ['MENUBACK', 'Hang up']], k)}</div></div>`;
   }
 }
 
