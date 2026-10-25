@@ -149,28 +149,27 @@ export function modifiersMenu() {
 }
 
 const PAD_ROWS = [
-  ['Left stick', 'Walk / climb any surface'],
-  ['A  or  LB', 'Jump (off walls too)'],
-  ['LT (hold)', 'Shoot web & swing; stick reels / pumps'],
-  ['Right stick', 'Aim'],
-  ['RT', 'Use weapon (saber: recall a thrown one)'],
-  ['RB  or  B', 'Throw weapon'],
-  ['X', 'Swap for a nearby weapon'],
-  ['D-pad ◀ ▶', 'Change spider (lobby)'],
+  ['Left stick', 'Crawl / steer webs'],
+  ['Right stick', 'Aim & swing blades'],
+  ['A  or  LT', 'Jump on a surface; in the air press / hold to shoot a web (release to let go)'],
+  ['RT', 'Use weapon (blades: hold to charge, release to lunge)'],
+  ['RB', 'Recall (pull your weapon or a nearby one to you)'],
+  ['LB  or  B', 'Throw weapon'],
+  ['X', 'Swap with a weapon on the ground'],
+  ['Y / D-pad ◀ ▶', 'Change spider (lobby)'],
+  ['Start', 'Menu'],
   ['Back', 'Leave (lobby)'],
-  ['Start', 'Pause'],
 ];
 const KEY_ROWS = [
-  ['W A S D', 'Walk / climb'],
-  ['Space', 'Jump'],
-  ['Right mouse', 'Web & swing'],
+  ['W A S D', 'Crawl / steer webs'],
   ['Mouse', 'Aim'],
+  ['Space / right mouse', 'Jump / web'],
   ['Left mouse', 'Use weapon'],
+  ['E', 'Recall'],
   ['Q', 'Throw weapon'],
-  ['E', 'Swap weapon'],
+  ['F', 'Swap'],
   ['Z / X', 'Change spider (lobby)'],
-  ['Backspace', 'Leave (lobby)'],
-  ['Esc', 'Pause'],
+  ['Esc', 'Menu'],
 ];
 export function helpMenu(extra = {}) {
   const rows = (list) => list.map(([k, v]) => `<div class="kv"><span class="key">${k}</span><span>${v}</span></div>`).join('');
@@ -179,7 +178,7 @@ export function helpMenu(extra = {}) {
     title: 'How to play',
     wide: true,
     items: [
-      { type: 'html', html: `<p class="lead">Swing between islands, grab weapons, be the last spider hanging. In the lobby, everyone stands on an island for 3 seconds to start that mode.</p>
+      { type: 'html', html: `<p class="lead">Swing between islands, grab weapons, be the last spider hanging. In the lobby, everyone stands on an island for 3 seconds to start that mode; press Start on the SETTINGS ledge for settings.</p>
         <div class="cols"><div><h3>Controller</h3>${rows(PAD_ROWS)}</div><div><h3>Keyboard + mouse</h3>${rows(KEY_ROWS)}</div></div>` },
       { type: 'action', label: 'Back', back: true },
     ],

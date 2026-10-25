@@ -77,6 +77,14 @@
     .kv { display: flex; gap: 10px; align-items: baseline; padding: 3px 0; line-height: 1.25; }
     .key { flex: 0 0 auto; min-width: 7.2em; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,.1);
       border-bottom: 2px solid rgba(0,0,0,.35); font-weight: 600; color: #fff; font-size: .9em; text-align: center; }
+    /* lobby: menus dock to the right edge, below the corner buttons, and the arena stays visible */
+    .ui-root.side .ui-layer { place-items: center end; box-sizing: border-box;
+      padding: calc(max(10px, env(safe-area-inset-top)) + var(--btn) + 12px) max(14px, env(safe-area-inset-right)) 14px 14px;
+      background: linear-gradient(90deg, rgba(3,2,10,0) 45%, rgba(3,2,10,.55)); }
+    .ui-root.side .ui-panel { width: min(470px, calc(100vw - 28px)); max-height: 100%;
+      background: linear-gradient(180deg, rgba(40,26,84,.93), rgba(16,12,38,.93)); }
+    .ui-root.side .ui-panel.wide { width: min(780px, calc(100vw - 28px)); }
+    @media (max-width: 760px) { .ui-root.side .ui-layer { place-items: center; padding: 10px; } }
     @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } .key { min-width: 6.4em; } }
     /* small screens: a open panel hides the corner buttons (panels have their own close) */
     @media (max-width: 760px), (max-height: 520px) {
