@@ -79,6 +79,10 @@ remaining outliers need **behaviour** changes, not numbers:
 - After any stat change, re-run the balance harness (`battles/dev/balance/`) and then
   the campaign solver (section 2).
 
+- **Campaign after the ranged reload pass:** levels whose enemy armies lean on archers or
+  guns got somewhat easier. Re-run the solver (section 2) for the solved levels if their
+  star targets feel generous.
+
 ## 4. Smaller known issues
 
 - **Setup:** the faction tab row scrolls to the selected faction, but with up to 16 tabs (15

@@ -307,9 +307,12 @@ register({
   buildProj(type, g, H) {
     const { mesh, cyl, sphere, mat } = H;
     if (type === 'pr_shot') {
-      mesh(sphere(0.035, 8, 6), mat('#8a8e96', { spec: 0.9 }), 0, 0, 0, g).castShadow = false;
-      const st = mesh(cyl(0.01, 0.03, 0.5, 5), mat('#fff6d0', { emit: 1, transparent: true, opacity: 0.45 }), 0, -0.28, 0, g);
+      // the ball glows hot and drags a long tracer (projviz adds a smoke line behind)
+      mesh(sphere(0.05, 8, 6), mat('#ffe7a0', { emissive: '#ffcf60' }), 0, 0, 0, g).castShadow = false;
+      const st = mesh(cyl(0.012, 0.045, 1.4, 6), mat('#ffd36a', { emissive: '#ffb030', transparent: true, opacity: 0.8 }), 0, -0.72, 0, g);
       st.castShadow = false;
+      const glow = mesh(cyl(0.03, 0.09, 0.9, 6), mat('#fff3c8', { emissive: '#fff0c0', transparent: true, opacity: 0.25, depthWrite: false }), 0, -0.45, 0, g);
+      glow.castShadow = false;
       return true;
     }
     if (type === 'pr_cannonball') { ballMesh(H, g, 0.2); return true; }

@@ -112,7 +112,7 @@ const units = [
   {
     id: 'an_snake_archer', name: 'Snake Archer', faction: 'ancient', cost: 130, hp: 80, speed: 4.4,
     build: { scale: 0.96, girth: 0.95 },
-    weapon: { line: 'Ranged · poison arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'venom_arrow', speed: 32, arc: 'low', range: 36, minRange: 8, cooldown: 2.2, damage: 22, force: 80, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
+    weapon: { line: 'Ranged · poison arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'venom_arrow', speed: 32, arc: 'low', range: 36, minRange: 8, cooldown: 2.7, damage: 22, force: 80, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#e6b48c', hat: 'an_snakehood', top: 'an_linen', legs: '#4c6a2e', quiver: true },
     personality: { aggro: 0.3, bravery: 0.3, voice: 1.2, chatter: 0.5, cry: 'cackle', idle: 'shift' },
     desc: 'Snake-venom arrows: the poison keeps hurting for a while.',

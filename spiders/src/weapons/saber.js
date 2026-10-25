@@ -19,16 +19,16 @@ export class Saber extends Weapon {
   static ammo = Infinity;
   static weight = 1.3;
   static color = '#4dd2ff';
-  static blades = [{ from: 4, to: 70 }];    // along the axis from the grip
+  static blades = [{ from: 4, to: 92 }];    // along the axis from the grip
   static throwSpeed = 1500;
   static chargeThrow = true;               // hold RT to wind up the throw, release to let fly
-  static throwCenter = 35;                 // spin center along the axis when thrown
+  static throwCenter = 46;                 // spin center along the axis when thrown
 
   constructor(game) {
     super(game);
     this.turnRate = 30;
-    this.holdDist = 2;
-    this.length = 70;
+    this.holdDist = 22;      // held out at arm's length, clear of the body
+    this.length = 92;
     this.on = 0;               // ignition 0..1
     this.clashCool = 0;
     this.prevSegs = null;

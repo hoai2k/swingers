@@ -370,7 +370,7 @@ const units = [
   {
     id: 'rn_musketeer', name: 'Musketeer', faction: 'renaissance', cost: 125, hp: 95, speed: 4.2,
     build: { scale: 1.0, girth: 1.0 },
-    weapon: { line: 'Ranged · musket volleys: waits for the line, then all fire', kind: 'pr_gun', volley: true, wait: 0.6, big: true, style: 'spear', anim: 'punch', item: 'rn_musket', damage: 70, speed: 85, range: 32, minRange: 6, cooldown: 0.5, reload: 4.0, ammo: 1, force: 260, spread: 0.022, releaseAt: 0.5, windup: 0.55, barrel: 1.05 },
+    weapon: { line: 'Ranged · musket volleys: waits for the line, then all fire', kind: 'pr_gun', volley: true, wait: 0.6, big: true, style: 'spear', anim: 'punch', item: 'rn_musket', damage: 70, speed: 85, range: 32, minRange: 6, cooldown: 0.5, reload: 5.0, ammo: 1, force: 260, spread: 0.022, releaseAt: 0.5, windup: 0.55, barrel: 1.05 },
     look: { skin: '#f0c8a0', hat: 'rn_cavalier', top: 'rn_tabard', legs: '#3a3440', beard: '#6a4a2a' },
     personality: { aggro: 0.35, bravery: 0.2, voice: 0.95, chatter: 0.5, cry: 'charge', idle: 'shift' },
     desc: 'Ready... aim... FIRE! Always together.',
@@ -378,7 +378,7 @@ const units = [
   {
     id: 'rn_balloon', name: 'Balloon Archer', faction: 'renaissance', cost: 230, hp: 90, speed: 4.0,
     build: { scale: 0.96, girth: 0.95 },
-    weapon: { line: 'Flying · shoots arrows from under a balloon · drops if it pops', kind: 'rn_balloon', style: 'bow', anim: 'bow', item: 'bow', proj: 'arrow', speed: 34, arc: 'low', range: 32, minRange: 3, cooldown: 2.2, damage: 36, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
+    weapon: { line: 'Flying · shoots arrows from under a balloon · drops if it pops', kind: 'rn_balloon', style: 'bow', anim: 'bow', item: 'bow', proj: 'arrow', speed: 34, arc: 'low', range: 32, minRange: 3, cooldown: 2.7, damage: 36, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#f2c8a0', hat: 'rn_aviator', top: 'rn_doublet', legs: '#4a3a2e', quiver: true },
     personality: { aggro: 0.3, bravery: 0, voice: 1.2, chatter: 0.6, cry: 'yip', idle: 'float' },
     desc: 'Floats over the fight shooting arrows. Pop the balloon and down he comes.',

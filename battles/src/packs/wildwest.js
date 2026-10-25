@@ -121,7 +121,7 @@ const units = [
   {
     id: 'ww_gunslinger', name: 'Gunslinger', faction: 'wildwest', cost: 220, hp: 95, speed: 4.6,
     build: { scale: 0.98, girth: 0.95 },
-    weapon: { line: 'Ranged · six-shooter, slow reload', kind: 'ww_gun', style: 'sword', anim: 'punch', item: 'ww_revolver', damage: 25, speed: 70, range: 30, minRange: 7, cooldown: 0.55, reload: 3.2, ammo: 6, force: 120, spread: 0.035, releaseAt: 0.5, windup: 0.45, barrel: 0.35 },
+    weapon: { line: 'Ranged · six-shooter, slow reload', kind: 'ww_gun', style: 'sword', anim: 'punch', item: 'ww_revolver', damage: 25, speed: 70, range: 30, minRange: 7, cooldown: 0.55, reload: 4.0, ammo: 6, force: 120, spread: 0.035, releaseAt: 0.5, windup: 0.45, barrel: 0.35 },
     look: { skin: '#e8b890', hat: 'ww_cowboy_black', top: 'ww_vest', legs: '#4a4060' },
     personality: { aggro: 0.35, bravery: 0.25, voice: 0.9, chatter: 0.6, cry: 'hey', idle: 'shift' },
     desc: 'Six fast shots, then a slow reload.',
@@ -129,7 +129,7 @@ const units = [
   {
     id: 'ww_blunderbuss', name: 'Blunderbuss', faction: 'wildwest', cost: 225, hp: 130, speed: 4.2,
     build: { scale: 1.02, girth: 1.1 },
-    weapon: { line: 'Ranged · short-range pellet cone', kind: 'ww_gun', style: 'spear', anim: 'punch', item: 'ww_blunderbuss', damage: 18, pellets: 9, speed: 45, range: 11, minRange: 3, cooldown: 3.0, reload: 3.0, ammo: 1, force: 220, spread: 0.13, releaseAt: 0.5, windup: 0.7, barrel: 0.8 },
+    weapon: { line: 'Ranged · short-range pellet cone', kind: 'ww_gun', style: 'spear', anim: 'punch', item: 'ww_blunderbuss', damage: 18, pellets: 9, speed: 45, range: 11, minRange: 3, cooldown: 3.0, reload: 3.6, ammo: 1, force: 220, spread: 0.13, releaseAt: 0.5, windup: 0.7, barrel: 0.8 },
     look: { skin: '#e8b890', hat: 'ww_bowler', top: 'ww_poncho', legs: '#5a4630' },
     personality: { aggro: 0.6, bravery: 0.2, voice: 0.8, chatter: 0.5, cry: 'hey', idle: 'lean' },
     desc: 'A cone of buckshot. Devastating up close.',
@@ -145,7 +145,7 @@ const units = [
   {
     id: 'ww_dynamite', name: 'Dynamite', faction: 'wildwest', cost: 120, hp: 95, speed: 4.4,
     build: { scale: 0.95, girth: 1.05, head: 1.05 },
-    weapon: { line: 'Ranged · bouncing dynamite on a fuse', kind: 'ranged', style: 'throw', anim: 'throw', item: 'ww_dynamite_hand', proj: 'dynamite', speed: 14, arc: 'high', range: 22, minRange: 6, cooldown: 2.8, damage: 100, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.6 },
+    weapon: { line: 'Ranged · bouncing dynamite on a fuse', kind: 'ranged', style: 'throw', anim: 'throw', item: 'ww_dynamite_hand', proj: 'dynamite', speed: 14, arc: 'high', range: 22, minRange: 6, cooldown: 3.3, damage: 100, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.6 },
     look: { skin: '#e8b890', hat: 'ww_miner', top: 'overalls', legs: '#4a5a7a', beard: '#7a5a3a' },
     personality: { aggro: 0.45, bravery: 0.25, voice: 0.85, chatter: 0.9, cry: 'cackle', idle: 'shake' },
     desc: 'Bouncing sticks of dynamite on a short fuse.',

@@ -122,7 +122,7 @@ export class ChallengeMode extends SurvivalMode {
   level(w) { return w + 2 * (this.trial.tier - 1); }
   get stageLevel() { return 1 + Math.floor((this.trial.tier - 1) / 2); }
   bossOn(w) { return !!this.trial.boss && w % WAVES_PER_STAGE === 0; }
-  budgetMul() { return this.trial.swarm || 1; }
+  budgetMul() { return (this.trial.swarm || 1) * 0.6; }   // fewer, bigger insects (as survival)
 
   rosterFor(w) {
     if (!this.trial.roster) return super.rosterFor(w);

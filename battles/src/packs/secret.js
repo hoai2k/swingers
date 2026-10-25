@@ -298,7 +298,7 @@ const units = [
   {
     id: 'sc_banana', name: 'Banana Thrower', faction: 'secret', cost: 60, hp: 85, speed: 4.6,
     build: { scale: 0.95, girth: 1.05, head: 1.05 },
-    weapon: { line: 'Ranged · enemies who step on its peels slip and fall', kind: 'ranged', style: 'throw', anim: 'throw', item: 'sc_banana_hand', proj: 'sc_banana', speed: 13, arc: 'high', range: 22, minRange: 5, cooldown: 1.8, damage: 28, force: 90, spread: 0.07, releaseAt: 0.7, windup: 0.8 },
+    weapon: { line: 'Ranged · enemies who step on its peels slip and fall', kind: 'ranged', style: 'throw', anim: 'throw', item: 'sc_banana_hand', proj: 'sc_banana', speed: 13, arc: 'high', range: 22, minRange: 5, cooldown: 2.2, damage: 28, force: 90, spread: 0.07, releaseAt: 0.7, windup: 0.8 },
     look: { skin: '#f2c8a0', hat: 'sc_banana_hood', top: 'sc_banana_suit', legs: '#e8c02a' },
     personality: { aggro: 0.35, bravery: 0.3, voice: 1.4, chatter: 0.9, cry: 'yip', idle: 'bounce' },
     desc: 'Lobs bananas and leaves the peels lying about. Mind your step.',

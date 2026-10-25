@@ -20,7 +20,7 @@ export class TwinSaber extends Saber {
   static ammo = Infinity;
   static weight = 0.9;
   static color = '#ff5ad1';
-  static blades = [{ from: 9, to: 54 }, { from: -9, to: -54 }];
+  static blades = [{ from: 10, to: 68 }, { from: -10, to: -68 }];
   static throwSpeed = 1250;
   static throwCenter = 0;           // spins about the middle of the staff
 
@@ -29,8 +29,8 @@ export class TwinSaber extends Saber {
   constructor(game) {
     super(game);
     this.turnRate = 27;
-    this.holdDist = 4;
-    this.length = 54;
+    this.holdDist = 20;
+    this.length = 68;
     this.grind = 0;
     this.wallN = { x: 0, y: -1 };
   }

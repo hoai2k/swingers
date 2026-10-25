@@ -41,7 +41,7 @@ const BASE_UNITS = [
   {
     id: 'spear_thrower', name: 'Spear Thrower', faction: 'tribal', cost: 145, hp: 90, speed: 4.2,
     build: { scale: 0.98, girth: 0.95 },
-    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'spear_hand', proj: 'spear', speed: 22, arc: 'low', range: 26, minRange: 7, cooldown: 3.2, damage: 60, force: 220, spread: 0.05, releaseAt: 0.7, windup: 1.0 },
+    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'spear_hand', proj: 'spear', speed: 22, arc: 'low', range: 26, minRange: 7, cooldown: 3.8, damage: 60, force: 220, spread: 0.05, releaseAt: 0.7, windup: 1.0 },
     look: { skin: '#e8b48a', hat: 'feather', top: 'fur', legs: '#6b4a2b', bare: true, paint: true },
     personality: { aggro: 0.4, bravery: 0.25, voice: 1.0, chatter: 0.5, cry: 'ooga', idle: 'bounce' },
     desc: 'Throws heavy spears that pin enemies.',
@@ -74,7 +74,7 @@ const BASE_UNITS = [
   {
     id: 'hay_baler', name: 'Hay Baler', faction: 'farmer', cost: 250, hp: 150, speed: 3.8,
     build: { scale: 1.08, girth: 1.25 },
-    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'hay_hand', proj: 'hay', speed: 15, arc: 'low', range: 20, minRange: 5, cooldown: 3.0, damage: 40, force: 900, spread: 0.06, releaseAt: 0.7, windup: 1.2 },
+    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'hay_hand', proj: 'hay', speed: 15, arc: 'low', range: 20, minRange: 5, cooldown: 3.5, damage: 40, force: 900, spread: 0.06, releaseAt: 0.7, windup: 1.2 },
     look: { skin: '#f0c49a', hat: 'cap', top: 'overalls', legs: '#7d6040' },
     personality: { aggro: 0.5, bravery: 0.2, voice: 0.8, chatter: 0.4, cry: 'hey', idle: 'lean' },
     desc: 'Bowls hay bales that knock over everything.',
@@ -82,7 +82,7 @@ const BASE_UNITS = [
   {
     id: 'potion_seller', name: 'Potion Seller', faction: 'farmer', cost: 190, hp: 130, speed: 3.9,
     build: { scale: 0.98, girth: 1.1, head: 1.05 },
-    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'potion_hand', proj: 'potion', speed: 14, arc: 'high', range: 24, minRange: 6, cooldown: 2.6, damage: 90, force: 380, spread: 0.07, releaseAt: 0.7, windup: 0.9, blast: 3.6 },
+    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'potion_hand', proj: 'potion', speed: 14, arc: 'high', range: 24, minRange: 6, cooldown: 3.1, damage: 90, force: 380, spread: 0.07, releaseAt: 0.7, windup: 0.9, blast: 3.6 },
     look: { skin: '#e9c09a', hat: 'hood', top: 'robe', legs: '#4c3a5e', beard: '#d9d9d9' },
     personality: { aggro: 0.35, bravery: 0.3, voice: 1.2, chatter: 0.9, cry: 'cackle', idle: 'shake' },
     desc: 'My potions are too strong for you, traveller.',
@@ -107,7 +107,7 @@ const BASE_UNITS = [
   {
     id: 'archer', name: 'Archer', faction: 'medieval', cost: 140, hp: 80, speed: 4.4,
     build: { scale: 0.97, girth: 0.95 },
-    weapon: { kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'arrow', speed: 34, arc: 'low', range: 38, minRange: 8, cooldown: 2.0, damage: 36, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
+    weapon: { kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'arrow', speed: 34, arc: 'low', range: 38, minRange: 8, cooldown: 2.5, damage: 36, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#f2c8a0', hat: 'hood_green', top: 'tunic', legs: '#4f5a2e', quiver: true },
     personality: { aggro: 0.3, bravery: 0.3, voice: 1.05, chatter: 0.4, cry: 'charge', idle: 'shift' },
     desc: 'Lobs arrows from a safe distance.',
@@ -151,7 +151,7 @@ const BASE_UNITS = [
   {
     id: 'bomber', name: 'Bomber', faction: 'legacy', cost: 210, hp: 90, speed: 4.6,
     build: { scale: 0.95, girth: 1.0, head: 1.1 },
-    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'bomb_hand', proj: 'bomb', speed: 13, arc: 'high', range: 22, minRange: 6, cooldown: 2.6, damage: 110, force: 650, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.8 },
+    weapon: { kind: 'ranged', style: 'throw', anim: 'throw', item: 'bomb_hand', proj: 'bomb', speed: 13, arc: 'high', range: 22, minRange: 6, cooldown: 3.1, damage: 110, force: 650, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.8 },
     look: { skin: '#f2c8a0', hat: 'goggles', top: 'apron', legs: '#3d3d3d' },
     personality: { aggro: 0.45, bravery: 0.2, voice: 1.3, chatter: 1, cry: 'cackle', idle: 'shake' },
     deathBomb: true,
@@ -160,7 +160,7 @@ const BASE_UNITS = [
   {
     id: 'wizard', name: 'Wizard', faction: 'legacy', cost: 800, hp: 240, speed: 3.6,
     build: { scale: 1.0, girth: 1.0, head: 1.05 },
-    weapon: { kind: 'ranged', style: 'staff', anim: 'cast', item: 'staff', proj: 'fireball', speed: 20, arc: 'flat', range: 34, minRange: 9, cooldown: 2.6, damage: 90, force: 560, spread: 0.02, releaseAt: 0.62, windup: 1.2, blast: 4.0 },
+    weapon: { kind: 'ranged', style: 'staff', anim: 'cast', item: 'staff', proj: 'fireball', speed: 20, arc: 'flat', range: 34, minRange: 9, cooldown: 3.0, damage: 90, force: 560, spread: 0.02, releaseAt: 0.62, windup: 1.2, blast: 4.0 },
     look: { skin: '#f2c8a0', hat: 'wizard', top: 'robe_blue', legs: '#2c3c8c', beard: '#eeeeee' },
     personality: { aggro: 0.3, bravery: 0.35, voice: 0.95, chatter: 0.7, cry: 'magic', idle: 'float' },
     desc: 'Hurls exploding fireballs.',

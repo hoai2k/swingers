@@ -79,7 +79,7 @@ const units = [
   {
     id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 80, hp: 40, speed: 4.5,
     build: { scale: 0.95, girth: 0.78, head: 1.05, mass: 0.7 },
-    weapon: { line: 'Ranged · cheap bony archer', kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.2, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
+    weapon: { line: 'Ranged · cheap bony archer', kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.7, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
     look: { skin: BONE, hat: 'sp_skull_hood', top: 'sp_ribs', legs: BONE, quiver: true },
     personality: { aggro: 0.35, bravery: 0, voice: 1.5, chatter: 0.5, cry: 'cackle', idle: 'shake' },
     fallApart: true,
@@ -88,7 +88,7 @@ const units = [
   {
     id: 'sp_candlehead', name: 'Candlehead', faction: 'spooky', cost: 180, hp: 80, speed: 4.2,
     build: { scale: 0.95, girth: 1.0, head: 1.0 },
-    weapon: { line: 'Magic · flaming wisps that set enemies alight', kind: 'sp_candle', style: 'staff', anim: 'cast', item: 'none', damage: 28, speed: 16, range: 26, minRange: 6, cooldown: 2.2, force: 260, blast: 1.8, spread: 0.06, releaseAt: 0.6, windup: 0.9, burn: 6, burnTime: 3.5 },
+    weapon: { line: 'Magic · flaming wisps that set enemies alight', kind: 'sp_candle', style: 'staff', anim: 'cast', item: 'none', damage: 28, speed: 16, range: 26, minRange: 6, cooldown: 2.7, force: 260, blast: 1.8, spread: 0.06, releaseAt: 0.6, windup: 0.9, burn: 6, burnTime: 3.5 },
     look: { skin: '#e8d8b8', hat: 'sp_candle', top: 'sp_robe', legs: '#2a2630' },
     personality: { aggro: 0.35, bravery: 0.3, voice: 1.3, chatter: 0.7, cry: 'magic', idle: 'float' },
     desc: 'Flings flaming wisps that set enemies alight.',
