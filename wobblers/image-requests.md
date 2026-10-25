@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 9 open (2 signs, 2 posters).** Rounds 1–8 are delivered;
+**Status: round 9 open (3 signs, 2 posters).** Rounds 1–8 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -46,7 +46,7 @@ push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
 
-## OPEN round 9 — Dusty Dunes extras (2 signs, 2 posters)
+## OPEN round 9 — Dusty Dunes and Frostpeak extras (3 signs, 2 posters)
 
 The game draws a procedural stand-in for each until the art arrives.
 
@@ -54,6 +54,7 @@ The game draws a procedural stand-in for each until the art arrives.
 
 - `dustville_hotel.png` — **DUSTVILLE HOTEL**: Wild-West hotel false-front board, weathered teal-blue wood planks, cream western-style letters, small bed or key icon.
 - `dustville.png` — **DUSTVILLE**: town-entrance arch board over the main street, sun-bleached brown planks hung on ropes, cream western letters, small cactus-and-sun icon.
+- `ski_lodge.png` — **SKI LODGE** (Frostpeak): ski-lodge chalet board, dark red with a snowy top edge, chunky cream rounded letters, small crossed-skis icon.
 
 ### Posters (`assets/posters/`, 512 × 716, opaque, filling the frame; in the sheriff's office)
 
