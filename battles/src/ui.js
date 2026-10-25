@@ -452,6 +452,20 @@ export class UI {
     setTimeout(() => t.remove(), time * 1000 + 600);
   }
 
+  // heavy-load banner and frame-rate counter (on the toast layer: every screen)
+  setPerf(warn, fps) {
+    if (!this.perfEl) {
+      this.perfEl = el('div', 'perfwarn');
+      this.fpsEl = el('div', 'fpsmeter');
+      this.layers.toast.appendChild(this.perfEl);
+      this.layers.toast.appendChild(this.fpsEl);
+    }
+    this.setText(this.perfEl, warn);
+    this.perfEl.style.display = warn ? '' : 'none';
+    this.setText(this.fpsEl, fps);
+    this.fpsEl.style.display = fps ? '' : 'none';
+  }
+
   // ------------------------------------------------------------- help
   setHelp(on) {
     this.show('help', on);

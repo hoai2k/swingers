@@ -901,6 +901,7 @@ export class Unit {
     if (!this.alive) return;
     this.kind?.die?.(this, killer);
     this.alive = false;
+    this.diedAt = this.battle.time;
     this.hp = 0;
     this.expr = EXPR.dead;
     this.st.attack = null;

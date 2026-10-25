@@ -7,6 +7,8 @@ import { PROJ_TYPES } from './battle.js';
 import { placeHeld } from './visual.js';
 
 export const REC_HZ = 30;
+const REC_SECONDS = 60 * 6; // recordings stop after 6 minutes
+const REC_BYTES = 450e6; // memory budget: huge battles record less often, then stop sooner
 // s.dyn: placed by its pack every step - true (a rope segment: always moving) or the
 // rigid body it rides on (at rest while that body sleeps)
 function restingStuck(s) {
@@ -26,14 +28,20 @@ export class Recorder {
     this.statics = [];
     this.restDrops = [];
     this.next = 0;
-    this.maxFrames = REC_HZ * 60 * 6; // 6 minutes
+    // body transforms are 14 bytes each per frame: within the memory budget a big
+    // battle records for less than 6 minutes, and a huge one (under 2 minutes at
+    // 30 Hz) at a lower rate, down to 10 Hz (still interpolated)
+    const perFrame = this.n * 14 + 2 * battle.units.length + 64;
+    const fits = Math.floor(REC_BYTES / perFrame);
+    this.hz = [REC_HZ, 20, 15, 10].find((hz) => fits >= hz * 120) || 10;
+    this.maxFrames = Math.max(this.hz * 30, Math.min(this.hz * REC_SECONDS, Math.floor(REC_BYTES / perFrame)));
   }
 
   event(t, e) { if (this.frames.length < this.maxFrames) this.events.push({ t, e }); }
 
   capture(b) {
     if (b.time + 1e-6 < this.next || this.frames.length >= this.maxFrames) return;
-    this.next = b.time + 1 / REC_HZ;
+    this.next = b.time + 1 / this.hz;
     const bodies = new Int16Array(this.n * 7);
     let k = 0;
     for (const u of b.units) {
@@ -162,6 +170,30 @@ export class Player {
     } else { this.resyncEvents(); this.jumped = true; }
     if (this.t >= this.duration && !scrub) this.playing = false;
     return out;
+  }
+
+  // How long unit i has been down at the current time (0 while standing): for
+  // Performance → Fallen units
+  fallenFor(i) {
+    if (!this.died) {
+      // per unit: the times it went down (a raised zombie can go down twice)
+      const f = this.rec.frames, n = this.rec.units.length;
+      this.died = Array.from({ length: n }, () => []);
+      const up = new Uint8Array(n).fill(1);
+      for (const fr of f) {
+        for (let u = 0; u < n; u++) {
+          const a = fr.us[u] & 8 ? 1 : 0;
+          if (up[u] && !a) this.died[u].push(fr.t);
+          up[u] = a;
+        }
+      }
+    }
+    const fr = this.frameAt(this.t);
+    if (!fr || fr.a.us[i] & 8) return 0;
+    const d = this.died[i];
+    let last = -1;
+    for (let k = 0; k < d.length && d[k] <= this.t + 1e-6; k++) last = d[k];
+    return last < 0 ? 0 : this.t - last;
   }
 
   // Unit deaths for timeline markers: [{t, team}]

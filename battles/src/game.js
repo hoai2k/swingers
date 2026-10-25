@@ -8,7 +8,7 @@ import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
 import { Creator } from './creator.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
-import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES } from './visual.js';
+import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
 import { CamRig } from './camera.js';
 import { Battle, PROJ } from './battle.js';
@@ -18,9 +18,16 @@ import { Recorder, Player } from './replay.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
 import { hasAsset } from './assets.js';
+import { Perf, SIM_LOADS, RES } from './perf.js';
 const mapImg = (id) => (hasAsset(`assets/ui/map-${id}.jpg`) ? `assets/ui/map-${id}.jpg` : '');
 const BUDGETS = [1000, 2500, 5000, 10000, 25000, Infinity];
-const CAPS = [40, 80, 120, 180];
+const CAPS = [40, 80, 120, 180, 300, 500, 1000, Infinity];
+const LOD_MIN = 120; // armies this big draw distant units as simple stand-ins
+const LOD_DIST = [22, 30, 40]; // m, by graphics quality
+const CORPSE_SECONDS = 10; // Performance → Fallen units: vanish this long after falling
+const BIG_ARMY = 180; // above this the unit limit is flagged as heavy on the frame rate
+const capText = (c) => (c === Infinity ? 'Unlimited' : c > BIG_ARMY ? `${c} (heavy)` : `${c}`);
+const money = (b) => (b === Infinity ? 'Unlimited' : b.toLocaleString('en-US'));
 const SPEEDS = [0, 0.1, 0.25, 0.5, 1, 2]; // battle time scales (0 = frozen, photo mode)
 const NORMAL = 4, SLOWMO = 2;
 const RSPEEDS = [0.1, 0.25, 0.5, 1, 2]; // replay speeds
@@ -77,10 +84,13 @@ export class Game {
     this.canvas = canvas;
     const st = loadStore();
     this.settings = Object.assign({
-      map: 0, budget: 2, cap: 2, blood: true, music: true,
+      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
       rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
+      // performance options (see perfItems)
+      res: 0, autoRes: true, shadows: true, fxLite: false, corpses: 0, simLoad: 1, showFps: false, lod: true,
     }, st.settings || {});
+    this.perf = new Perf();
     this.mode = 'versus'; // 'versus' (2P) | 'sandbox' (1P builds both sides) | 'campaign'
     this.progress = loadProgress();
     this.level = null; // campaign level being played
@@ -162,13 +172,17 @@ export class Game {
   // gold and unit limits for one army (campaign: the level's; versus: plus the round bonus)
   budgetOf(t) {
     if (this.mode === 'campaign' && this.level) return t === 0 ? this.level.budget : Infinity;
-    const b = BUDGETS[this.settings.budget];
+    const b = BUDGETS[this.settings[this.limKeys()[0]]];
     if (this.mode === 'versus' && this.match && b !== Infinity) return Math.round(b * (1 + BONUS * this.match.bonus[t]));
     return b;
   }
   capOf(t) {
     if (this.mode === 'campaign' && this.level) return t === 0 ? this.level.cap : Infinity;
-    return CAPS[this.settings.cap];
+    return CAPS[this.settings[this.limKeys()[1]]];
+  }
+  // sandbox keeps its own gold and unit limits (default: unlimited gold)
+  limKeys(sb = this.state === 'title' ? this.titlePage === 'sandbox' : this.mode === 'sandbox') {
+    return sb ? ['sbBudget', 'sbCap'] : ['budget', 'cap'];
   }
   // which army is fixed (the campaign's enemy)
   locked(t) { return this.mode === 'campaign' && t === 1; }
@@ -190,9 +204,12 @@ export class Game {
   }
 
   applyQuality() {
-    const q = QUALITY[this.quality];
-    this.renderer.setPixelRatio(q.pr >= 2 ? Math.min(2, devicePixelRatio || 1) : q.pr);
+    const q = QUALITY[this.quality], s = this.settings;
+    const base = q.pr >= 2 ? Math.min(2, devicePixelRatio || 1) : q.pr;
+    this.renderer.setPixelRatio(Math.max(0.2, base * (RES[s.res] ?? 1) * this.perf.autoScale));
+    if (this.fx) this.fx.lite = !!s.fxLite;
     if (this.env) {
+      this.env.sun.castShadow = s.shadows !== false;
       const sh = this.env.sun.shadow;
       if (sh.mapSize.x !== q.shadow) {
         sh.mapSize.set(q.shadow, q.shadow);
@@ -228,6 +245,7 @@ export class Game {
     this.terrain = new Terrain(map, i + 1);
     const env = buildScene(this.scene, map, this.terrain);
     env.sun.shadow.mapSize.set(QUALITY[this.quality].shadow, QUALITY[this.quality].shadow);
+    env.sun.castShadow = this.settings.shadows !== false;
     this.env = env;
     this.zones = [
       zoneMesh(this.terrain, -FIELD.x, -ZONE_GAP, -FIELD.z, FIELD.z, TEAM_COLORS[0]),
@@ -236,6 +254,7 @@ export class Game {
     this.zones.forEach((z) => this.scene.add(z));
     this.fx = new FX(this.scene, this.terrain);
     this.fx.blood = this.settings.blood;
+    this.fx.lite = !!this.settings.fxLite;
     this.projViz = new ProjViz(this.scene, this.fx);
     this.snow = null;
     if (map.snow) {
@@ -274,7 +293,7 @@ export class Game {
 
   addSetupVis(team, a) {
     const def = UNIT_BY_ID[a.type];
-    const vis = buildUnitVisual(def, team, { skel: skelOf(def) });
+    const vis = buildUnitVisual(def, team, { skel: skelOf(def), share: true });
     vis.entry = a;
     vis.team = team;
     vis.st = { phase: 0, amp: 0, style: def.weapon.style, attack: null, attackT: 0, headPitch: 0, headYaw: 0, mode: def.personality.idle === 'play' ? 'play' : 'normal', t: rand(0, 10), bob: 0 };
@@ -302,14 +321,18 @@ export class Game {
     this.frameNo = (this.frameNo || 0) + 1;
     this.ui.root.dataset.state = this.state === 'paused' ? this.pauseFrom : this.state;
     this.ui.root.dataset.hud = this.hudMode === 2 ? 'off' : 'on';
-    const dt = clamp((now - this.last) / 1000, 0, 0.1);
+    const raw = Math.max(0, (now - this.last) / 1000);
+    const dt = clamp(raw, 0, 0.1);
     this.last = now;
+    const P = this.perf;
+    P.tick(raw, this.state === 'battle' && this.timeScale > 0);
+    if (P.adapt(raw, this.settings.autoRes)) this.applyQuality();
     this.input._dt = dt;
     this.input.poll(dt);
     this.audio.beginFrame();
     if (this.input.anyPressed('a') || this.input.anyPressed('start')) this.audio.unlock();
     this.padEvents();
-    switch (this.state) {
+    if (!this.prepping) switch (this.state) {
       case 'title': this.updateTitle(dt); break;
       case 'levels': this.updateLevels(dt); break;
       case 'setup': this.updateSetup(dt); break;
@@ -335,6 +358,24 @@ export class Game {
       this.snow.position.set(Math.round(c.x / 10) * 10, c.y - 5, Math.round(c.z / 10) * 10);
     }
     this.render(dt);
+    this.perfHud();
+  }
+
+  // heavy-load banner (points to the Performance options) and the fps counter
+  perfHud() {
+    const P = this.perf, st = this.state === 'paused' ? this.pauseFrom : this.state;
+    const live = ['setup', 'battle', 'result', 'replay'].includes(st) && this.state !== 'paused';
+    let warn = '';
+    if (this.prepping) warn = `⏳ ${this.prepping}`;
+    else if (live && P.warn && !this.helpOn) {
+      const sim = st === 'battle' && P.speed < 0.9 ? ` · battle at <b>${Math.round(P.speed * 100)}%</b> speed` : '';
+      const how = st === 'setup' ? `${btn('Start')} → <b>Performance</b>` : `${btn('Start')} → <b>Performance</b> to lighten the load, or end the battle there`;
+      warn = `⚠ Heavy load: <b>${Math.round(P.fps)} fps</b>${sim}. ${how}`;
+    } else if (live && st === 'battle' && P.speed < 0.8 && this.timeScale > 0) {
+      warn = `<small>⏱ Heavy battle: running at ${Math.round(P.speed * 100)}% speed</small>`;
+    }
+    const fps = this.settings.showFps ? `${Math.round(P.fps)} fps${this.battle && st === 'battle' ? ` · sim ${P.stepMs.toFixed(0)} ms/step · ${Math.round(P.speed * 100)}%` : ''}` : '';
+    this.ui.setPerf(warn, fps);
   }
 
   // controller hot-plug: announce it, and never leave a game running for a pad that vanished
@@ -363,6 +404,7 @@ export class Game {
     const r = this.renderer;
     const w = r.domElement.width / r.getPixelRatio(), h = r.domElement.height / r.getPixelRatio();
     const vs = this.views();
+    this.updateLod(vs);
     r.shadowMap.needsUpdate = true;
     this.shake = Math.max(0, this.shake - dt * 3);
     this.audio.setListeners(vs.map((v) => this.rigs[v]));
@@ -382,6 +424,22 @@ export class Game {
       r.render(this.scene, rig.cam);
       rig.apply();
     });
+  }
+
+  // Distant units in a big army are drawn as simple stand-ins (Performance → Distant units)
+  updateLod(vs) {
+    const lists = this.state === 'setup' ? this.setupVis || [] : this.battleVis && this.battle ? [this.battleVis] : [];
+    const n = lists.reduce((a, l) => a + l.length, 0);
+    const on = this.settings.lod && n >= LOD_MIN;
+    const D = LOD_DIST[this.quality] || 30, cams = vs.map((v) => this.rigs[v].cam.position);
+    for (const l of lists) for (const vis of l) {
+      if (!on) { if (vis.far) setFar(vis, false); continue; }
+      const p = vis.parts[0].position;
+      let d2 = Infinity;
+      for (const c of cams) d2 = Math.min(d2, (p.x - c.x) ** 2 + (p.y - c.y) ** 2 + (p.z - c.z) ** 2);
+      const k = vis.far ? 0.9 : 1.1; // hysteresis
+      setFar(vis, d2 > (D * k) ** 2);
+    }
   }
 
   // Per-view visibility in setup: each player only sees their own ghost and
@@ -491,16 +549,16 @@ export class Game {
 
   titleItems() {
     const s = this.settings;
-    const money = (b) => (b === Infinity ? 'Unlimited' : b.toLocaleString('en-US'));
+    const [bk, ck] = this.limKeys(this.titlePage === 'sandbox');
     const common = [
       { label: 'Map', value: MAPS[s.map].name, key: 'map', preview: mapImg(MAPS[s.map].id) },
-      { label: 'Budget per army', value: money(BUDGETS[s.budget]), key: 'budget' },
-      { label: 'Unit limit per army', value: CAPS[s.cap], key: 'cap' },
+      { label: 'Budget per army', value: money(BUDGETS[s[bk]]), key: 'budget' },
+      { label: 'Unit limit per army', value: capText(CAPS[s[ck]]), key: 'cap' },
     ];
     switch (this.titlePage) {
       case 'options': return [
         { label: 'Battle screen', value: s.split ? 'Split' : 'Shared', key: 'split' },
-        { label: 'Graphics quality', value: QUALITY[this.quality].name, key: 'quality' },
+        ...this.perfItems(),
         { label: 'Look speed', value: `${LOOK[s.look]}×`, key: 'look' },
         { label: 'Invert look Y', value: onOff(s.invertY), key: 'invertY' },
         { label: 'Blood', value: onOff(s.blood), key: 'blood' },
@@ -534,14 +592,37 @@ export class Game {
     ];
   }
 
+  // Performance options (title Options, setup menu and pause menu)
+  perfItems() {
+    const s = this.settings, pct = (x) => `${Math.round(x * 100)}%`;
+    const auto = s.autoRes && this.perf.autoScale < 1 ? ` · auto ${pct((RES[s.res] ?? 1) * this.perf.autoScale)}` : '';
+    return [
+      { label: 'Graphics quality', value: QUALITY[this.quality].name, key: 'quality' },
+      { label: 'Resolution', value: pct(RES[s.res] ?? 1) + auto, key: 'res' },
+      { label: 'Auto resolution', value: s.autoRes ? 'On (lowers it when frames are slow)' : 'Off', key: 'autoRes' },
+      { label: 'Shadows', value: onOff(s.shadows), key: 'shadows' },
+      { label: 'Effects', value: s.fxLite ? 'Reduced' : 'Full', key: 'fxLite' },
+      { label: 'Distant units', value: s.lod ? `Simple in big battles (${LOD_MIN}+)` : 'Always detailed', key: 'lod' },
+      { label: 'Fallen units', value: s.corpses ? `Vanish after ${CORPSE_SECONDS} s` : 'Stay on the field', key: 'corpses' },
+      { label: 'Under heavy load', value: SIM_LOADS[s.simLoad]?.name || SIM_LOADS[1].name, key: 'simLoad' },
+      { label: 'Frame rate counter', value: onOff(s.showFps), key: 'showFps' },
+    ];
+  }
+  // one line on how the game is coping (performance pages)
+  perfLine() {
+    const P = this.perf, n = this.battle ? this.battle.units.filter((u) => u.alive).length : this.armies[0].length + this.armies[1].length;
+    const sim = this.battle && (this.state === 'battle' || this.pauseFrom === 'battle') ? ` · battle at ${Math.round(P.speed * 100)}% speed` : '';
+    return `Now: <b>${Math.round(P.fps)} fps</b>${sim} · ${n} unit${n === 1 ? '' : 's'}${this.battle ? ' standing' : ''}. Lower the resolution, shadows or effects for a faster picture; <i>Fallen units</i> and fewer units for a faster battle.`;
+  }
+
   // change a setting by d (±1); returns true if handled
   adjustSetting(key, d) {
     const s = this.settings;
     const cyc = (v, n) => (v + d + n) % n;
     switch (key) {
       case 'map': s.map = cyc(s.map, MAPS.length); this.changeMap(s.map); break;
-      case 'budget': s.budget = cyc(s.budget, BUDGETS.length); break;
-      case 'cap': s.cap = cyc(s.cap, CAPS.length); break;
+      case 'budget': { const k = this.limKeys()[0]; s[k] = cyc(s[k], BUDGETS.length); break; }
+      case 'cap': { const k = this.limKeys()[1]; s[k] = cyc(s[k], CAPS.length); break; }
       case 'blind': s.blind = !s.blind; break;
       case 'rounds': s.rounds = cyc(s.rounds | 0, ROUNDS.length); break;
       case 'bonus': s.bonus = !s.bonus; break;
@@ -553,6 +634,14 @@ export class Game {
       case 'invertY': s.invertY = !s.invertY; break;
       case 'blood': s.blood = !s.blood; this.fx.blood = s.blood; break;
       case 'music': s.music = !s.music; this.audio.setVolumes(0.8, s.music ? 0.45 : 0); break;
+      case 'res': s.res = cyc(s.res | 0, RES.length); this.applyQuality(); break;
+      case 'autoRes': s.autoRes = !s.autoRes; this.perf.adapt(0, s.autoRes); this.applyQuality(); break;
+      case 'shadows': s.shadows = !s.shadows; this.applyQuality(); break;
+      case 'fxLite': s.fxLite = !s.fxLite; this.applyQuality(); break;
+      case 'corpses': s.corpses = s.corpses ? 0 : 1; break;
+      case 'simLoad': s.simLoad = cyc(s.simLoad | 0, SIM_LOADS.length); this.perf.next = 0; break;
+      case 'showFps': s.showFps = !s.showFps; break;
+      case 'lod': s.lod = !s.lod; break;
       default: return false;
     }
     this.audio.play('click');
@@ -965,7 +1054,14 @@ export class Game {
 
   updateSetup(dt) {
     for (const p of this.activePlayers()) { this.updateSetupPlayer(p, dt); if (this.state !== 'setup') return; }
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.poseIdle(v, dt, t === 0 ? Math.PI / 2 : -Math.PI / 2);
+    // a big army animates its distant (stand-in) units every 4th frame, staggered
+    const many = this.setupVis[0].length + this.setupVis[1].length >= LOD_MIN;
+    for (let t = 0; t < 2; t++) {
+      this.setupVis[t].forEach((v, i) => {
+        if (many && v.far && (i + this.frameNo) % 4) return;
+        this.poseIdle(v, many && v.far ? dt * 4 : dt, t === 0 ? Math.PI / 2 : -Math.PI / 2);
+      });
+    }
     // versus setup timer: when it runs out the battle starts with whatever is placed
     if (this.setupLeft > 0 && !(this.countdown > 0)) {
       const prev = this.setupLeft;
@@ -1052,7 +1148,6 @@ export class Game {
 
   setupMenuItems(p) {
     const s = this.settings, ps = this.ps[p];
-    const money = (b) => (b === Infinity ? 'Unlimited' : b.toLocaleString('en-US'));
     const items = [
       { label: 'Resume', key: 'resume' },
       { label: ps.ready ? 'Not ready' : this.solo ? 'Start battle' : 'Ready', key: 'ready' },
@@ -1062,10 +1157,11 @@ export class Game {
     items.push({ label: `Clear ${this.mode === 'campaign' ? 'my' : TEAM_NAMES[ps.team]} army…`, key: 'clear' });
     if (this.mode !== 'campaign') {
       items.push({ label: 'Map', value: MAPS[s.map].name, key: 'map', preview: mapImg(MAPS[s.map].id) });
-      items.push({ label: 'Budget', value: money(BUDGETS[s.budget]), key: 'budget' });
-      items.push({ label: 'Unit limit', value: CAPS[s.cap], key: 'cap' });
+      items.push({ label: 'Budget', value: money(BUDGETS[s[this.limKeys()[0]]]), key: 'budget' });
+      items.push({ label: 'Unit limit', value: capText(CAPS[s[this.limKeys()[1]]]), key: 'cap' });
       if (this.mode === 'versus') items.push({ label: 'Blind setup', value: onOff(s.blind), key: 'blind' });
     }
+    items.push({ label: 'Performance…', key: 'perf' });
     items.push({ label: 'Controls', key: 'help' });
     if (this.mode === 'campaign') items.push({ label: 'Level select', key: 'levels' });
     items.push({ label: 'Main menu', key: 'quit' });
@@ -1087,6 +1183,7 @@ export class Game {
       const n = this.armies[t].length;
       return { title: `Clear ${TEAM_NAMES[t]} army?`, text: `Removes all ${n} unit${n === 1 ? '' : 's'} (${this.armyCost(t).toLocaleString('en-US')} gold). ${btn('X')} undo brings them back. <small>Tip: hold ${btn('View')} to clear without asking.</small>`, items: [{ label: 'No, keep them', key: 'no' }, { label: 'Yes, clear', key: 'yes', cls: 'danger' }], sel: m.sel };
     }
+    if (m.kind === 'perf') return { title: 'PERFORMANCE', text: this.perfLine(), items: [...this.perfItems(), { label: 'Back', key: 'back' }], sel: m.sel };
     const title = this.mode === 'campaign' ? `${this.level.name.toUpperCase()}${this.solo ? '' : ` · P${p + 1}`}` : `${TEAM_NAMES[t].toUpperCase()} · MENU`;
     return { title, items: this.setupMenuItems(p), sel: m.sel };
   }
@@ -1099,7 +1196,8 @@ export class Game {
     if (I.nav(p, 'up')) { m.sel = (m.sel + items.length - 1) % items.length; this.audio.play('click', null, 0.4); }
     m.sel = clamp(m.sel, 0, items.length - 1);
     const it = items[m.sel];
-    if (I.pressed(p, 'b') || (I.pressed(p, 'start') && m.kind === 'menu')) { ps.modal = null; I.swallow(); return; }
+    if (I.pressed(p, 'b') && m.kind === 'perf') { ps.modal = { kind: 'menu', sel: m.from || 0 }; I.swallow(); return; }
+    if (I.pressed(p, 'b') || (I.pressed(p, 'start') && m.kind !== 'clear')) { ps.modal = null; I.swallow(); return; }
     let d = 0;
     if (I.nav(p, 'right')) d = 1;
     if (I.nav(p, 'left')) d = -1;
@@ -1111,7 +1209,9 @@ export class Game {
       if (it.key === 'yes') this.clearArmy(p);
       return;
     }
+    if (m.kind === 'perf' && it.key === 'back') { ps.modal = { kind: 'menu', sel: m.from || 0 }; return; }
     switch (it.key) {
+      case 'perf': ps.modal = { kind: 'perf', sel: 0, from: m.sel }; this.audio.play('click'); break;
       case 'resume': ps.modal = null; break;
       case 'ready': ps.modal = null; this.toggleReady(p); break;
       case 'switch': ps.modal = null; this.switchSide(p); break;
@@ -1336,7 +1436,17 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- battle
-  startBattle() {
+  startBattle(now) {
+    // a huge battle takes a moment to build: say so first, build it once that's drawn
+    const n = this.armies[0].length + this.armies[1].length;
+    if (!now && n >= 300) {
+      if (!this.prepping) {
+        this.prepping = `Preparing the battle: ${n} units…`;
+        this.ui.show('pause', false);
+        requestAnimationFrame(() => requestAnimationFrame(() => { this.prepping = null; this.startBattle(true); }));
+      }
+      return;
+    }
     const from = this.state === 'paused' ? this.pauseFrom : this.state;
     this.disposeBattle();
     this.hideGhosts();
@@ -1419,10 +1529,14 @@ export class Game {
   }
 
   syncLive(dt) {
-    const b = this.battle;
+    const b = this.battle, gone = this.settings.corpses ? b.time - CORPSE_SECONDS : -Infinity;
     b.units.forEach((u, i) => {
       const vis = this.battleVis[i];
       if (!vis) return;
+      // Performance → Fallen units: a unit down for a while leaves the picture
+      const hide = !u.alive && u.diedAt < gone && !u.kind?.standing?.(u);
+      vis.root.visible = !hide;
+      if (hide) return;
       const r = u.rag;
       for (let j = 0; j < NPARTS; j++) {
         vis.parts[j].position.copy(r.pos[j]);
@@ -1494,15 +1608,25 @@ export class Game {
     }
 
     // simulate
+    // Within a wall-clock budget (Performance → Under heavy load): a heavy battle
+    // runs slower than real time instead of freezing the controls and the UI.
     if (this.timeScale > 0) {
-      const simDt = Math.min(dt, 1 / 20) * this.timeScale;
-      const n = Math.max(1, Math.ceil(simDt / (1 / 60) - 1e-6));
-      for (let i = 0; i < n; i++) {
-        b.step(simDt / n);
-        this.rec.capture(b);
+      const want = Math.min(dt, 1 / 20) * this.timeScale;
+      const n = Math.max(1, Math.ceil(want / (1 / 60) - 1e-6));
+      const h = want / n, load = SIM_LOADS[this.settings.simLoad] || SIM_LOADS[1], P = this.perf;
+      const t0 = performance.now();
+      let steps = 0;
+      if (P.due(t0)) {
+        for (; steps < n; steps++) {
+          if (steps && performance.now() - t0 + P.stepMs > load.ms) break;
+          b.step(h);
+          this.rec.capture(b);
+          this.input.sample(); // don't lose a short button tap during a long frame
+        }
       }
-      this.syncLive(simDt);
-      this.fx.update(simDt);
+      P.ran((steps * h) / this.timeScale, steps, performance.now() - t0, load);
+      this.syncLive(steps * h);
+      this.fx.update(steps * h);
     } else this.projViz.fromBattle(b, 0);
 
     // cameras
@@ -1821,14 +1945,23 @@ export class Game {
     this.state = 'paused';
     this.pauseSel = 0;
     this.pauseSub = sub || '';
+    // under heavy load the menu opens on the Performance page
+    this.pausePage = this.perf.warn && !sub ? 'perf' : 'main';
     this.ui.show('pause', true);
     this.input.swallow();
   }
 
-  pauseItems() {
+  pauseItems(page = this.pausePage) {
+    if (page !== this.pausePage) { const p = this.pausePage; this.pausePage = page; const r = this.pauseItems(); this.pausePage = p; return r; }
     const from = this.pauseFrom;
     const cine = this.rigs[0].mode === 'cine';
     const items = [{ label: 'Resume', key: 'resume' }];
+    if (this.pausePage === 'perf') {
+      items.push(...this.perfItems(), { label: 'More options…', key: 'main' });
+      for (const it of this.pauseItems('main')) if (['edit', 'levels', 'title'].includes(it.key)) items.push(it);
+      return items;
+    }
+    items.push({ label: 'Performance…', key: 'perf' });
     items.push({ label: 'Camera', value: cine ? 'Cinematic' : 'Free', key: 'cine' });
     items.push({ label: 'Screen', value: this.split ? 'Split' : 'Shared', key: 'split' });
     items.push({ label: 'HUD', value: ['Full', 'No tips', 'Hidden (photo)'][this.hudMode], key: 'hud' });
@@ -1850,6 +1983,7 @@ export class Game {
       if (I.nav(p, 'down')) { this.pauseSel = (this.pauseSel + 1) % items.length; this.audio.play('click', null, 0.4); }
       if (I.nav(p, 'up')) { this.pauseSel = (this.pauseSel + items.length - 1) % items.length; this.audio.play('click', null, 0.4); }
       const it = items[this.pauseSel];
+      if (I.pressed(p, 'b') && this.pausePage === 'perf' && !this.perf.warn) { this.pausePage = 'main'; this.pauseSel = 1; items = this.pauseItems(); I.swallow(); this.audio.play('click', null, 0.4); continue; }
       if (I.pressed(p, 'b') || I.pressed(p, 'start')) { this.closePause(); return; }
       let d = 0;
       if (I.nav(p, 'right')) d = 1;
@@ -1857,6 +1991,14 @@ export class Game {
       if ((d || I.pressed(p, 'a')) && it.value !== undefined) {
         this.pauseAdjust(it.key, d || 1);
         items = this.pauseItems();
+        continue;
+      }
+      if (I.pressed(p, 'a') && (it.key === 'perf' || it.key === 'main')) {
+        this.pausePage = it.key;
+        this.pauseSel = it.key === 'main' ? 1 : 0;
+        items = this.pauseItems();
+        I.swallow();
+        this.audio.play('click', null, 0.5);
         continue;
       }
       if (I.pressed(p, 'a')) {
@@ -1874,7 +2016,8 @@ export class Game {
       }
     }
     this.pauseSel = clamp(this.pauseSel, 0, items.length - 1);
-    this.ui.updatePause('PAUSED', items, this.pauseSel, this.pauseSub);
+    const perf = this.pausePage === 'perf';
+    this.ui.updatePause(perf ? 'PERFORMANCE' : 'PAUSED', items, this.pauseSel, perf ? `${this.pauseSub ? this.pauseSub + '<br>' : ''}${this.perfLine()}` : this.pauseSub);
     if (this.pauseFrom !== 'replay' && this.battle) this.ui.updateBattle(this.battleHud());
   }
 
@@ -1891,6 +2034,7 @@ export class Game {
       case 'split': this.toggleSplit(); break;
       case 'hud': this.hudMode = (this.hudMode + d + 3) % 3; break;
       case 'speed': this.speedIdx = clamp(this.speedIdx + d, 0, SPEEDS.length - 1); this.timeScale = SPEEDS[this.speedIdx]; break;
+      default: this.adjustSetting(key, d);
     }
   }
 
@@ -2001,6 +2145,7 @@ export class Game {
         for (const it of vis.items) it.visible = !hide;
         const px = this.proxies[i];
         px.alive = !!(f & 8);
+        vis.root.visible = !this.settings.corpses || px.alive || P.fallenFor(i) <= CORPSE_SECONDS;
         // a raised zombie fights for the side that raised it from then on
         px.team = f & 32 ? 1 : 0;
         px.def = f & 64 ? px.zdef || (px.zdef = { ...px.def0, name: 'Zombie ' + px.def0.name }) : px.def0;

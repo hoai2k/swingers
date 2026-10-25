@@ -181,6 +181,7 @@ export class FX {
     scene.add(this.light);
     this.lightT = 0;
     this.blood = true;
+    this.lite = false; // Performance → Effects: Reduced (fewer particles, no footstep dust)
   }
 
   clear() {
@@ -195,12 +196,12 @@ export class FX {
   // ---- particle spawners
   // solid chunk
   chunk(x, y, z, vx, vy, vz, size, life, color, g = 9.81, drag = 0.4) {
-    if (this.ps.length >= MAX_SOLID) return;
+    if (this.ps.length >= (this.lite ? MAX_SOLID / 4 : MAX_SOLID)) return;
     this.ps.push({ x, y, z, vx, vy, vz, size, life, max: life, c: new THREE.Color(color), g, drag, rx: rand(0, 6), vr: rand(-12, 12), bounce: 0.3 });
   }
   // billboard: o = {grow, alpha, tile, g, drag, ground, rot, vr, fadeIn, wob, shrink}
   bb(list, x, y, z, vx, vy, vz, size, life, color, o = {}) {
-    if (list.length >= (list === this.ss ? MAX_SOFT : MAX_GLOW)) return;
+    if (list.length >= (list === this.ss ? MAX_SOFT : MAX_GLOW) * (this.lite ? 0.25 : 1)) return;
     list.push({ x, y, z, vx, vy, vz, size, life, max: life, c: color.isColor ? color.clone() : new THREE.Color(color),
       grow: o.grow ?? 0, a: o.alpha ?? 1, tile: o.tile ?? T_PUFF, g: o.g ?? 0, drag: o.drag ?? 1, ground: o.ground ?? false,
       rot: o.rot ?? rand(0, 6.28), vr: o.vr ?? 0, fadeIn: o.fadeIn ?? 0.08, wob: o.wob ?? 0, ph: rand(0, 6.28), shrink: o.shrink ?? false });
@@ -399,7 +400,7 @@ export class FX {
   }
 
   update(dt) {
-    if (dt > 0) this.trackUnits(Math.min(dt, 0.1));
+    if (dt > 0 && !this.lite) this.trackUnits(Math.min(dt, 0.1));
     this.stepSolid(dt);
     this.stepBB(this.ss, this.soft, dt);
     this.stepBB(this.gs, this.glow, dt);

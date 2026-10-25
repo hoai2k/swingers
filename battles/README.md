@@ -4,7 +4,8 @@ A wobbly physics battle game in the style of *Totally Accurate Battle Simulator*
 screen: both players build their armies **at the same time** in split screen
 with Xbox controllers, then watch the wobbly active-ragdoll battle together.
 
-What's left to do is in `TODO.md`; unit balance notes are in `BALANCE.md`.
+What's left to do is in `TODO.md`; unit balance notes are in `BALANCE.md`. Art requests
+are in `image-requests.md` and music requests in `music-requests.md`.
 
 Serve the repo root over http (ES modules) and open `/battles/`:
 
@@ -13,6 +14,36 @@ Serve the repo root over http (ES modules) and open `/battles/`:
 `?q=low` forces the Low graphics quality at boot; otherwise *Options → Graphics
 quality* (Low / Medium / High: render scale and shadow resolution) is saved with the
 other settings.
+
+### Big battles and low frame rates
+
+The game is built not to freeze, however big the battle (`src/perf.js`):
+
+- Each frame runs only as many physics steps as fit in a time budget, so a heavy
+  battle **slows down** instead of the controls, camera and menus locking up. When a
+  single step is slower than the budget, some frames skip the simulation so the
+  picture and UI keep updating. Button taps shorter than a slow frame still count
+  (pads are sampled between physics steps, keys latch on press).
+- A small badge shows when the battle runs below 80% speed. When the frame rate stays
+  under 15 fps (or the battle under 45% speed) for 3 s, a banner says so, and **Menu**
+  opens the pause menu straight on its **Performance** page. From there you can resume,
+  change settings live, edit the armies or quit to the main menu.
+- *Performance* options are in the pause menu, the setup menu and *Options*:
+  - graphics quality and resolution (100–35%)
+  - auto resolution, which lowers the render scale while frames are slow for reasons
+    other than the simulation
+  - shadows
+  - effects (Reduced means fewer particles and no footstep dust)
+  - distant units: in armies of 120+, far-away units are drawn as simple stand-ins
+    (~80 triangles instead of ~10,000)
+  - fallen units: they vanish 10 s after falling (live and in the replay)
+  - under heavy load: *Smooth controls*, *Balanced* or *Full speed*. This sets how
+    much of each frame the simulation may take.
+  - a frame-rate counter
+- Identical units share their baked meshes, so a big army doesn't upload one copy per
+  soldier. Battles of 300+ units show "Preparing the battle…" while they're built.
+- Replays keep to about 450 MB. A big battle records less than 6 minutes, and a huge
+  one (over about 1,000 units) records at 20 or 10 Hz instead of 30.
 
 ## Modes
 
@@ -32,7 +63,9 @@ other settings.
   Worlds limit the factions you may use. Levels are data in `src/campaign.js`
   (unknown unit ids are skipped); progress and your army per level are saved in
   `localStorage` (`wobbly-battles.campaign.v1`).
-- **Sandbox**: free play with no match score. *Players: 1* is one full-screen setup
+- **Sandbox**: free play with no match score. It has its own *Budget* and *Unit limit*,
+  separate from Versus, and both default to **Unlimited** (the limit can also be set from
+  40 up to 1,000; limits above 180 are marked *heavy*). *Players: 1* is one full-screen setup
   where you build both armies (tap **View** to switch side, **Y** starts the battle).
   *Players: 2* is split screen, each player builds one army and the battle starts when
   both are ready — like Versus without rounds, timer or blind setup.
@@ -87,7 +120,7 @@ screen either pad does all of this; in split screen each pad drives its own view
 | D-pad | ←→ unit, ↑↓ faction | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
 | R3 | reset camera | tips / HUD off (photo mode) | same |
 | View | clear army (asks) | split / shared screen | split / shared |
-| Start (Menu) | menu: ready, map, budget, blind, quit | pause: cinematic camera, screen, HUD, time, restart, edit, quit | menu |
+| Start (Menu) | menu: ready, map, budget, blind, performance, quit | pause: performance, cinematic camera, screen, HUD, time, restart, edit, quit | menu |
 
 All menus take D-pad or left stick (with repeat), A to select, B to go back. In
 shared screen either pad drives the camera; in split screen each player has their
@@ -104,7 +137,7 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
 - `src/visual.js` unit meshes (baked per part), faces, hats, weapons, portraits
 - `src/world.js` maps/terrain/scenery · `src/fx.js` particles · `src/audio.js` synthesised sfx, voices, music
 - `src/maps-new.js` feature maps (castle, river, cove, volcano, canyon, graveyard) · `src/features.js` hills, plateaus, water, bridges, walls and breakables: height grid, colliders, AI steering, placement checks, projectile blocking (all mirrored through the centre for fairness) · `src/mapscene.js` their meshes and set dressing
-- `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine
+- `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 
 Vendored: three.js r170 (`vendor/three.module.min.js`), Rapier 0.14 compat (`vendor/rapier.es.js`).
 `dev/lineup.html` renders every unit for quick visual checks.
