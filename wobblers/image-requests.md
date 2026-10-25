@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 10 signs remaining.** Rounds 1–10 are delivered;
+**Status: 4 signs remaining.** Rounds 1–10 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## OPEN round 11 — Stratford Fall Fair, arcade cabinets, gadgets, phone booths (22 signs)
@@ -10,12 +10,6 @@ an autumn county fair (falling leaves, pumpkins, hay bales), so its signs lean o
 warm fall colours; arcade marquees are glowing neon on black. No real brand or
 game names, logos or characters.
 
-- `signs/ferris_wheel.png` (1024 × 256) — **FERRIS WHEEL**: big wheel: warm gold board, maroon letters, small wheel icon (autumn-fair version).
-- `signs/carousel.png` (1024 × 256) — **CAROUSEL**: classic carousel: cream board with gold scroll trim, red letters, small carousel-horse icon.
-- `signs/mini_train.png` (1024 × 256) — **MINI TRAIN**: kiddie train ride: green board, yellow letters, small steam-engine icon.
-- `signs/magic_tent.png` (1024 × 256) — **MAGIC TENT**: fortune-teller style tent where players change shape: deep purple board with gold stars, glowing gold letters, small crystal-ball icon.
-- `signs/gadgets.png` (1024 × 256) — **GADGETS**: gadget shop (jetpacks, boots, laser gun): teal board, white letters, small jetpack icon.
-- `signs/phone.png` (1024 × 256) — **PHONE**: phone booth where players fetch their vehicles: red board, white letters, small old-style telephone icon.
 - `signs/chomp_maze.png` (1024 × 256) — **CHOMP MAZE**: arcade cabinet marquee for a maze-chomping game: black board, glowing yellow letters, small round-chomper icon (original character, not any real game's).
 - `signs/space_raiders.png` (1024 × 256) — **SPACE RAIDERS**: arcade cabinet marquee for a shoot-the-aliens game: black board, glowing green letters, small pixel-alien icon (original design).
 - `signs/bug_blaster.png` (1024 × 256) — **BUG BLASTER**: arcade cabinet marquee for a shoot-the-bugs game: black board, glowing magenta letters, small cartoon-bug icon (original design).

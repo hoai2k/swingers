@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- fair-round11 -->
-## Delivered round 11 batches (12/22 signs)
+## Delivered round 11 batches (18/22 signs)
 
 - `signs/stratford_fall_fair.png` (1024 × 256) — **STRATFORD FALL FAIR**: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner.
 - `signs/pirate_ship.png` (1024 × 256) — **PIRATE SHIP**: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon.
@@ -19,6 +19,12 @@ files are recorded in `assets/generation.json`.
 - `signs/tilt-a-whirl.png` (1024 × 256) — **TILT-A-WHIRL**: spinning tub ride: candy-striped red and white board, small swirl icon.
 - `signs/himalaya.png` (1024 × 256) — **HIMALAYA**: fast music-ride on hills: snowy white board with mountain silhouette, icy-blue letters, small snowflake icon.
 - `signs/sizzler.png` (1024 × 256) — **SIZZLER**: spinning-arm ride: orange board, yellow letters with a sizzle outline, small sun icon.
+- `signs/ferris_wheel.png` (1024 × 256) — **FERRIS WHEEL**: big wheel: warm gold board, maroon letters, small wheel icon (autumn-fair version).
+- `signs/carousel.png` (1024 × 256) — **CAROUSEL**: classic carousel: cream board with gold scroll trim, red letters, small carousel-horse icon.
+- `signs/mini_train.png` (1024 × 256) — **MINI TRAIN**: kiddie train ride: green board, yellow letters, small steam-engine icon.
+- `signs/magic_tent.png` (1024 × 256) — **MAGIC TENT**: fortune-teller style tent where players change shape: deep purple board with gold stars, glowing gold letters, small crystal-ball icon.
+- `signs/gadgets.png` (1024 × 256) — **GADGETS**: gadget shop (jetpacks, boots, laser gun): teal board, white letters, small jetpack icon.
+- `signs/phone.png` (1024 × 256) — **PHONE**: phone booth where players fetch their vehicles: red board, white letters, small old-style telephone icon.
 
 Delivered with built-in imagegen, 2026-10-25. Exact dimensions, alpha, lettering and icons reviewed; loaded through the game manifest in the browser. Prompts and original sources are in `assets/generation.json`.
 
