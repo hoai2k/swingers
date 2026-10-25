@@ -130,9 +130,18 @@ export class UI {
     const stars = (n) => [1, 2, 3].map((k) => `<i class="${k <= n ? 'on' : ''}">★</i>`).join('');
     this.setText(v.total, `★ ${d.total} / ${d.max}`);
     this.setText(v.worlds, d.worlds.map((w, wi) => `<div class="lvworld ${w.unlocked ? '' : 'locked'}" style="--wc:${w.color}">
-      <div class="lvwname">${w.unlocked ? '' : '🔒 '}${w.name}</div>
+      <div class="lvwname"><span>${w.unlocked ? '' : '🔒 '}${w.name}</span><small>${w.bonus ? 'bonus · ' : ''}★ ${w.levels.reduce((s, l) => s + l.stars, 0)} / ${w.levels.length * 3}</small></div>
       ${w.levels.map((l, li) => `<div class="lvtile ${l.sel ? 'sel' : ''} ${l.unlocked ? '' : 'locked'}"><b>${wi + 1}-${li + 1}</b>
         <span class="lvn">${l.unlocked ? l.name : '🔒'}</span><span class="lvs">${stars(l.stars)}</span></div>`).join('')}</div>`).join(''));
+    // keep the selected world's row in view (the list scrolls when it doesn't fit)
+    const row = v.worlds.querySelector('.lvtile.sel')?.parentElement;
+    if (row && row !== this.lvRow) {
+      this.lvRow = row;
+      const pad = 8, top = row.offsetTop - pad, bot = row.offsetTop + row.offsetHeight + pad;
+      const box = v.worlds;
+      if (top < box.scrollTop) box.scrollTop = top;
+      else if (bot > box.scrollTop + box.clientHeight) box.scrollTop = bot - box.clientHeight;
+    }
     const L = d.level;
     this.setText(v.detail, `<div class="lvd-top" style="--wc:${L.color}"><span class="lvd-name">${L.name}</span><span class="lvd-stars">${stars(L.stars)}</span></div>
       <div class="lvd-tip">${L.unlocked ? L.tip : '🔒 Locked — beat the level before it first.'}</div>
