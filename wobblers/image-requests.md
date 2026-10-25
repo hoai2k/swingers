@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 34 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 27 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -54,13 +54,6 @@ stand-in for each until the art arrives.
 
 ### Bigtown (city)
 
-- `bouncy_beans.png` — **BOUNCY BEANS**: billboard, yellow board, orange bubbly letters, smiling jelly bean icon.
-- `taxi.png` — **TAXI**: yellow board with a black-and-white checker strip, black letters.
-- `delivery.png` — **DELIVERY**: orange board, white letters, cardboard box icon.
-- `building_site.png` — **BUILDING SITE**: yellow-and-black hazard-striped board, black letters, hard-hat icon.
-- `elevator.png` — **ELEVATOR**: steel-grey board, white letters, up/down arrows icon.
-- `market_street.png` — **MARKET STREET**: gateway arch banner, orange board, white letters, shopping basket icon.
-- `city_bus.png` — **CITY BUS**: dark board, amber LED-style letters (bus destination display), small bus icon.
 
 ### Frostpeak (snow)
 

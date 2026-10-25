@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- region-round-7 -->
-## Delivered round 7 batches (12/32 signs)
+## Delivered round 7 batches (19/32 signs)
 
 Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 
@@ -21,6 +21,13 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `city_park.png` — **CITY PARK**: leafy green board, white letters, round tree icon.
 - `harbour.png` — **HARBOUR**: navy board, white letters, anchor icon.
 - `wobble_cola.png` — **WOBBLE COLA**: billboard, red board, white swirly letters, fizzy cola bottle icon (invented brand).
+- `bouncy_beans.png` — **BOUNCY BEANS**: billboard, yellow board, orange bubbly letters, smiling jelly bean icon.
+- `taxi.png` — **TAXI**: yellow board with a black-and-white checker strip, black letters.
+- `delivery.png` — **DELIVERY**: orange board, white letters, cardboard box icon.
+- `building_site.png` — **BUILDING SITE**: yellow-and-black hazard-striped board, black letters, hard-hat icon.
+- `elevator.png` — **ELEVATOR**: steel-grey board, white letters, up/down arrows icon.
+- `market_street.png` — **MARKET STREET**: gateway arch banner, orange board, white letters, shopping basket icon.
+- `city_bus.png` — **CITY BUS**: dark board, amber LED-style letters (bus destination display), small bus icon.
 <!-- /region-round-7 -->
 
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)
