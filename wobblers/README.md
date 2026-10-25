@@ -29,7 +29,9 @@ opens the controls overlay.
 **Start** / **Esc** opens that player's own menu (resume, customise, respawn, settings,
 controls, reset vehicles, leave). With one player it pauses the game; in split screen it
 only covers that player's view. Settings (music and sound volume, shadows, resolution, and
-per-player invert-Y and camera sensitivity) are saved in `localStorage`. Menus work with the
+per-player invert-Y and camera sensitivity) are saved in `localStorage`. The buttons in the top-right
+corner (they fade out while the mouse is idle in play) toggle fullscreen and sound and open the
+shared settings with the mouse; leaving the title (the first join) goes fullscreen by itself. Menus work with the
 stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or the mouse.
 
 ## Controls

@@ -69,7 +69,7 @@ export class Audio {
       if (!AC) return;
       const c = this.ctx = new AC();
       this.master = c.createGain();
-      this.master.gain.value = this.audible() ? 1 : 0;
+      this.master.gain.value = this.audible() && settings.sound ? 1 : 0;
       const comp = c.createDynamicsCompressor();
       comp.threshold.value = -12; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
       this.master.connect(comp); comp.connect(c.destination);
@@ -111,7 +111,7 @@ export class Audio {
     if (!this.ctx) return;
     try {
       const on = this.audible();
-      this.master.gain.setTargetAtTime(on ? 1 : 0, this.ctx.currentTime, 0.03);
+      this.master.gain.setTargetAtTime(on && settings.sound ? 1 : 0, this.ctx.currentTime, 0.03);
       if (!on) this.ctx.suspend?.().catch?.(() => {});
       else this.ctx.resume?.().catch?.(() => {});
     } catch (e) { /* ignore */ }
@@ -122,6 +122,7 @@ export class Audio {
     const t = this.ctx.currentTime;
     this.sfx.gain.setTargetAtTime(settings.sfx, t, 0.05);
     this.musicBus.gain.setTargetAtTime(settings.music * 0.7, t, 0.05);
+    this.applyMute(); // settings.sound (the corner on/off button) gates the master
   }
 
   running() { return this.ctx && this.ctx.state === 'running'; }

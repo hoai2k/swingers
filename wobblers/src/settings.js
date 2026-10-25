@@ -5,7 +5,7 @@
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [], life: {}, missions: {} });
+const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [], life: {}, missions: {} });
 
 function load() {
   const s = DEFAULTS();
@@ -16,6 +16,7 @@ function load() {
       if (o && typeof o === 'object') {
         for (const k of ['music', 'sfx', 'res']) if (typeof o[k] === 'number' && isFinite(o[k])) s[k] = o[k];
         if (typeof o.shadows === 'boolean') s.shadows = o.shadows;
+        if (typeof o.sound === 'boolean') s.sound = o.sound; // corner sound on/off button
         if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
         // ids of the presents found so far (src/unlocks.js)
         if (Array.isArray(o.presents)) s.presents = o.presents.filter((v) => typeof v === 'string');

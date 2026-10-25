@@ -173,3 +173,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; fon
 .ewheel .ehint { font-weight: 800; font-size: calc(var(--d) * .042); margin-top: .2em; display: flex; align-items: center; justify-content: center; gap: .15em; white-space: nowrap; }
 .ewheel.small .elabel { display: none; } .ewheel.small .eicon { width: 70%; height: 70%; }
 .ewheel.small .ehint { font-size: 9px; }
+
+/* ---------- corner buttons (fullscreen, sound, settings) + the settings card ---------- */
+#corner { position: fixed; top: max(44px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); z-index: 40; display: flex; gap: 8px; transition: opacity .3s, transform .3s; }
+#corner.idle { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+#corner button { width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); background: rgba(20,50,110,.55); color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 rgba(0,0,0,.2); transition: transform .1s, background .1s; }
+#corner button:hover { background: var(--blue); transform: scale(1.08); }
+#corner button:active { transform: scale(.94); }
+#corner button.off { color: rgba(255,255,255,.55); }
+#corner svg { width: 58%; height: 58%; }
+.ppanel.gset { position: fixed; inset: 0; z-index: 35; pointer-events: auto; background: rgba(20,50,110,.6); }
+.ppanel.gset .card { --acc: var(--blue); padding-top: 8px; }

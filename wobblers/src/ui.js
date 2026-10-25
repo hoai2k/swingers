@@ -15,6 +15,34 @@ import { PhonePanel } from './phone.js';
 import { ShopPanel } from './life/shops.js';
 import { life } from './life/state.js';
 
+// Corner buttons (top right): fullscreen, sound on/off and the shared settings card.
+const svg = (body) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+const ICONS = {
+  full: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+  unfull: svg('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
+  sound: svg('<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'),
+  soundOff: svg('<path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M16 9l5 6M21 9l-5 6"/>'),
+  gear: svg('<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>'),
+};
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+const fsEnabled = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+// A refusal (no user gesture yet) is swallowed: the corner button still works.
+function enterFullscreen() {
+  if (fsElement() || !fsEnabled()) return;
+  try {
+    const r = document.documentElement;
+    const q = (r.requestFullscreen || r.webkitRequestFullscreen).call(r, { navigationUI: 'hide' });
+    if (q && q.catch) q.catch(() => {});
+  } catch (e) { /* not allowed here */ }
+}
+function toggleFullscreen() {
+  if (!fsElement()) { enterFullscreen(); return; }
+  try {
+    const q = (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    if (q && q.catch) q.catch(() => {});
+  } catch (e) { /* ignore */ }
+}
+
 const DEV_NAME = (id) => id === 'kb1' ? 'Keyboard' : id === 'kb2' ? 'Keyboard 2' : id.startsWith('gp') ? 'Controller ' + (+id.slice(2) + 1) : id;
 const textCol = (c) => (c === 0xffffff || c === 0xffc233 || c === 0x3fe0d0) ? '#234' : '#fff';
 const accent = (c) => PLAYER_CSS(c === 0xffffff ? 0x2a62c9 : c);
@@ -72,6 +100,20 @@ function itemHTML(it, i, sel) {
   } else if (it.value != null) val = it.adj ? `<span class="arrows">◀</span><b>${it.value}</b><span class="arrows">▶</span>` : `<b>${it.value}</b>`;
   else if (it.sub) val = '<span class="chev">›</span>';
   return `<div class="item ${i === sel ? 'sel' : ''} ${it.danger ? 'danger' : ''}" data-i="${i}"><span>${it.label}</span><span class="val">${val}</span></div>`;
+}
+
+// The settings every player shares: used by the pause menu's settings page and
+// by the corner gear's card.
+function sharedSettingItems(ui) {
+  const g = ui.game;
+  return [
+    { label: 'Sound', value: settings.sound ? 'On' : 'Off', adj: () => ui.toggleSound() },
+    { label: 'Music volume', slider: settings.music, adj: (d) => { settings.music = Math.max(0, Math.min(1, Math.round(settings.music * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); } },
+    { label: 'Sound effects', slider: settings.sfx, adj: (d) => { settings.sfx = Math.max(0, Math.min(1, Math.round(settings.sfx * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); ui.sfx('pop'); } },
+    { label: 'Shadows', value: g.shadows ? 'On' : 'Off', adj: () => { g.shadows = !g.shadows; settings.shadows = g.shadows; saveSettings(); } },
+    { label: 'Resolution', value: Math.round(g.resScale * 100) + '%', adj: (d) => { const v = [0.5, 0.75, 1], i = Math.max(0, Math.min(2, v.indexOf(nearest(v, g.resScale)) + d)); g.setResScale(v[i]); settings.res = v[i]; saveSettings(); } },
+    ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -196,10 +238,7 @@ class PauseMenu extends Panel {
     const p = this.p, ui = this.ui, g = ui.game, pf = devicePrefs(p.deviceId);
     if (this.page === 'settings') {
       return [
-        { label: 'Music volume', slider: settings.music, adj: (d) => { settings.music = Math.max(0, Math.min(1, Math.round(settings.music * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); } },
-        { label: 'Sound effects', slider: settings.sfx, adj: (d) => { settings.sfx = Math.max(0, Math.min(1, Math.round(settings.sfx * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); ui.sfx('pop'); } },
-        { label: 'Shadows', value: g.shadows ? 'On' : 'Off', adj: () => { g.shadows = !g.shadows; settings.shadows = g.shadows; saveSettings(); } },
-        { label: 'Resolution', value: Math.round(g.resScale * 100) + '%', adj: (d) => { const v = [0.5, 0.75, 1], i = Math.max(0, Math.min(2, v.indexOf(nearest(v, g.resScale)) + d)); g.setResScale(v[i]); settings.res = v[i]; saveSettings(); } },
+        ...sharedSettingItems(ui),
         { label: 'Invert camera Y', value: pf.invertY ? 'On' : 'Off', adj: () => { pf.invertY = !pf.invertY; saveSettings(); } },
         { label: this.confirmReset ? 'Press again to reset!' : 'Reset presents', danger: true, act: () => {
           if (!this.confirmReset) { this.confirmReset = true; return; }
@@ -264,6 +303,42 @@ class PauseMenu extends Panel {
   }
 }
 const nearest = (arr, v) => arr.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
+
+// The corner gear's settings card: covers the whole screen (title included),
+// works with the mouse and with any controller or keyboard, and pauses the game.
+class SettingsCard extends Panel {
+  constructor(ui) {
+    super(ui, null, 'menu gset');
+    document.body.appendChild(this.el); // above the title screen
+    this.devId = 'kb1';
+    this.el.addEventListener('pointerdown', (e) => { if (e.target === this.el) ui.closeSettings(); });
+    this.draw();
+  }
+  get kindName() { return deviceKind(this.devId); }
+  items() { return [...sharedSettingItems(this.ui), { label: 'Close', act: () => this.ui.closeSettings() }]; }
+  adjust(d) { PauseMenu.prototype.adjust.call(this, d); }
+  activate(d) {
+    const it = this.items()[this.sel];
+    if (!it) return;
+    if (it.adj) { this.adjust(d || 1); return; }
+    if (it.act) { this.ui.sfx('uiSelect'); it.act(); }
+  }
+  input(n) {
+    const N = this.items().length;
+    if (n.up) { this.sel = (this.sel + N - 1) % N; this.ui.sfx('uiMove'); this.draw(); }
+    if (n.down) { this.sel = (this.sel + 1) % N; this.ui.sfx('uiMove'); this.draw(); }
+    if (n.left) this.adjust(-1);
+    if (n.right) this.adjust(1);
+    if (n.ok) this.activate(0);
+    else if (n.back || n.start) this.ui.closeSettings();
+  }
+  draw() {
+    const k = this.kindName, it = this.items();
+    this.el.innerHTML = `<div class="card"><h2>Settings</h2>
+      ${it.map((x, i) => itemHTML(x, i, this.sel)).join('')}
+      <div class="foot">${promptRow([['OK', 'Select'], ['LS', 'Change'], ['MENUBACK', 'Close']], k)}</div></div>`;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // The controls / help overlay.
@@ -336,6 +411,8 @@ export class UI {
     this.hud.appendChild(this.join);
     this.joinHTML = '';
     this.ready = false;
+    this.settingsCard = null;
+    this.buildCorner();
     buildTitleCrowd(document.getElementById('crowd'));
     buildMapImage(game); // the island map picture, painted once
     // apply stored settings
@@ -357,6 +434,73 @@ export class UI {
   }
 
   sfx(name, extra) { this.game.audio?.play(name, null, 1, extra || {}); }
+
+  // Corner buttons: always shown on the title; in play they fade out when the
+  // mouse is idle (mouse-look under pointer lock doesn't wake them).
+  buildCorner() {
+    const bar = this.corner = document.createElement('div');
+    bar.id = 'corner';
+    const btn = (title, fn) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.title = title; b.tabIndex = -1;
+      b.setAttribute('aria-label', title);
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.game.audio?.start?.(); fn(); this.poke(); });
+      bar.appendChild(b);
+      return b;
+    };
+    this.btnFull = btn('Fullscreen', () => toggleFullscreen());
+    if (!fsEnabled()) this.btnFull.style.display = 'none';
+    this.btnSound = btn('Sound on/off', () => this.toggleSound());
+    this.btnSettings = btn('Settings', () => (this.settingsCard ? this.closeSettings() : this.openSettings()));
+    document.body.appendChild(bar);
+    this.idle = 4;
+    const wake = (e) => { if (!document.pointerLockElement || e.type !== 'mousemove') this.poke(); };
+    for (const ev of ['mousemove', 'pointerdown', 'touchstart']) addEventListener(ev, wake, { passive: true });
+    for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => this.refreshCorner());
+    setInterval(() => {
+      this.idle -= 0.25;
+      const show = this.idle > 0 || !this.game.players.length || !!this.settingsCard || bar.matches(':hover');
+      bar.classList.toggle('idle', !show);
+    }, 250);
+    this.refreshCorner();
+  }
+  poke() { this.idle = Math.max(this.idle, 2.5); this.corner.classList.remove('idle'); }
+  refreshCorner() {
+    this.btnFull.innerHTML = fsElement() ? ICONS.unfull : ICONS.full;
+    this.btnSound.innerHTML = settings.sound ? ICONS.sound : ICONS.soundOff;
+    this.btnSound.classList.toggle('off', !settings.sound);
+    this.btnSettings.innerHTML = ICONS.gear;
+    this.settingsCard?.draw();
+    for (const pn of this.panels.values()) if (pn instanceof PauseMenu) pn.draw();
+  }
+  toggleSound() {
+    settings.sound = !settings.sound;
+    saveSettings();
+    this.game.audio?.setVolumes?.();
+    if (settings.sound) this.sfx('uiSelect');
+    this.refreshCorner();
+  }
+  openSettings() {
+    if (this.settingsCard) return;
+    this.sfx('uiOpen');
+    this.settingsCard = new SettingsCard(this);
+    for (const id of this.game.input.devices.keys()) this.game.input.capture(id, true);
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.updatePause();
+  }
+  closeSettings() {
+    if (!this.settingsCard) return;
+    this.settingsCard.remove();
+    this.settingsCard = null;
+    this.sfx('uiBack');
+    const g = this.game;
+    for (const id of g.input.devices.keys()) {
+      const p = g.players.find((q) => q.deviceId === id);
+      g.input.capture(id, !!(p && this.panels.has(p)) || this.help?.id === id);
+    }
+    this.updatePause();
+  }
 
   setReady() {
     this.ready = true;
@@ -554,6 +698,16 @@ export class UI {
   handleInput() {
     const g = this.game, inp = g.input;
     if (!this.ready) return;
+    if (this.settingsCard) {
+      for (const id of [...inp.devices.keys()]) {
+        const n = this.nav.read(id);
+        if (!Object.values(n).some(Boolean)) continue;
+        this.settingsCard.devId = id;
+        this.settingsCard.input(n);
+        if (!this.settingsCard) break;
+      }
+      return;
+    }
     if (this.help) {
       const n = this.nav.read(this.help.id);
       const kb1Esc = this.help.id === 'kb1' && inp.tapped('Escape');
@@ -591,8 +745,12 @@ export class UI {
   tryJoin(id) {
     const g = this.game, inp = g.input;
     if (!this.ready || g.players.some((p) => p.deviceId === id)) return;
+    const fromTitle = !g.players.length;
     const p = g.addPlayer(id);
     if (!p) return;
+    // leaving the title: the press is the user gesture fullscreen needs
+    // (Chrome honours a gamepad press too; a refusal leaves the corner button)
+    if (fromTitle) enterFullscreen();
     this.title.classList.add('hidden');
     restoreLook(p);
     // don't start out wearing the same colour as someone else
@@ -625,7 +783,7 @@ export class UI {
     const g = this.game;
     const menus = [...this.panels.values()].filter((x) => x.kind === 'menu').length;
     const was = g.paused;
-    g.paused = g.players.length === 1 && (menus > 0 || !!this.help);
+    g.paused = (g.players.length > 0 && !!this.settingsCard) || (g.players.length === 1 && (menus > 0 || !!this.help));
     if (was !== g.paused) for (const pn of this.panels.values()) if (pn.kind === 'menu') pn.draw();
   }
 
