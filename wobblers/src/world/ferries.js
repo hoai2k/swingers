@@ -121,8 +121,15 @@ export class Ferry {
     (game.mapFeatures ||= []).push({ pts, w: 1.2, minPx: 1.5, color: 'rgba(255,255,255,.75)', dash: [8, 7] });
   }
 
+  // Where the hull centre stops at a berth: shifted along the coast so the side
+  // gate (FERRY.gateZ from the centre) lines up with the pier walkway.
+  static berthAt(stop) {
+    const B = stop.dock.berth, k = -FERRY.gateZ * stop.dir;
+    return { x: B.x + B.tx * k, z: B.z + B.tz * k, tx: B.tx, tz: B.tz, out: B.out };
+  }
+
   makeLeg(a, b, wps) {
-    const A = a.dock.berth, B = b.dock.berth;
+    const A = Ferry.berthAt(a), B = Ferry.berthAt(b);
     const ha = [A.tx * a.dir, A.tz * a.dir], hb = [B.tx * b.dir, B.tz * b.dir];
     const pts = [[A.x, A.z], [A.x + ha[0] * 45 + A.out[0] * 6, A.z + ha[1] * 45 + A.out[1] * 6], [A.x + ha[0] * 90 + A.out[0] * 30, A.z + ha[1] * 90 + A.out[1] * 30],
       ...wps, [B.x - hb[0] * 90 + B.out[0] * 30, B.z - hb[1] * 90 + B.out[1] * 30], [B.x - hb[0] * 45 + B.out[0] * 6, B.z - hb[1] * 45 + B.out[1] * 6], [B.x, B.z]];

@@ -37,6 +37,13 @@ const RAY_LEN = 1.05 * S;
 
 const WALK = 3.4, RUN = 6.2, SWIM = 2.6, JUMP_V = 5.6;
 const GETUP_T = 0.95;         // seconds to stand back up after going limp
+// Climbing stamina (player.grip, 0..1): hanging off the world tires the arms, so
+// you can hang ~8 s, hop up a bar or two and pull yourself over a ledge, but not
+// wall-run up a building. Standing or swimming rests the arms.
+const GRIP_DRAIN = 0.12;      // per second hanging off something solid
+const GRIP_REST = 0.6;        // per second back on the ground
+const GRIP_HOP = 0.16;        // a jump off a bar / rope while hanging
+const GRIP_MANTLE = 0.2;      // pulling up over a ledge
 
 // ---- look -----------------------------------------------------------------
 const SKIN = 0xffd9b8;
@@ -143,6 +150,7 @@ export class Player {
     this.stumble = 0;      // >0: wobbly after a bump
     this.mantle = null;    // climbing over a ledge
     this.hangPush = 0;     // time the stick has been held forward while hanging
+    this.grip = 1;         // climbing stamina (GRIP_*)
     this.accFwd = 0;       // forward acceleration commanded last step
     this.reachDown = 0;    // 0..1 bending over to reach the floor
     this.reachArm = { L: false, R: false }; // arm is reaching out to grab
@@ -434,8 +442,16 @@ export class Player {
     const gy = this.game.groundHeight(p.x, p.z, p.y + 2);
     const y = Math.max(p.y - 0.3, gy + 0.05);
     const v = sb.linvel();
+    // rides (exitPush): you hop off right where you are, with the ride's speed
+    // and a little push away from your seat, Wobbly Life style
+    let px = 0, pz = 0;
+    if (seat.exitPush) {
+      const sp = new THREE.Vector3(seat.pos[0], seat.pos[1], seat.pos[2]).applyQuaternion(_qa).add(toV(sb.translation(), _vc));
+      const dx = p.x - sp.x, dz = p.z - sp.z, d = Math.hypot(dx, dz);
+      if (d > 1e-3) { px = dx / d * seat.exitPush; pz = dz / d * seat.exitPush; }
+    }
     this.teleport(p.x, y, p.z, this.yaw);
-    this.setVelocity({ x: v.x * 0.8, y: v.y * 0.8 + 1, z: v.z * 0.8 });
+    this.setVelocity({ x: v.x * 0.8 + px, y: v.y * 0.8 + 1, z: v.z * 0.8 + pz });
     seat.onExit?.(this);
   }
 
@@ -580,6 +596,18 @@ export class Player {
       this.airTime = 0;
     }
     this.landDip = Math.max(0, this.landDip - DT * 3.2);
+
+    // --- grip stamina: tires while hanging off the world, rests on the ground
+    if (this.grounded || this.swimming || seated) this.grip = Math.min(1, this.grip + DT * GRIP_REST);
+    else if (!this.mantle && (this.anchorHand('L') || this.anchorHand('R'))) {
+      this.grip -= DT * GRIP_DRAIN;
+      if (this.grip <= 0) { // arms give out: drop
+        this.grip = 0;
+        this.releaseAll();
+        this.hands.L.cool = this.hands.R.cool = 0.6;
+        this.sqV -= 1;
+      }
+    }
 
     // --- grabbing
     if (!seated && !limp) { this.updateHands(inp); this.carryAssist(); }
@@ -737,7 +765,7 @@ export class Player {
       const pushing = bothHeld && mag > 0.5 && (mvx * Math.sin(this.yaw) + mvz * Math.cos(this.yaw)) / mag > 0.5;
       this.hangPush = pushing ? this.hangPush + DT : 0;
       // a ledge under our grip: jump (or keep pushing forward) to climb over it
-      const wantClimb = bothHeld && this.jumpCool <= 0 && (pressed.jump || this.hangPush > 0.35);
+      const wantClimb = bothHeld && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
       const ledge = wantClimb ? this.findLedge() : null;
 
       // jump
@@ -758,10 +786,19 @@ export class Player {
           this.landDip = 0;
           this.game.audio?.play('jump', cp);
         } else if (hanging) {
-          // let go and fling yourself up and forward (monkey bars, ropes)
+          // let go and fling yourself up and forward (monkey bars, ropes); off a
+          // flat wall (or with tired arms) you only push off it: no wall-running
+          const anchored = this.anchorHand('L') || this.anchorHand('R');
+          const hop = !anchored || (this.grip >= GRIP_HOP && !this.wallAhead());
           this.releaseAll();
           this.hands.L.cool = this.hands.R.cool = 0.4;
-          for (const b of this.bodies) b.applyImpulse({ x: Math.sin(this.yaw) * 2.5 * b.mass(), y: 6.5 * b.mass(), z: Math.cos(this.yaw) * 2.5 * b.mass() }, true);
+          if (hop) {
+            if (anchored) this.grip -= GRIP_HOP;
+            for (const b of this.bodies) b.applyImpulse({ x: Math.sin(this.yaw) * 2.5 * b.mass(), y: 6.5 * b.mass(), z: Math.cos(this.yaw) * 2.5 * b.mass() }, true);
+          } else {
+            this.hands.L.cool = this.hands.R.cool = 0.6;
+            for (const b of this.bodies) b.applyImpulse({ x: -Math.sin(this.yaw) * 2.2 * b.mass(), y: 1.5 * b.mass(), z: -Math.cos(this.yaw) * 2.2 * b.mass() }, true);
+          }
           this.sqV -= 2;
           this.impactGrace = Math.max(this.impactGrace, 0.08);
           this.jumpCool = 0.35;
@@ -858,13 +895,33 @@ export class Player {
           RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
         if (!hit || hit.normal.y < 0.6) continue;
         const top = o.y - hit.timeOfImpact;
-        if (top > gp.y - 0.3 && top < gp.y + 0.8) { best = Math.max(best ?? -1e9, top); break; }
+        if (top > gp.y - 0.3 && top < gp.y + 0.55) { best = Math.max(best ?? -1e9, top); break; }
       }
     }
     return best;
   }
 
+  // A hand holding on to the world (static, kinematic or a heavy body), i.e. hanging.
+  anchorHand(h) {
+    const hand = this.hands[h], b = hand.body;
+    if (!hand.joint || !b || hand.owner instanceof Player) return false;
+    return !b.isDynamic() || b.mass() >= 150;
+  }
+
+  // A wall right in front of us (steep static surface from the head down to the
+  // hips; thin bars and rungs only block one of the rays).
+  wallAhead() {
+    const c = this.chest.translation(), fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    for (const dy of [0.35, 0, -0.35]) {
+      const hit = this.world.castRayAndGetNormal(new RAPIER.Ray({ x: c.x, y: c.y + dy, z: c.z }, { x: fx, y: 0, z: fz }), 0.9, true,
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
+      if (!hit || Math.abs(hit.normal.y) > 0.5) return false;
+    }
+    return true;
+  }
+
   startMantle(top) {
+    this.grip = Math.max(0, this.grip - GRIP_MANTLE);
     this.mantle = { t: 0, top, stage: 0 };
     this.impactGrace = Math.max(this.impactGrace, 0.3);
     this.sqV -= 1.5;
@@ -1119,6 +1176,8 @@ export class Player {
         if (found) {
           const tb = found.parent();
           if (!tb) continue;
+          // tired arms can't catch hold of the world again until we've rested
+          if (this.grip < 0.15 && !this.grounded && !this.swimming && (!tb.isDynamic() || tb.mass() >= 150)) continue;
           // pull the grab point onto the surface
           const proj = found.projectPoint({ x: hp.x, y: hp.y, z: hp.z }, false);
           const gp = proj ? proj.point : hp;
@@ -1166,6 +1225,7 @@ export class Player {
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
+    this.grip = 1;
     this.emote = null; this.emoteBody = null; // stop any dance / sit
     this.wake(false);
     this.recover = 1;

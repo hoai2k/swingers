@@ -128,7 +128,8 @@ export class Game {
       // body, whose position is read from Rapier at most once per physics step
       if (s.body === sb) { if (Math.abs(s.pos[0] - c.x) > maxD + 1.6 || Math.abs(s.pos[2] - c.z) > maxD + 1.6) continue; }
       else {
-        if (s.seenStep !== this.stepCount) { s.seen = s.body.translation(); s.seenStep = this.stepCount; }
+        // (stepCount is still undefined before the first step: no cache yet)
+        if (s.seenStep !== this.stepCount || !s.seen) { s.seen = s.body.translation(); s.seenStep = this.stepCount; }
         const R = maxD + 1.6 + (s.reach ??= Math.hypot(s.pos[0], s.pos[1], s.pos[2]));
         if (Math.abs(s.seen.x - c.x) > R || Math.abs(s.seen.z - c.z) > R) continue;
       }

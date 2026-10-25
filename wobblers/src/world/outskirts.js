@@ -74,13 +74,14 @@ function beach(game, kit) {
   // parking at the end of the road
   kit.deco(0, 0.04, 302, 40, 0.08, 14, 0x5a5d66);
   for (let i = 0; i <= 8; i++) kit.deco(-20 + i * 5, 0.085, 302, 0.15, 0.01, 12, 0xffffff);
-  // pier
-  const px = 24, z0 = 300, z1 = 368, y = 1.3;
+  // pier: the deck is high enough (~2.2 m clear over the sand) to walk and
+  // swim underneath it, where a present and some coins are hidden
+  const px = 24, z0 = 300, z1 = 368, y = 2.3;
   kit.box(px, y, (z0 + z1) / 2, 4.5, 0.25, z1 - z0, 0xb98a5a);
   for (let z = z0 + 2; z < z1; z += 5) for (const s of [-1, 1]) kit.cyl(px + s * 2.1, (y - 6) / 2, z, 0.2, y + 6, 0x8a6a4a);
   for (let z = z0; z < z1; z += 2.5) for (const s of [-1, 1]) kit.cyl(px + s * 2.2, y + 0.5, z, 0.06, 1.0, 0x8a6a4a, { collide: false });
   kit.box(px - 2.2, y + 0.9, (z0 + z1) / 2, 0.1, 0.12, z1 - z0, 0x8a6a4a); kit.box(px + 2.2, y + 0.9, (z0 + z1) / 2, 0.1, 0.12, z1 - z0, 0x8a6a4a);
-  kit.wedge(px, 0, z0 - 3, 4.5, 6, y + 0.12, 0xb98a5a, { yaw: 0 });
+  kit.wedge(px, 0, z0 - 4.5, 4.5, 9, y + 0.12, 0xb98a5a, { yaw: 0 });
   // boats moored alongside
   game.vehicles.push(new Vehicle(game, 'boat', px - 5, 0.2, 345, 0, 0xff5a5a));
   game.vehicles.push(new Vehicle(game, 'boat', px + 5, 0.2, 352, Math.PI, 0x3f8cff));

@@ -29,7 +29,9 @@ export const EXTRA_HAT_NAMES = {
 };
 
 const glassMat = new THREE.MeshPhongMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, shininess: 120, specular: 0xffffff, depthWrite: false });
-const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe36a });
+// halo: a shaded golden ring (self-lit so it glows at night too) inside a soft additive glow
+const haloMat = new THREE.MeshPhongMaterial({ color: 0xffd84a, emissive: 0xffb21a, emissiveIntensity: 0.6, shininess: 90, specular: 0xfff6d0 });
+const haloGlowMat = new THREE.MeshBasicMaterial({ color: 0xffd060, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false });
 
 // Adds `kind` to Builder b (and extra meshes to group). Returns false if unknown.
 export function buildExtraHat(b, kind, R, c, group) {
@@ -112,8 +114,19 @@ export function buildExtraHat(b, kind, R, c, group) {
       b.cyl(R * 0.2, R * 0.29, R * 0.2, 0xffffff, [0, R * 1.95, 0], null, 16);
       return true;
     case 'halo': {
-      const h = new THREE.Mesh(new THREE.TorusGeometry(R * 0.62, R * 0.08, 8, 28), haloMat);
-      h.position.y = R * 1.55; h.rotation.x = Math.PI / 2 - 0.15;
+      // a round tube ring floating (and gently bobbing) a hand's width above the head
+      const h = new THREE.Group();
+      h.add(new THREE.Mesh(new THREE.TorusGeometry(R * 0.62, R * 0.1, 14, 40), haloMat));
+      const glow = new THREE.Mesh(new THREE.TorusGeometry(R * 0.62, R * 0.2, 10, 40), haloGlowMat);
+      glow.renderOrder = 2;
+      h.add(glow);
+      const y0 = R * 1.6, ring = h.children[0];
+      h.position.y = y0; h.rotation.x = Math.PI / 2 - 0.15;
+      ring.onBeforeRender = () => {
+        const t = performance.now() * 0.001;
+        h.position.y = y0 + Math.sin(t * 2.1) * R * 0.07;
+        h.rotation.y = Math.sin(t * 1.3) * 0.08;
+      };
       group.add(h);
       return true;
     }

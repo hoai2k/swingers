@@ -17,6 +17,14 @@ const FURN = {
     for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) b.box(0.05, 0.42, 0.05, DARK, [x, -0.22, z]);
     return { b, d: [C.cuboid(0.23, 0.03, 0.23).setMass(3), C.cuboid(0.23, 0.25, 0.03).setTranslation(0, 0.28, -0.2).setMass(1), C.cuboid(0.22, 0.2, 0.22).setTranslation(0, -0.23, 0).setMass(1)], h: 0.45 };
   },
+  // the plastic outdoor cafe chair (world/props.js), same seat and colliders as `chair`
+  cafeChair: (col = 0xffffff) => {
+    const b = new Builder();
+    b.box(0.45, 0.06, 0.45, col, [0, 0, 0]);
+    b.box(0.45, 0.5, 0.05, col, [0, 0.27, -0.2]);
+    for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) b.cyl(0.02, 0.02, 0.45, 0x888888, [x, -0.22, z], null, 5);
+    return { b, d: [C.cuboid(0.23, 0.03, 0.23).setMass(2), C.cuboid(0.23, 0.25, 0.03).setTranslation(0, 0.28, -0.2).setMass(0.6), C.cuboid(0.22, 0.2, 0.22).setTranslation(0, -0.23, 0).setMass(0.4)], h: 0.45 };
+  },
   stool: (col = 0xff5a5a) => {
     const b = new Builder();
     b.cyl(0.22, 0.22, 0.08, col, [0, 0, 0], null, 14);
@@ -153,6 +161,7 @@ const FURN = {
 // the chair; everyone else still bumps it as usual.
 const SEATS = {
   chair: { at: [[0, 0.21, 0.02]], exit: [0.2, 0.75] },
+  cafeChair: { at: [[0, 0.21, 0.02]], exit: [0.2, 0.75] },
   stool: { at: [[0, 0.23, 0]], exit: [0.2, 0.7] },
   sofa: { at: [[-0.42, 0.49, 0.06], [0.42, 0.49, 0.06]], exit: [0.3, 1.0] },
   armchair: { at: [[0, 0.39, 0.04]], exit: [0.3, 0.95] },
