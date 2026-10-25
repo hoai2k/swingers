@@ -97,7 +97,7 @@ export class VsMode {
     if (this.state === 'roundEnd') {
       if (this.t > 3.2) {
         const champ = game.players.find((p) => p.score >= settings.winScore);
-        if (champ) { this.state = 'matchEnd'; this.t = 0; this.champ = champ; sfx.win(); }
+        if (champ) { this.state = 'matchEnd'; this.t = 0; this.champ = champ; sfx.win(); game.music.sting('win'); }
         else this.nextRound();
       }
       return;
