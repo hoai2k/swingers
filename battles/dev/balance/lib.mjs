@@ -18,7 +18,7 @@ export async function load() {
   await initPhysics();
   const terrain = new Terrain(MAPS[0], 1);
   terrain.buildMesh();
-  G = { Battle, terrain, UNIT_BY_ID, UNITS, makeSkeleton };
+  G = { Battle, terrain, UNIT_BY_ID, UNITS, makeSkeleton, SRC_UNIT: SRC + 'unit.js' };
   return G;
 }
 
@@ -76,37 +76,40 @@ export function pickBudget(U, a, b) {
 
 const isBack = (def) => ['heal', 'bard'].includes(def.weapon.kind) || (def.weapon.range || 0) >= 8;
 
-// Placement for team 0 (x < 0). Front rank faces +x. Back-liners go behind.
-// Team 1 gets the point mirror (-x, -z), matching the point-symmetric terrain.
+// Placement for team 0 (x < 0), the way the game's Random army lays units out
+// (game.js randomArmy): front rank from x = -8, rows of up to 12 across, melee in
+// front, ranged and support behind. Team 1 gets the point mirror (-x, -z), matching
+// the point-symmetric terrain.
 export function layout(G, list) {
   const U = G.UNIT_BY_ID;
   const front = list.filter((id) => !isBack(U[id])), back = list.filter((id) => isBack(U[id]));
   const out = [];
-  let x = -6; // front edge (zone gap is +-3)
+  let d = 8, prevSp = 0;
   for (const group of [front, back]) {
     if (!group.length) continue;
-    const sp = Math.max(...group.map((id) => G.makeSkeleton(U[id].build).radius)) * 2.3 + 0.45;
-    const cols = Math.max(1, Math.min(Math.floor(50 / sp), Math.ceil(Math.sqrt(group.length * 2.5))));
-    const rows = Math.ceil(group.length / cols);
-    group.forEach((id, i) => {
-      const r = Math.floor(i / cols), c = i % cols;
-      const inRow = r === rows - 1 ? group.length - r * cols : cols;
-      out.push({ type: id, x: x - sp / 2 - r * sp, z: (c - (inRow - 1) / 2) * sp });
-    });
-    x -= rows * sp + 1;
+    const sp = Math.max(...group.map((id) => G.makeSkeleton(U[id].build).radius)) * 2.3 + 0.35;
+    const perRow = Math.max(1, Math.min(12, Math.floor(60 / sp)));
+    d += (prevSp + sp) / 2;
+    for (let i = 0; i < group.length; i += perRow) {
+      const k = Math.min(perRow, group.length - i);
+      for (let j = 0; j < k; j++) out.push({ type: group[i + j], x: -Math.min(d, 41), z: (j - (k - 1) / 2) * sp });
+      if (i + perRow < group.length) d += sp;
+    }
+    prevSp = sp;
   }
-  for (const u of out) u.x = Math.max(u.x, -40);
   return out;
 }
 export const mirror = (army) => army.map((u) => ({ type: u.type, x: -u.x, z: -u.z }));
 
-// OVERRIDE='{"clubber":{"cost":80,"weapon.damage":20}}' tries stats without editing files.
-export function applyOverrides(G, json) {
+// OVERRIDE='{"clubber":{"cost":80,"weapon.damage":20}}' tries stats without editing files;
+// OVERRIDE='@file.json' reads them from a file. A key naming a module instead of a unit
+// changes that module's exported tuning objects: {"packs/sm-mounts.js":{"MAMMOTH.hp":2000}}.
+export async function applyOverrides(G, json) {
   if (!json) return;
   if (typeof json === 'string' && json.startsWith('@')) json = fs.readFileSync(json.slice(1), 'utf8');
   const o = typeof json === 'string' ? JSON.parse(json) : json;
   for (const [id, fields] of Object.entries(o)) {
-    const def = G.UNIT_BY_ID[id];
+    const def = id.endsWith('.js') ? await import(SRC + id) : G.UNIT_BY_ID[id];
     if (!def) throw new Error('OVERRIDE: unknown unit ' + id);
     for (const [k, v] of Object.entries(fields)) {
       const keys = k.split('.');
@@ -150,7 +153,7 @@ export function fight(G, job) {
   const ms = (performance.now() - t0) / Math.max(1, f);
   const va = valueLeft(bt, ia), vb = valueLeft(bt, 1 - ia);
   const res = {
-    a, b, budget, swap, seed,
+    a, b, budget, swap, seed, sig: job.sig,
     na: la.length, nb: lb.length, ga: start[0], gb: start[1],
     win: bt.winner === ia ? 1 : bt.winner === 1 - ia ? -1 : 0,
     fa: va / start[0], fb: vb / start[1], t: +bt.time.toFixed(1), ms: +ms.toFixed(2),

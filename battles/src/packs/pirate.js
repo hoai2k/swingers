@@ -144,7 +144,7 @@ const harpoon = {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'pi_flintlock', name: 'Flintlock Pirate', faction: 'pirate', cost: 120, hp: 90, speed: 4.4,
+    id: 'pi_flintlock', name: 'Flintlock Pirate', faction: 'pirate', cost: 165, hp: 90, speed: 4.4,
     build: { scale: 0.98, girth: 1.0 },
     weapon: { line: 'Ranged · one heavy flintlock shot, then a long reload', kind: 'pr_gun', style: 'sword', anim: 'punch', item: 'pi_pistol', damage: 75, speed: 70, range: 26, minRange: 6, cooldown: 0.6, reload: 5.0, ammo: 1, force: 220, spread: 0.03, releaseAt: 0.55, windup: 0.6, barrel: 0.42 },
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_shirt', legs: '#3e3a4a', patch: true },
@@ -152,7 +152,7 @@ const units = [
     desc: 'One big bang. Then a long, long reload.',
   },
   {
-    id: 'pi_harpooner', name: 'Harpooner', faction: 'pirate', cost: 140, hp: 140, speed: 4.2,
+    id: 'pi_harpooner', name: 'Harpooner', faction: 'pirate', cost: 125, hp: 140, speed: 4.2,
     build: { scale: 1.06, girth: 1.18 },
     weapon: { line: 'Ranged · harpoons an enemy and reels it in', kind: 'pi_harpoon', style: 'throw', anim: 'throw', item: 'pi_harpoon_hand', proj: 'pi_harpoon', speed: 24, arc: 'low', range: 22, minRange: 4, cooldown: 4.5, damage: 50, force: 150, spread: 0.04, releaseAt: 0.7, windup: 0.9, hold: 2.6, pull: 22 },
     look: { skin: '#dba882', hat: 'pi_beanie', top: 'pi_shirt', legs: '#4a4038', beard: '#6a4a2a' },
@@ -160,7 +160,7 @@ const units = [
     desc: 'Harpoons the nearest landlubber and hauls it in.',
   },
   {
-    id: 'pi_bomb', name: 'Bomb Thrower', faction: 'pirate', cost: 150, hp: 90, speed: 4.5,
+    id: 'pi_bomb', name: 'Bomb Thrower', faction: 'pirate', cost: 120, hp: 90, speed: 4.5,
     build: { scale: 0.95, girth: 1.0, head: 1.08 },
     weapon: { line: 'Ranged · lobs lit bombs (hits friends too)', kind: 'ranged', style: 'throw', anim: 'throw', item: 'bomb_hand', proj: 'bomb', speed: 13, arc: 'high', range: 22, minRange: 6, cooldown: 3.0, damage: 85, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.4 },
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_vest', legs: '#5a4630', bare: true },
@@ -168,7 +168,7 @@ const units = [
     desc: 'Lights them, lobs them, laughs.',
   },
   {
-    id: 'pi_captain', name: 'Pirate Captain', faction: 'pirate', cost: 450, hp: 450, speed: 4.6,
+    id: 'pi_captain', name: 'Pirate Captain', faction: 'pirate', cost: 420, hp: 450, speed: 4.6,
     build: { scale: 1.1, girth: 1.08, head: 1.05 },
     weapon: {
       line: 'Melee · cutlass and a pistol shot · his shout rallies nearby crew', kind: 'pi_captain', style: 'sword', anim: 'overhead', item: 'pi_cutlass', damage: 50, reach: 1.25, cooldown: 0.9, force: 300,
@@ -190,7 +190,7 @@ const units = [
     desc: 'Two pistols, ten shots, no mercy.',
   },
   {
-    id: 'pi_cannon', name: 'Cannon', faction: 'pirate', cost: 700, hp: 110, speed: 3.8,
+    id: 'pi_cannon', name: 'Cannon', faction: 'pirate', cost: 540, hp: 110, speed: 3.8,
     build: { scale: 0.98, girth: 1.05, radius: 1.9 },
     weapon: { line: 'Siege · cannonballs plough through ranks and bounce on · recoils', kind: 'pi_cannon', style: 'sword', anim: 'overhead', item: 'pi_linstock', proj: 'pr_cannonball', speed: 30, damage: 150, force: 900, range: 50, minRange: 6, cooldown: 4.2, reach: 1.1, spread: 0.015 },
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_shirt', legs: '#3e3a4a' },

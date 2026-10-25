@@ -94,7 +94,7 @@ const zeus = {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'an_hoplite', name: 'Hoplite', faction: 'ancient', cost: 140, hp: 130, speed: 4.1,
+    id: 'an_hoplite', name: 'Hoplite', faction: 'ancient', cost: 120, hp: 130, speed: 4.1,
     build: { scale: 1.0, girth: 1.05 },
     weapon: { line: 'Melee · shield wall: tougher beside other hoplites', kind: 'an_phalanx', style: 'shield', anim: 'stab', item: 'an_dory', shield: 'round', damage: 26, reach: 1.8, cooldown: 1.15, force: 220, blockMelee: 0.45 },
     look: { skin: '#e6b48c', hat: 'an_corinthian', top: 'an_cuirass', legs: '#e6b48c' },
@@ -102,15 +102,15 @@ const units = [
     desc: 'Spear and shield. Stronger standing shoulder to shoulder.',
   },
   {
-    id: 'an_sarissa', name: 'Sarissa', faction: 'ancient', cost: 150, hp: 95, speed: 4.0,
+    id: 'an_sarissa', name: 'Sarissa', faction: 'ancient', cost: 100, hp: 95, speed: 4.0,
     build: { scale: 1.0, girth: 0.98 },
-    weapon: { line: 'Melee · 4 m pike', kind: 'melee', style: 'spear', anim: 'stab', item: 'an_sarissa', damage: 26, reach: 3.4, cooldown: 1.35, force: 260 },
+    weapon: { line: 'Melee · 4 m pike', kind: 'melee', style: 'spear', anim: 'stab', item: 'an_sarissa', damage: 34, reach: 3.4, cooldown: 1.35, force: 260 },
     look: { skin: '#e6b48c', hat: 'an_phrygian', top: 'an_linen', legs: '#e6b48c' },
     personality: { aggro: 0.75, bravery: 0.2, voice: 1.05, chatter: 0.4, cry: 'charge', idle: 'lean' },
     desc: 'A pike so long it pokes enemies before they get close.',
   },
   {
-    id: 'an_snake_archer', name: 'Snake Archer', faction: 'ancient', cost: 150, hp: 80, speed: 4.4,
+    id: 'an_snake_archer', name: 'Snake Archer', faction: 'ancient', cost: 130, hp: 80, speed: 4.4,
     build: { scale: 0.96, girth: 0.95 },
     weapon: { line: 'Ranged · poison arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'venom_arrow', speed: 32, arc: 'low', range: 36, minRange: 8, cooldown: 2.2, damage: 22, force: 80, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#e6b48c', hat: 'an_snakehood', top: 'an_linen', legs: '#4c6a2e', quiver: true },
@@ -118,7 +118,7 @@ const units = [
     desc: 'Snake-venom arrows: the poison keeps hurting for a while.',
   },
   {
-    id: 'an_minotaur', name: 'Minotaur', faction: 'ancient', cost: 760, hp: 880, speed: 4.2,
+    id: 'an_minotaur', name: 'Minotaur', faction: 'ancient', cost: 650, hp: 880, speed: 4.2,
     build: { scale: 1.55, girth: 1.2, head: 1.1, arms: 1.1, armThick: 1.25, mass: 1.3 },
     weapon: { line: 'Melee · charge throws units into the air', kind: 'an_charge', style: 'fists', anim: 'slam', item: 'none', damage: 60, chargeDamage: 45, reach: 1.5, cooldown: 1.5, force: 800, sweep: true, fistHit: true },
     look: { skin: '#8a5a3a', hat: 'an_bull', top: 'loincloth', legs: '#5a3a24', bare: true },
@@ -127,7 +127,7 @@ const units = [
     desc: 'Lowers its horns and charges. Sends whole lines flying.',
   },
   {
-    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 1800, hp: 1100, speed: 3.6,
+    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 2450, hp: 1100, speed: 3.6,
     build: { scale: 1.4, girth: 1.12, head: 1.05, mass: 1.5 },
     weapon: { line: 'Magic · lightning bolts from the sky', kind: 'an_zeus', style: 'staff', anim: 'cast', item: 'an_bolt', damage: 150, range: 38, minRange: 6, cooldown: 2.1, force: 700, blast: 3.6, spread: 0.04, releaseAt: 0.62, windup: 1.1 },
     look: { skin: '#f0c8a8', hat: 'an_laurel', top: 'an_toga', legs: '#f0c8a8', beard: '#f4f4f4' },

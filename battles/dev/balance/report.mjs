@@ -10,10 +10,13 @@ const md = process.argv.includes('--md'), sort = process.argv.includes('--sort')
 const S = {}; // S[unit][opp] = [scores]
 const W = {};
 const add = (u, o, s, w) => { ((S[u] ??= {})[o] ??= []).push(s); ((W[u] ??= {})[o] ??= []).push(w); };
-for (const f of files) for (const l of fs.readFileSync(f, 'utf8').split('\n')) {
-  if (!l) continue;
-  const r = JSON.parse(l);
-  if (r.error) continue;
+// later files / lines win: a pairing fought again with other stats (another sig)
+// replaces the older battles
+const rows0 = files.flatMap((f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)));
+const latest = {};
+for (const r of rows0) latest[r.a + '|' + r.b] = r.sig;
+for (const r of rows0) {
+  if (r.error || r.sig !== latest[r.a + '|' + r.b]) continue;
   add(r.a, r.b, r.score, r.win);
   add(r.b, r.a, -r.score, -r.win);
 }
@@ -27,6 +30,14 @@ const rows = Object.keys(S).filter((u) => u !== 'mix').map((u) => {
   return { u, per, avg: have.length ? mean(have) : NaN, n };
 });
 if (sort) rows.sort((a, b) => b.avg - a.avg);
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify(Object.fromEntries(rows.filter((r) => r.n).map((r) => [r.u, { avg: +r.avg.toFixed(3), n: r.n, vs: Object.fromEntries(opps.map((o, i) => [o, r.per[i] === null ? null : +r.per[i].toFixed(3)])) }]))));
+  process.exit(0);
+}
+// column means over the scored rows: how hard each panel army is to beat
+const scored = rows.filter((r) => r.n);
+const colMean = opps.map((o, i) => { const v = scored.map((r) => r.per[i]).filter((x) => x !== null && r0(x)); return v.length ? mean(v) : null; });
+function r0(x) { return x !== 0; }
 const f = (x) => (x === null ? '   . ' : (x >= 0 ? '+' : '') + x.toFixed(2));
 if (md) {
   console.log(`| unit | ${opps.join(' | ')} | avg | n |`);
@@ -35,4 +46,5 @@ if (md) {
 } else {
   console.log('unit'.padEnd(20) + opps.map((o) => o.slice(0, 6).padStart(7)).join('') + '    avg   n');
   for (const r of rows) console.log(r.u.padEnd(20) + r.per.map((x) => f(x).padStart(7)).join('') + '  ' + f(r.avg).padStart(6) + String(r.n).padStart(4));
+  console.log('column mean'.padEnd(20) + colMean.map((x) => f(x).padStart(7)).join(''));
 }

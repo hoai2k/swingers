@@ -408,7 +408,7 @@ function superPunch(u, v) {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'gd_shield_bearer', name: 'Shield Bearer', faction: 'good', cost: 180, hp: 190, speed: 3.9,
+    id: 'gd_shield_bearer', name: 'Shield Bearer', faction: 'good', cost: 160, hp: 190, speed: 3.9,
     build: { scale: 1.08, girth: 1.15, mass: 1.35 },
     weapon: { line: 'Defender · huge shield blocks from the front, bashes and shoves', kind: 'gd_shield', style: 'shield', anim: 'gd_bash', item: 'none', shield: 'wood', damage: 10, reach: 1.1, cooldown: 1.5, force: 560, blockMelee: 0.6 },
     look: { skin: '#f2c8a0', hat: 'gd_helm', top: 'gd_tabard', legs: '#8d939c' },
@@ -417,7 +417,7 @@ const units = [
     desc: 'A wall on legs. Blocks almost anything from the front and shoves enemies back.',
   },
   {
-    id: 'gd_cleric', name: 'Cleric', faction: 'good', cost: 220, hp: 110, speed: 4.2,
+    id: 'gd_cleric', name: 'Cleric', faction: 'good', cost: 135, hp: 110, speed: 4.2,
     build: { scale: 0.98, girth: 1.02, head: 1.02 },
     weapon: { line: 'Support · a beam of light heals the most hurt ally', kind: 'gd_cleric', style: 'staff', anim: 'cast', item: 'gd_sun_staff', heal: 32, range: 11, damage: 10, reach: 1.0, cooldown: 1.1, force: 90 },
     look: { skin: '#f2c8a0', hat: 'gd_mitre', top: 'gd_vestment', legs: '#f0ece0' },
@@ -425,7 +425,7 @@ const units = [
     desc: 'Keeps a beam of holy light on whoever is hurt the most.',
   },
   {
-    id: 'gd_angel', name: 'Angel', faction: 'good', cost: 900, hp: 540, speed: 6.5,
+    id: 'gd_angel', name: 'Angel', faction: 'good', cost: 700, hp: 540, speed: 6.5,
     build: { scale: 1.05, girth: 0.95 },
     weapon: { line: 'Flying · holy sword dives · revives one fallen ally', kind: 'gd_angel', style: 'sword', anim: 'overhead', item: 'gd_holy_sword', damage: 85, reach: 1.45, cooldown: 1.4, force: 480, sweep: true, revives: 1 },
     look: { skin: '#f6d8bc', hat: 'gd_halo', top: 'gd_robe', legs: '#f4f0e4' },
@@ -434,7 +434,7 @@ const units = [
     desc: 'Swoops down with a holy blade, and raises one fallen friend back to the fight.',
   },
   {
-    id: 'gd_phoenix', name: 'Phoenix', faction: 'good', cost: 950, hp: 380, speed: 7,
+    id: 'gd_phoenix', name: 'Phoenix', faction: 'good', cost: 620, hp: 380, speed: 7,
     build: { scale: 1.05, girth: 0.9, head: 1.0, mass: 0.9 },
     weapon: { line: 'Flying · fiery dive explosion · rises from its ashes once', kind: 'gd_phoenix', style: 'none', anim: 'punch', item: 'none', damage: 170, blast: 4.2, force: 950, cooldown: 1.2, reach: 1.0, burn: 9, burnTime: 4 },
     look: { skin: '#ff9a3a', hat: 'gd_phoenix', top: 'gd_feathers', legs: '#e8572a' },

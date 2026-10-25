@@ -20,7 +20,7 @@ import { load, PANEL, pickBudget, applyOverrides } from './lib.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const G = await load();
-applyOverrides(G, process.env.OVERRIDE);
+await applyOverrides(G, process.env.OVERRIDE);
 const U = G.UNIT_BY_ID;
 const runs = +arg('runs', 6), procs = +arg('procs', os.cpus().length), maxT = +arg('maxT', 120);
 const out = arg('out', 'balance-results.jsonl');
@@ -30,7 +30,11 @@ let pairs = arg('pairs') ? arg('pairs').split(',').map((p) => p.split(':')) : un
 for (const [a, b] of pairs) for (const id of [a, b].flatMap((s) => s.split('+').map((x) => x.split('@')[0]))) if (id !== 'mix' && !U[id]) throw new Error('unknown unit ' + id);
 
 const hash = (s) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
-const key = (j) => `${j.a}|${j.b}|${j.budget}|${j.swap}|${j.seed}`;
+// sig: hash of the stats of every unit type in the pairing, so a results file never
+// mixes battles fought with different stats
+const key = (j) => `${j.a}|${j.b}|${j.budget}|${j.swap}|${j.seed}|${j.sig}`;
+const idsOf = (s) => (s === 'mix' ? ['knight', 'archer', 'squire', 'clubber'] : s.split('+').map((x) => x.split('@')[0]));
+const sigOf = (a, b) => hash(JSON.stringify([...idsOf(a), ...idsOf(b)].map((id) => U[id])));
 const done = new Set();
 if (fs.existsSync(out)) for (const l of fs.readFileSync(out, 'utf8').split('\n')) if (l) { try { done.add(key(JSON.parse(l))); } catch { /* partial line */ } }
 
@@ -39,7 +43,7 @@ for (const [a, b] of pairs) {
   const { B, mis } = pickBudget(U, a, b);
   if (mis > 0.08) console.error(`warn: ${a} vs ${b} gold mismatch ${(mis * 100).toFixed(0)}% at ${B}`);
   for (let r = 0; r < runs; r++) {
-    const j = { a, b, budget: B, swap: r % 2, seed: hash(`${a}:${b}:${Math.floor(r / 2)}`), maxT };
+    const j = { a, b, budget: B, swap: r % 2, seed: hash(`${a}:${b}:${Math.floor(r / 2)}`), maxT, sig: sigOf(a, b) };
     if (!done.has(key(j))) jobs.push(j);
   }
 }

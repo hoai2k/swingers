@@ -68,7 +68,7 @@ const PJ = {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'sp_skeleton', name: 'Skeleton', faction: 'spooky', cost: 40, hp: 45, speed: 4.7,
+    id: 'sp_skeleton', name: 'Skeleton', faction: 'spooky', cost: 35, hp: 62, speed: 4.7,
     build: { scale: 0.97, girth: 0.78, head: 1.05, mass: 0.7 },
     weapon: { line: 'Melee · cheap, falls apart', kind: 'melee', style: 'sword', anim: 'overhead', item: 'sp_rusty_sword', damage: 19, reach: 1.25, cooldown: 1.0, force: 160 },
     look: { skin: BONE, hat: 'sp_skull', top: 'sp_ribs', legs: BONE },
@@ -77,7 +77,7 @@ const units = [
     desc: 'Cheap and rattly. Falls to bits when beaten.',
   },
   {
-    id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 70, hp: 40, speed: 4.5,
+    id: 'sp_skel_archer', name: 'Skeleton Archer', faction: 'spooky', cost: 80, hp: 40, speed: 4.5,
     build: { scale: 0.95, girth: 0.78, head: 1.05, mass: 0.7 },
     weapon: { line: 'Ranged · cheap bony archer', kind: 'ranged', style: 'bow', anim: 'bow', item: 'sp_bone_bow', proj: 'arrow', speed: 32, arc: 'low', range: 34, minRange: 7, cooldown: 2.2, damage: 24, force: 70, spread: 0.05, releaseAt: 0.78, windup: 1.0 },
     look: { skin: BONE, hat: 'sp_skull_hood', top: 'sp_ribs', legs: BONE, quiver: true },
@@ -86,7 +86,7 @@ const units = [
     desc: 'Rattly arrows from cheap bones.',
   },
   {
-    id: 'sp_candlehead', name: 'Candlehead', faction: 'spooky', cost: 200, hp: 80, speed: 4.2,
+    id: 'sp_candlehead', name: 'Candlehead', faction: 'spooky', cost: 180, hp: 80, speed: 4.2,
     build: { scale: 0.95, girth: 1.0, head: 1.0 },
     weapon: { line: 'Magic · flaming wisps that set enemies alight', kind: 'sp_candle', style: 'staff', anim: 'cast', item: 'none', damage: 28, speed: 16, range: 26, minRange: 6, cooldown: 2.2, force: 260, blast: 1.8, spread: 0.06, releaseAt: 0.6, windup: 0.9, burn: 6, burnTime: 3.5 },
     look: { skin: '#e8d8b8', hat: 'sp_candle', top: 'sp_robe', legs: '#2a2630' },
@@ -94,7 +94,7 @@ const units = [
     desc: 'Flings flaming wisps that set enemies alight.',
   },
   {
-    id: 'sp_vampire', name: 'Vampire', faction: 'spooky', cost: 340, hp: 340, speed: 6.0,
+    id: 'sp_vampire', name: 'Vampire', faction: 'spooky', cost: 260, hp: 340, speed: 6.0,
     build: { scale: 1.08, girth: 0.92, arms: 1.1 },
     weapon: { line: 'Melee · heals from the damage it deals', kind: 'sp_vampire', style: 'dual', anim: 'dual', item: 'sp_claw', item2: 'sp_claw', damage: 36, reach: 1.2, cooldown: 0.6, force: 200, drain: 0.6 },
     look: { skin: '#e4dce6', hat: 'sp_vampire', top: 'sp_vampire', legs: '#1d1a20', cape: true },

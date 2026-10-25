@@ -490,7 +490,7 @@ Object.assign(DRAGON, {
 // ======================================================================= units
 const units = [
   {
-    id: 'bb_war_elephant', name: 'War Elephant', faction: 'ancient', cost: 2200, hp: 230, speed: 4.2,
+    id: 'bb_war_elephant', name: 'War Elephant', faction: 'ancient', cost: 3000, hp: 230, speed: 4.2,
     build: { scale: 1, girth: 0.98, radius: 3.0 },
     weapon: { line: 'Mount · two howdah archers · tramples, trunk-swipes, tusk-tosses',
       kind: 'bb_welephant', style: 'bb_wbow', footStyle: 'bow', anim: 'bow', item: 'none', proj: 'arrow', speed: 34, arc: 'low',
@@ -501,7 +501,7 @@ const units = [
     desc: 'An armoured elephant with two archers in its howdah. Tramples, swipes and tosses.',
   },
   {
-    id: 'bb_battle_elephant', name: 'Battle Elephant', faction: 'dynasty', cost: 1800, hp: 260, speed: 4.4,
+    id: 'bb_battle_elephant', name: 'Battle Elephant', faction: 'dynasty', cost: 1700, hp: 260, speed: 4.4,
     build: { scale: 1, girth: 1.0, radius: 3.0 },
     weapon: { line: 'Mount · charges through lines with a spiked head-plate · mahout fights on',
       kind: 'bb_belephant', style: 'bb_mahout', footStyle: 'spear', anim: 'stab', item: 'bb_glaive', damage: 42, reach: 2.4, cooldown: 1.4, force: 380,
