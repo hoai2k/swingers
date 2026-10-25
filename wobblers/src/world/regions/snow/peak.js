@@ -7,7 +7,8 @@ import { chalet } from './village.js';
 import { TOP, SUMMIT, CAVE, CABIN, LAKE, JUMP, HAMLET, LIFT, pisteLine } from './layout.js';
 
 const ICE = 0xa8e0f8, ICE2 = 0x86c8ee, ICE3 = 0xd2f0ff, CRYSTAL = 0x7ff0ff, SNOW = 0xf6f9ff;
-GLOW.set(CRYSTAL, 2);
+const ICE_GLOW = 0xcfeeff; // the cave ceiling glows softly (down-facing faces would pick up the green ground bounce)
+GLOW.set(CRYSTAL, 2); GLOW.set(ICE_GLOW, 2);
 
 export function buildPeak(game, kit, R) {
   observatory(game, kit, R);
@@ -77,6 +78,7 @@ function iceCave(game, kit, R) {
     L.box(0, H + 0.4, lz + 1.5, w, 0.8, 3.1, ICE2);
     L.sphere(0, H + 1.5, lz + 1.5, 3.2, SNOW, { scale: [hw / 3 + 0.6, 0.45, 0.7] });
   }
+  L.deco(0, H - 0.03, 0, w - 0.4, 0.05, d - 0.6, ICE_GLOW);
   for (let i = 0; i < 26; i++) {
     const lx = (rnd() - 0.5) * (w - 3), lz = -hd + 2 + rnd() * (d - 4), len = 0.6 + rnd() * 1.4, p = L.v3(lx, H - len / 2, lz);
     kit.cone(p.x, p.y, p.z, 0.12 + rnd() * 0.1, len, ICE3, { euler: [Math.PI, 0, 0], seg: 5 });
