@@ -754,6 +754,7 @@ export class UI {
     for (const p of [...g.players]) {
       const panel = this.panels.get(p);
       if (panel) { panel.input(this.nav.read(p.deviceId)); continue; }
+      if (g.arcade?.inviteInput(p)) continue; // Paddle Ball invite: Y join / B no (arcade/index.js)
       const d = inp.get(p.deviceId);
       if (!d) continue;
       const startPressed = p.deviceId === 'kb1' ? (d.pressed.start && inp.held().has('Escape')) : d.pressed.start;

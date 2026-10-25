@@ -5,7 +5,7 @@
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [], life: {}, missions: {} });
+const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 1, devices: {}, presents: [], life: {}, missions: {}, arcade: {} });
 
 function load() {
   const s = DEFAULTS();
@@ -24,6 +24,8 @@ function load() {
         if (o.life && typeof o.life === 'object' && !Array.isArray(o.life)) s.life = o.life;
         // job medals and best times (src/missions/state.js checks the fields)
         if (o.missions && typeof o.missions === 'object' && !Array.isArray(o.missions)) s.missions = o.missions;
+        // arcade high scores (src/arcade/index.js checks the fields)
+        if (o.arcade && typeof o.arcade === 'object' && !Array.isArray(o.arcade)) s.arcade = o.arcade;
       }
     }
   } catch (e) { /* storage unavailable */ }

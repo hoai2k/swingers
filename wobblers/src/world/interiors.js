@@ -11,6 +11,7 @@ import { jukebox, piano, vendingMachine } from './music.js';
 import { trolley } from './fun.js';
 import { poster } from './posters.js';
 import { homeFixtures } from './estate.js';
+import { buildArcade } from '../arcade/index.js';
 
 const T = 0.25; // wall thickness
 
@@ -206,7 +207,9 @@ const SHOPS = {
       [a, b] = P(0, 0.42); L.deco(a, 0.9, b, 0.8, 0.12, 0.2, 0x444466, { yaw: ly });
       [a, b] = P(0, 0.2); L.deco(a, 1.8, b, 0.85, 0.2, 0.4, neon[(i + 2) % neon.length], { yaw: ly });
     };
-    for (let i = 0; i < 6; i++) cab(-5.2 + i * 1.05, -d / 2 + T + 0.45, 0, i);
+    // playable cabinets on the back wall (src/arcade/), then three for show
+    buildArcade(game, L, [{ lx: -4.9, lz: -d / 2 + T + 0.4, id: 'chomp' }, { lx: -3.6, lz: -d / 2 + T + 0.4, id: 'raiders' }, { lx: -2.3, lz: -d / 2 + T + 0.4, id: 'bugs' }, { lx: -1.0, lz: -d / 2 + T + 0.4, id: 'paddle' }]);
+    for (let i = 0; i < 3; i++) cab(0.35 + i * 1.05, -d / 2 + T + 0.45, 0, i + 4);
     for (let i = 0; i < 3; i++) cab(-w / 2 + T + 0.45, -1.8 + i * 1.05, Math.PI / 2, i + 3);
     // air hockey table with a puck you can whack around
     {
@@ -240,8 +243,8 @@ const SHOPS = {
     const awx = w / 2 - T - 0.04;
     poster(game, L, 'arcade_space', awx, 2.4, 0.2, -Math.PI / 2, 1.0, 1.4, { bg: '#1a1040', title: 'SPACE', sub: 'BLOBBERS', fg: '#3af0ff', blob: '#ff3a9a', frame: 0x222244 });
     poster(game, L, 'arcade_racer', awx, 2.4, 2.8, -Math.PI / 2, 1.0, 1.4, { bg: '#ff8a3d', title: 'TURBO', sub: 'WOBBLE KART', fg: '#1a1040', frame: 0x222244 });
-    lfurn(game, L, 'stool', -1.6, 0, -2.9, 0, 0xff3a9a);
-    lfurn(game, L, 'stool', 0.5, 0, -2.9, 0, 0x3af0ff);
+    lfurn(game, L, 'stool', 0.9, 0, -2.9, 0, 0xff3a9a);
+    lfurn(game, L, 'stool', 1.95, 0, -2.9, 0, 0x3af0ff);
     // neon strips
     L.deco(0, h - 0.5, -d / 2 + T + 0.03, w - 1, 0.08, 0.04, 0xff3a9a);
     L.deco(-w / 2 + T + 0.03, h - 0.5, 0, 0.04, 0.08, d - 1, 0x3af0ff);

@@ -124,6 +124,17 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   (label). Attack hits are collected in the Rapier query callback and applied after it (pushing
   bodies inside the callback throws). New forms: add to `FORMS` with a look builder.
 
+- Arcade cabinets (`src/arcade/`, built by one `buildArcade(game, L, spots)` call in
+  `world/interiors.js` ARCADE; hooks: one line in `ui.handleInput` for invites, `settings.arcade`).
+  A game is a class with `W`/`H`, `reset()`, `step(inputs)` (60 Hz; `inputs[i]` null = the game's
+  AI plays that slot), `draw(g)`, `score`, `over`, `snd` (interface at the top of `arcade/common.js`);
+  add one to `GAMES` in `arcade/index.js` and a spot in the ARCADE interior. Cabinet screens are
+  CanvasTextures repainted at 15 Hz only while a camera is within 16 m (idle demos freeze
+  otherwise). `game.arcade` has `cabinets` (`machine`, `session`, `pos`, `yaw`), `start(p, cab)`,
+  `join(p, cab)`, `invites`, `tick(cab)`; probe game logic by stepping `cab.machine` directly, or
+  headless in node with `node tools/arcade-sim.mjs`. Marquees are `signMesh` texts (art requested
+  in round 11).
+
 ## Missions (jobs, `src/missions/`)
 
 Wobbly Life-style jobs, wired by one `buildMissions(game)` call in `world/index.js` (after life,
