@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 18 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 12 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -73,12 +73,6 @@ stand-in for each until the art arrives.
 
 ### Tiki Jungle (jungle)
 
-- `volcano_trail.png` — **VOLCANO TRAIL**: rough bamboo-framed wooden board, cream letters, small smoking volcano icon.
-- `raft_ride.png` — **RAFT RIDE**: lashed log-raft board, white letters, small paddle-and-splash icon.
-- `temple_ruins.png` — **TEMPLE RUINS**: mossy grey carved-stone tablet, yellow-gold letters, small stepped pyramid icon.
-- `hot_lava.png` — **HOT LAVA**: orange-red warning board with black hazard stripes on the edges, white letters, small flame icon.
-- `jungle_tours.png` — **JUNGLE TOURS**: olive-green safari board, cream letters, small green jeep icon.
-- `waterfall.png` — **WATERFALL**: teal-blue wooden board with vines on the corners, white letters, small waterfall icon.
 
 ### Coconut Cove (tropical)
 

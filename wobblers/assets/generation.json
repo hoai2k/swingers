@@ -1217,6 +1217,72 @@
       "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"DIG SITE\". Board design: sandy-beige wooden board with rope edging, dark brown letters, dinosaur-bone icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
       "round": 7,
       "batch": 4
+    },
+    {
+      "index": 119,
+      "file": "signs/volcano_trail.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4963c0e5-aad3-4a57-8dc0-a51ba58201fa.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"VOLCANO TRAIL\". Board design: rough bamboo-framed wooden board, cream letters, small smoking volcano icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
+    },
+    {
+      "index": 120,
+      "file": "signs/raft_ride.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-78bd69fd-0c03-46b1-b624-9237af78f91b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"RAFT RIDE\". Board design: lashed log-raft board, white letters, small paddle-and-splash icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
+    },
+    {
+      "index": 121,
+      "file": "signs/temple_ruins.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-59dc75d2-1b1f-4ca0-9309-2eda3609a05d.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"TEMPLE RUINS\". Board design: mossy grey carved-stone tablet, yellow-gold letters, small stepped pyramid icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
+    },
+    {
+      "index": 122,
+      "file": "signs/hot_lava.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c5522ec1-6eb4-4cb0-9544-c19a0454b1af.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"HOT LAVA\". Board design: orange-red warning board with black hazard stripes on the edges, white letters, small flame icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
+    },
+    {
+      "index": 123,
+      "file": "signs/jungle_tours.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c5073f24-a2b8-43f6-bcc0-cdfa7dc1e862.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"JUNGLE TOURS\". Board design: olive-green safari board, cream letters, small green jeep icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
+    },
+    {
+      "index": 124,
+      "file": "signs/waterfall.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3bab7e7f-ea3c-483e-81ca-3def5643e924.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"WATERFALL\". Board design: teal-blue wooden board with vines on the corners, white letters, small waterfall icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 5
     }
   ]
 }

@@ -4,6 +4,19 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+<!-- region-round-8 -->
+## Delivered round 8 batches (6/14 signs)
+
+Built-in imagegen; exact sizes, alpha, text and browser loader checked.
+
+- `volcano_trail.png` — **VOLCANO TRAIL**: rough bamboo-framed wooden board, cream letters, small smoking volcano icon.
+- `raft_ride.png` — **RAFT RIDE**: lashed log-raft board, white letters, small paddle-and-splash icon.
+- `temple_ruins.png` — **TEMPLE RUINS**: mossy grey carved-stone tablet, yellow-gold letters, small stepped pyramid icon.
+- `hot_lava.png` — **HOT LAVA**: orange-red warning board with black hazard stripes on the edges, white letters, small flame icon.
+- `jungle_tours.png` — **JUNGLE TOURS**: olive-green safari board, cream letters, small green jeep icon.
+- `waterfall.png` — **WATERFALL**: teal-blue wooden board with vines on the corners, white letters, small waterfall icon.
+<!-- /region-round-8 -->
+
 <!-- region-round-7 -->
 ## Delivered round 7 batches (32/36 signs)
 
