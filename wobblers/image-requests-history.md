@@ -4,6 +4,19 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+<!-- region-round-7 -->
+## Delivered round 7 batches (6/32 signs)
+
+Built-in imagegen; exact sizes, alpha, text and browser loader checked.
+
+- `bigtown_tower.png` — **BIGTOWN TOWER**: sky-blue glass board, white letters, tiny skyscraper icon.
+- `stadium.png` — **STADIUM**: green board, white letters, football icon.
+- `parking.png` — **PARKING**: blue board, big white letters, white "P" roundel icon.
+- `cinema.png` — **CINEMA**: red marquee board with light bulbs round the edge, yellow letters, film-reel icon.
+- `diner.png` — **DINER**: retro turquoise/teal and cream-pink roadside diner board with a chrome edge, red rounded letters, small burger-and-milkshake icon (used in Bigtown and Dusty Dunes).
+- `hotel.png` — **HOTEL**: deep purple board, gold letters, little bell icon.
+<!-- /region-round-7 -->
+
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)
 
 The game draws a procedural stand-in for each until the art arrives.

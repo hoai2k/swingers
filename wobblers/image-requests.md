@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 7 and 8 open (46 signs).** Rounds 1–6 are delivered and integrated;
+**Status: 40 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -54,12 +54,6 @@ stand-in for each until the art arrives.
 
 ### Bigtown (city)
 
-- `bigtown_tower.png` — **BIGTOWN TOWER**: sky-blue glass board, white letters, tiny skyscraper icon.
-- `stadium.png` — **STADIUM**: green board, white letters, football icon.
-- `parking.png` — **PARKING**: blue board, big white letters, white "P" roundel icon.
-- `cinema.png` — **CINEMA**: red marquee board with light bulbs round the edge, yellow letters, film-reel icon.
-- `diner.png` — **DINER**: retro turquoise/teal and cream-pink roadside diner board with a chrome edge, red rounded letters, small burger-and-milkshake icon (used in Bigtown and Dusty Dunes).
-- `hotel.png` — **HOTEL**: deep purple board, gold letters, little bell icon.
 - `books.png` — **BOOKS**: warm brown board, cream letters, open-book icon.
 - `flowers.png` — **FLOWERS**: pastel pink board, white letters, tulip icon.
 - `news.png` — **NEWS**: white board, black letters, rolled newspaper icon.
