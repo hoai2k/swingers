@@ -39,7 +39,7 @@ const UNITS = [
     desc: 'A woolly mountain. Tramples everything and tosses units with its tusks while the rider throws spears.',
   },
   {
-    id: 'sm_catapult', name: 'Catapult', faction: 'medieval', cost: 500, hp: 110, speed: 3.8,
+    id: 'sm_catapult', name: 'Catapult', faction: 'medieval', cost: 450, hp: 110, speed: 3.8,
     build: { scale: 0.98, girth: 1.05, radius: 2.6 },
     weapon: { line: 'Siege · lobs boulders that crush and roll (hits friends too)', kind: 'sm_catapult', style: 'sword', anim: 'overhead', item: 'sm_mallet', proj: 'sm_boulder', damage: 220, force: 1200, blast: 3.4, range: 62, minRange: 12, cooldown: 6, reach: 1.1, spread: 0.035 },
     look: { skin: '#f0c49a', hat: 'cap', top: 'tunic', legs: '#6e5235' },
@@ -47,7 +47,7 @@ const UNITS = [
     desc: 'Lobs boulders that crush groups and roll on. Slow to reload. Wreck the cart or kill the crew to stop it.',
   },
   {
-    id: 'sm_ballista', name: 'Ballista', faction: 'medieval', cost: 520, hp: 100, speed: 3.8,
+    id: 'sm_ballista', name: 'Ballista', faction: 'medieval', cost: 480, hp: 100, speed: 3.8,
     build: { scale: 0.98, girth: 1.0, radius: 2.1 },
     weapon: { line: 'Siege · bolts skewer whole lines', kind: 'sm_ballista', style: 'sword', anim: 'overhead', item: 'sm_mallet', proj: 'sm_bolt', speed: 46, damage: 130, force: 800, range: 50, minRange: 5, cooldown: 4.2, reach: 1.1, spread: 0.012 },
     look: { skin: '#f2c8a0', hat: 'cap_metal', top: 'tunic', legs: '#5a4630' },

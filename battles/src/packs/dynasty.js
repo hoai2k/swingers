@@ -89,7 +89,7 @@ const units = [
     desc: 'Rocket arrows that explode with a bang and sparks.',
   },
   {
-    id: 'dy_hwacha', name: 'Hwacha', faction: 'dynasty', cost: 400, hp: 450, speed: 3.6,
+    id: 'dy_hwacha', name: 'Hwacha', faction: 'dynasty', cost: 450, hp: 450, speed: 3.6,
     build: { scale: 1.08, girth: 1.1, mass: 1.3 },
     weapon: { line: 'Siege · volleys of 16 rockets', kind: 'dy_hwacha', style: 'staff', anim: 'cast', item: 'dy_torch', damage: 60, speed: 21, range: 36, minRange: 10, cooldown: 5, force: 380, blast: 2.4, releaseAt: 0.55, windup: 1.4, volley: 16, scatter: 2.6 },
     look: { skin: '#f0c8a0', hat: 'dy_gat', top: 'dy_robe', legs: '#4a3a2a' },
