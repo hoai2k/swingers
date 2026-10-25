@@ -1,5 +1,5 @@
 // The lobby is a playable level. Press A on any controller (or Space / click
-// on the keyboard) to drop in a spider; D-pad left/right (Z/X) changes
+// on the keyboard) to drop in a spider; Y or D-pad left/right (Z/X) changes
 // character; Back (Backspace) leaves; Start (Esc) opens the menu.
 //
 // Layout (1920x1080):
@@ -10,15 +10,22 @@
 //   [TRIALS sign] over the trials perch, up between VERSUS and BOARD (it is also the left swing anchor)
 //  (settings)                             (range)   <- low ledges: SETTINGS / target dummy
 //
+// Popups never sit over the play area: everything that comes and goes lives
+// in reserved HUD strips (top edge: header / trial picker; bottom edge:
+// tutorial pills, control legend, player cards). Signs hang well above the
+// islands' landing areas.
+//
 // Everyone joined standing on the same mode island for 3 s starts it (solo
 // is fine). The board island's ends are pressure pads that cycle the board
 // (Random + every board in boards.js, saved with setSetting('board')).
-// Standing on the SETTINGS ledge opens the settings menu.
+// Standing on the SETTINGS ledge shows "Press START for settings"; Start
+// there opens the settings menu (pause.js asks wantsSettings()).
 // The TRIALS perch (modes/challenge.js): while standing on it, D-pad
-// left/right (Z/X) picks a trial instead of the character; everyone on it for
-// 3 s starts the selected one (locked trials don't start).
+// left/right (Z/X) picks a trial instead of the character (the picker shows
+// in the top strip); everyone on it for 3 s starts the selected one (locked
+// trials don't start).
 // A first-time tutorial (stored per browser) walks a newly joined player
-// through jump / web / grab / use with prompts under their spider.
+// through jump / web / grab / use with a pill above their player card.
 
 import { island, blob } from './shapes.js';
 import { W, H, THEMES } from './board.js';
@@ -28,7 +35,6 @@ import { castAt } from './cast.js';
 import { DropSpawner } from './weapons.js';
 import { BOARDS } from './boards.js';
 import { settings, setSetting } from './settings.js';
-import { settingsMenu } from './ui.js';
 import { TAU, rgba, clamp, FONT } from './util.js';
 import { optionalImage, ready } from './optional-art.js';
 import { TRIALS, TIERS, loadTrials, setTrialSel, trialUnlocked, trialCleared, trialNumber, trialTags, drawLock } from './modes/challenge.js';
@@ -37,6 +43,7 @@ const LOBBY_BG = optionalImage('lobby_bg.jpg');
 
 const HUB_Y = 790, MODE_Y = 460, BOARD_Y = 430, LEDGE_Y = 815;
 const TRIAL_X = 600, TRIAL_Y = 262, TRIAL_SIGN_X = 612;   // up between VERSUS and BOARD, clear of the hub routes
+const TRIAL_SIGN_Y = 110, TRIAL_SIGN_H = 74;              // the sign hangs clear above spiders on the perch
 
 export const LOBBY_BOARD = {
   id: 'lobby',
@@ -73,14 +80,15 @@ export const ISLANDS = [
 ];
 const TUT_KEY = 'spiders.tutorial.v1';
 const TUT_STEPS = [
-  { id: 'jump', pad: ['A', 'jump'], kb: ['Space', 'jump'] },
-  { id: 'web', pad: ['LT', 'hold to web'], kb: ['RMB', 'hold to web'] },
-  { id: 'grab', pad: ['', 'Grab a weapon'], kb: ['', 'Grab a weapon'] },
-  { id: 'use', pad: ['RT', 'use it'], kb: ['LMB', 'use it'] },
+  { id: 'jump', pad: 'Jump (A)', kb: 'Jump (Space)' },
+  { id: 'web', pad: 'Web in mid-air (A/LT again, hold)', kb: 'Web in mid-air (Space again, hold)' },
+  { id: 'grab', pad: 'Grab a weapon', kb: 'Grab a weapon' },
+  { id: 'use', pad: 'Use it (RT)', kb: 'Use it (left mouse)' },
 ];
 function tutorialDone() { try { return localStorage.getItem(TUT_KEY) === '1'; } catch (e) { return true; } }
 function setTutorialDone() { try { localStorage.setItem(TUT_KEY, '1'); } catch (e) { /* not persisted */ } }
 const START_TIME = 3;
+const CARD_TIME = 1.5;       // s the join / character-change highlight lasts
 const RACKS = [[660, HUB_Y - 30], [1260, HUB_Y - 30], [1740, LEDGE_Y - 30]];
 
 // ---------------------------------------------------------------------------
@@ -196,6 +204,11 @@ function boardPreview(def) {
   previews.set(def.id, c);
   return c;
 }
+// the reserved bottom strip: tutorial pills / legend / player cards
+const CARD_N = 8, CARD_W = 232, CARD_GAP = 6, CARD_Y = 1008, CARD_H = 62;
+const LEGEND_Y = 986, TUT_Y = 926;
+const CARD_X0 = W / 2 - (CARD_N * CARD_W + (CARD_N - 1) * CARD_GAP) / 2;
+const cardRect = (slot) => ({ x: CARD_X0 + slot * (CARD_W + CARD_GAP), y: CARD_Y, w: CARD_W, h: CARD_H });
 const boardOptions = () => ['random', ...BOARDS.map((b) => b.id)];
 
 // ---------------------------------------------------------------------------
@@ -210,7 +223,6 @@ export class Lobby {
     this.onZone = new Map();     // spider -> { zone, grace }
     this.pads = new Map();       // spider -> { side, t }
     this.settingsT = 0;
-    this.settingsUsed = false;
     this.rackT = RACKS.map(() => 0);
     this.t = 0;
     this.pickFlash = 0;
@@ -252,7 +264,7 @@ export class Lobby {
   join(id) {
     const np = this.game.addPlayer(id);
     if (np) {
-      this.spawn(np); this.cards.set(np, 1.8);
+      this.spawn(np); this.cards.set(np, CARD_TIME);
       if (!tutorialDone()) this.tut.set(np, { done: {}, t: 0, endT: 0 });
     }
     return np;
@@ -273,10 +285,10 @@ export class Lobby {
       const onTrials = p.spider && p.spider.alive && this.zoneOf(p.spider) === 'challenge';
       if (onTrials && (s.pressed.dl || s.pressed.dr)) this.cycleTrial(s.pressed.dl ? -1 : 1);
       else {
-        if (s.pressed.dl) { game.cycleCast(p, -1); this.cards.set(p, 2.2); }
-        if (s.pressed.dr) { game.cycleCast(p, 1); this.cards.set(p, 2.2); }
+        if (s.pressed.dl) { game.cycleCast(p, -1); this.cards.set(p, CARD_TIME); }
+        if (s.pressed.dr) { game.cycleCast(p, 1); this.cards.set(p, CARD_TIME); }
       }
-      if (s.pressed.y) { game.cycleCast(p, 1); this.cards.set(p, 2.2); }
+      if (s.pressed.y) { game.cycleCast(p, 1); this.cards.set(p, CARD_TIME); }
       if (s.pressed.back) { game.removePlayer(p); this.cards.delete(p); this.tut.delete(p); continue; }
     }
     this.trialFlash = Math.max(0, this.trialFlash - real * 2);
@@ -330,16 +342,10 @@ export class Lobby {
       this.pads.set(sp, pad);
     }
 
-    // settings ledge: stand on it for a moment
+    // settings ledge: standing on it only shows a hint; Start opens the menu
+    // (pause.js asks wantsSettings() before opening the pause menu)
     const onSettings = spiders.some((sp) => this.zoneOf(sp) === 'settings' && sp.ground);
-    if (!onSettings) { this.settingsT = 0; this.settingsUsed = false; }
-    else if (!this.settingsUsed) {
-      this.settingsT += dt;
-      if (this.settingsT > 1) {
-        this.settingsUsed = true; this.settingsT = 0;
-        if (game.ui && !game.ui.open) game.ui.push(settingsMenu());
-      }
-    }
+    this.settingsT = onSettings ? Math.min(1, this.settingsT + dt * 4) : Math.max(0, this.settingsT - dt * 4);
 
     // mode islands: every joined spider on the same one
     let zone = null;
@@ -364,6 +370,13 @@ export class Lobby {
 
   available(id) { return !!this.game.scenes[id]; }
 
+  // Start pressed by this input: open settings instead of the pause menu?
+  wantsSettings(inputId) {
+    const p = this.game.players.find((q) => q.inputId === inputId);
+    const sp = p && p.spider;
+    return !!(sp && sp.alive && this.zoneOf(sp) === 'settings');
+  }
+
   cycleTrial(dir) {
     this.trialSel = (this.trialSel + dir + TRIALS.length) % TRIALS.length;
     setTrialSel(this.trialSel);
@@ -383,10 +396,10 @@ export class Lobby {
       const tick = (id) => {
         if (tu.done[id]) return;
         tu.done[id] = true;
-        game.fx.text(sp.x, sp.y - 50, '✓', '#4fdc6a', 34, 0.8);
+        game.fx.text(sp.x, sp.y - sp.r - 30, '✓', '#4fdc6a', 24, 0.6);
         sfx.uiOk();
       };
-      if (s.pressed.a || s.pressed.lb) tick('jump');
+      if (s.pressed.a || s.pressed.lt) tick('jump');
       if (sp.web && sp.web.state === 'stuck') tick('web');
       if (sp.weapon) tick('grab');
       if (sp.weapon && s.pressed.rt) tick('use');
@@ -394,42 +407,35 @@ export class Lobby {
     }
   }
 
+  // One pill per learning player, in the reserved strip just above that
+  // player's card at the bottom edge (never over the play area).
   drawTutorial(ctx) {
     for (const [p, tu] of this.tut) {
-      const sp = p.spider;
-      if (!sp || !sp.alive || tu.t < 0.5) continue;
+      if (tu.t < 0.5) continue;
       const s = this.game.input.get(p.inputId);
       const kb = s && s.kind === 'keyboard';
-      const w = 250, h = 66;
-      const x = clamp(sp.x - w / 2, 8, W - w - 8), y = clamp(sp.y + sp.r + 34, 8, H - h - 90);
+      const { x: cx, w: cw } = cardRect(p.slot);
+      const w = cw - 6, h = 40, x = cx + 3, y = TUT_Y;
       const a = Math.min(1, (tu.t - 0.5) * 3) * (tu.endT ? Math.max(0, 1 - (tu.endT - 1.6) * 2) : 1);
       ctx.save();
       ctx.globalAlpha = clamp(a, 0, 1);
-      drawPanel(ctx, x, y, w, h, { r: 16, accent: tu.endT ? '#4fdc6a' : p.color.main, fill: 'rgba(10,8,28,0.88)', lw: 2.5 });
+      const col = tu.endT ? '#4fdc6a' : p.color.main;
+      ctx.fillStyle = 'rgba(10,8,28,0.86)';
+      ctx.beginPath(); ctx.roundRect(x, y, w, h, 12); ctx.fill();
+      ctx.strokeStyle = rgba(col, 0.85); ctx.lineWidth = 2; ctx.stroke();
+      text(ctx, `P${p.slot + 1}`, x + 10, y + 16, { size: 12, color: p.color.main, align: 'left', stroke: null });
       if (tu.endT) {
-        text(ctx, "You're ready!", x + w / 2, y + 32, { size: 26, color: '#4fdc6a', sw: 5 });
-        text(ctx, 'swing to an island to play', x + w / 2, y + 54, { size: 15, color: '#dfe6ff', stroke: null });
+        text(ctx, "You're ready! Swing to an island", x + w / 2, y + 33, { size: 15, color: '#4fdc6a', stroke: null, maxWidth: w - 16 });
       } else {
         const cur = TUT_STEPS.find((st) => !tu.done[st.id]);
-        const [key, label] = kb ? cur.kb : cur.pad;
-        let tx = x + 16;
-        if (key) {
-          ctx.font = `700 18px ${FONT}`;
-          const kw = Math.max(34, ctx.measureText(key).width + 16);
-          ctx.fillStyle = key === 'A' ? '#2f8f45' : 'rgba(255,255,255,0.18)';
-          ctx.beginPath(); ctx.roundRect(tx, y + 12, kw, 28, 8); ctx.fill();
-          text(ctx, key, tx + kw / 2, y + 32, { size: 18, color: '#fff', stroke: null });
-          tx += kw + 10;
-        }
-        text(ctx, label, tx, y + 33, { size: 22, color: '#fff', align: 'left', sw: 4, maxWidth: x + w - tx - 8 });
-        // the checklist
+        // progress ticks along the top line
         TUT_STEPS.forEach((st, i) => {
-          const cx = x + 22 + i * 58, cy = y + 52;
           const ok = tu.done[st.id];
-          ctx.fillStyle = ok ? '#4fdc6a' : st === cur ? p.color.main : 'rgba(255,255,255,0.25)';
-          ctx.beginPath(); ctx.arc(cx, cy, 5, 0, TAU); ctx.fill();
-          text(ctx, st.id, cx + 9, cy + 5, { size: 13, color: ok ? '#4fdc6a' : '#aab0d8', align: 'left', stroke: null });
+          ctx.fillStyle = ok ? '#4fdc6a' : st === cur ? p.color.main : 'rgba(255,255,255,0.22)';
+          ctx.beginPath(); ctx.arc(x + 42 + i * 13, y + 11, 4, 0, TAU); ctx.fill();
         });
+        text(ctx, `${TUT_STEPS.indexOf(cur) + 1}/4`, x + w - 10, y + 16, { size: 12, color: '#9aa0c8', align: 'right', stroke: null });
+        text(ctx, kb ? cur.kb : cur.pad, x + w / 2, y + 34, { size: 15, color: '#fff', stroke: null, weight: 600, maxWidth: w - 14 });
       }
       ctx.restore();
     }
@@ -456,14 +462,14 @@ export class Lobby {
     // threads holding up the islands (it's a spider's lobby)
     ctx.save();
     ctx.strokeStyle = 'rgba(230,236,255,0.22)'; ctx.lineWidth = 1.5;
-    for (const [x, y] of [[170, MODE_Y], [430, MODE_Y], [1490, MODE_Y], [1750, MODE_Y], [800, BOARD_Y], [1120, BOARD_Y], [1330, 210], [TRIAL_X - 70, TRIAL_Y], [TRIAL_X + 70, TRIAL_Y], [TRIAL_SIGN_X - 95, TRIAL_Y - 100], [TRIAL_SIGN_X + 95, TRIAL_Y - 100]]) {
+    for (const [x, y] of [[170, MODE_Y], [430, MODE_Y], [1490, MODE_Y], [1750, MODE_Y], [800, BOARD_Y], [1120, BOARD_Y], [1330, 210], [TRIAL_X - 70, TRIAL_Y], [TRIAL_X + 70, TRIAL_Y], [TRIAL_SIGN_X - 95, TRIAL_SIGN_Y], [TRIAL_SIGN_X + 95, TRIAL_SIGN_Y]]) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, y); ctx.stroke();
     }
     ctx.restore();
     for (const z of ISLANDS) if (!z.custom) this.drawModeSign(ctx, z);
     this.drawBoardSign(ctx);
     this.drawTrialSign(ctx);
-    this.drawLedgeSign(ctx, 165, 130, 'SETTINGS', 'stand here', '#b46bff', 'gear', this.settingsT);
+    this.drawLedgeSign(ctx, 165, 130, 'SETTINGS', 'stand here + START', '#b46bff', 'gear', this.settingsT, 'Press START / Esc for settings');
     this.drawLedgeSign(ctx, 1755, 1790, 'PRACTICE', 'hit the dummy', '#ffcf4a', 'target', 0);
     // board pads (arrows on the island ends)
     for (const dir of [-1, 1]) {
@@ -546,13 +552,11 @@ export class Lobby {
     }
     this.drawIcon(ctx, z.icon, cx - w / 2 + 62, y + 72, 52, avail ? z.color : '#777');
     text(ctx, z.label, cx + 40, y + 70, { size: 54, color: avail ? z.color : '#888', sw: 8, stroke: 'rgba(5,3,16,0.8)' });
-    text(ctx, avail ? z.sub : 'coming soon', cx + 40, y + 108, { size: 21, color: '#dfe6ff', stroke: null });
-    // who is here
+    // who is here (inside the sign, not over the island's landing area)
     const here = this.game.players.filter((p) => p.spider && p.spider.alive && this.zoneOf(p.spider) === z.id);
-    if (here.length && !active && avail) {
-      const n = this.game.players.length;
-      text(ctx, `${here.length} / ${n} here`, cx, y + h + 30, { size: 24, color: '#fff', sw: 5 });
-    }
+    const n = this.game.players.length;
+    const sub = !avail ? 'coming soon' : here.length && !active ? `${here.length} / ${n} here · everyone for 3 s` : z.sub;
+    text(ctx, sub, cx + 40, y + 108, { size: 21, color: here.length && !active && avail ? '#fff' : '#dfe6ff', stroke: null, maxWidth: w - 100 });
     ctx.restore();
     if (active) {
       // countdown ring
@@ -576,17 +580,17 @@ export class Lobby {
 
   drawBoardSign(ctx) {
     const t = this.t;
-    const cx = 960, w = 420, h = 236, y = 140;
+    const cx = 960, w = 360, h = 190, y = 118;   // hangs clear of spiders on the board island
     const bob = Math.sin(t * 1.2) * 3;
     ctx.save();
     ctx.translate(0, bob);
     ctx.strokeStyle = 'rgba(230,236,255,0.5)'; ctx.lineWidth = 2;
     for (const dx of [-w / 2 + 30, w / 2 - 30]) { ctx.beginPath(); ctx.moveTo(cx + dx, 0); ctx.lineTo(cx + dx, y); ctx.stroke(); }
     drawPanel(ctx, cx - w / 2, y, w, h, { r: 24, accent: '#ffcf4a', fill: 'rgba(10,8,28,0.85)', lw: 3 + this.pickFlash * 3 });
-    text(ctx, 'BOARD', cx, y + 30, { size: 22, color: '#ffcf4a', stroke: null });
+    text(ctx, 'BOARD', cx, y + 25, { size: 18, color: '#ffcf4a', stroke: null });
     const id = settings.board;
     const def = BOARDS.find((b) => b.id === id);
-    const pw = 240, ph = 135, px = cx - pw / 2, py = y + 42;
+    const pw = 208, ph = 117, px = cx - pw / 2, py = y + 34;
     ctx.save();
     ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 12); ctx.clip();
     if (def) ctx.drawImage(boardPreview(def), px, py, pw, ph);
@@ -600,27 +604,28 @@ export class Lobby {
         ctx.globalAlpha = 1;
       }
       ctx.fillStyle = 'rgba(10,8,28,0.45)'; ctx.fillRect(px, py, pw, ph);
-      text(ctx, '?', cx, py + ph / 2 + 36, { size: 110, color: '#ffcf4a', sw: 10, stroke: 'rgba(5,3,16,0.8)' });
+      text(ctx, '?', cx, py + ph / 2 + 32, { size: 96, color: '#ffcf4a', sw: 10, stroke: 'rgba(5,3,16,0.8)' });
     }
     ctx.restore();
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 12); ctx.stroke();
     // arrows either side of the preview
     for (const d of [-1, 1]) {
-      const ax = cx + d * (pw / 2 + 36), ay = py + ph / 2;
+      const ax = cx + d * (pw / 2 + 32), ay = py + ph / 2;
       ctx.fillStyle = 'rgba(255,207,74,0.9)';
       ctx.beginPath(); ctx.moveTo(ax + d * 14, ay); ctx.lineTo(ax - d * 8, ay - 18); ctx.lineTo(ax - d * 8, ay + 18); ctx.closePath(); ctx.fill();
     }
     const pop = 1 + this.pickFlash * 0.15;
-    ctx.save(); ctx.translate(cx, y + h - 18); ctx.scale(pop, pop);
-    text(ctx, def ? def.name : 'Random', 0, 0, { size: 34, color: '#fff', sw: 6, maxWidth: w - 30 });
+    ctx.save(); ctx.translate(cx, y + h - 13); ctx.scale(pop, pop);
+    text(ctx, def ? def.name : 'Random', 0, 0, { size: 28, color: '#fff', sw: 6, maxWidth: w - 30 });
     ctx.restore();
     ctx.restore();
-    if (def && def.tagline) text(ctx, def.tagline, cx, y + h + 26 + bob, { size: 19, color: '#dfe6ff', sw: 4, maxWidth: 520 });
-    else if (!def) text(ctx, 'step on the arrows to pick', cx, y + h + 26 + bob, { size: 19, color: '#dfe6ff', sw: 4 });
+    if (def && def.tagline) text(ctx, def.tagline, cx, y + h + 21 + bob, { size: 16, color: '#dfe6ff', sw: 4, maxWidth: 460 });
+    else if (!def) text(ctx, 'step on the arrows to pick', cx, y + h + 21 + bob, { size: 16, color: '#dfe6ff', sw: 4 });
   }
 
-  // the TRIALS perch sign: the selected trial, its lock state and the start countdown
+  // the TRIALS perch sign: the selected trial, its lock state and the start
+  // fill. Hangs above the perch so spiders standing there stay in the clear.
   drawTrialSign(ctx) {
     const z = ISLANDS.find((q) => q.id === 'challenge');
     const d = loadTrials();
@@ -628,22 +633,26 @@ export class Lobby {
     const open = trialUnlocked(i, d), done = trialCleared(i, d);
     const active = this.zone === z;
     const k = active ? Math.min(1, this.zoneT / START_TIME) : 0;
-    const w = 250, h = 92, cx = TRIAL_SIGN_X, y = TRIAL_Y - 100;
+    const w = 250, h = TRIAL_SIGN_H, cx = TRIAL_SIGN_X, y = TRIAL_SIGN_Y;
     const bob = Math.sin(this.t * 1.3 + 2) * 3;
     ctx.save();
     ctx.translate(0, bob);
+    // while someone stands on the perch the top-strip picker says it all: fade
+    // the sign back so the spiders right under it read clearly
+    this.trialSignA = clamp((this.trialSignA ?? 1) + (this.playersOn('challenge').length ? -0.08 : 0.08), 0.3, 1);
+    ctx.globalAlpha = this.trialSignA;
     drawPanel(ctx, cx - w / 2, y, w, h, { r: 18, accent: z.color, fill: 'rgba(10,8,28,0.86)', lw: active ? 5 : 3 + this.trialFlash * 2 });
     if (active) {
       ctx.save(); ctx.beginPath(); ctx.roundRect(cx - w / 2, y, w, h, 18); ctx.clip();
       ctx.fillStyle = rgba(z.color, 0.35); ctx.fillRect(cx - w / 2, y, w * k, h);
       ctx.restore();
     }
-    this.drawIcon(ctx, 'crown', cx - w / 2 + 34, y + 34, 30, z.color);
-    text(ctx, 'TRIALS', cx + 16, y + 38, { size: 32, color: z.color, sw: 6, stroke: 'rgba(5,3,16,0.8)' });
+    this.drawIcon(ctx, 'crown', cx - w / 2 + 34, y + 27, 26, z.color);
+    text(ctx, 'TRIALS', cx + 16, y + 32, { size: 28, color: z.color, sw: 6, stroke: 'rgba(5,3,16,0.8)' });
     const tier = TIERS[T.tier - 1];
-    text(ctx, `${trialNumber(i)}  ${T.name}`, cx + 8, y + 72, { size: 20, color: open ? '#fff' : '#9aa0c8', sw: 4, maxWidth: w - 70 });
-    if (!open) drawLock(ctx, cx + w / 2 - 22, y + 64, 16, '#9aa0c8');
-    else if (done) text(ctx, '✓', cx + w / 2 - 22, y + 76, { size: 24, color: '#4fdc6a', sw: 4 });
+    text(ctx, `${trialNumber(i)}  ${T.name}`, cx + 8, y + 60, { size: 18, color: open ? '#fff' : '#9aa0c8', sw: 4, maxWidth: w - 70 });
+    if (!open) drawLock(ctx, cx + w / 2 - 22, y + 53, 14, '#9aa0c8');
+    else if (done) text(ctx, '✓', cx + w / 2 - 22, y + 62, { size: 22, color: '#4fdc6a', sw: 4 });
     // arrows: D-pad picks while standing here
     for (const dd of [-1, 1]) {
       const ax = cx + dd * (w / 2 + 14), ay = y + h / 2;
@@ -651,143 +660,111 @@ export class Lobby {
       ctx.beginPath(); ctx.moveTo(ax + dd * 10, ay); ctx.lineTo(ax - dd * 6, ay - 13); ctx.lineTo(ax - dd * 6, ay + 13); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
-    if (active) {
-      const rx = cx, ry = y - 50 + bob, R = 34;
-      ctx.save();
-      ctx.fillStyle = 'rgba(10,8,28,0.85)';
-      ctx.beginPath(); ctx.arc(rx, ry, R + 7, 0, TAU); ctx.fill();
-      ctx.strokeStyle = z.color; ctx.lineWidth = 7; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(rx, ry, R, -Math.PI / 2, -Math.PI / 2 + TAU * k); ctx.stroke();
-      ctx.restore();
-      text(ctx, String(Math.max(1, Math.ceil(START_TIME - this.zoneT))), rx, ry + 15, { size: 42, color: '#fff', sw: 6 });
-    }
   }
 
-  // the trial picker card: shown while anyone stands on the TRIALS perch
+  playersOn(zone) { return this.game.players.filter((p) => p.spider && p.spider.alive && this.zoneOf(p.spider) === zone); }
+
+  // the trial picker: a compact card in the reserved top strip (it replaces
+  // the header) while anyone stands on the TRIALS perch
   drawTrialPicker(ctx) {
-    const here = this.game.players.filter((p) => p.spider && p.spider.alive && this.zoneOf(p.spider) === 'challenge');
-    if (!here.length) return;
+    const here = this.playersOn('challenge');
+    if (!here.length) return false;
     const d = loadTrials();
     const i = this.trialSel, T = TRIALS[i], tier = TIERS[T.tier - 1];
     const open = trialUnlocked(i, d), done = trialCleared(i, d);
-    const w = 640, h = 250, x = clamp(TRIAL_SIGN_X - w / 2, 16, W - w - 16), y = 280;
-    drawPanel(ctx, x, y, w, h, { r: 24, accent: tier.color, fill: 'rgba(10,8,28,0.94)', lw: 3 + this.trialFlash * 3 });
-    text(ctx, `TIER ${T.tier} · ${tier.name.toUpperCase()}`, x + 28, y + 38, { size: 20, color: tier.color, align: 'left', stroke: null });
-    text(ctx, `${trialNumber(i)}   (${i + 1}/${TRIALS.length})`, x + w - 28, y + 38, { size: 18, color: '#9aa0c8', align: 'right', stroke: null });
-    // name + arrows
-    const pop = 1 + this.trialFlash * 0.12;
-    ctx.save(); ctx.translate(x + w / 2, y + 88); ctx.scale(pop, pop);
-    text(ctx, T.name, 0, 0, { size: 46, color: open ? '#fff' : '#8a90b8', sw: 7, maxWidth: w - 150 });
-    ctx.restore();
-    for (const dd of [-1, 1]) {
-      const ax = x + w / 2 + dd * (w / 2 - 34), ay = y + 74;
-      ctx.fillStyle = tier.color;
-      ctx.beginPath(); ctx.moveTo(ax + dd * 14, ay); ctx.lineTo(ax - dd * 8, ay - 18); ctx.lineTo(ax - dd * 8, ay + 18); ctx.closePath(); ctx.fill();
+    const w = 900, h = 100, x = W / 2 - w / 2, y = 5;
+    drawPanel(ctx, x, y, w, h, { r: 20, accent: tier.color, fill: 'rgba(10,8,28,0.92)', lw: 2.5 + this.trialFlash * 3 });
+    const starting = this.zone && this.zone.id === 'challenge';
+    if (starting) {
+      ctx.save(); ctx.beginPath(); ctx.roundRect(x, y, w, h, 20); ctx.clip();
+      ctx.fillStyle = rgba(tier.color, 0.22); ctx.fillRect(x, y, w * Math.min(1, this.zoneT / START_TIME), h);
+      ctx.restore();
     }
-    text(ctx, T.premise, x + w / 2, y + 126, { size: 22, color: '#e4e8ff', stroke: null, maxWidth: w - 50 });
-    // rule chips
+    // line 1: tier · rule chips · number
+    text(ctx, `TIER ${T.tier} · ${tier.name.toUpperCase()}`, x + 22, y + 24, { size: 15, color: tier.color, align: 'left', stroke: null });
+    text(ctx, `${trialNumber(i)}  (${i + 1}/${TRIALS.length})`, x + w - 22, y + 24, { size: 14, color: '#9aa0c8', align: 'right', stroke: null });
     const tags = trialTags(T);
-    ctx.font = `600 16px ${FONT}`;
-    const widths = tags.map((t) => ctx.measureText(t).width + 20);
-    let tx = x + w / 2 - (widths.reduce((a, b) => a + b, 0) + 8 * (tags.length - 1)) / 2;
+    ctx.font = `600 13px ${FONT}`;
+    const widths = tags.map((t) => ctx.measureText(t).width + 16);
+    let tx = x + w / 2 - (widths.reduce((a, b) => a + b, 0) + 6 * (tags.length - 1)) / 2;
     tags.forEach((t, j) => {
       ctx.fillStyle = rgba(tier.color, 0.2);
-      ctx.beginPath(); ctx.roundRect(tx, y + 142, widths[j], 26, 10); ctx.fill();
-      text(ctx, t, tx + widths[j] / 2, y + 160, { size: 16, color: '#fff', stroke: null, weight: 600 });
-      tx += widths[j] + 8;
+      ctx.beginPath(); ctx.roundRect(tx, y + 9, widths[j], 20, 8); ctx.fill();
+      text(ctx, t, tx + widths[j] / 2, y + 23, { size: 13, color: '#fff', stroke: null, weight: 600 });
+      tx += widths[j] + 6;
     });
-    // status
+    // left: name with arrows; right: premise + status
+    const nx = x + 200;
+    const pop = 1 + this.trialFlash * 0.12;
+    ctx.save(); ctx.translate(nx, y + 62); ctx.scale(pop, pop);
+    text(ctx, T.name, 0, 0, { size: 30, color: open ? '#fff' : '#8a90b8', sw: 6, maxWidth: 270 });
+    ctx.restore();
+    for (const dd of [-1, 1]) {
+      const ax = nx + dd * 168, ay = y + 52;
+      ctx.fillStyle = tier.color;
+      ctx.beginPath(); ctx.moveTo(ax + dd * 11, ay); ctx.lineTo(ax - dd * 6, ay - 14); ctx.lineTo(ax - dd * 6, ay + 14); ctx.closePath(); ctx.fill();
+    }
+    text(ctx, T.premise, x + 390, y + 54, { size: 17, color: '#e4e8ff', align: 'left', stroke: null, maxWidth: w - 410 });
     let msg, col;
     if (!open) {
       const prev = TRIALS[i - 1];
       msg = prev && prev.tier === T.tier ? `Locked · clear ${prev.name} first` : `Locked · clear every ${TIERS[T.tier - 2].name} trial`;
       col = '#ff8a9a';
-      drawLock(ctx, x + 40, y + 200, 22, col);
+      drawLock(ctx, x + 400, y + 76, 13, col);
     } else if (done) { msg = 'Cleared · stand here 3 s to replay'; col = '#4fdc6a'; }
     else { msg = 'Everyone stand here 3 s to start'; col = '#ffd23f'; }
-    if (this.zone && this.zone.id === 'challenge') {
-      msg = `Starting in ${Math.max(1, Math.ceil(START_TIME - this.zoneT))}…`; col = '#fff';
-      ctx.save(); ctx.beginPath(); ctx.roundRect(x, y, w, h, 24); ctx.clip();
-      ctx.fillStyle = rgba(tier.color, 0.22); ctx.fillRect(x, y, w * Math.min(1, this.zoneT / START_TIME), h);
-      ctx.restore();
-    } else if (open && here.length < this.game.players.length) msg = `${here.length} / ${this.game.players.length} here · everyone stand here 3 s`;
-    text(ctx, msg, x + w / 2, y + 206, { size: 24, color: col, sw: 4 });
-    // progress: 6 tiers x 3
+    if (starting) { msg = `Starting in ${Math.max(1, Math.ceil(START_TIME - this.zoneT))}…`; col = '#fff'; }
+    else if (open && here.length < this.game.players.length) msg = `${here.length} / ${this.game.players.length} here · everyone stand here 3 s`;
+    text(ctx, msg, x + (open ? 390 : 416), y + 82, { size: 17, color: col, align: 'left', sw: 3, maxWidth: w - 430 });
+    // progress: 6 tiers x 3 along the bottom-left
     TRIALS.forEach((q, j) => {
-      const px = x + 32 + (q.tier - 1) * 58 + (j % 3) * 14, py = y + 232;
+      const px = x + 34 + (q.tier - 1) * 52 + (j % 3) * 12, py = y + 87;
       ctx.fillStyle = trialCleared(j, d) ? '#4fdc6a' : trialUnlocked(j, d) ? TIERS[q.tier - 1].color : 'rgba(255,255,255,0.18)';
-      ctx.beginPath(); ctx.arc(px, py, j === i ? 6 : 4.5, 0, TAU); ctx.fill();
-      if (j === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(px, py, j === i ? 5 : 3.5, 0, TAU); ctx.fill();
+      if (j === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
     });
-    text(ctx, '◀ ▶  D-pad / Z X to choose', x + w - 24, y + h - 8, { size: 14, color: '#9aa0c8', align: 'right', stroke: null });
+    text(ctx, '◀ ▶  D-pad / Z X', x + w - 22, y + h - 9, { size: 12, color: '#9aa0c8', align: 'right', stroke: null });
+    return true;
   }
 
-  drawLedgeSign(ctx, cx, postX, label, sub, color, icon, k) {
-    const y = LEDGE_Y - 150;
+  drawLedgeSign(ctx, cx, postX, label, sub, color, icon, k, hint = '') {
+    const y = LEDGE_Y - 150, w = 230, h = 72;
     ctx.save();
     // a little post
     ctx.strokeStyle = '#4a3020'; ctx.lineWidth = 7;
     ctx.beginPath(); ctx.moveTo(postX, LEDGE_Y + 4); ctx.lineTo(postX, y + 60); ctx.stroke();
-    drawPanel(ctx, cx - 105, y, 210, 72, { r: 16, accent: color, fill: 'rgba(10,8,28,0.82)' });
+    drawPanel(ctx, cx - w / 2, y, w, h, { r: 16, accent: color, fill: 'rgba(10,8,28,0.82)', lw: 3 + k * 2 });
     if (k > 0) {
-      ctx.save(); ctx.beginPath(); ctx.roundRect(cx - 105, y, 210, 72, 16); ctx.clip();
-      ctx.fillStyle = rgba(color, 0.4); ctx.fillRect(cx - 105, y, 210 * Math.min(1, k), 72);
+      ctx.save(); ctx.beginPath(); ctx.roundRect(cx - w / 2, y, w, h, 16); ctx.clip();
+      ctx.fillStyle = rgba(color, 0.3 * k); ctx.fillRect(cx - w / 2, y, w, h);
       ctx.restore();
     }
-    this.drawIcon(ctx, icon, cx - 70, y + 36, 30, color);
-    text(ctx, label, cx + 18, y + 36, { size: 26, color, sw: 5 });
-    text(ctx, sub, cx + 18, y + 60, { size: 16, color: '#dfe6ff', stroke: null });
+    this.drawIcon(ctx, icon, cx - w / 2 + 34, y + 30, 26, color);
+    text(ctx, label, cx + 16, y + 36, { size: 26, color, sw: 5 });
+    if (hint && k > 0) {
+      ctx.globalAlpha = k;
+      text(ctx, hint, cx, y + 60, { size: 15, color: '#ffcf4a', stroke: 'rgba(5,3,16,0.8)', sw: 3, maxWidth: w - 14 });
+      ctx.globalAlpha = 1;
+    } else text(ctx, sub, cx + 16, y + 60, { size: 15, color: '#dfe6ff', stroke: null });
     ctx.restore();
-  }
-
-  // world space, over the spiders: character cards (stacked so they never overlap)
-  draw(ctx) {
-    this.drawTutorial(ctx);
-    const w = 230, h = 78;
-    const list = [];
-    for (const [p, left] of this.cards) {
-      const sp = p.spider;
-      if (!sp || !sp.alive) continue;
-      list.push({ p, sp, left, x: clamp(sp.x - w / 2, 8, W - w - 8), y: clamp(sp.y - sp.r - 48 - h, 8, H - h) });
-    }
-    list.sort((a, b) => a.y - b.y || a.x - b.x);
-    const placed = [];
-    for (const c of list) {
-      let moved = true;
-      while (moved) {
-        moved = false;
-        for (const q of placed) {
-          if (Math.abs(q.x - c.x) < w + 6 && Math.abs(q.y - c.y) < h + 6) { c.y = q.y - h - 8; moved = true; }
-        }
-      }
-      placed.push(c);
-    }
-    for (const { p, sp, left, x, y } of placed) {
-      const a = Math.min(1, left * 3) * Math.min(1, (2.4 - left) * 8 + 0.3);
-      const c = castAt(p.castIndex);
-      ctx.save();
-      ctx.globalAlpha = clamp(a, 0, 1);
-      drawPanel(ctx, x, y, w, h, { r: 18, accent: p.color.main, fill: 'rgba(10,8,28,0.9)' });
-      // pointer + leader line down to the spider
-      const tx = clamp(sp.x, x + 20, x + w - 20);
-      ctx.strokeStyle = rgba(p.color.main, 0.6); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(tx, y + h + 10); ctx.lineTo(sp.x, sp.y - sp.r - 30); ctx.stroke();
-      ctx.fillStyle = 'rgba(10,8,28,0.9)';
-      ctx.beginPath(); ctx.moveTo(tx - 10, y + h); ctx.lineTo(tx + 10, y + h); ctx.lineTo(tx, y + h + 12); ctx.fill();
-      drawPortrait(ctx, x + 40, y + h / 2, 29, p);
-      text(ctx, c.name, x + 80, y + 38, { size: 28, align: 'left', color: '#fff', sw: 5, maxWidth: w - 96 });
-      text(ctx, `P${p.slot + 1}  ◀ ▶ change`, x + 80, y + 62, { size: 16, align: 'left', color: p.color.main, stroke: null });
-      ctx.restore();
-    }
   }
 
   drawUI(ctx) {
     const game = this.game;
     const t = this.t;
-    drawPlayerTags(ctx, game);
-    // header
-    text(ctx, 'SPIDER SWINGERS', 960, 52, { size: 40, color: '#fff', sw: 8, stroke: '#1b0d33' });
-    text(ctx, game.players.length ? 'Swing to an island · everyone on it for 3 s starts it' : 'Lobby', 960, 92, { size: 22, color: '#cfd6ff', sw: 4 });
+    // tiny name tag over a spider that just joined / changed character
+    drawPlayerTags(ctx, game, {
+      label: (sp) => {
+        const left = this.cards.get(sp.player);
+        if (!left) return null;
+        return { text: `P${sp.player.slot + 1} ${castAt(sp.player.castIndex).name}`, k: clamp(left * 3, 0, 1) };
+      },
+    });
+    // top strip: the trial picker replaces the header while anyone is on the perch
+    if (!this.drawTrialPicker(ctx)) {
+      text(ctx, 'SPIDER SWINGERS', 960, 52, { size: 40, color: '#fff', sw: 8, stroke: '#1b0d33' });
+      text(ctx, game.players.length ? 'Swing to an island · everyone on it for 3 s starts it' : 'Lobby', 960, 92, { size: 22, color: '#cfd6ff', sw: 4 });
+    }
     if (!game.players.length) {
       const pulse = 1 + Math.sin(t * 4) * 0.04;
       ctx.save(); ctx.translate(960, 640); ctx.scale(pulse, pulse);
@@ -798,53 +775,65 @@ export class Lobby {
       text(ctx, 'keyboard: Space or click', 40, 40, { size: 22, color: '#cfd6ff', stroke: null });
       ctx.restore();
     }
+    // bottom strip: tutorial pills, control legend, player cards
+    this.drawTutorial(ctx);
     this.drawLegend(ctx);
     this.drawCards(ctx);
-    this.drawTrialPicker(ctx);
   }
 
   drawLegend(ctx) {
-    const chip = (x, y, key, label, color = 'rgba(255,255,255,0.14)') => {
-      ctx.font = `600 17px ${FONT}`;
-      const kw = Math.max(30, ctx.measureText(key).width + 16);
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.roundRect(x, y - 15, kw, 26, 8); ctx.fill();
-      text(ctx, key, x + kw / 2, y + 4, { size: 17, color: '#fff', stroke: null, weight: 600 });
-      text(ctx, label, x + kw + 6, y + 4, { size: 17, color: '#cfd6ff', align: 'left', stroke: 'rgba(0,0,0,0.5)', sw: 3, weight: 500 });
-      ctx.font = `500 17px ${FONT}`;
-      return x + kw + 12 + ctx.measureText(label).width + 14;
+    const SZ = 15;
+    const measure = ([key, label]) => {
+      ctx.font = `600 ${SZ}px ${FONT}`;
+      const kw = Math.max(26, ctx.measureText(key).width + 12);
+      ctx.font = `500 ${SZ}px ${FONT}`;
+      return { kw, w: kw + 5 + ctx.measureText(label).width + 14 };
     };
-    const y = 975;
+    const chip = (x, y, [key, label, color = 'rgba(255,255,255,0.14)']) => {
+      const { kw, w } = measure([key, label]);
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.roundRect(x, y - 13, kw, 22, 7); ctx.fill();
+      text(ctx, key, x + kw / 2, y + 3, { size: SZ, color: '#fff', stroke: null, weight: 600 });
+      text(ctx, label, x + kw + 5, y + 3, { size: SZ, color: '#cfd6ff', align: 'left', stroke: 'rgba(0,0,0,0.5)', sw: 3, weight: 500 });
+      return x + w;
+    };
+    const y = LEGEND_Y;
+    const PAD = [['A/LT', 'jump · web', '#2f8f45'], ['RT', 'use'], ['RB', 'recall'], ['LB/B', 'throw'], ['X', 'swap'], ['Y/◀▶', 'spider']];
+    const KB = [['Space/RMB', 'jump · web'], ['LMB', 'use'], ['E', 'recall'], ['Q', 'throw'], ['F', 'swap'], ['Z/X', 'spider']];
     let x = 22;
-    x = chip(x, y, 'LT', 'web');
-    x = chip(x, y, 'A', 'jump', '#2f8f45');
-    x = chip(x, y, 'RT', 'use');
-    x = chip(x, y, 'RB', 'throw');
-    x = chip(x, y, '◀▶', 'spider');
-    x = 1360;
-    x = chip(x, y, 'RMB', 'web');
-    x = chip(x, y, 'Space', 'jump');
-    x = chip(x, y, 'LMB', 'use');
-    x = chip(x, y, 'Q', 'throw');
-    chip(x, y, 'Z/X', 'spider');
+    for (const c of PAD) x = chip(x, y, c);
+    x = W - 22 - KB.reduce((s, c) => s + measure(c).w, 0) + 14;
+    for (const c of KB) x = chip(x, y, c);
   }
 
   drawCards(ctx) {
     const game = this.game;
-    const n = 8, cw = 232, gap = 6, x0 = W / 2 - (n * cw + (n - 1) * gap) / 2, y = 1008, h = 62;
-    const firstEmpty = [...Array(n).keys()].find((i) => !game.players.some((q) => q.slot === i));
-    for (let i = 0; i < n; i++) {
+    const firstEmpty = [...Array(CARD_N).keys()].find((i) => !game.players.some((q) => q.slot === i));
+    for (let i = 0; i < CARD_N; i++) {
       const p = game.players.find((q) => q.slot === i);
-      const x = x0 + i * (cw + gap);
+      let { x, y, w: cw, h } = cardRect(i);
       if (p) {
-        drawPanel(ctx, x, y, cw, h, { r: 16, accent: p.color.main, fill: 'rgba(10,8,28,0.82)', lw: 2.5 });
+        // join / character change: the card lifts and glows instead of a popup over the arena
+        const left = this.cards.get(p) || 0;
+        const k = left ? clamp(left * 3, 0, 1) * clamp((CARD_TIME - left) * 10, 0, 1) : 0;
+        y -= 8 * k;
+        ctx.save();
+        if (k) { ctx.shadowColor = p.color.main; ctx.shadowBlur = 22 * k; }
+        drawPanel(ctx, x, y, cw, h, { r: 16, accent: p.color.main, fill: k ? `rgba(${Math.round(10 + 30 * k)},${Math.round(8 + 20 * k)},40,0.9)` : 'rgba(10,8,28,0.82)', lw: 2.5 + 2 * k });
+        ctx.restore();
         const dead = !(p.spider && p.spider.alive);
-        drawPortrait(ctx, x + 32, y + h / 2, 22, p, { dead });
+        drawPortrait(ctx, x + 32, y + h / 2, 22 + 3 * k, p, { dead });
         text(ctx, `P${i + 1}`, x + 62, y + 24, { size: 16, align: 'left', color: p.color.main, stroke: null });
         text(ctx, castAt(p.castIndex).name, x + 62, y + 48, { size: 23, align: 'left', color: '#fff', sw: 4, maxWidth: cw - 72 });
-        const z = p.spider && this.zoneOf(p.spider);
-        const isl = ISLANDS.find((q) => q.id === z);
-        if (isl) { ctx.fillStyle = isl.color; ctx.beginPath(); ctx.arc(x + cw - 16, y + 16, 6, 0, TAU); ctx.fill(); }
+        if (k) {
+          ctx.globalAlpha = k;
+          text(ctx, '◀ ▶ change', x + cw - 12, y + 24, { size: 13, align: 'right', color: p.color.main, stroke: null });
+          ctx.globalAlpha = 1;
+        } else {
+          const z = p.spider && this.zoneOf(p.spider);
+          const isl = ISLANDS.find((q) => q.id === z);
+          if (isl) { ctx.fillStyle = isl.color; ctx.beginPath(); ctx.arc(x + cw - 16, y + 16, 6, 0, TAU); ctx.fill(); }
+        }
       } else {
         ctx.save();
         ctx.globalAlpha = i === firstEmpty ? 0.75 + 0.25 * Math.sin(this.t * 4) : 0.45;

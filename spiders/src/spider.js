@@ -18,7 +18,7 @@ import { castAt, drawBody } from './cast.js';
 import { sfx } from './audio.js';
 
 export const SP = {
-  r: 19,
+  r: 15,                 // small spiders on a big board: room to fling
   gravity: 2000,
   walkSpeed: 340,
   walkAccel: 4200,
@@ -28,17 +28,24 @@ export const SP = {
   jumpSpeed: 860,
   maxSpeed: 2200,
   coyote: 0.1,
-  webSpeed: 3600,
-  webMax: 860,
-  webMin: 36,
-  webReel: 520,
-  webYank: 0.9,          // rope length snaps to this fraction of the hit distance
+  webSpeed: 4400,
+  webMax: 900,
+  webMin: 30,
+  webReel: 520,          // left stick along the rope reels in / pays out
+  webReelAuto: 300,      // a held web keeps reeling in on its own (the pull)
+  webPull: 1700,         // ...and tugs you toward the anchor (u/s^2)
+  webYank: 0.92,         // rope length snaps to this fraction of the hit distance
   webPump: 1500,
-  coxa: 15,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
-  femur: 44,
-  tibia: 54,
+  webMinHold: 0.25,      // a web stays on at least this long
+  webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
+  webCoolStep: 0.08,
+  airAnchor: 0.3,        // a web into empty air clings to nothing this long
+  webAssist: [0, 0.1, -0.1, 0.2, -0.2, 0.3, -0.3],   // aim-assist fan (rad)
+  coxa: 12,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
+  femur: 35,
+  tibia: 43,
   legLen: 40,            // average segment (reach = femur + tibia)
-  lift: 17,              // the body stands this far above the surface (r + lift)
+  lift: 14,              // the body stands this far above the surface (r + lift)
 };
 
 const LEGS = [
@@ -51,6 +58,7 @@ const LEGS = [
 
 let NEXT_ID = 1;
 
+const clingableSolid = (solid) => clingable(solid);
 const clingable = (solid) => solid.mat !== 'ice' && solid.mat !== 'bouncy' && solid.mat !== 'lava';
 
 export class Spider {
@@ -152,32 +160,22 @@ export class Spider {
       alt: inp.held.rb, altPressed: inp.pressed.rb,
     } : { aimX: this.aim.x, aimY: this.aim.y, angle: this.aimAngle, aimMag: 0, fire: false, firePressed: false, fireReleased: false, alt: false, altPressed: false };
 
-    // ---- jump
-    const jumpPressed = inp && (inp.pressed.a || inp.pressed.lb);
-    if (jumpPressed) {
-      if (this.ground || this.coyote > 0) {
-        const n = this.ground || this.lastNormal;
-        const jv = SP.jumpSpeed * this.jumpMul;
-        let jx = n.nx ?? n.x, jy = n.ny ?? n.y;
-        // nudge by the stick; on a ceiling, a jump is a drop
-        jx += move.x * 0.55; jy += move.y * 0.35;
-        const m = Math.hypot(jx, jy) || 1;
-        const sv = this.ground ? this.ground.solid.velAt(this.ground.x, this.ground.y, world.dt) : { x: 0, y: 0 };
-        this.vx = (jx / m) * jv + sv.x * 0.6 + this.vx * 0.3;
-        this.vy = (jy / m) * jv + sv.y * 0.6;
-        this.ground = null; this.coyote = 0; this.jumpLock = 0.16;
-        this.squash = 0.75;
-        sfx.jump();
-        game.fx.burst(this.x - jx / m * this.r, this.y - jy / m * this.r, { n: 6, speed: 160, color: 'rgba(255,255,255,0.6)', kind: 'smoke', size: 5, life: 0.35, g: 0 });
-      } else if (this.web && this.web.state === 'stuck') {
-        // jump out of a swing: let go with a little boost
-        this.releaseWeb(true);
-      }
+    // ---- jump / web: one button (A or LT), like the original
+    //  on a surface: jump. In the air: shoot a web (hold to keep it, release to
+    //  let go). Holding the button through a jump slings a web at the top.
+    this.webCooldown = Math.max(0, (this.webCooldown || 0) - dt);
+    const jwHeld = !!inp && (inp.held.a || inp.held.lt);
+    const jwPressed = !!inp && (inp.pressed.a || inp.pressed.lt);
+    if (jwPressed) {
+      if (this.ground || this.coyote > 0) { this.jump(move); this.jwHoldJump = 0; }
+      else if (!this.web) this.shootWeb(move, inp);
     }
-
-    // ---- web
-    if (inp && inp.pressed.lt && !this.web && !this.noWeb) this.shootWeb();   // noWeb: survival trials
-    if (this.web && (!inp || !(inp.lt > 0.3))) this.releaseWeb(false);
+    if (jwHeld && this.jwHoldJump !== undefined && this.jwHoldJump !== null && !this.ground && !this.web) {
+      this.jwHoldJump += dt;
+      if (this.jwHoldJump > 0.2) { this.shootWeb(move, inp); this.jwHoldJump = null; }
+    }
+    if (!jwHeld || this.ground) this.jwHoldJump = this.ground && jwHeld ? this.jwHoldJump : null;
+    if (this.web && !jwHeld && this.web.t >= SP.webMinHold) this.releaseWeb(true);
     if (this.web) this.updateWeb(dt, move);
 
     // ---- locomotion
@@ -198,10 +196,11 @@ export class Spider {
     // weapon
     const hadWeapon = !!this.weapon;
     if (this.weapon) this.weapon.update(dt, this.ctl);
-    if (inp && this.weapon && (inp.pressed.rb || inp.pressed.b)) this.throwWeapon();
+    if (inp && this.weapon && (inp.pressed.lb || inp.pressed.b)) this.throwWeapon();
     if (inp && inp.pressed.x) this.swapWeapon();
-    // a thrown weapon that can come back (sabers): pull the trigger to recall it
-    if (inp && !hadWeapon && this.recallable && inp.pressed.rt) this.recallable.recall(this);
+    // RB: recall — your thrown blade flies back; otherwise the nearest loose
+    // weapon is pulled to you
+    if (inp && inp.pressed.rb && !hadWeapon) this.recall();
     if (!this.weapon && this.pickCooldown <= 0) {
       const p = game.pickupNear(this.x, this.y, this.r + 16, this);
       if (p) game.takePickup(this, p);
@@ -280,7 +279,7 @@ export class Spider {
 
     this.x += this.vx * h;
     this.y += this.vy * h;
-    if (this.web && this.web.state === 'stuck') this.constrainWeb(h);
+    if (this.web && (this.web.state === 'stuck' || this.web.state === 'air')) this.constrainWeb(h);
 
     const preVx = this.vx, preVy = this.vy;
     const contacts = world.collideCircle(this, { bounce: 0, friction: 0 });
@@ -312,6 +311,7 @@ export class Spider {
         }
         this.coyote = SP.coyote;
         this.lastNormal = { x: n.nx, y: n.ny };
+        this.airWebs = 0;
       } else {
         this.ground = null;
       }
@@ -320,20 +320,62 @@ export class Spider {
     this.wasGround = !!this.ground;
   }
 
+  jump(move) {
+    const world = this.game.world;
+    const n = this.ground || this.lastNormal;
+    const jv = SP.jumpSpeed * this.jumpMul;
+    let jx = n.nx ?? n.x, jy = n.ny ?? n.y;
+    // nudge by the stick; on a ceiling, a jump is a drop
+    jx += move.x * 0.55; jy += move.y * 0.35;
+    const m = Math.hypot(jx, jy) || 1;
+    const sv = this.ground ? this.ground.solid.velAt(this.ground.x, this.ground.y, world.dt) : { x: 0, y: 0 };
+    // keep the momentum you had along the surface: running jumps go further
+    this.vx = (jx / m) * jv + sv.x * 0.6 + this.vx * 0.55;
+    this.vy = (jy / m) * jv + sv.y * 0.6 + Math.min(0, this.vy) * 0.2;
+    this.ground = null; this.coyote = 0; this.jumpLock = 0.16;
+    this.squash = 0.72;
+    this.pushOff = { t: 0.07, nx: jx / m, ny: jy / m };   // legs stay planted a moment and push
+    sfx.jump();
+    this.game.fx.burst(this.x - jx / m * this.r, this.y - jy / m * this.r, { n: 6, speed: 160, color: 'rgba(255,255,255,0.6)', kind: 'smoke', size: 5, life: 0.35, g: 0 });
+  }
+
   // ---------------------------------------------------------------- web
-  shootWeb() {
-    let dx = this.aim.x, dy = this.aim.y;
+  // Direction: the left stick (where you're steering); with it neutral, the
+  // right-stick aim if held, else up and a little forward. Keyboard + mouse
+  // aims with the mouse. A fan of rays gives a little aim assist.
+  webAim(move, inp) {
+    if (inp && inp.kind === 'keyboard' && inp.mouseAim) return { x: this.aim.x, y: this.aim.y };
+    if (move.mag > 0.35) return { x: move.x / move.mag, y: move.y / move.mag };
+    if (inp && inp.r.mag > 0.3) return { x: this.aim.x, y: this.aim.y };
+    const a = -Math.PI / 2 + this.facing * 0.35;
+    return { x: Math.cos(a), y: Math.sin(a) };
+  }
+
+  shootWeb(move = { x: 0, y: 0, mag: 0 }, inp = null) {
+    if (this.noWeb || this.webCooldown > 0) return;
+    let { x: dx, y: dy } = this.webAim(move, inp);
+    // aim assist: nudge toward the nearest anchor in a small fan
+    const max = SP.webMax * (this.webMul || 1);
+    const base = Math.atan2(dy, dx);
+    for (const off of SP.webAssist) {
+      const a = base + off;
+      if (this.game.world.raycast(this.x, this.y, Math.cos(a), Math.sin(a), max)) { dx = Math.cos(a); dy = Math.sin(a); break; }
+    }
     this.web = { state: 'fly', x: this.x, y: this.y, dx, dy, len: 0, dist: 0, solid: null, lx: 0, ly: 0, taut: false, target: null, t: 0 };
+    // webs in a row without landing cool down longer
+    this.airWebs = (this.airWebs || 0) + (this.ground ? 0 : 1);
+    this.webCooldown = SP.webCool + SP.webCoolStep * Math.max(0, this.airWebs - 1);
     sfx.webShoot();
   }
 
+  // letting go keeps every bit of the swing's momentum, plus a small kick
+  // along it (the fling)
   releaseWeb(boost) {
     if (!this.web) return;
-    if (this.web.state === 'stuck' && boost) {
+    if ((this.web.state === 'stuck' || this.web.state === 'air') && boost) {
       const sp = Math.hypot(this.vx, this.vy);
-      if (sp > 50) { this.vx *= 1.08; this.vy = this.vy * 1.08 - 220; }
-      else this.vy -= 400;
-      this.jumpLock = 0.1;
+      if (sp > 120) { const k = 1 + Math.min(0.12, 60 / sp); this.vx *= k; this.vy = this.vy * k - 90; }
+      this.jumpLock = 0.08;
     }
     this.web = null;
   }
@@ -395,16 +437,30 @@ export class Spider {
       }
       w.x = nx; w.y = ny;
       w.dist += step;
-      if (w.dist > SP.webMax * (this.webMul || 1) || hit) { this.web = null; }
+      if (hit) { this.web = null; return; }
+      if (w.dist > SP.webMax * (this.webMul || 1)) {
+        // nothing to grab: the web clings to thin air for a moment
+        w.state = 'air'; w.t = 0;
+        w.len = Math.hypot(w.x - this.x, w.y - this.y);
+        this.game.fx.burst(w.x, w.y, { n: 4, speed: 80, color: '#ffffff', size: 1.2, life: 0.2 });
+      }
       return;
     }
+    if (w.state === 'air' && w.t > SP.airAnchor) { this.web = null; return; }
     // stuck: dead targets or broken solids drop the web
     if ((w.target && (!w.target.alive || w.target.removed)) || (w.solid && w.solid.broken)) { this.web = null; return; }
     // reel with up/down relative to the rope, pump sideways
     const d = this.webDir();
     const reel = -(move.x * d.x + move.y * d.y);   // stick toward anchor = shorten
-    if (Math.abs(reel) > 0.3) w.len = clamp(w.len + reel * SP.webReel * dt, SP.webMin, SP.webMax + 40);
-    if (w.t < 0.25) w.len = Math.max(SP.webMin, w.len - 260 * dt);
+    // a held web reels in on its own; the stick along the rope speeds it up or pays out
+    let rate = -SP.webReelAuto;
+    if (Math.abs(reel) > 0.3) rate -= reel * SP.webReel;
+    w.len = clamp(Math.min(w.len, d.d + 4) + rate * dt, SP.webMin, SP.webMax + 40);
+    // ...and tugs you toward the anchor (strongest just after it sticks)
+    if (w.state === 'stuck' && d.d > SP.webMin + 4) {
+      const pull = SP.webPull * (w.t < 0.2 ? 1.6 : 1);
+      this.vx += d.x * pull * dt; this.vy += d.y * pull * dt;
+    }
     if (!this.ground) {
       const tx = -d.y, ty = d.x;
       const pump = move.x * tx + move.y * ty;
@@ -430,10 +486,13 @@ export class Spider {
     w.taut = d >= w.len - 1;
     if (d > w.len) {
       dx /= d; dy /= d;
-      this.x = a.x + dx * w.len;
-      this.y = a.y + dy * w.len;
+      // a touch of stretch: most of the overshoot is corrected each step, and
+      // the outward speed turns into swing rather than vanishing
+      const over = d - w.len;
+      this.x -= dx * over * 0.85;
+      this.y -= dy * over * 0.85;
       const vr = this.vx * dx + this.vy * dy;
-      if (vr > 0) { this.vx -= vr * dx * 1.0; this.vy -= vr * dy * 1.0; }
+      if (vr > 0) { this.vx -= vr * dx * 0.96; this.vy -= vr * dy * 0.96; }
     }
   }
 
@@ -472,6 +531,18 @@ export class Spider {
     sfx.throwIt();
   }
 
+  recall() {
+    if (this.recallable && this.recallable.pickup && !this.recallable.pickup.removed) { this.recallable.recall(this); return; }
+    const p = this.game.pickupNear(this.x, this.y, 520, this, true);
+    if (!p || p.stuck && !(p.weapon && p.weapon.recall)) return;
+    if (p.weapon && p.weapon.mode === 'stuck' && p.weapon.recall) { p.weapon.thrower = this; p.weapon.pickup = p; p.weapon.recall(this); return; }
+    const dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
+    p.stuck = false;
+    p.vx = (dx / m) * 1150; p.vy = (dy / m) * 1150 - 200; p.yankedBy = this; p.yankT = 0.6;
+    sfx.webStick();
+    this.game.fx.line(this.x, this.y, p.x, p.y, 'rgba(255,255,255,0.7)', 1.5, 0.15, false);
+  }
+
   swapWeapon() {
     const p = this.game.pickupNear(this.x, this.y, this.r + 40, this, true);
     if (!p) return;
@@ -488,6 +559,14 @@ export class Spider {
     const nx = g ? g.nx : this.up.x, ny = g ? g.ny : this.up.y;
     const tx = -ny, ty = nx;
     const speed = Math.hypot(this.vx, this.vy);
+    if (this.pushOff) { this.pushOff.t -= dt; if (this.pushOff.t <= 0) this.pushOff = null; }
+    // airborne and closing on a surface? (feet reach for it)
+    this.catchSurface = null;
+    if (!g && speed > 150) {
+      const look = clamp(speed * 0.12, 30, 140) + r + this.lift;
+      const hit = world.raycast(this.x, this.y, this.vx, this.vy, look);
+      if (hit && clingableSolid(hit.solid)) this.catchSurface = { x: hit.x, y: hit.y, nx: hit.nx, ny: hit.ny, tx: -hit.ny, ty: hit.nx };
+    }
     let anyStep = [false, false];
     for (const L of this.legs) if (L.t < 1 && !L.hold) anyStep[L.g] = true;
     const holds = this.holdTargets(tx, ty);
@@ -525,12 +604,25 @@ export class Spider {
           L.planted = false;
         }
       } else {
+        // just jumped: planted feet stay put a moment, so the legs stretch and push
+        if (this.pushOff && this.pushOff.t > 0 && L.planted) { L.t = 1; continue; }
         L.planted = false;
-        // airborne: legs spread and trail the motion
-        const spread = L.side * (0.7 + L.off * 0.55);
-        const ax = this.x + spread * r * 1.05 - clamp(this.vx * 0.02, -14, 14), ay = this.y + r * (1.2 + 0.3 * Math.sin(this.time * 9 + i)) - clamp(this.vy * 0.015, -10, 12);
+        let ax, ay;
+        const catchAt = this.catchSurface;
+        if (catchAt) {
+          // about to land: feet reach out and spread along the surface ahead
+          const off = (L.side * L.off * r) * 0.9;
+          ax = catchAt.x + catchAt.tx * off + catchAt.nx * 2; ay = catchAt.y + catchAt.ty * off + catchAt.ny * 2;
+        } else {
+          // flying: legs trail the motion; at speed they tuck in, slow they splay
+          const tuck = clamp(1.15 - speed / 1600, 0.45, 1);
+          const spread = L.side * (0.7 + L.off * 0.55) * tuck;
+          ax = this.x + spread * r * 1.05 - clamp(this.vx * 0.03, -22, 22);
+          ay = this.y + r * (1.2 * tuck + 0.3 * Math.sin(this.time * 9 + i)) - clamp(this.vy * 0.02, -16, 16);
+        }
         L.tx = ax; L.ty = ay;
-        L.fx = lerp(L.fx, ax, Math.min(1, dt * 14)); L.fy = lerp(L.fy, ay, Math.min(1, dt * 14));
+        const k = Math.min(1, dt * (catchAt ? 22 : 14));
+        L.fx = lerp(L.fx, ax, k); L.fy = lerp(L.fy, ay, k);
         L.t = 1;
         continue;
       }
@@ -560,6 +652,18 @@ export class Spider {
       const ext = (SP.femur + SP.tibia) * 0.85 * this.sz * Math.sin(Math.min(1, (0.22 - this.flingT) / 0.08) * Math.PI / 2);
       out.set(i, { x: this.x + d.x * ext, y: this.y + d.y * ext });
       return out;
+    }
+    // swinging: legs on the free side grip the web thread
+    if (this.web && this.web.state !== 'fly') {
+      const d = this.webDir();
+      const wside = this.weapon ? -(this.holdSide || this.facing) : 0;
+      const reach = (SP.femur + SP.tibia) * this.sz;
+      for (const side of wside ? [wside] : [1, -1]) {
+        const i = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
+        // feet on the thread itself, one a little above the other (hand over hand)
+        const along = reach * (side === 1 ? 0.8 : 0.64) + Math.sin(this.time * 7 + side) * 3;
+        out.set(i, { x: this.x + d.x * along, y: this.y + d.y * along });
+      }
     }
     const w = this.weapon;
     if (!w || !w.hands) return out;

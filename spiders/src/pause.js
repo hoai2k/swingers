@@ -3,7 +3,10 @@
 //  - pause menu: Start on a joined controller (or Esc) during a match or in
 //    the lobby. Resume / Settings / How to play / Quit, navigable with the
 //    D-pad or stick + A/B (the menus themselves are DOM, see ui.js).
-//  - any open DOM menu pauses the game (corner gear/help buttons too).
+//    On the lobby's SETTINGS ledge, Start opens the settings menu instead.
+//  - any open DOM menu pauses the game (corner gear/help buttons too). In the
+//    lobby menus dock to the right edge (.ui-root.side) so the arena stays
+//    visible behind them.
 //  - "controller disconnected" notices: a match pauses when a joined pad
 //    vanishes; in the lobby the player is dropped after a grace period.
 
@@ -67,6 +70,8 @@ export class Overlay {
     const fresh = states !== this.lastStates;   // edges are handled once per poll
     this.lastStates = states;
     this.checkPads(dt);
+    const side = g.sceneName === 'lobby';
+    if (side !== this.side) { this.side = side; this.ui.root.classList.toggle('side', side); }
     // a scene change (quit to lobby, mode start) closes whatever was open
     if (this.ui.open && this.sceneAtOpen && this.sceneAtOpen !== g.scene) { this.ui.closeAll(); }
     if (this.ui.open) {
@@ -83,7 +88,12 @@ export class Overlay {
       if (!s.pressed || !s.pressed.start) continue;
       const joined = g.players.some((p) => p.inputId === s.id);
       // in the lobby anyone may open it; in a match only players (and the keyboard)
-      if (joined || g.sceneName === 'lobby' || s.kind === 'keyboard') { this.openPause(); this.consume(); return; }
+      if (joined || g.sceneName === 'lobby' || s.kind === 'keyboard') {
+        if (g.sceneName === 'lobby' && g.scene.wantsSettings && g.scene.wantsSettings(s.id)) this.openSettings();
+        else this.openPause();
+        this.consume();
+        return;
+      }
     }
   }
 
@@ -109,6 +119,14 @@ export class Overlay {
           : { type: 'action', label: 'Quit to lobby', danger: true, run: () => { this.ui.closeAll(); g.go('lobby'); } },
       ],
     });
+  }
+
+  // Start on the lobby's SETTINGS ledge: straight to the settings menu
+  openSettings() {
+    if (this.ui.open) return;
+    this.sceneAtOpen = this.game.scene;
+    sfx.uiOk();
+    this.ui.push(settingsMenu());
   }
 
   matchLine() {

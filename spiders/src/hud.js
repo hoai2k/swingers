@@ -6,7 +6,8 @@
 //   drawPortrait(ctx, x, y, r, player|castIndex, {color, dead, ring})
 //   drawBanner(ctx, title, sub, k, color)        round intro / round end band (k: 0..1 appear)
 //   drawCountdown(ctx, label, t, color)          big centre pop ("3", "GO!")
-//   drawPlayerTags(ctx, game)                    P# arrows + held-weapon ammo bars
+//   drawPlayerTags(ctx, game, {label})           small P# arrows + held-weapon ammo bars
+//                                                (label(sp) -> {text, k} overrides a lobby tag)
 //   drawAmmoBar(ctx, spider)                     ammo bar under one spider
 //   drawScoreboard(ctx, game, {compact|big, highlight, stats, title})
 //   drawPanel(ctx, x, y, w, h, {r, fill, stroke, accent})
@@ -120,11 +121,12 @@ export function drawAmmoBar(ctx, sp) {
   const w = sp.weapon;
   if (!w || !Number.isFinite(w.maxAmmo) || !(w.maxAmmo > 0) || !Number.isFinite(w.ammo)) return;
   const frac = clamp(w.ammo / w.maxAmmo, 0, 1);
-  const bw = 46, bh = 7;
-  const x = sp.x - bw / 2, y = sp.y + sp.r + 12;
+  // sized to the spider (they are small): a thin strip just under the body
+  const bw = clamp(sp.r * 2, 30, 44), bh = 5;
+  const x = sp.x - bw / 2, y = sp.y + sp.r + 9;
   ctx.save();
   ctx.fillStyle = 'rgba(5,5,15,0.7)';
-  ctx.beginPath(); ctx.roundRect(x - 3, y - 3, bw + 6, bh + 6, 6); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(x - 2, y - 2, bw + 4, bh + 4, 4); ctx.fill();
   const low = frac <= 0.25;
   const col = low && Math.floor(sp.game.time * 6) % 2 ? '#ff5a6a' : (w.color || '#ffd23f');
   if (w.maxAmmo <= 12) {
@@ -143,8 +145,9 @@ export function drawAmmoBar(ctx, sp) {
   ctx.restore();
 }
 
-// P# arrows over spiders (after spawning, and always in the lobby) + ammo bars
-export function drawPlayerTags(ctx, game) {
+// P# arrows over spiders (after spawning, and always in the lobby) + ammo bars.
+// Kept small: the tag is the only thing drawn next to a spider in play.
+export function drawPlayerTags(ctx, game, { label } = {}) {
   for (const sp of game.spiders) {
     if (!sp.alive) continue;
     if (sp.weapon) drawAmmoBar(ctx, sp);
@@ -154,14 +157,22 @@ export function drawPlayerTags(ctx, game) {
     const bob = Math.sin(game.realTime * 5 + sp.slot) * 2;
     ctx.fillStyle = sp.color.main;
     if (game.sceneName === 'lobby') {
-      const y = sp.y - sp.r - 22 + bob;
-      ctx.beginPath(); ctx.moveTo(sp.x - 7, y); ctx.lineTo(sp.x + 7, y); ctx.lineTo(sp.x, y + 9); ctx.fill();
-      text(ctx, `P${sp.player.slot + 1}`, sp.x, y - 4, { size: 19, color: sp.color.main, sw: 5, stroke: 'rgba(5,3,16,0.8)' });
+      const y = sp.y - sp.r - 18 + bob;
+      ctx.beginPath(); ctx.moveTo(sp.x - 6, y); ctx.lineTo(sp.x + 6, y); ctx.lineTo(sp.x, y + 7); ctx.fill();
+      const tag = `P${sp.player.slot + 1}`;
+      const l = label && label(sp);
+      if (l && l.k > 0.4) {
+        // the name tag replaces the plain tag for a moment (join / character change)
+        ctx.save();
+        ctx.globalAlpha = l.k;
+        text(ctx, l.text, sp.x, y - 4, { size: 15, color: '#fff', sw: 4, stroke: rgba(sp.color.main, 0.9) });
+        ctx.restore();
+      } else text(ctx, tag, sp.x, y - 4, { size: 16, color: sp.color.main, sw: 4, stroke: 'rgba(5,3,16,0.8)' });
     } else {
       // matches: under the spider (pickup labels pop up above it at spawn)
-      const y = sp.y + sp.r + (sp.weapon ? 26 : 12) - bob;
-      ctx.beginPath(); ctx.moveTo(sp.x - 7, y + 9); ctx.lineTo(sp.x + 7, y + 9); ctx.lineTo(sp.x, y); ctx.fill();
-      text(ctx, `P${sp.player.slot + 1}`, sp.x, y + 28, { size: 19, color: sp.color.main, sw: 5, stroke: 'rgba(5,3,16,0.8)' });
+      const y = sp.y + sp.r + (sp.weapon ? 20 : 10) - bob;
+      ctx.beginPath(); ctx.moveTo(sp.x - 6, y + 7); ctx.lineTo(sp.x + 6, y + 7); ctx.lineTo(sp.x, y); ctx.fill();
+      text(ctx, `P${sp.player.slot + 1}`, sp.x, y + 23, { size: 16, color: sp.color.main, sw: 4, stroke: 'rgba(5,3,16,0.8)' });
     }
   }
 }

@@ -49,13 +49,16 @@ export class Saber extends Weapon {
   // blade segments in world space for a grip at (x,y) with angle a
   segsAt(x, y, a) {
     const c = Math.cos(a), s = Math.sin(a);
-    return this.constructor.blades.map((b) => ({ x1: x + c * b.from * this.on, y1: y + s * b.from * this.on, x2: x + c * b.to * this.on, y2: y + s * b.to * this.on }));
+    // charging draws the blade in (it snaps back out on release)
+    const k = this.on * (1 - 0.45 * (this.charging || 0));
+    return this.constructor.blades.map((b) => ({ x1: x + c * b.from * k, y1: y + s * b.from * k, x2: x + c * b.to * k, y2: y + s * b.to * k }));
   }
 
   update(dt, ctl) {
     const prevA = this.angle, px = this.x, py = this.y;
     super.update(dt, ctl);
     this.on = Math.min(1, this.on + dt * 6);
+    this.lungeT = Math.max(0, (this.lungeT || 0) - dt);
     this.clashCool = Math.max(0, this.clashCool - dt);
     const speed = Math.abs(this.av);
     if (speed > 9) sfx.swoosh(speed / 20);
@@ -81,7 +84,7 @@ export class Saber extends Weapon {
       } else {
         const c = this.charging;
         this.charging = 0;
-        this.throwSaber(ctl, c);
+        this.lunge(ctl, c);
       }
     }
   }
@@ -117,7 +120,7 @@ export class Saber extends Weapon {
         const c = closestOnSeg(actor.x, actor.y, s.x1, s.y1, s.x2, s.y2);
         if (Math.hypot(actor.x - c.x, actor.y - c.y) < actor.r + 3) {
           const dx = actor.x - (owner ? owner.x : x), dy = actor.y - (owner ? owner.y : y), m = Math.hypot(dx, dy) || 1;
-          if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500 * (this.mode ? this.throwPower || 1 : 1), iy: dy / m * 500 * (this.mode ? this.throwPower || 1 : 1), weapon: this, melee: true })) {
+          if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), iy: dy / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), weapon: this, melee: true })) {
             game.fx.burst(c.x, c.y, { n: 14, speed: 500, color: this.bladeColor, life: 0.3 });
           }
           break;
@@ -164,7 +167,22 @@ export class Saber extends Weapon {
   }
 
   // ---- throwing ---------------------------------------------------------
-  onThrow() { return false; }   // RB/B: plain toss
+  // LB / B: the spinning throw (RB recalls it)
+  onThrow(ctl) { this.throwSaber(ctl, 0.35); return true; }
+
+  // RT released: the blade snaps out and launches you along the aim; a full
+  // charge is a long dash that hits extra hard
+  lunge(ctl, c) {
+    const o = this.owner;
+    if (!o) return;
+    const sp = 420 + 1150 * c;
+    o.impulse(ctl.aimX * sp, ctl.aimY * sp - 60 * c, true);
+    this.lungeT = 0.18 + 0.22 * c;
+    this.throwPower = 1 + 1.6 * c;
+    sfx.swoosh(1 + 1.5 * c);
+    const t = this.along(this.length);
+    this.game.fx.burst(t.x, t.y, { n: 6 + Math.round(10 * c), speed: 300 + 300 * c, color: this.bladeColor, life: 0.25, dir: this.angle, spread: 0.9 });
+  }
 
   throwSaber(ctl, charge = 0) {
     const o = this.owner;
