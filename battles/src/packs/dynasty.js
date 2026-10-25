@@ -75,7 +75,7 @@ const rocketStep = (b, pr) => {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'dy_monk', name: 'Monk', faction: 'dynasty', cost: 85, hp: 110, speed: 5.0,
+    id: 'dy_monk', name: 'Monk', faction: 'dynasty', cost: 75, hp: 110, speed: 5.0,
     build: { scale: 0.98, girth: 0.95 },
     weapon: { line: 'Melee · palm strikes with huge knockback', kind: 'melee', style: 'none', anim: 'punch', item: 'dy_palm', damage: 38, reach: 1.0, cooldown: 0.75, force: 1000 },
     look: { skin: '#f0c8a0', hat: 'dy_bald', top: 'dy_robe', legs: '#e8a030' },
@@ -83,7 +83,7 @@ const units = [
     desc: 'Palm strikes that launch enemies across the field.',
   },
   {
-    id: 'dy_samurai', name: 'Samurai', faction: 'dynasty', cost: 230, hp: 230, speed: 5.4,
+    id: 'dy_samurai', name: 'Samurai', faction: 'dynasty', cost: 240, hp: 230, speed: 5.4,
     build: { scale: 1.02, girth: 1.0 },
     weapon: { line: 'Melee · parries frontal hits and strikes back', kind: 'dy_parry', style: 'twohand', anim: 'slam', item: 'dy_katana_sword', damage: 40, reach: 1.45, cooldown: 0.8, force: 300, parry: 0.6 },
     look: { skin: '#f0c8a0', hat: 'dy_kabuto', top: 'dy_lamellar', legs: '#2e2a2a' },
@@ -92,7 +92,7 @@ const units = [
     desc: 'Swift katana. Parries blows from the front and strikes back.',
   },
   {
-    id: 'dy_firework', name: 'Firework Archer', faction: 'dynasty', cost: 270, hp: 80, speed: 4.4,
+    id: 'dy_firework', name: 'Firework Archer', faction: 'dynasty', cost: 300, hp: 80, speed: 4.4,
     build: { scale: 0.97, girth: 0.95 },
     weapon: { line: 'Ranged · exploding rocket arrows', kind: 'ranged', style: 'bow', anim: 'bow', item: 'bow', proj: 'firework', speed: 26, arc: 'low', range: 32, minRange: 8, cooldown: 2.4, damage: 70, force: 420, spread: 0.05, releaseAt: 0.78, windup: 1.0, blast: 2.6 },
     look: { skin: '#f0c8a0', hat: 'dy_jingasa', top: 'dy_robe', legs: '#3a3a5a', quiver: true },
@@ -100,9 +100,9 @@ const units = [
     desc: 'Rocket arrows that explode with a bang and sparks.',
   },
   {
-    id: 'dy_hwacha', name: 'Hwacha', faction: 'dynasty', cost: 650, hp: 300, speed: 3.6,
+    id: 'dy_hwacha', name: 'Hwacha', faction: 'dynasty', cost: 450, hp: 450, speed: 3.6,
     build: { scale: 1.08, girth: 1.1, mass: 1.3 },
-    weapon: { line: 'Siege · volleys of 16 rockets', kind: 'dy_hwacha', style: 'staff', anim: 'cast', item: 'dy_torch', damage: 45, speed: 21, range: 36, minRange: 10, cooldown: 5, force: 380, blast: 2.4, releaseAt: 0.55, windup: 1.4, volley: 16, scatter: 2.6 },
+    weapon: { line: 'Siege · volleys of 16 rockets', kind: 'dy_hwacha', style: 'staff', anim: 'cast', item: 'dy_torch', damage: 60, speed: 21, range: 36, minRange: 10, cooldown: 5, force: 380, blast: 2.4, releaseAt: 0.55, windup: 1.4, volley: 16, scatter: 2.6 },
     look: { skin: '#f0c8a0', hat: 'dy_gat', top: 'dy_robe', legs: '#4a3a2a' },
     personality: { aggro: 0.25, bravery: 0.2, voice: 0.9, chatter: 0.6, cry: 'cackle', idle: 'shake' },
     desc: 'Lights the rack on its back: a dozen rockets rain down.',

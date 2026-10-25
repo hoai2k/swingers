@@ -296,15 +296,15 @@ function frostHit(bt, v, pr) {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'sc_banana', name: 'Banana Thrower', faction: 'secret', cost: 100, hp: 85, speed: 4.6,
+    id: 'sc_banana', name: 'Banana Thrower', faction: 'secret', cost: 60, hp: 85, speed: 4.6,
     build: { scale: 0.95, girth: 1.05, head: 1.05 },
-    weapon: { line: 'Ranged · enemies who step on its peels slip and fall', kind: 'ranged', style: 'throw', anim: 'throw', item: 'sc_banana_hand', proj: 'sc_banana', speed: 13, arc: 'high', range: 22, minRange: 5, cooldown: 1.8, damage: 22, force: 90, spread: 0.07, releaseAt: 0.7, windup: 0.8 },
+    weapon: { line: 'Ranged · enemies who step on its peels slip and fall', kind: 'ranged', style: 'throw', anim: 'throw', item: 'sc_banana_hand', proj: 'sc_banana', speed: 13, arc: 'high', range: 22, minRange: 5, cooldown: 1.8, damage: 28, force: 90, spread: 0.07, releaseAt: 0.7, windup: 0.8 },
     look: { skin: '#f2c8a0', hat: 'sc_banana_hood', top: 'sc_banana_suit', legs: '#e8c02a' },
     personality: { aggro: 0.35, bravery: 0.3, voice: 1.4, chatter: 0.9, cry: 'yip', idle: 'bounce' },
     desc: 'Lobs bananas and leaves the peels lying about. Mind your step.',
   },
   {
-    id: 'sc_cheerleader', name: 'Cheerleader', faction: 'secret', cost: 110, hp: 80, speed: 5.0,
+    id: 'sc_cheerleader', name: 'Cheerleader', faction: 'secret', cost: 80, hp: 80, speed: 5.0,
     build: { scale: 0.92, girth: 0.92, head: 1.08 },
     weapon: { line: 'Support · cheers nearby allies on: faster, harder, braver', kind: 'sc_cheer', style: 'dual', anim: 'punch', item: 'sc_pompom', item2: 'sc_pompom', damage: 6, reach: 0.9, cooldown: 1.0, force: 60, auraRadius: 9, regen: 4 },
     look: { skin: '#f6d2b4', hat: 'sc_ponytail', top: 'sc_cheer', legs: '#f4f0ea' },
@@ -312,7 +312,7 @@ const units = [
     desc: 'Gimme a W! Allies nearby fight faster, hit harder and never run.',
   },
   {
-    id: 'sc_bomb_stick', name: 'Bomb on a Stick', faction: 'secret', cost: 180, hp: 70, speed: 6.4,
+    id: 'sc_bomb_stick', name: 'Bomb on a Stick', faction: 'secret', cost: 100, hp: 70, speed: 6.4,
     build: { scale: 0.9, girth: 0.95, head: 1.1 },
     weapon: { line: 'Kamikaze · runs in and explodes', kind: 'sc_bombstick', style: 'sword', anim: 'overhead', item: 'sc_bomb_stick', damage: 100, blast: 2.8, force: 650, reach: 1.0, cooldown: 1.0 },
     look: { skin: '#f2c8a0', hat: 'sc_bandana', top: 'sc_rags', legs: '#5a4630' },
@@ -328,7 +328,7 @@ const units = [
     desc: 'Throws chickens. The chickens are angry about it.',
   },
   {
-    id: 'sc_lightning_gun', name: 'Lightning Gun', faction: 'secret', cost: 650, hp: 140, speed: 4.2,
+    id: 'sc_lightning_gun', name: 'Lightning Gun', faction: 'secret', cost: 490, hp: 140, speed: 4.2,
     build: { scale: 1.0, girth: 1.0, head: 1.05 },
     weapon: { line: 'Ranged · lightning arcs chain through groups', kind: 'sc_zap', style: 'spear', anim: 'punch', item: 'sc_tesla', damage: 52, range: 16, minRange: 4, cooldown: 2.4, force: 260, releaseAt: 0.5, windup: 0.6, chain: 3, jump: 4.5 },
     look: { skin: '#f2c8a0', hat: 'sc_goggles', top: 'sc_labcoat', legs: '#3a3a44' },

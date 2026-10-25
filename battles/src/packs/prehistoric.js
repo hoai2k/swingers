@@ -613,7 +613,7 @@ function rexDie(b, m) { if (m.held) { m.held.bcHeld = null; m.held = null; } b.s
 // ======================================================================= units
 const units = [
   {
-    id: 'pr_caveman', name: 'Caveman', faction: 'prehistoric', cost: 55, hp: 90, speed: 4.6,
+    id: 'pr_caveman', name: 'Caveman', faction: 'prehistoric', cost: 50, hp: 90, speed: 4.6,
     build: { scale: 0.98, girth: 1.08, head: 1.05, arms: 1.05 },
     weapon: { line: 'Melee · two-handed bone club knocks people over', kind: 'melee', style: 'twohand', anim: 'slam', item: 'pr_femur', damage: 30, reach: 1.25, cooldown: 1.35, force: 420 },
     look: { skin: '#d9a57c', hat: 'pr_shag', top: 'fur', legs: '#6b4a2b', bare: true, beard: '#4a3020', brow: true },
@@ -621,7 +621,7 @@ const units = [
     desc: 'Big bone. Bonk.',
   },
   {
-    id: 'pr_raptor', name: 'Velociraptor', faction: 'prehistoric', cost: 110, hp: 125, speed: 9,
+    id: 'pr_raptor', name: 'Velociraptor', faction: 'prehistoric', cost: 100, hp: 125, speed: 9,
     build: { scale: 1, radius: 0.75 },
     weapon: { line: 'Beast · fast pack hunter: leaps on prey, pins it and bites (stronger in packs)', kind: 'pr_raptor', style: 'none', anim: 'punch', item: 'none', damage: 17, reach: 1.0, cooldown: 0.45, force: 60 },
     look: { skin: M.RAPTOR_C.skin, hat: 'none', top: 'none', legs: M.RAPTOR_C.skin },
@@ -637,7 +637,7 @@ const units = [
     desc: 'A caveman on a raptor. Very fast; the raptor bites while he clubs.',
   },
   {
-    id: 'pr_ptero', name: 'Pterodactyl', faction: 'prehistoric', cost: 350, hp: 330, speed: 9,
+    id: 'pr_ptero', name: 'Pterodactyl', faction: 'prehistoric', cost: 310, hp: 330, speed: 9,
     build: { scale: 1, radius: 1.2 },
     weapon: { line: 'Flying · swoops, carries small units up high and drops them', kind: 'pr_ptero', style: 'none', anim: 'punch', item: 'none', damage: 48, reach: 1.0, cooldown: 3, force: 80 },
     look: { skin: M.PTERO_C.skin, hat: 'none', top: 'none', legs: M.PTERO_C.skin },
@@ -645,7 +645,7 @@ const units = [
     desc: 'Snatches small units, flies them up high and lets go.',
   },
   {
-    id: 'pr_trex', name: 'T-Rex', faction: 'prehistoric', cost: 2600, hp: 4200, speed: 4.4,
+    id: 'pr_trex', name: 'T-Rex', faction: 'prehistoric', cost: 2250, hp: 4200, speed: 4.4,
     build: { scale: 1, radius: 3.2 },
     weapon: { line: 'Giant beast · bites, shakes and throws units · roar makes enemies flee', kind: 'pr_trex', style: 'none', anim: 'punch', item: 'none', damage: 60, reach: 2, cooldown: 2, force: 400 },
     look: { skin: M.REX_C.skin, hat: 'none', top: 'none', legs: M.REX_C.skin },

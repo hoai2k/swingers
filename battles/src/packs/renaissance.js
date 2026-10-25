@@ -368,7 +368,7 @@ const units = [
     desc: 'En garde! Darts in, lunges, springs back.',
   },
   {
-    id: 'rn_musketeer', name: 'Musketeer', faction: 'renaissance', cost: 150, hp: 95, speed: 4.2,
+    id: 'rn_musketeer', name: 'Musketeer', faction: 'renaissance', cost: 125, hp: 95, speed: 4.2,
     build: { scale: 1.0, girth: 1.0 },
     weapon: { line: 'Ranged · musket volleys: waits for the line, then all fire', kind: 'pr_gun', volley: true, wait: 0.6, big: true, style: 'spear', anim: 'punch', item: 'rn_musket', damage: 70, speed: 85, range: 32, minRange: 6, cooldown: 0.5, reload: 4.0, ammo: 1, force: 260, spread: 0.022, releaseAt: 0.5, windup: 0.55, barrel: 1.05 },
     look: { skin: '#f0c8a0', hat: 'rn_cavalier', top: 'rn_tabard', legs: '#3a3440', beard: '#6a4a2a' },
@@ -376,7 +376,7 @@ const units = [
     desc: 'Ready... aim... FIRE! Always together.',
   },
   {
-    id: 'rn_balloon', name: 'Balloon Archer', faction: 'renaissance', cost: 260, hp: 90, speed: 4.0,
+    id: 'rn_balloon', name: 'Balloon Archer', faction: 'renaissance', cost: 230, hp: 90, speed: 4.0,
     build: { scale: 0.96, girth: 0.95 },
     weapon: { line: 'Flying · shoots arrows from under a balloon · drops if it pops', kind: 'rn_balloon', style: 'bow', anim: 'bow', item: 'bow', proj: 'arrow', speed: 34, arc: 'low', range: 32, minRange: 3, cooldown: 2.2, damage: 36, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#f2c8a0', hat: 'rn_aviator', top: 'rn_doublet', legs: '#4a3a2e', quiver: true },
@@ -384,7 +384,7 @@ const units = [
     desc: 'Floats over the fight shooting arrows. Pop the balloon and down he comes.',
   },
   {
-    id: 'rn_painter', name: 'Painter', faction: 'renaissance', cost: 100, hp: 80, speed: 4.2,
+    id: 'rn_painter', name: 'Painter', faction: 'renaissance', cost: 200, hp: 80, speed: 4.2,
     build: { scale: 0.95, girth: 1.05, head: 1.08 },
     weapon: { line: 'Support · flings paint: splashed enemies are slowed', kind: 'ranged', style: 'throw', anim: 'throw', item: 'rn_brush', proj: 'rn_paint', speed: 14, arc: 'low', range: 18, minRange: 4, cooldown: 2.2, damage: 8, force: 40, spread: 0.06, releaseAt: 0.7, windup: 0.8, blast: 1.7, slow: 5 },
     look: { skin: '#f2c8a0', hat: 'rn_beret', top: 'rn_smock', legs: '#3a3a48', beard: '#4a2e1e' },
@@ -392,7 +392,7 @@ const units = [
     desc: 'A true artist. His masterpieces slow the enemy down.',
   },
   {
-    id: 'rn_davinci', name: 'Da Vinci Tank', faction: 'renaissance', cost: 1350, hp: 300, speed: 3.6,
+    id: 'rn_davinci', name: 'Da Vinci Tank', faction: 'renaissance', cost: 1550, hp: 300, speed: 3.6,
     build: { scale: 1.0, girth: 1.0, legs: 0.62, radius: 2.15 },
     weapon: { line: 'Vehicle · rolls slowly, firing cannons all round · crewed', kind: 'rn_davinci', style: 'rn_tank', anim: 'slam', item: 'none', damage: 90, ballSpeed: 26, range: 34, reload: 2.5, cooldown: 1.0, reach: 1.0, force: 400 },
     look: { skin: '#f0c8a0', hat: 'rn_leo', top: 'rn_smock', legs: '#4a3a2e', beard: '#e8e4dc' },

@@ -387,7 +387,7 @@ function hexHit(b, pr, v, part) {
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'ev_fan_bearer', name: 'Fan Bearer', faction: 'evil', cost: 170, hp: 110, speed: 4.3,
+    id: 'ev_fan_bearer', name: 'Fan Bearer', faction: 'evil', cost: 135, hp: 110, speed: 4.3,
     build: { scale: 0.98, girth: 0.98 },
     weapon: { line: 'Support · gusts blow enemies and their shots back', kind: 'ev_fan', style: 'ev_fan', anim: 'ev_fan', item: 'ev_fan', damage: 6, range: 9, cooldown: 3.0, force: 460, reach: 1.0 },
     look: { skin: '#e6d2c0', hat: 'ev_fan_hat', top: 'ev_silk', legs: '#2a2032' },
@@ -395,7 +395,7 @@ const units = [
     desc: 'Waves a giant fan: blows enemies off their feet and their arrows back.',
   },
   {
-    id: 'ev_mace_spinner', name: 'Mace Spinner', faction: 'evil', cost: 300, hp: 260, speed: 4.6,
+    id: 'ev_mace_spinner', name: 'Mace Spinner', faction: 'evil', cost: 190, hp: 260, speed: 4.6,
     build: { scale: 1.08, girth: 1.08, arms: 1.1 },
     weapon: { line: 'Melee · spins with flails out, hits everything around · dizzy after', kind: 'ev_spinner', style: 'dual', anim: 'dual', item: 'ev_flail', item2: 'ev_flail', damage: 15, reach: 1.5, cooldown: 1.0, force: 380, spin: 3, dizzy: 2.0 },
     look: { skin: '#c9b8ae', hat: 'ev_spike_helm', top: 'ev_chain', legs: '#2e2a34', bare: true },
@@ -404,7 +404,7 @@ const units = [
     desc: 'Spins like a top with a flail in each hand. Then falls over, dizzy.',
   },
   {
-    id: 'ev_necromancer', name: 'Necromancer', faction: 'evil', cost: 450, hp: 150, speed: 3.9,
+    id: 'ev_necromancer', name: 'Necromancer', faction: 'evil', cost: 470, hp: 150, speed: 3.9,
     build: { scale: 1.0, girth: 0.92, head: 1.02 },
     weapon: { line: 'Magic · raises the dead of either side as zombies', kind: 'ev_necro', style: 'staff', anim: 'cast', item: 'ev_skull_staff', damage: 26, speed: 18, range: 22, minRange: 6, cooldown: 2.2, force: 140, spread: 0.04, releaseAt: 0.62, windup: 0.9, raiseRange: 16, raiseCD: 1.6, maxRaised: 8 },
     look: { skin: '#b9c8ae', hat: 'ev_necro_hood', top: 'ev_robe', legs: '#1e1a22' },
@@ -412,7 +412,7 @@ const units = [
     desc: 'The fallen get back up and fight for it, whichever side they died on.',
   },
   {
-    id: 'ev_chronomancer', name: 'Chronomancer', faction: 'evil', cost: 1000, hp: 300, speed: 3.8,
+    id: 'ev_chronomancer', name: 'Chronomancer', faction: 'evil', cost: 1100, hp: 300, speed: 3.8,
     build: { scale: 1.02, girth: 0.95, head: 1.05 },
     weapon: { line: 'Magic · bubbles of slow time cripple enemies inside', kind: 'ev_chrono', style: 'staff', anim: 'cast', item: 'ev_hourglass', damage: 12, range: 24, minRange: 6, cooldown: 5.5, force: 0, spread: 0, releaseAt: 0.62, windup: 1.1, radius: 4.2, duration: 5 },
     look: { skin: '#d8c8d8', hat: 'ev_chrono', top: 'ev_robe_chrono', legs: '#20182a', beard: '#cfcfe0' },

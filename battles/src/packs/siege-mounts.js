@@ -19,16 +19,16 @@ import * as M from './sm-meshes.js';
 
 const UNITS = [
   {
-    id: 'sm_cavalry', name: 'Cavalry', faction: 'medieval', cost: 750, hp: 230, speed: 4.0,
+    id: 'sm_cavalry', name: 'Cavalry', faction: 'medieval', cost: 640, hp: 230, speed: 4.0,
     build: { scale: 1, girth: 1.05, mass: 1.3, radius: 1.25 },
-    weapon: { line: 'Mounted · lance charge, tramples · rider fights on if unhorsed', kind: 'sm_cavalry', style: 'sm_lance', footStyle: 'spear', anim: 'stab', item: 'sm_lance', damage: 62, reach: 2.6, cooldown: 1.3, force: 900 },
+    weapon: { line: 'Mounted · lance charge, tramples · rider fights on if unhorsed', kind: 'sm_cavalry', style: 'sm_lance', footStyle: 'spear', anim: 'stab', item: 'sm_lance', damage: 80, reach: 2.6, cooldown: 1.3, force: 900 },
     look: { skin: '#f2c8a0', hat: 'helm_knight', top: 'armor', legs: '#8d939c', armor: true },
     personality: { aggro: 1, bravery: 0, voice: 0.85, chatter: 0.4, cry: 'charge', idle: 'shift' },
     armor: 0.3, stagger: 0.6,
     desc: 'Lance on a horse. Charges through lines, wheels round and charges again. Fights on foot if unhorsed.',
   },
   {
-    id: 'sm_mammoth', name: 'Mammoth', faction: 'tribal', cost: 2200, hp: 300, speed: 4.2,
+    id: 'sm_mammoth', name: 'Mammoth', faction: 'tribal', cost: 4000, hp: 300, speed: 4.2,
     build: { scale: 1, girth: 1.0, radius: 3.0 },
     weapon: { line: 'Mount · tramples and tusk-tosses · rider throws spears',
       kind: 'sm_mammoth', style: 'sm_mthrow', footStyle: 'throw', anim: 'throw', item: 'spear_hand', proj: 'spear', speed: 22, arc: 'low',
@@ -39,15 +39,15 @@ const UNITS = [
     desc: 'A woolly mountain. Tramples everything and tosses units with its tusks while the rider throws spears.',
   },
   {
-    id: 'sm_catapult', name: 'Catapult', faction: 'medieval', cost: 1000, hp: 110, speed: 3.8,
+    id: 'sm_catapult', name: 'Catapult', faction: 'medieval', cost: 450, hp: 110, speed: 3.8,
     build: { scale: 0.98, girth: 1.05, radius: 2.6 },
-    weapon: { line: 'Siege · lobs boulders that crush and roll (hits friends too)', kind: 'sm_catapult', style: 'sword', anim: 'overhead', item: 'sm_mallet', proj: 'sm_boulder', damage: 160, force: 1200, blast: 2.8, range: 62, minRange: 12, cooldown: 7.5, reach: 1.1, spread: 0.035 },
+    weapon: { line: 'Siege · lobs boulders that crush and roll (hits friends too)', kind: 'sm_catapult', style: 'sword', anim: 'overhead', item: 'sm_mallet', proj: 'sm_boulder', damage: 220, force: 1200, blast: 3.4, range: 62, minRange: 12, cooldown: 6, reach: 1.1, spread: 0.035 },
     look: { skin: '#f0c49a', hat: 'cap', top: 'tunic', legs: '#6e5235' },
     personality: { aggro: 0.3, bravery: 0, voice: 1.0, chatter: 0.5, cry: 'hey', idle: 'lean' },
     desc: 'Lobs boulders that crush groups and roll on. Slow to reload. Wreck the cart or kill the crew to stop it.',
   },
   {
-    id: 'sm_ballista', name: 'Ballista', faction: 'medieval', cost: 700, hp: 100, speed: 3.8,
+    id: 'sm_ballista', name: 'Ballista', faction: 'medieval', cost: 480, hp: 100, speed: 3.8,
     build: { scale: 0.98, girth: 1.0, radius: 2.1 },
     weapon: { line: 'Siege · bolts skewer whole lines', kind: 'sm_ballista', style: 'sword', anim: 'overhead', item: 'sm_mallet', proj: 'sm_bolt', speed: 46, damage: 130, force: 800, range: 50, minRange: 5, cooldown: 4.2, reach: 1.1, spread: 0.012 },
     look: { skin: '#f2c8a0', hat: 'cap_metal', top: 'tunic', legs: '#5a4630' },
@@ -55,7 +55,7 @@ const UNITS = [
     desc: 'A giant crossbow. Its bolts skewer a whole line of soldiers.',
   },
   {
-    id: 'sm_valkyrie', name: 'Valkyrie', faction: 'viking', cost: 850, hp: 650, speed: 6.5,
+    id: 'sm_valkyrie', name: 'Valkyrie', faction: 'viking', cost: 700, hp: 650, speed: 6.5,
     build: { scale: 1.02, girth: 0.95 },
     weapon: { line: 'Flying · dives on targets from the air', kind: 'sm_valkyrie', style: 'sword', anim: 'overhead', item: 'sword', damage: 80, reach: 1.4, cooldown: 1.5, force: 450, sweep: true },
     look: { skin: '#f2c8a0', hat: 'sm_valk', top: 'tunic', legs: '#5e5048' },

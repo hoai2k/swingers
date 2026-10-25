@@ -106,7 +106,7 @@ const units = [
     desc: 'Hammer, shield and a terrible temper.',
   },
   {
-    id: 'vk_headbutter', name: 'Headbutter', faction: 'viking', cost: 100, hp: 165, speed: 5.0,
+    id: 'vk_headbutter', name: 'Headbutter', faction: 'viking', cost: 90, hp: 165, speed: 5.0,
     build: { scale: 1.0, girth: 1.08, head: 1.15 },
     weapon: { line: 'Melee · headbutt knocks targets flat', kind: 'vk_headbutt', style: 'fists', anim: 'stab', item: 'none', damage: 47, reach: 0.8, cooldown: 1.1, force: 820 },
     look: { skin: '#f0c4a0', hat: 'vk_horns', top: 'bare_belt', legs: '#4e4038', bare: true, beard: '#e8c050' },
@@ -115,7 +115,7 @@ const units = [
     desc: 'Charges in head first and knocks enemies flat.',
   },
   {
-    id: 'vk_ice_archer', name: 'Ice Archer', faction: 'viking', cost: 150, hp: 85, speed: 4.4,
+    id: 'vk_ice_archer', name: 'Ice Archer', faction: 'viking', cost: 175, hp: 85, speed: 4.4,
     build: { scale: 0.97, girth: 0.98 },
     weapon: { line: 'Ranged · frost arrows slow targets', kind: 'ranged', style: 'bow', anim: 'bow', item: 'vk_icebow', proj: 'ice_arrow', speed: 34, arc: 'low', range: 36, minRange: 8, cooldown: 2.1, damage: 34, force: 90, spread: 0.035, releaseAt: 0.78, windup: 1.0 },
     look: { skin: '#f4d2bc', hat: 'vk_fur', top: 'fur', legs: '#5c6a78', quiver: true },
@@ -123,7 +123,7 @@ const units = [
     desc: 'Frost arrows freeze targets: slower steps, slower swings.',
   },
   {
-    id: 'vk_jarl', name: 'Jarl', faction: 'viking', cost: 850, hp: 480, speed: 4.4,
+    id: 'vk_jarl', name: 'Jarl', faction: 'viking', cost: 800, hp: 480, speed: 4.4,
     build: { scale: 1.3, girth: 1.15, head: 1.0, mass: 1.5 },
     weapon: { line: 'Melee · leaps in, battle cry inspires allies', kind: 'vk_jarl', style: 'shield', anim: 'overhead', item: 'vk_sword', shield: 'round', damage: 52, reach: 1.7, cooldown: 1.5, force: 560, sweep: true, blockMelee: 0.35 },
     look: { skin: '#f0c4a0', hat: 'vk_jarl', top: 'fur', legs: '#4a3e36', beard: '#b8b8b8', cape: true },
