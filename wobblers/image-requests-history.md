@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- region-round-7 -->
-## Delivered round 7 batches (19/32 signs)
+## Delivered round 7 batches (27/36 signs)
 
 Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 
@@ -28,6 +28,14 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `elevator.png` — **ELEVATOR**: steel-grey board, white letters, up/down arrows icon.
 - `market_street.png` — **MARKET STREET**: gateway arch banner, orange board, white letters, shopping basket icon.
 - `city_bus.png` — **CITY BUS**: dark board, amber LED-style letters (bus destination display), small bus icon.
+- `ski_lift.png` — **SKI LIFT**: bright red board with snow on top, white letters, chairlift-chair icon.
+- `hot_cocoa.png` — **HOT COCOA**: cosy wooden-plank board, cream letters, steaming mug with marshmallows.
+- `ice_cave.png` — **ICE CAVE**: icy pale-blue board with icicles hanging off the bottom edge, white letters, ice-crystal icon.
+- `ski_jump.png` — **SKI JUMP**: bright blue board, white letters, skier flying off a ramp.
+- `observatory.png` — **OBSERVATORY**: dark navy board with tiny stars, pale yellow letters, domed-telescope icon.
+- `skating.png` — **SKATING**: light-blue board with frosty edges, white letters, ice-skate icon.
+- `sled_hire.png` — **SLED HIRE**: red-and-white striped wooden board, white letters, red sled icon.
+- `tackle_shop.png` — **TACKLE SHOP**: weathered blue-green harbour board, white letters, fish-on-a-hook icon.
 <!-- /region-round-7 -->
 
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)

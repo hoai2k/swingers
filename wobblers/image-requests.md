@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 31 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 23 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -61,14 +61,6 @@ stand-in for each until the art arrives.
 
 ### Frostpeak (snow)
 
-- `ski_lift.png` — **SKI LIFT**: bright red board with snow on top, white letters, chairlift-chair icon.
-- `hot_cocoa.png` — **HOT COCOA**: cosy wooden-plank board, cream letters, steaming mug with marshmallows.
-- `ice_cave.png` — **ICE CAVE**: icy pale-blue board with icicles hanging off the bottom edge, white letters, ice-crystal icon.
-- `ski_jump.png` — **SKI JUMP**: bright blue board, white letters, skier flying off a ramp.
-- `observatory.png` — **OBSERVATORY**: dark navy board with tiny stars, pale yellow letters, domed-telescope icon.
-- `skating.png` — **SKATING**: light-blue board with frosty edges, white letters, ice-skate icon.
-- `sled_hire.png` — **SLED HIRE**: red-and-white striped wooden board, white letters, red sled icon.
-- `tackle_shop.png` — **TACKLE SHOP**: weathered blue-green harbour board, white letters, fish-on-a-hook icon.
 
 ### Dusty Dunes (desert)
 
