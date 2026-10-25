@@ -126,9 +126,15 @@ before you commit:
 
 Every deploy is paid for in GitHub Actions minutes while the repository is
 private, so batch a task's work into one push to `main` at the end rather than
-pushing after every small step. Pushes to a working branch run nothing. A newer
-push cancels a deploy still in progress, so a burst of pushes publishes only the
-last one.
+pushing after every small step. Pushes to a working branch run nothing. A
+deploy that is already running always finishes, and pushes waiting behind it
+collapse into the newest one. Pushes that only change docs (`*.md`, image
+requests), `tools/`, `.claude/` or art source files (`originals/`,
+`reference/`) don't deploy at all (`paths-ignore` in
+`.github/workflows/deploy.yml`), so no `[skip ci]` is needed for them. The
+deploy uploads only what the games load: the workflow's "Assemble site" step
+leaves out docs, tools, agent files and unloaded art, and the uploaded artifact
+is deleted once Pages has it. Keep new non-site files out of it the same way.
 
 ## Models
 

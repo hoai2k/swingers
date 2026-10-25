@@ -1,8 +1,20 @@
 name: Deploy to GitHub Pages
 
+# A push to main deploys the games; nothing else runs here (tests are run
+# locally before committing — CLAUDE.md, "Tests and deploys").
+
 on:
   push:
     branches: [main]
+    # Pushes that change nothing the site serves don't deploy: docs (image
+    # requests, READMEs, agent notes), tools, agent config and art source files.
+    # A push that also changes anything else deploys as usual.
+    paths-ignore:
+      - '**.md'
+      - '.claude/**'
+      - '**/tools/**'
+      - '**/originals/**'
+      - '**/reference/**'
   workflow_dispatch:
 
 permissions:
@@ -10,9 +22,15 @@ permissions:
   pages: write
   id-token: write
 
+# Never cancel, deliberately (as in the mini repo). A deploy that is running
+# always finishes, and GitHub keeps one pending run behind it, which a newer
+# push replaces for free: during a burst of pushes the site publishes once per
+# deploy length, and queued pushes collapse into the newest. Cancelling the
+# running deploy instead throws away the minutes it already used, and a steady
+# stream of pushes could cancel every deploy before it finished.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -27,16 +45,26 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      # Generated art originals and reference sheets are source material that no
-      # game loads (~100 MB); leave them out of the site so deploys stay small.
-      - name: Drop art source files from the site
-        run: rm -rf */assets/originals */reference */assets/reference assets/originals assets/reference
+      # Only what the games load goes into the site. Left out: repo and agent
+      # files, docs, tools, and art source material no game loads (~215 MB) —
+      # generated originals and reference sheets, and the root game's
+      # assets/{bg,heads,tiles,ui} (the games load the assets/web copies).
+      - name: Assemble site
+        run: |
+          mkdir _site
+          rsync -a \
+            --exclude '.git' --exclude '.github' --exclude '.claude' --exclude '_site' \
+            --exclude '*.md' --exclude 'tools/' \
+            --exclude 'originals/' --exclude 'reference/' \
+            --exclude '/assets/bg/' --exclude '/assets/heads/' --exclude '/assets/tiles/' --exclude '/assets/ui/' \
+            ./ _site/
+          du -sh _site
       - uses: actions/configure-pages@v5
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
       # The uploaded site would otherwise sit in Actions storage for a day
