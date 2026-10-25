@@ -50,6 +50,7 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Menu | Start | Esc | Numpad Enter |
 | Map (pan LS, zoom LT / RT) | View | M | Numpad / |
 | Phone: call a vehicle | D-pad down | P | Numpad * |
+| Gadget: jetpack / glider (hold in the air) · laser / grappling hook (fire) | A · X | Space · G | Numpad 0 · Numpad 2 |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
 
@@ -95,6 +96,24 @@ up to the till and press **Y**:
   The FOR SALE board in each garden sells the house too.
 - **CAR DEALER**: the sports car, ice-cream van, bus, police car, fire truck and helicopter.
   Once bought they show up in everyone's phone.
+
+## Gadgets
+
+The **GADGETS** shop stands in the yard of the north-east town block, behind the four
+shops above, its door on the outer town road. Walk up to the till and press **Y**: you try on
+whatever you highlight, and a bought gadget is everyone's for good. Each player wears one
+gadget at a time, chosen in the shop or on the customiser's **Gadget** row (bought ones only),
+and it is remembered with that player slot's look. Your view shows how to use it for a few
+seconds after you put it on.
+
+| Gadget | Price | How it works |
+|---|---|---|
+| High-jump boots | 160 | jumps go about three times as high; springy soles, so the landing doesn't knock you over |
+| Speed boots | 220 | walk and sprint about 1.65x faster, with a sparkly trail |
+| Glider | 260 | hold **A** / **Space** while falling: the wing opens, you sink slowly and sail forward (steer with the stick) |
+| Laser gun | 320 | held in your right hand (that hand can't grab): **X** / **G** fires a bolt that knocks people and NPCs over (they get back up) and shoves props. Holding something loose in the other hand, **X** throws it as usual |
+| Grappling hook | 380 | right hand: **X** / **G** shoots the hook where the camera looks (look up to aim higher) and reels you in; **A** lets go early. Hooking a loose prop or a person pulls it to you |
+| Jetpack | 450 | jump, then keep holding **A** / **Space**: thrust up and fly with the stick. About 3 s of fuel (the bar in your prompt), refilled after a moment on the ground. Mind the fall when it runs dry! |
 
 Coins, purchases, homes, pets and discovered areas are saved. *Settings → Reset coins,
 homes & pets* starts over.
@@ -219,6 +238,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
+| `src/gadgets.js`, `src/world/gadgetshop.js` | gadgets (jetpack, boots, glider, laser gun, grappling hook): behaviour, meshes, sounds, HUD hint; the GADGETS shop building |
 | `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks (locked items skipped); persistent settings |
 | `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |

@@ -14,6 +14,7 @@ import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
 import { PhonePanel } from './phone.js';
 import { ShopPanel } from './life/shops.js';
 import { life } from './life/state.js';
+import { gadgetName, cycleGadget, lockedGadgets } from './gadgets.js';
 
 // Corner buttons (top right): fullscreen, sound on/off and the shared settings card.
 const svg = (body) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
@@ -145,7 +146,7 @@ class Panel {
   remove() { this.el.remove(); }
   place(rect) {
     const [x, y, w, h] = rect;
-    const s = this.kind === 'custom' ? Math.max(0.4, Math.min(1, w * 0.42 / 400, h / 560)) : Math.max(0.42, Math.min(1, w / 620, h / 560));
+    const s = this.kind === 'custom' ? Math.max(0.4, Math.min(1, w * 0.42 / 400, h / 700)) : Math.max(0.42, Math.min(1, w / 620, h / 560));
     Object.assign(this.el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
     this.el.style.setProperty('--s', s.toFixed(3));
   }
@@ -159,7 +160,7 @@ class Customiser extends Panel {
     super(ui, player, 'custom');
     this.first = first;
     this.t0 = performance.now();
-    this.rows = ['Colour', 'Hat', 'Face', 'Trousers', 'Outfit', 'Done'];
+    this.rows = ['Colour', 'Hat', 'Face', 'Trousers', 'Outfit', 'Gadget', 'Done'];
     this.draw();
   }
   value(r) {
@@ -170,6 +171,7 @@ class Customiser extends Panel {
       case 'Face': return FACES[p.face || 0];
       case 'Trousers': return PANTS[p.pantsIndex || 0].name;
       case 'Outfit': return OUTFITS[p.outfitIndex || 0];
+      case 'Gadget': return gadgetName(p.gadget); // gadgets.js
     }
     return '';
   }
@@ -180,6 +182,7 @@ class Customiser extends Panel {
     else if (r === 'Face') cycleFace(p, d);
     else if (r === 'Trousers') cyclePants(p, d);
     else if (r === 'Outfit') cycleOutfit(p, d);
+    else if (r === 'Gadget') cycleGadget(p, d); // skips gadgets not bought yet
     else return;
     this.ui.sfx('uiChange', { dir: d });
     this.draw();
@@ -216,7 +219,8 @@ class Customiser extends Panel {
       if (r === 'Colour') extra = `<div class="swatches">${PLAYER_COLORS.map((c, j) => `<i class="${j === p.colorIndex ? 'on' : ''}" style="background:${PLAYER_CSS(c)}"></i>`).join('')}</div>`;
       const ty = { Hat: 'hat', Face: 'face', Trousers: 'pants', Outfit: 'outfit' }[r];
       const nl = r === 'Colour' ? 0 : lockedCount(ty), ns = r === 'Colour' ? 0 : shopLockedCount(ty), nj = r === 'Colour' ? 0 : jobLockedCount(ty);
-      if (nl || ns || nj) extra = `<div class="lockline">🔒 ${[nl && `${nl} in presents`, nj && `${nj} from jobs`, ns && `${ns} in the clothes shop`].filter(Boolean).join(' · ')}</div>`;
+      if (r === 'Gadget') { const ng = lockedGadgets(); if (ng) extra = `<div class="lockline">🔒 ${ng} in the GADGETS shop</div>`; }
+      else if (nl || ns || nj) extra = `<div class="lockline">🔒 ${[nl && `${nl} in presents`, nj && `${nj} from jobs`, ns && `${ns} in the clothes shop`].filter(Boolean).join(' · ')}</div>`;
       return `<div class="item ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${r}</span><span class="val"><span class="arrows">◀</span><b>${this.value(r)}</b><span class="arrows">▶</span></span>${extra}</div>`;
     }).join('');
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
@@ -375,7 +379,8 @@ function helpHTML(tab, kind) {
       <div class="callouts right">
         ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Ragdoll (flop!)')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera')}${row(g('START'), 'Menu')}
       </div></div>
-      <div class="drive"><b>Driving</b> ${g('RT')} gas ${g('LT')} brake / reverse ${g('LS')} steer ${g('A')} handbrake ${g('X')} horn ${g('Y')} get out</div>`;
+      <div class="drive"><b>Driving</b> ${g('RT')} gas ${g('LT')} brake / reverse ${g('LS')} steer ${g('A')} handbrake ${g('X')} horn ${g('Y')} get out</div>
+      <div class="drive"><b>Gadgets</b> jetpack / glider: hold ${g('A')} in the air · laser gun / grappling hook: ${g('X')} fire · boots: always on</div>`;
   } else if (tab === 1 || tab === 2) {
     const k = tab === 1 ? 'kb1' : 'kb2', G = (b) => glyph(b, k);
     body = `<div class="kbgrid">
@@ -383,12 +388,14 @@ function helpHTML(tab, kind) {
       ${row(G('X'), 'Punch')}${row(G('Y'), 'Get in / out, sit')}${row(G('LT') + ' ' + G('RT'), 'Grab left / right' + (k === 'kb1' ? ' (or Q / C)' : ''))}
       ${row(G('LB'), 'Sprint')}${row(G('EMOTE'), 'Emote wheel (hold)')}${row(G('MAP'), 'Map')}${row(G('PHONE'), 'Phone: call a vehicle')}${k === 'kb1' ? row(G('WAVE') + ' ' + G('CHEER') + ' ' + G('DANCE'), 'Wave / cheer / dance') : ''}${row(G('START'), 'Menu')}
       ${row(G('GAS') + ' ' + G('BRAKE'), 'Drive: gas / brake')}${row(G('HORN'), 'Horn')}
+      ${row(G('A') + ' hold', 'Gadget: jetpack / glider (in the air)')}${row(G('X'), 'Gadget: fire laser / grappling hook')}
       </div><p class="hnote">${k === 'kb1' ? 'Join with <span class="key">Enter</span> or <span class="key">Space</span>. Click the game to look around with the mouse.' : 'Join with <span class="key">NumEnter</span>. Play alongside Keyboard 1 and controllers.'}</p>`;
   } else {
     body = `<ul class="tips">
       <li>Hold ${g('LT')} / ${g('RT')} to raise an arm. Your hand grabs whatever it touches: props, friends, ledges, bars.</li>
       <li>Grab a ledge with both hands, then press ${g('A')} to pull yourself up. Look up to reach higher.</li>
       <li>Press ${g('B')} to go floppy. Great for rolling down hills.</li>
+      <li>Buy gadgets in the GADGETS shop behind the town's shops and wear one (shop or customiser): jetpack and glider fly while you hold ${g('A')} in the air, the laser gun and grappling hook fire with ${g('X')} (aim the hook with the camera), boots work by themselves.</li>
       <li>Walk up to a car, swing, ride or bench and press ${g('Y')}.</li>
       <li>Up to 8 players: more controllers or the second keyboard join with ${g('A')} any time.</li>
       <li>Every player has their own menu on ${g('START')}: customise your Wobbler, change settings or leave.</li>
@@ -602,7 +609,7 @@ export class UI {
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);
     if (holding && !p.grounded) return `${G('A')} Climb up`;
-    return '';
+    return g.gadgets?.hint(p, k) || ''; // how to use the worn gadget (gadgets.js)
   }
 
   update(views) {

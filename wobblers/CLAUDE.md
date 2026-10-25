@@ -94,6 +94,14 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `shops.js` `VEHICLE_PRICES` (the phone asks `game.vehicleLock(id)`). Coin pickup spots are
   `CLUSTERS` in `life/coins.js` (`[x, z, ray start, shape, count, size]`, like present spots).
   Home respawn wraps `game.spawnPoint`; pets are synced from the saved choice every 15 steps.
+- Gadgets (`src/gadgets.js`, shop building `world/gadgetshop.js`, list in `life/shops.js` 'gadgets'):
+  `GADGETS` (id, price...); bought = `'gadget:<id>'` in `life.bought`; worn one is `player.gadget`
+  (saved in the slot look, `cosmetics.js`), its runtime is `player.gear`. Player hooks are all
+  `this.gear?.…` (NPCs never have gear): `gear.speed` / `gear.jump` multipliers, `gear.filter(inp)`
+  (the tool hand can't grab), `gear.punch(p, inp)` (true = fired instead of punching), `gear.step`
+  after the pose (thrust / glide / aim arm / hook), `player.gearMesh` in `partMesh`. ui.js asks
+  `game.gadgets.hint(p, kind)`. A new gadget: an entry in `GADGETS`, geometry in `gearGeo`, a
+  step fn in `STEPS`. Probe with `setGadget(player, id)` (needs no purchase).
 
 ## Missions (jobs, `src/missions/`)
 

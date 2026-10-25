@@ -47,7 +47,7 @@ function keeper(L, lx, lz, shirt, ly = 0) {
   }
 }
 
-function till(game, L, lx, lz, color, shopId, label) {
+export function till(game, L, lx, lz, color, shopId, label) { // also world/gadgetshop.js
   L.box(lx, 0.55, lz, 3.4, 1.1, 0.8, color);
   L.deco(lx, 1.13, lz, 3.5, 0.06, 0.9, 0xffffff);
   L.box(lx + 1.0, 1.35, lz - 0.05, 0.5, 0.36, 0.4, 0x444a5a); // cash register

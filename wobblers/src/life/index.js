@@ -5,6 +5,7 @@
 //   game.coins    pickups (life/coins.js)             game.pets     pets (life/pets.js)
 //   game.homes    homes (world/estate.js)             game.life.reward(player, n, reason, pos)  mini-game prizes
 //   game.unlockedVehicles / game.vehicleLock(id)      car dealer purchases, checked by the phone
+//   game.gadgets  jetpack, boots, laser gun... (src/gadgets.js) and the GADGETS shop (world/gadgetshop.js)
 import { Wallet } from './wallet.js';
 import { LifeHud } from './hud.js';
 import { buildCoins } from './coins.js';
@@ -13,6 +14,8 @@ import { buildPets } from './pets.js';
 import { buildVehicleLocks } from './shops.js';
 import { buildHomes } from '../world/estate.js';
 import { resetLife } from './state.js';
+import { buildGadgets } from '../gadgets.js';
+import { buildGadgetShop } from '../world/gadgetshop.js';
 
 export function buildLife(game) {
   game.wallet = new Wallet(game);
@@ -33,4 +36,6 @@ export function buildLife(game) {
       game.lifeHud.bump();
     },
   };
+  buildGadgetShop(game, game.kit); // static scenery: before kit.finish (world/index.js)
+  buildGadgets(game);
 }
