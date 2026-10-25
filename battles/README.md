@@ -4,6 +4,8 @@ A wobbly physics battle game in the style of *Totally Accurate Battle Simulator*
 screen: both players build their armies **at the same time** in split screen
 with Xbox controllers, then watch the wobbly active-ragdoll battle together.
 
+What's left to do is in `TODO.md`; unit balance notes are in `BALANCE.md`.
+
 Serve the repo root over http (ES modules) and open `/battles/`:
 
     python3 -m http.server 8123   # then http://localhost:8123/battles/

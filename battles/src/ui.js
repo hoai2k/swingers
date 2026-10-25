@@ -132,7 +132,7 @@ export class UI {
     this.setText(v.worlds, d.worlds.map((w, wi) => `<div class="lvworld ${w.unlocked ? '' : 'locked'}" style="--wc:${w.color}">
       <div class="lvwname"><span>${w.unlocked ? '' : '🔒 '}${w.name}</span><small>${w.bonus ? 'bonus · ' : ''}★ ${w.levels.reduce((s, l) => s + l.stars, 0)} / ${w.levels.length * 3}</small></div>
       ${w.levels.map((l, li) => `<div class="lvtile ${l.sel ? 'sel' : ''} ${l.unlocked ? '' : 'locked'}"><b>${wi + 1}-${li + 1}</b>
-        <span class="lvn">${l.unlocked ? l.name : '🔒'}</span><span class="lvs">${stars(l.stars)}</span></div>`).join('')}</div>`).join(''));
+        <span class="lvn">${l.unlocked ? l.name : '🔒'}</span>${l.wip ? '<span class="lvwip" title="Under construction">🚧</span>' : ''}<span class="lvs">${stars(l.stars)}</span></div>`).join('')}</div>`).join(''));
     // keep the selected world's row in view (the list scrolls when it doesn't fit)
     const row = v.worlds.querySelector('.lvtile.sel')?.parentElement;
     if (row && row !== this.lvRow) {
@@ -143,7 +143,7 @@ export class UI {
       else if (bot > box.scrollTop + box.clientHeight) box.scrollTop = bot - box.clientHeight;
     }
     const L = d.level;
-    this.setText(v.detail, `<div class="lvd-top" style="--wc:${L.color}"><span class="lvd-name">${L.name}</span><span class="lvd-stars">${stars(L.stars)}</span></div>
+    this.setText(v.detail, `<div class="lvd-top" style="--wc:${L.color}"><span class="lvd-name">${L.name}</span>${L.wip ? '<span class="lvd-wip">🚧 Under construction: stars and budget not tuned yet</span>' : ''}<span class="lvd-stars">${stars(L.stars)}</span></div>
       <div class="lvd-tip">${L.unlocked ? L.tip : '🔒 Locked — beat the level before it first.'}</div>
       ${L.mapImg ? `<img class="lvd-map" src="${L.mapImg}" alt="">` : ''}<div class="lvd-row"><span>🗺 ${L.map}</span><span><span class="coin"></span> budget <b>${fmt(L.budget)}</b></span><span>👥 up to <b>${L.cap}</b> units</span>
         ${L.best !== undefined ? `<span>best: <b>${fmt(L.best)}</b> gold</span>` : ''}</div>

@@ -702,10 +702,10 @@ export class Game {
     this.ui.updateLevels({
       worlds: WORLDS.map((w, wi) => ({
         name: w.name, color: w.color, bonus: !!w.bonus, unlocked: worldUnlocked(pr, wi),
-        levels: w.levels.map((l) => ({ name: l.name, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
+        levels: w.levels.map((l) => ({ name: l.name, wip: !!l.wip, stars: pr.stars[l.id] || 0, unlocked: levelUnlocked(pr, l), sel: l === L })),
       })),
       level: {
-        name: L.name, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name, mapImg: mapImg((MAPS.find((m) => m.id === L.map) || MAPS[0]).id),
+        name: L.name, wip: !!L.wip, world: WORLDS[L.world].name, color: WORLDS[L.world].color, tip: L.tip || '', map: (MAPS.find((m) => m.id === L.map) || MAPS[0]).name, mapImg: mapImg((MAPS.find((m) => m.id === L.map) || MAPS[0]).id),
         budget: L.budget, cap: L.cap, enemyValue: armyValue(enemy), enemyCount: enemy.length,
         enemy: [...counts].map(([id, n]) => ({ id, n })), stars: pr.stars[L.id] || 0, best: pr.best[L.id],
         starGold: starGold(L), unlocked: levelUnlocked(pr, L),
@@ -1776,7 +1776,7 @@ export class Game {
       else if (this.mode === 'versus') match = this.scoreRound(b.winner);
     }
     this.ui.only('battle', 'result');
-    const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' ? [...TEAM_NAMES] : null;
+    const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
     this.ui.showResult({ winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
     this.audio.play('fanfare', null, 0.9, 1);
