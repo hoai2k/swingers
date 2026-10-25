@@ -2,23 +2,27 @@
  "t1": {
   "name": "First Contact",
   "world": "tribal",
-  "budget": 500,
+  "budget": 600,
   "cap": 12,
-  "enemyValue": 420,
+  "enemyValue": 360,
   "stars": [
-   350,
-   450
+   400,
+   500
   ],
   "cheapest": {
    "army": [
     [
      "hay_baler",
-     2
+     1
+    ],
+    [
+     "spear_thrower",
+     1
     ]
    ],
-   "cost": 280,
-   "confirm": "6/6",
-   "avgTime": 16.7
+   "cost": 395,
+   "confirm": "5/6",
+   "avgTime": 22.8
   },
   "cheapestMono": {
    "army": [
@@ -27,29 +31,34 @@
      2
     ]
    ],
-   "cost": 280,
-   "confirm": "6/6",
-   "avgTime": 16.7
+   "cost": 500,
+   "confirm": "5/6",
+   "avgTime": 14.5
   },
   "alt": {
    "army": [
     [
-     "protector",
-     5
+     "clubber",
+     1
+    ],
+    [
+     "farmer",
+     6
     ]
    ],
-   "cost": 400,
-   "confirm": "6/6",
-   "avgTime": 17.5
+   "cost": 420,
+   "confirm": "5/6",
+   "avgTime": 11.2
   },
   "suggest": {
-   "g3": 400,
-   "g2": 550,
-   "budgetMin": 700
+   "g3": 500,
+   "g2": 600,
+   "budget": 700,
+   "need": 700
   },
-  "tried": 37,
-  "secs": 522,
-  "date": "2026-10-24"
+  "tried": 43,
+  "secs": 3,
+  "date": "2026-10-25"
  },
  "t4": {
   "name": "Hay Day",
@@ -114,23 +123,27 @@
  "t2": {
   "name": "Shield Wall",
   "world": "tribal",
-  "budget": 700,
+  "budget": 900,
   "cap": 14,
-  "enemyValue": 760,
+  "enemyValue": 900,
   "stars": [
-   490,
-   630
+   600,
+   700
   ],
   "cheapest": {
    "army": [
     [
      "hay_baler",
-     3
+     2
+    ],
+    [
+     "protector",
+     1
     ]
    ],
-   "cost": 420,
-   "confirm": "5/6",
-   "avgTime": 28.3
+   "cost": 610,
+   "confirm": "6/6",
+   "avgTime": 39.5
   },
   "cheapestMono": {
    "army": [
@@ -139,14 +152,14 @@
      3
     ]
    ],
-   "cost": 420,
-   "confirm": "5/6",
-   "avgTime": 28.3
+   "cost": 750,
+   "confirm": "6/6",
+   "avgTime": 28.6
   },
   "alt": {
    "army": [
     [
-     "halfling",
+     "farmer",
      1
     ],
     [
@@ -154,18 +167,18 @@
      9
     ]
    ],
-   "cost": 770,
-   "confirm": "5/6",
-   "avgTime": 27.3
+   "cost": 1050,
+   "confirm": "6/6",
+   "avgTime": 22.3
   },
   "suggest": {
-   "g3": 600,
-   "g2": 700,
-   "budget": 900,
-   "need": 900
+   "g3": 850,
+   "g2": 1000,
+   "budget": 1200,
+   "need": 1200
   },
-  "tried": 48,
-  "secs": 43,
+  "tried": 43,
+  "secs": 0,
   "date": "2026-10-25"
  },
  "t3": {
