@@ -9,7 +9,8 @@ export const EXTRA_HATS = ['viking', 'chef', 'pirate', 'wizard', 'flowers', 'hea
   'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears',
   // sold in the clothes shop (unlocks.js SHOP_COSMETICS); keep appending so saved looks keep their index
   'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester',
-  // Tiki Jungle and Coconut Cove presents
+  // region presents
+  'pharaoh',
   'explorer', 'tikimask', 'parrot', 'snorkel', 'sailor', 'coconut'];
 
 export const EXTRA_HAT_NAMES = {
@@ -19,6 +20,7 @@ export const EXTRA_HAT_NAMES = {
   fez: 'Fez', catears: 'Cat ears',
   beret: 'Beret', bowler: 'Bowler hat', sombrero: 'Sombrero', frog: 'Frog hat', antlers: 'Antlers', tiara: 'Tiara',
   pumpkin: 'Pumpkin head', jester: 'Jester hat',
+  pharaoh: 'Pharaoh headdress',
   explorer: 'Explorer helmet', tikimask: 'Tiki mask', parrot: 'Parrot pal', snorkel: 'Snorkel mask', sailor: 'Sailor hat', coconut: 'Coconut cup',
 };
 
@@ -246,6 +248,19 @@ export function buildExtraHat(b, kind, R, c, group) {
       b.cone(R * 0.4, R * 0.25, 0x3fe0d0, [-R * 0.3, R * 1.25, R * 0.2], null, 8);
       b.cyl(R * 0.03, R * 0.03, R * 0.5, 0xffffff, [-R * 0.3, R * 1.0, R * 0.2], null, 4);
       return true;
+    case 'pharaoh': { // nemes headdress: striped gold/blue cap, side lappets, a little cobra (Dusty Dunes pyramid present)
+      b.sphere(R * 1.07, 0xffd23f, [0, R * 0.28, -R * 0.05], [1, 0.82, 1.05], 18);
+      for (let i = 0; i < 4; i++) b.torus(R * (1.0 - i * 0.1), R * 0.05, 0x2a5ad8, [0, R * (0.45 + i * 0.16), -R * 0.05], [Math.PI / 2, 0, 0], 20);
+      for (const s of [-1, 1]) {
+        b.box(R * 0.42, R * 1.2, R * 0.3, 0xffd23f, [s * R * 0.92, -R * 0.15, R * 0.15], [0.05, 0, s * 0.12]);
+        for (let i = 0; i < 4; i++) b.box(R * 0.44, R * 0.07, R * 0.32, 0x2a5ad8, [s * R * 0.92, -R * 0.55 + i * R * 0.28, R * 0.15], [0.05, 0, s * 0.12]);
+      }
+      b.box(R * 1.6, R * 0.14, R * 0.2, 0x2a5ad8, [0, R * 0.12, R * 0.92]);
+      b.cyl(R * 0.07, R * 0.09, R * 0.42, 0xffd23f, [0, R * 0.38, R * 1.0], [0.2, 0, 0], 8);
+      b.sphere(R * 0.11, 0xffd23f, [0, R * 0.62, R * 1.02], [1.3, 1, 0.8], 8);
+      b.capsule(R * 0.25, R * 0.4, 0x2a5ad8, [0, -R * 0.3, -R * 1.0], [0.3, 0, 0]);
+      return true;
+    }
   }
   return false;
 }

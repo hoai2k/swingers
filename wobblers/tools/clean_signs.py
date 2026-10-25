@@ -8,9 +8,11 @@ boards are left alone), makes it transparent, and recentres the board on a
 4:1 canvas so the game's 4:1 sign planes don't stretch it.
 
 The untouched originals are kept in assets/originals/signs/ (not loaded by
-the game). Re-run after adding signs, then run build_manifest.py.
+the game). Re-run after adding signs, then run build_manifest.py. Optional
+filename arguments limit processing to newly delivered signs.
 """
 import shutil
+import sys
 from collections import deque
 from pathlib import Path
 from PIL import Image
@@ -25,6 +27,8 @@ def close(a, b):
 
 for f in sorted(src_dir.glob('*.png')):
     if f.name.startswith('.'):
+        continue
+    if sys.argv[1:] and f.name not in sys.argv[1:]:
         continue
     orig = orig_dir / f.name
     if not orig.exists():

@@ -77,7 +77,7 @@ registerRole('rafter', {
 });
 
 // ---- Coconut Cove -----------------------------------------------------------------
-registerRole('tourist', {
+registerRole('beachgoer', {
   random: true, outfit: [OUT.hawaiian], prop: 'camera', behaviour: 'wander', hat: 'sunhat',
   lines: ['What a view!', 'Say cheese!', 'I love it here!', 'Where is the pool bar?', 'Sunburn incoming...'], emotes: ['wave', 'point', 'laugh'],
 });

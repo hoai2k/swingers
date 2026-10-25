@@ -39,7 +39,7 @@ export function buildResort(game, kit, R) {
   R.vehicle('golfcart', 574, 741, 0, 0xffffff);
   R.vehicle('golfcart', 578.5, 741, 0, 0x3fae5a);
   R.npc('lifeguard', 601, 716, { yaw: Math.PI });
-  for (const [x, z] of [[590, 725], [620, 730], [565, 770], [628, 750]]) R.npc('tourist', x, z, { area: { x, z, r: 12 } });
+  for (const [x, z] of [[590, 725], [620, 730], [565, 770], [628, 750]]) R.npc('beachgoer', x, z, { area: { x, z, r: 12 } });
   for (const [x, z] of [[598, 741.2], [604, 741.2]]) kit.bench(x, z, 0, Y);
   R.npc('islander', 601, 740);
   R.coins(600, 724, null, 'line', 10, 70);

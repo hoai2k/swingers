@@ -1,7 +1,8 @@
 // Cheap foliage for the jungle and the cove: every plant kind is one small
 // vertex-coloured template; instances are transformed straight into big typed
 // arrays and merged into one mesh per CELL x CELL m square (one draw call per
-// square, far-culled with the kit chunks via game.staticChunks). Trunks get a
+// square, far-culled with the kit chunks via game.staticChunks). Squares are
+// merged lazily, nearest a camera first, one per frame (finish()). Trunks get a
 // static cylinder collider; undergrowth has none.
 import * as THREE from 'three';
 import { Builder, matVC } from '../../../mesh.js';

@@ -14,7 +14,7 @@ function segDist(x, z, a, b) {
 }
 
 export function buildWild(game, kit, R) {
-  const rnd = R.rng(77), t0 = performance.now(), prof = {};
+  const rnd = R.rng(77);
   const F = new Flora(game, 96);
   const zips = (game.jungleZips || []).map((z) => [{ x: z.C0.x, z: z.C0.z }, { x: z.E.x, z: z.E.z }]);
   const [bx0, bx1, bz0, bz1] = R.bounds;
@@ -49,7 +49,6 @@ export function buildWild(game, kit, R) {
     else if (r < 0.9) F.add('palm', x, h - 0.1, z, s, yaw, tint);
     else F.add('banana', x, h - 0.1, z, s, yaw, tint);
   }
-  prof.trees = performance.now() - t0;
   // undergrowth
   const U = 7.5;
   for (let gx = bx0; gx < bx1; gx += U) for (let gz = bz0; gz < bz1; gz += U) {
@@ -65,10 +64,7 @@ export function buildWild(game, kit, R) {
   }
   // palms round the village (decorative, a few)
   for (const [x, z, s] of [[-440, 720], [-436, 800, 1.1], [-392, 728, 1.2], [-382, 806, 1.1], [-432, 732, 0.95], [-386, 722, 1]]) F.add('palm', x, R.groundAt(x, z) - 0.1, z, s || 1, rnd() * 6, 1);
-  prof.under = performance.now() - t0;
   F.finish();
-  prof.finish = performance.now() - t0;
-  (game.buildTimes ||= {}).wildProf = prof;
   game.jungleFlora = F.count;
 
   // ---- Mushroom Grove: bounce up the giant caps to the top -------------------------------
