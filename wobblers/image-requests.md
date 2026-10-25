@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 16 signs remaining.** Rounds 1–10 are delivered;
+**Status: 10 signs remaining.** Rounds 1–10 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## OPEN round 11 — Stratford Fall Fair, arcade cabinets, gadgets, phone booths (22 signs)
@@ -10,12 +10,6 @@ an autumn county fair (falling leaves, pumpkins, hay bales), so its signs lean o
 warm fall colours; arcade marquees are glowing neon on black. No real brand or
 game names, logos or characters.
 
-- `signs/zipper.png` (1024 × 256) — **ZIPPER**: flipping-cage ride: zig-zag yellow and black board, small lightning-bolt icon.
-- `signs/top_spin.png` (1024 × 256) — **TOP SPIN**: flipping gondola ride: hot pink board, white letters, small curly-arrow icon.
-- `signs/drop_tower.png` (1024 × 256) — **DROP TOWER**: free-fall tower ride: sky-blue board, bold red letters, small down-arrow icon.
-- `signs/tilt-a-whirl.png` (1024 × 256) — **TILT-A-WHIRL**: spinning tub ride: candy-striped red and white board, small swirl icon.
-- `signs/himalaya.png` (1024 × 256) — **HIMALAYA**: fast music-ride on hills: snowy white board with mountain silhouette, icy-blue letters, small snowflake icon.
-- `signs/sizzler.png` (1024 × 256) — **SIZZLER**: spinning-arm ride: orange board, yellow letters with a sizzle outline, small sun icon.
 - `signs/ferris_wheel.png` (1024 × 256) — **FERRIS WHEEL**: big wheel: warm gold board, maroon letters, small wheel icon (autumn-fair version).
 - `signs/carousel.png` (1024 × 256) — **CAROUSEL**: classic carousel: cream board with gold scroll trim, red letters, small carousel-horse icon.
 - `signs/mini_train.png` (1024 × 256) — **MINI TRAIN**: kiddie train ride: green board, yellow letters, small steam-engine icon.

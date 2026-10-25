@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- fair-round11 -->
-## Delivered round 11 batches (6/22 signs)
+## Delivered round 11 batches (12/22 signs)
 
 - `signs/stratford_fall_fair.png` (1024 × 256) — **STRATFORD FALL FAIR**: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner.
 - `signs/pirate_ship.png` (1024 × 256) — **PIRATE SHIP**: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon.
@@ -13,8 +13,16 @@ files are recorded in `assets/generation.json`.
 - `signs/ring_of_fire.png` (1024 × 256) — **RING OF FIRE**: looping ring coaster: black board, flaming orange-red letters, small flame-ring icon.
 - `signs/gravitron.png` (1024 × 256) — **GRAVITRON**: spinning saucer ride: chrome-silver board, electric purple letters, small flying-saucer icon.
 - `signs/starship_2000.png` (1024 × 256) — **STARSHIP 2000**: retro space-age spinning ride: navy board, neon cyan letters, small rocket icon.
+- `signs/zipper.png` (1024 × 256) — **ZIPPER**: flipping-cage ride: zig-zag yellow and black board, small lightning-bolt icon.
+- `signs/top_spin.png` (1024 × 256) — **TOP SPIN**: flipping gondola ride: hot pink board, white letters, small curly-arrow icon.
+- `signs/drop_tower.png` (1024 × 256) — **DROP TOWER**: free-fall tower ride: sky-blue board, bold red letters, small down-arrow icon.
+- `signs/tilt-a-whirl.png` (1024 × 256) — **TILT-A-WHIRL**: spinning tub ride: candy-striped red and white board, small swirl icon.
+- `signs/himalaya.png` (1024 × 256) — **HIMALAYA**: fast music-ride on hills: snowy white board with mountain silhouette, icy-blue letters, small snowflake icon.
+- `signs/sizzler.png` (1024 × 256) — **SIZZLER**: spinning-arm ride: orange board, yellow letters with a sizzle outline, small sun icon.
 
 Delivered with built-in imagegen, 2026-10-25. Exact dimensions, alpha, lettering and icons reviewed; loaded through the game manifest in the browser. Prompts and original sources are in `assets/generation.json`.
+
+TILT-A-WHIRL is also saved as `signs/tilt_a_whirl.png`, matching the game sign loader; the requested hyphenated filename is preserved.
 <!-- /fair-round11 -->
 
 ## Delivered round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
