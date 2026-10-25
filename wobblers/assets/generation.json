@@ -1283,6 +1283,94 @@
       "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"WATERFALL\". Board design: teal-blue wooden board with vines on the corners, white letters, small waterfall icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
       "round": 8,
       "batch": 5
+    },
+    {
+      "index": 125,
+      "file": "signs/coconut_resort.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7591c1ce-362f-4b05-baf9-a09fd77dd349.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"COCONUT RESORT\". Board design: sunny turquoise board with a thatched-straw top edge, white letters, small palm-tree-and-coconut icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 126,
+      "file": "signs/pool_bar.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-0ac010f5-fb76-47b0-8677-8b5b4947a339.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"POOL BAR\". Board design: bamboo-framed pink board, white letters, small coconut cocktail with umbrella icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 127,
+      "file": "signs/boat_hire.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9c8511b2-c20f-489f-8f98-736ee2c8dd83.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"BOAT HIRE\". Board design: white board with navy rope border, navy letters, small speedboat icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 128,
+      "file": "signs/lighthouse.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e1299c3a-27e0-42cb-98ce-f16018b529d8.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"LIGHTHOUSE\". Board design: red-and-white striped board, white letters on a red band, small lighthouse icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 129,
+      "file": "signs/volleyball.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7459d030-6045-47d2-8dce-0e135f0cd19e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"VOLLEYBALL\". Board design: sandy-yellow board, blue letters, small volleyball icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 130,
+      "file": "signs/snorkel_reef.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2f64657c-6408-4683-930e-12990a69af3f.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"SNORKEL REEF\". Board design: aqua board with little bubbles, white letters, small snorkel mask and fish icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 131,
+      "file": "signs/shipwreck.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8f57182a-357a-4940-aef7-7e4bd749e675.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"SHIPWRECK\". Board design: weathered dark driftwood planks, bone-white pirate-style letters, small skull-and-crossbones icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
+    },
+    {
+      "index": 132,
+      "file": "signs/lifeguard.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a35b5f21-f0f7-4e09-af84-64c915695813.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"LIFEGUARD\". Board design: bright red board, white letters, small red-and-white life-ring icon. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+      "round": 8,
+      "batch": 6
     }
   ]
 }

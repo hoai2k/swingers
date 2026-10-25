@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 12 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 4 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -63,24 +63,3 @@ stand-in for each until the art arrives.
 
 
 ### Dusty Dunes (desert)
-
-
-## OPEN round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
-
-All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
-letters plus one small icon (style rules above). The game draws a procedural
-stand-in for each until the art arrives.
-
-### Tiki Jungle (jungle)
-
-
-### Coconut Cove (tropical)
-
-- `coconut_resort.png` — **COCONUT RESORT**: sunny turquoise board with a thatched-straw top edge, white letters, small palm-tree-and-coconut icon.
-- `pool_bar.png` — **POOL BAR**: bamboo-framed pink board, white letters, small coconut cocktail with umbrella icon.
-- `boat_hire.png` — **BOAT HIRE**: white board with navy rope border, navy letters, small speedboat icon.
-- `lighthouse.png` — **LIGHTHOUSE**: red-and-white striped board, white letters on a red band, small lighthouse icon.
-- `volleyball.png` — **VOLLEYBALL**: sandy-yellow board, blue letters, small volleyball icon.
-- `snorkel_reef.png` — **SNORKEL REEF**: aqua board with little bubbles, white letters, small snorkel mask and fish icon.
-- `shipwreck.png` — **SHIPWRECK**: weathered dark driftwood planks, bone-white pirate-style letters, small skull-and-crossbones icon.
-- `lifeguard.png` — **LIFEGUARD**: bright red board, white letters, small red-and-white life-ring icon.

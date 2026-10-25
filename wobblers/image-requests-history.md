@@ -5,9 +5,13 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- region-round-8 -->
-## Delivered round 8 batches (6/14 signs)
+## Delivered round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
 
-Built-in imagegen; exact sizes, alpha, text and browser loader checked.
+All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
+letters plus one small icon (style rules above). The game draws a procedural
+stand-in for each until the art arrives.
+
+### Tiki Jungle (jungle)
 
 - `volcano_trail.png` — **VOLCANO TRAIL**: rough bamboo-framed wooden board, cream letters, small smoking volcano icon.
 - `raft_ride.png` — **RAFT RIDE**: lashed log-raft board, white letters, small paddle-and-splash icon.
@@ -15,6 +19,19 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `hot_lava.png` — **HOT LAVA**: orange-red warning board with black hazard stripes on the edges, white letters, small flame icon.
 - `jungle_tours.png` — **JUNGLE TOURS**: olive-green safari board, cream letters, small green jeep icon.
 - `waterfall.png` — **WATERFALL**: teal-blue wooden board with vines on the corners, white letters, small waterfall icon.
+
+### Coconut Cove (tropical)
+
+- `coconut_resort.png` — **COCONUT RESORT**: sunny turquoise board with a thatched-straw top edge, white letters, small palm-tree-and-coconut icon.
+- `pool_bar.png` — **POOL BAR**: bamboo-framed pink board, white letters, small coconut cocktail with umbrella icon.
+- `boat_hire.png` — **BOAT HIRE**: white board with navy rope border, navy letters, small speedboat icon.
+- `lighthouse.png` — **LIGHTHOUSE**: red-and-white striped board, white letters on a red band, small lighthouse icon.
+- `volleyball.png` — **VOLLEYBALL**: sandy-yellow board, blue letters, small volleyball icon.
+- `snorkel_reef.png` — **SNORKEL REEF**: aqua board with little bubbles, white letters, small snorkel mask and fish icon.
+- `shipwreck.png` — **SHIPWRECK**: weathered dark driftwood planks, bone-white pirate-style letters, small skull-and-crossbones icon.
+- `lifeguard.png` — **LIFEGUARD**: bright red board, white letters, small red-and-white life-ring icon.
+
+Delivered 2026-10-24 with built-in imagegen. Exact sizes, alpha, sign text and browser asset loading checked; prompts and sources are in `assets/generation.json`.
 <!-- /region-round-8 -->
 
 <!-- region-round-7 -->
