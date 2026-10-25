@@ -8,7 +8,9 @@ import * as THREE from 'three';
 export const EXTRA_HATS = ['viking', 'chef', 'pirate', 'wizard', 'flowers', 'headphones', 'bunny', 'propeller',
   'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears',
   // sold in the clothes shop (unlocks.js SHOP_COSMETICS); keep appending so saved looks keep their index
-  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester'];
+  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester',
+  // region presents
+  'pharaoh'];
 
 export const EXTRA_HAT_NAMES = {
   viking: 'Viking helmet', chef: 'Chef hat', pirate: 'Pirate hat', wizard: 'Wizard hat', flowers: 'Flower crown',
@@ -17,6 +19,7 @@ export const EXTRA_HAT_NAMES = {
   fez: 'Fez', catears: 'Cat ears',
   beret: 'Beret', bowler: 'Bowler hat', sombrero: 'Sombrero', frog: 'Frog hat', antlers: 'Antlers', tiara: 'Tiara',
   pumpkin: 'Pumpkin head', jester: 'Jester hat',
+  pharaoh: 'Pharaoh headdress',
 };
 
 const glassMat = new THREE.MeshPhongMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, shininess: 120, specular: 0xffffff, depthWrite: false });
@@ -200,6 +203,19 @@ export function buildExtraHat(b, kind, R, c, group) {
         b.cone(R * 0.3, R * 1.0, cols[k], [tip[0] * 0.6, R * 0.9 + (tip[1] - R * 0.9) * 0.4, tip[2] * 0.6], k === 2 ? [-0.7, 0, 0] : [0, 0, -s * 1.0], 10);
         b.sphere(R * 0.14, 0xffd23f, tip, null, 8);
       });
+      return true;
+    }
+    case 'pharaoh': { // nemes headdress: striped gold/blue cap, side lappets, a little cobra (Dusty Dunes pyramid present)
+      b.sphere(R * 1.07, 0xffd23f, [0, R * 0.28, -R * 0.05], [1, 0.82, 1.05], 18);
+      for (let i = 0; i < 4; i++) b.torus(R * (1.0 - i * 0.1), R * 0.05, 0x2a5ad8, [0, R * (0.45 + i * 0.16), -R * 0.05], [Math.PI / 2, 0, 0], 20);
+      for (const s of [-1, 1]) {
+        b.box(R * 0.42, R * 1.2, R * 0.3, 0xffd23f, [s * R * 0.92, -R * 0.15, R * 0.15], [0.05, 0, s * 0.12]);
+        for (let i = 0; i < 4; i++) b.box(R * 0.44, R * 0.07, R * 0.32, 0x2a5ad8, [s * R * 0.92, -R * 0.55 + i * R * 0.28, R * 0.15], [0.05, 0, s * 0.12]);
+      }
+      b.box(R * 1.6, R * 0.14, R * 0.2, 0x2a5ad8, [0, R * 0.12, R * 0.92]);
+      b.cyl(R * 0.07, R * 0.09, R * 0.42, 0xffd23f, [0, R * 0.38, R * 1.0], [0.2, 0, 0], 8);
+      b.sphere(R * 0.11, 0xffd23f, [0, R * 0.62, R * 1.02], [1.3, 1, 0.8], 8);
+      b.capsule(R * 0.25, R * 0.4, 0x2a5ad8, [0, -R * 0.3, -R * 1.0], [0.3, 0, 0]);
       return true;
     }
   }
