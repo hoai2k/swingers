@@ -1,10 +1,10 @@
 # Wobbly Battles — music requests
 
-**Status: 20 open requests, none delivered yet.** They are listed from most to least
+**Status: 17 open requests; 3 delivered (#4 victory, #5 defeat, #11 battle start, made with ElevenLabs Music and in the game).** They are listed from most to least
 important: the first five cover what players hear most of the time.
 
-Today all music is synthesised in `src/audio.js`: three short loops (title, army setup,
-battle). Delivered tracks will replace those loops, and the synth stays as the fallback
+Today the loops are synthesised in `src/audio.js` (title, army setup, battle); the three
+stingers below are recorded files. Delivered tracks will replace those loops, and the synth stays as the fallback
 for any track that hasn't arrived. Wiring the files in is done when they are
 delivered.
 
@@ -68,7 +68,7 @@ cheeky wink.
 > far too seriously, then back to the bouncy march. Welcoming, catchy, confident and
 > funny, the theme tune of the game. No vocals, no electronic sounds.
 
-## 4. Victory stinger — `victory.mp3`
+## 4. Victory stinger — `victory.mp3` — ✅ delivered
 
 > Instrumental short triumphant orchestral victory fanfare for a comedic battle game,
 > about 8 seconds, one shot with a natural ending. A bold trumpet and horn fanfare in
@@ -77,7 +77,7 @@ cheeky wink.
 > hit. A tiny cheeky trill on the piccolo just before the last chord. Proud, glorious
 > and slightly over the top. No vocals.
 
-## 5. Defeat stinger — `defeat.mp3`
+## 5. Defeat stinger — `defeat.mp3` — ✅ delivered
 
 > Instrumental short comedic defeat sting for a battle game, about 7 seconds, one shot
 > with a natural ending. A sad, deflating "wah-wah-wah-waaah" on a muted trombone
@@ -137,7 +137,7 @@ cheeky wink.
 > curious and fun, like a mad inventor building a contraption. No vocals, no
 > electronic sounds.
 
-## 11. Battle start horn and drums stinger — `battle-start.mp3`
+## 11. Battle start horn and drums stinger — `battle-start.mp3` — ✅ delivered
 
 > Instrumental short battle-start sting for a comedic war game, about 4 seconds, one
 > shot with a natural ending. A huge, slightly comical war horn blast, two massive

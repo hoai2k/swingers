@@ -132,6 +132,10 @@ const SONGS = {
 };
 for (const s of Object.values(SONGS)) s.steps = s.bars * 8;
 
+// Recorded one-shot music (see music-requests.md). Each loads once sound is
+// unlocked; until it has (or if the file is missing) the synthesised sound plays.
+const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
+
 export class Audio {
   constructor() {
     this.ctx = null;
@@ -172,6 +176,31 @@ export class Audio {
     this.attach(new AC());
     if (document.hidden || !document.hasFocus()) this.ctx.suspend();
     if (this.musicMode) this.startMusic(this.musicMode, true);
+    this.loadStingers();
+  }
+
+  loadStingers() {
+    this.stingers = {};
+    for (const [k, url] of Object.entries(STINGERS)) {
+      fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null))
+        .then((b) => b && this.ctx.decodeAudioData(b))
+        .then((buf) => { if (buf) this.stingers[k] = buf; })
+        .catch(() => {});
+    }
+  }
+
+  // Play a recorded stinger over ducked music; false if it isn't loaded (the
+  // caller then plays its synthesised stand-in).
+  stinger(name, vol = 0.8) {
+    const buf = this.stingers?.[name];
+    if (!buf || !this.ctx) return false;
+    const c = this.ctx, src = c.createBufferSource(), g = c.createGain();
+    src.buffer = buf;
+    g.gain.value = vol * this.sfxVol;
+    src.connect(g).connect(this.master);
+    src.start(c.currentTime + 0.01);
+    this.duckMusic(0.75, Math.max(0.5, buf.duration - 1.5), true);
+    return true;
   }
 
   // Build the graph on a context (also used with an OfflineAudioContext by dev harnesses).
@@ -437,9 +466,12 @@ export class Audio {
     return ws;
   }
 
-  duckMusic(depth, hold) {
+  duckMusic(depth, hold, stinger) {
     if (!this.duck) return;
     const t = this.ctx.currentTime;
+    // a stinger's longer duck isn't cut short by the impacts under it
+    if (stinger) this.stingerUntil = t + hold;
+    else if (t < (this.stingerUntil || 0)) return;
     this.duck.gain.cancelScheduledValues(t);
     this.duck.gain.setTargetAtTime(1 - depth, t, 0.03);
     this.duck.gain.setTargetAtTime(1, t + hold, 0.5);

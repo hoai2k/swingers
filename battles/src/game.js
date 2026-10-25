@@ -1475,7 +1475,7 @@ export class Game {
       if (!this.split) this.overviewCam(this.rigs[0]);
     }
     this.audio.startMusic('battle');
-    this.audio.play('horn', null, 0.8, 1);
+    if (!this.audio.stinger('start')) this.audio.play('horn', null, 0.8, 1);
     this.syncLive(0);
     this.input.swallow();
   }
@@ -1903,8 +1903,10 @@ export class Game {
     const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
     this.ui.showResult({ winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
-    this.audio.play('fanfare', null, 0.9, 1);
     this.audio.startMusic('setup');
+    // the recorded stingers: defeat when the campaign player loses, or nobody wins
+    const lost = b.winner < 0 || (this.mode === 'campaign' && b.winner !== 0);
+    if (!this.audio.stinger(lost ? 'defeat' : 'victory')) this.audio.play('fanfare', null, 0.9, 1);
     for (const r of this.rigs) if (r.mode === 'possess' && r.unit) { r.unit.control = null; r.mode = 'follow'; }
     for (let p = 0; p < 2; p++) this.input.rumble(p, 0.3, 0.3, 300);
     if (SPEEDS[this.speedIdx] === 0) this.speedIdx = NORMAL;
