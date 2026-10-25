@@ -4,8 +4,12 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
-<!-- fair-round11 -->
-## Delivered round 11 batches (18/22 signs)
+## Delivered round 11 — Stratford Fall Fair, arcade cabinets, gadgets, phone booths (22 signs)
+
+The game draws a procedural stand-in for each until the art arrives. The fair is
+an autumn county fair (falling leaves, pumpkins, hay bales), so its signs lean on
+warm fall colours; arcade marquees are glowing neon on black. No real brand or
+game names, logos or characters.
 
 - `signs/stratford_fall_fair.png` (1024 × 256) — **STRATFORD FALL FAIR**: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner.
 - `signs/pirate_ship.png` (1024 × 256) — **PIRATE SHIP**: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon.
@@ -25,11 +29,14 @@ files are recorded in `assets/generation.json`.
 - `signs/magic_tent.png` (1024 × 256) — **MAGIC TENT**: fortune-teller style tent where players change shape: deep purple board with gold stars, glowing gold letters, small crystal-ball icon.
 - `signs/gadgets.png` (1024 × 256) — **GADGETS**: gadget shop (jetpacks, boots, laser gun): teal board, white letters, small jetpack icon.
 - `signs/phone.png` (1024 × 256) — **PHONE**: phone booth where players fetch their vehicles: red board, white letters, small old-style telephone icon.
+- `signs/chomp_maze.png` (1024 × 256) — **CHOMP MAZE**: arcade cabinet marquee for a maze-chomping game: black board, glowing yellow letters, small round-chomper icon (original character, not any real game's).
+- `signs/space_raiders.png` (1024 × 256) — **SPACE RAIDERS**: arcade cabinet marquee for a shoot-the-aliens game: black board, glowing green letters, small pixel-alien icon (original design).
+- `signs/bug_blaster.png` (1024 × 256) — **BUG BLASTER**: arcade cabinet marquee for a shoot-the-bugs game: black board, glowing magenta letters, small cartoon-bug icon (original design).
+- `signs/paddle_ball.png` (1024 × 256) — **PADDLE BALL**: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon.
 
 Delivered with built-in imagegen, 2026-10-25. Exact dimensions, alpha, lettering and icons reviewed; loaded through the game manifest in the browser. Prompts and original sources are in `assets/generation.json`.
 
 TILT-A-WHIRL is also saved as `signs/tilt_a_whirl.png`, matching the game sign loader; the requested hyphenated filename is preserved.
-<!-- /fair-round11 -->
 
 ## Delivered round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
 
@@ -180,7 +187,8 @@ All twelve images were delivered at their requested sizes and verified through t
 
 Delivered 2026-10-24 with built-in imagegen. Prompts are in `assets/generation.json`.
 
-Summary: round 10 — 3 mission images; round 9 — 5 regional extras;
+Summary: round 11 — 22 fair, arcade and shop signs;
+round 10 — 3 mission images; round 9 — 5 regional extras;
 round 8 — 14 region signs; round 7 — 36 region signs;
 round 6 — 4 ferry/saloon signs;
 round 5 — 12 images (4 signs + 4 faces + 4 posters);

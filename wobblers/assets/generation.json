@@ -1698,6 +1698,52 @@
       "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"PHONE\". Design brief: phone booth where players fetch their vehicles: red board, white letters, small old-style telephone icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
       "round": 11,
       "batch": 2
+    },
+    {
+      "index": 163,
+      "file": "signs/chomp_maze.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c61e7694-de02-4d37-aa94-5ecaa6009c86.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"CHOMP MAZE\". Design: arcade cabinet marquee for a maze-chomping game: black board, glowing yellow letters, small round-chomper icon (original character, not any real game's). Use an ORIGINAL purple round muncher creature with two eyes and two little teeth, no wedge-mouth yellow circle or recognizable existing character. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 164,
+      "file": "signs/space_raiders.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b4699f97-208c-4344-9f25-06d70e843b52.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"SPACE RAIDERS\". Design: arcade cabinet marquee for a shoot-the-aliens game: black board, glowing green letters, small pixel-alien icon (original design). Use an ORIGINAL cyan pixel creature with three eyes and six tiny legs, not an existing game's alien sprite. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 165,
+      "file": "signs/bug_blaster.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-789a1c87-03be-4b49-b839-4926c6e8bb0d.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"BUG BLASTER\". Design: arcade cabinet marquee for a shoot-the-bugs game: black board, glowing magenta letters, small cartoon-bug icon (original design). Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 166,
+      "file": "signs/paddle_ball.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e93a43fa-8950-4143-ac6e-67624997ed03.png",
+      "prompt": "Use case: precise-object-edit. Edit ONLY the colour of the PADDLE BALL letters in this arcade marquee. The brief REQUIRES GLOWING WHITE LETTERS. Replace every yellow/orange letter fill with pure bright WHITE, with a soft WHITE neon glow, slight pale-grey shading permitted. No yellow, orange, cream or gold inside any letter. Preserve exact text PADDLE BALL, black signboard, cyan outline and border, the little paddle-and-ball icon, position, proportions and transparent outside background. All other elements stay unchanged. One horizontal 4:1 marquee image.",
+      "round": 11,
+      "batch": 3,
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-101387a2-bb16-4d71-a66c-934d7adf65d8.png",
+      "initialPrompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"PADDLE BALL\". Design: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark."
     }
   ]
 }

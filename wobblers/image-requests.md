@@ -1,19 +1,7 @@
 # Wobblers image requests
 
-**Status: 4 signs remaining.** Rounds 1–10 are delivered;
+**Status: all requested images delivered; no open requests.** Rounds 1–11 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
-
-## OPEN round 11 — Stratford Fall Fair, arcade cabinets, gadgets, phone booths (22 signs)
-
-The game draws a procedural stand-in for each until the art arrives. The fair is
-an autumn county fair (falling leaves, pumpkins, hay bales), so its signs lean on
-warm fall colours; arcade marquees are glowing neon on black. No real brand or
-game names, logos or characters.
-
-- `signs/chomp_maze.png` (1024 × 256) — **CHOMP MAZE**: arcade cabinet marquee for a maze-chomping game: black board, glowing yellow letters, small round-chomper icon (original character, not any real game's).
-- `signs/space_raiders.png` (1024 × 256) — **SPACE RAIDERS**: arcade cabinet marquee for a shoot-the-aliens game: black board, glowing green letters, small pixel-alien icon (original design).
-- `signs/bug_blaster.png` (1024 × 256) — **BUG BLASTER**: arcade cabinet marquee for a shoot-the-bugs game: black board, glowing magenta letters, small cartoon-bug icon (original design).
-- `signs/paddle_ball.png` (1024 × 256) — **PADDLE BALL**: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon.
 
 ## How delivery works
 
