@@ -32,7 +32,9 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
   150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
   vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
-  update (game.step). At most two physics steps run per frame. Parked NPCs stay visible
+  update (game.step). At most two physics steps run per frame. Kit chunks get a far version (only parts
+  with bounding radius >= 1.4 m, no shadows) drawn instead beyond 160 m (120 m in split screen);
+  `game.farCull` switches `chunk.mesh` / `chunk.far`. Parked NPCs stay visible
   (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
   Audio starts on the first controller press too (`game.wakeAudio`).
 - Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds

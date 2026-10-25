@@ -651,15 +651,20 @@ export class Vehicle {
   // Toy wobble: the visual shell lags behind accelerations on a spring.
   updateLean(v, fwd, side) {
     const pv = this.prevVel;
-    const ax = (v.x - pv.x) / DT, ay = (v.y - pv.y) / DT, az = (v.z - pv.z) / DT;
+    const ax = (v.x - pv.x) / DT, az = (v.z - pv.z) / DT;
     pv.set(v.x, v.y, v.z);
     const L = this.lean;
     if (this.def.heli || this.def.boat) { L.r = L.p = L.vr = L.vp = 0; return; }
-    const along = clamp(ax * fwd.x + ay * fwd.y + az * fwd.z, -30, 30), lat = clamp(ax * side.x + ay * side.y + az * side.z, -30, 30);
+    // horizontal acceleration only, smoothed over ~0.12 s: per-step bumps from the
+    // road surface used to rock the body forward and back while driving
+    const k = DT / 0.12;
+    L.along = (L.along || 0) + (clamp(ax * fwd.x + az * fwd.z, -30, 30) - (L.along || 0)) * k;
+    L.lat = (L.lat || 0) + (clamp(ax * side.x + az * side.z, -30, 30) - (L.lat || 0)) * k;
     const soft = this.def.bike ? 0.3 : 1;
-    const tr = clamp(lat * 0.006 * soft, -0.07, 0.07), tp = clamp(-along * 0.0045, -0.06, 0.06);
-    L.vr += ((tr - L.r) * 160 - L.vr * 9) * DT; L.r += L.vr * DT;
-    L.vp += ((tp - L.p) * 140 - L.vp * 8) * DT; L.p += L.vp * DT;
+    const tr = clamp(L.lat * 0.006 * soft, -0.07, 0.07), tp = clamp(-L.along * 0.0045, -0.06, 0.06);
+    // close to critically damped springs: lean in and settle, no rocking
+    L.vr += ((tr - L.r) * 160 - L.vr * 22) * DT; L.r += L.vr * DT;
+    L.vp += ((tp - L.p) * 140 - L.vp * 21) * DT; L.p += L.vp * DT;
     L.r = clamp(L.r, -0.12, 0.12); L.p = clamp(L.p, -0.1, 0.1);
   }
 

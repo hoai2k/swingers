@@ -280,8 +280,8 @@ function coverageMask(game, bounds) {
   cam.position.set(cx, 300, cz); cam.up.set(0, 0, -1); cam.lookAt(cx, 0, cz);
   // camera "up" is -z, so image row 0 (bottom) is +z: flip below
   const shown = [];
-  const far = (game.staticChunks || []).filter((c) => !c.mesh.visible); // hidden by game.farCull
-  for (const c of far) c.mesh.visible = true;
+  const far = (game.staticChunks || []).filter((c) => !c.mesh.visible); // hidden by game.farCull (or showing their far version)
+  for (const c of far) { c.mesh.visible = true; if (c.far) c.far.visible = false; }
   scene.traverse((o) => {
     if (!o.isMesh && !o.isInstancedMesh) return;
     const isStatic = o.isMesh && o.material && o.material.vertexColors && o.position.lengthSq() === 0 && !o.userData.terrain && o.parent === scene;
