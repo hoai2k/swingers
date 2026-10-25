@@ -1,0 +1,144 @@
+{
+  "_doc": "Sound effects generated with the ElevenLabs sound-generation API (see generate.py). name: the game's sound id (src/audio.js synth names); n: variants; dur: requested seconds.",
+  "style": "Clean, punchy, close-miked video game sound effect, no music, no voices, no background noise, single isolated sound.",
+  "sounds": [
+    {
+      "name": "whoosh",
+      "n": 4,
+      "dur": 0.7,
+      "prompt": "Fast sword swing whoosh through the air, sharp swish"
+    },
+    {
+      "name": "throw",
+      "n": 2,
+      "dur": 0.7,
+      "prompt": "Spinning spear thrown through the air, fluttering whoosh"
+    },
+    {
+      "name": "flyby",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Arrow whizzing past close to the ear, quick zip"
+    },
+    {
+      "name": "thud",
+      "n": 4,
+      "dur": 0.5,
+      "prompt": "Cartoon punch hitting a padded body, punchy smack"
+    },
+    {
+      "name": "crunch",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Heavy club hit to a body with a comic bony crunch"
+    },
+    {
+      "name": "thump",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Body falling and landing on grassy ground, soft heavy thump with a little dirt"
+    },
+    {
+      "name": "slash",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Sword blade slicing through cloth and a body, quick slash with a wet chop"
+    },
+    {
+      "name": "stab",
+      "n": 3,
+      "dur": 0.5,
+      "prompt": "Spear point stabbing into a body, short thwick thunk"
+    },
+    {
+      "name": "clang",
+      "n": 4,
+      "dur": 0.9,
+      "prompt": "Steel sword striking plate armour, bright metallic clang with a short ring"
+    },
+    {
+      "name": "block",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Sword hitting a wooden shield, hollow wooden thock with a rattle"
+    },
+    {
+      "name": "shield",
+      "n": 2,
+      "dur": 0.9,
+      "prompt": "Weapon hitting a metal-rimmed wooden shield, knock with a metal ring"
+    },
+    {
+      "name": "bow",
+      "n": 3,
+      "dur": 0.6,
+      "prompt": "Bow string twang releasing an arrow, taut twang and thwip"
+    },
+    {
+      "name": "fire",
+      "n": 2,
+      "dur": 1.2,
+      "prompt": "Fireball launched, roaring whoosh of flame with crackles"
+    },
+    {
+      "name": "boom",
+      "n": 3,
+      "dur": 2.5,
+      "prompt": "Cartoonish big explosion, deep boom with debris, punchy and not too long"
+    },
+    {
+      "name": "debris",
+      "n": 2,
+      "dur": 1.2,
+      "prompt": "Rubble, dirt and small rocks raining down on the ground after an explosion"
+    },
+    {
+      "name": "pop",
+      "n": 2,
+      "dur": 0.8,
+      "prompt": "Glass potion bottle shattering with a bubbly pop and fizz"
+    },
+    {
+      "name": "heal",
+      "n": 2,
+      "dur": 1.2,
+      "prompt": "Magical healing spell, soft shimmering chime sparkle rising"
+    },
+    {
+      "name": "gong",
+      "n": 1,
+      "dur": 3.0,
+      "prompt": "Big bronze gong struck once, deep shimmering ring"
+    },
+    {
+      "name": "horn",
+      "n": 2,
+      "dur": 2.5,
+      "prompt": "Medieval war horn blast, one long deep heroic call"
+    },
+    {
+      "name": "click",
+      "n": 1,
+      "dur": 0.5,
+      "prompt": "Soft wooden UI click, short and pleasant, menu selection"
+    },
+    {
+      "name": "place",
+      "n": 1,
+      "dur": 0.5,
+      "prompt": "Small toy soldier placed on a wooden table, soft cheerful plop"
+    },
+    {
+      "name": "remove",
+      "n": 1,
+      "dur": 0.5,
+      "prompt": "Small toy soldier lifted off a table, soft quick reverse pop"
+    },
+    {
+      "name": "lute",
+      "n": 2,
+      "dur": 1.2,
+      "prompt": "Single cheerful strum of a medieval lute"
+    }
+  ]
+}
