@@ -195,10 +195,12 @@ export class Game {
   wakeAudio() {
     const a = this.audio;
     if (!a || a.running()) { this.audioHint = false; return; }
-    for (const [id, d] of this.input.devices) {
-      if (!id.startsWith('gp')) continue;
-      const pr = d.rawPressed || d.pressed;
-      for (const k in pr) if (pr[k]) { a.start(); break; }
+    // any button or stick on any controller, read straight from the browser
+    // (like Spider Swingers' input.anyActivity), so nothing in our own input
+    // mapping can swallow the first press
+    const pads = (navigator.getGamepads ? navigator.getGamepads() : []) || [];
+    for (const pad of pads) {
+      if (pad && (pad.buttons.some((b) => b.pressed) || pad.axes.some((v) => Math.abs(v) > 0.5))) { a.start(); break; }
     }
     if (this.players.length && !this.audioHint && this.time > (this.audioHintAt ??= this.time + 3) && !a.running() && a.audible()) {
       this.audioHint = true;
@@ -320,8 +322,14 @@ export class Game {
     if (!list) return;
     const p = cam.position;
     // split screen draws the scene once per view: keep ordinary chunks a bit closer there
-    const near = this.players.length > 1 ? 560 : 760;
-    for (const c of list) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) - c.r < (c.tall ? 2400 : near);
+    const split = this.players.length > 1, near = split ? 560 : 760, lod = split ? 120 : 160;
+    for (const c of list) {
+      const d = Math.hypot(c.x - p.x, c.z - p.z) - c.r, show = d < (c.tall ? 2400 : near);
+      // past `lod` metres a chunk draws its far version (big pieces only, no shadows; world/kit.js)
+      const farOn = show && !!c.far && d > lod;
+      c.mesh.visible = show && !farOn;
+      if (c.far) c.far.visible = farOn;
+    }
   }
 
   render(dt) {

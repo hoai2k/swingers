@@ -2,10 +2,13 @@
 // one mesh per chunk for cheap drawing and culling) plus matching colliders.
 import * as THREE from 'three';
 import { Builder, matVC, matVCDouble } from '../mesh.js';
+import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RAPIER, yawQuat } from '../physics.js';
 
 const CHUNK = 64;
 const _q = new THREE.Quaternion(), _e = new THREE.Euler();
+
+const FAR_PART_R = 1.4; // parts smaller than this (bounding radius, m) are left out of a chunk's far version
 
 export class Kit {
   constructor(game) {
@@ -200,6 +203,14 @@ export class Kit {
     if (this.dbl) { const m = this.dbl.mesh(matVCDouble); this.game.scene.add(m); this.dbl = null; }
     const list = this.game.staticChunks ||= [];
     for (const b of this.chunks.values()) {
+      // far version: only the big pieces (walls, roofs, trunks, hulls), drawn
+      // instead of the full chunk beyond game.farCull's LOD distance
+      const big = b.parts.filter((g) => { if (!g.boundingSphere) g.computeBoundingSphere(); return g.boundingSphere.radius >= FAR_PART_R; });
+      let far = null;
+      if (big.length && big.length < b.parts.length * 0.85) {
+        const fg = mergeGeometries(big, false);
+        if (fg) { far = new THREE.Mesh(fg, matVC); far.castShadow = false; far.receiveShadow = false; far.visible = false; this.game.scene.add(far); }
+      }
       const m = b.mesh(matVC);
       this.game.scene.add(m);
       // far culling per view (game.farCull): centre, radius, tall enough to show from afar
@@ -207,7 +218,7 @@ export class Kit {
       if (!g.boundingBox) g.computeBoundingBox();
       const bb = g.boundingBox;
       if (bb.isEmpty()) continue;
-      list.push({ mesh: m, x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, r: Math.hypot(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2,
+      list.push({ mesh: m, far, x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, r: Math.hypot(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2,
         tall: bb.max.y > 20 || bb.max.y - bb.min.y > 16 });
     }
     this.chunks.clear();
