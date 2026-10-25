@@ -19,6 +19,7 @@ import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, lo
 
 import { hasAsset } from './assets.js';
 import { Perf, SIM_LOADS, RES } from './perf.js';
+import { Corner, setFullscreen, fsElement } from './corner.js';
 const mapImg = (id) => (hasAsset(`assets/ui/map-${id}.jpg`) ? `assets/ui/map-${id}.jpg` : '');
 const BUDGETS = [1000, 2500, 5000, 10000, 25000, Infinity];
 const CAPS = [40, 80, 120, 180, 300, 500, 1000, Infinity];
@@ -84,11 +85,11 @@ export class Game {
     this.canvas = canvas;
     const st = loadStore();
     this.settings = Object.assign({
-      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, // sandbox: unlimited gold and units
+      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, sound: true, autoFs: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
       rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
       // performance options (see perfItems)
-      res: 0, autoRes: true, shadows: true, fxLite: false, corpses: 0, simLoad: 1, showFps: false, lod: true,
+      res: 0, autoRes: true, shadows: true, fxLite: false, corpses: 0, simLoad: 1, showFps: false, lod: true, sfxRec: true,
     }, st.settings || {});
     this.perf = new Perf();
     this.mode = 'versus'; // 'versus' (2P) | 'sandbox' (1P builds both sides) | 'campaign'
@@ -106,6 +107,13 @@ export class Game {
     this.renderer = r;
     this.input = new Input();
     this.audio = new Audio();
+    this.audio.noSamples = this.settings.sfxRec === false;
+    this.audio.setMuted(this.settings.sound === false);
+    this.corner = new Corner({
+      sound: () => this.adjustSetting('sound', 1),
+      music: () => this.adjustSetting('music', 1),
+      settings: () => this.openSettings(),
+    }, () => ({ sound: this.settings.sound !== false, music: this.settings.music, busy: this.state === 'battle' }));
     this.ui = new UI(hud);
     this.armies = st.armies || [[], []];
     this.mapArmies = st.maps || {};
@@ -332,6 +340,10 @@ export class Game {
     this.audio.beginFrame();
     if (this.input.anyPressed('a') || this.input.anyPressed('start')) this.audio.unlock();
     this.padEvents();
+    // leaving the title (a controller press counts as the user gesture browsers want):
+    // go fullscreen like the other games
+    if (this.lastState === 'title' && this.state !== 'title' && this.settings.autoFs !== false && !fsElement()) setFullscreen(true);
+    this.lastState = this.state;
     if (!this.prepping) switch (this.state) {
       case 'title': this.updateTitle(dt); break;
       case 'levels': this.updateLevels(dt); break;
@@ -562,7 +574,10 @@ export class Game {
         { label: 'Look speed', value: `${LOOK[s.look]}×`, key: 'look' },
         { label: 'Invert look Y', value: onOff(s.invertY), key: 'invertY' },
         { label: 'Blood', value: onOff(s.blood), key: 'blood' },
+        { label: 'Sound', value: onOff(s.sound !== false), key: 'sound' },
         { label: 'Music', value: onOff(s.music), key: 'music' },
+        { label: 'Fullscreen when a game starts', value: onOff(s.autoFs !== false), key: 'autoFs' },
+        { label: 'Sound effects', value: s.sfxRec ? 'Recorded' : 'Synthesised', key: 'sfxRec' },
         { label: 'Back', key: 'back' },
       ];
       case 'versus': return [
@@ -590,6 +605,19 @@ export class Game {
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
     ];
+  }
+
+  // the corner gear: the settings for where you are
+  openSettings() {
+    this.audio.unlock();
+    switch (this.state) {
+      case 'title': this.titlePage = 'options'; this.titleSel = 0; this.helpOn = false; this.ui.setHelp(false); break;
+      case 'setup': if (!this.ps[0].modal) this.ps[0].modal = { kind: 'perf', sel: 0, from: 0 }; else this.ps[0].modal = null; break;
+      case 'battle': case 'result': case 'replay': this.openPause(); this.pausePage = 'perf'; break;
+      case 'paused': this.closePause(); break;
+      case 'levels': this.goTitle(); this.titlePage = 'options'; this.titleSel = 0; break;
+    }
+    this.audio.play('click');
   }
 
   // Performance options (title Options, setup menu and pause menu)
@@ -633,7 +661,9 @@ export class Game {
       case 'look': s.look = clamp(s.look + d, 0, LOOK.length - 1); break;
       case 'invertY': s.invertY = !s.invertY; break;
       case 'blood': s.blood = !s.blood; this.fx.blood = s.blood; break;
-      case 'music': s.music = !s.music; this.audio.setVolumes(0.8, s.music ? 0.45 : 0); break;
+      case 'music': s.music = !s.music; this.audio.setVolumes(0.8, s.music ? 0.45 : 0); this.corner?.refresh(); break;
+      case 'sound': s.sound = s.sound === false; this.audio.setMuted(!s.sound); this.corner?.refresh(); break;
+      case 'autoFs': s.autoFs = s.autoFs === false; break;
       case 'res': s.res = cyc(s.res | 0, RES.length); this.applyQuality(); break;
       case 'autoRes': s.autoRes = !s.autoRes; this.perf.adapt(0, s.autoRes); this.applyQuality(); break;
       case 'shadows': s.shadows = !s.shadows; this.applyQuality(); break;
@@ -642,6 +672,7 @@ export class Game {
       case 'simLoad': s.simLoad = cyc(s.simLoad | 0, SIM_LOADS.length); this.perf.next = 0; break;
       case 'showFps': s.showFps = !s.showFps; break;
       case 'lod': s.lod = !s.lod; break;
+      case 'sfxRec': s.sfxRec = !s.sfxRec; this.audio.noSamples = !s.sfxRec; break;
       default: return false;
     }
     this.audio.play('click');

@@ -134,6 +134,14 @@ for (const s of Object.values(SONGS)) s.steps = s.bars * 8;
 
 // Recorded one-shot music (see music-requests.md). Each loads once sound is
 // unlocked; until it has (or if the file is missing) the synthesised sound plays.
+// Recorded songs per music mode, streamed (not decoded: ~2.5 min each). `loop` is
+// where the song's own ending starts to fade: the next pass crossfades in there.
+const TRACKS = {
+  title: { url: 'assets/music/title.mp3', loop: 115.0 },
+  setup: { url: 'assets/music/setup-1.mp3', loop: 116.0 },
+  battle: { url: 'assets/music/battle-1.mp3', loop: 145.6 },
+};
+const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
 
 export class Audio {
@@ -163,6 +171,7 @@ export class Audio {
       this.hidden = document.hidden || !document.hasFocus();
       if (!this.ctx || this.offline) return;
       if (this.hidden) this.ctx.suspend(); else this.ctx.resume();
+      this.trackPause(this.hidden);
     };
     document.addEventListener('visibilitychange', upd);
     window.addEventListener('blur', upd);
@@ -177,6 +186,44 @@ export class Audio {
     if (document.hidden || !document.hasFocus()) this.ctx.suspend();
     if (this.musicMode) this.startMusic(this.musicMode, true);
     this.loadStingers();
+    this.loadSamples();
+  }
+
+  // Recorded sound effects (assets/sfx/index.json, made by dev/sfx/generate.py):
+  // name -> variants. A sound plays its recording once loaded, the synth otherwise.
+  loadSamples() {
+    this.samples = {};
+    this.sampleLevel = {};
+    fetch('assets/sfx/index.json').then((r) => (r.ok ? r.json() : null)).then((ix) => {
+      if (!ix) return;
+      Object.assign(this.sampleLevel, ix._levels || {});
+      for (const [name, files] of Object.entries(ix)) {
+        if (name.startsWith('_')) continue;
+        for (const f of files) {
+          fetch(f).then((r) => (r.ok ? r.arrayBuffer() : null))
+            .then((b) => b && this.ctx.decodeAudioData(b))
+            .then((buf) => { if (buf) (this.samples[name] ||= []).push(buf); })
+            .catch(() => {});
+        }
+      }
+    }).catch(() => {});
+  }
+
+  // play a recorded variant of `name` into o (never the same one twice running);
+  // returns its duration, or 0 when there's no recording
+  sample(name, o, t, p) {
+    const bank = this.samples?.[name];
+    if (!bank?.length || this.noSamples) return 0;
+    let i = (Math.random() * bank.length) | 0;
+    if (bank.length > 1 && i === bank.last) i = (i + 1) % bank.length;
+    bank.last = i;
+    const c = this.ctx, src = c.createBufferSource(), g = c.createGain();
+    src.buffer = bank[i];
+    src.playbackRate.value = clamp(p, 0.5, 2);
+    g.gain.value = this.sampleLevel[name] ?? 0.6;
+    src.connect(g).connect(o);
+    src.start(t);
+    return bank[i].duration / src.playbackRate.value;
   }
 
   loadStingers() {
@@ -209,7 +256,7 @@ export class Audio {
     this.offline = typeof OfflineAudioContext !== 'undefined' && ctx instanceof OfflineAudioContext;
     const sr = c.sampleRate;
     // master: gain → look-ahead limiter (AudioWorklet; compressor fallback) → soft clipper
-    this.master = c.createGain(); this.master.gain.value = 0.9;
+    this.master = c.createGain(); this.master.gain.value = this.muted ? 0 : 0.9;
     const clip = c.createWaveShaper();
     const N = 2048, curve = new Float32Array(N);
     for (let i = 0; i < N; i++) {
@@ -306,6 +353,12 @@ export class Audio {
       }
     }
     return b;
+  }
+
+  // all sound on/off (the corner button)
+  setMuted(m) {
+    this.muted = !!m;
+    if (this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ctx.currentTime, 0.05);
   }
 
   setVolumes(sfx, music) {
@@ -486,7 +539,7 @@ export class Audio {
     const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : 0.04;
     const o = this.out(gain, pan, dist, this.sfx, wet);
     const p = pitch * rand(0.96, 1.04) * this.slowPitch;
-    const dur = this.synth(name, o, t, p, gain) || 0.3;
+    const dur = this.sample(name, o, t, p) || this.synth(name, o, t, p, gain) || 0.3;
     this.sfxList.push({ end: t + dur, gain, out: o });
     this.active = this.sfxList.length + this.voiceList.length;
   }
@@ -1097,7 +1150,10 @@ export class Audio {
       m.gain.gain.linearRampToValueAtTime(0, now + 1.3);
     }
     this.music = null;
-    if (mode && SONGS[mode]) {
+    this.trackFadeOut(now);
+    if (mode && TRACKS[mode] && !this.trackFailed?.[mode]) {
+      this.trackStart(mode);
+    } else if (mode && SONGS[mode]) {
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(0, now);
       gain.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
@@ -1110,10 +1166,81 @@ export class Audio {
     if (!this.musicTimer && !this.offline) this.musicTimer = setInterval(() => this.musicTick(), 50);
   }
 
+  // ---- recorded songs: two media elements per song, swapped at each loop
+  trackDeck(mode) {
+    this.decks ||= {};
+    if (this.decks[mode]) return this.decks[mode];
+    const c = this.ctx, deck = { mode, players: [], cur: 0, on: false, loop: TRACKS[mode].loop };
+    for (let i = 0; i < 2; i++) {
+      const el = new window.Audio(TRACKS[mode].url);
+      el.preload = i ? 'none' : 'auto';
+      el.crossOrigin = 'anonymous';
+      const g = c.createGain(); g.gain.value = 0;
+      c.createMediaElementSource(el).connect(g).connect(this.musicBus);
+      el.addEventListener('error', () => {
+        // missing / undecodable: fall back to the synthesised song
+        (this.trackFailed ||= {})[mode] = true;
+        if (this.musicMode === mode && deck.on) { deck.on = false; this.startMusic(mode, true); }
+      });
+      deck.players.push({ el, g });
+    }
+    return (this.decks[mode] = deck);
+  }
+  trackStart(mode) {
+    const deck = this.trackDeck(mode), now = this.ctx.currentTime;
+    deck.on = true;
+    const p = deck.players[deck.cur];
+    p.g.gain.cancelScheduledValues(now);
+    p.g.gain.setValueAtTime(p.g.gain.value, now);
+    p.g.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
+    if (p.el.paused) { p.el.currentTime = 0; if (!this.hidden) p.el.play().catch(() => {}); }
+    this.track = deck;
+  }
+  trackFadeOut(now) {
+    const deck = this.track;
+    if (!deck) return;
+    this.track = null;
+    deck.on = false;
+    for (const p of deck.players) {
+      p.g.gain.cancelScheduledValues(now);
+      p.g.gain.setValueAtTime(p.g.gain.value, now);
+      p.g.gain.linearRampToValueAtTime(0, now + 1.3);
+    }
+    setTimeout(() => { if (!deck.on) for (const p of deck.players) p.el.pause(); }, 1500);
+  }
+  trackPause(hidden) {
+    const deck = this.track;
+    if (!deck) return;
+    for (const p of deck.players) {
+      if (hidden) { p.wasPlaying = !p.el.paused; p.el.pause(); } else if (p.wasPlaying) p.el.play().catch(() => {});
+    }
+  }
+  // near the song's ending: start the other player from the top and crossfade
+  trackTick() {
+    const deck = this.track;
+    if (!deck || this.hidden) return;
+    const cur = deck.players[deck.cur], loop = deck.loop;
+    if (cur.el.paused && !cur.el.ended) { if (cur.el.readyState > 0) cur.el.play().catch(() => {}); return; }
+    if (cur.el.currentTime < loop - XFADE && !cur.el.ended) return;
+    const now = this.ctx.currentTime, nx = deck.players[1 - deck.cur];
+    nx.el.currentTime = 0;
+    nx.el.play().catch(() => {});
+    nx.g.gain.cancelScheduledValues(now);
+    nx.g.gain.setValueAtTime(0, now);
+    nx.g.gain.linearRampToValueAtTime(1, now + 0.25);
+    cur.g.gain.cancelScheduledValues(now);
+    cur.g.gain.setValueAtTime(cur.g.gain.value, now);
+    cur.g.gain.linearRampToValueAtTime(0, now + XFADE);
+    const old = cur.el;
+    setTimeout(() => { if (deck.players[deck.cur].el !== old) old.pause(); }, XFADE * 1000 + 200);
+    deck.cur = 1 - deck.cur;
+  }
+
   // schedule notes up to `ahead` seconds in the future
   musicTick(ahead = 0.3) {
     const c = this.ctx;
     if (!c) return;
+    this.trackTick();
     const now = c.currentTime;
     for (let i = this.musics.length - 1; i >= 0; i--) {
       const m = this.musics[i];
@@ -1126,7 +1253,7 @@ export class Audio {
         m.step++;
       }
     }
-    if (!this.musics.length && this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
+    if (!this.musics.length && !this.track && this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
   }
 
   musicStep(m, t) {
