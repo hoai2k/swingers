@@ -4,6 +4,19 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+<!-- fair-round11 -->
+## Delivered round 11 batches (6/22 signs)
+
+- `signs/stratford_fall_fair.png` (1024 × 256) — **STRATFORD FALL FAIR**: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner.
+- `signs/pirate_ship.png` (1024 × 256) — **PIRATE SHIP**: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon.
+- `signs/viking_ship.png` (1024 × 256) — **VIKING SHIP**: swinging Viking longship ride: dark wood-brown board, ice-blue letters, small horned-helmet icon.
+- `signs/ring_of_fire.png` (1024 × 256) — **RING OF FIRE**: looping ring coaster: black board, flaming orange-red letters, small flame-ring icon.
+- `signs/gravitron.png` (1024 × 256) — **GRAVITRON**: spinning saucer ride: chrome-silver board, electric purple letters, small flying-saucer icon.
+- `signs/starship_2000.png` (1024 × 256) — **STARSHIP 2000**: retro space-age spinning ride: navy board, neon cyan letters, small rocket icon.
+
+Delivered with built-in imagegen, 2026-10-25. Exact dimensions, alpha, lettering and icons reviewed; loaded through the game manifest in the browser. Prompts and original sources are in `assets/generation.json`.
+<!-- /fair-round11 -->
+
 ## Delivered round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
 
 The game draws a procedural stand-in for each until the art arrives.

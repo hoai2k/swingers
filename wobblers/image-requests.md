@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 11 is open (22 signs).** Rounds 1–10 are delivered;
+**Status: 16 signs remaining.** Rounds 1–10 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## OPEN round 11 — Stratford Fall Fair, arcade cabinets, gadgets, phone booths (22 signs)
@@ -10,12 +10,6 @@ an autumn county fair (falling leaves, pumpkins, hay bales), so its signs lean o
 warm fall colours; arcade marquees are glowing neon on black. No real brand or
 game names, logos or characters.
 
-- `signs/stratford_fall_fair.png` (1024 × 256) — **STRATFORD FALL FAIR**: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner.
-- `signs/pirate_ship.png` (1024 × 256) — **PIRATE SHIP**: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon.
-- `signs/viking_ship.png` (1024 × 256) — **VIKING SHIP**: swinging Viking longship ride: dark wood-brown board, ice-blue letters, small horned-helmet icon.
-- `signs/ring_of_fire.png` (1024 × 256) — **RING OF FIRE**: looping ring coaster: black board, flaming orange-red letters, small flame-ring icon.
-- `signs/gravitron.png` (1024 × 256) — **GRAVITRON**: spinning saucer ride: chrome-silver board, electric purple letters, small flying-saucer icon.
-- `signs/starship_2000.png` (1024 × 256) — **STARSHIP 2000**: retro space-age spinning ride: navy board, neon cyan letters, small rocket icon.
 - `signs/zipper.png` (1024 × 256) — **ZIPPER**: flipping-cage ride: zig-zag yellow and black board, small lightning-bolt icon.
 - `signs/top_spin.png` (1024 × 256) — **TOP SPIN**: flipping gondola ride: hot pink board, white letters, small curly-arrow icon.
 - `signs/drop_tower.png` (1024 × 256) — **DROP TOWER**: free-fall tower ride: sky-blue board, bold red letters, small down-arrow icon.
