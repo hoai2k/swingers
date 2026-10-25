@@ -138,7 +138,7 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
 - **Town** — plaza with a fountain (spawn), shops, town hall, apartments, suburbs, parked cars,
   bins, cones, crates, shopping trolleys you can ride, wheelie bins you can hide in.
   Walk into the **cafe** (jukebox, rooftop terrace up the outside stairs), the **market**
-  (trolleys, vending machine) and the **arcade** (air hockey); the two-storey house by the
+  (trolleys, vending machine) and the **arcade** (air hockey and playable cabinets, below); the two-storey house by the
   town hall has a playable piano downstairs and a bedroom upstairs. Doors swing on hinges.
 - **Playground** (NE) — swings (pump with the stick), slide, see-saws, merry-go-round,
   monkey bars, trampolines, spring riders, sandbox.
@@ -153,6 +153,26 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   **mountain** with a lookout, boulders to roll, quad bikes and a **zip line** down to the
   lake; **lake** with a camp, boats, log rafts and a rope swing;
   **beach** with a pier, boats, palms and a lighthouse.
+
+## The arcade
+
+Four playable cabinets stand along the back wall of the town arcade, each showing a demo on
+its screen. Walk up and press **Y** to play: the game fills your own view (split screen works;
+everyone can play a different cabinet at once). Stick / D-pad (WASD or arrows) to move,
+**A** / **X** (Space, G or the mouse) to fire, **Start** / **B** (Esc) to leave.
+
+- **CHOMP MAZE** — eat every dot in the maze while four ghosts hunt you, each its own way;
+  power pellets turn them blue so you can eat them. Bonus berries, lives, levels.
+- **SPACE RAIDERS** — a marching grid of raiders that speeds up as it shrinks, crumbling
+  shields, a bonus saucer, waves.
+- **BUG BLASTER** — a segmented bug winds down through the mushrooms; shot segments become
+  mushrooms and split it. Spider and flea too.
+- **PADDLE BALL** — first to 11. With more than one player, starting it invites the others
+  (**Y** join / **B** no thanks, in their view); after 10 s without a taker you play the CPU.
+  Anyone can also press **Y** at the cabinet to take over the CPU's paddle.
+
+High scores (top 5 per game, and wins against the CPU) are saved; good scores pay coins
+into the purse.
 
 ## The archipelago
 
@@ -229,4 +249,5 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |
 | `src/life/` | life sim: `state.js` (saved coins/purchases/homes/pets), `wallet.js` (shared purse, `game.wallet`), `hud.js` (coin counters, floaters), `coins.js` (pickups), `earn.js` (areas, stunts, mini-game prizes), `shops.js` (shop panels, vehicle locks), `pets.js` (pets), `index.js` (wiring) |
 | `src/missions/` | jobs: `index.js` (manager: givers, runs, pay, map overlay), `steps.js` (objective step types), `ai.js` (mission NPC brains), `fx.js` (markers, beacons, hoops, fires, job items, cargo), `hud.js` (objective, pointer, results cards), `panel.js` (jobs list), `state.js` (saved medals), `jobs/*.js` (the jobs per island) |
+| `src/arcade/` | arcade cabinets: `index.js` (cabinet build, sessions, fixed-step loop, invites, high scores, bleeps), `panel.js` (per-player game panel, invite prompt), one file per game (`chomp.js`, `raiders.js`, `bugs.js`, `paddle.js`); `tools/arcade-sim.mjs` runs their attract AI headless in node |
 | `src/world/estate.js` | the CLOTHES / PET SHOP / HOMES / CAR DEALER buildings, the bungalows for sale, name plates, beds, wardrobes, `game.homes` |
