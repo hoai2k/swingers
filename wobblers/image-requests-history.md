@@ -5,7 +5,7 @@ review notes. Open requests live in `image-requests.md`; final prompts and sourc
 files are recorded in `assets/generation.json`.
 
 <!-- region-round-7 -->
-## Delivered round 7 batches (6/32 signs)
+## Delivered round 7 batches (12/32 signs)
 
 Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 
@@ -15,6 +15,12 @@ Built-in imagegen; exact sizes, alpha, text and browser loader checked.
 - `cinema.png` — **CINEMA**: red marquee board with light bulbs round the edge, yellow letters, film-reel icon.
 - `diner.png` — **DINER**: retro turquoise/teal and cream-pink roadside diner board with a chrome edge, red rounded letters, small burger-and-milkshake icon (used in Bigtown and Dusty Dunes).
 - `hotel.png` — **HOTEL**: deep purple board, gold letters, little bell icon.
+- `books.png` — **BOOKS**: warm brown board, cream letters, open-book icon.
+- `flowers.png` — **FLOWERS**: pastel pink board, white letters, tulip icon.
+- `news.png` — **NEWS**: white board, black letters, rolled newspaper icon.
+- `city_park.png` — **CITY PARK**: leafy green board, white letters, round tree icon.
+- `harbour.png` — **HARBOUR**: navy board, white letters, anchor icon.
+- `wobble_cola.png` — **WOBBLE COLA**: billboard, red board, white swirly letters, fizzy cola bottle icon (invented brand).
 <!-- /region-round-7 -->
 
 ## Delivered round 6 — ferry nameplates and saloon (4 signs)

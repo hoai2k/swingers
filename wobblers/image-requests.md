@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 40 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 34 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -54,12 +54,6 @@ stand-in for each until the art arrives.
 
 ### Bigtown (city)
 
-- `books.png` — **BOOKS**: warm brown board, cream letters, open-book icon.
-- `flowers.png` — **FLOWERS**: pastel pink board, white letters, tulip icon.
-- `news.png` — **NEWS**: white board, black letters, rolled newspaper icon.
-- `city_park.png` — **CITY PARK**: leafy green board, white letters, round tree icon.
-- `harbour.png` — **HARBOUR**: navy board, white letters, anchor icon.
-- `wobble_cola.png` — **WOBBLE COLA**: billboard, red board, white swirly letters, fizzy cola bottle icon (invented brand).
 - `bouncy_beans.png` — **BOUNCY BEANS**: billboard, yellow board, orange bubbly letters, smiling jelly bean icon.
 - `taxi.png` — **TAXI**: yellow board with a black-and-white checker strip, black letters.
 - `delivery.png` — **DELIVERY**: orange board, white letters, cardboard box icon.
