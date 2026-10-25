@@ -8,7 +8,9 @@ import * as THREE from 'three';
 export const EXTRA_HATS = ['viking', 'chef', 'pirate', 'wizard', 'flowers', 'headphones', 'bunny', 'propeller',
   'astronaut', 'trafficcone', 'halo', 'santa', 'hardhat', 'mortarboard', 'fez', 'catears',
   // sold in the clothes shop (unlocks.js SHOP_COSMETICS); keep appending so saved looks keep their index
-  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester'];
+  'beret', 'bowler', 'sombrero', 'frog', 'antlers', 'tiara', 'pumpkin', 'jester',
+  // Tiki Jungle and Coconut Cove presents
+  'explorer', 'tikimask', 'parrot', 'snorkel', 'sailor', 'coconut'];
 
 export const EXTRA_HAT_NAMES = {
   viking: 'Viking helmet', chef: 'Chef hat', pirate: 'Pirate hat', wizard: 'Wizard hat', flowers: 'Flower crown',
@@ -17,6 +19,7 @@ export const EXTRA_HAT_NAMES = {
   fez: 'Fez', catears: 'Cat ears',
   beret: 'Beret', bowler: 'Bowler hat', sombrero: 'Sombrero', frog: 'Frog hat', antlers: 'Antlers', tiara: 'Tiara',
   pumpkin: 'Pumpkin head', jester: 'Jester hat',
+  explorer: 'Explorer helmet', tikimask: 'Tiki mask', parrot: 'Parrot pal', snorkel: 'Snorkel mask', sailor: 'Sailor hat', coconut: 'Coconut cup',
 };
 
 const glassMat = new THREE.MeshPhongMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, shininess: 120, specular: 0xffffff, depthWrite: false });
@@ -202,6 +205,52 @@ export function buildExtraHat(b, kind, R, c, group) {
       });
       return true;
     }
+    case 'explorer':
+      b.sphere(R * 1.08, 0xd8c896, [0, R * 0.45, 0], [1, 0.62, 1.05], 16);
+      b.cyl(R * 1.35, R * 1.35, 0.03, 0xd8c896, [0, R * 0.42, 0], null, 20);
+      b.cyl(R * 1.09, R * 1.09, R * 0.12, 0x7a5a32, [0, R * 0.5, 0], null, 18);
+      b.sphere(R * 0.12, 0x7a5a32, [0, R * 1.1, 0], null, 6);
+      return true;
+    case 'tikimask':
+      b.rbox(R * 1.3, R * 1.5, R * 0.3, R * 0.1, 0x9a6a3a, [0, R * 1.2, R * 0.35]);
+      for (const s of [-1, 1]) { b.sphere(R * 0.17, 0xffffff, [s * R * 0.3, R * 1.4, R * 0.5], [1, 1, 0.4], 8); b.sphere(R * 0.08, 0x1e1e24, [s * R * 0.3, R * 1.4, R * 0.56], null, 6); }
+      b.box(R * 0.7, R * 0.18, R * 0.1, 0xffffff, [0, R * 0.85, R * 0.52]);
+      b.box(R * 0.14, R * 0.4, R * 0.12, 0x7a5032, [0, R * 1.15, R * 0.55]);
+      for (let i = 0; i < 5; i++) b.box(R * 0.14, R * 0.5, 0.02, [0x3cae4a, 0xff5a3a, 0xffd23f][i % 3], [(i - 2) * R * 0.28, R * 2.1, R * 0.32], [0, 0, (i - 2) * 0.25]);
+      return true;
+    case 'parrot':
+      b.sphere(R * 0.42, 0xe8322b, [0, R * 1.2, 0], [0.9, 1.2, 1], 10);
+      b.sphere(R * 0.3, 0xe8322b, [0, R * 1.75, R * 0.12], null, 10);
+      b.cone(R * 0.12, R * 0.3, 0xffd23f, [0, R * 1.7, R * 0.45], [Math.PI / 2 + 0.4, 0, 0], 6);
+      for (const s of [-1, 1]) { b.sphere(R * 0.07, 0xffffff, [s * R * 0.2, R * 1.82, R * 0.3], null, 6); b.box(0.02, R * 0.5, R * 0.4, 0x3cae4a, [s * R * 0.38, R * 1.2, -R * 0.05], [0.3, 0, s * 0.2]); }
+      b.box(R * 0.22, R * 0.9, 0.02, 0x3f8cff, [0, R * 0.95, -R * 0.45], [-0.6, 0, 0]);
+      b.cyl(R * 0.03, R * 0.03, R * 0.3, 0xffb24a, [0, R * 0.78, 0], null, 4);
+      return true;
+    case 'snorkel':
+      b.torus(R * 1.0, R * 0.07, 0x3f8cff, [0, R * 0.12, 0], [Math.PI / 2, 0, 0], 20);
+      b.rbox(R * 1.1, R * 0.5, R * 0.25, R * 0.1, 0xffd23f, [0, R * 0.2, R * 0.92]);
+      glass(group, R * 0.95, R * 0.38, [0, R * 0.2, R * 1.06]);
+      b.cyl(R * 0.08, R * 0.08, R * 1.6, 0xff8a1a, [R * 0.95, R * 0.7, R * 0.2], null, 8);
+      b.torus(R * 0.15, R * 0.06, 0xff8a1a, [R * 0.82, -R * 0.08, R * 0.32], [0, Math.PI / 2, 0], 8);
+      return true;
+    case 'sailor':
+      b.cyl(R * 0.95, R * 0.85, R * 0.45, 0xffffff, [0, R * 0.72, 0], null, 18);
+      b.cyl(R * 1.18, R * 1.18, R * 0.12, 0xffffff, [0, R * 0.98, 0], null, 18);
+      b.cyl(R * 0.87, R * 0.87, R * 0.12, 0x1f2b5c, [0, R * 0.6, 0], null, 18);
+      for (const s of [-1, 1]) b.box(R * 0.1, R * 0.5, 0.02, 0x1f2b5c, [s * R * 0.1, R * 0.35, -R * 0.9], [0.2, 0, s * 0.2]);
+      return true;
+    case 'coconut':
+      b.sphere(R * 0.95, 0x6b4a2a, [0, R * 0.55, 0], [1, 0.55, 1], 14);
+      b.cyl(R * 0.85, R * 0.85, 0.03, 0xf8f2e0, [0, R * 0.88, 0], null, 16);
+      b.cyl(R * 0.05, R * 0.05, R * 1.1, 0xff5a8a, [R * 0.35, R * 1.3, 0], [0, 0, -0.35], 6);
+      b.cone(R * 0.4, R * 0.25, 0x3fe0d0, [-R * 0.3, R * 1.25, R * 0.2], null, 8);
+      b.cyl(R * 0.03, R * 0.03, R * 0.5, 0xffffff, [-R * 0.3, R * 1.0, R * 0.2], null, 4);
+      return true;
   }
   return false;
+}
+function glass(group, w, h, pos) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glassMat);
+  m.position.set(pos[0], pos[1], pos[2]);
+  group?.add(m);
 }
