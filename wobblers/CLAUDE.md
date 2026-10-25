@@ -18,7 +18,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   Raised limbs float (gravity scale 0, weight moved to the torso); hanging arms keep
   gravity. Keep `kp * DT² ≲ 0.3`. Jumps use coyote time and a press buffer (`COYOTE`, `JUMP_BUFFER`),
   and `probeGround` falls back to `FOOT_RAYS` round the hips so standing on an edge still counts
-  as grounded. In the air the legs push off, tuck, then reach down for the landing. Legs are visual
+  as grounded. In the air the legs push off, tuck, then reach down for the landing. While in control the legs
+  aren't motor-driven: `poseLegs` sets each leg to its animation target (clamped to `LEG_LIMITS`,
+  a comfortable range), places it on its joint and moves its momentum onto the hips; only a
+  limp ragdoll drives them with physics (motors this light drifted +-0.5 rad against the body). Legs are visual
   while in control: their colliders skip static scenery and vehicles (`groupsLegs`), so a
   foot can't get caught under the ground; `updateLegs` makes them solid again for a full
   ragdoll and first pulls any leg behind a surface back out. Players duck under low ceilings

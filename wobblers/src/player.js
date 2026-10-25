@@ -148,7 +148,7 @@ const BODY_PROFILE = smoothProfile([
 const BODY_SPLIT = 0.76;  // trousers below, shirt above
 const BODY_DEPTH = 0.88;  // front-to-back over side-to-side
 const SHOULDER = [0.34, 1.12], SHOULDER_R = 0.087; // = the uArm joint pivot
-const shoulderWiden = (y) => 1 + 0.2 * Math.exp(-(((y - 1.085) / 0.11) ** 2)); // torso x scale
+const shoulderWiden = (y) => 1 + 0.3 * Math.exp(-(((y - 1.07) / 0.15) ** 2)); // torso x scale: broad shoulders that slope into the neck
 
 let _skinTemplate = null;
 function skinTemplate() {
@@ -189,14 +189,15 @@ function skinTemplate() {
   add(shape(lathe([mid, ...prof.slice(split)], 32)), 'shirt', waist);
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
-    // shoulder ball (chest), sunk into the widened torso: the arm bends out of it
-    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.97, SHOULDER[1] - 0.008, 0, 1, 0.9, 0.96), 'shirt', 'chest');
+    // shoulder pad (chest): a flattened oval stretched in toward the neck, so the
+    // shoulder line slopes from the neck down into the arm (no round knob on top)
+    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6, 0.62, 0.95), 'shirt', 'chest');
     // the arm: one tube from inside the shoulder to inside the mitten, bending
     // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
     const sh = JI['uArm' + h], el = JI['lArm' + h];
     const arm = (x, y) => (y > (sh.pivot[1] + el.pivot[1]) / 2 ? band(sh, sh.pivot[1] - y) : band(el, el.pivot[1] - y));
     const HEM = 0.885;
-    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.086, 1.12]], { bottom: false }), 16), x, 0, 0), 'shirt', arm);
+    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 16), x, 0, 0), 'shirt', arm); // the top cap ends inside the shoulder pad
     add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 14), x, 0, 0), 'skin', arm);
     // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff
     const hy = 0.745 - 0.13; // lower-arm centre + HAND_OFF
@@ -232,6 +233,12 @@ const _col = new THREE.Color(), _jq = new THREE.Quaternion(), _jp = new THREE.Ve
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _qd = new THREE.Quaternion();
 const _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
 const _e = new THREE.Euler();
+// leg ranges in radians, relative to the parent part (XYZ euler; x = forward / back bend)
+const LEG_PARTS = ['uLegL', 'uLegR', 'lLegL', 'lLegR'];
+const LEG_LIMITS = {
+  u: { x0: -1.8, x1: 0.6, y: 0.35, z: 0.4 },   // hip: forward to ~103 deg, back ~34, a little sideways / twist
+  l: { x0: -0.05, x1: 2.2, y: 0.12, z: 0.12 }, // knee: bends backwards only, to ~126 deg
+};
 const _hA = new THREE.Vector3(), _hB = new THREE.Vector3();
 const qx = (a) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), a);
 const qz = (a) => new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a);
@@ -695,6 +702,36 @@ export class Player {
     pb.applyTorqueImpulse({ x: -_va.x, y: -_va.y, z: -_va.z }, true);
   }
 
+  // While we're in control the legs are visual (they don't touch the world), so
+  // they aren't motor-driven: joint motors on legs this light can't hold a pose
+  // against the body's own wobble and the legs used to drift +-0.5 rad. Instead
+  // each leg is set to its animation pose relative to its parent, clamped to a
+  // comfortable range, and placed on its joint. Standing up out of a heap it
+  // eases in. A full ragdoll (limp) leaves them to the physics.
+  poseLegs() {
+    const k = this.getUp >= 0 ? 0.3 : 0.65; // a touch of follow-through, never a flop
+    for (const n of LEG_PARTS) {
+      const p = this.parts[n], b = p.body, pb = p.parent.body, L = LEG_LIMITS[n[0]];
+      _e.setFromQuaternion(p.target, 'XYZ');
+      _e.set(Math.min(L.x1, Math.max(L.x0, _e.x)), Math.min(L.y, Math.max(-L.y, _e.y)), Math.min(L.z, Math.max(-L.z, _e.z)), 'XYZ');
+      toQ(pb.rotation(), _qa);
+      _qc.copy(_qa).multiply(_qd.setFromEuler(_e));            // wanted world rotation
+      toQ(b.rotation(), _qb).slerp(_qc, k);
+      // keep the joint together: pivot on the parent, then back along the leg
+      const pa = p.pAnchor ??= new THREE.Vector3(...p.def.joint.map((v, i) => (v - p.parent.def.pos[i]) * S));
+      const pt = pb.translation();
+      _va.copy(pa).applyQuaternion(_qa).add(_vb.set(pt.x, pt.y, pt.z));
+      _va.sub(_vc.copy(p.anchor).applyQuaternion(_qb));
+      b.setTranslation({ x: _va.x, y: _va.y, z: _va.z }, true);
+      b.setRotation({ x: _qb.x, y: _qb.y, z: _qb.z, w: _qb.w }, true);
+      // the leg's own momentum (jump kick, pushes) moves onto the hips rather
+      // than vanishing, so jumps and knocks keep their strength
+      const lv = b.linvel(), hv = this.hips.linvel(), m = b.mass();
+      this.hips.applyImpulse({ x: (lv.x - hv.x) * m, y: (lv.y - hv.y) * m, z: (lv.z - hv.z) * m }, true);
+      b.setLinvel(pb.linvel(), true); b.setAngvel(pb.angvel(), true);
+    }
+  }
+
   // Raised limbs float (their weight moves onto the torso) so the joint drives
   // only handle motion and can stay soft and stable. Hanging arms keep their
   // weight and swing like pendulums.
@@ -1015,8 +1052,12 @@ export class Player {
       const dl = Math.hypot(dvx, dvz);
       if (dl > maxDv) { dvx *= maxDv / dl; dvz *= maxDv / dl; }
       const M = this.totalMass * strength * (this.getUp >= 0 ? rise : 1);
-      hips.applyImpulse({ x: dvx * M * 0.55, y: 0, z: dvz * M * 0.55 }, true);
-      chest.applyImpulse({ x: dvx * M * 0.45, y: 0, z: dvz * M * 0.45 }, true);
+      // the legs take their own share: pushed only through the hips they were
+      // dragged behind and trailed ~1 rad back while running
+      const legM = this.legMass ??= LEG_PARTS.reduce((a, n) => a + parts[n].body.mass(), 0), bodyM = M * (1 - legM / this.totalMass);
+      hips.applyImpulse({ x: dvx * bodyM * 0.55, y: 0, z: dvz * bodyM * 0.55 }, true);
+      chest.applyImpulse({ x: dvx * bodyM * 0.45, y: 0, z: dvz * bodyM * 0.45 }, true);
+      for (const n of LEG_PARTS) { const lb = parts[n].body, k = M / this.totalMass * lb.mass(); lb.applyImpulse({ x: dvx * k, y: 0, z: dvz * k }, true); }
       if (this.grounded) this.accFwd = (dvx * Math.sin(this.yaw) + dvz * Math.cos(this.yaw)) / DT;
 
       // climbing: hold forward (or press jump) while hanging off a ledge
@@ -1135,8 +1176,8 @@ export class Player {
     for (const n in parts) {
       const p = parts[n];
       if (!p.parent) continue;
-      // legs are visual only: they keep their pose through bumps and stumbles
-      const kl = !limp && n.includes('Leg') ? 1 : kLimb;
+      if (!limp && n.includes('Leg')) continue; // legs are posed directly while in control (poseLegs)
+      const kl = kLimb;
       let kp = p.kp * kl, kd = p.kd * Math.sqrt(kl);
       if (limp) { kp = Math.max(kp, 4); kd = Math.max(kd, 1.2); }
       // hanging off a moving ride the hands are pinned to it: stiff arm drives
@@ -1144,6 +1185,7 @@ export class Player {
       if (this.onRide && n.includes('Arm')) { kp *= 0.2; kd *= 0.6; }
       this.drive(p, kp, kd, p.maxT);
     }
+    if (!limp) this.poseLegs(); // the legs follow the animation exactly; a full ragdoll flops freely
 
     // --- impacts: big ones knock you out, smaller ones make you stumble
     const cv = chest.linvel();
