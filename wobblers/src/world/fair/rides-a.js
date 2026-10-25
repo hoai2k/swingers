@@ -5,8 +5,8 @@
 // `side` is the direction (+1 / -1 along z) from the ride to the midway: signs,
 // stairs and boarding platforms are on that side.
 import * as THREE from 'three';
-import { RAPIER } from '../../../physics.js';
-import { Builder } from '../../../mesh.js';
+import { RAPIER } from '../../physics.js';
+import { Builder } from '../../mesh.js';
 import { FAIR, MIDWAY, RIDES } from './layout.js';
 import { setPose, power, travel, vmaxFor, sstep, ypr, AX, strut, kitStrut, place, mat4, rb, BULB, BULB2, AUTUMN } from './common.js';
 

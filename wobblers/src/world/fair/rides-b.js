@@ -5,8 +5,8 @@
 // racing round a tilted, hilly track, forwards then backwards) and Sizzler
 // (spinning arms with spinning car clusters).
 import * as THREE from 'three';
-import { RAPIER } from '../../../physics.js';
-import { Builder, matVCDouble } from '../../../mesh.js';
+import { RAPIER } from '../../physics.js';
+import { Builder, matVCDouble } from '../../mesh.js';
 import { FAIR, MIDWAY, RIDES } from './layout.js';
 import { setPose, power, travel, vmaxFor, sstep, ypr, AX, strut, kitStrut, place, mat4, rb, BULB, BULB2, NEON_CYAN, NEON_PURPLE, NEON_PINK, AUTUMN } from './common.js';
 

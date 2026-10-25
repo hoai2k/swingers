@@ -5,9 +5,9 @@
 // Spawning a ragdoll NPC costs a few ms, so the crowd is spawned lazily: once
 // any player comes within SPAWN_R of the fair, one teen per physics step.
 // Only the 16 nearest NPCs are ever simulated (npc.js); the rest are parked.
-import { registerRole, OUTFITS } from '../../../npc.js';
-import { S } from '../../../player.js';
-import { FAIR, MIDWAY, RIDES, CENTRE, PATCH } from './layout.js';
+import { registerRole, OUTFITS } from '../../npc.js';
+import { S } from '../../player.js';
+import { MIDWAY, RIDES, CENTRE, PATCH, ARCH, AVENUE } from './layout.js';
 
 const HAND = -0.13 * S; // npc.js HAND_OFF (mitten centre in the lower-arm frame)
 export const TEEN_PROPS = {
@@ -53,15 +53,15 @@ function look(i) {
   };
 }
 
-export const SPAWN_R = 330;
+export const SPAWN_R = 260;
 
 export function spawnTeens(game, R, F) {
   const list = [];
   const add = (x, z, o = {}) => list.push([x, z, { ...look(list.length), ...o }]);
-  // wanderers along the midway
+  // wanderers along the midway (either side of the avenue)
   for (let i = 0; i < 14; i++) {
-    const x = FAIR.x0 + 18 + i * (FAIR.x1 - FAIR.x0 - 30) / 13, z = MIDWAY.z + (i % 2 ? 4 : -4);
-    add(x, z, { area: { x, z: MIDWAY.z, r: 22 } });
+    const k = i % 2 ? 1 : -1, x = k * (AVENUE + 8 + Math.floor(i / 2) * 15), z = MIDWAY.z + (i % 4 < 2 ? 3 : -3);
+    add(x, z, { area: { x, z: MIDWAY.z, r: 18 } });
   }
   // little groups hanging out by the rides (standing, chatting, looking round)
   const groups = [['ferris', 3], ['gravitron', 3], ['zipper', 2], ['droptower', 3], ['himalaya', 2], ['ringfire', 3], ['tilt', 2], ['sizzler', 2], ['pirate', 2], ['carousel', 2], ['topspin', 2]];
@@ -72,10 +72,10 @@ export function spawnTeens(game, R, F) {
       add(x, z, { behaviour: 'idle', yaw: Math.atan2(gx - x, gz - z) });
     }
   }
-  // a few on the benches, at the pumpkin patch and by the entrance
-  for (let i = 0; i < 4; i++) add(FAIR.x0 + 40 + i * 62, MIDWAY.z + (i % 2 ? 8 : -8), { behaviour: 'sit' });
-  for (let i = 0; i < 3; i++) add(PATCH.x - 6 + i * 5, PATCH.z + 4, { area: { x: PATCH.x, z: PATCH.z, r: 14 } });
-  for (let i = 0; i < 2; i++) add(FAIR.x0 - 6, MIDWAY.z - 3 + i * 6, { area: { x: FAIR.x0 - 12, z: MIDWAY.z, r: 10 } });
+  // a few on the benches, at the pumpkin patch and by the entrance arch
+  for (const x of [-110, -52, 24, 82]) add(x, MIDWAY.z - 7, { behaviour: 'sit' });
+  for (let i = 0; i < 3; i++) add(PATCH.x - 6, PATCH.z - 5 + i * 5, { area: { x: PATCH.x, z: PATCH.z, r: 10 } });
+  for (let i = 0; i < 2; i++) add(ARCH.x + (i ? 11 : -11), ARCH.z + 6, { area: { x: ARCH.x + (i ? 13 : -13), z: ARCH.z + 8, r: 5 } });
   // lazy spawn: one per physics step once a player is near
   let k = 0, started = false;
   const step = () => {
@@ -85,7 +85,7 @@ export function spawnTeens(game, R, F) {
       if (!started) return;
     }
     const it = list.shift();
-    if (it) game.npcs?.spawn('teen', it[0], it[1], { region: 'fair', ...it[2] });
+    if (it) game.npcs?.spawn('teen', it[0], it[1], it[2]);
     if (!list.length) { const i = game.steppers.indexOf(step); if (i >= 0) game.steppers.splice(i, 1); }
   };
   game.steppers.push(step);

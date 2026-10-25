@@ -3,8 +3,8 @@
 // the midway side. Each car is a kinematic body placed along the track; the
 // train stops at the station for a while every lap.
 import * as THREE from 'three';
-import { RAPIER } from '../../../physics.js';
-import { Builder } from '../../../mesh.js';
+import { RAPIER } from '../../physics.js';
+import { Builder } from '../../mesh.js';
 import { FAIR, MIDWAY, RIDES } from './layout.js';
 import { setPose, travel, vmaxFor, ypr, rb, BULB } from './common.js';
 

@@ -6,13 +6,13 @@
 // Rides only animate while a player is within ACTIVE_R of the fair (checked
 // every 30 steps); far away they just stand still where they stopped.
 import * as THREE from 'three';
-import { kinematic, setPose } from '../../park.js';
-import { addSeat } from '../../playground.js';
-import { matVC, GLOW, Builder, RoundedBoxGeometry } from '../../../mesh.js';
+import { kinematic, setPose } from '../park.js';
+import { addSeat } from '../playground.js';
+import { matVC, GLOW, Builder, RoundedBoxGeometry } from '../../mesh.js';
 import { CENTRE } from './layout.js';
 
 export { setPose };
-export const ACTIVE_R = 520;
+export const ACTIVE_R = 400;
 
 // colours that light up at night (string lights, ride bulbs, neon); unique to the fair
 export const BULB = 0xffd27a, BULB2 = 0xff7b3a, NEON_CYAN = 0x6ff6ff, NEON_PURPLE = 0xc77dff, NEON_PINK = 0xff6ad5;
@@ -27,7 +27,7 @@ export class FairRides {
     this.group.userData.noCull = true;
     game.scene.add(this.group);
     // hidden with the far kit chunks by game.farCull (an entry like kit.finish makes)
-    (game.staticChunks ||= []).push({ mesh: this.group, x: CENTRE.x, z: CENTRE.z, r: 190, tall: false });
+    (game.staticChunks ||= []).push({ mesh: this.group, x: CENTRE.x, z: CENTRE.z, r: 135, tall: false });
     this.active = false;
     this.inst = [];
     this.seats = [];

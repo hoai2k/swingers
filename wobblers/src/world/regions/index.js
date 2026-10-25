@@ -16,9 +16,8 @@ import * as snow from './snow.js';
 import * as desert from './desert.js';
 import * as jungle from './jungle.js';
 import * as tropical from './tropical.js';
-import * as fair from './fair.js';
 
-export const REGION_MODULES = [city, snow, desert, jungle, tropical, fair];
+export const REGION_MODULES = [city, snow, desert, jungle, tropical];
 
 // Home island extras: map labels come from map.js AREAS; ferry docks (land end
 // of each pier and the direction it points out to sea) for world/ferries.js.
@@ -26,7 +25,6 @@ HOME_REGION.docks = [
   { id: 'home_south', name: 'Wobbly Island', x: -130, z: 330, yaw: 0 },
   { id: 'home_north', name: 'Wobbly Island', x: -95, z: -350, yaw: Math.PI },
   { id: 'home_west', name: 'Wobbly Island', x: -345, z: 150, yaw: -Math.PI / 2 },
-  { id: 'home_ne', name: 'Wobbly Island', x: 236, z: -236, yaw: 3 * Math.PI / 4 }, // Fair Ferry
 ];
 
 // Registers every region's terrain (before buildTerrain).

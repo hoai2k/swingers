@@ -171,6 +171,14 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   (A: enormous jumps with a long hop forward). A shape lasts one minute (the countdown in your
   view flashes and you flicker for the last 5 seconds); animals can't grab or climb, but walk,
   swim, flop and drive. Respawning (or the crystal ball's *Back to normal*) turns you back.
+- **Stratford Fall Fair** (south, on the beach road just past the ring road) — an autumn
+  fairground under maples in red and gold, with falling leaves, pumpkins, hay bales, stalls and
+  lots of teenagers. Fourteen rides to sit on (Y; Y again to hop off, even mid-ride): Pirate Ship
+  and Viking Ship (swinging ships), Ring of Fire (a train that loops the loop), Gravitron and
+  Starship 2000 (spinning saucers that pin you to the wall), Zipper (flipping cages on a turning
+  boom), Top Spin, Drop Tower, Tilt-a-Whirl, Himalaya (forwards and backwards over the hills),
+  Sizzler, a Ferris Wheel, a classic Carousel with up-and-down horses and a Mini Train. A pumpkin
+  patch with a scarecrow and pumpkins to kick about outside the east fence.
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
 - **Sports field** (NW) — football pitch with a giant ball, basketball court with working
   hoops and a scoreboard, parking lot.
@@ -201,7 +209,7 @@ into the purse.
 
 ## The archipelago
 
-Around the home island lie six more islands, each with its own landscape, people and things
+Around the home island lie five more islands, each with its own landscape, people and things
 to do (a banner welcomes you as you arrive; the map zooms out to show them all):
 
 - **Bigtown** (east) — the city, over a drivable suspension bridge from the home island's
@@ -227,14 +235,6 @@ to do (a banner welcomes you as you arrive; the map zooms out to show them all):
   pool and swim-up bar, beach volleyball, surfing, a harbour full of boats (speedboats, a
   sailboat, pedalos, a banana boat, jet skis), a lighthouse, a snorkel reef with fish and
   turtles, and a pirate shipwreck. Beach buggies and golf carts.
-- **Stratford Fall Fair** (north-east, Fair Ferry from the home island's north-east dock) — an
-  autumn fairground island with maples in red and gold, falling leaves, pumpkins, hay bales and
-  lots of teenagers. Fourteen rides you can sit on (Y): Pirate Ship and Viking Ship (swinging
-  ships), Ring of Fire (a train that loops the loop), Gravitron and Starship 2000 (spinning
-  saucers that pin you to the wall), Zipper (flipping cages on a turning boom), Top Spin, Drop
-  Tower, Tilt-a-Whirl, Himalaya (forwards and backwards over the hills), Sizzler, a Ferris Wheel,
-  a classic Carousel with up-and-down horses and a Mini Train. Stalls, a pumpkin patch with a
-  scarecrow, an apple orchard on the hill and pumpkins to kick about.
 
 Every island has its own people (sheriffs, skiers, tiki villagers, taxi drivers...), coins
 to collect, presents to find and jobs to do.
@@ -260,7 +260,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/input.js` | gamepads + two keyboard schemes |
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
 | `src/terrain.js` | the archipelago terrain: regions (home island + islands) with height functions, biomes, flat areas; ground colours, LOD tiles, colliders; `heightAt`, `groundAt`, `biomeAt`, `regionAt` |
-| `src/world/regions/` | one module per island (city, snow, desert, jungle, tropical, fair): terrain descriptor + `build(game, kit, R)`; `helpers.js` is the `R` helper bag |
+| `src/world/regions/` | one module per island (city, snow, desert, jungle, tropical): terrain descriptor + `build(game, kit, R)`; `helpers.js` is the `R` helper bag |
 | `src/world/bridge.js`, `src/world/ferries.js` | the Bigtown suspension bridge; ferry docks, routes and the kinematic `Ferry` |
 | `src/npc.js`, `src/world/folk.js` | NPCs (AI-driven ragdolls with roles, outfits, props, speech bubbles, LOD); the home island's islanders |
 | `src/regionbanner.js` | "Welcome to ...!" banners per view; `player.region` |
@@ -278,6 +278,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |
 | `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
+| `src/world/fair/` | the Stratford Fall Fair: layout, ride helpers (`common.js`), rides (`rides-a.js`, `rides-b.js`, `train.js`), decor + falling leaves, the `teen` NPCs |
 | `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
 | `src/world/lights.js`, `posters.js` | interior light pool (per-view nearest lights) and framed posters |
 | `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |

@@ -101,7 +101,7 @@ function detailMaterial(radius, sway, timeU) {
 // ---- scatter rules -------------------------------------------------------------
 // Per-biome tweaks: grass size, flower chance (none on snow / desert / city
 // streets anyway: they only grow where the ground colour is green).
-const BIOME = { jungle: { grass: 1.7, dense: 0.25, flower: 0.5 }, tropical: { grass: 1.1, flower: 0.6 }, city: { flower: 0.6, pebble: 0 }, snow: { pebble: 0.4, flower: 0 }, desert: { flower: 0 }, fair: { flower: 0.25, pebble: 0.15 } };
+const BIOME = { jungle: { grass: 1.7, dense: 0.25, flower: 0.5 }, tropical: { grass: 1.1, flower: 0.6 }, city: { flower: 0.6, pebble: 0 }, snow: { pebble: 0.4, flower: 0 }, desert: { flower: 0 } };
 
 export class Detail {
   constructor(game, mask) {
@@ -280,8 +280,8 @@ function coverageMask(game, bounds) {
   cam.position.set(cx, 300, cz); cam.up.set(0, 0, -1); cam.lookAt(cx, 0, cz);
   // camera "up" is -z, so image row 0 (bottom) is +z: flip below
   const shown = [];
-  const far = (game.staticChunks || []).filter((c) => !c.mesh.visible); // hidden by game.farCull
-  for (const c of far) c.mesh.visible = true;
+  const far = (game.staticChunks || []).filter((c) => !c.mesh.visible); // hidden by game.farCull (or showing their far version)
+  for (const c of far) { c.mesh.visible = true; if (c.far) c.far.visible = false; }
   scene.traverse((o) => {
     if (!o.isMesh && !o.isInstancedMesh) return;
     const isStatic = o.isMesh && o.material && o.material.vertexColors && o.position.lengthSq() === 0 && !o.userData.terrain && o.parent === scene;
