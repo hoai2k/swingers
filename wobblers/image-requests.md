@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 27 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: 31 requested signs remaining.** Rounds 1–6 are delivered and integrated;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -54,6 +54,10 @@ stand-in for each until the art arrives.
 
 ### Bigtown (city)
 
+- `jump.png` — **JUMP**: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower).
+- `wobblecorp.png` — **WOBBLECORP**: teal glass-office board, white letters, little wobbly-bean logo icon (invented company).
+- `police.png` — **POLICE**: navy board, white letters, gold star badge icon (also shown on the sides of the police car).
+- `play_me.png` — **PLAY ME**: pink board, white letters, piano-keys icon (street piano).
 
 ### Frostpeak (snow)
 
