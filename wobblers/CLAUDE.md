@@ -29,6 +29,21 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
   `world/common.js` (speed from `throwSpeed(mass)`).
+- Character mesh (`src/player.js`, "the skin"): the body, limbs, mittens and shoes are ONE
+  `THREE.SkinnedMesh` per character (`skinTemplate()` builds the rest-pose geometry once; each
+  character clones it and only repaints the colour attribute in `paintSkin`). Its bones are the
+  part groups (`part.mesh`, posed from the bodies), two squash bones (`sqBones`, Player.sync)
+  and one joint bone per joint (`JOINTS`: waist, shoulders, elbows, hips, knees) that
+  `poseJoints` puts at the pivot, turned half way between the two parts, just before each
+  skeleton upload. Each limb is one tube and torso + hips one bean; weights fade parent ->
+  joint bone -> child over `JOINTS[].h`, so bends curve like rubber. Don't move the tubes' rest
+  shape off the joint pivots in `PARTS`. The head stays its own mesh (face texture). `part.mesh`
+  groups only hold rigid extras: outfits / gadgets (`partMesh`), the head + hat, NPC props, mission
+  cargo; the skin hangs in the chest group, so hiding the part groups (forms.js) hides it.
+  Rebuild with `player.rebuildMeshes()` (setColor / NPC looks do). Outfits can recolour the body
+  instead of covering it: `shirt` / `pants` on an `OUTFIT_LIST` entry (jackets, overalls), and
+  `beltRing` fits a belt to the bean. Probe close-ups by rendering `__wob.scene` with your own
+  camera (`__wob.frame = () => {}` stops the loop).
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
   150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
   vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel

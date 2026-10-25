@@ -33,6 +33,7 @@ import { HATS } from './config.js';
 import { startEmote, stopEmote } from './emotes.js';
 import { FACES, faceMaterial } from './cosmetics.js';
 import { Builder } from './mesh.js';
+import { beltRing } from './outfits.js';
 import { injectCSS } from './map.js';
 import { meshHeight } from './terrain.js';
 
@@ -79,7 +80,7 @@ export const OUTFITS = {
   vest(part, b) { if (part === 'chest') for (const s of [-1, 1]) b.rbox(0.16, 0.34, 0.06, 0.03, 0x6b4a2a, [s * 0.11, -0.02, FRONT - 0.03], [0, s * 0.35, 0]); },
   backpack(part, b) { if (part === 'chest') { b.rbox(0.34, 0.38, 0.16, 0.06, 0x8a6a3a, [0, -0.02, BACK - 0.06]); b.rbox(0.28, 0.12, 0.08, 0.03, 0x6b4a2a, [0, -0.12, BACK - 0.15]); } },
   apron(part, b) { if (part === 'chest') b.rbox(0.34, 0.36, 0.03, 0.02, 0xffffff, [0, -0.16, FRONT + 0.01], [-0.12, 0, 0]); },
-  belt(part, b) { if (part === 'hips') b.torus(0.17, 0.025, 0x3a2a1a, [0, 0.07, 0], [Math.PI / 2, 0, 0], 16); },
+  belt(part, b) { if (part === 'hips') beltRing(b, 0.025, 0x3a2a1a); },
   lifejacket(part, b) { if (part === 'chest') b.rbox(0.48, 0.36, 0.44, 0.1, 0xff8a1a, [0, 0.0, 0.0]); },
 };
 
@@ -172,13 +173,7 @@ export class NPC extends Player {
     this.face = fi > 0 ? fi : 0;
     const outs = (d.outfit || []).map((o) => (typeof o === 'function' ? o : OUTFITS[o])).filter(Boolean);
     this.outfit = outs.length ? (n, b) => { for (const f of outs) f(n, b, S); } : null; // read by Player.partMesh
-    for (const n in this.parts) {
-      const part = this.parts[n];
-      if (n === 'head') { this.buildHat(); continue; }
-      this.group.remove(part.mesh);
-      part.mesh = this.partMesh(part.def);
-      this.group.add(part.mesh);
-    }
+    this.rebuildMeshes(); // part groups + the skinned body (player.js)
     const prop = typeof d.prop === 'function' ? d.prop : PROPS[d.prop];
     if (prop) { const b = new Builder(); prop(b); const m = b.mesh(); m.castShadow = true; this.parts.lArmR.mesh.add(m); }
     this.headMesh.material = this.face ? faceMaterial(this.face) : headMaterials().normal;
