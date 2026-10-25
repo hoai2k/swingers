@@ -3,6 +3,7 @@
 // is remembered in localStorage (settings.presents holds the found ids).
 import { settings, saveSettings } from './settings.js';
 import { isBought } from './life/state.js';
+import { JOB_OUTFITS } from './outfits.js';
 
 // [present id, reward key]. Reward keys are 'hat:<HATS name>', 'face:<FACES name>'
 // or 'pants:<PANTS name>'; every key listed here starts locked.
@@ -41,6 +42,7 @@ export const SHOP_COSMETICS = [
   ['hat:antlers', 90], ['hat:tiara', 110], ['hat:pumpkin', 120], ['hat:jester', 140],
   ['face:Heart eyes', 60], ['face:Tongue out', 50], ['face:Dizzy', 60], ['face:Nerd', 70],
   ['pants:Lime', 25], ['pants:Navy', 25], ['pants:Teal', 30], ['pants:Lilac', 30], ['pants:Cream', 30],
+  ['outfit:apron', 40], ['outfit:tutu', 80], ['outfit:cape', 120], ['outfit:wings', 150],
 ];
 const BUYABLE = new Map(SHOP_COSMETICS);
 export const priceOf = (key) => BUYABLE.get(key);
@@ -67,7 +69,11 @@ export const foundCount = () => settings.presents.filter((id) => REWARD.has(id))
 export const rewardOf = (id) => REWARD.get(id);
 // true for a reward that hasn't been found yet (base items are never locked)
 // (shop items stay locked until bought)
-export const isLocked = (key) => (LOCKABLE.has(key) && !unlocked.has(key)) || (BUYABLE.has(key) && !isBought(key));
+// Job outfits (src/outfits.js) unlock the first time that job is finished.
+const JOB_OF = new Map(Object.entries(JOB_OUTFITS).map(([job, key]) => [key, job]));
+const jobWon = (job) => (settings.missions?.best?.[job]?.wins || 0) > 0;
+export const isLocked = (key) => (LOCKABLE.has(key) && !unlocked.has(key)) || (BUYABLE.has(key) && !isBought(key)) || (JOB_OF.has(key) && !jobWon(JOB_OF.get(key)));
+export const jobLockedCount = (type) => [...JOB_OF.keys()].filter((k) => k.startsWith(type + ':') && !jobWon(JOB_OF.get(k))).length;
 export const lockedCount = (type) => [...LOCKABLE].filter((k) => k.startsWith(type + ':') && !unlocked.has(k)).length;
 export const shopLockedCount = (type) => [...BUYABLE.keys()].filter((k) => k.startsWith(type + ':') && !isBought(k)).length;
 

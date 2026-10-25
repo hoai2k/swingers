@@ -6,9 +6,12 @@ import * as THREE from 'three';
 import { headMaterials } from './player.js';
 import { paintFace } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
-import { devicePrefs, saveSettings } from './settings.js';
+import { settings, devicePrefs, saveSettings } from './settings.js';
 import { EXTRA_HAT_NAMES } from './hats.js';
 import { isLocked } from './unlocks.js';
+import { OUTFIT_LIST, outfitFn } from './outfits.js';
+
+export const OUTFITS = OUTFIT_LIST.map((o) => o.name);
 
 // Faces 8-11, trousers 9-12 and HATS past the first eight are unlocked by presents; the
 // ones after those are sold in the clothes shop (both lists in src/unlocks.js).
@@ -221,6 +224,12 @@ export function setFace(p, i) {
   if (hm && hm.material !== headMaterials().ko) hm.material = faceMaterial(p.face);
 }
 
+export function setOutfit(p, i) {
+  p.outfitIndex = (i + OUTFIT_LIST.length) % OUTFIT_LIST.length;
+  p.outfit = outfitFn(p.outfitIndex, p); // read by Player.partMesh
+  p.setColor(p.colorIndex); // rebuilds the meshes
+}
+
 export function setPants(p, i) {
   p.pantsIndex = (i + PANTS.length) % PANTS.length;
   p.pantsColor = PANTS[p.pantsIndex].color ?? undefined; // read by Player.partMesh
@@ -232,6 +241,7 @@ export { HATS };
 export const hatLocked = (i) => isLocked('hat:' + HATS[i]);
 export const faceLocked = (i) => isLocked('face:' + FACES[i]);
 export const pantsLocked = (i) => isLocked('pants:' + PANTS[i].name);
+export const outfitLocked = (i) => isLocked('outfit:' + OUTFIT_LIST[i].id);
 // Next unlocked index from i in direction d (wraps; i itself if nothing else is free).
 function nextFree(i, d, n, locked) {
   for (let k = 1; k <= n; k++) { const j = (((i + d * k) % n) + n) % n; if (!locked(j)) return j; }
@@ -240,11 +250,13 @@ function nextFree(i, d, n, locked) {
 export const cycleHat = (p, d) => setHat(p, nextFree(p.hat, d, HATS.length, hatLocked));
 export const cycleFace = (p, d) => setFace(p, nextFree(p.face || 0, d, FACES.length, faceLocked));
 export const cyclePants = (p, d) => setPants(p, nextFree(p.pantsIndex || 0, d, PANTS.length, pantsLocked));
+export const cycleOutfit = (p, d) => setOutfit(p, nextFree(p.outfitIndex || 0, d, OUTFIT_LIST.length, outfitLocked));
 // Display name of a reward key ('hat:viking' -> 'Viking helmet').
 export function rewardName(key) {
   const [type, id] = key.split(':');
   if (type === 'hat') return HAT_NAMES[id] || id;
   if (type === 'face') return id + ' face';
+  if (type === 'outfit') return OUTFIT_LIST.find((o) => o.id === id)?.name || id;
   return id + ' trousers';
 }
 
@@ -254,22 +266,38 @@ export function setHat(p, i) {
 }
 
 export function lookOf(p) {
-  return { color: p.colorIndex, hat: p.hat, face: p.face || 0, pants: p.pantsIndex || 0 };
+  return { color: p.colorIndex, hat: p.hat, face: p.face || 0, pants: p.pantsIndex || 0, outfit: p.outfitIndex || 0 };
+}
+
+// Each player slot (Player 1, Player 2...) keeps its own saved Wobbler, stored
+// beside the per-device prefs as settings.devices.slot<N>. Before slots
+// existed the look was kept per device: that one is the fallback.
+function slotPrefs(p) {
+  const key = 'slot' + (p.index + 1), d = settings.devices;
+  if (!d[key] || typeof d[key] !== 'object') d[key] = {};
+  return d[key];
+}
+export function savedLook(p) {
+  const L = slotPrefs(p).look;
+  if (L && typeof L === 'object') return L;
+  const old = devicePrefs(p.deviceId).look;
+  return old && typeof old === 'object' ? old : null;
 }
 
 export function saveLook(p) {
-  devicePrefs(p.deviceId).look = lookOf(p);
+  slotPrefs(p).look = lookOf(p);
   saveSettings();
 }
 
-// Apply the look a device used last time (if any). Returns true if one existed.
+// Apply the look this player slot saved last time (if any). Returns true if one existed.
 export function restoreLook(p) {
-  const L = devicePrefs(p.deviceId).look;
-  if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; return false; }
+  const L = savedLook(p);
+  if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; p.outfitIndex = 0; p.outfit = null; return false; }
   const n = (v, m, locked = () => false) => (Number.isInteger(v) && v >= 0 && v < m && !locked(v) ? v : 0); // locked again after a progress reset
   p.hat = n(L.hat, HATS.length, hatLocked); p.buildHat();
   p.pantsIndex = n(L.pants, PANTS.length, pantsLocked);
   p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
+  p.outfitIndex = n(L.outfit, OUTFIT_LIST.length, outfitLocked); p.outfit = outfitFn(p.outfitIndex, p);
   p.setColor(n(L.color, PLAYER_COLORS.length));
   setFace(p, n(L.face, FACES.length, faceLocked));
   return true;
@@ -279,6 +307,7 @@ export function randomLook(p) {
   const r = (m, locked = () => false) => { const free = []; for (let i = 0; i < m; i++) if (!locked(i)) free.push(i); return free[(Math.random() * free.length) | 0] ?? 0; };
   p.hat = r(HATS.length, hatLocked); p.buildHat();
   p.pantsIndex = r(PANTS.length, pantsLocked); p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
+  p.outfitIndex = r(OUTFIT_LIST.length, outfitLocked); p.outfit = outfitFn(p.outfitIndex, p);
   p.setColor(r(PLAYER_COLORS.length));
   setFace(p, r(FACES.length, faceLocked));
 }

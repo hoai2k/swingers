@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { HATS, PLAYER_CSS, MAX_PLAYERS, PLAYER_COLORS } from './config.js';
 import { settings, saveSettings, devicePrefs } from './settings.js';
 import { glyph, formatHint, promptRow, deviceKind } from './glyphs.js';
-import { FACES, PANTS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace, cycleHat, cycleFace, cyclePants } from './cosmetics.js';
-import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, shopLockedCount, resetPresents } from './unlocks.js';
+import { FACES, PANTS, OUTFITS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace, cycleHat, cycleFace, cyclePants, cycleOutfit } from './cosmetics.js';
+import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, shopLockedCount, jobLockedCount, resetPresents } from './unlocks.js';
 import { buildTitleCrowd } from './title.js';
 import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
 import { PhonePanel } from './phone.js';
@@ -159,7 +159,7 @@ class Customiser extends Panel {
     super(ui, player, 'custom');
     this.first = first;
     this.t0 = performance.now();
-    this.rows = ['Colour', 'Hat', 'Face', 'Trousers', 'Done'];
+    this.rows = ['Colour', 'Hat', 'Face', 'Trousers', 'Outfit', 'Done'];
     this.draw();
   }
   value(r) {
@@ -169,6 +169,7 @@ class Customiser extends Panel {
       case 'Hat': return HAT_NAMES[HATS[p.hat]] || HATS[p.hat];
       case 'Face': return FACES[p.face || 0];
       case 'Trousers': return PANTS[p.pantsIndex || 0].name;
+      case 'Outfit': return OUTFITS[p.outfitIndex || 0];
     }
     return '';
   }
@@ -178,6 +179,7 @@ class Customiser extends Panel {
     else if (r === 'Hat') cycleHat(p, d); // skips items still locked in presents
     else if (r === 'Face') cycleFace(p, d);
     else if (r === 'Trousers') cyclePants(p, d);
+    else if (r === 'Outfit') cycleOutfit(p, d);
     else return;
     this.ui.sfx('uiChange', { dir: d });
     this.draw();
@@ -203,10 +205,8 @@ class Customiser extends Panel {
     if (n.left) this.adjust(-1);
     if (n.right) this.adjust(1);
     if (n.x) this.random();
-    if (n.ok) {
-      if (this.rows[this.sel] === 'Done') this.done();
-      else { this.sel++; this.ui.sfx('uiMove'); this.draw(); }
-    } else if (n.back || n.start) this.done();
+    // A plays straight away with the saved (or default) look: changing it is optional
+    if (n.ok || n.back || n.start) this.done();
   }
   draw() {
     const p = this.p, k = this.kindName;
@@ -214,15 +214,15 @@ class Customiser extends Panel {
       if (r === 'Done') return `<div class="item done ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${glyph('A', k)} Let's go!</span></div>`;
       let extra = '';
       if (r === 'Colour') extra = `<div class="swatches">${PLAYER_COLORS.map((c, j) => `<i class="${j === p.colorIndex ? 'on' : ''}" style="background:${PLAYER_CSS(c)}"></i>`).join('')}</div>`;
-      const ty = { Hat: 'hat', Face: 'face', Trousers: 'pants' }[r];
-      const nl = r === 'Colour' ? 0 : lockedCount(ty), ns = r === 'Colour' ? 0 : shopLockedCount(ty);
-      if (nl || ns) extra = `<div class="lockline">🔒 ${[nl && `${nl} in presents`, ns && `${ns} in the clothes shop`].filter(Boolean).join(' · ')}</div>`;
+      const ty = { Hat: 'hat', Face: 'face', Trousers: 'pants', Outfit: 'outfit' }[r];
+      const nl = r === 'Colour' ? 0 : lockedCount(ty), ns = r === 'Colour' ? 0 : shopLockedCount(ty), nj = r === 'Colour' ? 0 : jobLockedCount(ty);
+      if (nl || ns || nj) extra = `<div class="lockline">🔒 ${[nl && `${nl} in presents`, nj && `${nj} from jobs`, ns && `${ns} in the clothes shop`].filter(Boolean).join(' · ')}</div>`;
       return `<div class="item ${i === this.sel ? 'sel' : ''}" data-i="${i}"><span>${r}</span><span class="val"><span class="arrows">◀</span><b>${this.value(r)}</b><span class="arrows">▶</span></span>${extra}</div>`;
     }).join('');
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
       <div class="phead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">Player ${p.index + 1}<small>${DEV_NAME(p.deviceId)}</small></div>
       <h2>Make your Wobbler</h2><div class="presents">🎁 Presents ${foundCount()}/${PRESENTS_TOTAL}</div>${rows}
-      <div class="foot">${promptRow([['LS', 'Choose'], ['X', 'Surprise me'], ['A', 'Done']], k)}</div>
+      <div class="foot">${promptRow([['LS', 'Change'], ['X', 'Surprise me'], ['A', "Let's go!"]], k)}</div>
       <div class="mousebtns"><span data-act="random">Surprise me</span><span data-act="done">Done</span></div></div>`;
   }
 }
@@ -238,6 +238,7 @@ class PauseMenu extends Panel {
     const p = this.p, ui = this.ui, g = ui.game, pf = devicePrefs(p.deviceId);
     if (this.page === 'settings') {
       return [
+        { label: 'Customise your Wobbler', act: () => ui.openCustomiser(p, false) },
         ...sharedSettingItems(ui),
         { label: 'Invert camera Y', value: pf.invertY ? 'On' : 'Off', adj: () => { pf.invertY = !pf.invertY; saveSettings(); } },
         { label: this.confirmReset ? 'Press again to reset!' : 'Reset presents', danger: true, act: () => {
@@ -249,20 +250,25 @@ class PauseMenu extends Panel {
           this.confirmLife = false; g.life?.reset(); ui.toast('Coins, shopping, homes and pets reset');
         } },
         { label: 'Camera sensitivity', slider: (pf.sens - 0.25) / 2.25, adj: (d) => { pf.sens = Math.max(0.25, Math.min(2.5, pf.sens + d * 0.25)); saveSettings(); } },
+        { label: 'Reset vehicles', act: () => { for (const v of g.vehicles) if (!v.seats.some((s) => s.occupant)) v.respawn(); ui.toast('Vehicles are back home'); ui.closePanel(p); } },
+        { label: 'Back', act: () => this.back() },
+      ];
+    }
+    if (this.page === 'info') {
+      return [
+        { label: 'Instructions', sub: true, act: () => ui.openHelp(p.deviceId) },
+        { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
+        { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
+        ...(g.missions?.menuItems(p, this) || []), // jobs list, cancel job, jobs done (missions/index.js)
+        ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
         { label: 'Back', act: () => this.back() },
       ];
     }
     return [
       { label: 'Resume', act: () => ui.closePanel(p) },
-      { label: 'Customise', act: () => ui.openCustomiser(p, false) },
-      { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
-      { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
-      ...(g.missions?.menuItems(p, this) || []), // jobs list, cancel job, jobs done (missions/index.js)
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
-      ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
-      { label: 'Controls', sub: true, act: () => ui.openHelp(p.deviceId) },
-      { label: 'Reset vehicles', act: () => { for (const v of g.vehicles) if (!v.seats.some((s) => s.occupant)) v.respawn(); ui.toast('Vehicles are back home'); ui.closePanel(p); } },
+      { label: 'Info', sub: true, act: () => this.go('info') },
       { label: 'Leave game', danger: true, act: () => ui.leave(p) },
     ];
   }
@@ -290,14 +296,14 @@ class PauseMenu extends Panel {
     if (n.left) this.adjust(-1);
     if (n.right) this.adjust(1);
     if (n.ok) this.activate(0);
-    else if (n.start && this.p.deviceId !== 'kb1') { this.ui.sfx('uiBack'); this.ui.closePanel(this.p); }
+    else if (n.start) { this.ui.sfx('uiBack'); this.ui.closePanel(this.p); } // Start / Esc: unpause from any page
     else if (n.back) this.back();
   }
   draw() {
     const p = this.p, k = this.kindName, it = this.items();
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
       <div class="phead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">Player ${p.index + 1}<small>${DEV_NAME(p.deviceId)}</small></div>
-      <h2>${this.page === 'settings' ? 'Settings' : this.ui.game.paused ? 'Paused' : 'Menu'}</h2>
+      <h2>${this.page === 'settings' ? 'Settings' : this.page === 'info' ? 'Info' : this.ui.game.paused ? 'Paused' : 'Menu'}</h2>
       ${it.map((x, i) => itemHTML(x, i, this.sel)).join('')}
       <div class="foot">${promptRow([['A', 'Select'], ['B', 'Back']], k)}${this.page === 'settings' ? promptRow([['DPAD', 'Change']], k) : ''}</div></div>`;
   }
@@ -310,6 +316,7 @@ class SettingsCard extends Panel {
   constructor(ui) {
     super(ui, null, 'menu gset');
     document.body.appendChild(this.el); // above the title screen
+    setTimeout(() => this.el.classList.add('drawn'), 350);
     this.devId = 'kb1';
     this.el.addEventListener('pointerdown', (e) => { if (e.target === this.el) ui.closeSettings(); });
     this.draw();
@@ -428,6 +435,18 @@ export class UI {
       if (e.target.closest?.('[data-act="close"]')) this.closeHelp();
     });
     document.getElementById('press')?.addEventListener('click', () => this.tryJoin('kb1'));
+    // clicking outside a menu card (the dimmed part of that view) closes it
+    addEventListener('pointerdown', (e) => {
+      if (this.settingsCard || e.target.closest?.('#corner, #press')) return;
+      if (this.help) { if (!e.target.closest?.('.hpanel')) this.closeHelp(); return; }
+      for (const [p, pn] of [...this.panels]) {
+        if (pn.el.contains(e.target)) continue; // on the card itself
+        const r = pn.el.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) continue;
+        if (pn.done && pn instanceof Customiser) pn.done();
+        else { this.sfx('uiBack'); this.closePanel(p); }
+      }
+    }, true);
     // loading bar mirrors the percentage main.js writes
     const pct = document.getElementById('loadpct'), bar = document.getElementById('loadbar');
     if (pct && bar) new MutationObserver(() => { bar.style.width = pct.textContent; }).observe(pct, { childList: true, characterData: true, subtree: true });
@@ -457,7 +476,15 @@ export class UI {
     this.idle = 4;
     const wake = (e) => { if (!document.pointerLockElement || e.type !== 'mousemove') this.poke(); };
     for (const ev of ['mousemove', 'pointerdown', 'touchstart']) addEventListener(ev, wake, { passive: true });
-    for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => this.refreshCorner());
+    for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => {
+      // in fullscreen the browser keeps Esc for itself; the keyboard lock (Chrome)
+      // hands a tap to the game's pause menu (holding Esc still leaves fullscreen)
+      try {
+        if (fsElement()) navigator.keyboard?.lock?.(['Escape'])?.catch?.(() => {});
+        else navigator.keyboard?.unlock?.();
+      } catch (e) { /* unsupported */ }
+      this.refreshCorner();
+    });
     setInterval(() => {
       this.idle -= 0.25;
       const show = this.idle > 0 || !this.game.players.length || !!this.settingsCard || bar.matches(':hover');
@@ -766,6 +793,8 @@ export class UI {
   setPanel(p, panel) {
     this.panels.get(p)?.remove();
     if (panel) this.panels.set(p, panel); else this.panels.delete(p);
+    // panels pop in once; redraws (moving the selection) must not replay it
+    if (panel?.el) setTimeout(() => panel.el.classList.add('drawn'), 350);
     this.game.input.capture(p.deviceId, !!panel);
     if (panel && p.deviceId === 'kb1' && document.pointerLockElement) document.exitPointerLock();
     this.updatePause();
@@ -801,6 +830,8 @@ export class UI {
     this.help = { id, tab: deviceKind(id) === 'pad' ? 0 : deviceKind(id) === 'kb1' ? 1 : 2 };
     this.game.input.capture(id, true);
     if (document.pointerLockElement) document.exitPointerLock();
+    this.helpEl.classList.remove('drawn');
+    clearTimeout(this.helpPop); this.helpPop = setTimeout(() => this.helpEl.classList.add('drawn'), 350);
     this.drawHelp();
     this.helpEl.classList.remove('hidden');
     this.sfx('uiOpen');

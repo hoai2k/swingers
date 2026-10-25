@@ -18,7 +18,13 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   Raised limbs float (gravity scale 0, weight moved to the torso); hanging arms keep
   gravity. Keep `kp * DT² ≲ 0.3`. Jumps use coyote time and a press buffer (`COYOTE`, `JUMP_BUFFER`),
   and `probeGround` falls back to `FOOT_RAYS` round the hips so standing on an edge still counts
-  as grounded. In the air the legs push off, tuck, then reach down for the landing. Climbing: `player.grip` (GRIP_* constants) drains while
+  as grounded. In the air the legs push off, tuck, then reach down for the landing. Legs are visual
+  while in control: their colliders skip static scenery and vehicles (`groupsLegs`), so a
+  foot can't get caught under the ground; `updateLegs` makes them solid again for a full
+  ragdoll and first pulls any leg behind a surface back out. Players duck under low ceilings
+  (`headroom`) and pushing the stick for 1.5 s without moving (nothing `blockedAhead`) hops
+  them free (`stuckT`). Wall jumps (`wallNear`): a jump in the air next to a wall kicks off
+  it; chaining between walls works, the same wall again needs a landing first. Climbing: `player.grip` (GRIP_* constants) drains while
   hanging off the world and refills on the ground; mantling needs a ledge top within reach
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
@@ -38,7 +44,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Presents (`world/presents.js`, `src/unlocks.js`): spots are `[x, z, ray start]` — the box
   sits on the first static surface a ray from that height hits. New cosmetic rewards go in
   `unlocks.js` `PRESENTS` (reward keys `hat:` / `face:` / `pants:`); anything listed there starts
-  locked. New hats are built in `src/hats.js`.
+  locked. New hats are built in `src/hats.js`. Outfits (the customiser's Outfit row) are `src/outfits.js`
+  `OUTFIT_LIST` (append only; saved looks store indices): free ones, one per job (unlocked by
+  finishing that job once, `JOB_OUTFITS`) and shop ones (`SHOP_COSMETICS`). Each player slot
+  keeps its own saved look (`settings.devices.slot<N>`, `cosmetics.js` `saveLook` / `restoreLook`);
+  A on the join customiser plays straight away.
 - Rendering (`src/sky.js`, `src/look.js`, `world/water.js`, `world/detail.js`, `game.render`):
   read `game.timeOfDay` (hours), `game.dayLight` (0..1), `game.nightLight` (0..1) and
   `game.isNight` for anything that should react to the day/night cycle (headlights, lit

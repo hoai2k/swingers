@@ -19,7 +19,7 @@ cd wobblers && python3 -m http.server 8123   # then open http://localhost:8123
 Press **A** on a controller (or **Enter** / **Space** on the keyboard) to join. More players
 join the same way at any time; the screen splits 2 / 4 / 6 / 8 ways. Each new player first
 gets a customiser in their own view (colour, hat, face, trousers; **X** for a random look);
-the look is remembered per controller / keyboard. **24 presents** are hidden around the
+the look is remembered per player slot (Player 1, Player 2...), so **A** plays straight away with it. **24 presents** are hidden around the
 island (rooftops, towers, under the pier, on a raft...): touch one to open it and unlock a new
 hat, face or pair of trousers for everyone (16 hats, 4 faces, 4 trousers; progress is saved, and
 shown in the customiser and menu; *Settings → Reset presents* starts over). Locked items are

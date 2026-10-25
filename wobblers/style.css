@@ -185,3 +185,5 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #8fd3ff; fon
 #corner svg { width: 58%; height: 58%; }
 .ppanel.gset { position: fixed; inset: 0; z-index: 35; pointer-events: auto; background: rgba(20,50,110,.6); }
 .ppanel.gset .card { --acc: var(--blue); padding-top: 8px; }
+/* menus pop in once (ui.js adds .drawn); later redraws keep still, shakes still play */
+.ppanel.drawn > :not(.shake), .ppanel.drawn .card:not(.shake), .ppanel.drawn .mapcard, #help.drawn .hpanel { animation: none; }

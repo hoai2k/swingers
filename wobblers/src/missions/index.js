@@ -20,6 +20,8 @@
 //   game.missions.track(player, job) map + HUD pointer to a job's giver (jobs list)
 // Saved records: settings.missions (state.js). Idle cost: one giver proximity check
 // every 30 physics steps and a marker bob for markers near a player.
+import { JOB_OUTFITS } from '../outfits.js';
+import { rewardName } from '../cosmetics.js';
 import * as THREE from 'three';
 import { SEA_LEVEL } from '../config.js';
 import { meshHeight } from '../terrain.js';
@@ -273,6 +275,9 @@ export class Missions {
     }
     const gn = job.giverRef?.npc;
     if (gn && !gn.parked) gn.say(job.giver.thanks || 'Great work!', 3);
+    // the first finish unlocks this job's outfit (src/outfits.js) for everyone
+    const outfit = JOB_OUTFITS[job.id];
+    if (outfit && !prev?.wins) this.later(150, () => this.game.ui?.toast(`👕 New outfit: <b>${rewardName(outfit)}</b> <small>Settings → Customise</small>`));
   }
 
   end(run, how) {

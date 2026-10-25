@@ -12,8 +12,8 @@ import { PLAYER_CSS, HATS } from '../config.js';
 import { promptRow, deviceKind } from '../glyphs.js';
 import { injectCSS } from '../map.js';
 import { SHOP_COSMETICS } from '../unlocks.js';
-import { devicePrefs } from '../settings.js';
-import { FACES, PANTS, HAT_NAMES, setHat, setFace, setPants, saveLook, restoreLook, rewardName } from '../cosmetics.js';
+import { FACES, PANTS, HAT_NAMES, setHat, setFace, setPants, setOutfit, saveLook, restoreLook, savedLook, rewardName } from '../cosmetics.js';
+import { OUTFIT_LIST } from '../outfits.js';
 import { callVehicle, CALLABLE } from '../phone.js';
 import { life, markBought, isBought, petsOf, saveLife } from './state.js';
 import { PET_KINDS, PET_ORDER } from './pets.js';
@@ -63,17 +63,17 @@ const coin = '<i class="coinic"></i>';
 
 // ---- item lists -----------------------------------------------------------
 function clothesItems(game, p) {
-  const saved = devicePrefs(p.deviceId).look || {};
+  const saved = savedLook(p) || {};
   return SHOP_COSMETICS.map(([key, price]) => {
     const [type, id] = key.split(':');
-    const idx = type === 'hat' ? HATS.indexOf(id) : type === 'face' ? FACES.indexOf(id) : PANTS.findIndex((q) => q.name === id);
+    const idx = type === 'hat' ? HATS.indexOf(id) : type === 'face' ? FACES.indexOf(id) : type === 'outfit' ? OUTFIT_LIST.findIndex((o) => o.id === id) : PANTS.findIndex((q) => q.name === id);
     const col = type === 'pants' ? PANTS[idx]?.color : null;
     const name = type === 'hat' ? (HAT_NAMES[id] || id) : rewardName(key).replace(/^./, (c) => c.toUpperCase());
-    const wearing = (type === 'hat' && saved.hat === idx) || (type === 'face' && saved.face === idx) || (type === 'pants' && saved.pants === idx);
+    const wearing = (type === 'hat' && saved.hat === idx) || (type === 'face' && saved.face === idx) || (type === 'pants' && saved.pants === idx) || (type === 'outfit' && saved.outfit === idx);
     return {
-      cat: { hat: 'Hats', face: 'Faces', pants: 'Trousers' }[type], key, name, price, dot: col,
+      cat: { hat: 'Hats', face: 'Faces', pants: 'Trousers', outfit: 'Outfits' }[type], key, name, price, dot: col,
       owned: isBought(key), tag: isBought(key) ? (wearing ? 'Wearing' : 'Owned') : null,
-      apply: () => { if (idx < 0) return; if (type === 'hat') setHat(p, idx); else if (type === 'face') setFace(p, idx); else setPants(p, idx); },
+      apply: () => { if (idx < 0) return; if (type === 'hat') setHat(p, idx); else if (type === 'face') setFace(p, idx); else if (type === 'outfit') setOutfit(p, idx); else setPants(p, idx); },
       act(panel) {
         if (!isBought(key)) {
           if (!game.wallet.spend(price, p, name)) return panel.fail(`Not enough coins: ${name} costs ${price}`);

@@ -36,7 +36,9 @@ export class FollowCam {
     let hit = null;
     if (!_probe) _probe = new RAPIER.Ball(PROBE_R);
     try {
-      hit = w.castShape(from, _rot, dir, _probe, 0, max, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY);
+      // stopAtPenetration false: a probe that starts touching a wall the player is
+      // pressed against (jumping at it) only counts surfaces it moves into
+      hit = w.castShape(from, _rot, dir, _probe, 0, max, false, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY);
     } catch (e) { hit = null; }
     if (hit) return hit.time_of_impact ?? hit.timeOfImpact ?? max;
     const r = w.castRay(new RAPIER.Ray(from, dir), max, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY);

@@ -4,7 +4,7 @@
 // animated pose by PD torques. Turning the forces down makes it go limp.
 import * as THREE from 'three';
 import { RAPIER } from './physics.js';
-import { DT, ALL, groups, playerBit, G_VEH, HATS, PLAYER_COLORS } from './config.js';
+import { DT, ALL, groups, playerBit, G_STATIC, G_VEH, HATS, PLAYER_COLORS } from './config.js';
 import { buildExtraHat } from './hats.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
@@ -36,6 +36,7 @@ const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (f
 const RAY_LEN = 1.05 * S;
 
 const WALK = 4.2, RUN = 7.6, SWIM = 2.6, JUMP_V = 6.0;
+const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const COYOTE = 0.14;          // a jump still works this long after stepping off an edge
 const JUMP_BUFFER = 0.14;     // a jump pressed this long before landing still happens
 const FOOT_RAYS = [[0.16, 0], [-0.16, 0], [0, 0.16], [0, -0.16]]; // extra ground probes (x S) round the hips
@@ -123,6 +124,11 @@ export class Player {
     this.groupsNormal = groups(this.bit, ALL & ~this.bit);
     this.groupsSeated = groups(this.bit, ALL & ~this.bit & ~G_VEH);
     this.queryGroups = groups(ALL, ALL & ~this.bit);
+    // legs are visual while we're in control: they pass through the world
+    // (a foot can't get caught under the ground) and only touch props and other
+    // people; in a full ragdoll they collide with everything again
+    this.groupsLegs = groups(this.bit, ALL & ~this.bit & ~G_STATIC & ~G_VEH);
+    this.legsSolid = null;
     this.yaw = 0;
     this.state = 'normal'; // normal | limp | seated
     this.limpTimer = 0;    // >0: knocked out (auto recover)
@@ -140,6 +146,7 @@ export class Player {
     this.airTime = 0;
     this.offGround = 0;    // seconds since last grounded (coyote time)
     this.jumpBuf = 0;      // >0: a jump press is waiting to happen
+    this.stuckT = 0;       // seconds pushing the stick without moving (un-stick hop)
     this.prevChestVel = new THREE.Vector3();
     this.impactGrace = 0;
     this.t = 0;            // own clock (game.time only advances with rendering)
@@ -328,6 +335,34 @@ export class Player {
 
   setGroups(g) {
     for (const n in this.parts) for (const c of this.parts[n].cols) c.setCollisionGroups(g);
+    this.legsSolid = null; // updateLegs re-applies the legs' own groups
+  }
+
+  // Legs collide with the world only when limp. Turning them solid again first
+  // pulls any leg that ended up behind a surface (under the ground, inside a
+  // wall) back out along the line from the hips.
+  updateLegs() {
+    const solid = this.state === 'limp';
+    if (solid === this.legsSolid) return;
+    this.legsSolid = solid;
+    const g = solid ? (this.state === 'seated' ? this.groupsSeated : this.groupsNormal) : this.groupsLegs;
+    const hp = this.hips.translation(), hv = this.hips.linvel();
+    for (const n of ['uLegL', 'lLegL', 'uLegR', 'lLegR']) {
+      const part = this.parts[n], b = part.body;
+      if (solid) {
+        const t = b.translation(), dx = t.x - hp.x, dy = t.y - hp.y, dz = t.z - hp.z, d = Math.hypot(dx, dy, dz);
+        if (d > 1e-3) {
+          const ray = new RAPIER.Ray({ x: hp.x, y: hp.y, z: hp.z }, { x: dx / d, y: dy / d, z: dz / d });
+          const hit = this.world.castRay(ray, d + part.def.r * S, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
+          if (hit) {
+            const k = Math.max(0, hit.timeOfImpact - part.def.r * S - 0.02) / d;
+            b.setTranslation({ x: hp.x + dx * k, y: hp.y + dy * k, z: hp.z + dz * k }, true);
+            b.setLinvel(hv, true);
+          }
+        }
+      }
+      for (const c of part.cols) c.setCollisionGroups(g);
+    }
   }
 
   // Places the ragdoll in its rest pose at a position (feet) and facing.
@@ -508,6 +543,22 @@ export class Player {
     body.applyTorqueImpulse({ x: _va.x, y: _va.y, z: _va.z }, true);
   }
 
+  // Something solid right in front of the chest (a wall, a car, a crate we're pushing).
+  blockedAhead() {
+    const c = this.chest.translation();
+    const hit = this.world.castRayAndGetNormal(new RAPIER.Ray({ x: c.x, y: c.y, z: c.z }, { x: Math.sin(this.yaw), y: 0, z: Math.cos(this.yaw) }), 0.7, true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
+    return !!hit && Math.abs(hit.normal.y) < 0.6;
+  }
+
+  // Free space above the hips (static scenery only), capped a little above the head.
+  headroom() {
+    const hp = this.hips.translation();
+    const hit = this.world.castRay(new RAPIER.Ray({ x: hp.x, y: hp.y, z: hp.z }, { x: 0, y: 1, z: 0 }), HEAD_TOP + 0.3, true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
+    return hit ? hit.timeOfImpact : HEAD_TOP + 0.3;
+  }
+
   probeGround() {
     const hp = this.hips.translation();
     const ray = new RAPIER.Ray({ x: hp.x, y: hp.y, z: hp.z }, { x: 0, y: -1, z: 0 });
@@ -548,8 +599,10 @@ export class Player {
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
     this.flung = null;
+    this.updateLegs();
     this.jumpCool -= DT; this.impactGrace -= DT;
     this.offGround = this.grounded || this.swimming ? 0 : this.offGround + DT;
+    if (this.grounded || this.swimming) this.lastWall = null;
     this.jumpBuf = pressed.jump ? JUMP_BUFFER : this.jumpBuf - DT;
     this.hands.L.cool -= DT; this.hands.R.cool -= DT;
     if (this.punch.t > 0) this.punch.t -= DT;
@@ -726,6 +779,9 @@ export class Player {
         // bouncy walk: the hips bob up as the legs pass each other
         const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
         let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0);
+        // duck under a low ceiling (under the pier, in a crawl space) instead of wedging the head in it
+        const room = this.headroom();
+        if (room < HEAD_TOP) h = Math.max(STAND_H * 0.55, h - (HEAD_TOP - room));
         if (this.getUp >= 0) h = this.getUpH + (h - this.getUpH) * rise;
         const err = h - this.groundDist;
         const vy = v.y - gv.y;
@@ -780,6 +836,24 @@ export class Player {
       const bothHeld = !!(this.hands.L.joint && this.hands.R.joint);
       const pushing = bothHeld && mag > 0.5 && (mvx * Math.sin(this.yaw) + mvz * Math.cos(this.yaw)) / mag > 0.5;
       this.hangPush = pushing ? this.hangPush + DT : 0;
+
+      // un-stick: pushing the stick for a while without getting anywhere (and
+      // not just walking into a wall) hops us up and on, or ducks us forward
+      // out from under something
+      if (mag > 0.5 && !hanging && !this.swimming && this.punch.t <= 0 && hspeed < 0.3 && !this.blockedAhead()) {
+        this.stuckT += DT;
+        if (this.stuckT > 1.5) {
+          this.stuckT = 0;
+          const low = this.headroom() < HEAD_TOP + 0.1;
+          const up = low ? -1 : 4, fwd = low ? 3 : 2;
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (mvx / mag * fwd - bv.x) * m, y: (up - bv.y) * m, z: (mvz / mag * fwd - bv.z) * m }, true);
+          }
+          this.jumpCool = 0.3;
+          this.impactGrace = Math.max(this.impactGrace, 0.3);
+        }
+      } else this.stuckT = Math.max(0, this.stuckT - DT * 2);
       // a ledge under our grip: jump (or keep pushing forward) to climb over it
       const wantClimb = bothHeld && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
       const ledge = wantClimb ? this.findLedge() : null;
@@ -789,8 +863,9 @@ export class Player {
         this.startMantle(ledge);
         this.hangPush = 0;
         this.game.audio?.play('jump', cp);
-      } else if ((pressed.jump || this.jumpBuf > 0) && this.jumpCool <= 0 && (this.getUp < 0 || this.getUp > GETUP_T * 0.6)) {
-        const footing = this.grounded || this.swimming || (this.offGround < COYOTE && !hanging);
+      } else if ((pressed.jump || this.jumpBuf > 0) && this.jumpCool <= (pressed.jump && !this.grounded ? 0.2 : 0) && (this.getUp < 0 || this.getUp > GETUP_T * 0.6)) {
+        // (a wall jump may follow 0.15 s after the last jump; ground jumps wait the full cooldown)
+        const footing = this.jumpCool <= 0 && (this.grounded || this.swimming || (this.offGround < COYOTE && !hanging));
         if (footing) {
           // push off: straight up, plus a little kick the way the stick points
           const jv = this.swimming ? 4.2 : JUMP_V, kick = this.swimming ? 0 : 0.9;
@@ -808,7 +883,23 @@ export class Player {
           this.sqV -= 3;
           this.landDip = 0;
           this.game.audio?.play('jump', cp);
-        } else if (hanging && pressed.jump) {
+        } else if (!hanging && !this.swimming && pressed.jump && this.airTime > 0.05 && (this.wallHit = this.wallNear(mvx, mvz))) {
+          // wall jump: kick off away from the wall and up. Bouncing between two
+          // walls chains; the same wall again needs a landing first
+          const n = this.wallHit;
+          const jv = JUMP_V * 0.95, out = 4.8;
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (n.x * out - bv.x) * m, y: (jv - bv.y) * m, z: (n.z * out - bv.z) * m }, true);
+          }
+          this.yaw = Math.atan2(n.x, n.z);
+          this.lastWall = { x: n.x, z: n.z };
+          this.jumpBuf = 0;
+          this.jumpCool = 0.3;
+          this.impactGrace = Math.max(this.impactGrace, 0.15);
+          this.sqV -= 3;
+          this.game.audio?.play('jump', cp);
+        } else if (hanging && pressed.jump && this.jumpCool <= 0) {
           // let go and fling yourself up and forward (monkey bars, ropes); off a
           // flat wall (or with tired arms) you only push off it: no wall-running
           const anchored = this.anchorHand('L') || this.anchorHand('R');
@@ -854,7 +945,9 @@ export class Player {
     for (const n in parts) {
       const p = parts[n];
       if (!p.parent) continue;
-      let kp = p.kp * kLimb, kd = p.kd * Math.sqrt(kLimb);
+      // legs are visual only: they keep their pose through bumps and stumbles
+      const kl = !limp && n.includes('Leg') ? Math.max(kLimb, 0.9) : kLimb;
+      let kp = p.kp * kl, kd = p.kd * Math.sqrt(kl);
       if (limp) { kp = Math.max(kp, 4); kd = Math.max(kd, 1.2); }
       this.drive(p, kp, kd, p.maxT);
     }
@@ -941,6 +1034,27 @@ export class Player {
       if (!hit || Math.abs(hit.normal.y) > 0.5) return false;
     }
     return true;
+  }
+
+  // A static wall within reach of the body (looking the way we face, the way
+  // the stick points, and sideways): its horizontal normal, or null.
+  wallNear(mvx, mvz) {
+    const c = this.chest.translation(), fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    const dirs = [[fx, fz], [fz, -fx], [-fz, fx], [-fx, -fz]];
+    if (Math.hypot(mvx, mvz) > 0.3) dirs.unshift([mvx / Math.hypot(mvx, mvz), mvz / Math.hypot(mvx, mvz)]);
+    let best = null;
+    for (const [dx, dz] of dirs) {
+      for (const dy of [0, -0.3]) {
+        const hit = this.world.castRayAndGetNormal(new RAPIER.Ray({ x: c.x, y: c.y + dy, z: c.z }, { x: dx, y: 0, z: dz }), 0.75, true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
+        if (!hit || Math.abs(hit.normal.y) > 0.4) continue;
+        const l = Math.hypot(hit.normal.x, hit.normal.z);
+        const n = { x: hit.normal.x / l, z: hit.normal.z / l };
+        if (this.lastWall && n.x * this.lastWall.x + n.z * this.lastWall.z > 0.7) continue;
+        if (!best || hit.timeOfImpact < best.t) best = { t: hit.timeOfImpact, x: n.x, z: n.z };
+      }
+    }
+    return best;
   }
 
   startMantle(top) {
@@ -1046,9 +1160,9 @@ export class Player {
       set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
       const dip = Math.max(this.landDip, this.reachDown * 0.7);
-      set('uLegL', qx(-s * amp * 1.1 - dip * 0.6), 260, 22); set('uLegR', qx(s * amp * 1.1 - dip * 0.6), 260, 22);
-      set('lLegL', qx(Math.max(0, c) * amp * 1.2 + 0.05 + dip * 1.1), 220, 18);
-      set('lLegR', qx(Math.max(0, -c) * amp * 1.2 + 0.05 + dip * 1.1), 220, 18);
+      set('uLegL', qx(-s * amp * 1.1 - dip * 0.6), 560, 34); set('uLegR', qx(s * amp * 1.1 - dip * 0.6), 560, 34);
+      set('lLegL', qx(Math.max(0, c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
+      set('lLegR', qx(Math.max(0, -c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
     } else {
       // legs stay extended just after the push-off (jump, bounce), tuck at the
       // top, then reach down ready to land; only a long fall pedals
@@ -1056,8 +1170,8 @@ export class Player {
       const land = vy < -0.5 ? Math.min(1, (-vy - 0.5) / 3.5) : 0;
       const mix = (tuck, ext, reachDown) => (tuck + (ext - tuck) * push) * (1 - land) + reachDown * land;
       const f = Math.sin(T * 11) * 0.35 * fall * Math.min(1, Math.max(0, (this.airTime - 0.6) / 0.4));
-      set('uLegL', qx(mix(-0.6, -0.1, -0.4) + f), 200, 18); set('uLegR', qx(mix(-0.4, -0.05, -0.22) - f), 200, 18);
-      set('lLegL', qx(mix(0.95, 0.12, 0.5) - f * 0.5), 170, 15); set('lLegR', qx(mix(0.75, 0.1, 0.35) + f * 0.5), 170, 15);
+      set('uLegL', qx(mix(-0.6, -0.1, -0.4) + f), 480, 32); set('uLegR', qx(mix(-0.4, -0.05, -0.22) - f), 480, 32);
+      set('lLegL', qx(mix(0.95, 0.12, 0.5) - f * 0.5), 420, 28); set('lLegR', qx(mix(0.75, 0.1, 0.35) + f * 0.5), 420, 28);
     }
 
     // arms
