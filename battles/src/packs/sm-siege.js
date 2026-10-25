@@ -126,11 +126,38 @@ export function siegeThink(u, dt, ctx) {
     u.startAttack('punchy');
     c.pull = true;
     c.aimT = t;
+    c.aimPt = null;
   }
   // look along the engine while working it
   c.look = c.look || { pos: new V3() };
   c.look.pos.set(cp.x + Math.sin(c.aimYaw) * 10, cp.y, cp.z + Math.cos(c.aimYaw) * 10);
   return c.look;
+}
+
+// Possessed crew (kind.control): at the engine's station it lays the engine on the
+// crosshair point (control.aimPt) and the attack button pulls the release; away from
+// the station it fights on foot like anyone else.
+export function siegeControl(u, dt, ctl) {
+  const c = u.sm, b = u.battle;
+  if (c.broken || c.tipped) return false;
+  const st = stationPos(c, _p);
+  const dx = st.x - u.pos.x, dz = st.z - u.pos.z, d = Math.hypot(dx, dz);
+  c.atStation = d < 1.4;
+  if (!c.atStation) return false;
+  c.thinkT = b.time;
+  c.target = null; c.aimT = null;
+  if (ctl.aimPt) {
+    const cp = c.cart.pos;
+    c.aimYaw = Math.atan2(ctl.aimPt.x - cp.x, ctl.aimPt.z - cp.z);
+    c.aimPt = (c.aimPt || new V3()).copy(ctl.aimPt);
+  }
+  // stay put at the station unless the stick walks the crew away
+  if (Math.hypot(ctl.mx, ctl.mz) < 0.2 && d > 0.3) { const sp = Math.min(3, d * 3); u.desired.set((dx / d) * sp, 0, (dz / d) * sp); }
+  if (ctl.attack && c.loaded && c.fire < 0 && !u.st.attack && u.cooldown <= 0 && u.stun <= 0) {
+    u.startAttack('punchy');
+    c.pull = true;
+  }
+  return true;
 }
 
 export function siegeEvent(u, t0, t1) {
@@ -226,6 +253,13 @@ function launch(b, c) {
         const tv = t.rag.vel[PART.pelvis];
         tx = t.pos.x + tv.x * tof * 0.6; tz = t.pos.z + tv.z * tof * 0.6;
       }
+    } else if (c.aimPt) {
+      // a possessed crew's lob at the crosshair point
+      tx = c.aimPt.x; tz = c.aimPt.z;
+      const dx = Math.hypot(tx - from.x, tz - from.z);
+      ty = b.terrain.height(tx, tz) + 0.4;
+      const den = 2 * ct * ct * (dx * tt - (ty - from.y));
+      v = den > 0.1 ? Math.sqrt((g * dx * dx) / den) : 25;
     } else { tx = from.x + Math.sin(yaw0) * 35; tz = from.z + Math.cos(yaw0) * 35; v = 18.5; }
     // the arm only throws roughly where the cart points
     let yaw = Math.atan2(tx - from.x, tz - from.z);
@@ -243,6 +277,11 @@ function launch(b, c) {
       const a = ballisticAngle(Math.hypot(px - from.x, pz - from.z), tp.y - from.y, speed, g, false);
       if (a !== null) ang = a;
       yaw = yaw0 + clamp(angleDiff(yaw0, Math.atan2(px - from.x, pz - from.z)), -0.12, 0.12);
+    } else if (c.aimPt) {
+      const tp = c.aimPt;
+      const a = ballisticAngle(Math.hypot(tp.x - from.x, tp.z - from.z), tp.y - from.y, speed, g, false);
+      if (a !== null) ang = a;
+      yaw = yaw0 + clamp(angleDiff(yaw0, Math.atan2(tp.x - from.x, tp.z - from.z)), -0.12, 0.12);
     }
     yaw += rand(-1, 1) * w.spread; ang += rand(-1, 1) * w.spread * 0.5;
     vel.set(Math.sin(yaw) * Math.cos(ang), Math.sin(ang), Math.cos(yaw) * Math.cos(ang)).multiplyScalar(speed);

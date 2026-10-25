@@ -10,7 +10,7 @@
 import { register, EXT } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, rangedThink, crossed, aimPoint, launchVel, addProjectile, sweepParts, strike,
-  shieldBlocks, newId, torus,
+  shieldBlocks, newId, torus, pushUnit, slowBeast,
 } from './common.js';
 import { eulerYZX } from '../util.js';
 import { S as SM, hurtBig, shoveBig, setArm } from './sm-core.js';
@@ -37,7 +37,7 @@ export function shoot(u, part = PART.farmR, w = u.def.weapon, target = u.aimAt) 
   u.aimAt = target;
   aimPoint(u, _p, 0.4, 0.25);
   u.aimAt = keep;
-  if (!target && u.control) _p.y = hand.y + Math.tan(u.control.aimPitch) * 14;
+  if (!target && u.control && !u.control.aimPt) _p.y = hand.y + Math.tan(u.control.aimPitch) * 14;
   for (let i = 0; i < (w.pellets || 1); i++) {
     launchVel(hand, _p, w.speed * rand(0.96, 1.04), PROJ.pr_shot.g, false, w.spread, _v);
     addProjectile(b, 'pr_shot', hand, _v, u, { life: (w.range / w.speed) * 1.5, damage: w.damage, force: w.force });
@@ -193,8 +193,9 @@ function stepReels(b, dt) {
     if (r.t <= 0 || !o.alive || d < 1.3 * Math.max(1, v.s) || d > 34) { endReel(r); list.splice(i, 1); continue; }
     // reel the victim in (a big one is barely budged)
     if (v.alive) v.stun = Math.max(v.stun, 0.25);
+    if (v.alive) slowBeast(v, 0.35);
     const k = (r.pull * dt * v.M * clamp(d / 3, 0.5, 1)) / Math.max(1, v.s * v.s * v.s);
-    v.rag.impulseAll(((A.x - B.x) / d) * k, Math.max(0, (A.y - B.y) / d) * k + v.M * 2.2 * dt / Math.max(1, v.s), ((A.z - B.z) / d) * k);
+    pushUnit(v, ((A.x - B.x) / d) * k, Math.max(0, (A.y - B.y) / d) * k + v.M * 2.2 * dt / Math.max(1, v.s), ((A.z - B.z) / d) * k);
     // the harpooner leans back on the line
     o.rag.impulseAll(((B.x - A.x) / d) * -o.M * 0.6 * dt, 0, ((B.z - A.z) / d) * -o.M * 0.6 * dt);
     const n = Math.min(40, Math.ceil(d / SEG));
@@ -244,7 +245,8 @@ function stepPaint(b, dt) {
       for (const m of p.marks) m.t = Math.min(m.t, u.alive ? 0 : 20);
       u.prPaint = null; list.splice(i, 1); continue;
     }
-    if (u.airT <= 0) {
+    if (slowBeast(u, 0.55)) { /* a beast's legs (or wings) slow down */ }
+    else if (u.airT <= 0) {
       const v0 = u.rag.vel[PART.pelvis];
       u.rag.impulseAll(-v0.x * u.M * 0.1, 0, -v0.z * u.M * 0.1);
     }

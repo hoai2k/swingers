@@ -17,6 +17,7 @@
     "assets/ui/faction-good.png",
     "assets/ui/faction-evil.png",
     "assets/ui/faction-secret.png",
+    "assets/ui/faction-custom.png",
     "assets/ui/map-grass.jpg",
     "assets/ui/map-desert.jpg",
     "assets/ui/map-winter.jpg",
@@ -28,6 +29,7 @@
     "assets/ui/map-canyon.jpg",
     "assets/ui/map-graveyard.jpg",
     "assets/ui/victory-blue.png",
-    "assets/ui/victory-red.png"
+    "assets/ui/victory-red.png",
+    "assets/ui/creator-empty.png"
   ]
 }

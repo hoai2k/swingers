@@ -200,6 +200,7 @@ export function stepBeast(b, m, dt) {
   _l.set(_f.z, 0, -_f.x);
   m.vf = v.x * _f.x + v.z * _f.z;
   m.free = Math.max(0, m.free - dt);
+  if (m.slowT > 0) m.slowT -= dt;
   if (m.alive && !sleeping && m.free <= 0) {
     const fresh = b.time - m.thinkT < 0.15 && !b.over && u.alive;
     if (m.flying) flySupport(b, m, dt, fresh, yaw, up, v);
@@ -226,7 +227,7 @@ export function stepBeast(b, m, dt) {
 
 function walkSupport(b, m, dt, fresh, yaw, up, tilt, v) {
   const cfg = m.cfg, body = m.torso.body, pos = m.torso.pos;
-  const goalSpeed = fresh ? m.goalSpeed : 0;
+  const goalSpeed = (fresh ? m.goalSpeed : 0) * (m.slowT > 0 ? m.slowK : 1); // (frost, paint, ropes)
   const goalYaw = fresh ? m.goalYaw : yaw;
   const gy = b.terrain.height(pos.x, pos.z);
   const amp = clamp(Math.abs(m.vf) / cfg.speed, 0, 1);
@@ -250,7 +251,7 @@ function flySupport(b, m, dt, fresh, yaw, up, v) {
   const alt = fresh ? m.alt : Math.max(m.alt, cfg.alt * 0.6);
   const vyGoal = clamp((alt - h) * 1.8, -cfg.sink, cfg.climb);
   const vy = v.y + clamp((vyGoal - v.y) * 4, -16, 16) * dt + G * dt;
-  const gv = fresh ? m.goalVel : _c.set(0, 0, 0);
+  const gv = fresh ? _c.copy(m.goalVel).multiplyScalar(m.slowT > 0 ? m.slowK : 1) : _c.set(0, 0, 0);
   let ax = (gv.x - v.x) * 2.5, az = (gv.z - v.z) * 2.5;
   const am = Math.hypot(ax, az), cap = cfg.accel;
   if (am > cap) { ax *= cap / am; az *= cap / am; }

@@ -7,7 +7,10 @@ import { PROJ_TYPES } from './battle.js';
 import { placeHeld } from './visual.js';
 
 export const REC_HZ = 30;
+// s.dyn: placed by its pack every step - true (a rope segment: always moving) or the
+// rigid body it rides on (at rest while that body sleeps)
 function restingStuck(s) {
+  if (s.dyn) return s.dyn !== true && s.dyn.isSleeping();
   if (s.held) return !!s.held.body && s.held.body.isSleeping();
   if (s.unit) return !s.unit.alive && s.unit.rag.bodies[0].isSleeping();
   return true;
@@ -50,7 +53,8 @@ export class Recorder {
     const us = new Uint8Array(b.units.length);
     const hp = new Uint8Array(b.units.length);
     b.units.forEach((u, i) => {
-      us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0);
+      // bit 5: the unit's team now (a raised zombie changes side), bit 6: a zombie
+      us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0) | (u.team ? 32 : 0) | (u.zombie ? 64 : 0);
       hp[i] = Math.round(255 * Math.max(0, u.hp) / u.maxHp);
     });
     // arrows stuck in the ground (or in a corpse / dropped shield at rest) don't

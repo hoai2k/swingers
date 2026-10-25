@@ -8,7 +8,7 @@ import {
   THREE, clamp, rand, PART, EXPR, meleeThink, crossed, inFront, blast, addStatus,
   torus, tube, dome, headBand, tcol, tdark, chestShell,
 } from './common.js';
-import { valkInit, valkThink, valkStep, wingLayout, restSt, VALK } from './sm-valkyrie.js';
+import { valkInit, valkThink, valkStep, valkControl, diveTarget, wingLayout, restSt, VALK } from './sm-valkyrie.js';
 import {
   revivable, keepsKind, revive, reequip, markAt, refreshBeam, endBeam, supportMove, hover, STANCE, setArmKey,
 } from './ges-core.js';
@@ -120,8 +120,16 @@ const cleric = {
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (u.control) u.patient = b.mostHurtAlly(u, w.range);
-    const f = u.patient;
-    const on = f && f.alive && f.hp < f.maxHp && u.stun <= 0 && !u.isDown() && !u.st.attack;
+    // the beam lingers on its patient a moment after topping it up: a patient in a fight
+    // drops below full every few steps, and a beam blinking on and off at that rate
+    // reads as a dotted flicker (in the 30 Hz replay most of all)
+    let f = u.patient;
+    if (f) u.beamTo = f;
+    else if (u.beamTo && u.beamTo.alive && u.beamHold > 0 &&
+      Math.hypot(u.beamTo.pos.x - u.pos.x, u.beamTo.pos.z - u.pos.z) < w.range + 1.5) f = u.beamTo; // (a little slack: no blinking at the edge of range)
+    if (f && f.alive && f.hp < f.maxHp) { u.beamHold = 0.4; u.beamTo = f; }
+    else u.beamHold = (u.beamHold || 0) - dt;
+    const on = f && f.alive && u.beamHold > 0 && u.stun <= 0 && !u.isDown() && !u.st.attack;
     u.st.gdBeam = !!on;
     if (!on) { endBeam(u.beam); return; }
     f.hp = Math.min(f.maxHp, f.hp + w.heal * dt);
@@ -199,6 +207,7 @@ const angel = {
     u.battle.sound('clang', _o, 0.5, 1.8);
   },
   step: valkStep,
+  control: valkControl,
 };
 
 // Phoenix: circles high, then dives on a group and bursts into flames. The first time
@@ -248,11 +257,6 @@ const phoenix = {
       if (u.ash <= 0) phoenixRise(u);
       return;
     }
-    if (u.control) {
-      // possessed: skim low; the attack button bursts into flame where it is
-      u.sm.alt = 1.4; u.sm.state = 'cruise';
-      if (u.st.attack) { u.st.attack = null; phoenixBurst(u); if (!u.alive || u.ash > 0) return; }
-    }
     valkStep(u, dt);
     u.trailT -= dt;
     if (u.trailT <= 0) {
@@ -260,6 +264,36 @@ const phoenix = {
       const c = u.chestPos;
       b.emit('trail', c.x + rand(-0.3, 0.3), c.y + rand(-0.2, 0.3), c.z + rand(-0.3, 0.3), Math.random() < 0.5 ? 1 : 0);
     }
+  },
+  // possessed: circle high with the stick; the attack button dives on the crosshair
+  // point and bursts into flame there (or on the first enemy in the way)
+  control(u, dt, c) {
+    const f = u.sm, b = u.battle, p = u.pos;
+    if (u.ash > 0) return true;
+    f.t += dt;
+    if (f.state === 'dive' && !f.ctlDive) { f.diveAt = diveTarget(u, c, f.diveAt || new THREE.Vector3(), 16); f.ctlDive = true; } // (taken over mid-dive)
+    if (f.state === 'dive') {
+      const at = f.diveAt, dx = at.x - p.x, dz = at.z - p.z, dist = Math.hypot(dx, dz) || 1;
+      const low = Math.max(0.4, at.y - b.terrain.height(at.x, at.z) - (u.chestPos.y - p.y));
+      f.alt = low + (PHX.alt - low) * clamp((dist - 2) / 9, 0, 1);
+      u.desired.set(dx / dist * PHX.dive, 0, dz / dist * PHX.dive);
+      u.faceYaw = Math.atan2(dx, dz);
+      const cp = u.chestPos, R = 1.6 * Math.max(1, u.s * 0.8);
+      let near = false;
+      b.grid.query(cp.x, cp.z, R + 2, (o) => { if (!near && o.alive && o.team !== u.team && o.chestPos.distanceTo(cp) < R + o.skel.radius * 0.5) near = true; });
+      if (near || cp.distanceTo(at) < R || (f.t > 0.5 && u.groundGap() < 0.25 && dist < 4)) { phoenixBurst(u); return true; }
+      if (f.t > 4) { f.state = 'climb'; f.t = 0; }
+      return true;
+    }
+    f.ctlDive = false;
+    if (f.state === 'climb' && f.t < 1.2) f.alt = PHX.alt + 1;
+    else { f.state = 'cruise'; f.alt = PHX.alt; }
+    if (c.attack && f.state === 'cruise' && u.cooldown <= 0 && u.stun <= 0) {
+      f.state = 'dive'; f.t = 0; u.cooldown = u.def.weapon.cooldown;
+      f.diveAt = diveTarget(u, c, f.diveAt || new THREE.Vector3(), 16); f.ctlDive = true;
+      b.sound('fire', p, 1.0, 0.6); b.sound('whoosh', p, 0.9, 0.6);
+    }
+    return true;
   },
   hit(u, amount) {
     if (u.ash > 0) return 0;

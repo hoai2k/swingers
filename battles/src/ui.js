@@ -1,5 +1,5 @@
 // DOM overlay: title menu, per-player setup panels, battle HUD, results, replay bar.
-import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
+import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction, rosterVersion } from './units.js';
 import { TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { padLabel } from './input.js';
 import { hasAsset } from './assets.js';
@@ -51,7 +51,7 @@ export class UI {
   constructor(root) {
     this.root = root;
     this.layers = {};
-    for (const k of ['title', 'levels', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
+    for (const k of ['title', 'levels', 'creator', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
       const l = el('div', 'layer layer-' + k);
       root.appendChild(l);
       this.layers[k] = l;
@@ -251,7 +251,7 @@ export class UI {
     if (e.roster) ro = `<div class="rrow">${ro}</div><div class="rrow other" style="--oc:${tc(1 - t)}"><b>${TEAM_NAMES[1 - t]}</b>${e.roster.length ? this.rosterHtml(e.roster, 1 - t) : '<span class="empty">empty</span>'}</div>`;
     this.setText(s.roster, ro);
     const facs = d.factions || FACTIONS;
-    const fkey = facs.map((f) => f.id).join() + ':' + d.faction;
+    const fkey = facs.map((f) => f.id).join() + ':' + d.faction + ':' + rosterVersion; // (custom units change at runtime)
     if (s.faction !== fkey) {
       s.faction = fkey;
       s.unit = -1;

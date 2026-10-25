@@ -32,6 +32,18 @@ other settings.
   `localStorage` (`wobbly-battles.campaign.v1`).
 - **Sandbox** (1 player): one full-screen setup where you build both armies — tap
   **View** to switch side — then **Y** starts the battle.
+- **Unit Creator**: design up to 24 custom units, with a live, turning 3D preview
+  that shows the attack. Tabs (**LB/RB**): *Unit* (name with an on-screen keyboard
+  or typed, personality/voice, rank), *Body* (size, build, head, legs), *Look* (every
+  hat and outfit in the game, skin, trousers, boots, beard) and *Weapon* (any held
+  weapon of the base game and the packs, plus an optional shield or second weapon).
+  **X** randomises the tab, **Y** previews the other team colour, **Menu** saves. The
+  list page edits (**A**), duplicates (**X**) and deletes (**Y**). Stats are derived
+  and the gold cost is computed from them (`src/packs/custom.js`), so custom units
+  can't be cheap for what they do. Saved units appear under the **Custom** faction tab
+  in versus and sandbox setup (not in the campaign). They're stored in `localStorage`
+  (`wobbly-battles.custom.v1`) as recipes, not stats. Deleted or unknown custom units
+  are dropped from saved armies.
 
 In every setup: **Start → Random army** fills your side with a random mix within
 the limits (one undo step), hold **View** to clear your side (undo brings it back),
@@ -49,7 +61,9 @@ invert Y, blood, music.
 Watching the battle: **A** follows the unit in the crosshair (its stats card shows
 health, kills and damage), **X** takes control of it (TABS's *Take control*: left
 stick walks relative to the camera, right stick looks, **RT** attacks, **LT** blocks (ranged units: aims)
-(zoom), **A** jumps), **B** on the free camera hands over to the cinematic camera,
+(zoom), **A** jumps; shooters and casters fire at the crosshair, riders steer their mount
+with the stick, flyers dive on the crosshair, and a siege crew at its engine lays it on the
+crosshair and fires it), **B** on the free camera hands over to the cinematic camera,
 **Y** eases into slow motion, **R3** cycles tips / HUD off (photo mode). In shared
 screen either pad does all of this; in split screen each pad drives its own view.
 
@@ -80,11 +94,12 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
 
 - `src/body.js` skeleton (11 parts, joints, FK) · `src/pose.js` procedural target poses and attack animations
 - `src/ragdoll.js` Rapier bodies/joints + muscle servo · `src/unit.js` balance, locomotion, AI, personalities
-- `src/units.js` the roster (stats, weapons, looks, personality) · `src/items.js` held items: hit geometry, mass, shields (held items are colliders on the forearm and drop as rigid bodies on death)
+- `src/units.js` the roster (stats, weapons, looks, personality; `setFactionUnits` swaps a faction's units at runtime and bumps `rosterVersion` / calls `rosterHooks`) · `src/creator.js` the Unit Creator screen · `src/packs/custom.js` custom-unit recipes, storage, derived stats and cost · `src/items.js` held items: hit geometry, mass, shields (held items are colliders on the forearm and drop as rigid bodies on death)
 - `src/battle.js` simulation: melee sweeps, projectiles, explosions, healing, bard aura; emits events
 - `src/replay.js` quantised 30 Hz recording + interpolated playback with event replay
 - `src/visual.js` unit meshes (baked per part), faces, hats, weapons, portraits
 - `src/world.js` maps/terrain/scenery · `src/fx.js` particles · `src/audio.js` synthesised sfx, voices, music
+- `src/maps-new.js` feature maps (castle, river, cove, volcano, canyon, graveyard) · `src/features.js` hills, plateaus, water, bridges, walls and breakables: height grid, colliders, AI steering, placement checks, projectile blocking (all mirrored through the centre for fairness) · `src/mapscene.js` their meshes and set dressing
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine
 
 Vendored: three.js r170 (`vendor/three.module.min.js`), Rapier 0.14 compat (`vendor/rapier.es.js`).

@@ -154,8 +154,11 @@ export function stepMount(b, m, dt) {
       if (m.fallT > 2.5 && tilt < 0.35) m.fallen = false;
     }
     const support = !m.fallen || m.fallT > 2.5;
+    // a horse (or raptor) that lost its rider bolts from the fight, then wanders about
+    const loose = (!m.mounted || !u.alive) && cfg.mass < 1000;
+    if (support && loose) looseThink(b, m, dt, yaw);
     if (support) {
-      const fresh = b.time - m.thinkT < 0.1 && !b.over && m.mounted && u.alive;
+      const fresh = loose || (b.time - m.thinkT < 0.1 && !b.over && m.mounted && u.alive);
       const goalSpeed = fresh ? m.goalSpeed : 0;
       const goalYaw = fresh ? m.goalYaw : yaw;
       const gy = b.terrain.height(pos.x, pos.z);
@@ -363,6 +366,31 @@ function stepRider2(b, m, dt) {
   placeExtra(m.r2, f.pos, f.quat);
 }
 
+// A riderless mount: gallops away from the nearest enemy for a few seconds, shies away
+// from anyone who comes close, and otherwise ambles about the field.
+function looseThink(b, m, dt, yaw) {
+  const p = m.torso.pos, cfg = m.cfg;
+  const L = m.loose || (m.loose = { t: 0, flee: rand(3, 5), turnT: rand(1, 3), yaw });
+  L.t += dt; L.turnT -= dt;
+  let near = null, nd = 6 * 6;
+  for (const o of b.teams[1 - m.u.team]) {
+    if (!o.alive) continue;
+    const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2;
+    if (d < nd) { nd = d; near = o; }
+  }
+  let goal = L.yaw, speed = cfg.speed * 0.22;
+  if (near && (L.t < L.flee || nd < 3.5 * 3.5)) {
+    goal = Math.atan2(p.x - near.pos.x, p.z - near.pos.z) + Math.sin(L.t * 0.7) * 0.4;
+    speed = cfg.speed * (L.t < L.flee ? 0.8 : 0.5);
+    L.yaw = goal;
+  } else if (L.turnT <= 0) {
+    L.turnT = rand(2, 5);
+    L.yaw = yaw + rand(-1.3, 1.3);
+  }
+  m.goalYaw = steerInField(m, p, goal);
+  m.goalSpeed = L.turnT > 4.2 ? 0 : speed; // (stops to graze now and then)
+}
+
 // ------------------------------------------------------------------ AI (rider think)
 function steerInField(m, p, goal) {
   if (Math.abs(p.x) > FIELD.x + 5 || Math.abs(p.z) > FIELD.z + 4) return Math.atan2(-p.x, -p.z);
@@ -443,6 +471,17 @@ export function riderDie(u) {
   if (m && m.mounted) dismount(u.battle, m);
 }
 export function riderStep(u) {
+  const m = u.sm;
+  // taken control of: the stick steers the mount (the rider's think, which normally
+  // drives it, does not run); RT is still the rider's attack, tusks toss on their own
+  const c = u.control;
+  if (c && m.mounted && m.alive && !u.battle.over) {
+    m.thinkT = u.battle.time;
+    const mv = Math.hypot(c.mx, c.mz);
+    m.goalYaw = mv > 0.2 ? Math.atan2(c.mx, c.mz) : yawOf(m.torso.quat);
+    m.goalSpeed = Math.min(1, mv) * m.cfg.speed;
+    if (m.cfg.tusk && m.tossT < 0 && m.tossCd <= 0 && inTuskZone(u.battle, m)) { m.tossT = 0; m.tossCd = rand(2.6, 3.4); }
+  }
   u.st.smStun = u.stun > 0.3;
   // sitting in the saddle is not falling: no 'flail' mode, so attacks animate
   if (u.sm.mounted && !u.st.smStun) u.airT = 0;

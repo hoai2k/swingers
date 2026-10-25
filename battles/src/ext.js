@@ -18,7 +18,22 @@
 //     event(unit, t0, t1),                  //   attack animation progressed t0 -> t1
 //     step(unit, dt),                       //   every physics step after think
 //     hit(unit, amount, part, attacker, kind) -> amount,  // modify incoming damage
-//     die(unit, killer) } },
+//     parry(unit, attacker, kind) -> bool,  //   asked before a melee blow / shot lands:
+//                                           //   true = caught (no blood or knockback; set
+//                                           //   unit.parriedAt = battle.time, hit() then
+//                                           //   scales the damage)
+//     die(unit, killer),
+//     standing(unit) -> bool,               //   a dead unit still has something fighting
+//                                           //   for it (keeps the battle from ending)
+//     standIn(unit) -> target | null,       //   ...and what enemies attack meanwhile: an
+//                                           //   object with the unit fields AI reads (pos,
+//                                           //   chestPos, headPos, alive, team, skel, def,
+//                                           //   rag.vel/pos, hit(), s, M, stun)
+//     control(unit, dt, control) -> bool,   //   possessed (game.js take control): runs
+//                                           //   after the stick set desired/faceYaw; true
+//                                           //   = it handled the attack button itself
+//     aim: true } },                        //   a ranged pack kind: possession aims it at
+//                                           //   the crosshair (control.aimPt, aimPitch)
 //   proj: { type: {g, len, r, stick, roll, explode, fuse, life,
 //                  hit(battle, pr, victim, part) -> bool handled,
 //                  ground(battle, pr) -> bool handled, step(battle, pr, dt)} },

@@ -33,7 +33,15 @@ export const PANTS = [
   { name: 'Teal', color: 0x2ab5a5 },
   { name: 'Lilac', color: 0xc9a6ff },
   { name: 'Cream', color: 0xf2e4c0 },
-  { name: 'Glacier', color: 0x8fd8f0 }, // Frostpeak present
+  // region presents (keep appending)
+  { name: 'Sandstone', color: 0xd9a066 },
+  { name: 'Cactus', color: 0x5a9a3c },
+  // Bigtown presents (world/regions/city)
+  { name: 'Taxi yellow', color: 0xffc81e },
+  { name: 'Pinstripe grey', color: 0x5a5f6a },
+  { name: 'Brick red', color: 0xa8452e },
+  // Frostpeak present (world/regions/snow)
+  { name: 'Glacier', color: 0x8fd8f0 },
 ];
 export const HAT_NAMES = { none: 'No hat', cap: 'Cap', tophat: 'Top hat', beanie: 'Beanie', crown: 'Crown', party: 'Party hat', cowboy: 'Cowboy hat', bucket: 'Bucket hat', ...EXTRA_HAT_NAMES };
 export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Teal', 'Pink', 'White', 'Charcoal'];

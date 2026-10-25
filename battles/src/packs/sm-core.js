@@ -161,7 +161,8 @@ export function stickInto(b, s, g, pr) {
   closestOnSeg(g.a, g.b, lp, _cp);
   if (lp.distanceTo(_cp) > g.r * 0.9) lp.sub(_cp).setLength(g.r * 0.9).add(_cp);
   const lq = inv.multiply(pr.quat);
-  const st = { type: pr.type, unit: null, part: -1, pos, quat: pr.quat.clone(), t: 25, id: pr.id };
+  // (dyn: it moves with the body, so the replay records it while the body is awake)
+  const st = { type: pr.type, unit: null, part: -1, dyn: g.body, pos, quat: pr.quat.clone(), t: 25, id: pr.id };
   b.stuck.push(st);
   s.stuck.push({ st, g, lp, lq });
 }
