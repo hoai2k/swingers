@@ -4,6 +4,16 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
+
+The game draws a procedural stand-in for each until the art arrives.
+
+- `signs/jobs.png` (1024 × 256) — **JOBS**: bright job-board header, sunny yellow board with a chunky white rounded border, big dark-blue rounded letters, small clipboard-with-tick icon (on the job board on every island).
+- `posters/job_board.png` (716 × 512, landscape, opaque) — a cork notice board crammed with cheerful pinned job notes and doodles (a pizza slice, a fire truck, a sheep, a taxi, a snowflake, a cactus, a palm tree), coloured push-pins, a few coins drawn on the notes; toy-like, no readable small text except the word **JOBS** at the top. Hangs under the JOBS sign.
+- `ui/job_marker.png` (256 × 256, transparent) — floating quest marker: a big chunky yellow-orange exclamation mark "!" with a thick dark-blue rounded outline inside a soft white round badge, glossy toy look, centred with a little margin. Floats over job-giver NPCs and job boards.
+
+Delivered 2026-10-25 with built-in imagegen. Exact dimensions, transparency, text and subjects were reviewed, and runtime loading was checked in the browser. Prompts and sources are in `assets/generation.json`.
+
 ## Delivered round 9 — Dusty Dunes and Frostpeak extras (3 signs, 2 posters)
 
 The game draws a procedural stand-in for each until the art arrives.
@@ -143,7 +153,8 @@ All twelve images were delivered at their requested sizes and verified through t
 
 Delivered 2026-10-24 with built-in imagegen. Prompts are in `assets/generation.json`.
 
-Summary: round 8 — 14 region signs; round 7 — 36 region signs;
+Summary: round 10 — 3 mission images; round 9 — 5 regional extras;
+round 8 — 14 region signs; round 7 — 36 region signs;
 round 6 — 4 ferry/saloon signs;
 round 5 — 12 images (4 signs + 4 faces + 4 posters);
 round 4 — 16 images (6 region/ferry signs + 10 reference sheets);

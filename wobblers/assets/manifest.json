@@ -23,6 +23,7 @@
  "posters/cars_sale.png",
  "posters/clothes_fashion.png",
  "posters/homes_cottage.png",
+ "posters/job_board.png",
  "posters/painting_island.png",
  "posters/pets_adopt.png",
  "posters/portrait_family.png",
@@ -78,6 +79,7 @@
  "signs/ice_cave.png",
  "signs/ice_cream.png",
  "signs/island_hopper.png",
+ "signs/jobs.png",
  "signs/jump.png",
  "signs/jungle_tours.png",
  "signs/kart_racing.png",
@@ -124,5 +126,6 @@
  "signs/wobble_cola.png",
  "signs/wobblecorp.png",
  "signs/zip_line.png",
+ "ui/job_marker.png",
  "ui/logo.png"
 ]

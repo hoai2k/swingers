@@ -1467,6 +1467,36 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef716b78-79f3-4339-b30a-717883638c0e.png",
       "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"CACTUS KID\" beneath portrait; \"REWARD 50 COINS\" below. A cheeky little wobbly bean-person cowboy hugging a cactus in middle. Toy-like and silly. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
       "round": 9
+    },
+    {
+      "index": 142,
+      "file": "signs/jobs.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-66fbf1ea-b9c9-4c92-954e-4aaad3dc8fc5.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading and gentle highlight, cheerful and silly, never realistic. Exact word \"JOBS\": bright job-board header, sunny yellow board with chunky white rounded border, big dark-blue rounded letters, small clipboard-with-tick icon. Horizontal front-facing 4:1 signboard, board fills image with safe margin; transparent outside board. No real company logos, brands or watermark.",
+      "round": 10
+    },
+    {
+      "index": 143,
+      "file": "posters/job_board.png",
+      "width": 716,
+      "height": 512,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a6ce9e1-5a1a-4b07-88ae-465cd8bb2900.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading and gentle highlight, cheerful and silly, never realistic. Opaque landscape cork notice board crammed with cheerful pinned job notes and doodles: a pizza slice, fire truck, sheep, taxi, snowflake, cactus and palm tree; coloured push-pins and a few coins drawn on notes. Toy-like. The ONLY readable text is exact heading \"JOBS\" at top. No small text or pseudo-lettering on notes. Fill image edge to edge, landscape 716x512 composition. No real company logos, brands or watermark.",
+      "round": 10
+    },
+    {
+      "index": 144,
+      "file": "ui/job_marker.png",
+      "width": 256,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-684ebb56-f8d8-4aac-a3f9-dea55387c3e0.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading and gentle highlight, cheerful and silly, never realistic. One floating quest marker: big chunky yellow-orange exclamation mark \"!\" with thick dark-blue rounded outline inside a soft white ROUND BADGE. Glossy toy look, centered with little margin. Square icon intended 256x256. Genuine transparency outside the white circular badge. No other text or objects. No real company logos, brands or watermark.",
+      "round": 10
     }
   ]
 }

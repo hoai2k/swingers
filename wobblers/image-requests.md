@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 3 requested images remaining.** Rounds 1–8 are delivered;
+**Status: all requested images delivered; no open requests.** Rounds 1–10 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -45,11 +45,3 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
-
-## OPEN round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
-
-The game draws a procedural stand-in for each until the art arrives.
-
-- `signs/jobs.png` (1024 × 256) — **JOBS**: bright job-board header, sunny yellow board with a chunky white rounded border, big dark-blue rounded letters, small clipboard-with-tick icon (on the job board on every island).
-- `posters/job_board.png` (716 × 512, landscape, opaque) — a cork notice board crammed with cheerful pinned job notes and doodles (a pizza slice, a fire truck, a sheep, a taxi, a snowflake, a cactus, a palm tree), coloured push-pins, a few coins drawn on the notes; toy-like, no readable small text except the word **JOBS** at the top. Hangs under the JOBS sign.
-- `ui/job_marker.png` (256 × 256, transparent) — floating quest marker: a big chunky yellow-orange exclamation mark "!" with a thick dark-blue rounded outline inside a soft white round badge, glossy toy look, centred with a little margin. Floats over job-giver NPCs and job boards.
