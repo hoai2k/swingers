@@ -148,8 +148,9 @@ export function drawAmmoBar(ctx, sp) {
 // P# arrows over spiders (after spawning, and always in the lobby) + ammo bars.
 // Kept small: the tag is the only thing drawn next to a spider in play.
 export function drawPlayerTags(ctx, game, { label } = {}) {
-  for (const sp of game.spiders) {
-    if (!sp.alive) continue;
+  for (const real of game.spiders) {
+    if (!real.alive) continue;
+    const sp = game.uiProxy ? game.uiProxy(real) : real;   // on-screen spot through the camera
     if (sp.weapon) drawAmmoBar(ctx, sp);
     if (!sp.player) continue;
     const show = sp.invuln > 0 || game.sceneName === 'lobby';
