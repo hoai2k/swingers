@@ -275,6 +275,7 @@ export class Player {
       b.sphere(0.102 * S, 0xe8e8e8, [0, -0.098 * S, 0.045 * S], [1, 0.3, 1.47], 16);
     }
     this.outfit?.(p.n, b); // NPC outfits (src/npc.js): ties, scarves, backpacks...
+    this.gearMesh?.(p.n, b, g); // gadgets (src/gadgets.js): jetpack, boots, laser gun...
     const m = b.mesh(PLAYER_MAT);
     g.add(m);
     return g;
@@ -595,6 +596,7 @@ export class Player {
 
   // Called every physics step before world.step.
   step(inp, pressed) {
+    if (this.gear?.filter) inp = this.gear.filter(inp); // gadgets: a hand holding a tool can't grab
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
@@ -706,7 +708,7 @@ export class Player {
     const gv = this.groundVelocity(new THREE.Vector3());
     const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
     const strength = limp ? 0 : this.recover * riseUp * stumbleK;
-    const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK);
+    const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK) * (this.gear?.speed || 1); // gadgets: speed boots, jetpack / glider flight
     const hv = _vc.set(v.x - gv.x, 0, v.z - gv.z);
     const hspeed = hv.length();
     const fwdSpeed = hv.x * Math.sin(this.yaw) + hv.z * Math.cos(this.yaw);
@@ -868,7 +870,8 @@ export class Player {
         const footing = this.jumpCool <= 0 && (this.grounded || this.swimming || (this.offGround < COYOTE && !hanging));
         if (footing) {
           // push off: straight up, plus a little kick the way the stick points
-          const jv = this.swimming ? 4.2 : JUMP_V, kick = this.swimming ? 0 : 0.9;
+          const jv = this.swimming ? 4.2 : JUMP_V * (this.gear?.jump || 1), // gadgets: high-jump boots
+            kick = this.swimming ? 0 : 0.9;
           for (const b of this.bodies) {
             const bv = b.linvel();
             b.applyImpulse({ x: mvx * kick * b.mass(), y: (gv.y + jv - bv.y) * b.mass(), z: mvz * kick * b.mass() }, true);
@@ -919,7 +922,7 @@ export class Player {
           this.game.audio?.play('jump', cp);
         }
       }
-      if (pressed.punch && this.punch.t <= 0) {
+      if (pressed.punch && this.punch.t <= 0 && !this.gear?.punch?.(this, inp)) { // gadgets: laser gun / grappling hook fire instead
         this.punch.hand = this.punch.hand === 'L' ? 'R' : 'L';
         if (inp.grabL > 0.5 && inp.grabR <= 0.5) this.punch.hand = 'R';
         if (inp.grabR > 0.5 && inp.grabL <= 0.5) this.punch.hand = 'L';
@@ -939,6 +942,7 @@ export class Player {
     // --- pose
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
+    this.gear?.step(this, inp, pressed); // gadgets (src/gadgets.js): thrust, glide, aiming arm, hook
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
