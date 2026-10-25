@@ -651,18 +651,21 @@ export class Game {
         continue;
       }
 
-      if (this.state !== 'play') continue;
-
-      // power-ups: touch one to take it (it replaces any you had)
-      for (const pu of this.level.power.live) {
-        if (Math.hypot(pos.x - pu.x, pos.y - pu.y) < 30 + CFG.radius) {
-          this.level.power.take(pu);
-          p.givePower(pu.id);
-          this.particles.burst(pu.x, pu.y, POWERS[pu.id].color, 12, 220);
-          sfx.pickup();
-          break;
+      // power-ups: touch one to take it (it replaces any you had). The
+      // lobby playground spawns them too, so they work there as well.
+      if (this.state === 'play' || this.state === 'lobby') {
+        for (const pu of this.level.power.live) {
+          if (Math.hypot(pos.x - pu.x, pos.y - pu.y) < 30 + CFG.radius) {
+            this.level.power.take(pu);
+            p.givePower(pu.id);
+            this.particles.burst(pu.x, pu.y, POWERS[pu.id].color, 12, 220);
+            sfx.pickup();
+            break;
+          }
         }
       }
+
+      if (this.state !== 'play') continue;
 
       // goal — VS: first robot in WINS on the spot; CO-OP: the round is
       // only won when EVERY robot has made it
