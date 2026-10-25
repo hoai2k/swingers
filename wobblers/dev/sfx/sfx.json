@@ -1,0 +1,24 @@
+{
+  "_doc": "Recorded sound effects for Wobblers, made with the ElevenLabs sound-generation API (generate.py). name: the sound id src/audio.js plays (one-shots replace the synthesised sound of the same name; loops are ambient beds placed with audio.ambientSpot). n: variants; dur: requested seconds; loop: a seamless ambient loop; level: playback gain.",
+  "style": "Cheerful, cartoony video game sound effect for a silly physics sandbox with wobbly bean people, clean, no music unless asked.",
+  "sounds": [
+    { "name": "punch", "n": 4, "dur": 0.5, "level": 0.8, "prompt": "Soft cartoon punch hitting a squishy rubber toy, comedic bop" },
+    { "name": "thud", "n": 3, "dur": 0.6, "level": 0.8, "prompt": "Wobbly rubber body flopping onto the ground, soft comedic thud" },
+    { "name": "land", "n": 3, "dur": 0.4, "level": 0.6, "prompt": "Small feet landing on the ground after a jump, soft squishy pat" },
+    { "name": "splash", "n": 3, "dur": 1.2, "level": 0.8, "prompt": "Cartoon character splashing into a swimming pool, playful water splash" },
+    { "name": "boing", "n": 3, "dur": 0.8, "level": 0.7, "prompt": "Springy cartoon boing of bouncing on a trampoline" },
+    { "name": "swish", "n": 3, "dur": 0.4, "level": 0.6, "prompt": "Quick whoosh of a wobbly arm swinging a punch through the air" },
+    { "name": "door", "n": 2, "dur": 0.8, "level": 0.7, "prompt": "Wooden house door swinging open with a short creak and soft knock" },
+    { "name": "wheee", "n": 4, "dur": 1.2, "level": 0.8, "prompt": "Happy cartoon character shouting wheee while sliding down a slide, playful voice, no words" },
+    { "name": "ko", "n": 2, "dur": 1.5, "level": 0.8, "prompt": "Cartoon bonk on the head followed by a dizzy slide whistle down and twinkling stars" },
+    { "name": "bark", "n": 3, "dur": 0.6, "level": 0.7, "prompt": "A small friendly dog barking once, cute" },
+    { "name": "meow", "n": 2, "dur": 0.9, "level": 0.6, "prompt": "A cute cat meowing once" },
+    { "name": "quack", "n": 2, "dur": 0.6, "level": 0.6, "prompt": "A rubber duck squeak quack" },
+    { "name": "ride_screams", "n": 1, "dur": 20, "loop": true, "level": 0.5, "prompt": "Amusement park ride: a group of happy riders screaming and laughing as a roller coaster drops and swoops past, distant rattle of the track, excited cheers" },
+    { "name": "fair_crowd", "n": 1, "dur": 22, "loop": true, "level": 0.45, "prompt": "Busy autumn county fair: crowd of teenagers and families chatting and laughing outdoors, distant ride machinery hum and happy screams, faint carnival game bells, no music" },
+    { "name": "park_crowd", "n": 1, "dur": 22, "loop": true, "level": 0.4, "prompt": "Small funfair in a town park: people chatting and laughing, children giggling, a carousel turning, distant happy screams from rides, no music" },
+    { "name": "city_street", "n": 1, "dur": 22, "loop": true, "level": 0.4, "prompt": "Cheerful cartoon city street: traffic passing by, occasional friendly car horns, pedestrians chatting, a bus pulling away, pigeons, no music" },
+    { "name": "plaza_chatter", "n": 1, "dur": 20, "loop": true, "level": 0.35, "prompt": "Town square on a sunny day: relaxed crowd chatter and laughter, footsteps, a water fountain splashing, birds, no music" },
+    { "name": "arcade_room", "n": 1, "dur": 20, "loop": true, "level": 0.35, "prompt": "Retro video arcade room: many old arcade machines beeping and blooping, chiptune jingles, buttons clicking, kids cheering, muffled" }
+  ]
+}

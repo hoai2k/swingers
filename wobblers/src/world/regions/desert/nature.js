@@ -80,6 +80,7 @@ function tumbleweeds(game, R, N = 9) {
     game.scene.add(mesh);
     const o = game.physics.dynamic({ x: -1200, y: 10, z: i * 20 }, [RAPIER.ColliderDesc.ball(0.5).setMass(2.5).setFriction(0.6).setRestitution(0.45)], mesh, { angDamp: 0.3, linDamp: 0.2, buoy: { r: 0.5, volume: 0.15 } });
     o.kind = 'tumbleweed';
+    o.noCull = true; // switched on and off with the desert below (simcull.js leaves it alone)
     o.age = 0;
     spawnAt(o);
     R.common.throwable(game, o, { speed: 10, r: 0.5 });

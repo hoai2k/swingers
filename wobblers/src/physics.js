@@ -107,7 +107,7 @@ export class Physics {
 
   applyBuoyancy(obj) {
     const b = obj.body;
-    if (!b.isDynamic() || b.isSleeping()) return;
+    if (!b.isDynamic() || b.isSleeping() || !b.isEnabled()) return;
     const bu = obj.buoy;
     if (!bu) return;
     const t = b.translation();

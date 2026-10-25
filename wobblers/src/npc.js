@@ -25,7 +25,8 @@
 // dots); they collide with players and props on their own collision bits
 // (config.js NPC_BITS, 11..15, five groups, so NPCs in different groups bump
 // into each other); only the CAP nearest NPCs within WAKE_R of a player are
-// simulated, the rest are parked (bodies disabled, hidden, seats freed).
+// simulated, the rest are parked (bodies disabled, seats freed; still shown
+// standing where they were out to SHOW_R so streets don't look empty).
 import * as THREE from 'three';
 import { Player, S, headMaterials } from './player.js';
 import { HATS } from './config.js';
@@ -35,7 +36,8 @@ import { Builder } from './mesh.js';
 import { injectCSS } from './map.js';
 import { meshHeight } from './terrain.js';
 
-export const WAKE_R = 70, SLEEP_R = 85, CAP = 16;
+export const WAKE_R = 80, SLEEP_R = 95, CAP = 18;
+const SHOW_R = 130; // parked NPCs this close to a player stay visible, standing still
 const NPC_SLOTS = 5;                 // player indices 8..12 -> collision bits 11..15
 const HEAD_R = 0.31 * S, HAND_OFF = -0.13 * S;
 const r01 = () => Math.random();
@@ -142,7 +144,7 @@ export class NPC extends Player {
   constructor(game, def, x, z, slot) {
     super(game, 8 + (slot % NPC_SLOTS), 'npc');
     // the group sits at the origin (parts carry world positions), so game.cullSmall's
-    // distance test would hide every NPC far from (0, 0); parked NPCs are hidden anyway
+    // distance test would hide every NPC far from (0, 0); npc.js decides who is shown (SHOW_R)
     this.group.userData.noCull = true;
     this.isNPC = true;
     this.def = def;
@@ -217,6 +219,9 @@ export class NPC extends Player {
     const t = this.hips.translation();
     const ok = Number.isFinite(t.x) && t.y > -6 && Math.hypot(t.x - this.home.x, t.z - this.home.z) < this.area.r + 60;
     this.parkPos = ok ? { x: t.x, y: t.y, z: t.z } : { x: this.home.x, y: 0, z: this.home.z };
+    // still standing where it was: pose the meshes from the bodies so it can stay on show
+    this.showable = ok && this.state === 'normal';
+    if (this.showable) for (const k in this.parts) { const p = this.parts[k], b = p.body, t = b.translation(), r = b.rotation(); p.mesh.position.set(t.x, t.y, t.z); p.mesh.quaternion.set(r.x, r.y, r.z, r.w); }
     for (const b of this.bodies) b.setEnabled(false);
     this.group.visible = false;
     this.bubble = null;
@@ -258,6 +263,14 @@ export class NPC extends Player {
       if (d.flee !== false && ai.attacker) { ai.mode = 'flee'; ai.t = 2.5 + r01() * 1.5; }
       else { ai.mode = 'idle'; ai.t = 2; }
     }
+    // forms.js: everyone runs from a player in raptor form
+    const scare = this.game.forms?.scareOf(this);
+    if (scare && ai.mode !== 'flee' && this.def.flee !== false) {
+      if (this.seat) this.leaveSeat();
+      stopEmote(this);
+      ai.mode = 'flee'; ai.attacker = scare; ai.t = 2 + r01();
+      this.say(pick(['Aaah! A dinosaur!', 'Run!!', 'Help! A raptor!', 'Eeek!']));
+    } else if (scare && ai.mode === 'flee') { ai.attacker = scare; ai.t = Math.max(ai.t, 1); }
     if (this.state === 'seated') {
       ai.sitT -= dt;
       const np = this.nearestPlayer(5);
@@ -427,6 +440,7 @@ export class NPCManager {
       let d = 1e9;
       for (const p of ps) d = Math.min(d, Math.hypot(q.x - p.x, q.z - p.z));
       if (d < (n.parked ? WAKE_R : SLEEP_R)) cand.push([d, n]);
+      if (n.parked) n.group.visible = !!n.showable && d < SHOW_R;
     }
     cand.sort((a, b) => a[0] - b[0]);
     const want = new Set(cand.slice(0, CAP).map((c) => c[1]));

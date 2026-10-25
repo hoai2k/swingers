@@ -29,6 +29,21 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
   `world/common.js` (speed from `throwSpeed(mass)`).
+- Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
+  150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
+  vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
+  update (game.step). At most two physics steps run per frame. Parked NPCs stay visible
+  (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
+  Audio starts on the first controller press too (`game.wakeAudio`).
+- Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds
+  in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
+  `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`
+  makes originals in `assets/originals/sfx/` (not deployed) and the processed `assets/sfx/` +
+  `index.json` the game loads; nothing delivered = synth only.
+- Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
+  route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
+  `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in
+  `world/hometraffic.js`.
 - Collision groups (`src/config.js`): static, props, vehicles/rides, one bit per player.
   Seated players stop colliding with vehicles and rides.
 - Static scenery goes through `world/kit.js` so it is merged into per-chunk meshes;
@@ -94,6 +109,36 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `shops.js` `VEHICLE_PRICES` (the phone asks `game.vehicleLock(id)`). Coin pickup spots are
   `CLUSTERS` in `life/coins.js` (`[x, z, ray start, shape, count, size]`, like present spots).
   Home respawn wraps `game.spawnPoint`; pets are synced from the saved choice every 15 steps.
+- Gadgets (`src/gadgets.js`, shop building `world/gadgetshop.js`, list in `life/shops.js` 'gadgets'):
+  `GADGETS` (id, price...); bought = `'gadget:<id>'` in `life.bought`; worn one is `player.gadget`
+  (saved in the slot look, `cosmetics.js`), its runtime is `player.gear`. Player hooks are all
+  `this.gear?.…` (NPCs never have gear): `gear.speed` / `gear.jump` multipliers, `gear.filter(inp)`
+  (the tool hand can't grab), `gear.punch(p, inp)` (true = fired instead of punching), `gear.step`
+  after the pose (thrust / glide / aim arm / hook), `player.gearMesh` in `partMesh`. ui.js asks
+  `game.gadgets.hint(p, kind)`. A new gadget: an entry in `GADGETS`, geometry in `gearGeo`, a
+  step fn in `STEPS`. Probe with `setGadget(player, id)` (needs no purchase).
+
+- Shape-shifting (`src/forms.js`, the Magic Tent at `TENT` in the Fun Park; built by
+  `buildMagicTent` in `world/index.js`'s home step): `game.forms.transform(p, kind)` /
+  `revert(p)` / `of(p)`; `p.form` is the live record. Forms keep the same ragdoll: the human part
+  meshes are hidden and the form's meshes copy their poses each `Player.sync` (front legs copy the
+  opposite rear leg shifted forward; `knee` / `hip` stiffen the visual stride), so the player's look
+  is never modified and comes back exactly. Hooks marked `forms.js`: `player.js` (input filter =
+  no grabbing, `form.speed` / `jump` / `kick`, X calls `form.attack()`, sync, `respawn` and
+  `destroy` revert), `npc.js` (NPCs within `SCARE_R` of a raptor flee), `ui.js` (HUD), `map.js`
+  (label). Attack hits are collected in the Rapier query callback and applied after it (pushing
+  bodies inside the callback throws). New forms: add to `FORMS` with a look builder.
+
+- Arcade cabinets (`src/arcade/`, built by one `buildArcade(game, L, spots)` call in
+  `world/interiors.js` ARCADE; hooks: one line in `ui.handleInput` for invites, `settings.arcade`).
+  A game is a class with `W`/`H`, `reset()`, `step(inputs)` (60 Hz; `inputs[i]` null = the game's
+  AI plays that slot), `draw(g)`, `score`, `over`, `snd` (interface at the top of `arcade/common.js`);
+  add one to `GAMES` in `arcade/index.js` and a spot in the ARCADE interior. Cabinet screens are
+  CanvasTextures repainted at 15 Hz only while a camera is within 16 m (idle demos freeze
+  otherwise). `game.arcade` has `cabinets` (`machine`, `session`, `pos`, `yaw`), `start(p, cab)`,
+  `join(p, cab)`, `invites`, `tick(cab)`; probe game logic by stepping `cab.machine` directly, or
+  headless in node with `node tools/arcade-sim.mjs`. Marquees are `signMesh` texts (art requested
+  in round 11).
 
 ## Missions (jobs, `src/missions/`)
 

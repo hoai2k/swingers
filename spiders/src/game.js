@@ -42,6 +42,7 @@ import { segCircle, clamp, rand, TAU, FONT } from './util.js';
 import { loadProgress } from './preload.js';
 
 export const MAX_PLAYERS = 8;
+const CAM_MAX = 1.45;        // closest the camera eases in
 
 export class Game {
   constructor(canvas) {
@@ -71,6 +72,7 @@ export class Game {
     this.stopT = 0;
     this.paused = false;
     this.view = { s: 1, ox: 0, oy: 0, cw: 0, ch: 0, dpr: 1 };
+    this.cam = { z: 1, cx: W / 2, cy: H / 2, x0: 0, y0: 0 };
     this.acc = 0;
     this.mods = {};            // match modifiers in effect (modifiers.js): boomMul, bladeExtra, ...
     this.applySettings();
@@ -102,8 +104,38 @@ export class Game {
   }
 
   screenToWorld(cx, cy) {
-    const v = this.view;
-    return { x: (cx - v.ox) / v.s, y: (cy - v.oy) / v.s };
+    const v = this.view, c = this.cam;
+    return { x: ((cx - v.ox) / v.s) / c.z + c.x0, y: ((cy - v.oy) / v.s) / c.z + c.y0 };
+  }
+
+  // world point -> UI (arena-design) space, through the camera
+  toUI(x, y) { const c = this.cam; return { x: (x - c.x0) * c.z, y: (y - c.y0) * c.z }; }
+  // a stand-in for a body at its on-screen spot/size (name tags, ammo bars)
+  uiProxy(o) { const c = this.cam; const p = Object.create(o); p.x = (o.x - c.x0) * c.z; p.y = (o.y - c.y0) * c.z; p.r = o.r * c.z; return p; }
+
+  // Camera: shows the whole arena, and eases in (up to CAM_MAX) when the
+  // fighters are bunched up, always keeping the view inside the arena. The
+  // lobby and menus keep the full view.
+  updateCamera(dt, snap = false) {
+    const c = this.cam;
+    let tz = 1, tx = W / 2, ty = H / 2;
+    const dyn = this.board && this.scene && this.scene.dynamicCamera;
+    const pts = dyn ? this.spiders.filter((s) => s.alive).map((s) => [s.x, s.y]) : [];
+    if (dyn && this.scene.cameraExtra) pts.push(...this.scene.cameraExtra());
+    if (pts.length) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const [x, y] of pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      const pad = 380;
+      const bw = x1 - x0 + pad * 2, bh = y1 - y0 + pad * 2;
+      tz = clamp(Math.min(W / bw, H / bh), 1, CAM_MAX);
+      tx = (x0 + x1) / 2; ty = (y0 + y1) / 2;
+    }
+    const k = snap ? 1 : 1 - Math.exp(-dt * 2.2);
+    c.z += (tz - c.z) * k;
+    c.cx += (tx - c.cx) * k; c.cy += (ty - c.cy) * k;
+    const vw = W / c.z, vh = H / c.z;
+    c.x0 = clamp(c.cx - vw / 2, 0, W - vw);
+    c.y0 = clamp(c.cy - vh / 2, 0, H - vh);
   }
 
   // ---- scenes ---------------------------------------------------------------
@@ -119,6 +151,7 @@ export class Game {
   // ---- board & entities -------------------------------------------------------
   loadBoard(def) {
     this.board = new Board(def);
+    this.cam.z = 1; this.cam.cx = W / 2; this.cam.cy = H / 2; this.cam.x0 = 0; this.cam.y0 = 0;
     this.world = this.board.world;
     this.spiders = [];
     this.enemies = [];
@@ -393,6 +426,7 @@ export class Game {
 
   // advance the simulation (also the headless test hook)
   step(dt) {
+    this.updateCamera(dt);
     const sdt = dt * this.timeScale;
     if (this.overlay) this.overlay.update(dt);   // pause menu / DOM menus / pad notices (pause.js)
     if (this.scene && this.scene.preUpdate) this.scene.preUpdate(dt);
@@ -449,6 +483,9 @@ export class Game {
     ctx.scale(v.s, v.s);
     ctx.save();
     ctx.beginPath(); ctx.rect(-400, -400, W + 800, H + 800); ctx.clip();
+    const c = this.cam;
+    ctx.scale(c.z, c.z);
+    ctx.translate(-c.x0, -c.y0);
     if (this.board) this.drawWorld(ctx);
     ctx.restore();
     if (this.scene && this.scene.drawUI) this.scene.drawUI(ctx);

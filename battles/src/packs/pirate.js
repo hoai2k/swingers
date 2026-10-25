@@ -152,7 +152,7 @@ const units = [
   {
     id: 'pi_flintlock', name: 'Flintlock Pirate', faction: 'pirate', cost: 165, hp: 90, speed: 4.4,
     build: { scale: 0.98, girth: 1.0 },
-    weapon: { line: 'Ranged · one heavy flintlock shot, then a long reload', kind: 'pr_gun', style: 'sword', anim: 'punch', item: 'pi_pistol', damage: 75, speed: 70, range: 26, minRange: 6, cooldown: 0.6, reload: 5.0, ammo: 1, force: 220, spread: 0.03, releaseAt: 0.55, windup: 0.6, barrel: 0.42 },
+    weapon: { line: 'Ranged · one heavy flintlock shot, then a long reload', kind: 'pr_gun', style: 'sword', anim: 'punch', item: 'pi_pistol', damage: 75, speed: 70, range: 26, minRange: 6, cooldown: 0.6, reload: 6.0, ammo: 1, force: 220, spread: 0.03, releaseAt: 0.55, windup: 0.6, barrel: 0.42 },
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_shirt', legs: '#3e3a4a', patch: true },
     personality: { aggro: 0.4, bravery: 0.25, voice: 0.95, chatter: 0.7, cry: 'hey', idle: 'shift' },
     desc: 'One big bang. Then a long, long reload.',
@@ -168,7 +168,7 @@ const units = [
   {
     id: 'pi_bomb', name: 'Bomb Thrower', faction: 'pirate', cost: 120, hp: 90, speed: 4.5,
     build: { scale: 0.95, girth: 1.0, head: 1.08 },
-    weapon: { line: 'Ranged · lobs lit bombs (hits friends too)', kind: 'ranged', style: 'throw', anim: 'throw', item: 'bomb_hand', proj: 'bomb', speed: 13, arc: 'high', range: 22, minRange: 6, cooldown: 3.0, damage: 85, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.4 },
+    weapon: { line: 'Ranged · lobs lit bombs (hits friends too)', kind: 'ranged', style: 'throw', anim: 'throw', item: 'bomb_hand', proj: 'bomb', speed: 13, arc: 'high', range: 22, minRange: 6, cooldown: 3.5, damage: 85, force: 600, spread: 0.08, releaseAt: 0.7, windup: 0.9, blast: 3.4 },
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_vest', legs: '#5a4630', bare: true },
     personality: { aggro: 0.45, bravery: 0.2, voice: 1.25, chatter: 1, cry: 'cackle', idle: 'shake' },
     desc: 'Lights them, lobs them, laughs.',
@@ -189,7 +189,7 @@ const units = [
   {
     id: 'pi_queen', name: 'Pirate Queen', faction: 'pirate', cost: 1100, hp: 800, speed: 4.6,
     build: { scale: 1.15, girth: 0.98, head: 1.02 },
-    weapon: { line: 'Ranged · rapid volleys from two pistols', kind: 'pr_gun', dual: true, style: 'dual', anim: 'punch', item: 'pi_pistol', item2: 'pi_pistol', damage: 36, speed: 75, range: 24, minRange: 5, cooldown: 0.17, reload: 2.2, ammo: 10, force: 130, spread: 0.04, releaseAt: 0.5, windup: 0.22, barrel: 0.4 },
+    weapon: { line: 'Ranged · rapid volleys from two pistols', kind: 'pr_gun', dual: true, style: 'dual', anim: 'punch', item: 'pi_pistol', item2: 'pi_pistol', damage: 36, speed: 75, range: 24, minRange: 5, cooldown: 0.17, reload: 2.8, ammo: 10, force: 130, spread: 0.04, releaseAt: 0.5, windup: 0.22, barrel: 0.4 },
     look: { skin: '#f0c4a0', hat: 'pi_queen', top: 'pi_coat', legs: '#2a2228' },
     personality: { aggro: 0.5, bravery: 0, voice: 1.35, chatter: 0.8, cry: 'cackle', idle: 'regal' },
     armor: 0.1, stagger: 0.5,

@@ -29,6 +29,12 @@ export function autoTypes() {
   if (!VEHICLES.autobus) registerVehicle('autobus', { ...VEHICLES.citybus, handling: 'cityauto' });
   if (!VEHICLES.autotaxi) registerVehicle('autotaxi', { ...VEHICLES.taxi, handling: 'cityauto' });
 }
+// self-driving version of any vehicle type ('car' -> 'autocar'); returns the new type name
+export function autoType(base) {
+  const name = 'auto' + base;
+  if (!VEHICLES[name]) registerVehicle(name, { ...VEHICLES[base], handling: 'cityauto' });
+  return name;
+}
 
 // A loop of corner points (world x, z) driven in order; stops: [x, z] points on it to wait at.
 // The corners are road-centre intersections; the lane offset is applied here.
@@ -134,11 +140,12 @@ function autopilot(v, fwd) {
 export function placeOnRoute(v, s) {
   const [x, z] = at(v.route, s), [nx, nz] = at(v.route, s + 3);
   const yaw = Math.atan2(nx - x, nz - z);
-  v.body.setTranslation({ x, y: 3.6, z }, true);
+  const y = v.route.yAt ? v.route.yAt(x, z) : 3.6; // routes off the flat city plate give their ground height
+  v.body.setTranslation({ x, y, z }, true);
   v.body.setRotation({ x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) }, true);
   v.body.setLinvel({ x: 0, y: 0, z: 0 }, true); v.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
   if (v.rec) v.rec.snap = true;
-  return { x, y: 3.6, z, yaw };
+  return { x, y, z, yaw };
 }
 
 // A little bean driver sitting in the driver's seat while nobody else drives.

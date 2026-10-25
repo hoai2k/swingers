@@ -252,7 +252,7 @@ export class UI {
     this.setText(s.status, d.status || '');
     s.reticle.className = 'reticle ' + (d.valid ? 'ok' : 'bad');
     s.reticle.style.display = d.ready || d.modal ? 'none' : '';
-    this.setText(s.brush, d.ready ? '' : `brush ${btn('LT')} <b>${d.brush}</b> ${btn('RT')}`);
+    this.setText(s.brush, d.ready ? '' : `brush ${btn('dpad')}↑↓ <b>${d.brush}</b>`);
     const def = d.def;
     this.setText(s.info, this.infoHtml(def, t));
     // overview: my army by unit type (count and gold); building alone, the other army too
@@ -475,14 +475,14 @@ export class UI {
     <tr><th></th><th>Army setup <small>(both at once)</small></th><th>Battle</th><th>Replay</th></tr>
     <tr><td>${btn('LS')}</td><td>slide over the field</td><td>fly · follow: zoom · possess: walk</td><td>fly · follow: zoom</td></tr>
     <tr><td>${btn('RS')}</td><td>look</td><td>look · orbit · aim</td><td>look · orbit</td></tr>
-    <tr><td>${btn('LB')} ${btn('RB')}</td><td>down / up</td><td>down / up · following: prev / next unit</td><td>same</td></tr>
-    <tr><td>${btn('L3')}</td><td>fly fast (hold)</td><td>fly fast (hold)</td><td>fly fast</td></tr>
+    <tr><td>${btn('LB')} ${btn('RB')}</td><td>faction tab</td><td>down / up · following: prev / next unit</td><td>same</td></tr>
+    <tr><td>${btn('L3')}</td><td>fly fast (hold) · with ${btn('RS')} ↑↓: camera up / down</td><td>fly fast (hold)</td><td>fly fast</td></tr>
     <tr><td>${btn('A')}</td><td>place unit (hold to paint)</td><td>follow unit in crosshair · controlling: jump</td><td>play / pause</td></tr>
     <tr><td>${btn('B')}</td><td>remove unit (hold)</td><td>free cam: cinematic camera · else back to free cam / let go</td><td>free camera · exit</td></tr>
     <tr><td>${btn('X')}</td><td>undo (hold to repeat)</td><td>take control of the unit in crosshair (or the followed one)</td><td>follow unit</td></tr>
     <tr><td>${btn('Y')}</td><td>ready / not ready (alone: start battle)</td><td>slow motion</td><td>slow-mo final moments</td></tr>
-    <tr><td>${btn('LT')} ${btn('RT')}</td><td>brush: single / line / block</td><td>${btn('LT')} smooth camera · controlling: ${btn('RT')} attack, ${btn('LT')} block (ranged: aim)</td><td>scrub back / forward</td></tr>
-    <tr><td>${btn('dpad')}</td><td>←→ unit · ↑↓ faction</td><td>↑↓ time speed (down to freeze) · ←→ zoom</td><td>←→ skip · ↑↓ speed</td></tr>
+    <tr><td>${btn('LT')} ${btn('RT')}</td><td>previous / next unit</td><td>${btn('LT')} smooth camera · controlling: ${btn('RT')} attack, ${btn('LT')} block (ranged: aim)</td><td>scrub back / forward</td></tr>
+    <tr><td>${btn('dpad')}</td><td>←→ unit · ↑↓ brush (single / line / block)</td><td>↑↓ time speed (down to freeze) · ←→ zoom</td><td>←→ skip · ↑↓ speed</td></tr>
     <tr><td>${btn('R3')}</td><td>reset camera</td><td>cycle tips / HUD off (photo)</td><td>HUD off</td></tr>
     <tr><td>${btn('View')}</td><td>hold: clear army · building alone: tap to switch side</td><td>split / shared screen</td><td>split / shared screen</td></tr>
     <tr><td>${btn('Start')}</td><td>menu (ready, random army, map, quit)</td><td>pause menu (camera, screen, HUD, time…)</td><td>menu</td></tr>

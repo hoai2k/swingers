@@ -54,9 +54,13 @@ export class CamRig {
 
   addZoom(d) { this.zoom = clamp(this.zoom + d, -40, 30); }
 
-  // s: pad state; opts: { speed, lookSpeed, invertY, slow (0..1, LT cinematic), units, minHeight }
+  // s: pad state; opts: { speed, lookSpeed, invertY, slow (0..1, LT cinematic), units, minHeight,
+  // stickHeight (setup: the bumpers pick units, so holding L3 turns the right stick's
+  // up/down into camera height instead of pitch) }
   update(s, dt, terrain, opts = {}) {
     const slow = opts.slow || 0;
+    const lift = opts.stickHeight && s.b.l3 ? -s.ry : 0;
+    if (opts.stickHeight && s.b.l3) s = { ...s, ry: 0 };
     const look = (opts.lookSpeed ?? 2.3) * (1 - slow * 0.55);
     const iy = opts.invertY ? -1 : 1;
     // smoothed look: snappy normally, floaty while the slow cam trigger is held
@@ -77,7 +81,7 @@ export class CamRig {
       const alt = clamp(0.55 + (this.pos.y - gy0) / 22, 0.55, 3);
       const boost = s.b.l3 ? 3 : 1;
       const sp = (opts.speed ?? 11) * boost * alt * (1 - slow * 0.75);
-      const up = (s.b.rb ? 1 : 0) - (s.b.lb ? 1 : 0);
+      const up = opts.stickHeight ? lift / boost : (s.b.rb ? 1 : 0) - (s.b.lb ? 1 : 0);
       // planar (setup): the stick slides over the ground at constant height, so the
       // cursor moves where you push; otherwise fly along the view direction
       if (opts.planar) _v.set(Math.sin(this.yaw), 0, Math.cos(this.yaw)).multiplyScalar(-s.ly * sp);

@@ -110,6 +110,16 @@ export class ProjViz {
     for (const o of this.live.values()) {
       const u = o.userData, p = o.position;
       const moving = u.last && u.last.distanceToSquared(p) > 1e-4 && u.last.distanceToSquared(p) < 25;
+      // gun shots: a continuous line of smoke along the whole flight, filled in
+      // between frames (a fast ball moves metres per frame)
+      if (u.type === 'pr_shot' && u.last && moving) {
+        const d = Math.sqrt(u.last.distanceToSquared(p)), n = Math.min(10, Math.ceil(d / 0.45));
+        for (let i = 0; i < n; i++) {
+          const k = (i + Math.random()) / n;
+          this.fx.event(['gtrail', u.last.x + (p.x - u.last.x) * k, u.last.y + (p.y - u.last.y) * k, u.last.z + (p.z - u.last.z) * k]);
+        }
+        u.last.copy(p);
+      }
       if (!u.last) u.last = p.clone(); else if (emit) u.last.copy(p);
       if (u.flicker) { const k = 1 + Math.sin(this.t * 40 + p.x) * 0.12; u.flicker[0].scale.setScalar(k); u.flicker[1].scale.setScalar(2 - k); }
       if (u.spark) u.spark.scale.setScalar(0.7 + Math.random() * 0.8);

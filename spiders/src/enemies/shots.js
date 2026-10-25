@@ -10,8 +10,15 @@ import { TAU, rand, angDiff, clamp } from '../util.js';
 import { sfx } from '../audio.js';
 import { glowLine } from '../fx.js';
 
+// Insect shots fly at this fraction of the speed their shooter asks for:
+// slow enough to see coming, dodge, or bat back with a blade.
+export const SHOT_PACE = 0.6;
+
 class Shot {
   constructor(game, { x, y, vx, vy, owner, r = 5, life = 3, damage = 1, color = '#ff6a3a', core = '#fff3c8' }) {
+    vx *= SHOT_PACE; vy *= SHOT_PACE;
+    life /= SHOT_PACE;      // same range as before
+    r *= 1.3;               // and a bit bigger to see
     Object.assign(this, { game, x, y, vx, vy, owner, r, life, damage, color, core });
     this.prevX = x; this.prevY = y;
     this.age = 0;

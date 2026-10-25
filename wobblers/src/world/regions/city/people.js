@@ -6,6 +6,7 @@ import { registerRole, OUTFITS } from '../../../npc.js';
 import { VEHICLES, registerVehicle } from '../../../vehicles.js';
 import { registerCallable } from '../../../phone.js';
 import { signMesh } from '../../../mesh.js';
+import { autoType, makeRoute, placeOnRoute, addAutoDriver } from './traffic.js';
 
 // ---- outfits / props -----------------------------------------------------------------
 const hiVis = (part, b) => {
@@ -220,4 +221,35 @@ export function buildPeople(game, R) {
   N('townsfolk', 735, -120, { area: { x: 735, z: -150, r: 30 } });
   N('townsfolk', 735, 160, { area: { x: 735, z: 175, r: 20 } });
   N('townsfolk', 1015, -40, { area: { x: 1015, z: -30, r: 15 } });
+
+  // busier pavements: people out and about on every block (only the nearest
+  // few are simulated at once; npc.js parks the rest, still visible further off)
+  const walkers = [
+    ['townsfolk', 735, -40], ['townsfolk', 805, 30], ['shopper', 875, 90], ['townsfolk', 945, -40], ['businessman', 1015, 30],
+    ['tourist', 805, -110], ['townsfolk', 875, -120], ['shopper', 735, 100], ['townsfolk', 945, 90], ['businessman', 805, 90],
+    ['townsfolk', 875, 30], ['shopper', 945, 210], ['townsfolk', 805, 210], ['tourist', 1080, -20], ['townsfolk', 735, 30],
+    ['businessman', 875, -180], ['townsfolk', 1015, 100], ['shopper', 1080, 90], ['townsfolk', 945, 150], ['jogger', 770, -200],
+  ];
+  for (const [role, x, z] of walkers) N(role, x, z, { area: { x, z, r: 26 } });
+
+  // traffic: self-driving cars on loops round the blocks (traffic.js autopilot:
+  // right-hand lanes, red lights, braking for anything in front)
+  const loops = [
+    [[700, -150], [700, 0], [910, 0], [910, -150]],
+    [[770, 118], [770, 236], [910, 236], [910, 118]],
+    [[840, 0], [840, 180], [980, 180], [980, 0]],
+    [[910, -75], [910, 60], [1050, 60], [1050, -75]],
+  ].map((c) => makeRoute(c));
+  const cars = [
+    [0, 'car', 0x3f8cff, 20], [0, 'van', 0xffffff, 200], [0, 'sports', 0xff4d4d, 420],
+    [1, 'car', 0x55d85a, 30], [1, 'pickup', 0xc8503a, 260],
+    [2, 'car', 0xb46cff, 40], [2, 'delivery', 0xff8a1a, 250], [2, 'limo', 0x16161c, 470],
+    [3, 'car', 0xffd23f, 50], [3, 'van', 0x3fe0d0, 300],
+  ];
+  const drivers = [0xff5a5a, 0x3f8cff, 0x55d85a, 0xffc233, 0xb46cff, 0xff8a3d, 0x3fe0d0, 0xff7fc8];
+  cars.forEach(([li, type, col, s], i) => R.later(() => {
+    if (!VEHICLES[type]) return;
+    const v = R.vehicle(autoType(type), 800, 0, 0, col);
+    v.route = loops[li]; v.home = placeOnRoute(v, s); addAutoDriver(v, drivers[i % drivers.length]);
+  }));
 }

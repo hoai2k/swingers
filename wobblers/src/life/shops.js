@@ -8,6 +8,8 @@
 //   pets     buy a pet, or swap between the ones you have (life/pets.js)
 //   homes    the estate agent (world/estate.js homes)
 //   cars     vehicles for the phone (game.unlockedVehicles; the phone checks game.vehicleLock)
+//   gadgets  jetpack, boots, laser gun... (src/gadgets.js); tried on like clothes, bought
+//            ones are everyone's, each player wears one (saved with the look)
 import { PLAYER_CSS, HATS } from '../config.js';
 import { promptRow, deviceKind } from '../glyphs.js';
 import { injectCSS } from '../map.js';
@@ -17,6 +19,7 @@ import { OUTFIT_LIST } from '../outfits.js';
 import { callVehicle, CALLABLE } from '../phone.js';
 import { life, markBought, isBought, petsOf, saveLife } from './state.js';
 import { PET_KINDS, PET_ORDER } from './pets.js';
+import { GADGETS, setGadget } from '../gadgets.js';
 
 // Vehicles the dealer sells (phone ids from phone.js CALLABLE); every other phone vehicle is free.
 export const VEHICLE_PRICES = { icecream: 200, bus: 250, sports: 300, police: 350, firetruck: 450, heli: 800 };
@@ -28,8 +31,9 @@ export function buildVehicleLocks(game) {
 }
 export const isVehicleLocked = (game, id) => !!game.vehicleLock?.(id);
 
-const SHOP_NAMES = { clothes: 'Clothes shop', pets: 'Pet shop', homes: 'Estate agent', cars: 'Car dealer' };
-const SHOP_SUB = { clothes: 'try it on, buy it, everyone can wear it', pets: 'a friend who follows you everywhere', homes: 'your home is where you respawn', cars: 'bought vehicles appear in your phone' };
+const SHOP_NAMES = { clothes: 'Clothes shop', pets: 'Pet shop', homes: 'Estate agent', cars: 'Car dealer', gadgets: 'Gadget shop' };
+const SHOP_SUB = { clothes: 'try it on, buy it, everyone can wear it', pets: 'a friend who follows you everywhere', homes: 'your home is where you respawn', cars: 'bought vehicles appear in your phone', gadgets: 'wear one at a time, keep them forever' };
+const TRY_ON = new Set(['clothes', 'gadgets']); // the highlighted item is tried on
 
 const CSS = `
 .ppanel.shop { justify-content: flex-start; background: linear-gradient(90deg, rgba(20,50,110,.5), rgba(20,50,110,0) 62%); }
@@ -43,7 +47,8 @@ const CSS = `
 .shop .item { margin: 5px 0; padding: 7px 12px; gap: 10px; flex-wrap: nowrap; font-size: 15px; }
 .shop .item .nm { display: flex; flex-direction: column; line-height: 1.1; }
 .shop .item .nm small { font-size: 11px; font-weight: 700; opacity: .7; }
-.shop .item .tag { font-size: 11px; font-weight: 900; border-radius: 8px; padding: 2px 7px; background: #e4ecf8; color: #345; white-space: nowrap; }
+.shop .item .tag { font-size: 11px; font-weight: 900; border-radius: 8px; padding: 2px 7px; background: #e4ecf8; color: #345; white-space: nowrap; position: static; transform: none; box-shadow: none; margin-left: auto; }
+.shop .item .tag::after { display: none; } /* not the floating name tags' (style.css .tag) */
 .shop .item .price { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; white-space: nowrap; }
 .shop .item.poor .price { color: #d04040; }
 .shop .item.sel.poor .price { color: #ffd0d0; }
@@ -154,14 +159,38 @@ function carItems(game, p) {
   }).filter(Boolean);
 }
 
-const LISTS = { clothes: clothesItems, pets: petItems, homes: homeItems, cars: carItems };
+function gadgetItems(game, p) {
+  const worn = (savedLook(p) || {}).gadget || null;
+  const items = GADGETS.map((d) => {
+    const key = 'gadget:' + d.id, owned = isBought(key);
+    return {
+      cat: 'Gadgets', name: `${d.name} <small>${d.desc}</small>`, plain: d.name, price: d.price, owned, tag: owned ? (worn === d.id ? 'Wearing' : 'Owned') : null,
+      apply: () => setGadget(p, d.id),
+      act(panel) {
+        if (!owned) {
+          if (!game.wallet.spend(d.price, p, d.name)) return panel.fail(`Not enough coins: the ${d.name.toLowerCase()} costs ${d.price}`);
+          markBought(key);
+          game.audio?.play('buy');
+          game.ui.toast(`P${p.index + 1} bought the <b>${d.name}</b>! <small>everyone can wear it now</small>`, p.color);
+        }
+        setGadget(p, d.id); saveLook(p);
+        panel.ok(`Wearing the ${d.name.toLowerCase()}: ${d.how}`);
+      },
+    };
+  });
+  items.push({ cat: 'Gadgets', name: 'No gadget', price: 0, owned: true, tag: worn ? null : 'Wearing', apply: () => setGadget(p, null),
+    act(panel) { setGadget(p, null); saveLook(p); panel.ok('Gadget off'); } });
+  return items;
+}
+
+const LISTS = { clothes: clothesItems, pets: petItems, homes: homeItems, cars: carItems, gadgets: gadgetItems };
 
 // ---- the panel ----------------------------------------------------------------
 export class ShopPanel {
   constructor(ui, player, shop) {
     if (!cssDone) { injectCSS(CSS); cssDone = true; }
     this.ui = ui; this.p = player; this.shop = shop; this.kind = 'shop'; this.sel = 0;
-    this.faceCam = shop === 'clothes'; // ui.update swings the camera round like the customiser
+    this.faceCam = TRY_ON.has(shop); // ui.update swings the camera round like the customiser
     this.t0 = performance.now();
     this.msg = ''; this.msgOk = false;
     this.el = document.createElement('div');
@@ -170,14 +199,14 @@ export class ShopPanel {
     this.el.addEventListener('pointermove', (e) => { const it = e.target.closest?.('[data-i]'); if (it && +it.dataset.i !== this.sel) { this.sel = +it.dataset.i; this.changed(); } });
     this.el.addEventListener('click', (e) => { const it = e.target.closest?.('[data-i]'); if (it) { this.sel = +it.dataset.i; this.buy(); } });
     this.el.addEventListener('wheel', (e) => { this.move(e.deltaY > 0 ? 1 : -1); e.preventDefault(); }, { passive: false });
-    if (shop === 'clothes') saveLook(player); // what to go back to after trying things on
+    if (TRY_ON.has(shop)) saveLook(player); // what to go back to after trying things on
     ui.game.audio?.play('uiOpen');
     this.changed();
   }
   items() { return LISTS[this.shop](this.ui.game, this.p); }
   remove() {
     this.el.remove();
-    if (this.shop === 'clothes') restoreLook(this.p); // take off anything only tried on
+    if (TRY_ON.has(this.shop)) restoreLook(this.p); // take off anything only tried on
   }
   place(rect) {
     const [x, y, w, h] = rect;
@@ -187,7 +216,7 @@ export class ShopPanel {
   }
   changed() {
     const it = this.items()[this.sel];
-    if (this.shop === 'clothes') { restoreLook(this.p); it?.apply?.(); }
+    if (TRY_ON.has(this.shop)) { restoreLook(this.p); it?.apply?.(); }
     this.draw();
   }
   move(d) {
@@ -227,7 +256,7 @@ export class ShopPanel {
     const per = 44, vis = 7.4, N = its.length + (its.some((q) => q.cat !== its[0]?.cat) ? 3 : 0);
     const off = Math.max(0, Math.min(N - vis, this.sel + 1 - 3)) * per;
     const it = its[this.sel];
-    const act = !it ? 'Buy' : it.owned ? (this.shop === 'clothes' ? 'Wear' : this.shop === 'pets' ? (it.tag === 'With you' ? 'Call' : 'Choose') : this.shop === 'homes' ? 'Go home' : this.shop === 'cars' ? 'Call it' : 'Use') : it.taken ? 'Sold' : 'Buy';
+    const act = !it ? 'Buy' : it.owned ? (TRY_ON.has(this.shop) ? 'Wear' : this.shop === 'pets' ? (it.tag === 'With you' ? 'Call' : 'Choose') : this.shop === 'homes' ? 'Go home' : this.shop === 'cars' ? 'Call it' : 'Use') : it.taken ? 'Sold' : 'Buy';
     this.el.innerHTML = `<div class="card" style="--acc:${accent(p.color)}">
       <div class="phead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">Player ${p.index + 1}<small>${SHOP_NAMES[this.shop]}</small></div>
       <h2>${SHOP_NAMES[this.shop]}</h2><div class="ssub">${SHOP_SUB[this.shop]}</div>

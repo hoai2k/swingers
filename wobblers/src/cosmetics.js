@@ -10,6 +10,7 @@ import { settings, devicePrefs, saveSettings } from './settings.js';
 import { EXTRA_HAT_NAMES } from './hats.js';
 import { isLocked } from './unlocks.js';
 import { OUTFIT_LIST, outfitFn } from './outfits.js';
+import { applyGadget, gadgetLocked } from './gadgets.js';
 
 export const OUTFITS = OUTFIT_LIST.map((o) => o.name);
 
@@ -266,7 +267,7 @@ export function setHat(p, i) {
 }
 
 export function lookOf(p) {
-  return { color: p.colorIndex, hat: p.hat, face: p.face || 0, pants: p.pantsIndex || 0, outfit: p.outfitIndex || 0 };
+  return { color: p.colorIndex, hat: p.hat, face: p.face || 0, pants: p.pantsIndex || 0, outfit: p.outfitIndex || 0, gadget: p.gadget || null };
 }
 
 // Each player slot (Player 1, Player 2...) keeps its own saved Wobbler, stored
@@ -292,12 +293,13 @@ export function saveLook(p) {
 // Apply the look this player slot saved last time (if any). Returns true if one existed.
 export function restoreLook(p) {
   const L = savedLook(p);
-  if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; p.outfitIndex = 0; p.outfit = null; return false; }
+  if (!L || typeof L !== 'object') { p.face = 0; p.pantsIndex = 0; p.outfitIndex = 0; p.outfit = null; if (p.gadget) { applyGadget(p, null); p.setColor(p.colorIndex); } return false; }
   const n = (v, m, locked = () => false) => (Number.isInteger(v) && v >= 0 && v < m && !locked(v) ? v : 0); // locked again after a progress reset
   p.hat = n(L.hat, HATS.length, hatLocked); p.buildHat();
   p.pantsIndex = n(L.pants, PANTS.length, pantsLocked);
   p.pantsColor = PANTS[p.pantsIndex].color ?? undefined;
   p.outfitIndex = n(L.outfit, OUTFIT_LIST.length, outfitLocked); p.outfit = outfitFn(p.outfitIndex, p);
+  applyGadget(p, typeof L.gadget === 'string' && !gadgetLocked(L.gadget) ? L.gadget : null); // gadgets.js (before the mesh rebuild)
   p.setColor(n(L.color, PLAYER_COLORS.length));
   setFace(p, n(L.face, FACES.length, faceLocked));
   return true;

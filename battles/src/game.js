@@ -1284,7 +1284,7 @@ export class Game {
     const view = this.canSwitch(p) ? `${btn('View')} switch side <small>(hold: clear)</small>` : `${btn('View')} <small>hold:</small> clear`;
     return [
       `${btn('A')} place <small>(hold: paint)</small> ${btn('B')} remove ${btn('X')} undo ${btn('Y')} ${this.solo ? 'start battle' : 'ready'}`,
-      `${btn('dpad')} ←→ unit ↑↓ faction &nbsp;${btn('LT')}${btn('RT')} brush &nbsp;${btn('LB')}${btn('RB')} down/up &nbsp;${view} &nbsp;${btn('Start')} menu`,
+      `${btn('LB')}${btn('RB')} faction &nbsp;${btn('LT')}${btn('RT')} unit &nbsp;${btn('dpad')}↑↓ brush &nbsp;${btn('L3')}+${btn('RS')} up/down &nbsp;${view} &nbsp;${btn('Start')} menu`,
     ];
   }
 
@@ -1301,17 +1301,18 @@ export class Game {
       this.updateModal(p);
       if (this.state !== 'setup') return;
     } else {
-      rig.update(s, dt, this.terrain, { speed: 13, minHeight: 1.5, planar: true, ...this.lookOpts });
+      rig.update(s, dt, this.terrain, { speed: 13, minHeight: 1.5, planar: true, stickHeight: true, ...this.lookOpts });
       if (I.pressed(p, 'r3')) this.setupCam(p);
-      // unit selection
+      // unit selection: LB/RB faction tabs (as in the Unit Creator and the level
+      // select), LT/RT or D-pad left/right step through units, D-pad up/down the brush
       const nf = fl.length;
       const nIn = (f) => unitsOfFaction(fl[f].id).length;
-      if (I.repeat(p, 'right')) { ps.unit++; if (ps.unit >= nIn(ps.faction)) { ps.unit = 0; ps.faction = (ps.faction + 1) % nf; } this.audio.play('click', null, 0.5, 1.2); }
-      if (I.repeat(p, 'left')) { ps.unit--; if (ps.unit < 0) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = nIn(ps.faction) - 1; } this.audio.play('click', null, 0.5, 1.2); }
-      if (I.repeat(p, 'down')) { ps.faction = (ps.faction + 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
-      if (I.repeat(p, 'up')) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
-      if (I.pressed(p, 'rt')) { ps.brush = (ps.brush + 1) % BRUSHES.length; this.audio.play('click', null, 0.5, 1.4); }
-      if (I.pressed(p, 'lt')) { ps.brush = (ps.brush + BRUSHES.length - 1) % BRUSHES.length; this.audio.play('click', null, 0.5, 1.4); }
+      if (I.repeat(p, 'right') || I.repeat(p, 'rt')) { ps.unit++; if (ps.unit >= nIn(ps.faction)) { ps.unit = 0; ps.faction = (ps.faction + 1) % nf; } this.audio.play('click', null, 0.5, 1.2); }
+      if (I.repeat(p, 'left') || I.repeat(p, 'lt')) { ps.unit--; if (ps.unit < 0) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = nIn(ps.faction) - 1; } this.audio.play('click', null, 0.5, 1.2); }
+      if (I.repeat(p, 'rb')) { ps.faction = (ps.faction + 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
+      if (I.repeat(p, 'lb')) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
+      if (I.pressed(p, 'down')) { ps.brush = (ps.brush + 1) % BRUSHES.length; this.audio.play('click', null, 0.5, 1.4); }
+      if (I.pressed(p, 'up')) { ps.brush = (ps.brush + BRUSHES.length - 1) % BRUSHES.length; this.audio.play('click', null, 0.5, 1.4); }
       def = this.currentDef(p);
     }
     const skel = skelOf(def);

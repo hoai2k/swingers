@@ -35,7 +35,7 @@ const ARM_MASS = 2.9;         // upper + lower arm + mitten
 const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (feet just touch)
 const RAY_LEN = 1.05 * S;
 
-const WALK = 4.2, RUN = 7.6, SWIM = 2.6, JUMP_V = 6.0;
+const WALK = 4.8, RUN = 8.6, SWIM = 2.6, JUMP_V = 6.6;
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const COYOTE = 0.14;          // a jump still works this long after stepping off an edge
 const JUMP_BUFFER = 0.14;     // a jump pressed this long before landing still happens
@@ -275,6 +275,7 @@ export class Player {
       b.sphere(0.102 * S, 0xe8e8e8, [0, -0.098 * S, 0.045 * S], [1, 0.3, 1.47], 16);
     }
     this.outfit?.(p.n, b); // NPC outfits (src/npc.js): ties, scarves, backpacks...
+    this.gearMesh?.(p.n, b, g); // gadgets (src/gadgets.js): jetpack, boots, laser gun...
     const m = b.mesh(PLAYER_MAT);
     g.add(m);
     return g;
@@ -595,6 +596,8 @@ export class Player {
 
   // Called every physics step before world.step.
   step(inp, pressed) {
+    if (this.gear?.filter) inp = this.gear.filter(inp); // gadgets: a hand holding a tool can't grab
+    if (this.form) inp = this.form.input(inp); // forms.js: animals can't grab
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
@@ -706,7 +709,7 @@ export class Player {
     const gv = this.groundVelocity(new THREE.Vector3());
     const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
     const strength = limp ? 0 : this.recover * riseUp * stumbleK;
-    const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK);
+    const speed = (this.swimming ? SWIM : (inp.sprint ? RUN : WALK) * (this.gear?.speed || 1)) * (this.form?.speed ?? 1); // gadgets: speed boots, flight; forms.js
     const hv = _vc.set(v.x - gv.x, 0, v.z - gv.z);
     const hspeed = hv.length();
     const fwdSpeed = hv.x * Math.sin(this.yaw) + hv.z * Math.cos(this.yaw);
@@ -868,7 +871,8 @@ export class Player {
         const footing = this.jumpCool <= 0 && (this.grounded || this.swimming || (this.offGround < COYOTE && !hanging));
         if (footing) {
           // push off: straight up, plus a little kick the way the stick points
-          const jv = this.swimming ? 4.2 : JUMP_V, kick = this.swimming ? 0 : 0.9;
+          const jv = this.swimming ? 4.2 : JUMP_V * (this.gear?.jump || 1) * (this.form?.jump ?? 1), // gadgets: high-jump boots; forms.js
+            kick = this.swimming ? 0 : 0.9 * (this.form?.kick ?? 1);
           for (const b of this.bodies) {
             const bv = b.linvel();
             b.applyImpulse({ x: mvx * kick * b.mass(), y: (gv.y + jv - bv.y) * b.mass(), z: mvz * kick * b.mass() }, true);
@@ -919,7 +923,8 @@ export class Player {
           this.game.audio?.play('jump', cp);
         }
       }
-      if (pressed.punch && this.punch.t <= 0) {
+      if (pressed.punch && this.punch.t <= 0 && this.form) this.form.attack(); // forms.js: headbutt / bite / hop
+      else if (pressed.punch && this.punch.t <= 0 && !this.gear?.punch?.(this, inp)) { // gadgets: laser gun / grappling hook fire instead
         this.punch.hand = this.punch.hand === 'L' ? 'R' : 'L';
         if (inp.grabL > 0.5 && inp.grabR <= 0.5) this.punch.hand = 'R';
         if (inp.grabR > 0.5 && inp.grabL <= 0.5) this.punch.hand = 'L';
@@ -939,6 +944,7 @@ export class Player {
     // --- pose
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
+    this.gear?.step(this, inp, pressed); // gadgets (src/gadgets.js): thrust, glide, aiming arm, hook
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
@@ -946,7 +952,7 @@ export class Player {
       const p = parts[n];
       if (!p.parent) continue;
       // legs are visual only: they keep their pose through bumps and stumbles
-      const kl = !limp && n.includes('Leg') ? Math.max(kLimb, 0.9) : kLimb;
+      const kl = !limp && n.includes('Leg') ? 1 : kLimb;
       let kp = p.kp * kl, kd = p.kd * Math.sqrt(kl);
       if (limp) { kp = Math.max(kp, 4); kd = Math.max(kd, 1.2); }
       this.drive(p, kp, kd, p.maxT);
@@ -1160,18 +1166,19 @@ export class Player {
       set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
       const dip = Math.max(this.landDip, this.reachDown * 0.7);
-      set('uLegL', qx(-s * amp * 1.1 - dip * 0.6), 560, 34); set('uLegR', qx(s * amp * 1.1 - dip * 0.6), 560, 34);
-      set('lLegL', qx(Math.max(0, c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
-      set('lLegR', qx(Math.max(0, -c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
+      // a short, tidy stride (Wobbly Life style): the legs are visual, the wobble lives in the body and arms
+      set('uLegL', qx(-s * amp * 0.6 - dip * 0.4), 760, 40); set('uLegR', qx(s * amp * 0.6 - dip * 0.4), 760, 40);
+      set('lLegL', qx(Math.max(0, c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
+      set('lLegR', qx(Math.max(0, -c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
     } else {
       // legs stay extended just after the push-off (jump, bounce), tuck at the
       // top, then reach down ready to land; only a long fall pedals
       const push = vy > 1.5 ? Math.max(0, 1 - this.airTime / 0.2) : 0;
       const land = vy < -0.5 ? Math.min(1, (-vy - 0.5) / 3.5) : 0;
       const mix = (tuck, ext, reachDown) => (tuck + (ext - tuck) * push) * (1 - land) + reachDown * land;
-      const f = Math.sin(T * 11) * 0.35 * fall * Math.min(1, Math.max(0, (this.airTime - 0.6) / 0.4));
-      set('uLegL', qx(mix(-0.6, -0.1, -0.4) + f), 480, 32); set('uLegR', qx(mix(-0.4, -0.05, -0.22) - f), 480, 32);
-      set('lLegL', qx(mix(0.95, 0.12, 0.5) - f * 0.5), 420, 28); set('lLegR', qx(mix(0.75, 0.1, 0.35) + f * 0.5), 420, 28);
+      const f = Math.sin(T * 9) * 0.12 * fall * Math.min(1, Math.max(0, (this.airTime - 0.8) / 0.4));
+      set('uLegL', qx(mix(-0.35, -0.08, -0.25) + f), 720, 38); set('uLegR', qx(mix(-0.25, -0.04, -0.15) - f), 720, 38);
+      set('lLegL', qx(mix(0.55, 0.1, 0.35) - f * 0.5), 640, 34); set('lLegR', qx(mix(0.45, 0.08, 0.25) + f * 0.5), 640, 34);
     }
 
     // arms
@@ -1363,6 +1370,7 @@ export class Player {
   }
 
   respawn() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
@@ -1381,11 +1389,13 @@ export class Player {
     if (m) { m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q; }
     const hm = this.parts.hips.mesh.children[0];
     if (hm) hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
+    this.form?.sync(); // forms.js: animal meshes follow the ragdoll
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     for (const n in this.parts) {

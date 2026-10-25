@@ -1497,6 +1497,253 @@
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-684ebb56-f8d8-4aac-a3f9-dea55387c3e0.png",
       "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading and gentle highlight, cheerful and silly, never realistic. One floating quest marker: big chunky yellow-orange exclamation mark \"!\" with thick dark-blue rounded outline inside a soft white ROUND BADGE. Glossy toy look, centered with little margin. Square icon intended 256x256. Genuine transparency outside the white circular badge. No other text or objects. No real company logos, brands or watermark.",
       "round": 10
+    },
+    {
+      "index": 145,
+      "file": "signs/stratford_fall_fair.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1ca396ac-eb97-4151-8756-9cbcdd20f3f4.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"STRATFORD FALL FAIR\". Design brief: the fairground's big entrance arch sign: warm autumn palette (pumpkin orange, maple red, golden yellow) with a cream border, a small maple-leaf icon; extra festive, like a county fair banner. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 146,
+      "file": "signs/pirate_ship.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a8e3eda0-a86f-4975-bc45-0edc32466bf3.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"PIRATE SHIP\". Design brief: swinging pirate-ship ride: deep red board, gold letters, small skull-and-crossbones flag icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 147,
+      "file": "signs/viking_ship.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-879bcae6-076c-4010-9a48-644ef6067a18.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"VIKING SHIP\". Design brief: swinging Viking longship ride: dark wood-brown board, ice-blue letters, small horned-helmet icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 148,
+      "file": "signs/ring_of_fire.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9bc127ac-8143-4d83-8796-0735b9ff1144.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"RING OF FIRE\". Design brief: looping ring coaster: black board, flaming orange-red letters, small flame-ring icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 149,
+      "file": "signs/gravitron.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-6aa60082-bf05-4368-8d04-6000604d303d.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"GRAVITRON\". Design brief: spinning saucer ride: chrome-silver board, electric purple letters, small flying-saucer icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 150,
+      "file": "signs/starship_2000.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-79f41619-34a3-4cfc-876e-6e73acf213af.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"STARSHIP 2000\". Design brief: retro space-age spinning ride: navy board, neon cyan letters, small rocket icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and digits must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 0
+    },
+    {
+      "index": 151,
+      "file": "signs/zipper.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ab54a7ab-9fb2-4664-bf64-c63eadcd1cda.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"ZIPPER\". Design brief: flipping-cage ride: zig-zag yellow and black board, small lightning-bolt icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1
+    },
+    {
+      "index": 152,
+      "file": "signs/top_spin.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b22c2c59-0ead-4c25-b2b9-37aaa6ea6faa.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"TOP SPIN\". Design brief: flipping gondola ride: hot pink board, white letters, small curly-arrow icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1
+    },
+    {
+      "index": 153,
+      "file": "signs/drop_tower.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c43d1f8f-2490-4f14-ac09-5c7109c5c616.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"DROP TOWER\". Design brief: free-fall tower ride: sky-blue board, bold red letters, small down-arrow icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1
+    },
+    {
+      "index": 154,
+      "file": "signs/tilt-a-whirl.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-28e32dc2-a9cd-4865-a70d-96efae4cc31b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"TILT-A-WHIRL\". Design brief: spinning tub ride: candy-striped red and white board, small swirl icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1,
+      "aliases": [
+        "signs/tilt_a_whirl.png"
+      ]
+    },
+    {
+      "index": 155,
+      "file": "signs/himalaya.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5b8fd9f0-6dec-4ca8-98d0-ef08f92dbd8b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"HIMALAYA\". Design brief: fast music-ride on hills: snowy white board with mountain silhouette, icy-blue letters, small snowflake icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1
+    },
+    {
+      "index": 156,
+      "file": "signs/sizzler.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-027ba6db-3b28-4f67-b73b-b965ed13059c.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"SIZZLER\". Design brief: spinning-arm ride: orange board, yellow letters with a sizzle outline, small sun icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words and punctuation must be legible and spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 1
+    },
+    {
+      "index": 157,
+      "file": "signs/ferris_wheel.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-85db7eab-2e6b-4689-b959-f5836e096deb.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"FERRIS WHEEL\". Design brief: big wheel: warm gold board, maroon letters, small wheel icon (autumn-fair version). Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 158,
+      "file": "signs/carousel.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-96d4cfaa-9e52-49ab-862d-d907580a2d64.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"CAROUSEL\". Design brief: classic carousel: cream board with gold scroll trim, red letters, small carousel-horse icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 159,
+      "file": "signs/mini_train.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-faf6292a-54f4-4828-a3cc-c0cc36eb3f46.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"MINI TRAIN\". Design brief: kiddie train ride: green board, yellow letters, small steam-engine icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 160,
+      "file": "signs/magic_tent.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7f4046f1-99ea-454e-aced-dbb49de1be1b.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"MAGIC TENT\". Design brief: fortune-teller style tent where players change shape: deep purple board with gold stars, glowing gold letters, small crystal-ball icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 161,
+      "file": "signs/gadgets.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b80baaba-655b-47b2-8a0c-26c830af69c9.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"GADGETS\". Design brief: gadget shop (jetpacks, boots, laser gun): teal board, white letters, small jetpack icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 162,
+      "file": "signs/phone.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2519476d-8bb8-4ef6-83d3-4b56df2dc6d5.png",
+      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like cartoon, chunky rounded shapes, saturated colours, clean shading and gentle highlights, cheerful and silly. Exact sign text: \"PHONE\". Design brief: phone booth where players fetch their vehicles: red board, white letters, small old-style telephone icon. Single front-facing 4:1 horizontal board, 1024x256 delivery. The exact supplied words must be legible, spelled correctly, with one small requested icon. Board fills canvas with safe margin; genuinely transparent outside board. No surrounding scene, additional text, real company/game logos, recognizable existing game characters or watermark.",
+      "round": 11,
+      "batch": 2
+    },
+    {
+      "index": 163,
+      "file": "signs/chomp_maze.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c61e7694-de02-4d37-aa94-5ecaa6009c86.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"CHOMP MAZE\". Design: arcade cabinet marquee for a maze-chomping game: black board, glowing yellow letters, small round-chomper icon (original character, not any real game's). Use an ORIGINAL purple round muncher creature with two eyes and two little teeth, no wedge-mouth yellow circle or recognizable existing character. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 164,
+      "file": "signs/space_raiders.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b4699f97-208c-4344-9f25-06d70e843b52.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"SPACE RAIDERS\". Design: arcade cabinet marquee for a shoot-the-aliens game: black board, glowing green letters, small pixel-alien icon (original design). Use an ORIGINAL cyan pixel creature with three eyes and six tiny legs, not an existing game's alien sprite. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 165,
+      "file": "signs/bug_blaster.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-789a1c87-03be-4b49-b839-4926c6e8bb0d.png",
+      "prompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"BUG BLASTER\". Design: arcade cabinet marquee for a shoot-the-bugs game: black board, glowing magenta letters, small cartoon-bug icon (original design). Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark.",
+      "round": 11,
+      "batch": 3
+    },
+    {
+      "index": 166,
+      "file": "signs/paddle_ball.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e93a43fa-8950-4143-ac6e-67624997ed03.png",
+      "prompt": "Use case: precise-object-edit. Edit ONLY the colour of the PADDLE BALL letters in this arcade marquee. The brief REQUIRES GLOWING WHITE LETTERS. Replace every yellow/orange letter fill with pure bright WHITE, with a soft WHITE neon glow, slight pale-grey shading permitted. No yellow, orange, cream or gold inside any letter. Preserve exact text PADDLE BALL, black signboard, cyan outline and border, the little paddle-and-ball icon, position, proportions and transparent outside background. All other elements stay unchanged. One horizontal 4:1 marquee image.",
+      "round": 11,
+      "batch": 3,
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-101387a2-bb16-4d71-a66c-934d7adf65d8.png",
+      "initialPrompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"PADDLE BALL\". Design: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark."
     }
   ]
 }
