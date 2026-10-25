@@ -157,16 +157,36 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
 Around the home island lie five more islands, each with its own landscape, people and things
 to do (a banner welcomes you as you arrive; the map zooms out to show them all):
 
-- **Bigtown** (east) — the city, reached over a drivable suspension bridge from the home
-  island's east road.
-- **Frostpeak** (north) — icy mountains, a ski village on the southern foothills.
-- **Dusty Dunes** (west) — dunes, a red-rock canyon and mesas, an oasis, a wild-west town.
-- **Tiki Jungle** (south-west) — a volcano, a river, beaches and a stilt village.
-- **Coconut Cove** (south-east) — little tropical islets in a turquoise lagoon.
+- **Bigtown** (east) — the city, over a drivable suspension bridge from the home island's
+  east road. Skyscrapers, traffic lights and a self-driving bus and taxis you can ride or take
+  over; the 150 m Bigtown Tower with a glass elevator up to a rooftop helipad and a jump-off
+  plank; a stadium with a giant ball, a building site with a tower crane you can climb and ride,
+  a three-level parking garage, City Park, Market Street, a cinema, diner and harbour beach.
+  Taxis, limos, delivery vans, garbage trucks and city buses.
+- **Frostpeak** (north) — icy mountains. A ski village with a walk-in ski lodge (hot cocoa),
+  a 22-chair chairlift to the top station, a ski run you carve down at speed, a ski jump, a
+  frozen lake to skate on, an ice cave, an observatory, snowmen and snowball fights, and a
+  fishing hamlet by the ferry. Snowmobiles, a snowcat and sleds.
+- **Dusty Dunes** (west) — the wild-west town of Dustville (saloon with swinging doors and a
+  piano, sheriff's office with a jail, general store, water tower, windmill), a mine-cart ride
+  through the gold mine in Red Rock Canyon, a swaying rope bridge, a pyramid with a hidden
+  treasure room, a dinosaur dig, an oasis, bouncy cacti, rolling tumbleweeds and dune-buggy
+  ramps. Dune buggies, a monster truck, horses and camels.
+- **Tiki Jungle** (south-west) — a volcano with a lava lake that flings you out, a river with
+  rapids and a raft ride, a waterfall with a crystal cave behind it, a stilt village with
+  treehouses, rope bridges, zip lines and vines, a temple with a lever puzzle, and bouncy
+  mushrooms. Jeeps, canoes and log rafts.
+- **Coconut Cove** (south-east) — tropical islets in a turquoise lagoon: a resort hotel with a
+  pool and swim-up bar, beach volleyball, surfing, a harbour full of boats (speedboats, a
+  sailboat, pedalos, a banana boat, jet skis), a lighthouse, a snorkel reef with fish and
+  turtles, and a pirate shipwreck. Beach buggies and golf carts.
+
+Every island has its own people (sheriffs, skiers, tiki villagers, taxi drivers...), coins
+to collect, presents to find and jobs to do.
 
 **Ferries** sail between them: the *Island Hopper* (home beach, Coconut Cove, Tiki Jungle),
 the *Frostpeak Ferry* (home north coast) and the *Desert Ferry* (home west coast). Walk on
-board at a dock (the gate is behind the seats), stand on deck or sit on a bench, and get
+board at a dock (straight down the pier), stand on deck or sit on a bench, and get
 off at the next stop. Islanders wander about, wave and chat when you come close, and flop
 over when punched or run over. The phone calls vehicles anywhere (including a jet ski).
 
