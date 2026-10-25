@@ -81,7 +81,10 @@ export class Weapon {
     this.length = 34;         // rough size for pickups / drawing
   }
 
-  get muzzleDist() { return this.length; }
+  // guns are drawn a little smaller than their nominal size so they suit the
+  // small spiders; blades keep their full reach
+  get vis() { return this.kind === 'melee' ? 1 : 0.8; }
+  get muzzleDist() { return this.length * this.vis; }
   get dirX() { return Math.cos(this.angle); }
   get dirY() { return Math.sin(this.angle); }
   get flip() { return Math.cos(this.angle) < 0; }
@@ -145,6 +148,7 @@ export class Weapon {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
     if (this.flip) ctx.scale(1, -1);
+    if (this.vis !== 1) ctx.scale(this.vis, this.vis);
     this.drawShape(ctx);
     ctx.restore();
   }

@@ -18,8 +18,11 @@ import { castAt, drawBody } from './cast.js';
 import { sfx } from './audio.js';
 
 export const SP = {
-  r: 15,                 // small spiders on a big board: room to fling
-  gravity: 2000,
+  r: 15,                 // body radius at size 1 (see base)
+  base: 0.68,            // every spider is drawn and hit at this size: small
+                         // against the board, so there's room to swing.
+                         // Speeds and web reach stay in board units.
+  gravity: 1750,         // a touch floaty: long, readable arcs
   walkSpeed: 340,
   walkAccel: 4200,
   airAccel: 1100,
@@ -32,9 +35,12 @@ export const SP = {
   webMax: 900,
   webMin: 30,
   webReel: 520,          // left stick along the rope reels in / pays out
-  webReelAuto: 300,      // a held web keeps reeling in on its own (the pull)
-  webPull: 1700,         // ...and tugs you toward the anchor (u/s^2)
-  webYank: 0.92,         // rope length snaps to this fraction of the hit distance
+  webReelAuto: 220,      // a held web keeps shortening its rest length (the pull)
+  webRest: 0.5,          // the elastic web's rest length, as a fraction of the hit distance
+  webK: 16,              // spring: u/s^2 of pull per unit of stretch...
+  webMaxPull: 4600,      // ...capped
+  webDamp: 2.2,          // damping on the stretch (keeps it bouncy, not jittery)
+  webSlack: 0.45,        // max stretch beyond rest (x hit distance) before it goes taut
   webPump: 1500,
   webMinHold: 0.25,      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
@@ -105,6 +111,7 @@ export class Spider {
     this.legs = LEGS.map((L) => ({ ...L, F: SP.femur * (L.far ? 0.85 : 0.9), T: SP.tibia * (L.far ? 1.1 : 1.35), fx: 0, fy: 0, sx: 0, sy: 0, tx: 0, ty: 0, t: 1, planted: false, solid: null, lx: 0, ly: 0 }));
     this.ctl = null;
     this.recallable = null;   // thrown weapon that answers RT (saber)
+    this.setSize(1);          // base size (SP.base)
   }
 
   get webColor() { return '#f4f7ff'; }
@@ -112,6 +119,7 @@ export class Spider {
 
   // scale the body and legs (tiny / giant modifiers)
   setSize(k) {
+    k *= SP.base;
     this.sz = k;
     this.r = SP.r * k;
     for (const L of this.legs) { L.F = SP.femur * (L.far ? 0.85 : 0.9) * k; L.T = SP.tibia * (L.far ? 1.1 : 1.35) * k; }
@@ -416,7 +424,8 @@ export class Spider {
         if (ent.body) {
           w.state = 'stuck'; w.target = ent.body;
           const d = Math.hypot(ent.body.x - this.x, ent.body.y - this.y);
-          w.len = Math.max(SP.webMin, d * SP.webYank);
+          w.attach = d;
+          w.len = Math.max(SP.webMin, d * SP.webRest);
           sfx.webStick();
           return;
         }
@@ -427,7 +436,8 @@ export class Spider {
         const l = hit.solid.inv({ x: hit.x, y: hit.y });
         w.lx = l.x; w.ly = l.y;
         const d = Math.hypot(hit.x - this.x, hit.y - this.y);
-        w.len = Math.max(SP.webMin, d * SP.webYank);
+        w.attach = d;
+        w.len = Math.max(SP.webMin, d * SP.webRest);
         w.x = hit.x; w.y = hit.y;
         sfx.webStick();
         this.game.fx.burst(hit.x, hit.y, { n: 5, speed: 120, color: '#ffffff', size: 1.5, life: 0.25 });
@@ -441,7 +451,8 @@ export class Spider {
       if (w.dist > SP.webMax * (this.webMul || 1)) {
         // nothing to grab: the web clings to thin air for a moment
         w.state = 'air'; w.t = 0;
-        w.len = Math.hypot(w.x - this.x, w.y - this.y);
+        w.attach = Math.hypot(w.x - this.x, w.y - this.y);
+        w.len = w.attach;            // thin air: a brake, not a slingshot
         this.game.fx.burst(w.x, w.y, { n: 4, speed: 80, color: '#ffffff', size: 1.2, life: 0.2 });
       }
       return;
@@ -453,14 +464,9 @@ export class Spider {
     const d = this.webDir();
     const reel = -(move.x * d.x + move.y * d.y);   // stick toward anchor = shorten
     // a held web reels in on its own; the stick along the rope speeds it up or pays out
-    let rate = -SP.webReelAuto;
+    let rate = w.state === 'air' ? 0 : -SP.webReelAuto;
     if (Math.abs(reel) > 0.3) rate -= reel * SP.webReel;
-    w.len = clamp(Math.min(w.len, d.d + 4) + rate * dt, SP.webMin, SP.webMax + 40);
-    // ...and tugs you toward the anchor (strongest just after it sticks)
-    if (w.state === 'stuck' && d.d > SP.webMin + 4) {
-      const pull = SP.webPull * (w.t < 0.2 ? 1.6 : 1);
-      this.vx += d.x * pull * dt; this.vy += d.y * pull * dt;
-    }
+    w.len = clamp(w.len + rate * dt, SP.webMin, SP.webMax);
     if (!this.ground) {
       const tx = -d.y, ty = d.x;
       const pump = move.x * tx + move.y * ty;
@@ -478,21 +484,29 @@ export class Spider {
     if (hit && hit.t > 12) this.web = null;
   }
 
+  // The web is elastic: past its rest length it pulls like a stretched band
+  // (spring + damping), which flings you at the anchor and lets swings
+  // build up; past rest + slack it goes taut like a rope. Momentum is never
+  // thrown away except the outward part when taut.
   constrainWeb(h) {
     const w = this.web;
     const a = this.webAnchor();
-    let dx = this.x - a.x, dy = this.y - a.y;
+    let dx = a.x - this.x, dy = a.y - this.y;
     const d = Math.hypot(dx, dy) || 1;
-    w.taut = d >= w.len - 1;
-    if (d > w.len) {
-      dx /= d; dy /= d;
-      // a touch of stretch: most of the overshoot is corrected each step, and
-      // the outward speed turns into swing rather than vanishing
-      const over = d - w.len;
-      this.x -= dx * over * 0.85;
-      this.y -= dy * over * 0.85;
-      const vr = this.vx * dx + this.vy * dy;
-      if (vr > 0) { this.vx -= vr * dx * 0.96; this.vy -= vr * dy * 0.96; }
+    dx /= d; dy /= d;
+    const stretch = d - w.len;
+    w.taut = stretch > 2;
+    if (stretch > 0) {
+      const vr = this.vx * dx + this.vy * dy;            // speed toward the anchor
+      let acc = Math.min(SP.webMaxPull, SP.webK * stretch) - SP.webDamp * Math.max(-600, Math.min(600, vr));
+      if (acc < 0) acc = 0;
+      this.vx += dx * acc * h; this.vy += dy * acc * h;
+      const max = w.len + (w.attach || d) * SP.webSlack + 30;
+      if (d > max) {
+        this.x += dx * (d - max); this.y += dy * (d - max);
+        const out = -(this.vx * dx + this.vy * dy);
+        if (out > 0) { this.vx += dx * out; this.vy += dy * out; }
+      }
     }
   }
 
@@ -581,7 +595,7 @@ export class Spider {
       if (hold) {
         const k = Math.min(1, dt * (L.hold ? 30 : 16));
         L.fx = lerp(L.fx, hold.x, k); L.fy = lerp(L.fy, hold.y, k);
-        L.hold = true; L.planted = false; L.t = 1; L.solid = null;
+        L.hold = true; L.holdKind = hold.kind || 'web'; L.planted = false; L.t = 1; L.solid = null;
         continue;
       }
       if (L.hold) { L.hold = false; L.planted = false; L.t = 1; }
@@ -675,8 +689,8 @@ export class Spider {
     this.holdSide = side;
     const hands = w.hands();
     const grip = this.legs.findIndex((L) => L.side === side && L.off === LEGS[1].off);
-    out.set(grip, hands[0]);
-    if (hands[1]) out.set(this.legs.findIndex((L) => L.side === side && L.off === LEGS[0].off), hands[1]);
+    out.set(grip, { ...hands[0], kind: 'weapon' });
+    if (hands[1]) out.set(this.legs.findIndex((L) => L.side === side && L.off === LEGS[0].off), { ...hands[1], kind: 'weapon' });
     return out;
   }
 
@@ -704,7 +718,7 @@ export class Spider {
     const shin = back ? shade(c.dark, 0.6) : c.dark;
     const coxaCol = back ? shade(c.dark, 0.5) : c.dark;
     for (const L of this.legs) {
-      if (far === 'hold' ? !L.hold : (L.far !== far || L.hold)) continue;
+      if (far === 'hold' ? !(L.hold && L.holdKind !== 'weapon') : far === 'arm' ? !(L.hold && L.holdKind === 'weapon') : (L.far !== far || L.hold)) continue;
       // hip on the body, then a short base segment angled up and out
       const { hipX, hipY, cx, cy } = this.legRoot(L, nx, ny, tx, ty);
       let fx = L.fx, fy = L.fy;
@@ -790,6 +804,8 @@ export class Spider {
       ctx.beginPath(); ctx.arc(this.x, this.y, r + 9, 0, TAU); ctx.stroke();
       ctx.restore();
     }
+    // the leg wielding the weapon is drawn over the body: you see the arm work
+    this.drawLegs(ctx, 'arm');
     if (this.weapon) this.weapon.draw(ctx);
   }
 }

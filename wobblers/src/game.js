@@ -1,4 +1,5 @@
 // Game: renderer, split-screen views, fixed-step physics loop, players.
+import { buildSimCull } from './simcull.js';
 import * as THREE from 'three';
 import './look.js';
 import { Sky } from './sky.js';
@@ -49,6 +50,7 @@ export class Game {
     this.setupLights();
     this.npcs = new NPCManager(this); // world builders spawn NPCs into it
     buildWorld(this);
+    this.simCull = buildSimCull(this); // far-away props and parked vehicles stop simulating (simcull.js)
     this.ui = new UI(this);
     this.regionBanners = new RegionBanners(this); // "Welcome to Frostpeak!"; sets player.region
     this.emotes = new Emotes(this); // emote wheel + quick emotes
@@ -169,15 +171,50 @@ export class Game {
       const inp = driving ? { ...st, moveX: 0, moveY: 0, grabL: 0, grabR: 0 } : st;
       p.step(inp, driving ? { ragdoll: false, jump: false, punch: false } : pr);
     }
-    for (const v of this.vehicles) v.update();
+    const held = this._held ||= new Set(); held.clear(); // bodies in someone's hands stay awake (grab-on vehicles)
+    for (const p of this.players) for (const h of ['L', 'R']) if (p.hands?.[h]?.body) held.add(p.hands[h].body);
+    for (const v of this.vehicles) {
+      if (v.culled) continue; // far from every player (simcull.js)
+      // a parked, empty vehicle at rest sleeps: its wheel controller would
+      // otherwise nudge it every step and keep the solver busy forever
+      const b = v.body, empty = !v.route && !v.seats.some((s) => s.occupant) && !held.has(b);
+      if (b.isSleeping()) { if (empty) continue; b.wakeUp(); } // someone got in: wake it
+      v.update();
+      if (empty && !v.def.boat) {
+        const lv = b.linvel(), av = b.angvel();
+        if (lv.x * lv.x + lv.y * lv.y + lv.z * lv.z < 0.04 && av.x * av.x + av.y * av.y + av.z * av.z < 0.02) { if ((v.stillT = (v.stillT || 0) + DT) > 1) { b.sleep(); v.stillT = 0; } }
+        else v.stillT = 0;
+      }
+    }
     for (const f of this.steppers) f();
     this.physics.step();
+  }
+
+  // Browsers only start audio after a user action, and the DOM events audio.js
+  // listens for (keys, clicks, touches) never fire for a controller. Try on
+  // every controller button press until it runs (Chrome counts the press as
+  // the gesture); if it still can't start once someone is playing, say how.
+  wakeAudio() {
+    const a = this.audio;
+    if (!a || a.running()) { this.audioHint = false; return; }
+    // any button or stick on any controller, read straight from the browser
+    // (like Spider Swingers' input.anyActivity), so nothing in our own input
+    // mapping can swallow the first press
+    const pads = (navigator.getGamepads ? navigator.getGamepads() : []) || [];
+    for (const pad of pads) {
+      if (pad && (pad.buttons.some((b) => b.pressed) || pad.axes.some((v) => Math.abs(v) > 0.5))) { a.start(); break; }
+    }
+    if (this.players.length && !this.audioHint && this.time > (this.audioHintAt ??= this.time + 3) && !a.running() && a.audible()) {
+      this.audioHint = true;
+      this.ui.toast('🔇 Sound is off until you click or press a key');
+    }
   }
 
   frame(dt) {
     dt = Math.max(0, Math.min(dt, 0.1));
     this.time += dt;
     this.input.poll();
+    this.wakeAudio();
     this.ui.handleInput();
     if (!this.paused && !this.manual) {
       for (const p of this.players) {
@@ -189,8 +226,10 @@ export class Game {
       }
       this.acc += dt;
       let n = 0;
-      while (this.acc >= DT && n < 3) { this.step(); this.acc -= DT; n++; }
-      if (n === 3) this.acc = 0;
+      // at most two physics steps per frame: on a slow frame the world runs a
+      // little slow instead of spending even longer catching up (and falling further behind)
+      while (this.acc >= DT && n < 2) { this.step(); this.acc -= DT; n++; }
+      if (n === 2) this.acc = Math.min(this.acc, DT);
       this.physics.recover();
       this.physics.alpha = Math.min(1, this.acc / DT);
     } else this.physics.alpha = 1;
@@ -284,7 +323,15 @@ export class Game {
     const list = this.staticChunks;
     if (!list) return;
     const p = cam.position;
-    for (const c of list) c.mesh.visible = Math.hypot(c.x - p.x, c.z - p.z) - c.r < (c.tall ? 2400 : 760);
+    // split screen draws the scene once per view: keep ordinary chunks a bit closer there
+    const split = this.players.length > 1, near = split ? 560 : 760, lod = split ? 120 : 160;
+    for (const c of list) {
+      const d = Math.hypot(c.x - p.x, c.z - p.z) - c.r, show = d < (c.tall ? 2400 : near);
+      // past `lod` metres a chunk draws its far version (big pieces only, no shadows; world/kit.js)
+      const farOn = show && !!c.far && d > lod;
+      c.mesh.visible = show && !farOn;
+      if (c.far) c.far.visible = farOn;
+    }
   }
 
   render(dt) {
@@ -334,8 +381,8 @@ export class Game {
     });
     if (this.players.length) {
       const groups = this.shadowGroups(views);
-      // with many separate groups use a smaller map so 8 shadow passes stay cheap
-      const want = groups.length > 2 ? 1024 : 2048;
+      // players apart need one shadow pass each: use a smaller map so those passes stay cheap
+      const want = groups.length > 1 ? 1024 : 2048;
       if (this.sun.shadow.mapSize.x !== want) {
         this.sun.shadow.mapSize.set(want, want);
         if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }

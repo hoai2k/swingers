@@ -50,6 +50,7 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Menu | Start | Esc | Numpad Enter |
 | Map (pan LS, zoom LT / RT) | View | M | Numpad / |
 | Phone: call a vehicle | D-pad down | P | Numpad * |
+| Gadget: jetpack / glider (hold in the air) · laser / grappling hook (fire) | A · X | Space · G | Numpad 0 · Numpad 2 |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
 
@@ -96,6 +97,24 @@ up to the till and press **Y**:
 - **CAR DEALER**: the sports car, ice-cream van, bus, police car, fire truck and helicopter.
   Once bought they show up in everyone's phone.
 
+## Gadgets
+
+The **GADGETS** shop stands in the yard of the north-east town block, behind the four
+shops above, its door on the outer town road. Walk up to the till and press **Y**: you try on
+whatever you highlight, and a bought gadget is everyone's for good. Each player wears one
+gadget at a time, chosen in the shop or on the customiser's **Gadget** row (bought ones only),
+and it is remembered with that player slot's look. Your view shows how to use it for a few
+seconds after you put it on.
+
+| Gadget | Price | How it works |
+|---|---|---|
+| High-jump boots | 160 | jumps go about three times as high; springy soles, so the landing doesn't knock you over |
+| Speed boots | 220 | walk and sprint about 1.65x faster, with a sparkly trail |
+| Glider | 260 | hold **A** / **Space** while falling: the wing opens, you sink slowly and sail forward (steer with the stick) |
+| Laser gun | 320 | held in your right hand (that hand can't grab): **X** / **G** fires a bolt that knocks people and NPCs over (they get back up) and shoves props. Holding something loose in the other hand, **X** throws it as usual |
+| Grappling hook | 380 | right hand: **X** / **G** shoots the hook where the camera looks (look up to aim higher) and reels you in; **A** lets go early. Hooking a loose prop or a person pulls it to you |
+| Jetpack | 450 | jump, then keep holding **A** / **Space**: thrust up and fly with the stick. About 3 s of fuel (the bar in your prompt), refilled after a moment on the ground. Mind the fall when it runs dry! |
+
 Coins, purchases, homes, pets and discovered areas are saved. *Settings → Reset coins,
 homes & pets* starts over.
 
@@ -138,7 +157,7 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
 - **Town** — plaza with a fountain (spawn), shops, town hall, apartments, suburbs, parked cars,
   bins, cones, crates, shopping trolleys you can ride, wheelie bins you can hide in.
   Walk into the **cafe** (jukebox, rooftop terrace up the outside stairs), the **market**
-  (trolleys, vending machine) and the **arcade** (air hockey); the two-storey house by the
+  (trolleys, vending machine) and the **arcade** (air hockey and playable cabinets, below); the two-storey house by the
   town hall has a playable piano downstairs and a bedroom upstairs. Doors swing on hinges.
 - **Playground** (NE) — swings (pump with the stick), slide, see-saws, merry-go-round,
   monkey bars, trampolines, spring riders, sandbox.
@@ -146,6 +165,20 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   twisting water slide, pool toys and a giant rubber duck.
 - **Fun Park** (west) — ferris wheel, carousel, roller coaster, swing ride, drop tower,
   bumper cars, bouncy castle, food stalls, a can-toss stall (win a teddy) and a bowling lane.
+  The striped **MAGIC TENT** (west side, between the ferris wheel and the drop tower) has a
+  crystal ball: press **Y** at it to turn into a **goat** (X: charging headbutt), a
+  **velociraptor** (X: bite; people nearby run away screaming) or a **giant grasshopper**
+  (A: enormous jumps with a long hop forward). A shape lasts one minute (the countdown in your
+  view flashes and you flicker for the last 5 seconds); animals can't grab or climb, but walk,
+  swim, flop and drive. Respawning (or the crystal ball's *Back to normal*) turns you back.
+- **Stratford Fall Fair** (south, on the beach road just past the ring road) — an autumn
+  fairground under maples in red and gold, with falling leaves, pumpkins, hay bales, stalls and
+  lots of teenagers. Fourteen rides to sit on (Y; Y again to hop off, even mid-ride): Pirate Ship
+  and Viking Ship (swinging ships), Ring of Fire (a train that loops the loop), Gravitron and
+  Starship 2000 (spinning saucers that pin you to the wall), Zipper (flipping cages on a turning
+  boom), Top Spin, Drop Tower, Tilt-a-Whirl, Himalaya (forwards and backwards over the hills),
+  Sizzler, a Ferris Wheel, a classic Carousel with up-and-down horses and a Mini Train. A pumpkin
+  patch with a scarecrow and pumpkins to kick about outside the east fence.
 - **Stunt park** (SW) — ramps, a jump gap, half-pipe, quarter pipes, crates to smash.
 - **Sports field** (NW) — football pitch with a giant ball, basketball court with working
   hoops and a scoreboard, parking lot.
@@ -153,6 +186,26 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   **mountain** with a lookout, boulders to roll, quad bikes and a **zip line** down to the
   lake; **lake** with a camp, boats, log rafts and a rope swing;
   **beach** with a pier, boats, palms and a lighthouse.
+
+## The arcade
+
+Four playable cabinets stand along the back wall of the town arcade, each showing a demo on
+its screen. Walk up and press **Y** to play: the game fills your own view (split screen works;
+everyone can play a different cabinet at once). Stick / D-pad (WASD or arrows) to move,
+**A** / **X** (Space, G or the mouse) to fire, **Start** / **B** (Esc) to leave.
+
+- **CHOMP MAZE** — eat every dot in the maze while four ghosts hunt you, each its own way;
+  power pellets turn them blue so you can eat them. Bonus berries, lives, levels.
+- **SPACE RAIDERS** — a marching grid of raiders that speeds up as it shrinks, crumbling
+  shields, a bonus saucer, waves.
+- **BUG BLASTER** — a segmented bug winds down through the mushrooms; shot segments become
+  mushrooms and split it. Spider and flea too.
+- **PADDLE BALL** — first to 11. With more than one player, starting it invites the others
+  (**Y** join / **B** no thanks, in their view); after 10 s without a taker you play the CPU.
+  Anyone can also press **Y** at the cabinet to take over the CPU's paddle.
+
+High scores (top 5 per game, and wins against the CPU) are saved; good scores pay coins
+into the purse.
 
 ## The archipelago
 
@@ -217,16 +270,20 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
+| `src/forms.js` | the Magic Tent and shape-shifting (goat / velociraptor / giant grasshopper): animal looks on the ragdoll, attacks, timer HUD, chooser panel, magic puffs |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
 | `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
+| `src/gadgets.js`, `src/world/gadgetshop.js` | gadgets (jetpack, boots, glider, laser gun, grappling hook): behaviour, meshes, sounds, HUD hint; the GADGETS shop building |
 | `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks (locked items skipped); persistent settings |
 | `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
 | `src/audio.js`, `src/music.js` | synthesized SFX, engines, rides and ambience; procedural day / night music |
 | `src/world/interiors.js`, `furniture.js` | enterable buildings (hollow shells, physics doors, stairs) and loose furniture |
+| `src/world/fair/` | the Stratford Fall Fair: layout, ride helpers (`common.js`), rides (`rides-a.js`, `rides-b.js`, `train.js`), decor + falling leaves, the `teen` NPCs |
 | `src/world/fun.js`, `music.js` | trolleys, bins, beach balls, can toss, bowling, rope swing, rafts, zip line; jukebox, piano, vending machines |
 | `src/world/lights.js`, `posters.js` | interior light pool (per-view nearest lights) and framed posters |
 | `src/assets.js`, `tools/build_manifest.py` | optional painted art (faces, signs, posters, logo) swapped in when listed in `assets/manifest.json`; see `image-requests.md` |
 | `src/world/common.js` | world helpers: building-local placement, walls/stairs/rails, doors, use spots, punch-to-throw, ladders, `groundAt` |
 | `src/life/` | life sim: `state.js` (saved coins/purchases/homes/pets), `wallet.js` (shared purse, `game.wallet`), `hud.js` (coin counters, floaters), `coins.js` (pickups), `earn.js` (areas, stunts, mini-game prizes), `shops.js` (shop panels, vehicle locks), `pets.js` (pets), `index.js` (wiring) |
 | `src/missions/` | jobs: `index.js` (manager: givers, runs, pay, map overlay), `steps.js` (objective step types), `ai.js` (mission NPC brains), `fx.js` (markers, beacons, hoops, fires, job items, cargo), `hud.js` (objective, pointer, results cards), `panel.js` (jobs list), `state.js` (saved medals), `jobs/*.js` (the jobs per island) |
+| `src/arcade/` | arcade cabinets: `index.js` (cabinet build, sessions, fixed-step loop, invites, high scores, bleeps), `panel.js` (per-player game panel, invite prompt), one file per game (`chomp.js`, `raiders.js`, `bugs.js`, `paddle.js`); `tools/arcade-sim.mjs` runs their attract AI headless in node |
 | `src/world/estate.js` | the CLOTHES / PET SHOP / HOMES / CAR DEALER buildings, the bungalows for sale, name plates, beds, wardrobes, `game.homes` |

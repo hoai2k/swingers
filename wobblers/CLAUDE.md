@@ -29,6 +29,38 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
   `world/common.js` (speed from `throwSpeed(mass)`).
+- Character mesh (`src/player.js`, "the skin"): the body, limbs, mittens and shoes are ONE
+  `THREE.SkinnedMesh` per character (`skinTemplate()` builds the rest-pose geometry once; each
+  character clones it and only repaints the colour attribute in `paintSkin`). Its bones are the
+  part groups (`part.mesh`, posed from the bodies), two squash bones (`sqBones`, Player.sync)
+  and one joint bone per joint (`JOINTS`: waist, shoulders, elbows, hips, knees) that
+  `poseJoints` puts at the pivot, turned half way between the two parts, just before each
+  skeleton upload. Each limb is one tube and torso + hips one bean; weights fade parent ->
+  joint bone -> child over `JOINTS[].h`, so bends curve like rubber. Don't move the tubes' rest
+  shape off the joint pivots in `PARTS`. The head stays its own mesh (face texture). `part.mesh`
+  groups only hold rigid extras: outfits / gadgets (`partMesh`), the head + hat, NPC props, mission
+  cargo; the skin hangs in the chest group, so hiding the part groups (forms.js) hides it.
+  Rebuild with `player.rebuildMeshes()` (setColor / NPC looks do). Outfits can recolour the body
+  instead of covering it: `shirt` / `pants` on an `OUTFIT_LIST` entry (jackets, overalls), and
+  `beltRing` fits a belt to the bean. Probe close-ups by rendering `__wob.scene` with your own
+  camera (`__wob.frame = () => {}` stops the loop).
+- Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
+  150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
+  vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
+  update (game.step). At most two physics steps run per frame. Kit chunks get a far version (only parts
+  with bounding radius >= 1.4 m, no shadows) drawn instead beyond 160 m (120 m in split screen);
+  `game.farCull` switches `chunk.mesh` / `chunk.far`. Parked NPCs stay visible
+  (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
+  Audio starts on the first controller press too (`game.wakeAudio`).
+- Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds
+  in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
+  `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`
+  makes originals in `assets/originals/sfx/` (not deployed) and the processed `assets/sfx/` +
+  `index.json` the game loads; nothing delivered = synth only.
+- Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
+  route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
+  `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in
+  `world/hometraffic.js`.
 - Collision groups (`src/config.js`): static, props, vehicles/rides, one bit per player.
   Seated players stop colliding with vehicles and rides.
 - Static scenery goes through `world/kit.js` so it is merged into per-chunk meshes;
@@ -94,6 +126,56 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `shops.js` `VEHICLE_PRICES` (the phone asks `game.vehicleLock(id)`). Coin pickup spots are
   `CLUSTERS` in `life/coins.js` (`[x, z, ray start, shape, count, size]`, like present spots).
   Home respawn wraps `game.spawnPoint`; pets are synced from the saved choice every 15 steps.
+- Gadgets (`src/gadgets.js`, shop building `world/gadgetshop.js`, list in `life/shops.js` 'gadgets'):
+  `GADGETS` (id, price...); bought = `'gadget:<id>'` in `life.bought`; worn one is `player.gadget`
+  (saved in the slot look, `cosmetics.js`), its runtime is `player.gear`. Player hooks are all
+  `this.gear?.…` (NPCs never have gear): `gear.speed` / `gear.jump` multipliers, `gear.filter(inp)`
+  (the tool hand can't grab), `gear.punch(p, inp)` (true = fired instead of punching), `gear.step`
+  after the pose (thrust / glide / aim arm / hook), `player.gearMesh` in `partMesh`. ui.js asks
+  `game.gadgets.hint(p, kind)`. A new gadget: an entry in `GADGETS`, geometry in `gearGeo`, a
+  step fn in `STEPS`. Probe with `setGadget(player, id)` (needs no purchase).
+
+- Shape-shifting (`src/forms.js`, the Magic Tent at `TENT` in the Fun Park; built by
+  `buildMagicTent` in `world/index.js`'s home step): `game.forms.transform(p, kind)` /
+  `revert(p)` / `of(p)`; `p.form` is the live record. Forms keep the same ragdoll: the human part
+  meshes are hidden and the form's meshes copy their poses each `Player.sync` (front legs copy the
+  opposite rear leg shifted forward; `knee` / `hip` stiffen the visual stride), so the player's look
+  is never modified and comes back exactly. Hooks marked `forms.js`: `player.js` (input filter =
+  no grabbing, `form.speed` / `jump` / `kick`, X calls `form.attack()`, sync, `respawn` and
+  `destroy` revert), `npc.js` (NPCs within `SCARE_R` of a raptor flee), `ui.js` (HUD), `map.js`
+  (label). Attack hits are collected in the Rapier query callback and applied after it (pushing
+  bodies inside the callback throws). New forms: add to `FORMS` with a look builder.
+
+- Arcade cabinets (`src/arcade/`, built by one `buildArcade(game, L, spots)` call in
+  `world/interiors.js` ARCADE; hooks: one line in `ui.handleInput` for invites, `settings.arcade`).
+  A game is a class with `W`/`H`, `reset()`, `step(inputs)` (60 Hz; `inputs[i]` null = the game's
+  AI plays that slot), `draw(g)`, `score`, `over`, `snd` (interface at the top of `arcade/common.js`);
+  add one to `GAMES` in `arcade/index.js` and a spot in the ARCADE interior. Cabinet screens are
+  CanvasTextures repainted at 15 Hz only while a camera is within 16 m (idle demos freeze
+  otherwise). `game.arcade` has `cabinets` (`machine`, `session`, `pos`, `yaw`), `start(p, cab)`,
+  `join(p, cab)`, `invites`, `tick(cab)`; probe game logic by stepping `cab.machine` directly, or
+  headless in node with `node tools/arcade-sim.mjs`. Marquees are `signMesh` texts (art requested
+  in round 11).
+
+## Stratford Fall Fair (`src/world/fair/`)
+
+The fairground on the home island in the flat strip south of the ring road, either side of the
+south avenue (x -120..120, z 166..287, ground y = 0; the avenue |x| < 9 stays clear for traffic,
+the entrance arch spans it at z = 164, the midway crosses it at z = 227). One `buildFair(game, kit)`
+call in `world/index.js` (its own `fair` build step). Layout in `fair/layout.js` (`RIDES` centres).
+- 14 rides, each static kit scenery plus kinematic bodies posed by one animator (`fair/common.js`
+  `FairRides`: `F.body`, `F.instanced` draws many same-looking bodies (cabins, cages, cars, horses,
+  tubs) as one InstancedMesh, `F.seat` adds a ride seat with `exitPush` and `seat.fair`, `F.animate`,
+  `F.sign`; timing helpers `power` / `travel` / `vmaxFor` make each cycle end where it started).
+  `rides-a.js`: pirate / viking ship, ring of fire (`F.ringFire` is its pendulum state), ferris wheel,
+  carousel, drop tower; `rides-b.js`: gravitron, starship 2000, zipper, top spin, tilt-a-whirl,
+  himalaya, sizzler; `train.js`: mini train. Ride parts live in one scene group far-culled with the
+  kit chunks; the animators only run while a player is within 400 m (`F.active`).
+- `decor.js`: arch, fences, midway lights, stalls (existing sign words), maples (pre-merged
+  templates stamped with `stamp`), leaf litter, pumpkins, hay (some bales are seats), the pumpkin
+  patch outside the east fence, coins, and falling leaves (one Points cloud round the players).
+- `npcs.js`: the `teen` role; ~50 teens spawned lazily (one per physics step) once a player is
+  within 260 m. `game.fair` = { times, rides }.
 
 ## Missions (jobs, `src/missions/`)
 
@@ -166,7 +248,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   region's grass coverage mask is rendered the first time a camera comes near it.
 - **NPCs** (`src/npc.js`): `game.npcs.spawn(role | def, x, z, opts)` (or `R.npc`). Roles:
   townsfolk, lifeguard, farmer, businessman, taxi, skier, cowboy, explorer, surfer,
-  fisherman, chef; add more with `registerRole(name, def)`. def: `colors { shirt, pants,
+  fisherman, chef (and `teen`, world/fair/npcs.js); add more with `registerRole(name, def)`. def: `colors { shirt, pants,
   hat }`, `hat` (any HATS id, or an NPC hat: straw, pith, chef, helmet, sunhat; `registerHat`),
   `face` (FACES index or name), `outfit` (['tie', 'scarf', 'vest', 'backpack', 'apron', 'belt',
   'lifejacket'] or a fn), `prop` (briefcase, rod, surfboard, skis, pitchfork, lasso, map, buoy,

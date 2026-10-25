@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 // Player outfits: the customiser's Outfit row. Each piece adds geometry to body
 // parts in their local frames (metres, the same frames as the NPC outfits in
 // npc.js), read by Player.partMesh through player.outfit.
@@ -9,10 +10,19 @@
 // Keep appending: saved looks store the index.
 const FRONT = 0.205, BACK = -0.2;
 const GOLD = 0xffc83a, WHITE = 0xffffff;
+// a belt round the body bean at the waist (hips frame; the bean is ~0.21 m wide, 0.88 as deep there)
+export const beltRing = (b, t, c) => b.add(new THREE.TorusGeometry(0.212, t, 6, 20), c, [0, 0.07, 0], [Math.PI / 2, 0, 0], [1, 0.88, 1]);
 
 const stripes = (b, y, c) => { // two reflective bands round the chest
   for (const dy of [0, -0.12]) b.torus(0.205, 0.018, c, [0, y + dy, 0], [Math.PI / 2, 0, 0], 20);
 };
+
+// Jackets recolour the body's shirt (`shirt`, read by Player.paintSkin) so they
+// bend with it, sleeves and all; these bands hug the chest bean (chest frame).
+const bands = (b, c) => {
+  for (const [y, sx] of [[0.02, 1.04], [-0.1, 1]]) b.add(new THREE.TorusGeometry(0.232, 0.017, 6, 24), c, [0, y, 0], [Math.PI / 2, 0, 0], [sx, 0.88, 1]);
+};
+const collar = (b, c) => b.add(new THREE.TorusGeometry(0.13, 0.035, 8, 20), c, [0, 0.225, 0.0], [Math.PI / 2, 0, 0], [1, 0.9, 1]);
 
 export const OUTFIT_LIST = [
   { id: 'none', name: 'No outfit', from: 'free', build() {} },
@@ -34,8 +44,8 @@ export const OUTFIT_LIST = [
   } },
   { id: 'belt', name: 'Belt', from: 'free', build(n, b) {
     if (n !== 'hips') return;
-    b.torus(0.17, 0.025, 0x3a2a1a, [0, 0.07, 0], [Math.PI / 2, 0, 0], 16);
-    b.box(0.07, 0.05, 0.02, GOLD, [0, 0.07, 0.175]);
+    beltRing(b, 0.025, 0x3a2a1a);
+    b.box(0.07, 0.05, 0.02, GOLD, [0, 0.07, 0.207]);
   } },
   // ---- job rewards (Wobbly Island)
   { id: 'pizzabag', name: 'Pizza delivery bag', from: 'job:pizza', build(n, b) {
@@ -44,9 +54,8 @@ export const OUTFIT_LIST = [
     b.box(0.2, 0.12, 0.01, WHITE, [0, 0.03, BACK - 0.285]);
     for (const s of [-1, 1]) b.box(0.04, 0.3, 0.02, 0x2a2a33, [s * 0.1, 0.02, FRONT - 0.02], [-0.15, 0, 0]);
   } },
-  { id: 'firejacket', name: 'Firefighter jacket', from: 'job:fire', build(n, b) {
-    if (n === 'chest') { b.rbox(0.47, 0.4, 0.42, 0.12, 0xc89a3a, [0, -0.02, 0]); stripes(b, 0.02, 0xd8f040); }
-    if (n.startsWith('uArm')) b.cyl(0.085, 0.08, 0.2, 0xc89a3a, [0, 0, 0]);
+  { id: 'firejacket', name: 'Firefighter jacket', from: 'job:fire', shirt: 0xc89a3a, build(n, b) {
+    if (n === 'chest') { bands(b, 0xd8f040); collar(b, 0xb0842c); }
   } },
   { id: 'lifejacket', name: 'Life jacket', from: 'job:lifeguard', build(n, b) {
     if (n !== 'chest') return;
@@ -58,8 +67,7 @@ export const OUTFIT_LIST = [
       b.rbox(0.3, 0.22, 0.03, 0.02, 0x3b5c9a, [0, -0.08, FRONT + 0.005], [-0.1, 0, 0]);
       for (const s of [-1, 1]) { b.box(0.05, 0.36, 0.02, 0x3b5c9a, [s * 0.11, 0.08, FRONT - 0.01], [-0.25, 0, 0]); b.box(0.05, 0.36, 0.02, 0x3b5c9a, [s * 0.11, 0.06, BACK + 0.01], [0.25, 0, 0]); b.sphere(0.022, GOLD, [s * 0.11, 0.04, FRONT + 0.02]); }
     }
-    if (n === 'hips') b.sphere(0.185, 0x3b5c9a, [0, 0.0, 0], [1.02, 0.9, 0.95], 14);
-  } },
+  }, pants: 0x3b5c9a }, // pants: the body's trouser colour while worn (Player.paintSkin)
   // ---- Bigtown
   { id: 'bowtie', name: 'Chauffeur bow tie', from: 'job:cab', build(n, b) {
     if (n !== 'chest') return;
@@ -115,9 +123,9 @@ export const OUTFIT_LIST = [
   } },
   { id: 'toolbelt', name: 'Digger tool belt', from: 'job:fossils', build(n, b) {
     if (n !== 'hips') return;
-    b.torus(0.175, 0.03, 0x8a6a3a, [0, 0.07, 0], [Math.PI / 2, 0, 0], 16);
-    for (const a of [-1.1, 1.1, 2.4]) b.rbox(0.08, 0.1, 0.05, 0.02, 0x6b4a2a, [Math.sin(a) * 0.19, 0.03, Math.cos(a) * 0.19], [0, a, 0]);
-    b.box(0.03, 0.16, 0.02, 0x8a8f96, [0.2, -0.02, -0.05], [0, 0, 0.2]); // trowel
+    beltRing(b, 0.03, 0x8a6a3a);
+    for (const a of [-1.1, 1.1, 2.4]) b.rbox(0.08, 0.1, 0.05, 0.02, 0x6b4a2a, [Math.sin(a) * 0.225, 0.03, Math.cos(a) * 0.2], [0, a, 0]);
+    b.box(0.03, 0.16, 0.02, 0x8a8f96, [0.235, -0.02, -0.05], [0, 0, 0.2]); // trowel
   } },
   // ---- Tiki Jungle
   { id: 'toothnecklace', name: 'Tooth necklace', from: 'job:raft', build(n, b) {
@@ -143,12 +151,11 @@ export const OUTFIT_LIST = [
   } },
   { id: 'captain', name: "Captain's jacket", from: 'job:watertaxi', build(n, b) {
     if (n === 'chest') {
-      b.rbox(0.47, 0.4, 0.42, 0.12, 0x22305a, [0, -0.02, 0]);
-      for (const y of [0.06, -0.04, -0.14]) b.sphere(0.02, GOLD, [0.05, y, 0.215]);
-      for (const s of [-1, 1]) b.box(0.12, 0.03, 0.12, GOLD, [s * 0.27, 0.16, 0]);
+      collar(b, 0x1a2547);
+      for (const y of [0.06, -0.04, -0.14]) b.sphere(0.022, GOLD, [0.05, y, 0.203]);
+      for (const s of [-1, 1]) b.box(0.12, 0.03, 0.12, GOLD, [s * 0.255, 0.17, 0], [0, 0, s * 0.35]);
     }
-    if (n.startsWith('uArm')) b.cyl(0.085, 0.08, 0.2, 0x22305a, [0, 0, 0]);
-  } },
+  }, shirt: 0x22305a },
   // ---- clothes shop
   { id: 'cape', name: 'Hero cape', from: 'shop', build(n, b) {
     if (n !== 'chest') return;
@@ -176,7 +183,10 @@ export const OUTFIT_LIST = [
 // player.outfit (read by Player.partMesh) for an outfit index
 export function outfitFn(i, player) {
   const o = OUTFIT_LIST[i];
-  return o && o.id !== 'none' ? (n, b) => o.build(n, b, player.color) : null;
+  if (!o || o.id === 'none') return null;
+  const f = (n, b) => o.build(n, b, player.color);
+  f.pants = o.pants; f.shirt = o.shirt; // optional trouser / shirt colours (Player.paintSkin)
+  return f;
 }
 // job id -> reward key ('outfit:<id>'), for unlocks.js and the job results card
 export const JOB_OUTFITS = Object.fromEntries(OUTFIT_LIST.filter((o) => o.from.startsWith('job:')).map((o) => [o.from.slice(4), 'outfit:' + o.id]));

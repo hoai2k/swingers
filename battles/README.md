@@ -121,14 +121,14 @@ screen either pad does all of this; in split screen each pad drives its own view
 |---|---|---|---|
 | Left stick | slide over the field | fly · follow: zoom · possess: walk | fly · follow: zoom |
 | Right stick | look | look · follow: orbit · possess: aim | look / orbit |
-| LB / RB | down / up | down / up · following: prev / next unit | same |
-| L3 | fast | fast fly | fast fly |
+| LB / RB | faction tab | down / up · following: prev / next unit | same |
+| L3 | fast · hold + right stick ↑↓: camera down / up | fast fly | fast fly |
 | A | place (hold to paint) | follow unit in crosshair · possess: jump | play / pause |
 | B | remove (hold) | free cam: cinematic camera · else free camera / let go | free camera, then exit |
 | X | undo (hold to repeat) | possess unit in crosshair (or the followed one) | follow unit |
 | Y | ready / not ready | slow motion | slow-mo final moments |
-| LT / RT | brush: single, line ×3/×5, block 3×3/4×4 | LT hold: slow smooth cam · RT: attack (possess) | scrub back / forward |
-| D-pad | ←→ unit, ↑↓ faction | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
+| LT / RT | previous / next unit | LT hold: slow smooth cam · RT: attack (possess) | scrub back / forward |
+| D-pad | ←→ unit, ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
 | R3 | reset camera | tips / HUD off (photo mode) | same |
 | View | clear army (asks) | split / shared screen | split / shared |
 | Start (Menu) | menu: ready, map, budget, blind, performance, quit | pause: performance, cinematic camera, screen, HUD, time, restart, edit, quit | menu |

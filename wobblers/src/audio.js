@@ -50,6 +50,12 @@ export class Audio {
     this.ambT = 0;
     this.nextBird = 0; this.nextCricket = 0; this.nextCheer = 0;
     this.organ = { i: 0, t: 0, bar: 0 };
+    // recorded ambient beds (only heard once dev/sfx/generate.py has made them)
+    this.ambientSpot('park_crowd', PARK.x, PARK.z, 140);
+    this.ambientSpot('ride_screams', -195, 50, 70); this.ambientSpot('ride_screams', -205, -85, 70); // coaster drops
+    this.ambientSpot('plaza_chatter', FOUNTAIN.x, FOUNTAIN.z, 45);
+    this.ambientSpot('arcade_room', -19, 49, 14);
+    this.ambientSpot('city_street', 875, 0, 260);
     const resume = () => this.start();
     for (const ev of ['keydown', 'mousedown', 'pointerdown', 'touchstart', 'click']) addEventListener(ev, resume);
     document.addEventListener('visibilitychange', () => this.applyMute());
@@ -91,6 +97,7 @@ export class Audio {
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
       this.music = new Music(this, this.musicBus);
       this.buildAmbience();
+      this.loadSamples();
       this.applyMute();
     } catch (e) { console.warn('audio unavailable', e); this.ctx = null; }
   }
@@ -126,6 +133,60 @@ export class Audio {
   }
 
   running() { return this.ctx && this.ctx.state === 'running'; }
+
+  // ---- recorded sounds (assets/sfx/index.json, made by dev/sfx/generate.py) ----
+  // One-shots replace the synthesised sound of the same name; `_loops` are
+  // ambient beds that play at places registered with ambientSpot(). Anything
+  // not delivered (or not decoded yet) falls back to the synth / silence.
+  loadSamples() {
+    this.samples = {}; this.sampleLevel = {}; this.loopNames = new Set();
+    fetch('assets/sfx/index.json').then((r) => (r.ok ? r.json() : null)).then((ix) => {
+      if (!ix) return;
+      Object.assign(this.sampleLevel, ix._levels || {});
+      for (const n of ix._loops || []) this.loopNames.add(n);
+      for (const [name, files] of Object.entries(ix)) {
+        if (name.startsWith('_') || !Array.isArray(files)) continue;
+        for (const f of files) {
+          fetch(f).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => b && this.ctx.decodeAudioData(b))
+            .then((buf) => { if (buf) (this.samples[name] ||= []).push(buf); }).catch((e) => console.warn('sfx', f, e));
+        }
+      }
+    }).catch(() => { /* no recordings: synth only */ });
+  }
+  // A recorded variant of `name` into node `out` (never the same one twice running); false if none.
+  playSample(name, out, vol, rate = 1) {
+    const list = this.samples?.[name];
+    if (!list?.length || this.loopNames.has(name)) return false;
+    let i = (Math.random() * list.length) | 0;
+    if (list.length > 1 && i === this.lastSample?.[name]) i = (i + 1) % list.length;
+    (this.lastSample ||= {})[name] = i;
+    const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
+    src.buffer = list[i]; src.playbackRate.value = rate * (0.95 + Math.random() * 0.1);
+    g.gain.value = vol * (this.sampleLevel[name] ?? 1);
+    src.connect(g); g.connect(out); src.start();
+    return true;
+  }
+  // A looping ambient bed (a recorded `_loops` sound) heard within r metres of
+  // (x, z), loudest within r / 4. Safe to call before audio starts.
+  ambientSpot(name, x, z, r = 60, vol = 1) { (this.spots ||= []).push({ name, x, z, r, vol, src: null, g: null }); }
+  updateSpots(cams) {
+    if (!this.spots) return;
+    const c = this.ctx, t = c.currentTime;
+    for (const s of this.spots) {
+      const buf = this.samples?.[s.name]?.[0];
+      if (!buf) continue;
+      let w = 0;
+      for (const cam of cams) w = Math.max(w, smooth(s.r, s.r * 0.25, Math.hypot(cam.position.x - s.x, cam.position.z - s.z)));
+      if (w > 0.01 && !s.src) {
+        s.g = c.createGain(); s.g.gain.value = 0; s.g.connect(this.ambBus);
+        s.src = c.createBufferSource(); s.src.buffer = buf; s.src.loop = true;
+        s.src.connect(s.g); s.src.start(t, Math.random() * buf.duration);
+      }
+      if (!s.src) continue;
+      s.g.gain.setTargetAtTime(w * s.vol * (this.sampleLevel[s.name] ?? 1), t, 0.5);
+      if (w <= 0.01 && s.g.gain.value < 0.005) { s.src.stop(); s.src.disconnect(); s.g.disconnect(); s.src = s.g = null; }
+    }
+  }
 
   // ---- listeners ------------------------------------------------------------
   cameras() {
@@ -235,6 +296,7 @@ export class Audio {
     const v = sp.v * strength;
     if (v < 0.02) return;
     const out = this.outNode(1, sp.pan, ui ? 0 : 0.6);
+    if (this.playSample(name, out, v, extra.pitch || 1)) return; // a delivered recording wins over the synth
     const r = Math.random;
     switch (name) {
       case 'jump': {
@@ -620,6 +682,7 @@ export class Audio {
       A.crowd.f.frequency.setTargetAtTime(600 + Math.random() * 400, t, 0.3);
       A.wind.g.gain.setTargetAtTime(0.08 * W.wind * (0.6 + Math.random() * 0.4), t, 0.8);
       A.fountain.g.gain.setTargetAtTime(0.05 * W.fountain, t, 0.4);
+      this.updateSpots(cams);
     }
     const W = A.w;
     // birds by day, crickets and the odd owl by night

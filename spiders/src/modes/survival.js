@@ -14,9 +14,9 @@
 // The last wave of every 2nd stage is a boss wave (Brood Tyrant + escorts).
 // Everyone down for good: 'lost' (slow motion) -> 'over' (results; A = lobby).
 //
-// Wave scaling (see buildWave): budget = (3 + 1.5 w) x (1 + 0.5 (players-1))
+// Wave scaling (see buildWave): budget = (3 + 1.5 w) x (1 + 0.5 (players-1)) x 0.6
 // points spent on insects unlocked by wave w (each type is introduced on its
-// unlock wave); at most 4 + 2 players + w/2 insects alive at once (cap 18).
+// unlock wave); at most 3 + players + w/3 insects alive at once (cap 11).
 // Insects get ~3% faster/quicker per wave (Enemy.agg, cap +50%), and from
 // stage 2 tougher: +25% hp per stage, and from stage 3 some wear armor
 // plates (each soaks one hit; more plates later) — see scaleEnemy.
@@ -141,6 +141,9 @@ export class SurvivalMode {
   level(w) { return w; }
   // how tough insects are (hp / armor), by stage
   get stageLevel() { return this.stage; }
+  get dynamicCamera() { return this.state !== 'over' && this.state !== 'won' && this.state !== 'perk'; }
+  // keep live insects in frame too (but zoom tracks the spiders mostly)
+  cameraExtra() { return this.game.enemies.filter((e) => e.alive && e.x > 0 && e.x < 1920 && e.y > 0 && e.y < 1080).map((e) => [e.x, e.y]); }
   bossOn(w) { return w % (WAVES_PER_STAGE * BOSS_STAGES) === 0; }
   maxLives(p) { return this.lifeCap + (((p.perks || {}).heart) || 0); }
 
@@ -279,7 +282,7 @@ export class SurvivalMode {
     return { unlocked: ROSTER.filter((e) => e.from <= L), fresh: ROSTER.filter((e) => e.from === L) };
   }
 
-  budgetMul() { return 1; }
+  budgetMul() { return 0.6; }   // fewer, bigger insects
 
   buildWave(w, n) {
     const groups = [];
@@ -311,7 +314,7 @@ export class SurvivalMode {
     return head.concat(rest);
   }
 
-  get maxAlive() { return Math.min(18, 4 + 2 * this.playerCount + Math.floor(this.level(this.wave) / 2)); }
+  get maxAlive() { return Math.min(11, 3 + this.playerCount + Math.floor(this.level(this.wave) / 3)); }
   get isBossWave() { return this.bossOn(this.wave); }
 
   nextWave() {
@@ -616,8 +619,9 @@ export class SurvivalMode {
     const m = 46;
     for (const w of this.pending) {
       const k = 1 - w.t / w.T;
-      const x = clamp(w.x, m, W - m), y = clamp(w.y, m + 70, H - m);
-      const ang = Math.atan2(H / 2 - w.y, W / 2 - w.x);
+      const u = this.game.toUI(w.x, w.y);
+      const x = clamp(u.x, m, W - m), y = clamp(u.y, m + 70, H - m);
+      const ang = Math.atan2(H / 2 - u.y, W / 2 - u.x);
       const boss = w.group.boss;
       const col = boss ? '#ffb020' : '#ff4a4a';
       const pulse = 0.5 + 0.5 * Math.sin(this.game.realTime * 18);

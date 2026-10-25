@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { RAPIER } from './physics.js';
 import { DT, ALL, groups, playerBit, G_STATIC, G_VEH, HATS, PLAYER_COLORS } from './config.js';
 import { buildExtraHat } from './hats.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/BufferGeometryUtils.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
 
@@ -35,7 +36,7 @@ const ARM_MASS = 2.9;         // upper + lower arm + mitten
 const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (feet just touch)
 const RAY_LEN = 1.05 * S;
 
-const WALK = 4.2, RUN = 7.6, SWIM = 2.6, JUMP_V = 6.0;
+const WALK = 4.8, RUN = 8.6, SWIM = 2.6, JUMP_V = 6.6;
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const COYOTE = 0.14;          // a jump still works this long after stepping off an edge
 const JUMP_BUFFER = 0.14;     // a jump pressed this long before landing still happens
@@ -73,32 +74,159 @@ export function headMaterials() {
   }
   return _headMats;
 }
+// ---- the skin: one skinned mesh per character --------------------------------
+// The body, limbs, mittens and shoes are a single THREE.SkinnedMesh, so a
+// character is one draw call and bends like one rubbery whole. Its bones:
+//  - the per-part groups (`part.mesh`, posed from the ragdoll bodies every frame);
+//  - two squash bones (chestSq / hipsSq, children of chest / hips: Player.sync);
+//  - a joint bone at every joint (JOINTS: waist, shoulders, elbows, hips, knees),
+//    not in the scene graph: its world matrix is set just before the skeleton
+//    uploads (poseJoints), at the joint pivot, turned half way between the parent
+//    and child parts.
+// Each limb is ONE tapered tube (shoulder to wrist, hip to ankle) and torso +
+// hips are ONE lathed bean. Across a joint the weights fade parent -> joint
+// bone -> child over a band (JOINTS[].h), so a bend spreads over two half-angle
+// rotations and the surface curves through it like a rubber hose instead of
+// meeting at a hinge. Mittens and shoes ride their part rigidly. The shape is
+// built once in the rest pose (feet on y = 0, unscaled units, x S at the end)
+// and cloned per character; only the colour attribute differs.
+// The head keeps its own mesh (face texture) and sits on the bean's top.
+// Outfits, gadgets and NPC props stay rigid meshes inside each part's group.
+const JOINTS = [ // parent, child, band half-width (unscaled m); the pivot is the child's PARTS joint
+  { n: 'waistJ', P: 'hips', C: 'chest', h: 0.13 },
+  ...['L', 'R'].flatMap((s) => [
+    { n: 'shJ' + s, P: 'chest', C: 'uArm' + s, h: 0.1 },
+    { n: 'elJ' + s, P: 'uArm' + s, C: 'lArm' + s, h: 0.1 },
+    { n: 'hipJ' + s, P: 'hips', C: 'uLeg' + s, h: 0.08 },
+    { n: 'knJ' + s, P: 'uLeg' + s, C: 'lLeg' + s, h: 0.09 },
+  ]),
+];
+for (const j of JOINTS) {
+  const c = PARTS.find((q) => q.n === j.C), p = PARTS.find((q) => q.n === j.P);
+  j.pivot = c.joint;
+  j.aP = new THREE.Vector3(c.joint[0] - p.pos[0], c.joint[1] - p.pos[1], c.joint[2] - p.pos[2]).multiplyScalar(S); // pivot in each part's frame
+  j.aC = new THREE.Vector3(c.joint[0] - c.pos[0], c.joint[1] - c.pos[1], c.joint[2] - c.pos[2]).multiplyScalar(S);
+}
+const JI = Object.fromEntries(JOINTS.map((j) => [j.C, j]));
+const SKIN_BONES = PARTS.map((p) => p.n).concat(['chestSq', 'hipsSq'], JOINTS.map((j) => j.n));
+const BI = Object.fromEntries(SKIN_BONES.map((n, i) => [n, i]));
+const CK = ['shirt', 'pants', 'skin', 'mitten', 'cuff', 'shoe', 'sole']; // colour keys
+const smooth01 = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// Weights across a joint. d: distance past the pivot towards the child (rest pose).
+function band(j, d, P = j.P, C = j.C) {
+  const h = j.h;
+  if (d <= -h) return [P, 1];
+  if (d >= h) return [C, 1];
+  if (d < 0) { const t = smooth01(-h, 0, d); return [P, 1 - t, j.n, t]; }
+  const t = smooth01(0, h, d); return [j.n, 1 - t, C, t];
+}
 // Smooth profile (r, y) through control points, unscaled units.
 function smoothProfile(ctrl, n = 36) {
   const curve = new THREE.CatmullRomCurve3(ctrl.map(([r, y]) => new THREE.Vector3(r, y, 0)), false, 'centripetal');
   return curve.getPoints(n).map((v) => [Math.max(0, v.x), v.y]);
 }
-// Lathe a slice [i0..i1] of a profile into a geometry scaled by S.
-function latheGeo(prof, i0, i1, seg = 28) {
-  const pts = prof.slice(i0, i1 + 1).map(([r, y]) => new THREE.Vector2(r * S, y * S));
-  return new THREE.LatheGeometry(pts, seg);
+// Tube profile (r, y), bottom to top: a round bottom cap (radius of the first
+// point), straight runs through the given [r, y] points (subdivided every
+// `step` so bends have rings to curve with) and a round top cap.
+function tubeProfile(pts, { step = 0.016, bottom = true, top = true, n = 6 } = {}) {
+  const out = [];
+  const [rb, yb] = pts[0], [rt, yt] = pts[pts.length - 1];
+  if (bottom) for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i / n) * Math.PI / 2; out.push([Math.cos(a) * rb, yb + Math.sin(a) * rb]); }
+  for (let k = 0; k < pts.length - 1; k++) {
+    const [r0, y0] = pts[k], [r1, y1] = pts[k + 1], m = Math.max(1, Math.ceil(Math.abs(y1 - y0) / step));
+    for (let i = 0; i < m; i++) out.push([r0 + (r1 - r0) * i / m, y0 + (y1 - y0) * i / m]);
+  }
+  out.push([rt, yt]);
+  if (top) for (let i = 1; i <= n; i++) { const a = (i / n) * Math.PI / 2; out.push([Math.cos(a) * rt, yt + Math.sin(a) * rt]); }
+  return out;
 }
-// Capsule with different end radii (top r0, bottom r1), centred, unscaled length.
-function taperGeo(r0, r1, len) {
-  const pts = [];
-  const N = 8;
-  for (let i = 0; i <= N; i++) { const a = -Math.PI / 2 + (i / N) * Math.PI / 2; pts.push([Math.cos(a) * r1, -len / 2 + Math.sin(a) * r1]); }
-  for (let i = 0; i <= N; i++) { const a = (i / N) * Math.PI / 2; pts.push([Math.cos(a) * r0, len / 2 + Math.sin(a) * r0]); }
-  return latheGeo(pts, 0, pts.length - 1, 18);
+// Torso + hips bean (rest pose, unscaled): a rounded seat the legs grow out
+// of, a wide soft belly, closing under the head.
+const BODY_PROFILE = smoothProfile([
+  [0, 0.375], [0.12, 0.39], [0.2, 0.43], [0.236, 0.5], [0.25, 0.6], [0.268, 0.72], [0.284, 0.84],
+  [0.286, 0.95], [0.27, 1.04], [0.236, 1.12], [0.18, 1.2], [0.1, 1.262], [0, 1.285]], 44);
+const BODY_SPLIT = 0.76;  // trousers below, shirt above
+const BODY_DEPTH = 0.88;  // front-to-back over side-to-side
+const SHOULDER = [0.34, 1.12], SHOULDER_R = 0.087; // = the uArm joint pivot
+const shoulderWiden = (y) => 1 + 0.2 * Math.exp(-(((y - 1.085) / 0.11) ** 2)); // torso x scale
+
+let _skinTemplate = null;
+function skinTemplate() {
+  if (_skinTemplate) return _skinTemplate;
+  const pieces = [];
+  const m4 = new THREE.Matrix4();
+  // geo: rest-pose geometry (unscaled); key: colour key; w: bone name or fn(x, y, z) -> [bone, w, bone, w]
+  const add = (geo, key, w, { smooth = true } = {}) => {
+    let g = geo;
+    for (const a of Object.keys(g.attributes)) if (a !== 'position' && !(a === 'normal' && !smooth)) g.deleteAttribute(a);
+    if (smooth) { g = mergeVertices(g); g.computeVertexNormals(); }
+    const n = g.attributes.position.count, P = g.attributes.position;
+    if (!g.index) { const idx = new Uint32Array(n); for (let i = 0; i < n; i++) idx[i] = i; g.setIndex(new THREE.BufferAttribute(idx, 1)); }
+    const ck = new Float32Array(n).fill(CK.indexOf(key));
+    const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      const ws = typeof w === 'string' ? [w, 1] : w(P.getX(i), P.getY(i), P.getZ(i));
+      for (let k = 0; k < ws.length / 2; k++) { si[i * 4 + k] = BI[ws[k * 2]]; sw[i * 4 + k] = ws[k * 2 + 1]; }
+    }
+    g.setAttribute('ckey', new THREE.BufferAttribute(ck, 1));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
+    g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+    pieces.push(g);
+  };
+  const lathe = (prof, seg) => new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+  const at = (g, x, y, z, sx = 1, sy = 1, sz = 1) => g.applyMatrix4(m4.compose(new THREE.Vector3(x, y, z), new THREE.Quaternion(), new THREE.Vector3(sx, sy, sz)));
+  // body: one bean from the seat to the neck in two colours, the waist bending through its joint bone
+  const W = JI.chest, waist = (x, y) => band(W, y - W.pivot[1], 'hipsSq', 'chestSq');
+  const prof = BODY_PROFILE, split = prof.findIndex((p) => p[1] >= BODY_SPLIT);
+  const a = prof[split - 1], b = prof[split], t = (BODY_SPLIT - a[1]) / (b[1] - a[1]);
+  const mid = [a[0] + (b[0] - a[0]) * t, BODY_SPLIT];
+  const shape = (g) => { // widen towards the shoulders, flatten front to back
+    const P = g.attributes.position;
+    for (let i = 0; i < P.count; i++) { P.setX(i, P.getX(i) * shoulderWiden(P.getY(i))); P.setZ(i, P.getZ(i) * BODY_DEPTH); }
+    return g;
+  };
+  add(shape(lathe([...prof.slice(0, split), mid], 32)), 'pants', waist);
+  add(shape(lathe([mid, ...prof.slice(split)], 32)), 'shirt', waist);
+  for (const s of [1, -1]) {
+    const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
+    // shoulder ball (chest), sunk into the widened torso: the arm bends out of it
+    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.97, SHOULDER[1] - 0.008, 0, 1, 0.9, 0.96), 'shirt', 'chest');
+    // the arm: one tube from inside the shoulder to inside the mitten, bending
+    // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
+    const sh = JI['uArm' + h], el = JI['lArm' + h];
+    const arm = (x, y) => (y > (sh.pivot[1] + el.pivot[1]) / 2 ? band(sh, sh.pivot[1] - y) : band(el, el.pivot[1] - y));
+    const HEM = 0.885;
+    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.086, 1.12]], { bottom: false }), 16), x, 0, 0), 'shirt', arm);
+    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 14), x, 0, 0), 'skin', arm);
+    // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff
+    const hy = 0.745 - 0.13; // lower-arm centre + HAND_OFF
+    add(at(new THREE.SphereGeometry(0.108, 16, 12), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
+    add(at(new THREE.SphereGeometry(0.048, 10, 8), x - s * 0.045, hy + 0.035, 0.055, 1, 1.25, 1), 'mitten', 'lArm' + h);
+    add(at(new THREE.CylinderGeometry(0.082, 0.09, 0.035, 14), x, hy + 0.075, 0), 'cuff', 'lArm' + h, { smooth: false });
+    // the leg: one trouser tube from inside the seat down into the shoe, bending at hip and knee
+    const hp = JI['uLeg' + h], kn = JI['lLeg' + h];
+    const leg = (x, y) => (y > (hp.pivot[1] + kn.pivot[1]) / 2 ? band(hp, hp.pivot[1] - y) : band(kn, kn.pivot[1] - y));
+    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 16), lx, 0, 0), 'pants', leg);
+    // round chunky shoe, toe forward, pale sole
+    add(at(new THREE.SphereGeometry(0.105, 16, 12), lx, 0.045, 0.045, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
+    add(at(new THREE.SphereGeometry(0.102, 16, 12), lx, 0.022, 0.045, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
+  }
+  const g = mergeGeometries(pieces, false);
+  for (const p of pieces) p.dispose();
+  g.scale(S, S, S);
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 3), 3));
+  _skinTemplate = g;
+  return g;
 }
-// Torso (chest-local): wide soft belly and shoulders, tapering into the hips,
-// closing under the head. Its foot sits inside the hips mesh.
-const TORSO_PROFILE = smoothProfile([
-  [0, -0.43], [0.13, -0.415], [0.205, -0.375], [0.245, -0.3], [0.272, -0.18], [0.288, -0.05],
-  [0.284, 0.08], [0.264, 0.18], [0.222, 0.26], [0.152, 0.315], [0.07, 0.345], [0, 0.355]]);
-const TORSO_SPLIT = TORSO_PROFILE.reduce((best, p, i) => (Math.abs(p[1] + 0.17) < Math.abs(TORSO_PROFILE[best][1] + 0.17) ? i : best), 0);
-const HIPS_PROFILE = smoothProfile([
-  [0, -0.2], [0.12, -0.188], [0.205, -0.13], [0.238, -0.04], [0.236, 0.05], [0.2, 0.13], [0.11, 0.185], [0, 0.2]], 24);
+// Inverse rest transforms of the bones (all upright: parts at their rest
+// positions, joint bones at their pivots).
+const SKIN_INV = SKIN_BONES.map((n) => {
+  const j = JOINTS.find((q) => q.n === n);
+  const p = j ? j.pivot : PARTS.find((q) => q.n === n.replace('Sq', '')).pos;
+  return new THREE.Matrix4().makeTranslation(-p[0] * S, -p[1] * S, -p[2] * S);
+});
+const SKIN_BOUNDS = new THREE.Sphere(new THREE.Vector3(0, -0.12, 0), 1.05); // chest-local, any pose
+const _col = new THREE.Color(), _jq = new THREE.Quaternion(), _jp = new THREE.Vector3(), _jv = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1);
 
 // scratch
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _qd = new THREE.Quaternion();
@@ -222,6 +350,8 @@ export class Player {
       b.joint.setContactsEnabled(false);
       b.parent = a;
     }
+    this.paintSkin();
+    this.bindSkin();
     this.totalMass = PARTS.reduce((s, p) => s + p.m, 0) + 0.8;
     // Effective inertia each joint has to swing: the whole limb below it,
     // about the joint. Twist about the bone axis only sees the part itself.
@@ -238,26 +368,12 @@ export class Player {
     }
   }
 
-  // One mesh per physics part, shaped so the parts read as a single soft
-  // "bean": the torso is a lathed jelly-bean that tapers down into the hips
-  // (its lower end hides inside the hips mesh, so bending at the waist never
-  // opens a seam), a big round head, stubby tapered limbs and mitten hands.
+  // The group a part's things hang in (posed from its body every frame; it is
+  // also that part's skin bone): the head mesh + hat, or rigid extras built in
+  // the part's local frame. The body itself is the skinned mesh (skinTemplate).
   partMesh(p) {
-    const b = new Builder();
-    const shirt = this.color;
-    const pants = this.pantsColor ?? new THREE.Color(this.color).multiplyScalar(0.55).getHex(); // pantsColor: customiser (cosmetics.js)
-    const skin = SKIN;
-    const shoe = 0x3a3340;
     const g = new THREE.Group();
-    const side = p.n.endsWith('L') ? 1 : -1;
-    if (p.n === 'hips') {
-      // rounded seat: a squashed ball, slightly wider than deep
-      b.add(latheGeo(HIPS_PROFILE, 0, HIPS_PROFILE.length - 1), pants, [0, 0, 0], null, [1, 1, 0.9]);
-    } else if (p.n === 'chest') {
-      const split = TORSO_SPLIT;
-      b.add(latheGeo(TORSO_PROFILE, 0, split), pants, [0, 0, 0], null, [1, 1, 0.88]);
-      b.add(latheGeo(TORSO_PROFILE, split, TORSO_PROFILE.length - 1), shirt, [0, 0, 0], null, [1, 1, 0.88]);
-    } else if (p.n === 'head') {
+    if (p.n === 'head') {
       const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 32, 24), headMaterials().normal);
       m.scale.set(1, 0.97, 0.98);
       m.castShadow = true;
@@ -267,27 +383,77 @@ export class Player {
       g.add(this.hatMesh);
       this.buildHat();
       return g;
-    } else if (p.n.startsWith('uArm')) {
-      // short sleeve: fat at the shoulder, tapering to the elbow
-      b.add(taperGeo(0.085, 0.068, 0.2), shirt, [0, 0.005 * S, 0]);
-    } else if (p.n.startsWith('lArm')) {
-      b.add(taperGeo(0.066, 0.058, 0.16), skin, [0, 0.01 * S, 0]);
-      // mitten: a fat rounded paddle with a thumb pointing forward-in
-      b.sphere(HAND_R * 1.08, 0xffffff, [0, HAND_OFF, 0], [0.95, 1.12, 0.82], 16);
-      b.sphere(HAND_R * 0.48, 0xffffff, [-side * 0.045 * S, HAND_OFF + 0.035 * S, 0.055 * S], [1, 1.25, 1], 10);
-      b.cyl(HAND_R * 0.82, HAND_R * 0.9, 0.035 * S, 0xf1f1f1, [0, HAND_OFF + 0.075 * S, 0], null, 14);
-    } else if (p.n.startsWith('uLeg')) {
-      b.add(taperGeo(0.105, 0.088, 0.21), pants, [0, 0.01 * S, 0]);
-    } else if (p.n.startsWith('lLeg')) {
-      b.add(taperGeo(0.088, 0.082, 0.17), pants, [0, 0.03 * S, 0]);
-      // round chunky shoe, toe forward
-      b.sphere(0.105 * S, shoe, [0, -0.075 * S, 0.045 * S], [1, 0.68, 1.45], 16);
-      b.sphere(0.102 * S, 0xe8e8e8, [0, -0.098 * S, 0.045 * S], [1, 0.3, 1.47], 16);
     }
-    this.outfit?.(p.n, b); // NPC outfits (src/npc.js): ties, scarves, backpacks...
-    const m = b.mesh(PLAYER_MAT);
-    g.add(m);
+    const b = new Builder();
+    this.outfit?.(p.n, b); // outfits (src/outfits.js, NPCs: src/npc.js): ties, scarves, backpacks...
+    this.gearMesh?.(p.n, b, g); // gadgets (src/gadgets.js): jetpack, boots, laser gun...
+    if (b.parts.length) g.add(b.mesh(PLAYER_MAT));
     return g;
+  }
+
+  // The skinned body (one per character): made once, recoloured and re-bound
+  // to the part groups whenever they are rebuilt (rebuildMeshes).
+  paintSkin() {
+    const shirt = this.outfit?.shirt ?? this.color; // jackets (outfits.js)
+    const pants = this.outfit?.pants ?? this.pantsColor ?? new THREE.Color(this.color).multiplyScalar(0.55).getHex(); // outfit trousers (outfits.js), pantsColor: customiser (cosmetics.js)
+    const cols = { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
+    if (!this.skin) {
+      const m = new THREE.SkinnedMesh(skinTemplate().clone(), PLAYER_MAT);
+      m.castShadow = true; m.receiveShadow = true;
+      m.boundingSphere = SKIN_BOUNDS.clone();
+      m.boundingBox = new THREE.Box3().setFromCenterAndSize(SKIN_BOUNDS.center, new THREE.Vector3(2.1, 2.1, 2.1));
+      this.skin = m;
+    }
+    const g = this.skin.geometry, key = g.attributes.ckey.array, c = g.attributes.color, a = c.array;
+    const rgb = CK.map((k) => _col.set(cols[k]).toArray());
+    for (let i = 0; i < key.length; i++) { const v = rgb[key[i]]; a[i * 3] = v[0]; a[i * 3 + 1] = v[1]; a[i * 3 + 2] = v[2]; }
+    c.needsUpdate = true;
+  }
+  bindSkin() {
+    const P = this.parts, sq = { chestSq: new THREE.Object3D(), hipsSq: new THREE.Object3D() };
+    P.chest.mesh.add(sq.chestSq); P.hips.mesh.add(sq.hipsSq);
+    this.sqBones = sq;
+    if (!this.jointBones) {
+      this.jointBones = {};
+      for (const j of JOINTS) { const o = new THREE.Object3D(); o.matrixAutoUpdate = false; this.jointBones[j.n] = o; }
+    }
+    const old = this.skin.skeleton, jb = this.jointBones;
+    const sk = new THREE.Skeleton(SKIN_BONES.map((n) => sq[n] || jb[n] || P[n].mesh), SKIN_INV.map((m) => m.clone()));
+    // the joint bones follow the parts just before every upload (parked NPCs,
+    // forms and anything else that poses part.mesh get them too)
+    const upload = sk.update;
+    sk.update = () => { this.poseJoints(); upload.call(sk); };
+    this.skin.bind(sk, new THREE.Matrix4());
+    old?.dispose();
+    P.chest.mesh.add(this.skin); // follows the chest's visibility (forms.js hides the part groups)
+  }
+  // Joint bones: at the pivot (the mean of where each side puts it), turned
+  // half way between the two parts. Part groups sit in this.group at the origin,
+  // so their position / quaternion are world values.
+  poseJoints() {
+    const P = this.parts, jb = this.jointBones;
+    for (const j of JOINTS) {
+      const a = P[j.P].mesh, c = P[j.C].mesh;
+      _jp.copy(j.aP).applyQuaternion(a.quaternion).add(a.position);
+      _jv.copy(j.aC).applyQuaternion(c.quaternion).add(c.position);
+      _jp.add(_jv).multiplyScalar(0.5);
+      _jq.slerpQuaternions(a.quaternion, c.quaternion, 0.5);
+      jb[j.n].matrixWorld.compose(_jp, _jq, _one);
+    }
+  }
+  // Rebuild the part groups (outfit / gadget / colour change) and re-bind the skin.
+  rebuildMeshes() {
+    for (const n in this.parts) {
+      const part = this.parts[n];
+      if (n === 'head') { this.buildHat(); continue; }
+      this.group.remove(part.mesh);
+      const m = this.partMesh(part.def);
+      m.position.copy(part.mesh.position); m.quaternion.copy(part.mesh.quaternion);
+      part.mesh = m;
+      this.group.add(m);
+    }
+    this.paintSkin();
+    this.bindSkin();
   }
 
   buildHat() {
@@ -328,13 +494,7 @@ export class Player {
   setColor(ci) {
     this.colorIndex = (ci + PLAYER_COLORS.length) % PLAYER_COLORS.length;
     this.color = PLAYER_COLORS[this.colorIndex];
-    for (const n in this.parts) {
-      const part = this.parts[n];
-      if (n === 'head') { this.buildHat(); continue; }
-      this.group.remove(part.mesh);
-      part.mesh = this.partMesh(part.def);
-      this.group.add(part.mesh);
-    }
+    this.rebuildMeshes();
     this.game.ui?.refreshTags();
   }
 
@@ -612,6 +772,8 @@ export class Player {
 
   // Called every physics step before world.step.
   step(inp, pressed) {
+    if (this.gear?.filter) inp = this.gear.filter(inp); // gadgets: a hand holding a tool can't grab
+    if (this.form) inp = this.form.input(inp); // forms.js: animals can't grab
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
@@ -731,7 +893,7 @@ export class Player {
     if (ride && !this.grounded) gv.copy(ride); // steer relative to the ride you hang from
     const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
     const strength = limp ? 0 : this.recover * riseUp * stumbleK;
-    const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK);
+    const speed = (this.swimming ? SWIM : (inp.sprint ? RUN : WALK) * (this.gear?.speed || 1)) * (this.form?.speed ?? 1); // gadgets: speed boots, flight; forms.js
     const hv = _vc.set(v.x - gv.x, 0, v.z - gv.z);
     const hspeed = hv.length();
     const fwdSpeed = hv.x * Math.sin(this.yaw) + hv.z * Math.cos(this.yaw);
@@ -893,7 +1055,8 @@ export class Player {
         const footing = this.jumpCool <= 0 && (this.grounded || this.swimming || (this.offGround < COYOTE && !hanging));
         if (footing) {
           // push off: straight up, plus a little kick the way the stick points
-          const jv = this.swimming ? 4.2 : JUMP_V, kick = this.swimming ? 0 : 0.9;
+          const jv = this.swimming ? 4.2 : JUMP_V * (this.gear?.jump || 1) * (this.form?.jump ?? 1), // gadgets: high-jump boots; forms.js
+            kick = this.swimming ? 0 : 0.9 * (this.form?.kick ?? 1);
           for (const b of this.bodies) {
             const bv = b.linvel();
             b.applyImpulse({ x: mvx * kick * b.mass(), y: (gv.y + jv - bv.y) * b.mass(), z: mvz * kick * b.mass() }, true);
@@ -944,7 +1107,8 @@ export class Player {
           this.game.audio?.play('jump', cp);
         }
       }
-      if (pressed.punch && this.punch.t <= 0) {
+      if (pressed.punch && this.punch.t <= 0 && this.form) this.form.attack(); // forms.js: headbutt / bite / hop
+      else if (pressed.punch && this.punch.t <= 0 && !this.gear?.punch?.(this, inp)) { // gadgets: laser gun / grappling hook fire instead
         this.punch.hand = this.punch.hand === 'L' ? 'R' : 'L';
         if (inp.grabL > 0.5 && inp.grabR <= 0.5) this.punch.hand = 'R';
         if (inp.grabR > 0.5 && inp.grabL <= 0.5) this.punch.hand = 'L';
@@ -964,6 +1128,7 @@ export class Player {
     // --- pose
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
+    this.gear?.step(this, inp, pressed); // gadgets (src/gadgets.js): thrust, glide, aiming arm, hook
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
@@ -971,7 +1136,7 @@ export class Player {
       const p = parts[n];
       if (!p.parent) continue;
       // legs are visual only: they keep their pose through bumps and stumbles
-      const kl = !limp && n.includes('Leg') ? Math.max(kLimb, 0.9) : kLimb;
+      const kl = !limp && n.includes('Leg') ? 1 : kLimb;
       let kp = p.kp * kl, kd = p.kd * Math.sqrt(kl);
       if (limp) { kp = Math.max(kp, 4); kd = Math.max(kd, 1.2); }
       // hanging off a moving ride the hands are pinned to it: stiff arm drives
@@ -1188,18 +1353,19 @@ export class Player {
       set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
       const dip = Math.max(this.landDip, this.reachDown * 0.7);
-      set('uLegL', qx(-s * amp * 1.1 - dip * 0.6), 560, 34); set('uLegR', qx(s * amp * 1.1 - dip * 0.6), 560, 34);
-      set('lLegL', qx(Math.max(0, c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
-      set('lLegR', qx(Math.max(0, -c) * amp * 1.2 + 0.05 + dip * 1.1), 480, 30);
+      // a short, tidy stride (Wobbly Life style): the legs are visual, the wobble lives in the body and arms
+      set('uLegL', qx(-s * amp * 0.6 - dip * 0.4), 760, 40); set('uLegR', qx(s * amp * 0.6 - dip * 0.4), 760, 40);
+      set('lLegL', qx(Math.max(0, c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
+      set('lLegR', qx(Math.max(0, -c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
     } else {
       // legs stay extended just after the push-off (jump, bounce), tuck at the
       // top, then reach down ready to land; only a long fall pedals
       const push = vy > 1.5 ? Math.max(0, 1 - this.airTime / 0.2) : 0;
       const land = vy < -0.5 ? Math.min(1, (-vy - 0.5) / 3.5) : 0;
       const mix = (tuck, ext, reachDown) => (tuck + (ext - tuck) * push) * (1 - land) + reachDown * land;
-      const f = Math.sin(T * 11) * 0.35 * fall * Math.min(1, Math.max(0, (this.airTime - 0.6) / 0.4));
-      set('uLegL', qx(mix(-0.6, -0.1, -0.4) + f), 480, 32); set('uLegR', qx(mix(-0.4, -0.05, -0.22) - f), 480, 32);
-      set('lLegL', qx(mix(0.95, 0.12, 0.5) - f * 0.5), 420, 28); set('lLegR', qx(mix(0.75, 0.1, 0.35) + f * 0.5), 420, 28);
+      const f = Math.sin(T * 9) * 0.12 * fall * Math.min(1, Math.max(0, (this.airTime - 0.8) / 0.4));
+      set('uLegL', qx(mix(-0.35, -0.08, -0.25) + f), 720, 38); set('uLegR', qx(mix(-0.25, -0.04, -0.15) - f), 720, 38);
+      set('lLegL', qx(mix(0.55, 0.1, 0.35) - f * 0.5), 640, 34); set('lLegR', qx(mix(0.45, 0.08, 0.25) + f * 0.5), 640, 34);
     }
 
     // arms
@@ -1492,6 +1658,7 @@ export class Player {
   }
 
   respawn() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
@@ -1506,15 +1673,16 @@ export class Player {
   sync() {
     for (const n in this.parts) { const p = this.parts[n]; this.physics.pose(p.rec, p.mesh); }
     // squash & stretch the torso about the shoulders so the neck stays covered
-    const q = this.sq, m = this.parts.chest.mesh.children[0];
-    if (m) { m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q; }
-    const hm = this.parts.hips.mesh.children[0];
-    if (hm) hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
+    const q = this.sq, m = this.sqBones.chestSq, hm = this.sqBones.hipsSq; // skin bones (bindSkin)
+    m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q;
+    hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
+    this.form?.sync(); // forms.js: animal meshes follow the ragdoll
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
+    this.game.forms?.revert(this, { quiet: true }); // forms.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     for (const n in this.parts) {
@@ -1524,5 +1692,6 @@ export class Player {
       this.world.removeRigidBody(p.body);
     }
     this.game.scene.remove(this.group);
+    this.skin.geometry.dispose(); this.skin.skeleton.dispose();
   }
 }

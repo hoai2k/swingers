@@ -218,3 +218,35 @@ cap. Results files resume: finished battles (same units, stats, budget, seed and
 side) are skipped, so a re-run after a stat change only fights the pairings it
 touches. A full panel run (82 units x 9 armies x 6 = ~4400 battles) takes about
 70–90 minutes on 4 busy cores (1–15 ms per physics step).
+
+## Ranged reload pass (owner feedback: ranged felt too strong)
+
+Ordinary ranged units fire about 20–25% less often; prices unchanged, so they are now
+slightly under par per gold and lose clearly to cheap melee rushes. Special and siege
+units (Zeus, Da Vinci, catapult, ballista, cannon, hwacha, war elephant, mammoth,
+tree giant) are unchanged.
+
+| unit | change |
+|---|---|
+| Archer | cooldown 2.0 → 2.5 |
+| Skeleton Archer, Snake Archer | cooldown 2.2 → 2.7 |
+| Ice Archer | cooldown 2.1 → 2.6 |
+| Spear Thrower | cooldown 3.2 → 3.8 |
+| Musketeer | reload 4.0 → 5.0 |
+| Flintlock | reload 5.0 → 6.0 |
+| Gunslinger | reload 3.2 → 4.0 |
+| Pirate Queen | reload 2.2 → 2.8 |
+| Blunderbuss | reload 3.0 → 3.6 |
+| Firework Archer | cooldown 2.4 → 3.0 |
+| Bomber, Potion Seller | cooldown 2.6 → 3.1 |
+| Dynamite, Pirate Bomber | cooldown 2.8 → 3.3, 3.0 → 3.5 |
+| Wizard | cooldown 2.6 → 3.0 |
+| Hay Baler | cooldown 3.0 → 3.5 |
+| Banana thrower | cooldown 1.8 → 2.2 |
+| Balloon archer, Candlehead | cooldown 2.2 → 2.7 |
+
+Equal-gold scores after the change (`run.mjs`, 4 runs per pairing, avg over the
+reference panel; +1 flawless win, −1 flawless loss): archer −0.02 (was +0.06),
+skeleton archer −0.01, gunslinger −0.03, spear thrower −0.05, musketeer −0.09,
+flintlock −0.09. They now lose to clubbers and squires (−0.4 to −0.97) and still beat
+giants and kings (+0.4 to +0.96).

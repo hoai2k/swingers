@@ -16,6 +16,9 @@ import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
 import { randomWeaponId } from '../weapons.js';
 
+// Insects are a good deal bigger than the spiders: easy to read and to hit.
+export const ENEMY_SCALE = 1.45;
+
 let NEXT = 1;
 
 export class Enemy {
@@ -39,7 +42,7 @@ export class Enemy {
     this.type = C.id;
     this.label = C.label;
     this.x = x; this.y = y; this.vx = 0; this.vy = 0;
-    this.r = C.r;
+    this.r = C.r * ENEMY_SCALE;   // insects are drawn and hit at this size
     this.wave = wave;
     // gentle difficulty creep: a bit faster and quicker to attack each wave
     this.agg = 1 + Math.min(0.5, (wave - 1) * 0.03);

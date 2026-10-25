@@ -19,7 +19,7 @@ export class BroodTyrant extends Enemy {
   static id = 'tyrant';
   static label = 'Brood Tyrant';
   static hp = 40;
-  static r = 56;
+  static r = 46;            // x ENEMY_SCALE in game
   static speed = 170;
   static color = '#ffb020';
   static dropChance = 0;

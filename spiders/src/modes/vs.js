@@ -27,6 +27,7 @@ export class VsMode {
     this.lastWinner = null;
   }
 
+  get dynamicCamera() { return this.state !== 'matchEnd'; }
   teamFor(p) { return 'p' + p.slot; }
 
   start() {
