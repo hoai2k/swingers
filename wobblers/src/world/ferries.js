@@ -94,6 +94,8 @@ export const ROUTES = [
     waypoints: [[[-260, -480], [-170, -620]], [[220, -640], [150, -470]]] },
   { name: 'Desert Ferry', color: 0xffc233, stops: [['home_west', -1], ['desert', -1]],
     waypoints: [[[-400, 60], [-600, -120]], [[-640, 180], [-420, 250]]] },
+  { name: 'Fair Ferry', color: 0xe8742a, stops: [['home_ne', 1], ['fair', -1]],
+    waypoints: [[[360, -470], [480, -640]], [[480, -720], [400, -420]]] },
 ];
 
 const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new THREE.Vector3();

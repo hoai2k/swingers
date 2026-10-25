@@ -122,7 +122,7 @@ items, per-player use-spot prompts via `seat.labelFor(p)`), `phone.js` (X opens 
 ## Regions / NPCs / ferries / registerVehicle (the archipelago)
 
 The world is an archipelago: the home island ("Wobbly Island", |x|, |z| <= 400, unchanged)
-plus five regions, each a module in `src/world/regions/`. Coordinates: +x east, +z south
+plus six regions, each a module in `src/world/regions/`. Coordinates: +x east, +z south
 (the map's north is -z). Sea level y = -0.5; the open sea floor is y = -8 (one plane + one
 collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
 
@@ -133,6 +133,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
 | `desert` | Dusty Dunes (`DUSTY DUNES`) | -1440..-680, -440..440, 4 m | town flat x -1020..-900, z -100..40, y = 4; oasis pond (-935, 165); red-rock plateau + canyon on the north coast (floor y ~3 along z = -232 + 28 sin(x / 55)); mesas SW; dunes W; dock (-760, 40) |
 | `jungle` | Tiki Jungle (`TIKI JUNGLE`) | -960..-300, 520..1140, 4 m | volcano 92 m with a crater at (-690, 900); gully + sea-level river to the east shore; stilt village flat x -430..-385, z 735..795, y = 1.5; lagoon flat x -385..-350, z 730..800, y = -1.6; dock (-405, 815) |
 | `tropical` | Coconut Cove (`COCONUT COVE`) | 300..810, 480..921, 3 m | islets A (470, 620), B (640, 600), C (605, 772, low hill), D (438, 792) in a shallow lagoon; resort flat x 565..645, z 735..790, y = 2; harbour flat x 440..500, z 598..640, y = 1.5; dock (452, 572) |
+| `fair` | Stratford Fall Fair (`STRATFORD FALL FAIR`) | 540..1150, -1110..-590, 4 m | autumn island NE of home; fairground flat x 700..985, z -945..-745, y = 2.2, midway along z = -845 from the entrance arch (x = 700) east; orchard hill (1010, -985); pumpkin patch (1035, -900); dock (652, -858) on the west coast |
 
 - **Terrain** (`src/terrain.js`): a region descriptor `region = { id, name, biome, signText,
   centre, bounds, step, height(x, z), color(x, z, h, slope, out), sand(x, z, h), flats, roads,
@@ -166,7 +167,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   region's grass coverage mask is rendered the first time a camera comes near it.
 - **NPCs** (`src/npc.js`): `game.npcs.spawn(role | def, x, z, opts)` (or `R.npc`). Roles:
   townsfolk, lifeguard, farmer, businessman, taxi, skier, cowboy, explorer, surfer,
-  fisherman, chef; add more with `registerRole(name, def)`. def: `colors { shirt, pants,
+  fisherman, chef (plus region roles, e.g. `teen` at the fair); add more with `registerRole(name, def)`. def: `colors { shirt, pants,
   hat }`, `hat` (any HATS id, or an NPC hat: straw, pith, chef, helmet, sunhat; `registerHat`),
   `face` (FACES index or name), `outfit` (['tie', 'scarf', 'vest', 'backpack', 'apron', 'belt',
   'lifejacket'] or a fn), `prop` (briefcase, rod, surfboard, skis, pitchfork, lasso, map, buoy,
@@ -181,12 +182,25 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   the pier to deep water with a T head (top y = 1.4 = the ferry deck), a FERRY sign and a
   berth alongside the head. `ROUTES` lists the lines (stops `[dockId, dir]` + waypoints per
   leg): Island Hopper (home_south -> cove -> jungle), Frostpeak Ferry (home_north <-> snow),
-  Desert Ferry (home_west <-> desert). Ferries are kinematic (`physics.animators`), slow
+  Desert Ferry (home_west <-> desert), Fair Ferry (home_ne, the home island's north-east dock
+  at (236, -236), <-> fair). Ferries are kinematic (`physics.animators`), slow
   down for bends, wait 14 s at each dock, close their side gates while sailing (the gates are
   behind the seats; at a berth the hull stops so a gate faces the pier walkway: `Ferry.berthAt`); benches are seats with `seat.ferry`. After
   moving a dock or waypoint, probe the route (sample `groundAt` under the hull along each leg,
   keep more than 3 m of water). Players standing on any kinematic body move with it
   (player.js `groundVelocity`, which uses a kinematic body's origin as its pivot).
+- **Stratford Fall Fair** (`world/regions/fair.js` + `fair/`): 14 rides along a midway, each static
+  kit scenery plus kinematic bodies posed by one animator (`fair/common.js` `FairRides`: `F.body`,
+  `F.instanced` draws many same-looking bodies (cabins, cages, cars, horses) as one InstancedMesh,
+  `F.seat` adds a ride seat with `exitPush`, `F.animate`, `F.sign`; timing helpers `power` / `travel` /
+  `vmaxFor` make each cycle end where it started). Ride parts live in one scene group far-culled with
+  the kit chunks, and the animators only run while a player is within 520 m (`F.active`). Layout in
+  `fair/layout.js` (`RIDES` centres); rides A (`rides-a.js`: pirate / viking ship, ring of fire,
+  ferris wheel, carousel, drop tower), B (`rides-b.js`: gravitron, starship 2000, zipper, top spin,
+  tilt-a-whirl, himalaya, sizzler), `train.js` (mini train), `decor.js` (arch, stalls, maples,
+  pumpkins, hay, falling leaves: one Points cloud round the players), `npcs.js` (the `teen` role; ~50
+  teens spawned lazily, one per step, once a player is within 330 m). Fair seats carry `seat.fair`;
+  `game.fair` = { times, rides } (`rides.ringFire` is the Ring of Fire's pendulum state).
 - **New vehicles** (`src/vehicles.js`): `registerVehicle(type, def)` (the usual fields;
   `boat: true` for a buoyant hull, `mesh(b, def, color, P, vehicle)` for a custom look,
   `colliders(add, C, def, vehicle)`, `voice` / `engineVoice`, `horn`), and

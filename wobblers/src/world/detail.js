@@ -101,7 +101,7 @@ function detailMaterial(radius, sway, timeU) {
 // ---- scatter rules -------------------------------------------------------------
 // Per-biome tweaks: grass size, flower chance (none on snow / desert / city
 // streets anyway: they only grow where the ground colour is green).
-const BIOME = { jungle: { grass: 1.7, dense: 0.25, flower: 0.5 }, tropical: { grass: 1.1, flower: 0.6 }, city: { flower: 0.6, pebble: 0 }, snow: { pebble: 0.4, flower: 0 }, desert: { flower: 0 } };
+const BIOME = { jungle: { grass: 1.7, dense: 0.25, flower: 0.5 }, tropical: { grass: 1.1, flower: 0.6 }, city: { flower: 0.6, pebble: 0 }, snow: { pebble: 0.4, flower: 0 }, desert: { flower: 0 }, fair: { flower: 0.25, pebble: 0.15 } };
 
 export class Detail {
   constructor(game, mask) {

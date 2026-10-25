@@ -30,6 +30,7 @@ import { addCoinCluster } from '../../life/coins.js';
 const SIGN_COLORS = {
   city: ['#2a62c9', '#ffffff', 0x3a3f4a], snow: ['#3f8cff', '#ffffff', 0x7a5032], desert: ['#b5532c', '#ffe8b0', 0x7a5032],
   jungle: ['#2f8a35', '#ffe36a', 0x6b4a2a], tropical: ['#2bc4c4', '#ffffff', 0xb98a5a], home: ['#ff5a8a', '#ffffff', 0x7a5032],
+  fair: ['#e8742a', '#fff6d8', 0x6b4426],
 };
 
 export function regionHelpers(game, kit, region) {

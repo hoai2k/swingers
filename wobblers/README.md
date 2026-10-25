@@ -156,7 +156,7 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
 
 ## The archipelago
 
-Around the home island lie five more islands, each with its own landscape, people and things
+Around the home island lie six more islands, each with its own landscape, people and things
 to do (a banner welcomes you as you arrive; the map zooms out to show them all):
 
 - **Bigtown** (east) — the city, over a drivable suspension bridge from the home island's
@@ -182,6 +182,14 @@ to do (a banner welcomes you as you arrive; the map zooms out to show them all):
   pool and swim-up bar, beach volleyball, surfing, a harbour full of boats (speedboats, a
   sailboat, pedalos, a banana boat, jet skis), a lighthouse, a snorkel reef with fish and
   turtles, and a pirate shipwreck. Beach buggies and golf carts.
+- **Stratford Fall Fair** (north-east, Fair Ferry from the home island's north-east dock) — an
+  autumn fairground island with maples in red and gold, falling leaves, pumpkins, hay bales and
+  lots of teenagers. Fourteen rides you can sit on (Y): Pirate Ship and Viking Ship (swinging
+  ships), Ring of Fire (a train that loops the loop), Gravitron and Starship 2000 (spinning
+  saucers that pin you to the wall), Zipper (flipping cages on a turning boom), Top Spin, Drop
+  Tower, Tilt-a-Whirl, Himalaya (forwards and backwards over the hills), Sizzler, a Ferris Wheel,
+  a classic Carousel with up-and-down horses and a Mini Train. Stalls, a pumpkin patch with a
+  scarecrow, an apple orchard on the hill and pumpkins to kick about.
 
 Every island has its own people (sheriffs, skiers, tiki villagers, taxi drivers...), coins
 to collect, presents to find and jobs to do.
@@ -207,7 +215,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/input.js` | gamepads + two keyboard schemes |
 | `src/physics.js` | Rapier wrapper, buoyancy, water volumes, kinematic animators |
 | `src/terrain.js` | the archipelago terrain: regions (home island + islands) with height functions, biomes, flat areas; ground colours, LOD tiles, colliders; `heightAt`, `groundAt`, `biomeAt`, `regionAt` |
-| `src/world/regions/` | one module per island (city, snow, desert, jungle, tropical): terrain descriptor + `build(game, kit, R)`; `helpers.js` is the `R` helper bag |
+| `src/world/regions/` | one module per island (city, snow, desert, jungle, tropical, fair): terrain descriptor + `build(game, kit, R)`; `helpers.js` is the `R` helper bag |
 | `src/world/bridge.js`, `src/world/ferries.js` | the Bigtown suspension bridge; ferry docks, routes and the kinematic `Ferry` |
 | `src/npc.js`, `src/world/folk.js` | NPCs (AI-driven ragdolls with roles, outfits, props, speech bubbles, LOD); the home island's islanders |
 | `src/regionbanner.js` | "Welcome to ...!" banners per view; `player.region` |
