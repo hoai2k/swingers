@@ -16,7 +16,9 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Ragdoll tuning (`src/player.js`): the joint drives are an *implicit* PD on each limb's
   own inertia — explicit PD with chain inertia or large `kd` goes unstable in Rapier.
   Raised limbs float (gravity scale 0, weight moved to the torso); hanging arms keep
-  gravity. Keep `kp * DT² ≲ 0.3`. Climbing: `player.grip` (GRIP_* constants) drains while
+  gravity. Keep `kp * DT² ≲ 0.3`. Jumps use coyote time and a press buffer (`COYOTE`, `JUMP_BUFFER`),
+  and `probeGround` falls back to `FOOT_RAYS` round the hips so standing on an edge still counts
+  as grounded. In the air the legs push off, tuck, then reach down for the landing. Climbing: `player.grip` (GRIP_* constants) drains while
   hanging off the world and refills on the ground; mantling needs a ledge top within reach
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
