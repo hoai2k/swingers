@@ -57,12 +57,16 @@ beside you, facing your way. Boats need water nearby and helicopters need open s
 player has one called vehicle; calling another sends the old one away unless someone is in it.
 
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
-players, ledges, bars) until you let go. Punch while holding (or standing at) a ball, can
-or teddy to throw it; facing a hoop, the cans or the bowling pins aims the throw. Y also
-sits you on benches, chairs, stools, sofas, armchairs and beanbags, and
-works machines and buttons (vending machines, jukebox, game resets). Push toward a ladder
-to climb it. Grab with both hands and jump to pull yourself
-up. Look up with the camera to reach higher.
+players, ledges, bars) until you let go. Punch while holding something to throw it: light
+things fly far, a crate a few metres, a sofa not much further than you can stagger. Punching
+at a ball, can or teddy throws it too; facing a hoop, the cans or the bowling pins aims the
+throw. Y also sits you on benches, chairs (indoors and the outdoor cafe chairs), stools,
+sofas, armchairs and beanbags, and works machines and buttons (vending machines, jukebox,
+game resets). Push toward a ladder to climb it. Grab a ledge's top edge with both hands
+and jump (or push forward) to pull yourself over it; flat walls can't be scaled, and
+hanging tires your arms, so you drop after a while and need a rest on the ground. Jumping
+while hanging from bars or ropes hops you up and forward. Look up with the camera to reach
+higher. Leaving a ride (Y) drops you off right where you are.
 
 Browsers on Windows expose at most four XInput (Xbox) pads, so 8 players means mixing
 pads with the two keyboard schemes (or using controllers that show up as generic HID).

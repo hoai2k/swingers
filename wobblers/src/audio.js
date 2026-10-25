@@ -12,6 +12,24 @@ const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const pick = (arr) => arr[(Math.random() * arr.length) | 0];
 
+// Rough distance (m) from (x, z) to open water (ground under the sea plane:
+// the sea, the lake, sea-level rivers), sampling the terrain on a few rings
+// round the listener. ~33 height samples at worst, a few times a second.
+const WATER_Y = -0.6, RINGS = [10, 25, 45, 70, 100];
+export function waterDistance(x, z) {
+  if (heightAt(x, z) < WATER_Y) return 0;
+  for (const r of RINGS) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k + (r % 2) * 0.5) * Math.PI / 4;
+      if (heightAt(x + Math.sin(a) * r, z + Math.cos(a) * r) < WATER_Y) return r;
+    }
+  }
+  return Infinity;
+}
+// Waves + surf weight for a listener: loud on the shore, gone ~100 m inland
+// (on every island, not just the home one) and fading with height.
+export const seaWeight = (p) => smooth(105, 15, waterDistance(p.x, p.z)) * smooth(40, 5, p.y);
+
 // Calliope waltz for the fun park (scale steps over C major, 3/4).
 const ORGAN = [
   [72, 2], [76, 1], [79, 2], [76, 1], [74, 2], [77, 1], [81, 2], [77, 1],
@@ -583,11 +601,7 @@ export class Audio {
       const W = { sea: 0, park: 0, organ: 0, fountain: 0, wind: 0, lake: 0 };
       for (const cam of cams) {
         const p = cam.position;
-        const r = Math.hypot(p.x, p.z * 0.95);
-        let sea = smooth(250, 335, r);
-        // near low ground by the coast
-        if (sea > 0 && sea < 1) { const h = heightAt(p.x, p.z); sea *= smooth(12, 1, h); }
-        W.sea = Math.max(W.sea, sea * smooth(40, 5, p.y));
+        W.sea = Math.max(W.sea, seaWeight(p));
         W.park = Math.max(W.park, smooth(150, 50, Math.hypot(p.x - PARK.x, p.z - PARK.z)));
         W.organ = Math.max(W.organ, smooth(90, 10, Math.hypot(p.x - CAROUSEL.x, p.z - CAROUSEL.z)));
         W.fountain = Math.max(W.fountain, smooth(22, 4, Math.hypot(p.x - FOUNTAIN.x, p.z - FOUNTAIN.z)));

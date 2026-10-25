@@ -16,13 +16,19 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Ragdoll tuning (`src/player.js`): the joint drives are an *implicit* PD on each limb's
   own inertia — explicit PD with chain inertia or large `kd` goes unstable in Rapier.
   Raised limbs float (gravity scale 0, weight moved to the torso); hanging arms keep
-  gravity. Keep `kp * DT² ≲ 0.3`.
+  gravity. Keep `kp * DT² ≲ 0.3`. Climbing: `player.grip` (GRIP_* constants) drains while
+  hanging off the world and refills on the ground; mantling needs a ledge top within reach
+  of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
+  off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
+  `world/common.js` (speed from `throwSpeed(mass)`).
 - Collision groups (`src/config.js`): static, props, vehicles/rides, one bit per player.
   Seated players stop colliding with vehicles and rides.
 - Static scenery goes through `world/kit.js` so it is merged into per-chunk meshes;
   every new static thing should be added with the kit (visual + collider in one call).
 - Rides are kinematic bodies animated in `physics.animators`; anything a player can sit
-  on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`). Seats on
+  on is a seat in `game.seats` (`{ body, pos, yaw, kind, label, hint, control() }`; optional
+  `exit` (body-local) / `exitWorld`, and `exitPush` (m/s) for rides: getting off mid-ride
+  drops you right there with a small push away from the seat). Seats on
   `physics.staticBody` keep world positions in `pos` (`nearestSeat` relies on that for its
   quick reject). `kit.bench` adds two seats per bench; `furn()` adds seats to chairs, stools,
   sofas, armchairs and beanbags (table `SEATS` in `world/furniture.js`; those pieces use the
@@ -141,7 +147,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   leg): Island Hopper (home_south -> cove -> jungle), Frostpeak Ferry (home_north <-> snow),
   Desert Ferry (home_west <-> desert). Ferries are kinematic (`physics.animators`), slow
   down for bends, wait 14 s at each dock, close their side gates while sailing (the gates are
-  behind the seats, 4 m aft of the pier walkway); benches are seats with `seat.ferry`. After
+  behind the seats; at a berth the hull stops so a gate faces the pier walkway: `Ferry.berthAt`); benches are seats with `seat.ferry`. After
   moving a dock or waypoint, probe the route (sample `groundAt` under the hull along each leg,
   keep more than 3 m of water). Players standing on any kinematic body move with it
   (player.js `groundVelocity`, which uses a kinematic body's origin as its pivot).

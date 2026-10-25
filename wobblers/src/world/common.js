@@ -186,16 +186,50 @@ export function throwable(game, obj, opts = {}) {
   return t;
 }
 const _fw = new THREE.Vector3();
+// Anything else loose you're holding (crates, bins, chairs, sofas...) is thrown
+// too, slower the heavier it is: ~9 m for a cone, ~5 m for a crate, ~3 m
+// for a sofa (speed ~ m^-0.2, so the throw energy still grows with mass).
+const THROW_MAX_KG = 90;
+function heldLoose(game, p, h) {
+  const hand = p.hands[h], b = hand.body, o = hand.owner;
+  if (!hand.joint || !b || !b.isDynamic() || b.mass() > THROW_MAX_KG) return false;
+  if (o && (o.parts || o.constructor?.name === 'Vehicle')) return false;
+  // not things on hinges / chains (doors, lids, swings, see-saws): only the
+  // players' own grips may hold it
+  let pinned = false;
+  game.physics.world.impulseJoints.forEachJointHandleAttachedToRigidBody(b.handle, (jh) => {
+    if (!game.players.some((q) => q.hands.L.joint?.handle === jh || q.hands.R.joint?.handle === jh)) pinned = true;
+  });
+  return !pinned;
+}
+export function throwSpeed(mass) { return Math.max(3, Math.min(10, 10.5 * Math.pow(Math.max(mass, 0.5), -0.2))); }
+function throwHeld(game, p, h) {
+  const b = p.hands[h].body, m = b.mass();
+  for (const k of ['L', 'R']) if (p.hands[k].body === b) { p.releaseHand(k); p.hands[k].cool = 0.5; }
+  const sp = throwSpeed(m), up = 0.55, fx = Math.sin(p.yaw), fz = Math.cos(p.yaw), cv = p.chest.linvel();
+  b.setLinvel({ x: cv.x * 0.3 + fx * sp * Math.cos(up), y: Math.max(0, cv.y) * 0.3 + sp * Math.sin(up), z: cv.z * 0.3 + fz * sp * Math.cos(up) }, true);
+  _fw.set(Math.cos(p.yaw), 0, -Math.sin(p.yaw)).multiplyScalar(Math.min(6, 30 / (m + 4)));
+  b.setAngvel({ x: _fw.x, y: 0, z: _fw.z }, true);
+  b.wakeUp();
+  // heaving something heavy pushes you back a little
+  const kick = Math.min(1.5, m * sp / (p.totalMass * 6));
+  p.chest.applyImpulse({ x: -fx * kick * p.totalMass * 0.5, y: 0, z: -fz * kick * p.totalMass * 0.5 }, true);
+  p.punch.hit = true;
+  (game.throwers ||= new Map()).set(b.handle, p); game.lastThrower = p;
+  game.audio?.play('swish', b.translation());
+}
 function throwStep(game) {
   for (const p of game.players) {
     if (!p.punch || p.punch.t < 0.31 || p.state !== 'normal') continue; // punch started this step
-    let best = null, bd = 1e9, hand = null;
+    let best = null, bd = 1e9, hand = null, loose = null;
     for (const h of ['L', 'R']) {
       const hb = p.hands[h].body;
       if (!hb) continue;
       const t = game.throwables.find((q) => q.body === hb);
       if (t) { best = t; hand = h; break; }
+      if (!loose && heldLoose(game, p, h)) loose = h;
     }
+    if (!best && loose) { throwHeld(game, p, loose); continue; }
     if (!best) {
       const c = p.chest.translation(), fx = Math.sin(p.yaw), fz = Math.cos(p.yaw);
       for (const t of game.throwables) {
