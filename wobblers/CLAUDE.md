@@ -275,3 +275,21 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   `registerHandling(name, { update(vehicle, driver, vel, fwd, up, side), wheels })` with
   `def.handling = name`. Put it on the phone with `registerCallable({ id, type, name, icon | svg,
   color, opts }, beforeId)` (`src/phone.js`). Example: the jet ski in `world/regions/tropical.js`.
+- **Phone booths / bouncy ball / grab-on rides**: booths are `BOOTHS` in `world/booths.js`
+  (`[name, x, z, yaw]`, yaw = open front; pick spots with a clearance probe: flat ground, an empty
+  1.8 m box, room for a car 5 m ahead) and reuse the phone: `new PhonePanel(ui, p, { list, from,
+  title })` and `callVehicle(game, p, entry, from)` / `findSpot(..., from)` spawn round `from`
+  (`{ x, y: ground + 1, z, yaw }`) instead of the player. The bouncy ball is vehicle `hopper`
+  (`world/bouncy.js`; its own `vehicle.control`, the 'hopper' handling, tilt locked with
+  `setEnabledRotations`). Hanging off kinematic bodies is `player.rideCarry()`: the body eases
+  to the grip point's velocity, limbs are clamped relative to it, the arm drives soften, the
+  player stops colliding with rides while hanging (`rideGroups`, like seated riders: a ragdoll
+  squeezed between kinematic cars jitters), the grip joint's anchor is led by 0.8 step of
+  travel (Rapier solves it against the ride's start-of-step pose), it tears if a hand is
+  dragged 0.75 m off its grip, and dragging along the ground at > 7 m/s knocks you off; grip
+  drains at `RIDE_DRAIN` x the climbing rate. NB: Rapier reports tens of m/s of `linvel` on a
+  forearm pinned to a fast ride that is really keeping pace (measure limb speed by position
+  differences); `releaseHand` resets the arm to the chest's velocity so letting go doesn't
+  fling it. A ride part needs colliders to be grabbed: `world/ridegrab.js` adds seat blocks to
+  kinematic seat bodies that have none; give new rides real colliders (rails, chains, poles).
+  Held vehicles never get put to sleep (game.step), so grabbing a parked car works.

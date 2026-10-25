@@ -58,6 +58,21 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 **A** to find yourself). The **phone** calls any vehicle to you: it pops in on a clear spot
 beside you, facing your way. Boats need water nearby and helicopters need open space. Each
 player has one called vehicle; calling another sends the old one away unless someone is in it.
+Red **phone booths** (in town, at the Fun Park, by the ferry piers and in every island's
+village or harbour; shown on the map) are a garage: **Y** at a booth lists every vehicle you
+have (locked car-dealer ones aren't offered) and the one you pick pops in right outside the
+booth (it counts as your called vehicle).
+
+The **bouncy ball** (on the phone, and parked by the playground, the Fun Park and on each
+island) is a big space hopper: sit on it with **Y** and it hops by itself; the stick leans
+(forward / back) and turns, and holding **A** at a landing bounces it about 3.5 m high. It
+floats, bumps people over and carries a second rider.
+
+**Moving rides can be grabbed**: hold LT / RT on a roller-coaster car, ferris-wheel gondola,
+carousel pole, swing-ride chair or chain, drop-tower seat, ferry... and you hang on while it
+moves (even when every seat is taken). Your grip still tires (slower than on a wall, ~20 s), so
+eventually you drop; let go of the triggers to fall off, or **Y** to climb into a free seat.
+Being dragged into the ground at speed knocks you off.
 
 Hold a trigger to raise that arm; the hand grabs whatever it touches (props, other
 players, ledges, bars) until you let go. Punch while holding something to throw it: light
@@ -269,6 +284,9 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
+| `src/world/booths.js` | phone booths (`BOOTHS`): the phone panel as a garage list spawning outside the booth, map icons |
+| `src/world/bouncy.js` | the bouncy ball vehicle (`hopper`: ball collider with locked tilt, hop handling, rolling look) and its parked spots |
+| `src/world/ridegrab.js` | grab blocks on ride seats whose kinematic body has no colliders (every ride can be hung from) |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/forms.js` | the Magic Tent and shape-shifting (goat / velociraptor / giant grasshopper): animal looks on the ragdoll, attacks, timer HUD, chooser panel, magic puffs |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
