@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: 31 requested signs remaining.** Rounds 1–6 are delivered and integrated;
+**Status: round 9 open (2 signs, 2 posters).** Rounds 1–8 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -46,60 +46,16 @@ push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
 
-## OPEN round 7 — region signs: Bigtown, Frostpeak, Dusty Dunes (32 signs)
+## OPEN round 9 — Dusty Dunes extras (2 signs, 2 posters)
 
-All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
-letters plus one small icon (style rules above). The game draws a procedural
-stand-in for each until the art arrives.
+The game draws a procedural stand-in for each until the art arrives.
 
-### Bigtown (city)
+### Signs (`assets/signs/`, 1024 × 256, exact words)
 
-- `jump.png` — **JUMP**: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower).
-- `wobblecorp.png` — **WOBBLECORP**: teal glass-office board, white letters, little wobbly-bean logo icon (invented company).
-- `police.png` — **POLICE**: navy board, white letters, gold star badge icon (also shown on the sides of the police car).
-- `play_me.png` — **PLAY ME**: pink board, white letters, piano-keys icon (street piano).
+- `dustville_hotel.png` — **DUSTVILLE HOTEL**: Wild-West hotel false-front board, weathered teal-blue wood planks, cream western-style letters, small bed or key icon.
+- `dustville.png` — **DUSTVILLE**: town-entrance arch board over the main street, sun-bleached brown planks hung on ropes, cream western letters, small cactus-and-sun icon.
 
-### Frostpeak (snow)
+### Posters (`assets/posters/`, 512 × 716, opaque, filling the frame; in the sheriff's office)
 
-- `ski_lift.png` — **SKI LIFT**: bright red board with snow on top, white letters, chairlift-chair icon.
-- `hot_cocoa.png` — **HOT COCOA**: cosy wooden-plank board, cream letters, steaming mug with marshmallows.
-- `ice_cave.png` — **ICE CAVE**: icy pale-blue board with icicles hanging off the bottom edge, white letters, ice-crystal icon.
-- `ski_jump.png` — **SKI JUMP**: bright blue board, white letters, skier flying off a ramp.
-- `observatory.png` — **OBSERVATORY**: dark navy board with tiny stars, pale yellow letters, domed-telescope icon.
-- `skating.png` — **SKATING**: light-blue board with frosty edges, white letters, ice-skate icon.
-- `sled_hire.png` — **SLED HIRE**: red-and-white striped wooden board, white letters, red sled icon.
-- `tackle_shop.png` — **TACKLE SHOP**: weathered blue-green harbour board, white letters, fish-on-a-hook icon.
-
-### Dusty Dunes (desert)
-
-- `sheriff.png` — **SHERIFF**: weathered brown wood planks, cream western-style letters, small gold star.
-- `general_store.png` — **GENERAL STORE**: faded red-painted wood, cream western letters, barrel or sack icon.
-- `gas.png` — **GAS**: red roadside board, white rounded letters, fuel-pump icon.
-- `gold_mine.png` — **GOLD MINE**: rough nailed timber planks, yellow-gold letters, pickaxe icon.
-- `dig_site.png` — **DIG SITE**: sandy-beige wooden board with rope edging, dark brown letters, dinosaur-bone icon.
-
-## OPEN round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
-
-All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded
-letters plus one small icon (style rules above). The game draws a procedural
-stand-in for each until the art arrives.
-
-### Tiki Jungle (jungle)
-
-- `volcano_trail.png` — **VOLCANO TRAIL**: rough bamboo-framed wooden board, cream letters, small smoking volcano icon.
-- `raft_ride.png` — **RAFT RIDE**: lashed log-raft board, white letters, small paddle-and-splash icon.
-- `temple_ruins.png` — **TEMPLE RUINS**: mossy grey carved-stone tablet, yellow-gold letters, small stepped pyramid icon.
-- `hot_lava.png` — **HOT LAVA**: orange-red warning board with black hazard stripes on the edges, white letters, small flame icon.
-- `jungle_tours.png` — **JUNGLE TOURS**: olive-green safari board, cream letters, small green jeep icon.
-- `waterfall.png` — **WATERFALL**: teal-blue wooden board with vines on the corners, white letters, small waterfall icon.
-
-### Coconut Cove (tropical)
-
-- `coconut_resort.png` — **COCONUT RESORT**: sunny turquoise board with a thatched-straw top edge, white letters, small palm-tree-and-coconut icon.
-- `pool_bar.png` — **POOL BAR**: bamboo-framed pink board, white letters, small coconut cocktail with umbrella icon.
-- `boat_hire.png` — **BOAT HIRE**: white board with navy rope border, navy letters, small speedboat icon.
-- `lighthouse.png` — **LIGHTHOUSE**: red-and-white striped board, white letters on a red band, small lighthouse icon.
-- `volleyball.png` — **VOLLEYBALL**: sandy-yellow board, blue letters, small volleyball icon.
-- `snorkel_reef.png` — **SNORKEL REEF**: aqua board with little bubbles, white letters, small snorkel mask and fish icon.
-- `shipwreck.png` — **SHIPWRECK**: weathered dark driftwood planks, bone-white pirate-style letters, small skull-and-crossbones icon.
-- `lifeguard.png` — **LIFEGUARD**: bright red board, white letters, small red-and-white life-ring icon.
+- `wanted_pete.png` — old-west WANTED poster on aged parchment: big **WANTED** at the top, a goofy wobbly bean-person outlaw with a black hat and red bandana in the middle, **WOBBLY PETE** underneath, and "REWARD 100 COINS". Toy-like and silly, not scary.
+- `wanted_kid.png` — same parchment WANTED layout: big **WANTED**, a cheeky little bean-person cowboy hugging a cactus, **CACTUS KID** underneath, and "REWARD 50 COINS".
