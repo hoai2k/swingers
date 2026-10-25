@@ -588,6 +588,7 @@ export class UI {
       if (p.seat.kind === 'driver' && p.seat.vehicle) {
         const def = p.seat.vehicle.def || {}, boat = def.boat;
         if (def.heli) return `${G('GAS')} Up ${G('BRAKE')} Down ${G('LS')} Fly ${G('Y')} Get out`;
+        if (def.handling === 'hopper') return `${G('LS')} Lean ${G('A')} Big bounce ${G('Y')} Get off`; // world/bouncy.js
         if (def.siren) return `${G('GAS')} Gas ${G('BRAKE')} Brake ${G('HORN')} Siren ${G('Y')} Get out`;
         return `${G('GAS')} ${boat ? 'Throttle' : 'Gas'} ${G('BRAKE')} ${boat ? 'Reverse' : 'Brake'} ${G('HORN')} Horn ${G('Y')} Get out`;
       }
@@ -601,6 +602,8 @@ export class UI {
       return `${G('Y')} ${what}`;
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);
+    const onRide = holding && ['L', 'R'].some((h) => p.hands[h].body?.isKinematic?.());
+    if (onRide && !p.grounded) return `Hang on! Let go of ${G('LT')} ${G('RT')} to drop`; // moving rides (player.js rideCarry)
     if (holding && !p.grounded) return `${G('A')} Climb up`;
     return '';
   }

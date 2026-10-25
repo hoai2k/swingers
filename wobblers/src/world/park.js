@@ -107,6 +107,12 @@ function ferrisWheel(game, kit, cx, cz) {
     b.cyl(0.05, 0.05, 1.3, 0x999999, [0, 1.9, 0], null, 6);
     const body = kinematic(game, { x: cx, y: 1.5, z: cz }, [
       RAPIER.ColliderDesc.cuboid(0.8, 0.06, 0.9).setTranslation(0, -0.6, 0),
+      // grab-ons: roof, rails and ends (hang off a gondola as it goes round)
+      RAPIER.ColliderDesc.cuboid(0.9, 0.06, 1.0).setTranslation(0, 1.2, 0),
+      RAPIER.ColliderDesc.cuboid(0.05, 0.25, 0.9).setTranslation(0.78, -0.35, 0),
+      RAPIER.ColliderDesc.cuboid(0.05, 0.25, 0.9).setTranslation(-0.78, -0.35, 0),
+      RAPIER.ColliderDesc.cuboid(0.8, 0.3, 0.05).setTranslation(0, -0.3, 0.85),
+      RAPIER.ColliderDesc.cuboid(0.8, 0.3, 0.05).setTranslation(0, -0.3, -0.85),
     ], b.mesh());
     cabins.push(body);
     for (const s of [1, -1]) addSeat(game, { body, pos: [0, -0.2, s * 0.55], yaw: s > 0 ? Math.PI : 0, label: 'Ride', hint: 'Enjoy the view! · Y exit', exit: [0, -0.2, s * 2.2], exitPush: 1.5 });
@@ -161,6 +167,11 @@ function carousel(game, kit, cx, cz) {
       addSeat(game, { body: plat, pos: [Math.sin(a) * r, 0.85, Math.cos(a) * r], yaw: a + Math.PI / 2, label: 'Ride horse', hint: 'Wheee! · Y exit', exit: [Math.sin(a) * (r - 1.1), 0.5, Math.cos(a) * (r - 1.1)] });
     }
   }
+  // the brass poles are solid: grab one and the carousel swings you round
+  for (const [r, n] of ring) for (let i = 0; i < n; i++) {
+    const a = (i + (r < 5 ? 0.5 : 0)) / n * Math.PI * 2;
+    game.physics.world.createCollider(RAPIER.ColliderDesc.cylinder(2.3, 0.06).setTranslation(Math.sin(a) * r, 2.6, Math.cos(a) * r).setCollisionGroups(VEH_GROUPS), plat);
+  }
   // horses are children of the platform mesh
   const platMesh = game.physics.objects[game.physics.objects.length - 1].mesh;
   for (const h of horses) platMesh.add(h.m);
@@ -188,7 +199,13 @@ function swingRide(game, kit, cx, cz) {
     b.rbox(0.6, 0.08, 0.55, 0.03, c, [0, 0, 0]);
     b.rbox(0.6, 0.6, 0.08, 0.03, c, [0, 0.3, -0.26]);
     for (const x of [-0.27, 0.27]) b.cyl(0.012, 0.012, L, 0xbbbbbb, [x, L / 2, 0], null, 4);
-    const body = kinematic(game, { x: cx, y: 1, z: cz }, [], b.mesh());
+    // seat, back and the two chains are solid (grab a chain or the chair and fly round)
+    const body = kinematic(game, { x: cx, y: 1, z: cz }, [
+      RAPIER.ColliderDesc.cuboid(0.3, 0.04, 0.28),
+      RAPIER.ColliderDesc.cuboid(0.3, 0.3, 0.04).setTranslation(0, 0.3, -0.26),
+      RAPIER.ColliderDesc.cylinder(L / 2 - 0.4, 0.04).setTranslation(0.27, L / 2 + 0.2, 0),
+      RAPIER.ColliderDesc.cylinder(L / 2 - 0.4, 0.04).setTranslation(-0.27, L / 2 + 0.2, 0),
+    ], b.mesh());
     chairs.push(body);
     addSeat(game, { body, pos: [0, 0.18, 0], yaw: 0, label: 'Swing ride', hint: 'Hold on! · Y exit', exit: [0, 0.2, 0.9] });
   }
@@ -231,7 +248,14 @@ function dropTower(game, kit, cx, cz) {
     b.rbox(0.6, 0.12, 0.6, 0.04, 0xffd23f, [Math.sin(a) * 2.0, -0.35, Math.cos(a) * 2.0], [0, a, 0]);
     b.rbox(0.6, 0.9, 0.12, 0.04, 0xffd23f, [Math.sin(a) * 1.7, 0.1, Math.cos(a) * 1.7], [0, a, 0]);
   }
-  const ring = kinematic(game, { x: cx, y: 1.2, z: cz }, [], b.mesh());
+  // seat pans and backs are solid: hang off the ring for the drop
+  const ringCols = [];
+  for (let i = 0; i < seatsN; i++) {
+    const a = i / seatsN * Math.PI * 2, q = { x: 0, y: Math.sin(a / 2), z: 0, w: Math.cos(a / 2) };
+    ringCols.push(RAPIER.ColliderDesc.cuboid(0.3, 0.06, 0.3).setTranslation(Math.sin(a) * 2.0, -0.35, Math.cos(a) * 2.0).setRotation(q));
+    ringCols.push(RAPIER.ColliderDesc.cuboid(0.3, 0.45, 0.06).setTranslation(Math.sin(a) * 1.7, 0.1, Math.cos(a) * 1.7).setRotation(q));
+  }
+  const ring = kinematic(game, { x: cx, y: 1.2, z: cz }, ringCols, b.mesh());
   for (let i = 0; i < seatsN; i++) {
     const a = i / seatsN * Math.PI * 2;
     addSeat(game, { body: ring, pos: [Math.sin(a) * 2.0, -0.15, Math.cos(a) * 2.0], yaw: a, label: 'Drop tower', hint: 'Here we go… · Y exit', exit: [Math.sin(a) * 3.3, 0, Math.cos(a) * 3.3], exitPush: 1.5 });
@@ -385,7 +409,16 @@ function coaster(game, kit) {
     b.rbox(1.3, 0.55, 0.2, 0.08, c, [0, 0.6, -0.85]);
     if (i === 0) b.rbox(1.3, 0.5, 0.5, 0.2, c, [0, 0.35, 1.05]);
     b.rbox(1.2, 0.08, 0.1, 0.03, 0xffffff, [0, 0.8, 0.2]);
-    const body = kinematic(game, { x: P[0].x, y: P[0].y, z: P[0].z }, [RAPIER.ColliderDesc.cuboid(0.7, 0.15, 1.0).setTranslation(0, 0.05, 0)], b.mesh());
+    // floor plus sides, seat back, lap bar and nose: things to catch hold of
+    // from the platform or the ground (riders in seats don't collide with them)
+    const body = kinematic(game, { x: P[0].x, y: P[0].y, z: P[0].z }, [
+      RAPIER.ColliderDesc.cuboid(0.7, 0.15, 1.0).setTranslation(0, 0.05, 0),
+      RAPIER.ColliderDesc.cuboid(0.06, 0.2, 0.95).setTranslation(0.64, 0.35, 0),
+      RAPIER.ColliderDesc.cuboid(0.06, 0.2, 0.95).setTranslation(-0.64, 0.35, 0),
+      RAPIER.ColliderDesc.cuboid(0.62, 0.27, 0.08).setTranslation(0, 0.6, -0.85),
+      RAPIER.ColliderDesc.cuboid(0.6, 0.04, 0.05).setTranslation(0, 0.8, 0.2),
+      ...(i === 0 ? [RAPIER.ColliderDesc.cuboid(0.62, 0.22, 0.22).setTranslation(0, 0.35, 1.05)] : []),
+    ], b.mesh());
     cars.push(body);
     for (const sx of [0.32, -0.32]) addSeat(game, { body, pos: [sx, 0.55, -0.2], yaw: 0, label: 'Ride coaster', hint: 'Arms up! (LT/RT) · Y exit', exitPush: 1.5 });
   }

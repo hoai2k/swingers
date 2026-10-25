@@ -48,6 +48,16 @@ const GRIP_DRAIN = 0.12;      // per second hanging off something solid
 const GRIP_REST = 0.6;        // per second back on the ground
 const GRIP_HOP = 0.16;        // a jump off a bar / rope while hanging
 const GRIP_MANTLE = 0.2;      // pulling up over a ledge
+// Hanging off moving rides (kinematic bodies: coaster cars, ferris gondolas,
+// swing chairs, ferries): see rideCarry().
+const RIDE_FOLLOW = 2.0;      // 1/s: the body eases toward the grip point's velocity
+const RIDE_CATCH = 0.7;       // share of the speed difference taken up when the hand closes
+const RIDE_TEAR = 0.75;       // m: a hand dragged this far off its grip point lets go
+const RIDE_MAXREL = 12;       // m/s: no limb flies off faster than this relative to the ride
+const RIDE_MAXSPIN = 14;      // rad/s
+const RIDE_ARMDAMP = 0.5;     // share of the arm's spin (relative to the chest) removed per step
+const RIDE_LEAD = 0.8;         // steps of ride travel the grip joint is aimed ahead (measured lag)
+const RIDE_DRAIN = 0.4;       // grip drains slower hanging off a ride (~20 s from full)
 
 // ---- look -----------------------------------------------------------------
 const SKIN = 0xffd9b8;
@@ -428,6 +438,13 @@ export class Player {
           this.game.audio?.play('swish', b.translation());
         }
       }
+      // letting go of a ride: the pinned arm's solver velocity is not real
+      // motion (Rapier reports tens of m/s on a forearm that is keeping pace
+      // with its grip), so hand the arm the body's own speed instead of a fling
+      if (b && b.isKinematic()) {
+        const cv = this.chest.linvel(), cw = this.chest.angvel();
+        for (const nm of ['lArm' + h, 'uArm' + h]) { this.parts[nm].body.setLinvel(cv, true); this.parts[nm].body.setAngvel(cw, true); }
+      }
       hand.joint = null; hand.body = null; hand.owner = null;
     }
   }
@@ -669,7 +686,7 @@ export class Player {
     // --- grip stamina: tires while hanging off the world, rests on the ground
     if (this.grounded || this.swimming || seated) this.grip = Math.min(1, this.grip + DT * GRIP_REST);
     else if (!this.mantle && (this.anchorHand('L') || this.anchorHand('R'))) {
-      this.grip -= DT * GRIP_DRAIN;
+      this.grip -= DT * GRIP_DRAIN * (this.onRide ? RIDE_DRAIN : 1);
       if (this.grip <= 0) { // arms give out: drop
         this.grip = 0;
         this.releaseAll();
@@ -680,6 +697,13 @@ export class Player {
 
     // --- grabbing
     if (!seated && !limp) { this.updateHands(inp); this.carryAssist(); }
+    this.onRide = false;
+    const ride = !seated && !limp ? this.rideCarry() : null; // hanging off a moving ride
+    // while hanging off it, the body passes through ride parts (like a seated
+    // rider): a ragdoll squeezed between kinematic cars is crushed into jitter
+    // (standing on the ride itself still counts: the hover spring keeps us on it)
+    const rideGroups = !!ride && !(this.grounded && this.groundBody?.isFixed());
+    if (rideGroups !== !!this.rideGroups && !seated) { this.rideGroups = rideGroups; this.setGroups(rideGroups ? this.groupsSeated : this.groupsNormal); }
     // looking down while reaching bends over to pick things off the floor
     const camPitch = cam ? cam.pitch : 0.2;
     const reachingNow = !limp && !seated && ((inp.grabL || 0) > 0.3 || (inp.grabR || 0) > 0.3);
@@ -704,6 +728,7 @@ export class Player {
 
     // --- balance
     const gv = this.groundVelocity(new THREE.Vector3());
+    if (ride && !this.grounded) gv.copy(ride); // steer relative to the ride you hang from
     const stumbleK = this.stumble > 0 ? 1 - 0.6 * Math.min(1, this.stumble / 0.5) : 1;
     const strength = limp ? 0 : this.recover * riseUp * stumbleK;
     const speed = this.swimming ? SWIM : (inp.sprint ? RUN : WALK);
@@ -736,7 +761,7 @@ export class Player {
       const chestT = yq.clone().multiply(qeul(this.lean, -twist * 0.6, this.roll + waddle, 'YXZ'));
       const hipsT = yq.clone().multiply(qeul(this.lean * 0.4, twist, (this.roll + waddle) * 0.5, 'YXZ'));
       const air = this.grounded || this.swimming || seated ? 1 : 0.55;
-      const k = strength * air * (hanging ? 0.35 : 1) * (this.mantle ? 0.5 : 1);
+      const k = strength * air * (hanging ? (this.onRide ? 0.12 : 0.35) : 1) * (this.mantle ? 0.5 : 1);
       this.upright(chest, chestT, 260 * k, 26 * Math.sqrt(k), parts.chest.I * 4.5);
       this.upright(hips, hipsT, 200 * k, 22 * Math.sqrt(k), parts.hips.I * 4.5);
     }
@@ -949,6 +974,9 @@ export class Player {
       const kl = !limp && n.includes('Leg') ? Math.max(kLimb, 0.9) : kLimb;
       let kp = p.kp * kl, kd = p.kd * Math.sqrt(kl);
       if (limp) { kp = Math.max(kp, 4); kd = Math.max(kd, 1.2); }
+      // hanging off a moving ride the hands are pinned to it: stiff arm drives
+      // would fight the grip joints as the ride turns and set the arms buzzing
+      if (this.onRide && n.includes('Arm')) { kp *= 0.2; kd *= 0.6; }
       this.drive(p, kp, kd, p.maxT);
     }
 
@@ -1331,10 +1359,111 @@ export class Player {
           hand.body = tb;
           hand.owner = this.physics.handleOwner.get(found.handle) || null;
           hand.local = { x: _vb.x, y: _vb.y, z: _vb.z };
+          hand.stretch = 0;
+          // catching hold of a moving ride: take up most of its speed at once
+          // (instead of the arm joints yanking the body along in one step)
+          if (tb.isKinematic()) {
+            const pv = this.gripVelocity(h, _hA), cv = this.chest.linvel();
+            const dx = (pv.x - cv.x) * RIDE_CATCH, dy = (pv.y - cv.y) * RIDE_CATCH, dz = (pv.z - cv.z) * RIDE_CATCH;
+            if (dx * dx + dy * dy + dz * dz > 0.25) for (const b of this.bodies) { const bv = b.linvel(); b.setLinvel({ x: bv.x + dx, y: bv.y + dy, z: bv.z + dz }, true); }
+            this.impactGrace = Math.max(this.impactGrace, 0.3);
+          }
           this.game.audio?.play('grab', hp);
         }
       }
     }
+  }
+
+  // World position (out) of hand h's grip point on the body it holds.
+  gripPoint(h, out) {
+    const hand = this.hands[h], b = hand.body;
+    toQ(b.rotation(), _qc);
+    return out.set(hand.local.x, hand.local.y, hand.local.z).applyQuaternion(_qc).add(toV(b.translation(), _vc));
+  }
+  // Velocity (out) of hand h's grip point. Kinematic rides pivot about their
+  // origin (worldCom() is stale for them, as in groundVelocity).
+  gripVelocity(h, out) {
+    const b = this.hands[h].body;
+    const gp = this.gripPoint(h, _hB);
+    const c = b.isKinematic() ? b.translation() : b.worldCom();
+    const v = b.linvel(), w = b.angvel();
+    const rx = gp.x - c.x, ry = gp.y - c.y, rz = gp.z - c.z;
+    return out.set(v.x + w.y * rz - w.z * ry, v.y + w.z * rx - w.x * rz, v.z + w.x * ry - w.y * rx);
+  }
+
+  // Hanging off a moving ride (any kinematic body): the arm joints alone would
+  // whip a light ragdoll about at coaster speeds, so the whole body eases
+  // toward the grip point's velocity (RIDE_FOLLOW), hard jolts don't count as
+  // impacts while holding on, and a hand dragged far off its grip (snagged on
+  // scenery, a violent turn) lets go cleanly. Grip stamina still drains in
+  // step() (anchorHand counts kinematic bodies), so tired arms drop you.
+  // Returns the carrier velocity (shared Vector3) or null when not riding.
+  rideCarry() {
+    let n = 0;
+    const acc = this._rideV ||= new THREE.Vector3();
+    acc.set(0, 0, 0);
+    for (const h of ['L', 'R']) {
+      const hand = this.hands[h], b = hand.body;
+      if (!hand.joint || !b || !hand.local || !b.isKinematic()) continue;
+      // torn off?
+      const gp = this.gripPoint(h, _hA), hp = this.handPos(h, _hB);
+      const d = gp.distanceTo(hp);
+      hand.stretch = d > RIDE_TEAR ? (hand.stretch || 0) + DT : 0;
+      if (hand.stretch > 0.12) { this.releaseHand(h); hand.cool = 0.5; this.impactGrace = Math.max(this.impactGrace, 0.3); continue; }
+      const pv = this.gripVelocity(h, _hA);
+      if (!Number.isFinite(pv.x + pv.y + pv.z)) continue;
+      // the arm is pinned between the shoulder and a moving ride, and the
+      // light forearm would start to whirl round the grip: damp the arm's spin
+      // toward the chest's (the drives alone can't hold it at speed)
+      const cw = this.chest.angvel();
+      for (const nm of ['lArm' + h, 'uArm' + h]) {
+        const ab = this.parts[nm].body, a = ab.angvel();
+        ab.setAngvel({ x: a.x + (cw.x - a.x) * RIDE_ARMDAMP, y: a.y + (cw.y - a.y) * RIDE_ARMDAMP, z: a.z + (cw.z - a.z) * RIDE_ARMDAMP }, true);
+      }
+      // Rapier solves the grip joint against where the ride was at the start
+      // of the step, so the hand trails its grip by one step of travel (0.3 m
+      // at coaster speed) and the arm chain thrashes trying to catch up: aim
+      // the joint at where the grip point will be after this step instead
+      if (hand.joint.setAnchor2) {
+        toQ(b.rotation(), _qc).invert();
+        _vc.set(pv.x, pv.y, pv.z).multiplyScalar(DT * RIDE_LEAD).applyQuaternion(_qc);
+        hand.joint.setAnchor2({ x: hand.local.x + _vc.x, y: hand.local.y + _vc.y, z: hand.local.z + _vc.z });
+      }
+      if (!n) this.yaw += b.angvel().y * DT; // turn with the ride (once, from the first grip)
+      acc.add(pv); n++;
+    }
+    this.onRide = n > 0;
+    if (!n) return null;
+    acc.multiplyScalar(1 / n);
+    // dragged along the ground at speed (a coaster dip, a ferry's hull): knocked off
+    const near = this.groundDist < STAND_H + 0.3 + Math.max(0, -acc.y) * 0.1; // (looking ahead on a steep dive)
+    if (near && !(this.groundBody && !this.groundBody.isFixed()) && Math.hypot(acc.x, acc.y, acc.z) > 7) {
+      this.releaseAll();
+      this.hands.L.cool = this.hands.R.cool = 0.6;
+      this.stumble = Math.max(this.stumble, 0.5);
+      this.impactGrace = Math.max(this.impactGrace, 0.3);
+      this.onRide = false;
+      return null;
+    }
+    const moving = acc.lengthSq() > 0.04;
+    if (moving && !(this.grounded && this.groundBody?.isFixed())) {
+      const k = Math.min(1, DT * RIDE_FOLLOW);
+      const cv = this.chest.linvel();
+      const dx = (acc.x - cv.x) * k, dy = (acc.y - cv.y) * k, dz = (acc.z - cv.z) * k;
+      for (const b of this.bodies) {
+        const bv = b.linvel();
+        let rx = bv.x + dx - acc.x, ry = bv.y + dy - acc.y, rz = bv.z + dz - acc.z;
+        const r = Math.hypot(rx, ry, rz);
+        if (r > RIDE_MAXREL) { const f = RIDE_MAXREL / r; rx *= f; ry *= f; rz *= f; } // a snag on scenery mustn't fling a limb away
+        b.setLinvel({ x: acc.x + rx, y: acc.y + ry, z: acc.z + rz }, true);
+        // and no limb spins up round its grip
+        const a = b.angvel(), wr = Math.hypot(a.x, a.y, a.z);
+        if (wr > RIDE_MAXSPIN) { const f = RIDE_MAXSPIN / wr; b.setAngvel({ x: a.x * f, y: a.y * f, z: a.z * f }, true); }
+      }
+      this.impactGrace = Math.max(this.impactGrace, 2 * DT);
+      this.prevChestVel.set(cv.x + dx, cv.y + dy, cv.z + dz);
+    }
+    return acc;
   }
 
   punchHit() {

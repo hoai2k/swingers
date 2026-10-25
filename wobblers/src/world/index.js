@@ -24,6 +24,8 @@ import { buildFerries } from './ferries.js';
 import { buildFolk } from './folk.js';
 import { buildLife } from '../life/index.js';
 import { buildMissions } from '../missions/index.js';
+import { buildBooths } from './booths.js';
+import { placeBouncyBalls } from './bouncy.js'; // also registers the bouncy ball vehicle
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -54,6 +56,7 @@ export function buildWorld(game) {
   T('bridge', () => buildBridge(game, kit));
   T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]
   T('ferries', () => buildFerries(game, kit)); // docks from every region's `docks`, then the ferry lines
+  T('booths', () => { buildBooths(game, kit); placeBouncyBalls(game); }); // phone booths (garage) + parked bouncy balls
   T('folk', () => buildFolk(game));            // home island NPCs
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too

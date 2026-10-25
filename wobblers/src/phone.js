@@ -87,11 +87,15 @@ let cssDone = false;
 const textCol = (c) => (c === 0xffffff || c === 0xffc233 || c === 0x3fe0d0) ? '#234' : '#fff';
 const accent = (c) => PLAYER_CSS(c === 0xffffff ? 0x2a62c9 : c);
 
+// opts (phone booths, world/booths.js): list (entries to offer, default CALLABLE),
+// from ({ x, y, z, yaw }: spawn round this point instead of the player; y = ground + 1),
+// title, sub (header texts), done (toast text fn).
 export class PhonePanel {
-  constructor(ui, player) {
+  constructor(ui, player, opts = {}) {
     if (!cssDone) { injectCSS(CSS); cssDone = true; }
     this.ui = ui; this.p = player; this.kind = 'phone';
-    this.sel = Math.max(0, CALLABLE.findIndex((c) => c.id === (player.lastCall || 'car')));
+    this.opts = opts; this.list = opts.list || CALLABLE; this.from = opts.from || null;
+    this.sel = Math.max(0, this.list.findIndex((c) => c.id === (player.lastCall || 'car')));
     this.t0 = performance.now();
     this.msg = ''; this.msgOk = false;
     this.el = document.createElement('div');
@@ -103,7 +107,7 @@ export class PhonePanel {
     });
     this.el.addEventListener('wheel', (e) => { this.move(e.deltaY > 0 ? 1 : -1); e.preventDefault(); }, { passive: false });
     // which special vehicles can come here right now
-    this.water = !!findSpot(ui.game, player, VEHICLES.boat, null);
+    this.water = !!findSpot(ui.game, player, VEHICLES.boat, null, this.from);
     ui.game.audio?.play('uiOpen');
     this.draw();
   }
@@ -115,7 +119,8 @@ export class PhonePanel {
     this.el.style.setProperty('--s', s.toFixed(3));
   }
   move(d) {
-    const N = CALLABLE.length;
+    const N = this.list.length;
+    if (!N) return;
     this.sel = (this.sel + d + N) % N;
     this.msg = '';
     this.ui.sfx('uiMove');
@@ -127,18 +132,19 @@ export class PhonePanel {
     const kb = this.p.deviceId === 'kb1' || this.p.deviceId === 'kb2';
     if (n.back || (kb && pr.phone) || (this.p.deviceId === 'kb1' && n.start)) { this.ui.sfx('uiBack'); this.ui.closePanel(this.p); return; }
     if (pr.map) { this.ui.openMap(this.p); return; }
-    if (n.x && this.ui.game.missions) { this.ui.game.missions.openList(this.p); return; } // jobs list (missions/panel.js)
+    if (n.x && this.ui.game.missions && !this.from) { this.ui.game.missions.openList(this.p); return; } // jobs list (missions/panel.js)
     if (n.up || n.left) this.move(-1);
     if (n.down || n.right) this.move(1);
     if (n.ok) this.call();
   }
   call() {
-    const c = CALLABLE[this.sel], g = this.ui.game;
-    const res = callVehicle(g, this.p, c);
+    const c = this.list[this.sel], g = this.ui.game;
+    if (!c) return;
+    const res = callVehicle(g, this.p, c, this.from);
     if (res.ok) {
       this.p.lastCall = c.id;
       this.ui.closePanel(this.p);
-      this.ui.toast(`${c.name} on its way!`, this.p.color);
+      this.ui.toast(this.opts.done ? this.opts.done(c) : `${c.name} on its way!`, this.p.color);
       return;
     }
     this.msg = res.msg; this.msgOk = false;
@@ -149,22 +155,22 @@ export class PhonePanel {
   }
   draw() {
     const p = this.p, k = deviceKind(p.deviceId);
-    const per = 40, vis = 6.45, N = CALLABLE.length;
+    const per = 40, vis = 6.45, N = this.list.length;
     const off = Math.max(0, Math.min(N - vis, this.sel - 2.5)) * per;
-    const items = CALLABLE.map((c, i) => {
+    const items = this.list.map((c, i) => {
       const vd = VEHICLES[c.type] || {};
       const note = this.ui.game.vehicleLock?.(c.id) ? '🔒 car dealer' : vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli ? 'needs space' : '';
       const off2 = vd.boat && !this.water;
       return `<div class="phitem ${i === this.sel ? 'sel' : ''} ${off2 ? 'off' : ''}" data-i="${i}"><svg viewBox="0 0 24 14">${ICONS[c.icon] || ICONS.car}</svg>${c.name}${note ? `<small>${note}</small>` : ''}</div>`;
     }).join('');
     const prev = this.ui.game.calledVehicles?.get(p);
-    const sub = prev && !prev.destroyed ? 'replaces your ' + (CALLABLE.find((c) => c.id === prev.callId)?.name.toLowerCase() || 'ride') : 'call a ride';
+    const sub = prev && !prev.destroyed ? 'replaces your ' + (CALLABLE.find((c) => c.id === prev.callId)?.name.toLowerCase() || 'ride') : (this.opts.sub || 'call a ride');
     this.el.innerHTML = `<div class="phonecase" style="--acc:${accent(p.color)};--fg:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">
       <div class="phnotch"></div><div class="phscreen">
-      <div class="phtitle">Vehicles<i>${sub}</i></div>
+      <div class="phtitle">${this.opts.title || 'Vehicles'}<i>${sub}</i></div>
       <div class="phlist"><div class="phin" style="transform:translateY(${-off}px)">${items}</div></div>
       <div class="phmsg ${this.msgOk ? 'ok' : ''}">${this.msg}</div></div>
-      <div class="foot">${promptRow([['OK', 'Call'], ...(this.ui.game.missions ? [['X', 'Jobs']] : []), ['MENUBACK', 'Hang up']], k)}</div></div>`;
+      <div class="foot">${promptRow([['OK', 'Call'], ...(this.ui.game.missions && !this.from ? [['X', 'Jobs']] : []), ['MENUBACK', 'Hang up']], k)}</div></div>`;
   }
 }
 
@@ -191,10 +197,12 @@ function waterSurface(game, x, z) {
 }
 
 // A clear spot near the player for vehicle `def`, or null. Returns { x, y, z, yaw }.
-export function findSpot(game, player, def, excludeBody) {
+// `from` ({ x, y, z, yaw }, y about 1 m above the ground, like a chest) searches
+// round that point instead (phone booths spawn right outside the booth).
+export function findSpot(game, player, def, excludeBody, from = null) {
   const ph = game.physics, world = ph.world;
-  const c = player.chest.translation();
-  const yaw = player.yaw;
+  const c = from || player.chest.translation();
+  const yaw = from ? from.yaw : player.yaw;
   const E = extents(def);
   const footY = c.y - 1.0;
   const boat = !!def.boat, heli = !!def.heli;
@@ -215,7 +223,7 @@ export function findSpot(game, player, def, excludeBody) {
       const lx = u * (E.hx - 0.2), lz = E.cz + v * (E.hz - 0.2);
       const wx = x + lx * cy + lz * sy, wz = z - lx * sy + lz * cy;
       const lvl = waterSurface(game, wx, wz);
-      const gy = game.groundHeight(wx, wz, boat ? lvl + 1.5 : Math.max(c.y + 2.5, lvl + 1));
+      const gy = game.groundHeight(wx, wz, boat ? Math.max(lvl + 1.5, c.y + 2.5) : Math.max(c.y + 2.5, lvl + 1)); // (from above the caller: land higher than the water must count)
       hs.push(gy);
       if (gy < lvl - (boat ? 0.7 : 0.15)) wet++;
       if (boat && gy > lvl - 0.7) { ok = false; break; }
@@ -249,7 +257,7 @@ export function findSpot(game, player, def, excludeBody) {
 }
 
 // Spawn `entry` (a CALLABLE item) for player. Returns { ok, vehicle } or { ok: false, msg }.
-export function callVehicle(game, player, entry) {
+export function callVehicle(game, player, entry, from = null) {
   if (typeof entry === 'string') entry = CALLABLE.find((c) => c.id === entry || c.type === entry);
   if (!entry) return { ok: false, msg: 'Unknown vehicle' };
   const locked = game.vehicleLock?.(entry.id); if (locked) return { ok: false, msg: locked }; // car dealer (src/life/shops.js)
@@ -258,7 +266,7 @@ export function callVehicle(game, player, entry) {
   let prev = calls.get(player);
   if (prev && (prev.destroyed || !game.vehicles.includes(prev))) prev = null;
   const prevEmpty = prev && !prev.seats.some((s) => s.occupant);
-  const spot = findSpot(game, player, def, prevEmpty ? prev.body : null);
+  const spot = findSpot(game, player, def, prevEmpty ? prev.body : null, from);
   if (!spot) {
     if (def.boat) return { ok: false, msg: 'Boats need water: try the beach, the lake or the pier' };
     if (def.heli) return { ok: false, msg: 'Not enough open space for a helicopter here' };
