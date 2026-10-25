@@ -4,6 +4,23 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 9 — Dusty Dunes and Frostpeak extras (3 signs, 2 posters)
+
+The game draws a procedural stand-in for each until the art arrives.
+
+### Signs (`assets/signs/`, 1024 × 256, exact words)
+
+- `dustville_hotel.png` — **DUSTVILLE HOTEL**: Wild-West hotel false-front board, weathered teal-blue wood planks, cream western-style letters, small bed or key icon.
+- `dustville.png` — **DUSTVILLE**: town-entrance arch board over the main street, sun-bleached brown planks hung on ropes, cream western letters, small cactus-and-sun icon.
+- `ski_lodge.png` — **SKI LODGE** (Frostpeak): ski-lodge chalet board, dark red with a snowy top edge, chunky cream rounded letters, small crossed-skis icon.
+
+### Posters (`assets/posters/`, 512 × 716, opaque, filling the frame; in the sheriff's office)
+
+- `wanted_pete.png` — old-west WANTED poster on aged parchment: big **WANTED** at the top, a goofy wobbly bean-person outlaw with a black hat and red bandana in the middle, **WOBBLY PETE** underneath, and "REWARD 100 COINS". Toy-like and silly, not scary.
+- `wanted_kid.png` — same parchment WANTED layout: big **WANTED**, a cheeky little bean-person cowboy hugging a cactus, **CACTUS KID** underneath, and "REWARD 50 COINS".
+
+Delivered 2026-10-25 with built-in imagegen. Exact dimensions, transparency, text and subjects were reviewed, and runtime loading was checked in the browser. Prompts and sources are in `assets/generation.json`.
+
 ## Delivered round 8 — region signs: Tiki Jungle, Coconut Cove (14 signs)
 
 All `assets/signs/<file>`, 1024 × 256, the exact words in big chunky rounded

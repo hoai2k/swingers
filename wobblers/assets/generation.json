@@ -1417,6 +1417,56 @@
       "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"PLAY ME\". Board design: pink board, white letters, piano-keys icon (street piano). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
       "round": 7,
       "batch": 7
+    },
+    {
+      "index": 137,
+      "file": "signs/dustville_hotel.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f609f5e9-9f01-4ffa-aa52-9edfcfdbb710.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Exact words \"DUSTVILLE HOTEL\". Wild-West hotel false-front board, weathered teal-blue wood planks, cream western-style letters, small bed or key icon. One horizontal front-facing 4:1 signboard for 1024x256 delivery, big readable exact lettering, board fills frame with safe margin, transparent outside board, no surrounding scene. No real company logos, brands or watermark.",
+      "round": 9
+    },
+    {
+      "index": 138,
+      "file": "signs/dustville.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2b8f25f4-9dac-476c-a727-3ab5a39fb242.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Exact word \"DUSTVILLE\". Town-entrance arch board over the main street, sun-bleached brown planks hung on ropes, cream western letters, small cactus-and-sun icon. One horizontal front-facing 4:1 signboard for 1024x256 delivery, big readable exact lettering, board fills frame with safe margin, transparent outside board, no surrounding scene. No real company logos, brands or watermark.",
+      "round": 9
+    },
+    {
+      "index": 139,
+      "file": "signs/ski_lodge.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8963d9f2-2016-49e1-b96d-d4da11297b1e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Exact words \"SKI LODGE\". Ski-lodge chalet board, dark red with snowy top edge, chunky cream rounded letters, small crossed-skis icon. One horizontal front-facing 4:1 signboard for 1024x256 delivery, big readable exact lettering, board fills frame with safe margin, transparent outside board, no surrounding scene. No real company logos, brands or watermark.",
+      "round": 9
+    },
+    {
+      "index": 140,
+      "file": "posters/wanted_pete.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-559bd4f0-038f-4cc9-8203-7c7fa80f5ac7.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"WOBBLY PETE\" beneath portrait; \"REWARD 100 COINS\" below. A goofy wobbly bean-person outlaw with black hat and red bandana in the middle. Toy-like, silly, not scary. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
+      "round": 9
+    },
+    {
+      "index": 141,
+      "file": "posters/wanted_kid.png",
+      "width": 512,
+      "height": 716,
+      "transparent": false,
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef716b78-79f3-4339-b30a-717883638c0e.png",
+      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"CACTUS KID\" beneath portrait; \"REWARD 50 COINS\" below. A cheeky little wobbly bean-person cowboy hugging a cactus in middle. Toy-like and silly. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
+      "round": 9
     }
   ]
 }

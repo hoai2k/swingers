@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 9 and 10 open (8 images).** Rounds 1–8 are delivered;
+**Status: 3 requested images remaining.** Rounds 1–8 are delivered;
 see `image-requests-history.md` for those requests and their review notes.
 
 ## How delivery works
@@ -45,21 +45,6 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
-
-## OPEN round 9 — Dusty Dunes and Frostpeak extras (3 signs, 2 posters)
-
-The game draws a procedural stand-in for each until the art arrives.
-
-### Signs (`assets/signs/`, 1024 × 256, exact words)
-
-- `dustville_hotel.png` — **DUSTVILLE HOTEL**: Wild-West hotel false-front board, weathered teal-blue wood planks, cream western-style letters, small bed or key icon.
-- `dustville.png` — **DUSTVILLE**: town-entrance arch board over the main street, sun-bleached brown planks hung on ropes, cream western letters, small cactus-and-sun icon.
-- `ski_lodge.png` — **SKI LODGE** (Frostpeak): ski-lodge chalet board, dark red with a snowy top edge, chunky cream rounded letters, small crossed-skis icon.
-
-### Posters (`assets/posters/`, 512 × 716, opaque, filling the frame; in the sheriff's office)
-
-- `wanted_pete.png` — old-west WANTED poster on aged parchment: big **WANTED** at the top, a goofy wobbly bean-person outlaw with a black hat and red bandana in the middle, **WOBBLY PETE** underneath, and "REWARD 100 COINS". Toy-like and silly, not scary.
-- `wanted_kid.png` — same parchment WANTED layout: big **WANTED**, a cheeky little bean-person cowboy hugging a cactus, **CACTUS KID** underneath, and "REWARD 50 COINS".
 
 ## OPEN round 10 — jobs / missions (1 sign, 1 poster, 1 UI marker)
 
