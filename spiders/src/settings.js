@@ -14,6 +14,7 @@ const DEFAULTS = {
   friendlyFire: false,     // survival
   board: 'random',         // 'random' or a board id
   slowmo: true,            // slow motion on the last kill of a round
+  autoPickup: false,       // walk over a weapon to take it (off: grab with RB, like the original)
   // VS: the Squeeze (closing hazard), see squeeze.js
   squeezeSpeed: 'normal',  // 'off' | 'static' | 'normal' | 'fast' | 'fastest'
   squeezeSides: 'all',     // 'one' | 'several' | 'all'

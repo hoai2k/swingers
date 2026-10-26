@@ -80,9 +80,9 @@ export const ISLANDS = [
 ];
 const TUT_KEY = 'spiders.tutorial.v1';
 const TUT_STEPS = [
-  { id: 'jump', pad: 'Jump (A)', kb: 'Jump (Space)' },
-  { id: 'web', pad: 'Web in mid-air (A/LT again, hold)', kb: 'Web in mid-air (Space again, hold)' },
-  { id: 'grab', pad: 'Grab a weapon', kb: 'Grab a weapon' },
+  { id: 'jump', pad: 'Jump (LB)', kb: 'Jump (Space)' },
+  { id: 'web', pad: 'Web in mid-air (LB again, hold)', kb: 'Web in mid-air (Space again, hold)' },
+  { id: 'grab', pad: 'Grab a weapon (RB)', kb: 'Grab a weapon (E)' },
   { id: 'use', pad: 'Use it (RT)', kb: 'Use it (left mouse)' },
 ];
 function tutorialDone() { try { return localStorage.getItem(TUT_KEY) === '1'; } catch (e) { return true; } }
@@ -399,7 +399,7 @@ export class Lobby {
         game.fx.text(sp.x, sp.y - sp.r - 30, '✓', '#4fdc6a', 24, 0.6);
         sfx.uiOk();
       };
-      if (s.pressed.a || s.pressed.lt) tick('jump');
+      if (s.pressed.a || s.pressed.lt || s.pressed.lb) tick('jump');
       if (sp.web && sp.web.state === 'stuck') tick('web');
       if (sp.weapon) tick('grab');
       if (sp.weapon && s.pressed.rt) tick('use');
@@ -798,8 +798,8 @@ export class Lobby {
       return x + w;
     };
     const y = LEGEND_Y;
-    const PAD = [['A/LT', 'jump · web', '#2f8f45'], ['RT', 'use'], ['RB', 'recall'], ['LB/B', 'throw'], ['X', 'swap'], ['Y/◀▶', 'spider']];
-    const KB = [['Space/RMB', 'jump · web'], ['LMB', 'use'], ['E', 'recall'], ['Q', 'throw'], ['F', 'swap'], ['Z/X', 'spider']];
+    const PAD = [['LB', 'jump · web', '#2f8f45'], ['RT', 'shoot'], ['RB', 'grab · throw'], ['X', 'swap'], ['Y/◀▶', 'spider']];
+    const KB = [['Space/RMB', 'jump · web'], ['LMB', 'shoot'], ['E', 'grab · throw'], ['F', 'swap'], ['Z/X', 'spider']];
     let x = 22;
     for (const c of PAD) x = chip(x, y, c);
     x = W - 22 - KB.reduce((s, c) => s + measure(c).w, 0) + 14;
