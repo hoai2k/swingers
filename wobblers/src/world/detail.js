@@ -3,6 +3,9 @@
 //    demand and gathered per camera into one InstancedMesh per kind (so each
 //    split-screen view costs 3 draw calls), only within a short radius, and
 //    shrunk away smoothly at the edge so nothing pops;
+//  - past them, out to ~115 m: flat billboard clumps of grass and of flowers
+//    (one textured quad each, turned to face the camera, drawn on a canvas);
+//    beyond that the ground's own grass texture (terrain.js) is all there is;
 //  - road edge lines, gravel shoulders and kerbs (static, merged);
 //  - night glow for street lamps: halos and light pools (instanced, additive).
 // Nothing here has physics.
@@ -13,10 +16,12 @@ import { Builder, matVC } from '../mesh.js';
 
 const TILE = 16;
 const KINDS = {
-  grass: { radius: 52, cap: 11000 },
-  flower: { radius: 44, cap: 2400 },
-  pebble: { radius: 40, cap: 900 },
+  grass: { radius: 40, cap: 8000 },
+  flower: { radius: 34, cap: 1600 },
+  pebble: { radius: 36, cap: 900 },
 };
+// billboard clumps: shown from FADE_IN (grown in over 10 m) to OUT (faded over the last 18 m)
+const CLUMP = { in: 30, out: 115, cap: 5000, step: 30 };
 
 function hash2(i, j, k = 0) {
   const s = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453;
@@ -98,6 +103,86 @@ function detailMaterial(radius, sway, timeU) {
   return m;
 }
 
+// Atlas of four 128 px cells: two grass clumps (grey, tinted per instance by
+// the ground colour) and two flower clumps (coloured heads keep their colour).
+function clumpAtlas() {
+  const C = 128, cv = document.createElement('canvas');
+  cv.width = C * 4; cv.height = C;
+  const g = cv.getContext('2d');
+  let s = 11;
+  const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const pal = ['#ffffff', '#ffd83a', '#ff6f9a', '#b884ff', '#ff5a4a', '#7fb2ff', '#ff9f3a'];
+  for (let cell = 0; cell < 4; cell++) {
+    const ox = cell * C;
+    const blades = cell < 2 ? 34 : 22;
+    for (let i = 0; i < blades; i++) {
+      const bx = ox + 14 + r() * (C - 28), h = C * (0.35 + r() * 0.5), lean = (r() - 0.5) * 34, w = 3 + r() * 3, v = (120 + r() * 135) | 0;
+      g.fillStyle = `rgb(${v},${v},${v})`;
+      g.beginPath(); g.moveTo(bx - w, C); g.quadraticCurveTo(bx + lean * 0.3, C - h * 0.5, bx + lean, C - h); g.quadraticCurveTo(bx + lean * 0.3 + w * 0.4, C - h * 0.5, bx + w, C); g.fill();
+    }
+    if (cell >= 2) {
+      const main = pal[(cell === 2 ? 1 : 2)];
+      for (let i = 0; i < 9; i++) {
+        const fx = ox + 18 + r() * (C - 36), fy = C * (0.25 + r() * 0.45), fr = 6 + r() * 4;
+        g.strokeStyle = '#5a8a3a'; g.lineWidth = 2; g.beginPath(); g.moveTo(fx, fy); g.lineTo(fx + (r() - 0.5) * 6, C); g.stroke();
+        g.fillStyle = r() < 0.6 ? main : pal[(r() * pal.length) | 0];
+        for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; g.beginPath(); g.arc(fx + Math.cos(a) * fr * 0.6, fy + Math.sin(a) * fr * 0.6, fr * 0.5, 0, 7); g.fill(); }
+        g.fillStyle = '#ffc61a'; g.beginPath(); g.arc(fx, fy, fr * 0.32, 0, 7); g.fill();
+      }
+    }
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+function clumpGeometry() {
+  const g = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+  g.deleteAttribute('normal');
+  g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+  return g;
+}
+// Faces the camera around the vertical axis, picks one of two atlas cells by
+// position, grows in near CLUMP.in and fades out by CLUMP.out. Grey texels take
+// the instance colour; coloured ones (flowers) keep theirs.
+function clumpMaterial(tex, base, timeU) {
+  const m = new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.45, side: THREE.DoubleSide });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = timeU;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime;\nvarying vec3 vTint;')
+      .replace('#include <uv_vertex>', `#include <uv_vertex>
+	{
+		vec3 ipu = instanceMatrix[3].xyz;
+		float cell = ${base.toFixed(1)} + step(0.5, fract(sin(dot(ipu.xz, vec2(12.9898, 78.233))) * 43758.5453));
+		vMapUv = vec2((uv.x + cell) * 0.25, uv.y);
+	}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+	{
+		vec3 ip = instanceMatrix[3].xyz;
+		vec2 to = cameraPosition.xz - ip.xz;
+		float dd = length(to);
+		vec2 f = to / max(dd, 0.001);
+		float s = smoothstep(${CLUMP.in.toFixed(1)}, ${(CLUMP.in + 10).toFixed(1)}, dd) * smoothstep(${CLUMP.out.toFixed(1)}, ${(CLUMP.out - 18).toFixed(1)}, dd);
+		float w = sin(uTime * 1.7 + ip.x * 0.3 + ip.z * 0.2) * 0.06 * position.y;
+		transformed = vec3(f.y * position.x + w, position.y, -f.x * position.x) * s;
+		vTint = instanceColor;
+	}`)
+      .replace('#include <color_vertex>', '#include <color_vertex>\n\tvColor = vec3(1.0);');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vTint;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+	{
+		vec3 c = diffuseColor.rgb;
+		float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+		diffuseColor.rgb = mix(c * vTint * 1.6, c, smoothstep(0.08, 0.2, sat));
+	}`)
+      .replace('#include <normal_fragment_begin>',
+        '#include <normal_fragment_begin>\n\tnormal = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );');
+  };
+  m.customProgramCacheKey = () => 'wobClump' + base;
+  return m;
+}
+
 // ---- scatter rules -------------------------------------------------------------
 // Per-biome tweaks: grass size, flower chance (none on snow / desert / city
 // streets anyway: they only grow where the ground colour is green).
@@ -116,6 +201,10 @@ export class Detail {
       flower: detailMaterial(KINDS.flower.radius, 0.12, this.timeU),
       pebble: detailMaterial(KINDS.pebble.radius, 0, this.timeU),
     };
+    this.ctiles = new Map();
+    this.cgeo = clumpGeometry();
+    const atlas = clumpAtlas();
+    this.cmats = { grass: clumpMaterial(atlas, 0, this.timeU), flower: clumpMaterial(atlas, 2, this.timeU) };
     this.frame = 0;
     game.updaters.push((dt) => { this.timeU.value += dt; this.frame++; });
   }
@@ -191,6 +280,37 @@ export class Detail {
     return t;
   }
 
+  // A few billboard clumps per tile: the same ground rules as the tufts, much sparser.
+  clumpTile(ti, tj) {
+    const key = ti * 4096 + tj;
+    let t = this.ctiles.get(key);
+    if (t) { t.used = this.frame; return t; }
+    const out = { grass: [], flower: [] };
+    const r = rng(hash2(ti, tj, 9));
+    const x0 = ti * TILE, z0 = tj * TILE, c = new THREE.Color();
+    const reg = regionAt(x0 + TILE / 2, z0 + TILE / 2), rb = reg?.bounds;
+    if (reg && x0 > rb[0] + 6 && x0 + TILE < rb[1] - 6 && z0 > rb[2] + 6 && z0 + TILE < rb[3] - 6) {
+      const mask = this.maskFor(reg), bio = BIOME[reg.biome] || {};
+      const patch = fbm((x0 + 8) / 40 + 3, (z0 + 8) / 40 - 5);
+      for (let k = 0; k < CLUMP.step; k++) {
+        const x = x0 + r() * TILE, z = z0 + r() * TILE, roll = r(), sz = r();
+        const h = meshHeight(x, z);
+        if (h < -0.3 || isSand(x, z, h) || this.covered(x, z, mask) || onRoad(x, z, 1)) continue;
+        meshColor(x, z, c);
+        if (c.g - Math.max(c.r, c.b) < 0.12) continue;
+        const d = fbm(x / 11 + 7, z / 11 + 3);
+        const flower = roll < (0.06 + 0.5 * Math.max(0, patch - 0.5)) * (bio.flower ?? 1) && d > 0.45;
+        if (!flower && roll > 0.35 + 0.8 * d) continue;
+        const s = (flower ? 0.7 : 0.8 + d * 0.5) * (0.8 + sz * 0.5) * (flower ? 1 : bio.grass || 1);
+        (flower ? out.flower : out.grass).push(x, h - 0.05, z, s, c.r, c.g, c.b);
+      }
+    }
+    t = { used: this.frame, grass: new Float32Array(out.grass), flower: new Float32Array(out.flower) };
+    this.ctiles.set(key, t);
+    if (this.ctiles.size > 3000) for (const [kk, tt] of this.ctiles) if (this.frame - tt.used > 600) this.ctiles.delete(kk);
+    return t;
+  }
+
   viewSet(cam) {
     let v = this.views.get(cam);
     if (!v) {
@@ -206,6 +326,17 @@ export class Detail {
         this.game.scene.add(m);
         v.meshes[k] = m;
       }
+      v.clumps = {};
+      for (const k in this.cmats) {
+        const m = new THREE.InstancedMesh(this.cgeo, this.cmats[k], CLUMP.cap);
+        m.count = 0; m.frustumCulled = false; m.receiveShadow = true; m.castShadow = false;
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CLUMP.cap * 3), 3);
+        m.visible = false; m.userData.noCull = true;
+        this.game.scene.add(m);
+        v.clumps[k] = m;
+      }
+      v.ccx = v.ccz = 1e9;
       this.views.set(cam, v);
     }
     return v;
@@ -250,21 +381,55 @@ export class Detail {
     }
   }
 
+  rebuildClumps(v, px, pz) {
+    v.ccx = px; v.ccz = pz;
+    const R = CLUMP.out, n = { grass: 0, flower: 0 };
+    const i0 = Math.floor((px - R) / TILE), i1 = Math.floor((px + R) / TILE);
+    const j0 = Math.floor((pz - R) / TILE), j1 = Math.floor((pz + R) / TILE);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const td = Math.hypot((i + 0.5) * TILE - px, (j + 0.5) * TILE - pz);
+      if (td > R + TILE * 0.71 || td < CLUMP.in - TILE * 0.71) continue;
+      const t = this.clumpTile(i, j);
+      for (const k in n) {
+        const src = t[k], m = v.clumps[k], mat = m.instanceMatrix.array, col = m.instanceColor.array;
+        for (let q = 0; q < src.length && n[k] < CLUMP.cap; q += 7) {
+          const dd = (src[q] - px) ** 2 + (src[q + 2] - pz) ** 2;
+          if (dd > R * R || dd < (CLUMP.in - 2) ** 2) continue;
+          const s = src[q + 3], o = n[k] * 16;
+          mat.fill(0, o, o + 16);
+          mat[o] = s * 1.3; mat[o + 5] = s; mat[o + 10] = s * 1.3; mat[o + 15] = 1;
+          mat[o + 12] = src[q]; mat[o + 13] = src[q + 1]; mat[o + 14] = src[q + 2];
+          col.set(src.subarray(q + 4, q + 7), n[k] * 3);
+          n[k]++;
+        }
+      }
+    }
+    for (const k in n) {
+      const m = v.clumps[k];
+      m.count = n[k];
+      m.instanceMatrix.clearUpdateRanges(); m.instanceMatrix.addUpdateRange(0, n[k] * 16); m.instanceMatrix.needsUpdate = true;
+      m.instanceColor.clearUpdateRanges(); m.instanceColor.addUpdateRange(0, n[k] * 3); m.instanceColor.needsUpdate = true;
+    }
+  }
+
   // Called before each view renders: show only this camera's instances.
   view(cam) {
     for (const [c, v] of this.views) {
-      if (c !== cam) { for (const k in v.meshes) v.meshes[k].visible = false; if (this.frame - v.seen > 300) this.drop(c, v); }
+      if (c !== cam) { for (const k in v.meshes) v.meshes[k].visible = false; for (const k in v.clumps) v.clumps[k].visible = false; if (this.frame - v.seen > 300) this.drop(c, v); }
     }
     if (this.game.detailLevel === 0) return;
     const v = this.viewSet(cam);
     v.seen = this.frame;
     const p = cam.position;
     if ((p.x - v.cx) ** 2 + (p.z - v.cz) ** 2 > 36) this.rebuild(v, p.x, p.z);
-    for (const k in v.meshes) v.meshes[k].visible = v.meshes[k].count > 0 && p.y - meshHeight(p.x, p.z) < 60;
+    if ((p.x - v.ccx) ** 2 + (p.z - v.ccz) ** 2 > 100) this.rebuildClumps(v, p.x, p.z);
+    const above = p.y - meshHeight(p.x, p.z);
+    for (const k in v.meshes) v.meshes[k].visible = v.meshes[k].count > 0 && above < 60;
+    for (const k in v.clumps) v.clumps[k].visible = v.clumps[k].count > 0 && above < 90;
   }
 
   drop(c, v) {
-    for (const k in v.meshes) { this.game.scene.remove(v.meshes[k]); v.meshes[k].dispose(); }
+    for (const m of [...Object.values(v.meshes), ...Object.values(v.clumps)]) { this.game.scene.remove(m); m.dispose(); }
     this.views.delete(c);
   }
 }

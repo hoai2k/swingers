@@ -259,6 +259,11 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   towers and the bridge stay as silhouettes. Far terrain is one coarse mesh per region.
   Grass / flowers only grow on green ground (per-biome tweaks: `BIOME` in `detail.js`); a
   region's grass coverage mask is rendered the first time a camera comes near it.
+  Grass has three distance bands: 3D tufts/flowers up close (`KINDS` radii, ~40 m),
+  camera-facing billboard clumps from a canvas atlas out to ~115 m (`CLUMP`, one quad each,
+  grey texels tinted by the ground colour, flower heads keep theirs), and beyond that only
+  the world-space grass texture the terrain material paints on green ground (`grassGround`
+  in `terrain.js`, canvas-made, normalised so far ground keeps its colour).
 - **NPCs** (`src/npc.js`): `game.npcs.spawn(role | def, x, z, opts)` (or `R.npc`). Roles:
   townsfolk, lifeguard, farmer, businessman, taxi, skier, cowboy, explorer, surfer,
   fisherman, chef (and `teen`, world/fair/npcs.js); add more with `registerRole(name, def)`. def: `colors { shirt, pants,

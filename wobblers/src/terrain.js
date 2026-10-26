@@ -441,7 +441,69 @@ function landIndices(g) {
 // skipped (the sea-floor plane is there); a region far from the camera is
 // drawn as one coarse mesh.
 const TILE_CELLS = 66, LOD_STRIDE = [1, 3, 6], LOD_DIST = [95, 230], FAR_DIST = 520, FAR_STRIDE = 8;
-const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+const terrainMat = grassGround(new THREE.MeshLambertMaterial({ vertexColors: true }));
+
+// Grass texture painted onto green ground, in world space: blade streaks and
+// darker clumps at two scales (so the repeat doesn't show), averaging to 1 so
+// distant ground keeps its colour. Up close the 3D tufts (world/detail.js) sit
+// on top; from mid range out this is the grass. Made on a canvas, no image file.
+function grassTexture() {
+  const N = 256, cv = document.createElement('canvas');
+  cv.width = cv.height = N;
+  const g = cv.getContext('2d');
+  g.fillStyle = 'rgb(200,200,200)'; g.fillRect(0, 0, N, N);
+  let s = 7;
+  const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const blob = (x, y, rad, v, a) => { // drawn wrapped so the tile repeats seamlessly
+    for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+      const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, rad);
+      gr.addColorStop(0, `rgba(${v},${v},${v},${a})`); gr.addColorStop(1, `rgba(${v},${v},${v},0)`);
+      g.fillStyle = gr; g.fillRect(x + dx - rad, y + dy - rad, rad * 2, rad * 2);
+    }
+  };
+  for (let i = 0; i < 40; i++) blob(r() * N, r() * N, 14 + r() * 30, r() < 0.5 ? 150 : 245, 0.35);
+  for (let i = 0; i < 2600; i++) { // short blade strokes
+    const x = r() * N, y = r() * N, l = 3 + r() * 6, a = -Math.PI / 2 + (r() - 0.5) * 1.2, v = 150 + r() * 105;
+    g.strokeStyle = `rgba(${v | 0},${v | 0},${v | 0},0.8)`; g.lineWidth = 1 + r();
+    for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+      g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + Math.cos(a) * l, y + dy + Math.sin(a) * l); g.stroke();
+    }
+  }
+  // normalise to a mean of 0.5 (the shader doubles it)
+  const img = g.getImageData(0, 0, N, N), d = img.data;
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) sum += d[i];
+  const k = 127.5 / (sum / (N * N));
+  for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = Math.min(255, d[i] * k);
+  g.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
+}
+function grassGround(m) {
+  if (typeof document === 'undefined') return m;
+  const tex = grassTexture();
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uGrass = { value: tex };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vGW;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvGW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uGrass;\nvarying vec3 vGW;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+	{
+		vec3 c = diffuseColor.rgb;
+		float green = smoothstep(0.04, 0.14, c.g - max(c.r, c.b));
+		float t = texture2D(uGrass, vGW.xz * 0.25).r * 2.0;
+		float t2 = texture2D(uGrass, vGW.zx * 0.031 + 0.37).r * 2.0;
+		float k = mix(1.0, mix(t, 1.0, 0.25) * mix(t2, 1.0, 0.5), green);
+		diffuseColor.rgb = c * k + vec3(0.03, 0.05, 0.0) * green * (t - 1.0);
+	}`);
+  };
+  m.customProgramCacheKey = () => 'wobGrassGround';
+  return m;
+}
 
 function tileGeometry(g, nrm, i0, i1, j0, j1, s) {
   const n = g.nx, pos = g.pos, col = g.col;
