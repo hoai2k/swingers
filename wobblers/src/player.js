@@ -168,6 +168,33 @@ function tubeProfile(pts, { step = 0.016, bottom = true, top = true, n = 6 } = {
   if (top) for (let i = 1; i <= n; i++) { const a = (i / n) * Math.PI / 2; out.push([Math.cos(a) * rt, yt + Math.sin(a) * rt]); }
   return out;
 }
+// Shoulders: the torso's own surface grows out over each shoulder, so neck, shoulder and
+// the top of the arm are one continuous skin (no separate pads or seams). Each shoulder is a
+// tapered capsule from the base of the neck out to a ball on the shoulder joint as wide as the
+// sleeve top; every torso vertex is pushed out along its normal onto the smooth union of the
+// torso and those capsules (polynomial smooth-min, blend K). The ball is centred on the joint,
+// so the sleeve stays flush with the rounded corner however the arm swings.
+function capsuleDist(px, py, pz, A, ra, B, rb) {
+  const bx = B[0] - A[0], by = B[1] - A[1], qx = px - A[0], qy = py - A[1];
+  const t = Math.max(0, Math.min(1, (qx * bx + qy * by) / (bx * bx + by * by)));
+  return Math.hypot(qx - bx * t, qy - by * t, pz) - (ra + (rb - ra) * t);
+}
+function growShoulders(g, rTop, K = 0.07) {
+  g.computeVertexNormals();
+  const P = g.attributes.position, N = g.attributes.normal;
+  const caps = [1, -1].map((s) => [[0.13 * s, 1.17], 0.085, [SHOULDER[0] * s, SHOULDER[1]], rTop]);
+  const dc = (x, y, z) => Math.min(...caps.map(([A, ra, B, rb]) => capsuleDist(x, y, z, A, ra, B, rb)));
+  const smin = (a, b) => { const h = Math.max(K - Math.abs(a - b), 0) / K; return Math.min(a, b) - h * h * K / 4; };
+  for (let i = 0; i < P.count; i++) {
+    const x = P.getX(i), y = P.getY(i), z = P.getZ(i), nx = N.getX(i), ny = N.getY(i), nz = N.getZ(i);
+    if (y < 0.85 || dc(x, y, z) > K) continue; // far from the shoulders: unchanged
+    // the torso's distance at p + n t is ~t; find where smin(t, capsule) = 0
+    let lo = 0, hi = 0.35;
+    for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (smin(m, dc(x + nx * m, y + ny * m, z + nz * m)) < 0) lo = m; else hi = m; }
+    P.setXYZ(i, x + nx * lo, y + ny * lo, z + nz * lo);
+  }
+  return g;
+}
 // Torso + hips bean (rest pose, unscaled): a rounded seat the legs grow out
 // of, a wide soft belly, closing under the head.
 const BODY_PROFILE = smoothProfile([
@@ -175,7 +202,7 @@ const BODY_PROFILE = smoothProfile([
   [0.286, 0.95], [0.27, 1.04], [0.236, 1.12], [0.18, 1.2], [0.1, 1.262], [0, 1.285]], 44);
 const BODY_SPLIT = 0.7;   // trousers below, shirt above (the waist line: just above the belt)
 const BODY_DEPTH = 0.88;  // front-to-back over side-to-side
-const SHOULDER = [0.34, 1.12], SHOULDER_R = 0.087; // = the uArm joint pivot
+const SHOULDER = [0.34, 1.12]; // = the uArm joint pivot
 const shoulderWiden = (y) => 1 + 0.3 * Math.exp(-(((y - 1.07) / 0.15) ** 2)); // torso x scale: broad shoulders that slope into the neck
 
 let _skinTemplate = null;
@@ -217,18 +244,15 @@ function skinTemplate() {
     // the clothes as rounded shells (the shirt overlapping the trousers at the waist); the torso
     // is all shirt up to the head like the default style (no bare neck), so no skin bean under it
     const shell = (pts, k) => pts.map(([r, y]) => [r * k + 0.006, y]);
-    add(shape(lathe(shell(prof.filter((p) => p[1] <= BODY_SPLIT + 0.03), 1.05), 24)), 'pants', waist);
-    add(shape(lathe(shell(prof.filter((p) => p[1] >= BODY_SPLIT - 0.04), 1.045), 24)), 'shirt', waist);
+    add(shape(lathe(shell(prof.filter((p) => p[1] <= BODY_SPLIT + 0.03), 1.05), 40)), 'pants', waist);
+    add(growShoulders(shape(lathe(shell(prof.filter((p) => p[1] >= BODY_SPLIT - 0.04), 1.045), 40)), 0.09 * STYLE.limb), 'shirt', waist);
   } else {
-    add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
-    add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
+    add(shape(lathe([...prof.slice(0, split), mid], 40)), 'pants', waist);
+    add(growShoulders(shape(lathe([mid, ...prof.slice(split)], 40)), 0.083 * STYLE.limb), 'shirt', waist);
   }
-  const L = STYLE.limb, LL = 1 + (L - 1) * 0.6, Lp = 1 + (L - 1) * 0.7, Hs = STYLE.hand, Fs = STYLE.shoe; // style: limb / leg / shoulder / mitten / shoe sizes
+  const L = STYLE.limb, LL = 1 + (L - 1) * 0.6, Hs = STYLE.hand, Fs = STYLE.shoe; // style: limb / leg / mitten / shoe sizes
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
-    // shoulder (chest): a rounded cap over the top of the arm, reaching in toward the neck,
-    // so the shoulder line curves out and over (convex) from the neck into the arm
-    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.88, SHOULDER[1] - 0.025, 0, 1.45 * Lp, 0.86 * Lp, 0.9 * Lp), 'shirt', 'chest');
     // the arm: one tube from inside the shoulder to inside the mitten, bending
     // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
     const sh = JI['uArm' + h], el = JI['lArm' + h];
@@ -236,9 +260,9 @@ function skinTemplate() {
     const HEM = 0.885;
     if (STYLE.layered) { // a whole skin arm, and a short sleeve over its top
       add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.068, 0.9], [0.075, 1.0], [0.078, 1.06]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
-      add(at(lathe(tubeProfile([[0.08, HEM], [0.086, 1.0], [0.09, 1.07]], { bottom: false, top: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm);
+      add(at(lathe(tubeProfile([[0.08, HEM], [0.086, 1.0], [0.09, 1.07], [0.09, 1.12]], { bottom: false, top: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm);
     } else {
-      add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm); // the top cap ends inside the shoulder pad
+      add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06], [0.083, 1.12]], { bottom: false, top: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm); // its top ring meets the shoulder ball's equator
       add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
     }
     // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff

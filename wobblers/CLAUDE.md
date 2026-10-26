@@ -43,7 +43,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `poseJoints` puts at the pivot, turned half way between the two parts, just before each
   skeleton upload. Each limb is one tube and torso + hips one bean; weights fade parent ->
   joint bone -> child over `JOINTS[].h`, so bends curve like rubber. Don't move the tubes' rest
-  shape off the joint pivots in `PARTS`. The head stays its own mesh (face texture). `part.mesh`
+  shape off the joint pivots in `PARTS`. Shoulders are not separate pads: `growShoulders` pushes
+  the torso's own vertices out onto a smooth union with a tapered capsule per side (neck base ->
+  a ball on the shoulder pivot as wide as the sleeve top), so neck, shoulder corner and arm read
+  as one continuous rubber body; sleeves run up to the pivot to meet that ball flush. Keep the
+  torso and trouser lathes at the same segment count (the toy-style shells overlap at the waist). The head stays its own mesh (face texture). `part.mesh`
   groups only hold rigid extras: outfits / gadgets (`partMesh`), the head + hat, NPC props, mission
   cargo; the skin hangs in the chest group, so hiding the part groups (forms.js) hides it.
   Rebuild with `player.rebuildMeshes()` (setColor / NPC looks do). Outfits can recolour the body
