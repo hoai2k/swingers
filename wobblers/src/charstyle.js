@@ -17,8 +17,11 @@ export const CHAR_STYLES = {
 };
 
 const param = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('style') : null;
-export const STYLE_ID = CHAR_STYLES[param] ? param : 'classic';
+export const STYLE_ID = CHAR_STYLES[param] ? param : 'chunky';
 export const STYLE = CHAR_STYLES[STYLE_ID];
+// How flat the face side of the head is (0 = round ball; ?flat=0.5 to try other values).
+const flatParam = typeof location !== 'undefined' ? parseFloat(new URLSearchParams(location.search).get('flat')) : NaN;
+export const FACE_FLAT = Number.isFinite(flatParam) ? flatParam : STYLE.faceFlat || 0;
 
 let _ramp = null;
 const toonRamp = () => {

@@ -49,8 +49,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   camera (`__wob.frame = () => {}` stops the loop).
 - Look styles (`src/charstyle.js`): `CHAR_STYLES` changes the drawn proportions (head size /
   drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
-  toon + outline) without touching the ragdoll. Chosen with `?style=<id>` (default `classic`);
-  `charMat()` makes the skin, head and face materials in the current style.
+  toon + outline) without touching the ragdoll. Chosen with `?style=<id>` (default `chunky`);
+  `charMat()` makes the skin, head and face materials in the current style. `FACE_FLAT`
+  (`style.faceFlat`, try `?flat=0.5`) flattens the face side of the head (`headGeometry`).
+  Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features
+  compact (eyes near the equator, mouth just below), or they climb onto the forehead / chin.
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
   150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
   vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel

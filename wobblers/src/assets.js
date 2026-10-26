@@ -64,16 +64,18 @@ function featureBox(im) {
   return box;
 }
 
+const FACE_BOX = [0.24, 0.38, 0.52]; // painted features: max width / height (share of the texture), centre height
 export function paintFace(tex, name) {
   return paintOver(tex, `faces/face_${slug(name)}.png`, (g, im, cv) => {
     const W = cv.width, H = cv.height;
     g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
     // the head's texture is equirectangular with square pixels (0.7 degrees
-    // each), so the features keep their proportions: ~110 degrees wide,
-    // centred a little above the head's equator
+    // each), so the features keep their proportions: at most ~86 degrees wide
+    // and ~68 tall (a bigger box put the eyes on the forehead and the mouth on
+    // the chin), centred just below the head's equator
     const [bx, by, bw, bh] = featureBox(im);
-    const k = Math.min(W * 0.31 / bw, H * 0.52 / bh);
+    const k = Math.min(W * FACE_BOX[0] / bw, H * FACE_BOX[1] / bh);
     const dw = bw * k, dh = bh * k;
-    g.drawImage(im, bx, by, bw, bh, W * 0.25 - dw / 2, H * 0.5 - dh / 2, dw, dh);
+    g.drawImage(im, bx, by, bw, bh, W * 0.25 - dw / 2, H * FACE_BOX[2] - dh / 2, dw, dh);
   });
 }

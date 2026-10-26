@@ -9,7 +9,7 @@ import { buildExtraHat } from './hats.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/BufferGeometryUtils.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
-import { STYLE, charMat, outlineMat } from './charstyle.js'; // look styles to compare (?style=)
+import { STYLE, FACE_FLAT, charMat, outlineMat } from './charstyle.js'; // look styles to compare (?style=)
 
 export const S = 0.8; // overall character scale
 const UP = new THREE.Vector3(0, 1, 0);
@@ -66,6 +66,25 @@ const SKIN = 0xffd9b8;
 const HEAD_R = 0.31 * S;
 // soft plastic sheen so the rounded shapes read
 const PLAYER_MAT = charMat({ vertexColors: true }); // the look style (charstyle.js) picks the shading
+// The head ball (face texture centred on +z). FACE_FLAT squashes the front
+// cap so the face sits on a flatter, gently rounded area.
+let _headGeo = null;
+function headGeometry() {
+  if (_headGeo) return _headGeo;
+  const g = new THREE.SphereGeometry(HEAD_R, 32, 22);
+  if (FACE_FLAT > 0) {
+    // z' = z - k (z - c)^2: no crease where it starts, the very front pulled in by k (1 - c)^2
+    const P = g.attributes.position, c = 0.3, k = FACE_FLAT / (2 * (1 - c)), N = g.attributes.normal, keep = N.array.slice();
+    for (let i = 0; i < P.count; i++) {
+      const z = P.getZ(i) / HEAD_R;
+      if (z > c) P.setZ(i, (z - k * (z - c) ** 2) * HEAD_R);
+    }
+    g.computeVertexNormals();
+    for (let i = 0; i < P.count; i++) if (P.getZ(i) / HEAD_R <= c) N.setXYZ(i, keep[i * 3], keep[i * 3 + 1], keep[i * 3 + 2]); // the back stays a smooth ball (no seam)
+  }
+  _headGeo = g;
+  return g;
+}
 const HEAD_OUTLINE = new THREE.MeshBasicMaterial({ color: 0x23202a, side: THREE.BackSide });
 let _headMats = null;
 export function headMaterials() {
@@ -384,7 +403,7 @@ export class Player {
   partMesh(p) {
     const g = new THREE.Group();
     if (p.n === 'head') {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 18), headMaterials().normal);
+      const m = new THREE.Mesh(headGeometry(), headMaterials().normal);
       m.scale.set(1, 0.97, 0.98).multiplyScalar(STYLE.head);
       m.position.y = -STYLE.drop * S;
       m.castShadow = true;

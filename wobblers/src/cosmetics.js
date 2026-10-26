@@ -18,7 +18,9 @@ export const OUTFITS = OUTFIT_LIST.map((o) => o.name);
 // Faces 8-11, trousers 9-12 and HATS past the first eight are unlocked by presents; the
 // ones after those are sold in the clothes shop (both lists in src/unlocks.js).
 export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy', 'Star eyes', 'Winky', 'Robot', 'Moustache',
-  'Heart eyes', 'Tongue out', 'Dizzy', 'Nerd'];
+  'Heart eyes', 'Tongue out', 'Dizzy', 'Nerd',
+  // plain, neutral faces with dot eyes (free; drawn here, no painted art)
+  'Dot eyes', 'Calm', 'Content', 'Oh', 'Shy', 'Smirk'];
 export const PANTS = [
   { name: 'Matching', color: null },
   { name: 'Denim', color: 0x3b5c9a },
@@ -181,6 +183,27 @@ function drawFace(kind) {
       for (const x of ex) { g.beginPath(); for (let a = 0; a < 14; a += 0.3) { const r = 2 + a * 1.4; g.lineTo(x + Math.cos(a) * r, ey + Math.sin(a) * r); } g.stroke(); }
       g.strokeStyle = '#5a2a2a'; g.lineWidth = 6; g.beginPath();
       for (let i = 0; i <= 8; i++) g.lineTo(cx - 24 + i * 6, H * 0.64 + (i % 2 ? 5 : -5));
+      g.stroke();
+      break;
+    }
+    // neutral dot-eye faces: small and close together, like a toy's printed face
+    case 'Dot eyes': case 'Calm': case 'Content': case 'Oh': case 'Shy': case 'Smirk': {
+      g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H); // no default cheeks
+      const dy = H * 0.47, dx = kind === 'Shy' ? 17 : 21, r = kind === 'Oh' ? 8 : 7, my = H * 0.565;
+      g.fillStyle = '#1c1c28';
+      for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * dx, kind === 'Shy' ? dy + 3 : dy, r, r * 1.15, 0, 0, 7); g.fill(); }
+      if (kind === 'Content' || kind === 'Shy') {
+        g.fillStyle = 'rgba(255,120,120,.4)';
+        for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 38, my - 4, 11, 7, 0, 0, 7); g.fill(); }
+      }
+      g.strokeStyle = '#4a2a2a'; g.fillStyle = '#4a2a2a'; g.lineWidth = 4;
+      g.beginPath();
+      if (kind === 'Dot eyes') g.arc(cx, my - 8, 10, 0.25 * Math.PI, 0.75 * Math.PI);
+      else if (kind === 'Calm') { g.moveTo(cx - 8, my); g.lineTo(cx + 8, my); }
+      else if (kind === 'Content') g.arc(cx, my - 10, 13, 0.2 * Math.PI, 0.8 * Math.PI);
+      else if (kind === 'Oh') { g.ellipse(cx, my + 1, 5, 6, 0, 0, 7); g.fill(); }
+      else if (kind === 'Shy') g.arc(cx, my - 5, 6, 0.2 * Math.PI, 0.8 * Math.PI);
+      else { g.moveTo(cx - 8, my); g.quadraticCurveTo(cx + 4, my + 3, cx + 11, my - 5); } // Smirk
       g.stroke();
       break;
     }
