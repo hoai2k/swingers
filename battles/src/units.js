@@ -166,7 +166,7 @@ const BASE_UNITS = [
     desc: 'Hurls exploding fireballs.',
   },
   {
-    id: 'giant', name: 'Giant', faction: 'legacy', cost: 1600, hp: 1600, speed: 4.4,
+    id: 'giant', name: 'Giant', faction: 'legacy', cost: 1600, hp: 2400, speed: 4.4,
     build: { scale: 2.3, girth: 1.2, head: 0.9, legs: 1.05, arms: 1.15, armThick: 1.3, mass: 1.4 },
     weapon: { kind: 'melee', style: 'fists', anim: 'slam', item: 'none', damage: 120, reach: 1.9, cooldown: 2.0, force: 1700, sweep: true, fistHit: true },
     look: { skin: '#a7b88a', hat: 'none', top: 'loincloth', legs: '#7a5a3a', bare: true, brow: true },
