@@ -486,15 +486,9 @@ export class UI {
     this.idle = 4;
     const wake = (e) => { if (!document.pointerLockElement || e.type !== 'mousemove') this.poke(); };
     for (const ev of ['mousemove', 'pointerdown', 'touchstart']) addEventListener(ev, wake, { passive: true });
-    for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => {
-      // in fullscreen the browser keeps Esc for itself; the keyboard lock (Chrome)
-      // hands a tap to the game's pause menu (holding Esc still leaves fullscreen)
-      try {
-        if (fsElement()) navigator.keyboard?.lock?.(['Escape'])?.catch?.(() => {});
-        else navigator.keyboard?.unlock?.();
-      } catch (e) { /* unsupported */ }
-      this.refreshCorner();
-    });
+    // Esc in fullscreen is the browser's: one tap leaves fullscreen (no keyboard lock,
+    // which made players hold Esc); out of fullscreen it toggles the pause menu
+    for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => this.refreshCorner());
     setInterval(() => {
       this.idle -= 0.25;
       const show = this.idle > 0 || !this.game.players.length || !!this.settingsCard || bar.matches(':hover');

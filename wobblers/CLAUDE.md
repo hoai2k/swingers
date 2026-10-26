@@ -18,7 +18,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   Raised limbs float (gravity scale 0, weight moved to the torso); hanging arms keep
   gravity. Keep `kp * DT² ≲ 0.3`. Jumps use coyote time and a press buffer (`COYOTE`, `JUMP_BUFFER`),
   and `probeGround` falls back to `FOOT_RAYS` round the hips so standing on an edge still counts
-  as grounded. In the air the legs push off, tuck, then reach down for the landing. While in control the legs
+  as grounded. Air control: a jump keeps the take-off momentum (`jumpAxis`) and the stick
+  steers it (`AIR_ACCEL` across / forward); pulling back only bends it (`AIR_BRAKE`, never below
+  `AIR_KEEP` of the take-off speed), while a standing jump can be steered any way.
+  In the air the legs push off, tuck, then reach down for the landing. While in control the legs
   aren't motor-driven: `poseLegs` sets each leg to its animation target (clamped to `LEG_LIMITS`,
   a comfortable range), places it on its joint and moves its momentum onto the hips; only a
   limp ragdoll drives them with physics (motors this light drifted +-0.5 rad against the body). Legs are visual
@@ -49,7 +52,8 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   camera (`__wob.frame = () => {}` stops the loop).
 - Look styles (`src/charstyle.js`): `CHAR_STYLES` changes the drawn proportions (head size /
   drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
-  toon + outline) without touching the ragdoll. Chosen with `?style=<id>` (default `chunky`);
+  toon + outline, or `wobbly`: one colour all over, plain head with two black oval eyes) without
+  touching the ragdoll. Chosen with `?style=<id>` (default `chunky`; `?head=0.85` scales the head);
   `charMat()` makes the skin, head and face materials in the current style. `FACE_FLAT`
   (`style.faceFlat`: chunky 0.5; try others with `?flat=`) flattens the face side of the head (`headGeometry`).
   Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features

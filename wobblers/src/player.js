@@ -37,8 +37,11 @@ const ARM_MASS = 2.9;         // upper + lower arm + mitten
 const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (feet just touch)
 const RAY_LEN = 1.05 * S;
 
-const WALK = 4.8, RUN = 8.6, SWIM = 2.6, JUMP_V = 6.6;
+const WALK = 5.3, RUN = 9.4, SWIM = 2.6, JUMP_V = 6.6;
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
+const AIR_ACCEL = 16;          // m/s^2 of steering in the air, across and along the jump
+const AIR_BRAKE = 6;           // m/s^2 at most against the jump's take-off direction: pulling back bends a jump...
+const AIR_KEEP = 0.45;         // ...and never brings it below this share of its take-off speed
 const COYOTE = 0.14;          // a jump still works this long after stepping off an edge
 const JUMP_BUFFER = 0.14;     // a jump pressed this long before landing still happens
 const FOOT_RAYS = [[0.16, 0], [-0.16, 0], [0, 0.16], [0, -0.16]]; // extra ground probes (x S) round the hips
@@ -85,6 +88,7 @@ function headGeometry() {
   _headGeo = g;
   return g;
 }
+const MONO_EYE = new THREE.SphereGeometry(0.075 * 0.8, 12, 8).scale(0.72, 1.25, 0.32), MONO_EYE_MAT = new THREE.MeshBasicMaterial({ color: 0x15151c });
 const HEAD_OUTLINE = new THREE.MeshBasicMaterial({ color: 0x23202a, side: THREE.BackSide });
 let _headMats = null;
 export function headMaterials() {
@@ -404,6 +408,16 @@ export class Player {
     const g = new THREE.Group();
     if (p.n === 'head') {
       const m = new THREE.Mesh(headGeometry(), headMaterials().normal);
+      if (STYLE.mono) { // 'wobbly' style: a plain head in the body colour with two black oval eyes; faces don't apply
+        const mat = this.monoHeadMat = charMat({ color: this.color });
+        Object.defineProperty(m, 'material', { get: () => mat, set: () => {} });
+        for (const s of [-1, 1]) {
+          const e = new THREE.Mesh(MONO_EYE, MONO_EYE_MAT);
+          e.position.set(s * 0.3 * HEAD_R, 0.12 * HEAD_R, 0.95 * HEAD_R * (1 - FACE_FLAT * 0.12));
+          e.lookAt(e.position.clone().multiplyScalar(2));
+          m.add(e);
+        }
+      }
       m.scale.set(1, 0.97, 0.98).multiplyScalar(STYLE.head);
       m.position.y = -STYLE.drop * S;
       m.castShadow = true;
@@ -428,7 +442,9 @@ export class Player {
   paintSkin() {
     const shirt = this.outfit?.shirt ?? this.color; // jackets (outfits.js)
     const pants = this.outfit?.pants ?? this.pantsColor ?? new THREE.Color(this.color).multiplyScalar(0.55).getHex(); // outfit trousers (outfits.js), pantsColor: customiser (cosmetics.js)
-    const cols = { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
+    const cols = STYLE.mono // 'wobbly' style: one colour all over, blue shoes
+      ? { shirt: this.color, pants: this.color, skin: this.color, mitten: this.color, cuff: this.color, shoe: 0x2f6fe0, sole: 0x2a5cc0 }
+      : { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
     if (!this.skin) {
       const m = new THREE.SkinnedMesh(skinTemplate().clone(), PLAYER_MAT);
       m.castShadow = true; m.receiveShadow = true;
@@ -483,7 +499,7 @@ export class Player {
   rebuildMeshes() {
     for (const n in this.parts) {
       const part = this.parts[n];
-      if (n === 'head') { this.buildHat(); continue; }
+      if (n === 'head') { this.buildHat(); this.monoHeadMat?.color.set(this.color); continue; }
       this.group.remove(part.mesh);
       const m = this.partMesh(part.def);
       m.position.copy(part.mesh.position); m.quaternion.copy(part.mesh.quaternion);
@@ -1064,7 +1080,7 @@ export class Player {
       // snappy but not instant: ~0.25 s to walking pace, quicker to turn round
       let accel;
       if (this.swimming) accel = 6;
-      else if (!this.grounded) accel = hanging ? 5 : 9;
+      else if (!this.grounded) accel = hanging ? 5 : AIR_ACCEL;
       else if (slippery) accel = 1;
       else {
         const opp = hspeed > 0.5 && mag > 0.05 ? Math.max(0, -(hv.x * mvx + hv.z * mvz) / (hspeed * mag)) : 0;
@@ -1079,9 +1095,27 @@ export class Player {
         if (mag < 0.05) { dvx = 0; dvz = 0; }
       }
       if (this.punch.t > 0.12 && mag < 0.05) { dvx = 0; dvz = 0; } // don't brake the lunge
-      const maxDv = accel * DT;
-      const dl = Math.hypot(dvx, dvz);
-      if (dl > maxDv) { dvx *= maxDv / dl; dvz *= maxDv / dl; }
+      const airborne = !this.grounded && !this.swimming && !hanging;
+      // the jump's direction and speed as it left the ground (pulling back is measured against it)
+      if (!airborne) this.jumpAxis = hspeed > 0.5 ? { x: hv.x / hspeed, z: hv.z / hspeed, s: hspeed } : null;
+      const ja = this.jumpAxis;
+      if (airborne && ja) {
+        // in the air: steer freely across and along the jump, but pulling back only bends it:
+        // braking against the take-off direction is capped at AIR_BRAKE and stops once the
+        // jump is down to AIR_KEEP of its take-off speed
+        const ux = ja.x, uz = ja.z;
+        let par = dvx * ux + dvz * uz, px = dvx - par * ux, pz = dvz - par * uz;
+        const along = hv.x * ux + hv.z * uz, floor = ja.s * AIR_KEEP;
+        par = Math.max(-AIR_BRAKE * DT, Math.min(AIR_ACCEL * DT, par));
+        if (par < 0) par = Math.max(par, Math.min(0, floor - along));
+        const pl = Math.hypot(px, pz), maxP = AIR_ACCEL * DT;
+        if (pl > maxP) { px *= maxP / pl; pz *= maxP / pl; }
+        dvx = px + par * ux; dvz = pz + par * uz;
+      } else {
+        const maxDv = accel * DT;
+        const dl = Math.hypot(dvx, dvz);
+        if (dl > maxDv) { dvx *= maxDv / dl; dvz *= maxDv / dl; }
+      }
       const M = this.totalMass * strength * (this.getUp >= 0 ? rise : 1);
       // the legs take their own share: pushed only through the hips they were
       // dragged behind and trailed ~1 rad back while running

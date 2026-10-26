@@ -312,7 +312,7 @@ function himalaya(F, kit, at) {
   for (let i = 0; i < NC; i++) {
     const body = F.body({ x, y: Y + 1.5, z }, [RAPIER.ColliderDesc.cuboid(0.85, 0.12, 1.1).setTranslation(0, 0.05, 0)]);
     cars.push(body);
-    for (const sx of [-0.38, 0.38]) F.seat(body, [sx, 0.6, -0.15], 0, 'Ride Himalaya', 'Do you wanna go faster?!', [-1.9, 0.3, 0]);
+    for (const sx of [-0.38, 0.38]) F.seat(body, [sx, 0.6, -0.15], 0, 'Ride Himalaya', 'Hold on tight!', [-1.9, 0.3, 0]);
   }
   const shell = new Builder(), frame = new Builder();
   rb(shell, 1.7, 0.5, 2.3, 0.2, 0xffffff, [0, 0.1, 0]);

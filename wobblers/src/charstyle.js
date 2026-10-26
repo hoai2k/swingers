@@ -13,12 +13,16 @@ export const CHAR_STYLES = {
   vinyl: { name: 'Vinyl figure', head: 1.12, drop: 0.02, limb: 1.15, hand: 1.1, shoe: 1.08, body: 1, mat: 'vinyl' },
   toon: { name: 'Cel toon', head: 1.05, drop: 0, limb: 1.12, hand: 1.05, shoe: 1.05, body: 1, mat: 'toon', outline: true },
   blob: { name: 'Wobbly blob', head: 1.3, drop: 0.13, limb: 1.3, hand: 1.12, shoe: 1.12, body: 1.16, mat: 'matte' },
+  // one colour all over (head and hands too), two black oval eyes, blue shoes, big round head low on a pear body
+  wobbly: { name: 'Wobbly Life-like', head: 1.24, drop: 0.1, limb: 1.4, hand: 1.08, shoe: 1.15, body: 1.12, mat: 'matte', mono: true },
   chibi: { name: 'Big-head chibi', head: 1.42, drop: 0.07, limb: 1.2, hand: 1.15, shoe: 1.15, body: 0.94, mat: 'vinyl' },
 };
 
 const param = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('style') : null;
 export const STYLE_ID = CHAR_STYLES[param] ? param : 'chunky';
-export const STYLE = CHAR_STYLES[STYLE_ID];
+const headParam = typeof location !== 'undefined' ? parseFloat(new URLSearchParams(location.search).get('head')) : NaN;
+// ?head=0.85 scales the style's head (to try other head sizes)
+export const STYLE = Number.isFinite(headParam) ? { ...CHAR_STYLES[STYLE_ID], head: CHAR_STYLES[STYLE_ID].head * headParam } : CHAR_STYLES[STYLE_ID];
 // How flat the face side of the head is (0 = round ball; ?flat=0.5 to try other values).
 const flatParam = typeof location !== 'undefined' ? parseFloat(new URLSearchParams(location.search).get('flat')) : NaN;
 export const FACE_FLAT = Number.isFinite(flatParam) ? flatParam : STYLE.faceFlat || 0;
