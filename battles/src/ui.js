@@ -265,7 +265,7 @@ export class UI {
       s.faction = fkey;
       s.unit = -1;
       s.budgetKey = '';
-      this.setText(s.tabs, facs.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}${light(f.color) ? ' light' : ''}" style="--fc:${f.color}">${hasAsset(`assets/ui/faction-${f.id}.png`) ? `<img class="ficon" src="assets/ui/faction-${f.id}.png" alt="">` : ''}${f.name}</span>`).join(''));
+      this.setText(s.tabs, facs.map((f, i) => `<span class="tab ${i === d.faction ? 'on' : ''}${light(f.color) ? ' light' : ''}" style="--fc:${f.color}">${hasAsset(`assets/ui/faction-${f.id}.png`) ? `<img class="ficon" src="assets/ui/faction-${f.id}.png" alt="">` : f.icon ? `<span class="ficon">${f.icon}</span>` : ''}${f.name}</span>`).join(''));
       const on = s.tabs.children[d.faction];
       if (on) s.tabs.scrollLeft = on.offsetLeft - s.tabs.offsetLeft - (s.tabs.clientWidth - on.offsetWidth) / 2;
       const list = unitsOfFaction(facs[d.faction].id);

@@ -163,7 +163,8 @@ export function beastKill(b, m, att, fromDie) {
   m.big.hp = 0;
   const u = m.u, cfg = m.cfg;
   const p = m.torso.pos, gy = b.terrain.height(p.x, p.z), big = cfg.mass > 1000;
-  b.emit('blood', p.x, p.y, p.z, big ? 16 : 6, 0, 0);
+  if (cfg.metal) b.emit('spark', p.x, p.y, p.z, big ? 12 : 5); // a machine (cfg.metal): sparks, no blood
+  else b.emit('blood', p.x, p.y, p.z, big ? 16 : 6, 0, 0);
   b.emit('dust', p.x, gy, p.z, big ? 8 : 2);
   b.sound('crunch', p, big ? 1.4 : 0.7, cfg.pitch ?? 0.6);
   for (let i = 0; i < m.torso.body.numColliders(); i++) m.torso.body.collider(i).setCollisionGroups(GR.dead);
