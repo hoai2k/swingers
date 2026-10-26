@@ -437,3 +437,29 @@ not sold (faction `jjk_shiki`) and are not priced on their own.
 
     node battles/dev/balance/run.mjs --units jk_gojo,jk_sukuna,jk_megumi,jk_mahoraga --runs 4 --procs 3 --out /tmp/jjk-strongest.jsonl
     node battles/dev/balance/report.mjs /tmp/jjk-strongest.jsonl
+
+## Jujutsu Kaisen: the curses (`src/packs/jjk-curses.js`)
+
+Priced with the harness against the reference panel at equal gold, sides swapped, 4
+battles per pairing (36 per unit). Summons (Geto's Stored Curses, Mahito's Transfigured
+Humans) are reserves with cost 0, so they fight but add nothing to the score. Three
+rounds of 2-battle drafts moved the prices; the final 4-battle round:
+
+| unit | cost | hp | role | first draft | final avg | notes |
+|---|---:|---:|---|---:|---:|---|
+| Toji Fushiguro (`jk_toji`) | **1000** | 640 | assassin | +0.07 | +0.13 | fast leaps + Playful Cloud; beats blobs and knights, loses to gunslingers and the King |
+| Dagon (`jk_dagon`) | 950 → **1050** | 1200 | caster | +0.12 | +0.08 | fish swarms; domain (r 9, 7 s, 14 per 0.5 s) once 4+ enemies are close |
+| Mahito (`jk_mahito`) | 1050 → **850** | 470 | melee | −0.11 | +0.01 | +42 soul damage per touch; kills (and victims under 30% hp) become his transfigured humans (5 reserves); regen 9/s; domain (r 7, 4.5 s, 34 per 0.6 s) |
+| Jogo (`jk_jogo`) | 1100 → **1250** | 430 | caster | +0.21 | −0.01 | Ember Insects (4 × 20 + burn), Meteor every 15 s (170, r 4.6, burn); domain (r 8, 6 s, 12 + burn) |
+| Hanami (`jk_hanami`) | 750 → **1150** | 980 → 820 | bruiser | +0.58 | −0.00 | armor 0.3 → 0.22; polarised: flattens cheap melee (+0.97), loses to knights and elites |
+| Suguru Geto (`jk_geto`) | 1150 → **700** | 520 | summoner | −0.76 | −0.06 | curses out 2 at a time (6 stored, up to 4 out; 120 → 170 hp, 24 → 30 dmg); Uzumaki 70 + 35 per curse |
+| Choso (`jk_choso`) | 430 → **540** | 300 | ranged | +0.32 | +0.02 | Piercing Blood 54 through a whole line every 3.8 s; Supernova 50 when crowded |
+| Kinji Hakari (`jk_hakari`) | 900 → **600** | 560 | brawler | −0.39 | +0.07 | domain does no damage (a daze); 16% jackpot chance per spin: 14 s of 120 hp/s regen, +60% damage, +25% speed |
+| Fly Head (`jk_flyhead`) | 30 → **26** | 58 | swarm | −0.18 | −0.11 | beats archers and gunslingers by mobbing them, loses to anything sturdier |
+
+All nine are within ±0.2 of even (standard error about ±0.05). Domains clash only with
+other domains, and the secrets need Gojo or Yuji, so neither shows against the panel.
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jk_toji,jk_dagon,jk_mahito,jk_jogo,jk_hanami,jk_geto,jk_choso,jk_hakari,jk_flyhead --runs 4 --out /tmp/jkc.jsonl
+    node battles/dev/balance/report.mjs /tmp/jkc.jsonl
