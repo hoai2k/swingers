@@ -1,8 +1,24 @@
 # Wobbly Battles — image request history
 
-Delivered requests (rounds 1–6, 54 images). Kept for the record: the
+Delivered requests (rounds 1–7, 55 images). Kept for the record: the
 briefs, final paths and where each image is used. Open requests live in
 `image-requests.md`.
+
+## Delivered round 7 — Jujutsu Kaisen faction emblem
+
+Delivered 2026-10-26 with built-in imagegen. Verified 128 × 128 transparent PNG,
+small-size readability and browser preload. Original preserved in
+`assets/originals/ui/`; prompt and source in `assets/generation.json`.
+
+### Round 7 — Jujutsu Kaisen faction emblem (delivered)
+
+A big fan faction of the anime's characters (Gojo, Sukuna, Megumi, Yuji, Toji...). The
+owner's look references for the units are in `reference/jjk/` (low-poly TABS-style
+renders of Toji and Gojo).
+
+| # | File | Size | Status | Brief |
+|---|---|---|---|---|
+| 55 | `assets/ui/faction-jjk.png` | 128×128, transparent PNG | delivered | Faction emblem for **Jujutsu Kaisen**: a cursed finger (a withered, dark-red mummified finger with a black nail) crossed with a cursed tool talisman, in front of a dark circle of blue-violet cursed energy flames. Black, deep red (#8a1c1c) and electric blue (#3a7bff). Same flat sticker style and bold outline as the other emblems, no text, readable at 28 px. |
 
 ## Delivered round 6 — new faction emblems (2 images)
 
