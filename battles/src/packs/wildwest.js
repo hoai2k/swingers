@@ -150,7 +150,7 @@ const pickaxe = {
     for (const v of u.hitSet) {
       if (u.pickSeen.has(v)) continue;
       u.pickSeen.add(v);
-      if (!v.alive || v.bc) continue;
+      if (!v.def || !v.alive || v.bc) continue; // (the hit set also holds smashed props)
       const sh = v.shield?.();
       if (sh) { if (Math.random() < w.disarm) knockOff(b, v, sh, u); continue; }
       const a = Math.min(0.8, v.def.armor || 0);
