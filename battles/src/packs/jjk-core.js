@@ -14,7 +14,7 @@
 //  - seal(): the Prison Realm - a unit frozen in a cube, untouchable, for t seconds
 //  - Infinity: units with u.jkInfinity = true (Gojo) stop blows and shots short of them
 //    unless the attacker has u.jkPierce (Toji's Inverted Spear of Heaven) - enforced
-//    for every hit by the Unit.hit wrapper below (call ensureHitHook() in a kind's
+//    for every hit by the Unit.hit wrapper below (call ensureHitHook(u) in a kind's
 //    init so it is in place from the first step); infinityBlocks() for your own checks
 //  - u.jkNoCE (Toji, Maki): no cursed energy - sure-hits don't find them
 //  - secrets: onSecret(fn) runs fn(b, dt) every step; announce() shows the banner
@@ -23,13 +23,9 @@
 import { register } from '../ext.js';
 import { THREE, clamp, rand, PART, newId } from './common.js';
 import { RAPIER, GROUPS } from '../physics.js';
-// (unit.js and battle.js are loaded lazily: a static import here would evaluate items.js
-// and battle.js in the middle of src/packs/index.js, so ITEMS and PROJ would be built
-// before the packs after this one - and this one - had registered their items and
-// projectile types; in a browser their meshes were then missing)
-let UnitP = null, park = null;
-import('../unit.js').then((m) => { UnitP = m.Unit.prototype; });
-import('../battle.js').then((m) => { park = m.park; });
+// (no static import of unit.js or battle.js here: this pack loads while units.js is
+// still gathering the packs, and pulling battle.js in at that point would make
+// battle.js / items.js copy EXT.proj / EXT.items before the later packs registered)
 
 export const FACTION = { id: 'jjk', name: 'Jujutsu Kaisen', color: '#2b2f6b' };
 const UPY = new THREE.Vector3(0, 1, 0);
@@ -243,15 +239,27 @@ export function infinityBlocks(v, attacker) {
 // Every hit goes through Unit.hit: a sealed unit takes nothing, and Infinity stops
 // any blow, shot or blast (a ripple where it stopped) unless the attacker pierces it.
 // Sure-hits (kind 'domain') and the unit's own Infinity off-time get through.
-// (installed on first use: unit.js is still loading when this module runs; pass any unit
-// if you can, in case the lazy import above has not finished)
+// (installed on first use: unit.js is still loading when this module runs)
+// ensureHitHook(x): x is any unit or battle (to find the Unit class); with no argument
+// it relies on the copy installed once unit.js has loaded (dynamic import below).
 let hit0 = null;
-export function ensureHitHook(u = null) {
+function installHit(UnitClass) {
+  if (hit0 || !UnitClass) return;
+  hit0 = UnitClass.prototype.hit;
+  UnitClass.prototype.hit = jkHit;
+}
+export function ensureHitHook(x) {
   if (hit0) return;
-  const P = UnitP || (u && Object.getPrototypeOf(u));
-  if (!P || typeof P.hit !== 'function') return;
-  hit0 = P.hit;
-  P.hit = jkHit;
+  const u = x && (x.rag ? x : x.units && x.units[0]);
+  if (u) installHit(Object.getPrototypeOf(u).constructor);
+}
+import('../unit.js').then((m) => installHit(m.Unit));
+// a reserve out of play (same as battle.js park)
+export function park(u) {
+  u.dormant = true;
+  u.alive = false;
+  for (const bd of u.rag.bodies) bd.setEnabled(false);
+  for (const e of u.extras) e.body?.setEnabled(false);
 }
 function jkHit(amount, part, ix, iy, iz, attacker, kind) {
   if (this.jkSealedT > this.battle.time) return;
@@ -307,7 +315,7 @@ register({
     return false;
   },
   battleStep(b, dt) {
-    ensureHitHook(b.units[0]);
+    ensureHitHook(b);
     const s = STATE.get(b);
     for (const f of SECRETS) f(b, dt);
     if (!s) return;
