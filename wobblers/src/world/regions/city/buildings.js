@@ -1,6 +1,7 @@
 // Bigtown building kit: glass towers, mid-rise blocks, brick row houses and
 // shops. All static, through the kit (merged per chunk); windows are a few
 // big glass panels per floor in GLOW colours so towers light up at night.
+import { AWNING_BOUNCE } from '../../../config.js';
 import * as THREE from 'three';
 import { GLOW, signMesh } from '../../../mesh.js';
 import { Local } from '../../common.js';
@@ -158,7 +159,7 @@ export function awning(kit, L, w, d, color, y = 3.0) {
   const c = new THREE.Color(color).getHex(), n = Math.max(2, Math.round(w / 1.4));
   for (let i = 0; i < n; i++) {
     const lx = -w / 2 + (i + 0.5) * (w / n);
-    L.box(lx, y + 0.35, d / 2 + 1.0, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, 0, 0] });
+    L.box(lx, y + 0.35, d / 2 + 1.0, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, 0, 0], bounce: AWNING_BOUNCE }); // a trampoline
   }
 }
 

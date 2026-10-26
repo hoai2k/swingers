@@ -1,4 +1,5 @@
 // Town centre shops, town hall, apartments and the suburbs.
+import { AWNING_BOUNCE } from '../config.js';
 import * as THREE from 'three';
 import { signMesh } from '../mesh.js';
 import { interiorShop, interiorHouse } from './interiors.js';
@@ -121,7 +122,7 @@ export function shop(game, kit, x, z, yaw, name, color, opts = {}) {
   for (let i = 0; i < n; i++) {
     const lx = -w / 2 + (i + 0.5) * (w / n);
     const [ax, az] = P(lx, d / 2 + 1.0);
-    kit.box(ax, 3.35, az, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, yaw, 0] });
+    kit.box(ax, 3.35, az, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, yaw, 0], bounce: AWNING_BOUNCE }); // land on it: boing
   }
   if (opts.floors) windows(kit, P, yaw, w, d, h, opts.floors, 0x8fcfff, false);
   const sign = signMesh(name, Math.min(w * 0.8, 9), color);

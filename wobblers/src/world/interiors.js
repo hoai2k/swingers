@@ -2,6 +2,7 @@
 // furniture, and stairs (a two-storey house, a cafe with a rooftop terrace).
 // Exteriors keep the footprint, door position, awning and sign of the solid
 // versions in town.js so streets and props still line up.
+import { AWNING_BOUNCE } from '../config.js';
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
 import { Builder, signMesh } from '../mesh.js';
@@ -54,7 +55,7 @@ export function shopFront(game, L, w, d, h, name, color) {
   const n = Math.round(w / 1.2);
   for (let i = 0; i < n; i++) {
     const lx = -w / 2 + (i + 0.5) * (w / n);
-    L.box(lx, 3.35, d / 2 + 1.0, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, 0, 0] });
+    L.box(lx, 3.35, d / 2 + 1.0, w / n + 0.01, 0.12, 2.1, i % 2 ? 0xffffff : c, { euler: [0.35, 0, 0], bounce: AWNING_BOUNCE }); // a trampoline
   }
   const sign = signMesh(name, Math.min(w * 0.8, 9), color);
   const p = L.v3(0, h - 0.9, d / 2 + 0.2);

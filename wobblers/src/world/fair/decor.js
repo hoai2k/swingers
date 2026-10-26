@@ -4,6 +4,7 @@
 // patch with a scarecrow and corn outside the east fence, loose ones to kick
 // about), hay bales, coins; plus falling leaves (one Points cloud that follows
 // the players while they are at the fair).
+import { AWNING_BOUNCE } from '../../config.js';
 import * as THREE from 'three';
 import { RAPIER } from '../../physics.js';
 import { Builder, signMesh } from '../../mesh.js';
@@ -150,7 +151,7 @@ export function buildDecor(game, kit, R, F) {
     const z = az - k * 14, yaw = k > 0 ? 0 : Math.PI, f = k; // faces the midway
     kit.box(x, Y + 1.1, z, 4, 2.2, 3, 0xf6ead0, { yaw });
     const c = new THREE.Color(col).getHex();
-    for (let i = 0; i < 5; i++) kit.deco(x - 1.6 + i * 0.8, Y + 2.9, z + f * 1.9, 0.8, 0.1, 1.6, i % 2 ? 0xffffff : c, { euler: [f * 0.3, 0, 0] });
+    for (let i = 0; i < 5; i++) kit.box(x - 1.6 + i * 0.8, Y + 2.9, z + f * 1.9, 0.8, 0.1, 1.6, i % 2 ? 0xffffff : c, { euler: [f * 0.3, 0, 0], bounce: AWNING_BOUNCE }); // a trampoline
     kit.deco(x, Y + 3.3, z, 4.2, 0.2, 3.2, c);
     kit.deco(x, Y + 1.15, z + f * 1.55, 3.6, 0.12, 0.5, 0x8a5a36);
     pumpkin(kit.b(x, z), x - 1.2, Y + 1.21, z + f * 1.55, 0.45);

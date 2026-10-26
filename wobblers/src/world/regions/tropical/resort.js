@@ -2,6 +2,7 @@
 // terrace), the pool with a swim-up pool bar, sunbeds you can lie on and
 // umbrellas on the beach, beach huts, a lifeguard tower, a beach volleyball
 // court with a working ball and scoreboard, pedalos and a banana boat.
+import { AWNING_BOUNCE } from '../../../config.js';
 import * as THREE from 'three';
 import { RAPIER } from '../../../physics.js';
 import { Builder } from '../../../mesh.js';
@@ -246,7 +247,7 @@ function beachHut(game, kit, R, x, z, color) {
   L.wall(1.9, -1.9, 1.9, 1.9, 2.4, 0.12, 0xffffff, [{ at: 1.9, w: 1.0, h: 0.8, sill: 1.0 }]);
   for (const s of [-1, 1]) L.box(0, 2.85, s * 1.1, 4.6, 0.12, 2.6, THATCH, { euler: [s * 0.5, 0, 0] });
   // striped awning + towel
-  for (let i = 0; i < 5; i++) L.deco(-1.6 + i * 0.8, 2.25, 2.4, 0.8, 0.06, 1.0, i % 2 ? 0xffffff : color, { euler: [0.35, 0, 0] });
+  for (let i = 0; i < 5; i++) L.box(-1.6 + i * 0.8, 2.25, 2.4, 0.8, 0.06, 1.0, i % 2 ? 0xffffff : color, { euler: [0.35, 0, 0], bounce: AWNING_BOUNCE }); // a trampoline
   const p = L.v3(0, 0, 4);
   kit.deco(p.x, R.groundAt(p.x, p.z) + 0.03, p.z, 1.0, 0.02, 1.9, [0xff5a8a, 0x3fe0d0, 0xffd23f][(x | 0) % 3], { yaw: -Math.PI / 2 });
   void game;

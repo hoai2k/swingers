@@ -22,6 +22,7 @@ export const CAMERA_QUERY = groups(ALL, G_STATIC);
 export const WHEEL_QUERY = groups(ALL, G_STATIC | G_VEH);
 
 export const SEA_LEVEL = -0.5;
+export const AWNING_BOUNCE = 10; // shop / stall awnings are trampolines (bounce speed, m/s)
 
 export const PLAYER_COLORS = [
   0xff5a5a, // red

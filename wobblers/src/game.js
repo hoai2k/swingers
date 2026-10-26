@@ -436,6 +436,10 @@ export class Game {
         if (Math.abs(b.speed) > 3.5) { a.knockOut(2.5); a.impactGrace = 0.5; }
       }
     }
+    // people (players and NPCs) have their own land / knock-out sounds: bumping into
+    // someone, or them toppling onto the ground, plays no extra thud (it sounded odd);
+    // only a vehicle hitting someone still does
+    if ((o1 instanceof Player || o2 instanceof Player) && !(o1 instanceof Vehicle || o2 instanceof Vehicle)) return;
     const t = c1.translation();
     this.audio.play('thud', t, Math.min(1.5, m / 6000));
   }
