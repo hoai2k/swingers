@@ -1,14 +1,17 @@
 // Spooky: Skeleton and Skeleton Archer (cheap; they fall apart when they die),
 // Candlehead (flaming wisps that set enemies on fire), Vampire (drains health with
-// every claw), Reaper (one swing of the scythe kills almost anything).
+// every claw), Reaper (one swing of the scythe kills almost anything), Ghost (arrows,
+// shots and blasts pass through it; its cold touch sends enemies running) and
+// Swordcaster (conjures ghost swords that fly straight through a whole line).
+// Everything drawn is a unit part, a projectile or a battle.stuck entry (replays).
 import { register } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel,
-  addProjectile, sweepParts, blast, addStatus, torus, tube, dome, headBand, tcol, tdark, chestShell, twoSided,
+  addProjectile, sweepParts, blast, addStatus, strike, shieldBlocks, torus, tube, dome, headBand, tcol, tdark, chestShell, twoSided,
 } from './common.js';
 
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3();
-const BONE = '#ece4cc';
+const BONE = '#ece4cc', SHEET = '#eef3fb', SPECTRE = '#9ff0ff';
 
 // ------------------------------------------------------------------ kinds
 const vampire = {
@@ -43,6 +46,79 @@ const candle = {
   },
 };
 
+// Ghost: arrows, shots, bites and blasts mostly pass through it (only blades bite);
+// whoever it touches is frightened and runs for a moment.
+const ghost = {
+  melee: true,
+  init(u) { u.spScared = new Set(); },
+  think: meleeThink,
+  // anything that is not a melee blow goes through (no blood, no push)
+  parry(u, att, kind) {
+    if (kind === 'melee') return false;
+    u.parriedAt = u.battle.time;
+    const c = u.chestPos;
+    u.battle.emit('atrail', c.x, c.y, c.z, 0.4);
+    return true;
+  },
+  hit(u, amount, part, att, kind) { return kind === 'melee' ? amount : amount * u.def.weapon.ethereal; },
+  step(u) {
+    const b = u.battle, w = u.def.weapon;
+    if (!u.st.attack) { u.spScared.clear(); return; }
+    for (const v of u.hitSet) {
+      if (u.spScared.has(v) || !v.rag || !v.alive) continue; // (the set also holds big bodies)
+      u.spScared.add(v);
+      // big things, beasts, riders and crews are not scared off
+      if (v.s > 1.6 || v.bc || v.sm) continue;
+      v.fleeT = Math.max(v.fleeT, w.fear * rand(0.85, 1.15));
+      v.st.attack = null;
+      v.expr = EXPR.scared;
+      if (Math.random() < 0.6) b.voice(v, 'scream', true);
+      const h = v.headPos;
+      b.emit('atrail', h.x, h.y + 0.3, h.z, 0.5);
+    }
+  },
+};
+
+// Swordcaster: ghost swords appear over its head and fly at the target in a straight
+// line, cutting through everyone in the way.
+const swordcast = {
+  aim: true,
+  init(u) { u.attackDur = u.def.weapon.windup; },
+  think: rangedThink,
+  event(u, t0, t1) {
+    const w = u.def.weapon, b = u.battle;
+    if (!crossed(t0, t1, w.releaseAt)) return;
+    u.released = true;
+    const tgt = u.aimAt;
+    b.sound('clang', u.headPos, 0.35, 2.4);
+    for (let i = 0; i < w.swords; i++) {
+      b.delayed.push([i * 0.14, () => {
+        if (!u.alive) return;
+        const h = u.headPos, fx = Math.sin(u.heading), fz = Math.cos(u.heading);
+        const side = (i - (w.swords - 1) / 2) * 0.75 * u.s;
+        _o.set(h.x + fz * side, h.y + (0.55 + (i % 2 ? 0.3 : 0)) * u.s, h.z - fx * side);
+        const keep = u.aimAt;
+        u.aimAt = tgt;
+        aimPoint(u, _p, 0.9, tgt && tgt.alive ? _o.distanceTo(tgt.chestPos) / w.speed : 0.5);
+        u.aimAt = keep;
+        if (!tgt && u.control && !u.control.aimPt) _p.y = _o.y + Math.tan(u.control.aimPitch) * 14;
+        launchVel(_o, _p, w.speed, 0, false, w.spread, _v);
+        addProjectile(b, 'sp_gsword', _o, _v, u, { life: (w.range / w.speed) * 1.5, pierce: w.pierce });
+        b.emit('atrail', _o.x, _o.y, _o.z, 0.5);
+        b.sound('whoosh', _o, 0.5, 1.7 + i * 0.15);
+      }]);
+    }
+  },
+};
+function gswordHit(b, pr, v, part) {
+  pr.hits.add(v);
+  const dir = _v.copy(pr.vel).normalize();
+  if (shieldBlocks(b, v, dir, 0.7)) { pr.life = -1; return; }
+  strike(b, v, pr.damage, dir, pr.force, pr.owner, 'gsword', part, 'slash');
+  pr.damage *= 0.8;
+  if (--pr.pierce <= 0) pr.life = -1;
+}
+
 const wispBurst = (b, pr) => {
   const w = pr.owner.def.weapon;
   blast(b, pr.pos, pr.blast, pr.damage, pr.force, pr.owner, {
@@ -62,6 +138,17 @@ const PJ = {
     },
     hit(b, pr) { wispBurst(b, pr); return true; },
     ground(b, pr) { wispBurst(b, pr); return true; },
+  },
+  sp_gsword: {
+    g: 0, len: 1.0, r: 0.08, life: 3,
+    step(b, pr) {
+      pr.trailT = (pr.trailT || 0) - 1;
+      if (pr.trailT <= 0) { pr.trailT = 3; b.emit('atrail', pr.pos.x, pr.pos.y, pr.pos.z, 0.3); }
+      const h = sweepParts(b, pr, 0.1);
+      if (h) gswordHit(b, pr, h.v, h.part);
+    },
+    hit(b, pr, v) { gswordHit(b, pr, v, PART.chest); return pr.life < 0; },
+    ground(b, pr) { b.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 1); b.sound('clang', pr.pos, 0.25, 2.2); return true; },
   },
 };
 
@@ -110,6 +197,22 @@ const units = [
     personality: { aggro: 0.8, bravery: 0, voice: 0.5, chatter: 0.3, cry: 'magic', idle: 'float' },
     armor: 0.1, stagger: 0.3,
     desc: 'Every swing of the scythe is a death sentence.',
+  },
+  {
+    id: 'sp_ghost', name: 'Ghost', faction: 'spooky', cost: 115, hp: 120, speed: 5.0,
+    build: { scale: 1.0, girth: 0.92, head: 1.08, mass: 0.6 },
+    weapon: { line: 'Melee · arrows and blasts pass through · its touch makes enemies flee', kind: 'sp_ghost', style: 'fists', anim: 'punch', item: 'none', damage: 22, reach: 1.1, cooldown: 1.0, force: 120, ethereal: 0.25, fear: 2.4 },
+    look: { skin: '#e4ecf6', hat: 'sp_ghost', top: 'sp_ghost', legs: '#e4ecf6' },
+    personality: { aggro: 0.9, bravery: 0, voice: 1.2, chatter: 0.9, cry: 'magic', idle: 'float' },
+    desc: 'Booo! Arrows go straight through it, and whoever it touches runs for their life.',
+  },
+  {
+    id: 'sp_swordcaster', name: 'Swordcaster', faction: 'spooky', cost: 300, hp: 150, speed: 4.2,
+    build: { scale: 1.02, girth: 0.95, head: 1.02 },
+    weapon: { line: 'Magic · ghost swords fly straight through a whole line', kind: 'sp_swordcast', style: 'staff', anim: 'cast', item: 'none', damage: 34, speed: 24, range: 28, minRange: 6, cooldown: 4.0, force: 160, spread: 0.03, releaseAt: 0.6, windup: 0.9, swords: 3, pierce: 4 },
+    look: { skin: '#c8d0dc', hat: 'sp_swordcaster', top: 'sp_swordcaster', legs: '#23202c' },
+    personality: { aggro: 0.35, bravery: 0.2, voice: 0.75, chatter: 0.6, cry: 'magic', idle: 'float' },
+    desc: 'Conjures ghostly swords that cut straight through the enemy ranks.',
   },
 ];
 
@@ -210,6 +313,26 @@ function buildHat(kind, r, team, g, H) {
       }
       return true;
     }
+    case 'sp_ghost': { // a sheet over the head: two dark eyes and an "oooh" mouth
+      const sh = mat(SHEET, { emit: 0.35 }), hole = mat('#1a1a26');
+      mesh(sphere(r * 1.12, 18, 14), sh, 0, r * 0.12, 0, g).scale.set(1, 1.12, 1);
+      for (const sd of [-1, 1]) { const e = mesh(sphere(r * 0.2, 10, 8), hole, sd * r * 0.36, r * 0.28, r * 0.98, g); e.scale.set(0.8, 1.3, 0.4); }
+      const mo = mesh(sphere(r * 0.17, 10, 8), hole, 0, -r * 0.25, r * 1.02, g); mo.scale.set(0.8, 1.15, 0.4);
+      for (const sd of [-1, 1]) mesh(sphere(r * 0.13, 8, 6), tcol(H, team), sd * r * 0.62, -r * 0.05, r * 0.82, g).scale.set(1, 0.6, 0.4); // team-coloured cheeks
+      g.userData.hidesFace = true;
+      return true;
+    }
+    case 'sp_swordcaster': { // a deep hood, a shadowed face and two pale blue eyes
+      const cloth = mat('#2a2440');
+      mesh(sphere(r * 1.03, 14, 10), mat('#141220'), 0, 0, r * 0.02, g);
+      for (const sd of [-1, 1]) mesh(sphere(r * 0.11, 8, 6), glow(SPECTRE), sd * r * 0.32, r * 0.12, r * 0.9, g).scale.set(1.3, 0.7, 0.6);
+      mesh(H.geo('schood' + r.toFixed(3), () => twoSided(new THREE.SphereGeometry(r * 1.25, 18, 12, Math.PI / 2 + 0.75, Math.PI * 2 - 1.5, 0, Math.PI * 0.8))), cloth, 0, r * 0.1, -r * 0.05, g);
+      const tip = mesh(cone(r * 0.5, r * 1.1, 10), cloth, 0, r * 1.05, -r * 0.55, g); tip.rotation.x = -0.9;
+      headBand(H, r, 0.62, 0.14, tc, g, 0.24);
+      mesh(octa(r * 0.14), glow(SPECTRE), 0, r * 0.98, r * 0.95, g); // a spectral gem
+      g.userData.hidesFace = true;
+      return true;
+    }
     case 'sp_reaper': { // black hood with a skull inside and glowing eyes
       skull(r, g, H, '#7fd8ff');
       const cloth = mat('#141216');
@@ -254,6 +377,32 @@ function decorate(def, team, vis, H) {
     for (const p of [PART.uarmL, PART.farmL, PART.uarmR, PART.farmR]) { const sp = skel.parts[p]; mesh(cyl(sp.r * 1.3, sp.r * (p === PART.farmL || p === PART.farmR ? 1.9 : 1.4), sp.hh * 2.1, 10), col, 0, 0, 0, parts[p]); }
     if (top === 'sp_reaper') for (const p of [PART.farmL, PART.farmR]) mesh(sphere(skel.parts[p].r * 1.5, 8, 6), bone, 0, -skel.parts[p].hh - skel.parts[p].r * 0.3, 0, parts[p]);
   }
+  if (top === 'sp_ghost') { // a bed sheet: no legs, a ragged hem floating over the ground
+    const sh = mat(SHEET, { emit: 0.35 });
+    for (const p of [PART.thighL, PART.thighR, PART.shinL, PART.shinR]) parts[p].clear();
+    chestShell(H, ch, sh, C, 1.05);
+    const L = skel.standHeight * 0.62;
+    mesh(cyl(pel.r * 1.25, pel.r * 2.1, L, 16), sh, 0, -L * 0.5, 0, P);
+    for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; const t = mesh(cone(pel.r * 0.42, pel.r * (0.8 + (i % 3) * 0.3), 5), sh, Math.sin(a) * pel.r * 1.75, -L - pel.r * 0.3, Math.cos(a) * pel.r * 1.75, P); t.rotation.x = Math.PI; }
+    mesh(cyl(pel.r * 1.3, pel.r * 1.3, pel.r * 0.25, 14), tc, 0, -pel.r * 0.2, 0, P); // a team sash
+    for (const p of [PART.uarmL, PART.farmL, PART.uarmR, PART.farmR]) { const sp = skel.parts[p]; mesh(cyl(sp.r * 1.3, sp.r * (p === PART.farmL || p === PART.farmR ? 2.0 : 1.4), sp.hh * 2.1, 10), sh, 0, 0, 0, parts[p]); }
+  }
+  if (top === 'sp_swordcaster') { // dark robe with a glowing trim, three ghost swords over the back
+    const col = mat('#2a2440'), trim = H.glow(SPECTRE);
+    chestShell(H, ch, col, C);
+    mesh(box(r * 0.16, (hh + r) * 1.7, r * 0.06), trim, 0, -hh * 0.1, r * 1.1, C);
+    mesh(cyl(r * 1.13, r * 1.14, r * 0.14, 14), tc, 0, -hh - r * 0.38, 0, C);
+    const sk = mesh(cyl(pel.r * 1.1, pel.r * 1.6, pel.r * 3.2, 14), col, 0, -pel.r * 1.35, 0, P); sk.scale.set(1, 1, 0.95);
+    mesh(cyl(pel.r * 1.62, pel.r * 1.62, pel.r * 0.14, 14), trim, 0, -pel.r * 2.9, 0, P);
+    for (const p of [PART.uarmL, PART.farmL, PART.uarmR, PART.farmR]) { const sp = skel.parts[p]; mesh(cyl(sp.r * 1.3, sp.r * (p === PART.farmL || p === PART.farmR ? 1.9 : 1.4), sp.hh * 2.1, 10), col, 0, 0, 0, parts[p]); }
+    for (let i = 0; i < 3; i++) {
+      const sw = new THREE.Group();
+      const inner = new THREE.Group(); gswordMesh(H, inner, 0.8, true); inner.rotation.y = Math.PI / 2; sw.add(inner);
+      sw.position.set((i - 1) * r * 1.3, hh + r * 1.6 + (i === 1 ? r * 0.5 : 0), -r * 1.3);
+      sw.rotation.set(-0.2, 0, (i - 1) * -0.45);
+      C.add(sw);
+    }
+  }
   if (top === 'sp_vampire') { // high collar, white shirt and a red jewel
     const blk = mat('#1d1a20');
     chestShell(H, ch, blk, C);
@@ -265,7 +414,20 @@ function decorate(def, team, vis, H) {
   }
 }
 
+// a ghost sword, blade along +Y (tip at +0.55 k)
+function gswordMesh(H, g, k = 1, solid = false) {
+  const { mesh, box, cone, cyl, sphere, glow, mat } = H;
+  const blade = solid ? glow('#d8fbff') : mat('#d8fbff', { emit: 0.8, transparent: true, opacity: 0.8 }), core = glow(SPECTRE);
+  mesh(box(0.02 * k, 0.75 * k, 0.09 * k), blade, 0, 0.12 * k, 0, g).castShadow = false;
+  mesh(box(0.024 * k, 0.6 * k, 0.025 * k), core, 0, 0.1 * k, 0, g).castShadow = false;
+  const t = mesh(cone(0.065 * k, 0.16 * k, 4), blade, 0, 0.57 * k, 0, g); t.scale.set(0.3, 1, 1); t.castShadow = false;
+  mesh(box(0.05 * k, 0.04 * k, 0.26 * k), core, 0, -0.26 * k, 0, g).castShadow = false;
+  mesh(cyl(0.025 * k, 0.025 * k, 0.16 * k, 6), mat('#4a5a70', { emit: 0.4 }), 0, -0.36 * k, 0, g).castShadow = false;
+  mesh(sphere(0.035 * k, 6, 5), core, 0, -0.45 * k, 0, g).castShadow = false;
+}
+
 function buildProj(type, g, H) {
+  if (type === 'sp_gsword') { gswordMesh(H, g, 1.1); return true; }
   if (type !== 'wisp') return false;
   const { mesh, sphere, glow, mat } = H;
   const a = mesh(sphere(0.16, 10, 8), glow('#fff2b0'), 0, 0, 0, g); a.castShadow = false;
@@ -282,7 +444,7 @@ register({
     sp_claw: { len: 0.3, r: 0.1, grip: 80 },
     sp_scythe: { len: 2.1, r: 0.14, grip: 25, metal: true, heavy: true },
   },
-  kinds: { sp_vampire: vampire, sp_candle: candle },
+  kinds: { sp_vampire: vampire, sp_candle: candle, sp_ghost: ghost, sp_swordcast: swordcast },
   proj: PJ,
   buildItem, buildHat, decorate, buildProj,
 });

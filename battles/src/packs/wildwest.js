@@ -1,8 +1,10 @@
 // Wild West: Cactus (stands still; thorns hurt whoever hits it), Gunslinger (six
 // quick revolver shots, then a slow reload), Blunderbuss (a cone of pellets up
 // close), Lasso (ropes an enemy and drags it in), Dynamite (bouncing sticks with a
-// fuse).
+// fuse), Quick Draw (a duelist: calls out the enemy's shooters first, one fast aimed
+// shot at the head), Miner (a pickaxe that cracks armour and hooks shields away).
 import { register } from '../ext.js';
+import { RAPIER } from '../physics.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel,
   addProjectile, handPos, sweepParts, strike, shieldBlocks, addRope, torus, tube, dome, headBand, tcol, tdark, chestShell,
@@ -63,7 +65,124 @@ const gun = {
   },
 };
 
+// Quick Draw: prefers the most expensive enemy shooter in range, else the nearest;
+// a quick draw and one shot aimed at the head (a head hit does w.headshot times).
+const isShooter = (o) => o.alive && (o.def.weapon.range || 0) >= 8 && !o.kind?.melee;
+const quick = {
+  aim: true,
+  init(u) { u.attackDur = u.def.weapon.windup; u.duelT = 0; },
+  think(u, dt, c) {
+    const w = u.def.weapon, b = u.battle, p = u.pos;
+    u.duelT -= dt;
+    if (u.duelT <= 0) {
+      u.duelT = 0.5;
+      let best = null, bc = 0;
+      for (const o of b.teams[1 - u.team]) {
+        if (!isShooter(o) || (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 > w.range * w.range) continue;
+        if (o.def.cost > bc) { bc = o.def.cost; best = o; }
+      }
+      u.duel = best;
+    }
+    const t = u.duel?.alive && !u.st.attack ? u.duel : c.t;
+    if (t !== c.t) {
+      const dx = t.pos.x - p.x, dz = t.pos.z - p.z, dist = Math.hypot(dx, dz);
+      c = { ...c, t, dist, gap: dist - t.skel.radius - u.skel.radius, dirx: dx / (dist || 1), dirz: dz / (dist || 1) };
+      u.target = t;
+    }
+    return rangedThink(u, dt, c);
+  },
+  event(u, t0, t1) {
+    const w = u.def.weapon, b = u.battle;
+    if (!crossed(t0, t1, w.releaseAt)) return;
+    u.released = true;
+    const hand = handPos(u, _o);
+    const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
+    hand.x += fx * w.barrel * u.s; hand.z += fz * w.barrel * u.s; hand.y += 0.04 * u.s;
+    const t = u.aimAt;
+    if (t && t.alive) {
+      const hp = t.headPos, v = t.rag.vel[PART.head], tof = hp.distanceTo(hand) / w.speed;
+      _p.set(hp.x + v.x * tof * 0.6, hp.y + v.y * tof * 0.3, hp.z + v.z * tof * 0.6);
+    } else {
+      aimPoint(u, _p, 0.4, 0.2);
+      if (u.control && !u.control.aimPt) _p.y = hand.y + Math.tan(u.control.aimPitch) * 14;
+    }
+    launchVel(hand, _p, w.speed, 1.5, false, w.spread, _v);
+    addProjectile(b, 'ww_hshot', hand, _v, u, { life: w.range / w.speed * 1.4 });
+    b.emit('spark', hand.x, hand.y, hand.z, 3);
+    b.emit('gtrail', hand.x + fx * 0.3, hand.y, hand.z + fz * 0.3, 0);
+    b.sound('boom', hand, 0.38, 2.3);
+    u.rag.impulse(PART.farmR, -fx * u.M * 0.1, u.M * 0.08, -fz * u.M * 0.1);
+    b.delayed.push([0.6, () => b.sound('click', u.pos, 0.4, 1.1)]);
+  },
+};
+
+// Miner: the pick goes through armour (makes up what armour took off the blow), and
+// often hooks a shield right out of its bearer's hand.
+function knockOff(b, v, h, by) {
+  if (h.dropped) return;
+  v.readHeld();
+  h.dropped = true;
+  if (h.phys && h.collider) {
+    b.world.removeCollider(h.collider, true);
+    h.collider = null;
+    const body = b.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(h.pos.x, h.pos.y, h.pos.z)
+      .setRotation({ x: h.quat.x, y: h.quat.y, z: h.quat.z, w: h.quat.w })
+      .setLinearDamping(0.1).setAngularDamping(0.8));
+    b.world.createCollider(v.heldCollider(h, false), body);
+    const fx = Math.sin(by.heading), fz = Math.cos(by.heading);
+    body.setLinvel({ x: -fx * 3 + rand(-1, 1), y: rand(3, 5), z: -fz * 3 + rand(-1, 1) }, true); // yanked back toward the miner
+    body.setAngvel({ x: rand(-6, 6), y: rand(-6, 6), z: rand(-6, 6) }, true);
+    h.body = body; h.t = 0; h.restT = 0; h.landed = false;
+  }
+  const c = h.pos;
+  b.emit('spark', c.x, c.y, c.z, 10);
+  b.sound('shield', c, 1.0, 0.8);
+  b.sound('clang', c, 0.7, 0.6);
+}
+const pickaxe = {
+  melee: true,
+  init(u) { u.pickSeen = new Set(); },
+  think: meleeThink,
+  step(u) {
+    if (!u.st.attack) { if (u.pickSeen.size) u.pickSeen.clear(); return; }
+    const w = u.def.weapon, b = u.battle;
+    for (const v of u.hitSet) {
+      if (u.pickSeen.has(v)) continue;
+      u.pickSeen.add(v);
+      if (!v.def || !v.alive || v.bc) continue; // (the hit set also holds smashed props)
+      const sh = v.shield?.();
+      if (sh) { if (Math.random() < w.disarm) knockOff(b, v, sh, u); continue; }
+      const a = Math.min(0.8, v.def.armor || 0);
+      if (a <= 0) continue;
+      v.hit(w.damage * a / (1 - a) * (u.buff > 0 ? 1.15 : 1), PART.chest, 0, 0, 0, u, 'pierce');
+      const c = v.chestPos;
+      b.emit('spark', c.x, c.y, c.z, 6);
+      b.sound('clang', c, 0.8, 0.6);
+    }
+  },
+};
+
 // ------------------------------------------------------------------ projectiles
+const headshot = {
+  g: 1.5, len: 0.22, r: 0.03, life: 1.2,
+  step(b, pr) {
+    const h = sweepParts(b, pr, 0.035);
+    if (!h) return;
+    const dir = _d.copy(pr.vel).normalize();
+    pr.life = -1;
+    if (shieldBlocks(b, h.v, dir, 0.6)) return;
+    const head = h.part === PART.head;
+    strike(b, h.v, pr.damage * (head ? pr.owner.def.weapon.headshot : 1), dir, pr.force, pr.owner, 'bullet', h.part, 'thud');
+    if (head) { const p = h.v.headPos; b.emit('spark', p.x, p.y, p.z, 5); b.sound('clang', p, 0.6, 2.6); }
+  },
+  hit(b, pr, v) {
+    const dir = _d.copy(pr.vel).normalize();
+    strike(b, v, pr.damage, dir, pr.force, pr.owner, 'bullet', PART.chest, 'thud');
+    return true;
+  },
+  ground(b, pr) { b.emit('dust', pr.pos.x, pr.pos.y, pr.pos.z, 0.5); return true; },
+};
 const bullet = {
   g: 1.5, len: 0.22, r: 0.03, life: 1.2,
   step(b, pr) {
@@ -150,6 +269,22 @@ const units = [
     personality: { aggro: 0.45, bravery: 0.25, voice: 0.85, chatter: 0.9, cry: 'cackle', idle: 'shake' },
     desc: 'Bouncing sticks of dynamite on a short fuse.',
   },
+  {
+    id: 'ww_quickdraw', name: 'Quick Draw', faction: 'wildwest', cost: 190, hp: 90, speed: 4.6,
+    build: { scale: 0.98, girth: 0.92 },
+    weapon: { line: 'Ranged · duels enemy shooters first · aimed headshots', kind: 'ww_quick', style: 'sword', anim: 'punch', item: 'ww_revolver', damage: 34, headshot: 2.5, speed: 85, range: 32, minRange: 6, cooldown: 3.6, force: 160, spread: 0.014, releaseAt: 0.45, windup: 0.3, barrel: 0.35 },
+    look: { skin: '#e8b890', hat: 'ww_flat', top: 'ww_duster', legs: '#3a3440' },
+    personality: { aggro: 0.35, bravery: 0.2, voice: 0.75, chatter: 0.3, cry: 'hey', idle: 'lean' },
+    desc: 'Fastest hand in the West. Shoots the other shooters first.',
+  },
+  {
+    id: 'ww_miner', name: 'Miner', faction: 'wildwest', cost: 125, hp: 160, speed: 4.3,
+    build: { scale: 1.0, girth: 1.12, head: 1.05 },
+    weapon: { line: 'Melee · pickaxe cracks armour, hooks shields away', kind: 'ww_pick', style: 'twohand', anim: 'slam', item: 'ww_pickaxe', damage: 36, reach: 1.4, cooldown: 1.2, force: 300, disarm: 0.6 },
+    look: { skin: '#e0b088', hat: 'ww_prospector', top: 'overalls', legs: '#5a4a3a', beard: '#9a8a7a' },
+    personality: { aggro: 0.9, bravery: 0.1, voice: 0.7, chatter: 0.8, cry: 'hey', idle: 'thump' },
+    desc: 'Forty years digging through rock. Armour is nothing.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -171,6 +306,15 @@ function buildItem(name, s, team, g, H) {
     mesh(cyl(0.03 * s, 0.03 * s, L * 0.6, 8), mat('#b58a3a', { spec: 0.9 }), 0, -back + L * 0.68, 0.03 * s, g);
     mesh(cyl(0.075 * s, 0.035 * s, 0.14 * s, 10), mat('#b58a3a', { spec: 0.9 }), 0, -back + L * 0.98, 0.03 * s, g); // flared muzzle
     mesh(box(0.06 * s, 0.06 * s, 0.03 * s), steel, 0, -back + L * 0.38, 0.06 * s, g);
+    return true;
+  }
+  if (name === 'ww_pickaxe') { // a long haft, a curved double-pointed iron head
+    const L = 1.15 * s;
+    mesh(cyl(0.028 * s, 0.032 * s, L, 7), wood(), 0, L / 2, 0, g);
+    const hd = new THREE.Group(); hd.position.set(0, L * 0.96, 0); g.add(hd);
+    for (const sd of [-1, 1]) mesh(tube(H, 'wwpk' + sd + s.toFixed(3), [[0, 0, 0], [0, -0.03, sd * 0.14], [0, -0.09, sd * 0.27], [0, -0.17, sd * 0.36]].map((p) => p.map((q) => q * s)), 0.04 * s, 0.006 * s, 10), steel, 0, 0, 0, hd);
+    mesh(box(0.06 * s, 0.08 * s, 0.07 * s), steel, 0, 0, 0, hd);
+    mesh(cyl(0.035 * s, 0.035 * s, 0.05 * s, 7), tcol(H, team), 0, L * 0.08, 0, g);
     return true;
   }
   if (name === 'ww_lasso_hand') {
@@ -212,6 +356,23 @@ function buildHat(kind, r, team, g, H) {
   switch (kind) {
     case 'ww_cowboy': cowboy(r, g, H, '#c8a070', tc); return true;
     case 'ww_cowboy_black': cowboy(r, g, H, '#2a2424', tc); return true;
+    case 'ww_flat': { // a flat-crowned, flat-brimmed gambler's hat
+      const felt = mat('#5a5652', { spec: 0.15 });
+      mesh(cyl(r * 1.7, r * 1.7, r * 0.05, 22), felt, 0, r * 0.66, 0, g);
+      mesh(cyl(r * 0.8, r * 0.82, r * 0.5, 18), felt, 0, r * 0.92, 0, g).scale.set(1, 1, 1.08);
+      mesh(cyl(r * 0.83, r * 0.83, r * 0.1, 18), tc, 0, r * 0.74, 0, g).scale.set(1, 1, 1.08);
+      for (const sd of [-1, 1]) { const m = mesh(H.capsule(r * 0.07, r * 0.3), mat('#3a2a1a'), sd * r * 0.2, -r * 0.32, r * 0.93, g); m.rotation.z = sd * (Math.PI / 2 - 0.15); } // a thin moustache
+      return true;
+    }
+    case 'ww_prospector': { // a battered slouch hat with a candle stuck in the band
+      const felt = mat('#7a6248', { spec: 0.05 });
+      const br = mesh(cyl(r * 1.5, r * 1.55, r * 0.05, 20), felt, 0, r * 0.64, 0, g); br.rotation.x = 0.1; br.rotation.z = -0.08;
+      mesh(dome(H, r * 0.9, 0.5), felt, 0, r * 0.66, 0, g).scale.set(1, 0.95, 1.05);
+      mesh(cyl(r * 0.92, r * 0.92, r * 0.13, 16), tc, 0, r * 0.74, 0, g);
+      mesh(cyl(r * 0.08, r * 0.09, r * 0.4, 8), mat('#f4ead0'), r * 0.45, r * 1.0, r * 0.65, g);
+      mesh(cone(r * 0.06, r * 0.18, 6), glow('#ffd040'), r * 0.45, r * 1.28, r * 0.65, g).castShadow = false;
+      return true;
+    }
     case 'ww_bowler': {
       const blk = mat('#3a3030', { spec: 0.25 });
       mesh(dome(H, r * 0.92, 0.5), blk, 0, r * 0.68, 0, g).scale.set(1, 0.9, 1.05);
@@ -266,6 +427,20 @@ function decorate(def, team, vis, H) {
       for (const p of [PART.thighL, PART.thighR]) mesh(H.capsule(skel.parts[p].r * 1.22, skel.parts[p].hh * 1.6), mat('#8a6040', { spec: 0.15 }), 0, 0, 0, parts[p]);
     }
   }
+  if (top === 'ww_duster') { // a long duster coat over a team shirt, gun belt
+    const coat = mat('#8a7a62', { spec: 0.1 });
+    chestShell(H, ch, coat, C);
+    mesh(box(r * 0.5, (hh + r) * 1.7, r * 0.05), tc, 0, -hh * 0.05, r * 1.06, C);
+    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.2, (hh + r) * 1.3, r * 0.05), coat, sd * r * 0.32, hh * 0.15, r * 1.09, C); l.rotation.z = sd * 0.22; }
+    const tail = mesh(cyl(pel.r * 1.2, pel.r * 1.6, pel.r * 2.6, 14), coat, 0, -pel.r * 1.0, -pel.r * 0.15, P); tail.scale.set(1, 1, 0.85);
+    mesh(box(pel.r * 2.3, pel.r * 0.3, pel.r * 2.1), leather(), 0, pel.r * 0.25, 0, P);
+    mesh(box(pel.r * 0.35, pel.r * 0.8, pel.r * 0.35), leather(), -pel.r * 1.15, -pel.r * 0.4, 0, P);
+  }
+  if (def.id === 'ww_miner') { // a lamp on the belt and a sack of ore on the back
+    mesh(cyl(pel.r * 0.2, pel.r * 0.24, pel.r * 0.45, 8), H.metal(), pel.r * 1.1, -pel.r * 0.1, pel.r * 0.3, P);
+    mesh(sphere(pel.r * 0.15, 8, 6), H.glow('#fff2b0'), pel.r * 1.1, -pel.r * 0.1, pel.r * 0.3, P);
+    mesh(sphere(r * 0.7, 10, 8), mat('#a08a60', { spec: 0 }), 0, -hh * 0.2, -r * 1.2, C).scale.set(1, 1.2, 0.7);
+  }
   if (top === 'ww_poncho') { // striped poncho
     const pon = mesh(cone(r * 1.42, (hh + r) * 2.3, 16), mat('#c8a050'), 0, hh * 0.35, 0, C);
     pon.scale.set(1, 1, 0.85);
@@ -285,7 +460,7 @@ function decorate(def, team, vis, H) {
 
 function buildProj(type, g, H) {
   const { mesh, cyl, cone, box, sphere, mat, glow, octa } = H;
-  if (type === 'bullet') {
+  if (type === 'bullet' || type === 'ww_hshot') {
     mesh(cyl(0.025, 0.025, 0.1, 6), mat('#d8b040', { spec: 1 }), 0, 0, 0, g).castShadow = false;
     const st = mesh(cyl(0.012, 0.03, 0.5, 5), mat('#fff6d0', { emit: 1, transparent: true, opacity: 0.5 }), 0, -0.3, 0, g);
     st.castShadow = false;
@@ -316,8 +491,9 @@ register({
     ww_blunderbuss: { len: 1.0, r: 0.06, grip: 90, back: 0.3 },
     ww_lasso_hand: { len: 0, r: 0, grip: 90 },
     ww_dynamite_hand: { len: 0, r: 0, grip: 90 },
+    ww_pickaxe: { len: 1.15, r: 0.12, grip: 30, heavy: true, metal: true, mass: 2.8 },
   },
-  kinds: { ww_cactus: cactus, ww_gun: gun },
-  proj: { bullet, lasso, dynamite },
+  kinds: { ww_cactus: cactus, ww_gun: gun, ww_quick: quick, ww_pick: pickaxe },
+  proj: { bullet, lasso, dynamite, ww_hshot: headshot },
   buildItem, buildHat, decorate, buildProj,
 });

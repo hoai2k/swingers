@@ -250,3 +250,128 @@ reference panel; +1 flawless win, −1 flawless loss): archer −0.02 (was +0.06
 skeleton archer −0.01, gunslinger −0.03, spear thrower −0.05, musketeer −0.09,
 flintlock −0.09. They now lose to clubbers and squires (−0.4 to −0.97) and still beat
 giants and kings (+0.4 to +0.96).
+
+## Jujutsu faction (new units)
+
+Priced with the same harness: 6 battles per pairing against the reference panel (54 per
+unit), sides swapped. Support units are also scored in a Squire line with 25% of the
+gold. First drafts (2 runs per pairing) were far off: the Four-Armed King at 2400 scored
++0.42 (the domain flattened every melee blob), the Shadow Summoner at 280 +0.49 (the
+wolves are rarely targeted), Cursed Spirits at 40 with fists −0.70 and Brawlers −0.24
+(fists are out-reached by every sword). Fists became short pack items (`jj_fist`,
+`jj_claw`, like the Monk's palm), and prices and numbers moved to the final values:
+
+| unit | cost | hp | role | alone | in line (25%) | notes |
+|---|---:|---:|---|---:|---:|---|
+| Cursed Spirit (`jj_spirit`) | **35** | 80 | cheap swarm | −0.10 | | beats archers and gunslingers by mobbing them, loses to anything sturdier |
+| Cursed Brawler (`jj_brawler`) | **125** | 160 | melee | −0.05 | | 20% black flash: 2.5× damage, big knockback |
+| Nail Witch (`jj_nail`) | **160** | 95 | ranged | −0.03 | | cooldown 2.9 s (in line with the reload pass); resonance 30 dmg at most every 5 s; loses to rushes, beats giants and kings |
+| Shadow Summoner (`jj_shadow`) | **420** | 120 | summoner | +0.08 | −0.04 | two wolves (90 hp, 20 per bite) for 11 s, 4 s between summons; polarised: +0.85…+1.0 vs giants and kings, −0.86 vs gunslingers |
+| Cursed Speaker (`jj_speaker`) | **200** | 105 | support | −0.57 | +0.02 | knock-down cone every 7 s; alone it stalls (13 of 54 battles hit the time cap) |
+| Blindfolded Sorcerer (`jj_sorcerer`) | **1450** | 460 | hero | −0.01 | | infinity 6 s on / 3 s off; orb 110 dmg every 5.5 s; beats ranged (+0.45…+0.79), loses to giants and kings |
+| Four-Armed King (`jj_king`) | **2800** | 2000 | boss | +0.07 | | 4 cuts of 50 per 1.4 s within 6.5 m; domain (r 8 m, 4 s, 12 per 0.4 s tick, allies take half) every 14 s once 4+ enemies are close; beats blobs, loses to knights and the mixed army |
+
+Every one is within ±0.10 of even (standard error about ±0.05; the elites are lumpier).
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jj_spirit,jj_brawler,jj_nail,jj_shadow,jj_speaker,jj_sorcerer,jj_king,squire+jj_speaker@0.25,squire+jj_shadow@0.25 --runs 6 --procs 4 --out /tmp/jj.jsonl
+    node battles/dev/balance/report.mjs /tmp/jj.jsonl
+
+## New units (Tribal, Farmer, Legacy, Viking, Ancient, Dynasty, Wild West)
+
+Fourteen units, so each of these factions has at least seven. Each was priced with the
+harness against the reference panel at equal gold (`run.mjs --runs 6`, 54 battles per
+unit). The Volva is support, so she is scored inside a Squire line with a quarter of
+the gold. The new ranged units follow the reload pass above: slow cooldowns, they lose
+to cheap melee rushes and beat giants and kings. Code: `src/packs/classic.js` (the
+core factions) and each pack faction's own file.
+
+| unit | faction | cost | gimmick | score | notes |
+|---|---|---:|---|---:|---|
+| Stoner (`tb_stoner`) | tribal | 105 | cheap stones; a head hit dazes | −0.08 | +0.36 at 80; cooldown 2.8 → 3.0 |
+| Bone Mage (`tb_bone_mage`) | tribal | 300 | a rune ring marks the spot, then bone spikes erupt and toss enemies up | −0.00 | +0.12 at 270 |
+| Scarecrow (`fm_scarecrow`) | farmer | 105 | homing crows peck at the face: the target panics and runs, then is steady for 4 s | +0.01 | +1.00 vs Knight and King before the fear had a cooldown; −0.26 at 130 after; fear 2.6 → 3.0 s |
+| Harvester (`fm_harvester`) | farmer | 200 | the scythe sweeps a wide arc in front and trips up to six enemies | −0.06 | |
+| Wheelbarrow (`fm_wheelbarrow`) | farmer | 320 | never stops: the barrow shoves the enemy line along, knocks it over and catches shots from the front | +0.04 | +0.39 at 230 (knock 1.0 → 0.6 s, front guard 75% → 60%) |
+| Peasant (`lg_peasant`) | legacy | 30 | bold (inspired) with 3+ allies close, runs when left alone next to an enemy | −0.01 | |
+| Poacher (`lg_poacher`) | legacy | 120 | bolas tangle the legs (a shuffle for 3 s); a running target trips | −0.09 | |
+| Barbarian (`lg_barbarian`) | legacy | 280 | grabs the enemy in front and hurls it at the next one | −0.10 | −0.26 at 330; can't lift giants (−0.87 vs Giant) |
+| Raider (`vk_raider`) | viking | 125 | two throwing axes on the way in, then a hand axe | −0.03 | −0.17 at 140 |
+| Volva (`vk_volva`) | viking | 115 | a rune ward on every ally within 6 m soaks up 65 damage for 7 s | −0.12 in line | −0.20 at 150 with a 45 ward |
+| Gladiator (`an_gladiator`) | ancient | 200 | every kill heals 25% and adds damage, swing speed and pace (up to 5 kills) | −0.00 | +0.22 at 170 |
+| Ninja (`dy_ninja`) | dynasty | 110 | flips over its target and lands behind it; backstabs hit 2.5x | −0.06 | −0.32 at 130 with 115 hp; hp → 130 |
+| Quick Draw (`ww_quickdraw`) | wildwest | 190 | duels the most expensive enemy shooter in range first; one aimed shot, 2.5x on the head | +0.03 | |
+| Miner (`ww_miner`) | wildwest | 125 | the pick ignores armour and hooks shields out of their bearers' hands (60%) | −0.08 | −0.33 at 150 with 150 hp; hp → 160 |
+
+Against single opponents (−1 to +1, same runs): the Wheelbarrow flattens melee blobs
+(+0.81 vs Squires) but loses to guns and the King. The Quick Draw, Stoner, Scarecrow and
+Poacher beat Giants and Knights and lose to Clubber and Squire rushes (−0.4 to −0.8),
+like the other ranged units. The Barbarian, Harvester and Peasant beat cheap melee and
+lose to the elites. To re-run:
+
+    node battles/dev/balance/run.mjs --units tb_stoner,tb_bone_mage,fm_scarecrow,fm_harvester,fm_wheelbarrow,lg_peasant,lg_poacher,lg_barbarian,vk_raider,an_gladiator,dy_ninja,ww_quickdraw,ww_miner,squire+vk_volva@0.25 --runs 6 --out /tmp/new.jsonl
+    node battles/dev/balance/report.mjs /tmp/new.jsonl --sort
+
+## Galactic faction (new units)
+
+The seven Galactic units (`src/packs/galactic.js`) were priced with the same harness:
+alone against the reference panel, 6 battles per pairing (54 per unit), sides swapped
+every run. The first prices were guesses; each round changed only the numbers below
+(plus the Walker's stomp, see its row).
+
+| unit | cost | first try | final | other changes | notes |
+|---|---:|---:|---:|---|---|
+| Battle Droid (`ga_droid`) | 45 → **55** | +0.20 | +0.04 |  | cheap swarm; loses to melee rushes (−0.4), shreds giants and kings |
+| Blaster Trooper (`ga_trooper`) | 130 → **175** | +0.56 | −0.05 | damage 21→17, reload 3.6→4.4 | bursts of 5 bolts with a big spread; kept just under par after the ranged reload pass |
+| Laser Knight (`ga_knight`) | 300 | +0.03 | +0.03 |  | beats archers (+0.65) and gunslingers (+0.55) by deflecting; about even with melee |
+| Space Furball (`ga_furball`) | 340 → **520** | +0.55 | +0.08 | hp 520→480 | heavy knockback bolts and swats knock whole ranks over |
+| Jetpack Hunter (`ga_hunter`) | 420 → **570** | +0.44 | +0.01 | wrist rocket 60→50 | hovering out of reach made it strong against melee elites |
+| Dark Lord (`ga_lord`) | 1400 → **1500** | +0.13 | +0.05 |  | push and choke wreck melee crowds (+0.57 vs clubbers); weak to gunslingers (−0.32) |
+| Walker (`ga_walker`) | 2600 | −0.48 | +0.10 | behaviour: stomp | without a stomp, anything under its legs was safe from the cannons; now the nearest leg stomps (60 dmg, 2.2 m) |
+
+Final scores by opponent (`report.mjs`):
+
+| unit | clubber | squire | archer | knight | chieftain | gunslinger | giant | king | mix | avg |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Battle Droid | −0.40 | −0.45 | +0.24 | −0.38 | −0.47 | +0.46 | +0.83 | +0.47 | +0.10 | +0.04 |
+| Blaster Trooper | −0.46 | −0.59 | −0.28 | +0.21 | −0.01 | +0.25 | +0.95 | −0.00 | −0.49 | −0.05 |
+| Laser Knight | −0.21 | −0.30 | +0.65 | −0.25 | −0.12 | +0.55 | +0.10 | +0.08 | −0.26 | +0.03 |
+| Space Furball | −0.60 | −0.40 | −0.21 | +0.36 | +0.52 | −0.05 | +0.75 | +0.03 | +0.27 | +0.08 |
+| Jetpack Hunter | −0.23 | −0.30 | −0.23 | −0.21 | +0.07 | −0.04 | +0.70 | +0.64 | −0.33 | +0.01 |
+| Dark Lord | +0.57 | +0.20 | +0.11 | +0.04 | +0.09 | −0.32 | −0.04 | −0.24 | +0.02 | +0.05 |
+| Walker | +0.28 | +0.31 | +0.04 | +0.01 | −0.54 | +0.50 | −0.47 | +0.45 | +0.27 | +0.10 |
+
+All seven sit between −0.05 and +0.10. The shooters follow the roster's pattern (they
+lose to cheap melee rushes and beat big slow units). The Walker loses to Chieftains and
+Giants, which reach its belly and outlast the stomps. Its pairings and the Dark Lord's
+are noisy (1–3 units a side, a few 9–12% gold gaps against the King). Only the
+Walker's hull hp is scored (it is mirrored on its hidden pilot), so it is measured
+like the other beasts.
+
+    node battles/dev/balance/run.mjs --units ga_droid,ga_trooper,ga_knight,ga_furball,ga_hunter,ga_lord,ga_walker --runs 6 --procs 4 --out /tmp/galactic.jsonl
+    node battles/dev/balance/report.mjs /tmp/galactic.jsonl
+
+## New units: Spooky, Pirate, Renaissance, Prehistoric, Good, Evil, Secret
+
+Eleven units bring these factions to seven each. Each was priced with `run.mjs` (4 runs
+per pairing, equal gold, the reference panel above) after the ranged reload pass.
+Support, bomber and control units are also scored in line (inside a Squire frontline,
+50% of the gold; the Flag Bearer 25%). Final scores (+1 flawless win, −1 flawless loss):
+
+| unit | faction | cost | alone | in line | other changes while pricing | notes |
+|---|---|---:|---:|---:|---|---|
+| Ghost (`sp_ghost`) | spooky | 150 → **115** | +0.02 |  |  | shots, bites and blasts do 25% (no blood, no push); its touch makes enemies flee. Beats archers, guns, knights and kings; loses to cheap melee and giants |
+| Swordcaster (`sp_swordcaster`) | spooky | **300** | +0.01 |  |  | three ghost swords that pierce up to 4 in a line; strong vs giants, weak vs squire walls |
+| Powder Monkey (`pi_monkey`) | pirate | 130 → **200** | +0.00 | +0.13 | keg damage 130 → 100 | wrecks melee blobs, helpless vs gunslingers; like the Mammoth, its cost alone barely moved it (+0.29 at 130, +0.15 at 210) |
+| Jouster (`rn_jouster`) | renaissance | 700 → **950** | +0.09 |  |  | shielded lancer that rides down the most valuable enemy |
+| Triceratops (`pr_triceratops`) | prehistoric | **1300** | +0.01 |  |  | charges and tosses groups; loses to knights, chieftains and giants |
+| Tar Slinger (`pr_tar`) | prehistoric | 110 → **85** |  | −0.01 | splash and a 6 dps scald added | area slow; alone it loses (−0.58 at 110), judged in line like the throwers |
+| Divine Archer (`gd_divine_archer`) | good | 170 → **150** | −0.00 |  |  | homing arrows (turn 2 rad/s); reload in line with the slowed archers |
+| Flag Bearer (`gd_flag_bearer`) | good | **150** |  | +0.05 |  | allies within 8 m take a third less damage (not a killing blow); bearers don't stack |
+| Void Monarch (`ev_void_monarch`) | evil | 1400 → **1800** | −0.09 |  | implode 150 → 60, tick damage 16 → 8, cooldown 5 → 6 | at first one rift killed a whole Squire army (+0.65); still crushes blobs (+0.7 to +0.85) and loses to elites, guns and the mixed army |
+| Shadow Assassin (`ev_shadow`) | evil | 220 → **170** | −0.03 |  | hp 150 → 170 | blinks behind shooters and healers: +0.9 vs archers, loses to giants |
+| Bubble Blower (`sc_bubble`) | secret | 180 → **100** | −0.22 | −0.02 | cooldown 3.2 → 2.8 | control unit (floats one small enemy for 3 s); fair in line, a little weak alone |
+
+Re-run:
+
+    node battles/dev/balance/run.mjs --runs 4 --out /tmp/new.jsonl --units sp_ghost,sp_swordcaster,pi_monkey,rn_jouster,pr_triceratops,gd_divine_archer,ev_void_monarch,ev_shadow,sc_bubble,squire+pr_tar,squire+gd_flag_bearer@0.25,squire+sc_bubble,squire+pi_monkey

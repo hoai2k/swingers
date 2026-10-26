@@ -1018,11 +1018,12 @@ export function buildUnitVisual(def, team, opts = {}) {
     }
     root.userData.ghostMat = gm;
   }
+  if (STYLE === 'chibi') parts[PART.head].scale.setScalar(1.3); // (the look only: the head's collider is unchanged)
   const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id, def) };
   // each part's baked mesh, for the distant stand-ins (setFar)
   if (!opts.noBake && !opts.ghost && !opts.portrait) {
     vis.lod = [];
-    parts.forEach((g, i) => { const m = g.children.find((o) => o.isMesh && o.material === BAKED); if (m) vis.lod.push({ m, hi: m.geometry, part: skel.parts[i] }); });
+    parts.forEach((g, i) => { const m = g.children.find((o) => o.isMesh && o.material === bakedMat()); if (m) vis.lod.push({ m, hi: m.geometry, part: skel.parts[i] }); });
   }
   if (!opts.ghost && !opts.portrait) LIVE_VIS.add(vis);
   return vis;
@@ -1065,6 +1066,48 @@ BAKED.onBeforeCompile = (sh) => {
       #include <opaque_fragment>`);
 };
 BAKED.customProgramCacheKey = () => 'wobbly-baked';
+
+// Look styles, to compare (dev/lineup.html?style=…); the game uses 'classic'.
+// Every style keeps the baked vertex colours and the per-vertex glow (fx.y).
+export const UNIT_STYLES = ['classic', 'toon', 'clay', 'vinyl', 'lowpoly', 'chibi'];
+let STYLE = 'classic';
+export function setUnitStyle(s) { STYLE = UNIT_STYLES.includes(s) ? s : 'classic'; }
+const fxPatch = (m, key, rim) => {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec2 fx;\nvarying vec2 vFx;')
+      .replace('#include <color_vertex>', '#include <color_vertex>\nvFx = fx;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vFx;')
+      .replace('#include <opaque_fragment>', `{ ${rim ? `float rim = 1.0 - saturate(dot(normal, normalize(vViewPosition)));
+        outgoingLight += diffuseColor.rgb * pow(rim, 3.0) * ${rim.toFixed(2)};` : ''}
+        outgoingLight = mix(outgoingLight, diffuseColor.rgb * 1.25, vFx.y); }
+        #include <opaque_fragment>`);
+  };
+  m.customProgramCacheKey = () => 'wobbly-' + key;
+  return m;
+};
+const STYLE_MATS = {};
+function bakedMat() {
+  if (STYLE === 'classic') return BAKED;
+  if (STYLE_MATS[STYLE]) return STYLE_MATS[STYLE];
+  let m;
+  if (STYLE === 'toon' || STYLE === 'chibi') {
+    // three flat bands of light
+    const tex = new THREE.DataTexture(new Uint8Array([110, 110, 110, 255, 200, 200, 200, 255, 255, 255, 255, 255]), 3, 1);
+    tex.minFilter = tex.magFilter = THREE.NearestFilter; tex.needsUpdate = true;
+    m = fxPatch(new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: tex }), 'toon', 0.18);
+  } else if (STYLE === 'clay') m = fxPatch(new THREE.MeshLambertMaterial({ vertexColors: true }), 'clay', 0.12);
+  else if (STYLE === 'vinyl') m = fxPatch(new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12, sheen: 0.2 }), 'vinyl', 0.22);
+  else if (STYLE === 'lowpoly') m = fxPatch(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }), 'lowpoly', 0);
+  return (STYLE_MATS[STYLE] = m);
+}
+// toon styles: a dark ink outline (an inverted hull pushed out along the normals)
+const OUTLINE = new THREE.MeshBasicMaterial({ color: '#1b1626', side: THREE.BackSide });
+OUTLINE.onBeforeCompile = (sh) => {
+  sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed += normalize(normal) * 0.03;');
+};
+OUTLINE.customProgramCacheKey = () => 'wobbly-outline';
 
 const BAKE_SHARE = new WeakMap(); // def -> "team|scale" -> part key -> merged geometry
 function isDesc(o, anc) { for (let p = o; p; p = p.parent) if (p === anc) return true; return false; }
@@ -1126,10 +1169,11 @@ function bake(node, frame, filter = () => true, shared = null, key = '') {
   addBaked(node, geo);
 }
 function addBaked(node, geo) {
-  const merged = new THREE.Mesh(geo, BAKED);
+  const merged = new THREE.Mesh(geo, bakedMat());
   merged.castShadow = true;
   merged.receiveShadow = true;
   node.add(merged);
+  if (STYLE === 'toon' || STYLE === 'chibi') { const o = new THREE.Mesh(geo, OUTLINE); o.castShadow = false; merged.add(o); }
   // drop now-empty groups
   node.traverse((o) => { if (o !== node && o.isGroup && !o.children.length) o.userData.empty = true; });
 }

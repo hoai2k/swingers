@@ -6,9 +6,12 @@
 //   expr=n           expression for all (default cycles)  ghost=1 render as placement ghosts
 //   faces=1          draw the face atlas (all variants x expressions) instead
 //   only=id,id       just these units                    w,h   canvas size
+//   style=toon|clay|vinyl|lowpoly|chibi   look style to compare (default: the game's 'classic')
 import { THREE } from '../src/util.js';
 import { UNITS } from '../src/units.js';
-import { buildUnitVisual, poseVisual, setExpression, initFaces, FACE_MATS, TEAM_COLORS } from '../src/visual.js';
+import { buildUnitVisual, poseVisual, setExpression, initFaces, FACE_MATS, TEAM_COLORS, setUnitStyle } from '../src/visual.js';
+if (q0().get('style')) setUnitStyle(q0().get('style'));
+function q0() { return new URLSearchParams(location.search); }
 const q = new URLSearchParams(location.search);
 const W = +(q.get('w') || 1600), H = +(q.get('h') || 800);
 if (q.get('faces')) {

@@ -1,13 +1,17 @@
 // Prehistoric: Caveman (a big bone club), Velociraptor (fast pack hunter: leaps on its
 // prey, pins it down and bites), Raptor Rider (a caveman on a running raptor that bites
 // too), Pterodactyl (flies, swoops, carries small units up and drops them) and T-Rex
-// (huge: bites, shakes and throws units; its roar sends nearby enemies running).
+// (huge: bites, shakes and throws units; its roar sends nearby enemies running),
+// Triceratops (charges horns-first and tosses whole groups into the air) and Tar
+// Slinger (lobs pots of tar: the sticky pools they leave bog enemies down).
+// Tar pools are battle.stuck markers at fixed spots, so replays show them.
 // The beasts use bc-core.js (a rigid body with kinematic legs/head/tail and a hidden
 // pilot ragdoll); the raptor rider uses the mount code of sm-mounts.js.
 import { register } from '../ext.js';
 import { makeSkeleton } from '../body.js';
 import { GUARD } from '../pose.js';
-import { THREE, clamp, rand, PART, EXPR } from './common.js';
+import { THREE, clamp, rand, PART, EXPR, sweepParts, slowBeast } from './common.js';
+import { markAt } from './ges-core.js';
 import {
   V, V3, Q4, BC, beastLayout, beastInit, beastUnitStep, beastHit, beastDie, animLegs, setRot, partPoint, footfalls,
   nearestEnemy, countEnemies, heightOf, trampleBeast, onFoot, small, carry, trackFall, fling, quake, inField, holdUpright,
@@ -192,6 +196,204 @@ function raptorAct(b, m, dt) {
     if (m.biteCd <= 0) bite(b, m, v, 1);
     return;
   }
+}
+
+// ======================================================================= Triceratops
+const TRI = {
+  torso: V(0, 1.45, 0), r: 0.85, hh: 1.0, mass: 3000, cols: [{ at: V(0, 0.1, 1.8), r: 0.6, mass: 200 }],
+  H0: 1.45, speed: 5.0, accel: 6, turn: 1.3, turnSlow: 0.6, grip: 9, alpha: 5, stride: 2.6, legAmp: 0.5, bob: 0.06, getUp: 2.5,
+  seg: [V(0, 0, -1.4), V(0, 0.1, 2.1)], segR: 1.0, combatR: 1.3, pitch: 0.55, shoveK: 0.5, blastK: 0.6,
+  charge: 10.5, horn: [1.9, 3.6], hornW: 1.3,
+  torsoMesh: M.triTorso,
+  parts: [
+    { at: V(0.55, -0.35, 0.8), parent: -1, leg: 0, len: 1.1, front: true, mesh: (H, t) => M.triLeg(H, t, true) },
+    { at: V(-0.55, -0.35, 0.8), parent: -1, leg: PI, len: 1.1, front: true, mesh: (H, t) => M.triLeg(H, t, true) },
+    { at: V(0.55, -0.35, -0.85), parent: -1, leg: PI, len: 1.1, mesh: (H, t) => M.triLeg(H, t, false) },
+    { at: V(-0.55, -0.35, -0.85), parent: -1, leg: 0, len: 1.1, mesh: (H, t) => M.triLeg(H, t, false) },
+    { at: V(0, 0.15, 1.45), parent: -1, mesh: M.triHead },
+    { at: V(0, 0.1, -1.45), parent: -1, mesh: (H, t) => M.triTail(H, t, 0) },
+    { at: V(0, -0.12, -0.95), parent: 5, mesh: (H, t) => M.triTail(H, t, 1) },
+  ],
+};
+const TRI_HEAD = 4;
+function triAnim(b, m) {
+  const P = m.parts, t = m.t;
+  animLegs(m, m.state === 'charge' ? 1.3 : 1);
+  const sw = Math.sin(m.phase) * 0.15;
+  if (!m.alive) { setRot(P[TRI_HEAD].q, 0.45, 0.3); setRot(P[5].q, -0.1, 0.3); setRot(P[6].q, 0, 0.3); return; }
+  let hp = Math.sin(m.phase * 2) * 0.04, hy = -sw * 0.3;
+  if (m.state === 'charge') hp = 0.32 + Math.sin(m.phase * 2) * 0.05; // head down, horns levelled
+  else if (m.state === 'gore') {
+    // dip, then toss the head up and to the side
+    hp = t < 0.3 ? 0.4 * (t / 0.3) : t < 0.5 ? 0.4 - 1.0 * ((t - 0.3) / 0.2) : -0.6 * Math.max(0, 1 - (t - 0.5) / 0.4);
+    hy = m.goreSd * (t < 0.3 ? 0 : 0.35 * Math.max(0, 1 - Math.abs(t - 0.45) / 0.35));
+  }
+  setRot(P[TRI_HEAD].q, hp, hy);
+  setRot(P[5].q, -0.05, sw * 0.7);
+  setRot(P[6].q, -0.05, sw * 1.2);
+}
+function triThink(u, dt, ctx) {
+  const m = u.bc, b = u.battle, p = m.torso.pos;
+  m.thinkT = b.time;
+  const t = nearestEnemy(b, u.team, p, (o) => heightOf(b, o) < 3) || ctx.t;
+  u.expr = EXPR.angry;
+  const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz);
+  const yaw = yawOf(m.torso.quat), bear = angleDiff(yaw, Math.atan2(dx, dz));
+  if (m.state === 'charge') {
+    // locked on: only small corrections, flat out
+    m.goalYaw = inField(p, yaw + clamp(bear, -0.25, 0.25));
+    m.goalSpeed = TRI.charge;
+    return t;
+  }
+  m.goalYaw = inField(p, Math.atan2(dx, dz));
+  const near = d - t.skel.radius;
+  m.goalSpeed = m.state === 'gore' ? 0.5 : near < 1.6 ? -1.5 : Math.abs(bear) > 1.0 ? 1.2 : TRI.speed * (near < 4 ? 0.5 : 1);
+  if (m.state === 'walk' && m.chargeCd <= 0 && near > 5 && near < 18 && Math.abs(bear) < 0.3 && !m.fallen) startCharge(b, m);
+  return t;
+}
+function startCharge(b, m) {
+  m.state = 'charge'; m.t = 0; m.gored = new Set();
+  b.sound('horn', m.torso.pos, 0.7, 0.5);
+  b.voice(m.u, 'cry', true);
+}
+// who is on the horns: ahead of the body, from the ground up to its back
+function hornZone(b, m, fn) {
+  const u = m.u, p = m.torso.pos, yw = yawOf(m.torso.quat), fx = Math.sin(yw), fz = Math.cos(yw);
+  const [a0, a1] = TRI.horn;
+  b.grid.query(p.x + fx * (a0 + a1) / 2, p.z + fz * (a0 + a1) / 2, 4, (o) => {
+    if (!o.alive || o.team === u.team || o.pos.y > p.y + 1.2) return;
+    const dx = o.pos.x - p.x, dz = o.pos.z - p.z, along = dx * fx + dz * fz, side = dx * fz - dz * fx;
+    const r = o.bc ? o.skel.radius : o.sm && o.sm.big ? o.sm.big.r : o.skel.radius;
+    if (along < a0 - r || along > a1 + r || Math.abs(side) > TRI.hornW + r) return;
+    fn(o, side, fx, fz);
+  });
+}
+// tossed on the horns: up and over to the side (big units are only knocked about)
+function toss(b, m, o, side, fx, fz, dmg, up) {
+  const u = m.u, sd = side >= 0 ? 1 : -1, lx = fz * sd, lz = -fx * sd;
+  o.hit(dmg, PART.chest, 0, 0, 0, u, 'horn');
+  if (small(o, 1.7)) {
+    fling(o, fx * 4 + lx * 3, up, fz * 4 + lz * 3, 1.8);
+    trackFall(b, o, u, 9);
+    if (Math.random() < 0.4) b.voice(o, 'scream', true);
+  } else if (o.sm && o.sm.big && o.sm.big.alive) {
+    hurtBig(b, o.sm.big, dmg * 0.6, u);
+    shoveBig(o.sm.big, fx * o.sm.big.mass * 2.5, o.sm.big.mass * 2.5, fz * o.sm.big.mass * 2.5, o.sm.big.A, 5);
+  } else if (!o.bc) fling(o, fx * 3, 2, fz * 3, 1.0);
+  const c = o.chestPos;
+  b.emit('blood', c.x, c.y, c.z, 6, fx, fz);
+  b.sound('crunch', c, 0.9, 0.8);
+}
+function triAct(b, m, dt) {
+  const u = m.u, w = u.def.weapon, p = m.torso.pos;
+  m.t += dt;
+  m.chargeCd = (m.chargeCd ?? rand(0.5, 1.5)) - dt;
+  m.goreCd = (m.goreCd ?? 0) - dt;
+  footfalls(m, (i, at) => {
+    const gy = b.terrain.height(at.x, at.z);
+    b.emit('dust', at.x, gy, at.z, m.state === 'charge' ? 2 : 1);
+    if (i % 2 === 0) b.sound('thump', at, m.state === 'charge' ? 0.6 : 0.35, 0.6);
+  });
+  if (Math.abs(m.vf) > 1) trampleBeast(b, m, 1.0, 18);
+  if (m.state === 'idle') m.state = 'walk';
+  if (m.state === 'charge') {
+    // everyone on the horns while it runs is gored once per charge, harder the faster it goes
+    const k = clamp(m.vf / TRI.charge, 0.35, 1.1);
+    if (m.vf > 3) hornZone(b, m, (o, side, fx, fz) => {
+      if (m.gored.has(o)) return;
+      m.gored.add(o);
+      toss(b, m, o, side, fx, fz, w.charge * k, 5 + 4 * k);
+      shoveBig(m.big, -fx * TRI.mass * 0.25, 0, -fz * TRI.mass * 0.25, p, 1); // each one slows it a little
+    });
+    // the charge ends after a few seconds, or when it is stopped
+    if (m.t > 2.6 || (m.t > 0.9 && m.vf < 2.5) || m.fallen) { m.state = 'walk'; m.t = 0; m.chargeCd = rand(3, 4); }
+    return;
+  }
+  if (m.state === 'gore') {
+    if (m.t - dt < 0.4 && m.t >= 0.4) {
+      hornZone(b, m, (o, side, fx, fz) => toss(b, m, o, m.goreSd, fx, fz, w.damage, 5.5));
+      partPoint(m, TRI_HEAD, 0, 0, 1.0, _a);
+      for (const g of S(b).bigs) { // horns also flip carts and horses
+        if (!g.alive || g.team === u.team || g.u === u) continue;
+        closestOnSeg(g.A, g.B, _a, _b);
+        if (_b.distanceTo(_a) > g.r + 1.4) continue;
+        hurtBig(b, g, w.damage, u);
+        shoveBig(g, (_b.x - p.x) * g.mass * 0.5, g.mass * 3, (_b.z - p.z) * g.mass * 0.5, _b, 5);
+      }
+      b.sound('whoosh', p, 0.9, 0.5);
+    }
+    if (m.t > 0.95) { m.state = 'walk'; m.t = 0; m.goreCd = rand(0.9, 1.3); }
+    return;
+  }
+  // walking: gore whoever is on the horns
+  if (m.goreCd <= 0) {
+    let any = null;
+    hornZone(b, m, (o, side) => { any = any || { side }; });
+    if (any) { m.state = 'gore'; m.t = 0; m.goreSd = any.side >= 0 ? 1 : -1; }
+  }
+}
+TRI.init = (m) => { m.state = 'walk'; };
+Object.assign(TRI, { anim: triAnim, act: triAct, command: (b, m) => { if (m.state === 'walk' && m.chargeCd <= 0) startCharge(b, m); } });
+
+// ======================================================================= Tar Slinger
+// A pot of hot tar: it splashes those close by, and leaves a sticky pool where it lands.
+// Enemies wading through a pool are scalded and bogged down (feet drag, slower swings;
+// beasts and horses slow down).
+const TAR = { R: 1.9, life: 7, max: 40, dps: 6 };
+const tarPools = (b) => (b._prTar ??= []);
+function tarSplat(b, pr, x, z, v = null) {
+  const gy = b.terrain.height(x, z);
+  // hot tar splashes everyone close to where it lands
+  b.grid.query(x, z, 3, (o) => {
+    if (!o.alive || o.team === pr.team || (o !== v && (o.pos.x - x) ** 2 + (o.pos.z - z) ** 2 > 1.5 * 1.5)) return;
+    o.hit(pr.damage * (o === v ? 1 : 0.6), PART.chest, 0, 0, 0, pr.owner, 'tar');
+  });
+  b.emit('dust', x, gy, z, 1);
+  b.sound('thud', pr.pos, 0.5, 0.6);
+  const list = tarPools(b);
+  if (list.length >= TAR.max) list.shift().mark.t = 0;
+  list.push({ x, z, t: TAR.life, team: pr.team, owner: pr.owner, mark: markAt(b, 'pr_tarpool', new V3(x, gy + 0.03, z), TAR.life) });
+}
+const tarPot = {
+  g: 9.81, len: 0, r: 0.14, life: 6,
+  step(b, pr) { const h = sweepParts(b, pr, 0.15); if (h) { tarSplat(b, pr, h.v.pos.x, h.v.pos.z, h.v); pr.life = -1; } },
+  hit(b, pr, v) { tarSplat(b, pr, v.pos.x, v.pos.z, v); return true; },
+  ground(b, pr) { tarSplat(b, pr, pr.pos.x, pr.pos.z); return true; },
+};
+function stepTar(b, dt) {
+  const list = b._prTar, seen = new Set();
+  for (let i = list.length - 1; i >= 0; i--) {
+    const pool = list[i];
+    pool.t -= dt;
+    if (pool.t <= 0) { list.splice(i, 1); continue; }
+    b.grid.query(pool.x, pool.z, TAR.R + 1, (v) => {
+      if (!v.alive || v.team === pool.team || seen.has(v)) return;
+      if ((v.pos.x - pool.x) ** 2 + (v.pos.z - pool.z) ** 2 > (TAR.R + v.skel.radius * 0.5) ** 2) return;
+      if (v.pos.y - b.terrain.height(v.pos.x, v.pos.z) > v.skel.standHeight * 1.4 + 0.3) return; // flyers and the airborne
+      seen.add(v);
+      if (slowBeast(v, 0.4)) return;
+      if (v.sm && v.sm.mounted) {
+        const mv = v.sm.torso.body.linvel(), k = 1 - 2 * dt;
+        v.sm.torso.body.setLinvel({ x: mv.x * k, y: mv.y, z: mv.z * k }, true);
+        return;
+      }
+      const v0 = v.rag.vel[PART.pelvis];
+      v.rag.impulseAll(-v0.x * v.M * 0.2, 0, -v0.z * v.M * 0.2);
+      v.cooldown += dt * 0.4;
+      // and it scalds (a tick every half second)
+      v.prTarT = (v.prTarT || 0) + dt;
+      if (v.prTarT > 0.5) { v.prTarT = 0; v.hit(TAR.dps * 0.5, PART.pelvis, 0, 0, 0, pool.owner && pool.owner.alive ? pool.owner : null, 'tar'); }
+      if (Math.random() < dt * 1.5) b.emit('dust', v.pos.x, b.terrain.height(v.pos.x, v.pos.z), v.pos.z, 0.5);
+    });
+  }
+}
+// a clay pot brimming with tar, held in the hand
+function tarPotMesh(H, g, s) {
+  const clay = H.mat('#a8643a', { spec: 0.1 }), tar = H.mat('#15110e', { spec: 1.0 });
+  H.mesh(H.sphere(0.13 * s, 12, 10), clay, 0, 0.02 * s, 0, g).scale.set(1, 0.85, 1);
+  H.mesh(H.cyl(0.08 * s, 0.1 * s, 0.06 * s, 10), clay, 0, 0.13 * s, 0, g);
+  H.mesh(H.cyl(0.075 * s, 0.075 * s, 0.02 * s, 10), tar, 0, 0.16 * s, 0, g);
+  for (let i = 0; i < 3; i++) H.mesh(H.capsule(0.018 * s, 0.07 * s), tar, Math.cos(i * 2.1) * 0.1 * s, 0.07 * s, Math.sin(i * 2.1) * 0.1 * s, g).castShadow = false;
 }
 
 // ======================================================================= Raptor Rider
@@ -652,9 +854,25 @@ const units = [
     personality: { aggro: 1, bravery: 0, voice: 0.35, chatter: 0.4, cry: 'roar', idle: 'thump' },
     desc: 'The king of the lizards. Bites, shakes and throws; its roar sends armies running.',
   },
+  {
+    id: 'pr_triceratops', name: 'Triceratops', faction: 'prehistoric', cost: 1300, hp: 2600, speed: 5.0,
+    build: { scale: 1, radius: 2.0 },
+    weapon: { line: 'Beast · charges horns-first and tosses whole groups into the air', kind: 'pr_tri', style: 'none', anim: 'punch', item: 'none', damage: 70, charge: 110, reach: 2, cooldown: 2, force: 400 },
+    look: { skin: M.TRI_C.skin, hat: 'none', top: 'none', legs: M.TRI_C.skin },
+    personality: { aggro: 1, bravery: 0, voice: 0.45, chatter: 0.4, cry: 'roar', idle: 'thump' },
+    desc: 'Three horns and a bad temper. Lowers its head and charges straight through.',
+  },
+  {
+    id: 'pr_tar', name: 'Tar Slinger', faction: 'prehistoric', cost: 85, hp: 85, speed: 4.4,
+    build: { scale: 0.96, girth: 1.05, head: 1.05 },
+    weapon: { line: 'Ranged · pots of tar leave sticky pools that bog enemies down', kind: 'ranged', style: 'throw', anim: 'throw', item: 'pr_tarpot', proj: 'pr_tarpot', speed: 13, arc: 'high', range: 21, minRange: 5, cooldown: 3.6, damage: 16, force: 60, spread: 0.07, releaseAt: 0.7, windup: 0.9 },
+    look: { skin: '#cf9a72', hat: 'pr_tarcap', top: 'fur', legs: '#4a3a2a', bare: true, beard: '#2a2018', brow: true },
+    personality: { aggro: 0.35, bravery: 0.25, voice: 1.0, chatter: 0.9, cry: 'ooga', idle: 'shake' },
+    desc: 'Throws pots of hot tar. Whatever steps in it gets stuck.',
+  },
 ];
 const DEF = Object.fromEntries(units.map((d) => [d.id, d]));
-const BEAST_CFG = { pr_raptor: RAPTOR, pr_ptero: PTERO, pr_trex: REX };
+const BEAST_CFG = { pr_raptor: RAPTOR, pr_ptero: PTERO, pr_trex: REX, pr_triceratops: TRI };
 Object.assign(RAPTOR, { anim: raptorAnim, act: raptorAct, command: (b, m) => { const t = m.prey && m.prey.alive ? m.prey : nearestEnemy(b, m.u.team, m.torso.pos); if (m.leapCd <= 0 && m.state === 'run' && t) leap(b, m, t); } });
 Object.assign(PTERO, { anim: pteroAnim, act: pteroAct, onDie: pteroDie });
 Object.assign(REX, { anim: rexAnim, act: rexAct, onDie: rexDie, command: (b, m) => { if (m.state === 'walk') { m.state = 'bite'; m.t = 0; m.held = null; m.throwSd = 1; m.biteYaw = 0; } } });
@@ -668,21 +886,42 @@ const beastKind = (cfg, think) => ({ init: (u) => beastInit(u, cfg), think, step
 register({
   factions: [{ id: 'prehistoric', name: 'Prehistoric', color: '#3daa6e' }],
   units,
-  items: { pr_femur: { len: 1.05, r: 0.1, grip: 25, heavy: true, mass: 2.6 } },
+  items: { pr_femur: { len: 1.05, r: 0.1, grip: 25, heavy: true, mass: 2.6 }, pr_tarpot: { len: 0.0, r: 0.12, grip: 0, mass: 0.8 } },
+  proj: { pr_tarpot: tarPot, pr_tarpool: { g: 0, len: 0, r: 0, life: 1 } },
   kinds: {
     pr_raptor: beastKind(RAPTOR, raptorThink),
     pr_ptero: beastKind(PTERO, pteroThink),
     pr_trex: beastKind(REX, rexThink),
+    pr_tri: beastKind(TRI, triThink),
     pr_rrider: { melee: true, init: riderInit, think: riderThink, step: riderStep, hit: riderHit, die: riderDie },
   },
   buildItem(name, s, team, g, H) {
+    if (name === 'pr_tarpot') { tarPotMesh(H, g, s); return true; }
     if (name !== 'pr_femur') return false;
     M.femur(H, s, g);
     return true;
   },
   buildHat(kind, r, team, g, H) {
+    if (kind === 'pr_tarcap') { // shaggy hair without the bone, tar smeared on the cheeks
+      M.shag(H, r, team, g, false);
+      for (const sd of [-1, 1]) H.mesh(H.sphere(r * 0.14, 8, 6), H.mat('#1c1612', { spec: 0.9 }), sd * r * 0.42, r * 0.05, r * 0.86, g).scale.set(1, 0.5, 0.4);
+      return true;
+    }
     if (kind !== 'pr_shag') return false;
     M.shag(H, r, team, g);
+    return true;
+  },
+  buildProj(type, g, H) {
+    if (type === 'pr_tarpot') { tarPotMesh(H, g, 1); return true; }
+    if (type !== 'pr_tarpool') return false;
+    // a flat, glossy black pool with a few bubbles
+    const tar = H.mat('#15110e', { spec: 1.0 }), hi = H.mat('#3a3028', { spec: 1.0 });
+    H.mesh(H.cyl(TAR.R, TAR.R * 0.95, 0.04, 22), tar, 0, 0, 0, g).castShadow = false;
+    for (let i = 0; i < 5; i++) {
+      const a = i * 1.3, rr = TAR.R * (0.2 + (i % 3) * 0.25);
+      H.mesh(H.cyl(TAR.R * (0.28 - i * 0.03), TAR.R * (0.3 - i * 0.03), 0.06, 12), i % 2 ? hi : tar, Math.cos(a) * rr * 0.6, 0.01, Math.sin(a) * rr * 0.6, g).castShadow = false;
+    }
+    for (let i = 0; i < 4; i++) { const o = H.mesh(H.sphere(0.07 + i * 0.02, 8, 6), tar, Math.cos(i * 2) * TAR.R * 0.5, 0.04, Math.sin(i * 2) * TAR.R * 0.5, g); o.scale.set(1, 0.6, 1); o.castShadow = false; }
     return true;
   },
   decorate(def, team, vis, H) {
@@ -695,5 +934,8 @@ register({
       for (const l of riderLayout()) vis.extraParts.push({ group: l.mesh(H, team), pos: l.pos, quat: l.quat });
     }
   },
-  battleStep(b, dt) { if (b._bc) stepRiders(b, dt); },
+  battleStep(b, dt) {
+    if (b._bc) stepRiders(b, dt);
+    if (b._prTar && b._prTar.length) stepTar(b, dt);
+  },
 });

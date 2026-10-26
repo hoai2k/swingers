@@ -3,15 +3,17 @@
 // pistol; his shout rallies the crew around him), Pirate Queen (rapid volleys from two
 // pistols) and the Cannon: a crewed gun on a wheeled carriage (an extra rigid body, see
 // sm-siege.js) whose cannonballs plough through ranks and bounce on; it recoils, needs
-// its gunner, and can be blown over.
+// its gunner, and can be blown over. The Powder Monkey runs a lit powder keg into the
+// enemy line, drops it and scurries back for another (the keg in his arms is a stuck
+// marker, the dropped keg a projectile, so both show in replays).
 // Shared guns, cannonballs and reels: pr-shared.js.
-import { register } from '../ext.js';
+import { register, EXT } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, addProjectile, sweepParts, strike, stickTo,
-  shieldBlocks, torus, dome, headBand, tcol, tdark, chestShell, hoodGeo,
+  shieldBlocks, blast, newId, torus, dome, headBand, tcol, tdark, chestShell, hoodGeo,
 } from './common.js';
 import { ballisticAngle } from '../util.js';
-import { yawOf, shoveBig, angleDiff, rangedEvent } from './sm-core.js';
+import { yawOf, shoveBig, angleDiff, rangedEvent, setArm } from './sm-core.js';
 import { siegeLayout, siegeInit, siegeThink, siegeControl, siegeCrewDie } from './sm-siege.js';
 import { PROJ as PRP, shoot, addReel, reeling, wheel, barrel, ballMesh } from './pr-shared.js';
 
@@ -126,6 +128,88 @@ function rally(u) {
   }
 }
 
+// Powder Monkey: carries a lit keg in, drops it at the enemy's feet, runs back, and
+// fetches another while hanging back from the fight.
+function holdKeg(u) {
+  const b = u.battle, ch = u.skel.parts[PART.chest];
+  const lp = new V3(0, -ch.hh * 0.6, ch.r * 1.75);
+  u.pmKeg = { type: 'pi_keg_held', unit: u, part: PART.chest, lp, lq: new THREE.Quaternion(), pos: u.chestPos.clone(), quat: new THREE.Quaternion(), t: 9999, id: newId() };
+  b.stuck.push(u.pmKeg);
+}
+function dropKeg(u, fuse) {
+  const b = u.battle, w = u.def.weapon, k = u.pmKeg;
+  if (!k) return;
+  k.t = 0;
+  u.pmKeg = null;
+  const fx = Math.sin(u.heading), fz = Math.cos(u.heading), v0 = u.rag.vel[PART.chest];
+  const at = k.pos.clone();
+  _d.set(v0.x * 0.2 + fx * 1.2, 1.0, v0.z * 0.2 + fz * 1.2);
+  addProjectile(b, 'pi_keg', at, _d, u, { damage: 0, force: 0, life: 8, keg: fuse ?? w.fuse, kegDmg: w.keg, kegBlast: w.blast, kegForce: w.force });
+  b.sound('fire', at, 0.45, 1.6);
+  u.pmLoad = w.reload * rand(0.9, 1.1);
+}
+const monkey = {
+  melee: true,
+  init(u) { u.pmLoad = 0; u.pmRun = 0; holdKeg(u); },
+  think(u, dt, c) {
+    const w = u.def.weapon;
+    const { t, gap, dirx, dirz, spd } = c;
+    if (u.pmRun > 0) { // scurry off before it goes up
+      u.desired.set(-dirx * spd * 1.1, 0, -dirz * spd * 1.1);
+      u.expr = EXPR.scared;
+      return null;
+    }
+    if (!u.pmKeg) { // fetching another: keep out of the fight (fists if caught)
+      if (gap < 1.4) return meleeThink(u, dt, c);
+      u.expr = EXPR.normal;
+      if (gap < w.keep) u.desired.set(-dirx * spd * 0.7, 0, -dirz * spd * 0.7);
+      else if (gap > w.keep + 4) u.desired.set(dirx * spd * 0.5, 0, dirz * spd * 0.5);
+      return t;
+    }
+    u.desired.set(dirx * spd, 0, dirz * spd);
+    u.expr = EXPR.angry;
+    if (gap < w.dropGap && u.stun <= 0 && !u.isDown()) {
+      dropKeg(u);
+      u.pmRun = w.run;
+      if (Math.random() < 0.7) u.battle.voice(u, 'cry', true);
+    }
+    return t;
+  },
+  step(u, dt) {
+    u.pmRun = Math.max(0, u.pmRun - dt);
+    if (!u.pmKeg && u.pmLoad > 0 && (u.pmLoad -= dt) <= 0) { holdKeg(u); u.battle.sound('click', u.pos, 0.5, 0.9); }
+    u.st.piCarry = !!u.pmKeg;
+  },
+  // shot down with a keg in his arms: it drops, still lit
+  die(u) { if (u.pmKeg) dropKeg(u, 0.9); },
+  control(u, dt, c) {
+    if (c.attack && u.pmKeg) { dropKeg(u); return true; }
+    return !!u.pmKeg; // (no punching with a keg in his arms)
+  },
+};
+const CARRY = [0.55, 0.05, -0.75, -1.55];
+EXT.pose.push((st, pose) => {
+  if (st.piCarry && !st.attack && st.mode === 'normal') { setArm(pose, 1, CARRY); setArm(pose, -1, CARRY); }
+});
+// the dropped keg: fizzes on the ground, then blows up (friends get half)
+const keg = {
+  g: 9.81, len: 0, r: 0.22, life: 8,
+  hit: () => false, // it doesn't hurt to be hit by a keg, only when it goes off
+  step(b, pr, dt) {
+    pr.keg -= dt;
+    const gy = b.terrain.height(pr.pos.x, pr.pos.z);
+    if (pr.pos.y - gy < 0.3 && pr.vel.lengthSq() < 1) pr.spin.set(0, 0, 0);
+    pr.fz = (pr.fz || 0) - 1;
+    if (pr.fz <= 0) { pr.fz = 3; b.emit('fuse', pr.pos.x, pr.pos.y + 0.28, pr.pos.z); }
+    if (pr.keg > 0) return;
+    _d.copy(pr.pos); _d.y = Math.max(_d.y, gy + 0.25);
+    blast(b, _d, pr.kegBlast, pr.kegDmg, pr.kegForce, pr.owner, { fx: 0, friendly: 0.5 });
+    b.emit('dust', _d.x, gy, _d.z, 4);
+    b.sound('debris', _d, 0.6, 1.2);
+    pr.life = -1;
+  },
+};
+
 // ------------------------------------------------------------------ projectiles
 // Harpoon: flies like a spear, sticks in whoever it hits and starts the reel.
 function harpoonHit(b, pr, v, part) {
@@ -202,6 +286,14 @@ const units = [
     look: { skin: '#e8b890', hat: 'pi_bandana', top: 'pi_shirt', legs: '#3e3a4a' },
     personality: { aggro: 0.3, bravery: 0, voice: 0.9, chatter: 0.6, cry: 'hey', idle: 'lean' },
     desc: 'Fire in the hole! A cannonball that skips straight through the enemy line.',
+  },
+  {
+    id: 'pi_monkey', name: 'Powder Monkey', faction: 'pirate', cost: 200, hp: 60, speed: 6.4,
+    build: { scale: 0.74, girth: 1.0, head: 1.2, mass: 1.1 },
+    weapon: { line: 'Bomber · drops a lit powder keg in the enemy line, runs, fetches another', kind: 'pi_monkey', style: 'fists', anim: 'punch', item: 'none', damage: 12, keg: 100, blast: 3.4, force: 700, fuse: 1.25, reload: 6, run: 2.0, dropGap: 2.2, keep: 9, reach: 0.9, cooldown: 0.8 },
+    look: { skin: '#e8b890', hat: 'pi_powder', top: 'pi_powder', legs: '#5a4630', bare: true },
+    personality: { aggro: 1, bravery: 0, voice: 1.75, chatter: 1, cry: 'cackle', idle: 'hop' },
+    desc: 'A cabin boy with a powder keg. Drops it, runs, comes back with another.',
   },
 ];
 
@@ -281,6 +373,13 @@ function buildHat(kind, r, team, g, H) {
       mesh(torus(H, r * 0.12, r * 0.03, Math.PI * 2, 10), gold(), r * 0.98, -r * 0.3, 0, g).rotation.y = Math.PI / 2; // earring
       return true;
     }
+    case 'pi_powder': { // a sooty knitted cap pulled down, soot on the cheeks
+      const cap = mesh(dome(H, r * 1.06, 0.5), tc, 0, r * 0.12, -r * 0.04, g); cap.rotation.x = -0.15;
+      headBand(H, r, 0.25, 0.26, td, g, 0.1);
+      mesh(sphere(r * 0.2, 8, 6), td, 0, r * 1.12, -r * 0.1, g); // pom-pom
+      for (const sd of [-1, 1]) mesh(sphere(r * 0.16, 8, 6), mat('#4a4440'), sd * r * 0.5, -r * 0.2, r * 0.8, g).scale.set(1, 0.6, 0.35);
+      return true;
+    }
     case 'pi_tricorn': case 'pi_queen': {
       const q = kind === 'pi_queen';
       const felt = mat(q ? '#3a1e2e' : '#24222a', { spec: 0.15 });
@@ -341,6 +440,14 @@ function decorate(def, team, vis, H) {
     const band = mesh(box(r * 0.18, (hh + r) * 2.1, r * 0.06), leather(), 0, -r * 0.05, r * 1.02, C); band.rotation.z = -0.6;
     for (const k of [-1, 0, 1]) mesh(sphere(r * 0.15, 8, 6), mat('#1d1a1a', { spec: 0.4 }), -Math.sin(0.6) * k * r * 0.5, k * r * 0.5 * Math.cos(0.6), r * 1.1, C);
     mesh(cyl(r * 1.2, r * 1.2, r * 0.3, 16), tc, 0, -hh - r * 0.4, 0, C).scale.set(1, 1, 0.95);
+  }
+  if (top === 'pi_powder') { // a ragged shirt, a sash, and a spare keg strapped on the back
+    const rag = mat('#d8ccb0', { spec: 0.05 });
+    chestShell(H, ch, rag, C);
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; const t = mesh(cone(r * 0.2, r * 0.45, 4), rag, Math.sin(a) * r * 1.05, -hh - r * 0.75, Math.cos(a) * r * 1.0, C); t.rotation.x = Math.PI; }
+    mesh(cyl(r * 1.22, r * 1.22, r * 0.28, 16), tc, 0, -hh - r * 0.35, 0, C).scale.set(1, 1, 0.95);
+    const kg = new THREE.Group(); kegMesh(H, kg, team, 0.75); kg.position.set(0, 0, -r * 1.75); kg.rotation.z = Math.PI / 2; C.add(kg);
+    for (const sd of [-1, 1]) { const st = mesh(box(r * 0.12, (hh + r) * 2.2, r * 0.05), leather(), sd * r * 0.5, 0, r * 0.98, C); st.rotation.z = sd * 0.25; }
   }
   if (top === 'pi_coat') { // long coat: gold buttons and trim, cravat, cuffs, coat tails
     const q = def.id === 'pi_queen';
@@ -413,7 +520,22 @@ function cannonCart(H, team) {
   return g;
 }
 
+// a small powder keg (staves, two team hoops, a wick)
+function kegMesh(H, g, team, k = 1, wick = false) {
+  const { mesh, cyl, sphere, mat, glow } = H;
+  const R = 0.2 * k, L = 0.42 * k;
+  mesh(cyl(R * 0.85, R * 0.85, L, 12), H.wood(), 0, 0, 0, g);
+  mesh(cyl(R, R, L * 0.6, 12), H.wood(), 0, 0, 0, g);
+  for (const y of [-0.32, 0.32]) mesh(cyl(R * 0.95, R * 0.95, L * 0.08, 12), team === null ? mat('#4a4e56', { spec: 0.7 }) : mat(H.TEAM_COLORS[team]), 0, y * L, 0, g);
+  mesh(cyl(R * 0.8, R * 0.8, 0.01, 12), H.darkWood(), 0, L * 0.5, 0, g);
+  if (wick) {
+    mesh(cyl(0.012, 0.012, 0.12 * k, 4), mat('#c8a060'), 0.04 * k, L * 0.5 + 0.06 * k, 0, g).rotation.z = -0.4;
+    const sp = mesh(H.octa(0.035), glow('#ffd040'), 0.07 * k, L * 0.5 + 0.12 * k, 0, g); sp.castShadow = false;
+  }
+}
+
 function buildProj(type, g, H) {
+  if (type === 'pi_keg' || type === 'pi_keg_held') { kegMesh(H, g, null, 1, true); return true; }
   if (type !== 'pi_harpoon') return false;
   const { mesh, cyl, cone, box, mat } = H;
   const iron = mat('#4a4e56', { spec: 0.8 });
@@ -436,8 +558,9 @@ register({
   kinds: {
     pi_harpoon: harpooner,
     pi_captain: captain,
+    pi_monkey: monkey,
     pi_cannon: { melee: true, init: (u) => siegeInit(u, CANNON), think: siegeThink, event: cannonEvent, die: siegeCrewDie, control: siegeControl },
   },
-  proj: { pi_harpoon: harpoon },
+  proj: { pi_harpoon: harpoon, pi_keg: keg, pi_keg_held: { g: 0, len: 0, r: 0, life: 1 } },
   buildItem, buildHat, decorate, buildProj,
 });
