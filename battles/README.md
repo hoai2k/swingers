@@ -138,6 +138,23 @@ shared screen either pad drives the camera; in split screen each player has thei
 own. The result menu uses the D-pad so the sticks can keep flying the camera.
 Keyboard fallback for both players is listed on the title screen's *Controls* page.
 
+## Factions
+
+Each faction is a tab in setup. The base four (Tribal, Farmer, Medieval, Legacy) are in
+`src/units.js`; the others are packs in `src/packs/` (Viking, Ancient, Dynasty, Wild
+West, Spooky, Pirate, Renaissance, Prehistoric, Good, Evil, Secret, Galactic, plus the
+Custom tab of the Unit Creator). Faction tab emblems are `assets/ui/faction-<id>.png`
+when delivered; without one the tab shows just the name in the faction colour.
+
+- **Galactic** (`src/packs/galactic.js`, space opera): Battle Droid (cheap swarm, weak
+  blaster, falls apart), Blaster Trooper (bursts of glowing bolts, inaccurate), Laser
+  Knight (fast energy sword; bats blaster bolts back at the shooter, catches blows and
+  arrows), Space Furball (heavy crossbow-blaster, swats anyone close, roars into a rage),
+  Jetpack Hunter (hovers over the line, blaster pistol and wrist rockets), Dark Lord
+  (red energy sword, force push and force choke) and the Walker (a four-legged mech
+  with twin heavy cannons that stomps whatever gets in among its legs). Bolts glow cyan
+  for Blue and red for Red.
+
 ## Code map
 
 - `src/body.js` skeleton (11 parts, joints, FK) · `src/pose.js` procedural target poses and attack animations
@@ -159,6 +176,7 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
   a line) and the Four-Armed King (boss: invisible cuts around him and a domain dome where cuts
   hit everyone inside). Its tab emblem (`assets/ui/faction-jujutsu.png`) is requested; until
   it arrives the tab shows the name only.
+- `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 
 Vendored: three.js r170 (`vendor/three.module.min.js`), Rapier 0.14 compat (`vendor/rapier.es.js`).

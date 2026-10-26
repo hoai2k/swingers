@@ -311,3 +311,42 @@ lose to the elites. To re-run:
 
     node battles/dev/balance/run.mjs --units tb_stoner,tb_bone_mage,fm_scarecrow,fm_harvester,fm_wheelbarrow,lg_peasant,lg_poacher,lg_barbarian,vk_raider,an_gladiator,dy_ninja,ww_quickdraw,ww_miner,squire+vk_volva@0.25 --runs 6 --out /tmp/new.jsonl
     node battles/dev/balance/report.mjs /tmp/new.jsonl --sort
+
+## Galactic faction (new units)
+
+The seven Galactic units (`src/packs/galactic.js`) were priced with the same harness:
+alone against the reference panel, 6 battles per pairing (54 per unit), sides swapped
+every run. The first prices were guesses; each round changed only the numbers below
+(plus the Walker's stomp, see its row).
+
+| unit | cost | first try | final | other changes | notes |
+|---|---:|---:|---:|---|---|
+| Battle Droid (`ga_droid`) | 45 → **55** | +0.20 | +0.04 |  | cheap swarm; loses to melee rushes (−0.4), shreds giants and kings |
+| Blaster Trooper (`ga_trooper`) | 130 → **175** | +0.56 | −0.05 | damage 21→17, reload 3.6→4.4 | bursts of 5 bolts with a big spread; kept just under par after the ranged reload pass |
+| Laser Knight (`ga_knight`) | 300 | +0.03 | +0.03 |  | beats archers (+0.65) and gunslingers (+0.55) by deflecting; about even with melee |
+| Space Furball (`ga_furball`) | 340 → **520** | +0.55 | +0.08 | hp 520→480 | heavy knockback bolts and swats knock whole ranks over |
+| Jetpack Hunter (`ga_hunter`) | 420 → **570** | +0.44 | +0.01 | wrist rocket 60→50 | hovering out of reach made it strong against melee elites |
+| Dark Lord (`ga_lord`) | 1400 → **1500** | +0.13 | +0.05 |  | push and choke wreck melee crowds (+0.57 vs clubbers); weak to gunslingers (−0.32) |
+| Walker (`ga_walker`) | 2600 | −0.48 | +0.10 | behaviour: stomp | without a stomp, anything under its legs was safe from the cannons; now the nearest leg stomps (60 dmg, 2.2 m) |
+
+Final scores by opponent (`report.mjs`):
+
+| unit | clubber | squire | archer | knight | chieftain | gunslinger | giant | king | mix | avg |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Battle Droid | −0.40 | −0.45 | +0.24 | −0.38 | −0.47 | +0.46 | +0.83 | +0.47 | +0.10 | +0.04 |
+| Blaster Trooper | −0.46 | −0.59 | −0.28 | +0.21 | −0.01 | +0.25 | +0.95 | −0.00 | −0.49 | −0.05 |
+| Laser Knight | −0.21 | −0.30 | +0.65 | −0.25 | −0.12 | +0.55 | +0.10 | +0.08 | −0.26 | +0.03 |
+| Space Furball | −0.60 | −0.40 | −0.21 | +0.36 | +0.52 | −0.05 | +0.75 | +0.03 | +0.27 | +0.08 |
+| Jetpack Hunter | −0.23 | −0.30 | −0.23 | −0.21 | +0.07 | −0.04 | +0.70 | +0.64 | −0.33 | +0.01 |
+| Dark Lord | +0.57 | +0.20 | +0.11 | +0.04 | +0.09 | −0.32 | −0.04 | −0.24 | +0.02 | +0.05 |
+| Walker | +0.28 | +0.31 | +0.04 | +0.01 | −0.54 | +0.50 | −0.47 | +0.45 | +0.27 | +0.10 |
+
+All seven sit between −0.05 and +0.10. The shooters follow the roster's pattern (they
+lose to cheap melee rushes and beat big slow units). The Walker loses to Chieftains and
+Giants, which reach its belly and outlast the stomps. Its pairings and the Dark Lord's
+are noisy (1–3 units a side, a few 9–12% gold gaps against the King). Only the
+Walker's hull hp is scored (it is mirrored on its hidden pilot), so it is measured
+like the other beasts.
+
+    node battles/dev/balance/run.mjs --units ga_droid,ga_trooper,ga_knight,ga_furball,ga_hunter,ga_lord,ga_walker --runs 6 --procs 4 --out /tmp/galactic.jsonl
+    node battles/dev/balance/report.mjs /tmp/galactic.jsonl
