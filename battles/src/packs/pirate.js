@@ -289,7 +289,7 @@ const units = [
   },
   {
     id: 'pi_monkey', name: 'Powder Monkey', faction: 'pirate', cost: 200, hp: 60, speed: 6.4,
-    build: { scale: 0.74, girth: 1.0, head: 1.2, mass: 1.1 },
+    build: { scale: 0.74, girth: 1.0, head: 1.2, mass: 1.1, neck: 0.15 },
     weapon: { line: 'Bomber · drops a lit powder keg in the enemy line, runs, fetches another', kind: 'pi_monkey', style: 'fists', anim: 'punch', item: 'none', damage: 12, keg: 100, blast: 3.4, force: 700, fuse: 1.25, reload: 6, run: 2.0, dropGap: 2.2, keep: 9, reach: 0.9, cooldown: 0.8 },
     look: { skin: '#e8b890', hat: 'pi_powder', top: 'pi_powder', legs: '#5a4630', bare: true },
     personality: { aggro: 1, bravery: 0, voice: 1.75, chatter: 1, cry: 'cackle', idle: 'hop' },

@@ -93,7 +93,7 @@ that rumbles is Blue). Unplugging a pad pauses a battle and un-readies a player 
 setup. Armies are saved per map in `localStorage` (`wobbly-battles.v1`).
 
 Options: default battle screen (shared / split), the performance options, look speed,
-invert Y, blood, sound, music, recorded or synthesised sound effects, and going
+invert Y, googly eyes (TABS-style 3D eyes with loose pupils, on by default), blood, sound, music, recorded or synthesised sound effects, and going
 fullscreen when a game starts. The **corner buttons** (top right, hidden while the
 mouse is idle) toggle fullscreen, sound and music, and the gear opens the settings for
 the current screen. Leaving the title with a controller (or key) press goes fullscreen,

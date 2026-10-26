@@ -631,7 +631,7 @@ const units = [
   },
   {
     id: 'ga_furball', name: 'Space Furball', faction: 'galactic', cost: 520, hp: 480, speed: 4.4,
-    build: { scale: 1.38, girth: 1.12, head: 1.02, arms: 1.12, mass: 1.25 },
+    build: { scale: 1.38, girth: 1.12, head: 1.02, arms: 1.12, mass: 1.25, neck: 0.15 },
     weapon: { line: 'Ranged · heavy crossbow-blaster bolts · swats anyone close · roars into a rage', kind: 'ga_blaster', style: 'spear', anim: 'punch', item: 'ga_xbow', heavy: true, damage: 62, speed: 34, range: 26, minRange: 4, cooldown: 0.6, reload: 2.6, ammo: 1, force: 480, spread: 0.035, releaseAt: 0.5, windup: 0.55, barrel: 0.75, swat: { reach: 1.1, damage: 45, fling: 9, cd: 1.6 }, rage: true },
     look: { skin: '#7a5232', hat: 'ga_fur', top: 'ga_fur', legs: '#6a4628', bare: true, accent: '#4a3020' },
     personality: { aggro: 0.75, bravery: 0, voice: 0.55, chatter: 0.8, cry: 'roar', idle: 'thump' },
