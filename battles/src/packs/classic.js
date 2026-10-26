@@ -15,7 +15,7 @@ import { register } from '../ext.js';
 import { ATTACKS, GUARD } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, crossed, inFront, aimPoint, sweepParts, strike, shieldBlocks,
-  pushUnit, slowBeast, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo,
+  pushUnit, slowBeast, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo, airborne, groundEnemy,
 } from './common.js';
 import { mark, markAt } from './ges-core.js';
 
@@ -77,7 +77,9 @@ const boneMage = {
     u.expr = EXPR.normal;
     if (dist > w.range * 0.85) u.desired.set(dirx * spd, 0, dirz * spd);
     else if (dist < w.minRange * 0.7) u.desired.set(-dirx * spd * 0.7, 0, -dirz * spd * 0.7);
-    if (dist < w.range && dist > w.minRange * 0.5 && !u.st.attack && u.cooldown <= 0 && u.stun <= 0) { u.startAttack(); u.aimAt = t; }
+    // spikes come out of the ground: a flyer can't be hit, so pick someone standing
+    const g = t && airborne(u.battle, t) ? groundEnemy(u.battle, u, w.range) : t;
+    if (g && dist < w.range && dist > w.minRange * 0.5 && !u.st.attack && u.cooldown <= 0 && u.stun <= 0) { u.startAttack(); u.aimAt = g; }
     if (u.st.attack) u.desired.multiplyScalar(0.1);
     return t;
   },

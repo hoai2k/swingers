@@ -8,7 +8,7 @@ import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
 import { Creator } from './creator.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
-import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar, setGoogly } from './visual.js';
+import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar, setGoogly, jiggleEyes } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
 import { CamRig } from './camera.js';
 import { Battle, PROJ } from './battle.js';
@@ -417,7 +417,7 @@ export class Game {
     const r = this.renderer;
     const w = r.domElement.width / r.getPixelRatio(), h = r.domElement.height / r.getPixelRatio();
     const vs = this.views();
-    this.updateLod(vs);
+    this.updateLod(vs, dt);
     r.shadowMap.needsUpdate = true;
     this.shake = Math.max(0, this.shake - dt * 3);
     this.audio.setListeners(vs.map((v) => this.rigs[v]));
@@ -440,18 +440,21 @@ export class Game {
   }
 
   // Distant units in a big army are drawn as simple stand-ins (Performance → Distant units)
-  updateLod(vs) {
-    const lists = this.state === 'setup' ? this.setupVis || [] : this.battleVis && this.battle ? [this.battleVis] : [];
+  // (also rattles the googly pupils of units near a camera)
+  updateLod(vs, dt) {
+    const lists = this.state === 'setup' ? this.setupVis || [] : this.battleVis && this.battle ? [this.battleVis] : this.titleUnits ? [this.titleUnits] : [];
     const n = lists.reduce((a, l) => a + l.length, 0);
     const on = this.settings.lod && n >= LOD_MIN;
     const D = LOD_DIST[this.quality] || 30, cams = vs.map((v) => this.rigs[v].cam.position);
     for (const l of lists) for (const vis of l) {
-      if (!on) { if (vis.far) setFar(vis, false); continue; }
       const p = vis.parts[0].position;
       let d2 = Infinity;
       for (const c of cams) d2 = Math.min(d2, (p.x - c.x) ** 2 + (p.y - c.y) ** 2 + (p.z - c.z) ** 2);
-      const k = vis.far ? 0.9 : 1.1; // hysteresis
-      setFar(vis, d2 > (D * k) ** 2);
+      if (!on) { if (vis.far) setFar(vis, false); } else {
+        const k = vis.far ? 0.9 : 1.1; // hysteresis
+        setFar(vis, d2 > (D * k) ** 2);
+      }
+      if (vis.pupils && !vis.far && d2 < 900 && vis.root.visible) jiggleEyes(vis, dt);
     }
   }
 

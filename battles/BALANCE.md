@@ -375,3 +375,14 @@ Support, bomber and control units are also scored in line (inside a Squire front
 Re-run:
 
     node battles/dev/balance/run.mjs --runs 4 --out /tmp/new.jsonl --units sp_ghost,sp_swordcaster,pi_monkey,rn_jouster,pr_triceratops,gd_divine_archer,ev_void_monarch,ev_shadow,sc_bubble,squire+pr_tar,squire+gd_flag_bearer@0.25,squire+sc_bubble,squire+pi_monkey
+
+## Zeus throws thunderbolts; flyers as targets
+
+Zeus now hurls a thunderbolt that strikes where it hits (on the ground, or a flyer in
+the air) instead of striking the ground under the target. It is more accurate, so it
+was re-priced: 2450 scored +0.15 (4 runs), 2750 +0.11, **3000 +0.02** (6 runs).
+Against four flyers, damage dealt while they were in the air went from 329 → 2162
+(valkyries) and 269 → 2160 (angels). The Void Monarch's rift now opens round a flyer,
+the Tree Giant throws at flyers, and ground-only attacks (Bone Mage spikes, catapult
+lobs) pick targets on the ground. Scores after the change (4 runs): Void Monarch
+−0.02, Tree Giant −0.06, Bone Mage +0.05, Catapult −0.12.
