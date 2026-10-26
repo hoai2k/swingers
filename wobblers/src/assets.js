@@ -68,7 +68,7 @@ const FACE_BOX = [0.24, 0.38, 0.52]; // painted features: max width / height (sh
 export function paintFace(tex, name) {
   return paintOver(tex, `faces/face_${slug(name)}.png`, (g, im, cv) => {
     const W = cv.width, H = cv.height;
-    g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
+    g.clearRect(0, 0, W, H); // features only: the head material lays them over the skin
     // the head's texture is equirectangular with square pixels (0.7 degrees
     // each), so the features keep their proportions: at most ~86 degrees wide
     // and ~68 tall (a bigger box put the eyes on the forehead and the mouth on

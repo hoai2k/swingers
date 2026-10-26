@@ -57,8 +57,7 @@ export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange'
 function drawFace(kind) {
   const W = 512, H = 256, cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
-  const g = cv.getContext('2d');
-  g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
+  const g = cv.getContext('2d'); // features on a transparent background (laid over the skin: charstyle.js)
   const cx = W * 0.25, ex = [cx - 30, cx + 30], ey = H * 0.44;
   g.fillStyle = 'rgba(255,120,120,.35)';
   for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(cx + sx * 52, H * 0.6, 20, 12, 0, 0, 7); g.fill(); }
@@ -188,7 +187,7 @@ function drawFace(kind) {
     }
     // neutral dot-eye faces: small and close together, like a toy's printed face
     case 'Dot eyes': case 'Calm': case 'Content': case 'Oh': case 'Shy': case 'Smirk': {
-      g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H); // no default cheeks
+      g.clearRect(0, 0, W, H); // no default cheeks
       const dy = H * 0.47, dx = kind === 'Shy' ? 22 : 27, r = kind === 'Oh' ? 8 : 7, my = H * 0.565;
       g.fillStyle = '#1c1c28';
       for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * dx, kind === 'Shy' ? dy + 3 : dy, r, r * 1.15, 0, 0, 7); g.fill(); }
@@ -223,6 +222,7 @@ function drawFace(kind) {
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
+  t.premultiplyAlpha = true;
   paintFace(t, kind);
   return t;
 }

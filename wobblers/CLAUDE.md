@@ -57,9 +57,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   at runtime (`game.setCharStyle(id)`: `setCharStyle` + `resetCharCaches` + `player.restyle()`
   for players and NPCs; `STYLE` / `FACE_FLAT` are live bindings). `dressed` = Wobbly Life
   proportions with a smooth skin body in `skinTone(color)` (the colour's skin version) and the
-  shirt / trousers as layered shells on it (`STYLE.layered`); the faces' peach background is
-  swapped for the skin tone in the shader (`skinColored`, uniform set in the head's
-  onBeforeRender). `?style=<id>` overrides it for trials; `?head=0.85` scales the head;
+  shirt / trousers as layered shells on it (`STYLE.layered`), in the default chunky shape.
+  Face textures hold only the features on a transparent background (premultiplied alpha:
+  `drawFace`, `faceCanvas`, `paintFace` never paint skin); `charMat` lays them over the skin
+  colour in the shader (`faceOverSkin`: peach by default, the head's onBeforeRender sets the
+  skin tone in the toy style), so edges stay clean and blush stays see-through. `?style=<id>` overrides it for trials; `?head=0.85` scales the head;
   `charMat()` makes the skin, head and face materials in the current style. `FACE_FLAT`
   (`style.faceFlat`: chunky 0.5; try others with `?flat=`) flattens the face side of the head (`headGeometry`).
   Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features

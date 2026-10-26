@@ -106,7 +106,8 @@ function faceCanvas(kind) {
   const W = 512, H = 256, cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const g = cv.getContext('2d');
-  g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H);
+  // features only, on a transparent background: the head material lays them over the skin
+  // colour (charstyle.js faceOverSkin), so edges stay clean and blush stays see-through
   // cheeks
   g.fillStyle = 'rgba(255,120,120,.35)';
   for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(W * 0.25 + sx * 52, H * 0.6, 20, 12, 0, 0, 7); g.fill(); }
@@ -131,6 +132,7 @@ function faceCanvas(kind) {
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
+  t.premultiplyAlpha = true; // clean filtering at the features' transparent edges
   paintFace(t, kind === 'ko' ? 'ko' : 'happy');
   return t;
 }

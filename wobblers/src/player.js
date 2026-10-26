@@ -173,7 +173,7 @@ function tubeProfile(pts, { step = 0.016, bottom = true, top = true, n = 6 } = {
 const BODY_PROFILE = smoothProfile([
   [0, 0.375], [0.12, 0.39], [0.2, 0.43], [0.236, 0.5], [0.25, 0.6], [0.268, 0.72], [0.284, 0.84],
   [0.286, 0.95], [0.27, 1.04], [0.236, 1.12], [0.18, 1.2], [0.1, 1.262], [0, 1.285]], 44);
-const BODY_SPLIT = 0.76;  // trousers below, shirt above
+const BODY_SPLIT = 0.7;   // trousers below, shirt above (the waist line: just above the belt)
 const BODY_DEPTH = 0.88;  // front-to-back over side-to-side
 const SHOULDER = [0.34, 1.12], SHOULDER_R = 0.087; // = the uArm joint pivot
 const shoulderWiden = (y) => 1 + 0.3 * Math.exp(-(((y - 1.07) / 0.15) ** 2)); // torso x scale: broad shoulders that slope into the neck
@@ -226,9 +226,9 @@ function skinTemplate() {
   const L = STYLE.limb, LL = 1 + (L - 1) * 0.6, Lp = 1 + (L - 1) * 0.7, Hs = STYLE.hand, Fs = STYLE.shoe; // style: limb / leg / shoulder / mitten / shoe sizes
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
-    // shoulder pad (chest): a flattened oval stretched in toward the neck, so the
-    // shoulder line slopes from the neck down into the arm (no round knob on top)
-    add(at(new THREE.SphereGeometry(SHOULDER_R, 12, 9), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6 * Lp, 0.62 * Lp, 0.95 * Lp), 'shirt', 'chest');
+    // shoulder (chest): a rounded cap over the top of the arm, reaching in toward the neck,
+    // so the shoulder line curves out and over (convex) from the neck into the arm
+    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.88, SHOULDER[1] - 0.025, 0, 1.45 * Lp, 0.86 * Lp, 0.9 * Lp), 'shirt', 'chest');
     // the arm: one tube from inside the shoulder to inside the mitten, bending
     // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
     const sh = JI['uArm' + h], el = JI['lArm' + h];

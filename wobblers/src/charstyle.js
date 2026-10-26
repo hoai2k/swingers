@@ -18,7 +18,9 @@ export const CHAR_STYLES = {
   wobbly: { name: 'Wobbly Life-like', head: 1.24, drop: 0.1, limb: 1.4, hand: 1.08, shoe: 1.15, body: 1.12, mat: 'matte', mono: true },
   // Wobbly Life proportions and coloured skin, but our head, faces and clothes: a smooth
   // rounded body in the skin colour with the shirt and trousers as layers on top
-  dressed: { name: 'Dressed wobbly', head: 1.24, drop: 0.1, limb: 1.4, hand: 1.08, shoe: 1.15, body: 1.12, mat: 'matte', faceFlat: 0.5, layered: true, skinColored: true },
+  // toy style: the default chunky shape, with skin in the character's colour (skinTone) and
+  // the shirt and trousers as layers over a smooth skin body
+  dressed: { name: 'Toy style', head: 1.0, drop: 0.03, limb: 1.4, hand: 1.22, shoe: 1.18, body: 1.07, mat: 'matte', faceFlat: 0.5, layered: true, skinColored: true },
   chibi: { name: 'Big-head chibi', head: 1.42, drop: 0.07, limb: 1.2, hand: 1.15, shoe: 1.15, body: 0.94, mat: 'vinyl' },
 };
 
@@ -57,28 +59,28 @@ const toonRamp = () => {
   return _ramp;
 };
 
-// Peach face backgrounds (#ffd9b8, linear) are recoloured to the character's skin colour
-// in styles with coloured skin: the head mesh sets material.userData.skinU before it draws.
-function skinSwap(m) {
+// Face textures hold only the features on a transparent background (premultiplied alpha);
+// the head material lays them over the skin colour: peach by default, the character's skin
+// tone in the toy style (the head mesh sets material.userData.skinU before it draws).
+function faceOverSkin(m) {
   const skinU = m.userData.skinU = { value: new THREE.Color(0xffd9b8) };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uSkin = skinU;
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform vec3 uSkin;')
-      .replace('#include <map_fragment>', `#include <map_fragment>
-	{
-		float k = smoothstep(0.05, 0.22, length(diffuseColor.rgb - vec3(1.0, 0.693, 0.479)));
-		diffuseColor.rgb = mix(uSkin, diffuseColor.rgb, k);
-	}`);
+      .replace('#include <map_fragment>', `#ifdef USE_MAP
+	vec4 faceTx = texture2D( map, vMapUv );
+	diffuseColor.rgb *= uSkin * ( 1.0 - faceTx.a ) + faceTx.rgb;
+#endif`);
   };
-  m.customProgramCacheKey = () => 'wobSkinSwap' + STYLE.mat;
+  m.customProgramCacheKey = () => 'wobFace' + STYLE.mat;
   return m;
 }
 
 // A character material in the current style (vertex colours or a face map).
 export function charMat(opts = {}) {
   const m = charMatBase(opts);
-  return opts.map && STYLE.skinColored ? skinSwap(m) : m;
+  return opts.map ? faceOverSkin(m) : m;
 }
 function charMatBase(opts) {
   switch (STYLE.mat) {
