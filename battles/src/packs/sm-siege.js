@@ -13,6 +13,7 @@ import {
   stickInto, angleDiff,
 } from './sm-core.js';
 import * as M from './sm-meshes.js';
+import { airborne } from './common.js';
 
 const V = (x, y, z) => new V3(x, y, z);
 const Q0 = new Q4();
@@ -97,6 +98,7 @@ function pickTarget(b, u, c, w) {
     const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
     if (d < nd) { nd = d; near = o; }
     if (d < w.minRange || d > w.range) continue;
+    if (c.cfg.arm && airborne(b, o)) continue; // a lobbed stone can't catch a flyer
     const k = d * (o === c.target ? 0.85 : 1) * (1 + 0.1 * (o.s > 1.5 ? -1 : 0));
     if (k < bd) { bd = k; best = o; }
   }

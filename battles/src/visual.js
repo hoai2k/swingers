@@ -1101,11 +1101,45 @@ function googlyEyes(g, r, V) {
     const pu = mesh(sphere(re * 0.52, 12, 8), ink, Math.cos(a) * d, Math.sin(a) * d, re * 0.7, e);
     pu.scale.set(1, 1, 0.45);
     pu.castShadow = false;
+    pu.userData.gog = { x: pu.position.x, y: pu.position.y, vx: 0, vy: 0, R: re * 0.4 }; // jiggleEyes()
     pupils.push(pu);
     g.add(e);
   }
   return pupils;
 }
+// Googly pupils rattle about: each is a loose ball in its eye, pulled down by gravity
+// and thrown about by the head's acceleration, bouncing off the rim. Run every frame
+// for units near the camera (dt in seconds).
+const _ga = new THREE.Vector3(), _gq = new THREE.Quaternion(), _gp = new THREE.Vector3();
+export function jiggleEyes(vis, dt) {
+  if (!vis.pupils || !(dt > 0)) return;
+  const head = vis.parts[PART.head], p = head.position;
+  const rdt = dt; // the head's motion is measured over the real frame time...
+  dt = Math.min(dt, 1 / 20); // ...the pupil is moved in small steps
+  // head velocity and acceleration (a jump - teleport, replay seek - resets them)
+  if (!vis.gogV || vis.gogP.distanceToSquared(p) > 4) { vis.gogP = p.clone(); vis.gogV = new THREE.Vector3(); return; }
+  _gp.copy(p).sub(vis.gogP).divideScalar(rdt);
+  _ga.copy(_gp).sub(vis.gogV).divideScalar(rdt).clampLength(0, 60);
+  vis.gogV.copy(_gp); vis.gogP.copy(p);
+  // the pupil feels gravity minus the head's acceleration (and some extra slosh)
+  _ga.multiplyScalar(-0.35); _ga.y -= 9.81;
+  for (const pu of vis.pupils) {
+    const g = pu.userData.gog;
+    _gq.copy(head.quaternion).multiply(pu.parent.quaternion).invert();
+    const a = _gp.copy(_ga).applyQuaternion(_gq);
+    g.vx += a.x * dt * 0.6; g.vy += a.y * dt * 0.6;
+    g.vx *= 1 - Math.min(1, 3 * dt); g.vy *= 1 - Math.min(1, 3 * dt);
+    g.x += g.vx * dt; g.y += g.vy * dt;
+    const d = Math.hypot(g.x, g.y);
+    if (d > g.R) { // hit the rim: bounce back in
+      const nx = g.x / d, ny = g.y / d, vn = g.vx * nx + g.vy * ny;
+      g.x = nx * g.R; g.y = ny * g.R;
+      if (vn > 0) { g.vx -= 1.5 * vn * nx; g.vy -= 1.5 * vn * ny; }
+    }
+    pu.position.x = g.x; pu.position.y = g.y;
+  }
+}
+
 export const UNIT_STYLES = ['classic', 'toon', 'clay', 'vinyl', 'lowpoly', 'chibi'];
 let STYLE = 'classic';
 export function setUnitStyle(s) { STYLE = UNIT_STYLES.includes(s) ? s : 'classic'; }

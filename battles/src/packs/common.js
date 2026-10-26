@@ -316,6 +316,33 @@ function stepRopes(b, dt) {
 }
 
 // ------------------------------------------------------------------ lightning
+// In the air: flying (valkyries, angels, dragons, balloons, jetpacks...) or thrown up.
+// Ranged attacks aim at such targets where they are; attacks that come out of the
+// ground (spikes, lobbed siege stones) pick a target on the ground instead.
+export const airborne = (b, o) => o.pos.y - b.terrain.height(o.pos.x, o.pos.z) > (o.skel?.standHeight ?? 1) * 1.4 + 0.3;
+// the nearest enemy of u standing on the ground within range (null if none)
+export function groundEnemy(b, u, range) {
+  let best = null, bd = range * range;
+  for (const o of b.teams[1 - u.team]) {
+    if (!o.alive || airborne(b, o)) continue;
+    const d = (o.pos.x - u.pos.x) ** 2 + (o.pos.z - u.pos.z) ** 2;
+    if (d < bd) { bd = d; best = o; }
+  }
+  return best;
+}
+
+// A thunderbolt strike at pos: from the sky onto the ground, or - for a target in the
+// air - a burst where it hits.
+export function thunderAt(b, pos, owner, damage, radius, force) {
+  const gy = b.terrain.height(pos.x, pos.z);
+  if (pos.y - gy < 1.6) { lightning(b, pos.x, pos.z, owner, damage, radius, force); return; }
+  const q = new THREE.Quaternion().setFromAxisAngle(UPY, rand(0, Math.PI * 2));
+  b.stuck.push({ type: 'zbolt', unit: null, part: -1, pos: pos.clone(), quat: q, t: 0.3, id: newId() });
+  b.emit('spark', pos.x, pos.y, pos.z, 16);
+  blast(b, pos, radius * 0.8, damage, force * 0.7, owner, { fx: 2, friendly: 0.5 });
+  b.sound('clang', pos, 1.2, 2.2);
+}
+
 export function lightning(b, x, z, owner, damage, radius, force) {
   const gy = b.terrain.height(x, z);
   const pos = new THREE.Vector3(x, gy, z);

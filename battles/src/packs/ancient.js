@@ -1,15 +1,31 @@
 // Ancient: Hoplite (shield wall: tougher next to other hoplites), Sarissa (a very
 // long pike), Snake Archer (poison arrows), Minotaur (charges and tosses units into
-// the air), Zeus (calls lightning down from the sky), Gladiator (plays to the crowd:
+// the air), Zeus (hurls thunderbolts that strike where they hit, flyers too), Gladiator (plays to the crowd:
 // each kill heals him and makes him faster and harder hitting).
 import { register } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, aimPoint,
-  addStatus, arrowProj, arrowMesh, lightning, torus, tube, dome, headBand, lathe, tcol, tdark, chestShell,
+  addStatus, arrowProj, arrowMesh, torus, tube, dome, headBand, lathe, tcol, tdark, chestShell,
+  launchVel, addProjectile, sweepParts, thunderAt,
 } from './common.js';
 import { mark } from './ges-core.js';
 
-const _p = new THREE.Vector3();
+const _p = new THREE.Vector3(), _v = new THREE.Vector3();
+
+// Zeus's thunderbolt in flight: crackles as it goes; whatever it hits (a unit on the
+// ground or in the air, or the ground) is struck by lightning; spent, it bursts.
+const thunder = {
+  g: 0, len: 1.1, r: 0.15, life: 1.6,
+  step(b, pr, dt) {
+    if (Math.random() < dt * 25) b.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 1);
+    const h = sweepParts(b, pr, 0.3);
+    const spent = pr.life <= dt;
+    if (!h && !spent) return;
+    thunderAt(b, h ? h.v.chestPos : pr.pos, pr.owner, pr.damage, pr.blast, pr.force);
+    pr.life = -1;
+  },
+  ground(b, pr) { thunderAt(b, pr.pos, pr.owner, pr.damage, pr.blast, pr.force); return true; },
+};
 
 // ------------------------------------------------------------------ kinds
 const phalanx = {
@@ -83,12 +99,16 @@ const zeus = {
     const w = u.def.weapon;
     if (crossed(t0, t1, w.releaseAt)) {
       u.released = true;
-      aimPoint(u, _p, 1, 0.45);
-      const k = w.spread * Math.hypot(_p.x - u.pos.x, _p.z - u.pos.z);
+      // he hurls the thunderbolt: it flies straight (leading the target, on the ground
+      // or in the air) and the strike comes down wherever it hits
       const b = u.battle, h = u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset, 0, new THREE.Vector3());
-      b.emit('spark', h.x, h.y, h.z, 5);
-      const x = _p.x + rand(-k, k), z = _p.z + rand(-k, k);
-      b.delayed.push([0.12, () => lightning(b, x, z, u, w.damage, w.blast, w.force)]);
+      h.y += 0.3 * u.s;
+      aimPoint(u, _p, 0.9, h.distanceTo(u.aimAt?.alive ? u.aimAt.chestPos : _p) / w.boltSpeed);
+      if (!u.aimAt && u.control && !u.control.aimPt) _p.y = h.y + Math.tan(u.control.aimPitch) * 14;
+      launchVel(h, _p, w.boltSpeed, 0, false, w.spread, _v);
+      addProjectile(b, 'an_thunder', h, _v, u, { life: (w.range * 1.3) / w.boltSpeed, damage: w.damage, force: w.force, blast: w.blast });
+      b.emit('spark', h.x, h.y, h.z, 8);
+      b.sound('fire', h, 0.7, 1.6);
     }
   },
 };
@@ -158,13 +178,13 @@ const units = [
     desc: 'Lowers its horns and charges. Sends whole lines flying.',
   },
   {
-    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 2450, hp: 1100, speed: 3.6,
+    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 3000, hp: 1100, speed: 3.6,
     build: { scale: 1.4, girth: 1.12, head: 1.05, mass: 1.5 },
-    weapon: { line: 'Magic · lightning bolts from the sky', kind: 'an_zeus', style: 'staff', anim: 'cast', item: 'an_bolt', damage: 150, range: 38, minRange: 6, cooldown: 2.1, force: 700, blast: 3.6, spread: 0.04, releaseAt: 0.62, windup: 1.1 },
+    weapon: { line: 'Magic · hurls thunderbolts that strike where they hit, on the ground or in the air', kind: 'an_zeus', style: 'staff', anim: 'cast', item: 'an_bolt', damage: 150, range: 38, minRange: 6, cooldown: 2.1, force: 700, blast: 3.6, spread: 0.02, boltSpeed: 34, releaseAt: 0.62, windup: 1.1 },
     look: { skin: '#f0c8a8', hat: 'an_laurel', top: 'an_toga', legs: '#f0c8a8', beard: '#f4f4f4' },
     personality: { aggro: 0.35, bravery: 0, voice: 0.6, chatter: 0.7, cry: 'royal', idle: 'regal' },
     armor: 0.15, stagger: 0.3,
-    desc: 'Calls lightning down on the enemy. Mind your own side.',
+    desc: 'Hurls thunderbolts: lightning strikes wherever they hit, even flyers in the air. Mind your own side.',
   },
   {
     id: 'an_gladiator', name: 'Gladiator', faction: 'ancient', cost: 200, hp: 165, speed: 4.6,
@@ -368,10 +388,23 @@ register({
   kinds: { an_phalanx: phalanx, an_charge: charge, an_zeus: zeus, an_glory: glory },
   proj: {
     venom_arrow: arrowProj({ onHit(b, v, pr) { addStatus(b, v, 'poison', 5, 9, pr.owner); } }),
+    an_thunder: thunder,
     an_glory: { g: 0, len: 0, r: 0, life: 1 }, // marker: a gold laurel won in the arena
   },
   buildProj(type, g, H) {
     if (type === 'venom_arrow') { arrowMesh(H, g, '#8cff5a', '#4f8a2e', true); return true; }
+    if (type === 'an_thunder') { // a glowing zig-zag thunderbolt, point first (+Y)
+      const core = H.mat('#fff6c0', { emissive: '#ffe680' }), glow = H.mat('#ffd640', { emissive: '#ffb020', transparent: true, opacity: 0.45, depthWrite: false });
+      const pts = [[0, 0.55], [0.09, 0.2], [-0.07, 0.05], [0.08, -0.2], [-0.05, -0.55]];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], L = Math.hypot(x1 - x0, y1 - y0);
+        const seg = H.mesh(H.cyl(0.035, 0.035, L, 5), core, (x0 + x1) / 2, (y0 + y1) / 2, 0, g);
+        seg.rotation.z = -Math.atan2(x1 - x0, y1 - y0); seg.castShadow = false;
+        const halo = H.mesh(H.cyl(0.09, 0.09, L, 6), glow, (x0 + x1) / 2, (y0 + y1) / 2, 0, g);
+        halo.rotation.z = seg.rotation.z; halo.castShadow = false;
+      }
+      return true;
+    }
     if (type === 'an_glory') {
       for (let i = 0; i < 14; i++) {
         const a = (i / 14) * Math.PI * 2;

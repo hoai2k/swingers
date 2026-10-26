@@ -9,7 +9,7 @@ import { register, EXT } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel,
-  addProjectile, sweepParts, strike, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo, twoSided,
+  addProjectile, sweepParts, strike, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo, twoSided, airborne,
 } from './common.js';
 import { UPY, revivable, revive, fists, mark, markAt, nearest, STANCE, setArmKey } from './ges-core.js';
 import { pushUnit, slowBeast, blast } from './common.js';
@@ -314,8 +314,8 @@ const voidKing = {
     u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset, 0, _o);
     _o.y += 0.9 * u.s; // from the orb on the sceptre
     aimPoint(u, _p, 0.3, 0.8);
-    const gy = b.terrain.height(_p.x, _p.z);
-    _p.y = gy + 1.0;
+    // the rift opens on the ground by the target, or in the air round a flyer
+    if (!(u.aimAt?.alive && airborne(b, u.aimAt))) _p.y = b.terrain.height(_p.x, _p.z) + 1.0;
     launchVel(_o, _p, w.speed, 0, false, 0.02, _v);
     addProjectile(b, 'ev_voidball', _o, _v, u, { life: _o.distanceTo(_p) / w.speed + 0.05, goal: _p.clone() });
     b.sound('gong', _o, 0.35, 0.35);
@@ -324,7 +324,8 @@ const voidKing = {
 function openRift(b, pr, at) {
   const o = pr.owner, w = o.def.weapon, s = S(b);
   const gy = b.terrain.height(at.x, at.z);
-  const pos = new THREE.Vector3(at.x, Math.max(gy + 1.0, Math.min(at.y, gy + 1.6)), at.z);
+  // on the ground by the target, or up in the air where it caught a flyer
+  const pos = new THREE.Vector3(at.x, Math.max(gy + 1.0, Math.min(at.y, at.y > gy + 3 ? gy + 12 : gy + 1.6)), at.z);
   s.rifts.push({ pos, t: w.duration, team: pr.team, owner: o, w, tick: 0, mk: markAt(b, 'ev_rift', pos, w.duration) });
   b.emit('spark', pos.x, pos.y, pos.z, 6);
   b.sound('gong', pos, 0.7, 0.4);
@@ -350,7 +351,7 @@ function stepRifts(b, dt) {
     b.grid.query(r.pos.x, r.pos.z, R + 2, (v) => {
       if (!v.alive || v.team === r.team) return;
       const dx = r.pos.x - v.pos.x, dz = r.pos.z - v.pos.z, d = Math.hypot(dx, dz);
-      if (d > R + v.skel.radius || v.pos.y > r.pos.y + 2.5) return;
+      if (d > R + v.skel.radius || Math.abs(v.pos.y - r.pos.y) > 3) return; // (an air rift spares the ground below)
       // the pull is strongest near the edge (it holds them once they are in the middle)
       const k = w.pull * dt * v.M * clamp(d / 1.5, 0, 1) / Math.max(1, v.s * v.s);
       if (d > 0.3) pushUnit(v, (dx / d) * k, v.M * 2 * dt, (dz / d) * k);
@@ -471,7 +472,7 @@ const treeGiant = {
     if (u.tree) { u.tree.t = 0; u.tree = null; }
     u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset, 0, _o);
     aimPoint(u, _p, 0.3, 1.0);
-    _p.y = b.terrain.height(_p.x, _p.z) + 0.5;
+    if (!(u.aimAt?.alive && airborne(b, u.aimAt))) _p.y = b.terrain.height(_p.x, _p.z) + 0.5; // (a flyer: at it)
     launchVel(_o, _p, w.treeSpeed, 9.81, false, 0.04, _v);
     addProjectile(b, 'ev_tree', _o, _v, u, { life: 6, damage: w.treeDamage, force: w.treeForce, spin: new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(4, 7) * (Math.random() < 0.5 ? -1 : 1)) });
     b.sound('whoosh', _o, 1.6, 0.4);
