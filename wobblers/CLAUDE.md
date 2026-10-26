@@ -53,11 +53,15 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Look styles (`src/charstyle.js`): `CHAR_STYLES` changes the drawn proportions (head size /
   drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
   toon + outline, or `wobbly`: one colour all over, plain head with two black oval eyes) without
-  touching the ragdoll. Default `chunky`; Settings > Toy style characters switches to `dressed`
+  touching the ragdoll. Default `dressed` (toy style, players and NPCs); Settings > Toy style
+  characters Off switches to `chunky` (a saved choice counts only with `toyStyleChosen`, set by the toggle)
   at runtime (`game.setCharStyle(id)`: `setCharStyle` + `resetCharCaches` + `player.restyle()`
   for players and NPCs; `STYLE` / `FACE_FLAT` are live bindings). `dressed` = Wobbly Life
-  proportions with a smooth skin body in `skinTone(color)` (the colour's skin version) and the
-  shirt / trousers as layered shells on it (`STYLE.layered`), in the default chunky shape.
+  colouring: skin (head, arms, legs) in `skinTone(skinBase())` and the shirt / trousers as
+  layered shells (`STYLE.layered`; the shirt runs up to the head, no bare neck), in the chunky
+  shape. Clothes and hats use `clothesColor()` (a player's shirt in toy style, since its own
+  colour is the skin: a hat in it read as hair); NPCs keep their role colour as the shirt and
+  pick a skin colour from the palette (`npc.skinBase()`); an NPC `hatColor` goes via `hatTint`.
   Face textures hold only the features on a transparent background (premultiplied alpha:
   `drawFace`, `faceCanvas`, `paintFace` never paint skin); `charMat` lays them over the skin
   colour in the shader (`faceOverSkin`: peach by default, the head's onBeforeRender sets the

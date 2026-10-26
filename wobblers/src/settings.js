@@ -5,7 +5,7 @@
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 0, showFps: false, toyStyle: false, devices: {}, presents: [], life: {}, missions: {}, arcade: {} });
+const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 0, showFps: false, toyStyle: true, devices: {}, presents: [], life: {}, missions: {}, arcade: {} });
 
 function load() {
   const s = DEFAULTS();
@@ -18,7 +18,9 @@ function load() {
         if (typeof o.shadows === 'boolean') s.shadows = o.shadows;
         if (typeof o.sound === 'boolean') s.sound = o.sound; // corner sound on/off button
         if (typeof o.showFps === 'boolean') s.showFps = o.showFps;
-        if (typeof o.toyStyle === 'boolean') s.toyStyle = o.toyStyle; // character look (charstyle.js)
+        // character look (charstyle.js): toy style is the default; a saved Off counts only if the
+        // player picked it in Settings (older saves stored the old Off default)
+        if (typeof o.toyStyle === 'boolean' && o.toyStyleChosen) { s.toyStyle = o.toyStyle; s.toyStyleChosen = true; }
         if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
         // ids of the presents found so far (src/unlocks.js)
         if (Array.isArray(o.presents)) s.presents = o.presents.filter((v) => typeof v === 'string');

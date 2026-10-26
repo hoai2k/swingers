@@ -118,7 +118,7 @@ function sharedSettingItems(ui) {
       settings.res = v[i]; g.setResScale(v[i] || 1); saveSettings();
     } },
     // character look: our chunky Wobblers, or the toy style (coloured skin, Wobbly Life proportions, clothes on top)
-    { label: 'Toy style characters', value: settings.toyStyle ? 'On' : 'Off', adj: () => { settings.toyStyle = !settings.toyStyle; saveSettings(); g.setCharStyle(settings.toyStyle ? TOY_STYLE : 'chunky'); } },
+    { label: 'Toy style characters', value: settings.toyStyle ? 'On' : 'Off', adj: () => { settings.toyStyle = !settings.toyStyle; settings.toyStyleChosen = true; saveSettings(); g.setCharStyle(settings.toyStyle ? TOY_STYLE : 'chunky'); } },
     { label: 'Show FPS', value: settings.showFps ? 'On' : 'Off', adj: () => { settings.showFps = !settings.showFps; saveSettings(); ui.perfOverlay?.(null); } },
     ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
   ];

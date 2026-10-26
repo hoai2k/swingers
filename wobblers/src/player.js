@@ -214,11 +214,11 @@ function skinTemplate() {
     return g;
   };
   if (STYLE.layered) {
-    // smooth rounded skin all over, then the clothes as shells on top of it
+    // the clothes as rounded shells (the shirt overlapping the trousers at the waist); the torso
+    // is all shirt up to the head like the default style (no bare neck), so no skin bean under it
     const shell = (pts, k) => pts.map(([r, y]) => [r * k + 0.006, y]);
-    add(shape(lathe(prof, 24)), 'skin', waist);
     add(shape(lathe(shell(prof.filter((p) => p[1] <= BODY_SPLIT + 0.03), 1.05), 24)), 'pants', waist);
-    add(shape(lathe(shell(prof.filter((p) => p[1] >= BODY_SPLIT - 0.04 && p[1] <= 1.17), 1.045), 24)), 'shirt', waist);
+    add(shape(lathe(shell(prof.filter((p) => p[1] >= BODY_SPLIT - 0.04), 1.045), 24)), 'shirt', waist);
   } else {
     add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
     add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
@@ -441,7 +441,7 @@ export class Player {
       m.position.y = -STYLE.drop * S;
       m.castShadow = true;
       if (STYLE.outline) { const o = new THREE.Mesh(m.geometry, HEAD_OUTLINE); o.scale.setScalar(1.05); m.add(o); }
-      if (STYLE.skinColored) m.onBeforeRender = (r, s, c, geo, mat) => { const u = mat.userData.skinU; if (u) { u.value.set(skinTone(this.color)); mat.uniformsNeedUpdate = true; } };
+      if (STYLE.skinColored) m.onBeforeRender = (r, s, c, geo, mat) => { const u = mat.userData.skinU; if (u) { u.value.set(skinTone(this.skinBase())); mat.uniformsNeedUpdate = true; } };
       this.headMesh = m;
       g.add(m);
       this.hatMesh = new THREE.Group();
@@ -465,8 +465,8 @@ export class Player {
     const cols = STYLE.mono // 'wobbly' style: one colour all over, blue shoes
       ? { shirt: this.color, pants: this.color, skin: this.color, mitten: this.color, cuff: this.color, shoe: 0x2f6fe0, sole: 0x2a5cc0 }
       : STYLE.skinColored // 'dressed': skin in the character colour, clothes in their own colours
-        ? { shirt: this.outfit?.shirt ?? DRESS_SHIRTS[(this.colorIndex ?? 0) % DRESS_SHIRTS.length], pants: this.outfit?.pants ?? this.pantsColor ?? 0x3b5c9a,
-          skin: skinTone(this.color), mitten: skinTone(this.color), cuff: skinTone(this.color), shoe: 0x3a3340, sole: 0xe8e8e8 }
+        ? { shirt: this.clothesColor(), pants: this.outfit?.pants ?? this.pantsColor ?? 0x3b5c9a,
+          skin: skinTone(this.skinBase()), mitten: skinTone(this.skinBase()), cuff: skinTone(this.skinBase()), shoe: 0x3a3340, sole: 0xe8e8e8 }
         : { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
     if (!this.skin) {
       const m = new THREE.SkinnedMesh(skinTemplate().clone(), PLAYER_MAT);
@@ -548,7 +548,7 @@ export class Player {
     while (hm.children.length) { const c = hm.children.pop(); c.geometry?.dispose(); }
     const kind = HATS[this.hat];
     if (kind === 'none') return;
-    const b = new Builder(), R = HEAD_R, c = this.color;
+    const b = new Builder(), R = HEAD_R, c = this.hatTint ?? this.clothesColor();
     const dark = new THREE.Color(c).multiplyScalar(0.6).getHex();
     if (kind === 'cap') {
       b.sphere(R * 1.02, c, [0, R * 0.35, 0], [1, 0.62, 1], 16);
@@ -577,6 +577,15 @@ export class Player {
     } else buildExtraHat(b, kind, R, c, hm); // unlockable hats (src/hats.js)
     hm.add(b.mesh());
   }
+
+  // Hats and shirts: the character colour, except in the toy style, where that colour is the
+  // skin (a hat in it would read as hair): there they take the shirt colour.
+  clothesColor() {
+    if (!STYLE.skinColored) return this.color;
+    return this.outfit?.shirt ?? DRESS_SHIRTS[(this.colorIndex ?? 0) % DRESS_SHIRTS.length];
+  }
+  // Toy style: the colour the skin tone comes from (a player's chosen colour; NPCs pick one, npc.js).
+  skinBase() { return this.color; }
 
   setColor(ci) {
     this.colorIndex = (ci + PLAYER_COLORS.length) % PLAYER_COLORS.length;

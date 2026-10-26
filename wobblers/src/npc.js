@@ -29,7 +29,7 @@
 // standing where they were out to SHOW_R so streets don't look empty).
 import * as THREE from 'three';
 import { Player, S, headMaterials } from './player.js';
-import { HATS } from './config.js';
+import { HATS, PLAYER_COLORS } from './config.js';
 import { startEmote, stopEmote } from './emotes.js';
 import { FACES, faceMaterial } from './cosmetics.js';
 import { Builder } from './mesh.js';
@@ -183,10 +183,9 @@ export class NPC extends Player {
     const kind = this.hatKind;
     if (kind == null || HATS.includes(kind)) {
       if (kind != null) this.hat = HATS.indexOf(kind);
-      const c = this.color;
-      if (this.hatColor != null) this.color = this.hatColor;
+      this.hatTint = this.hatColor ?? undefined; // its own hat colour, in any style
       super.buildHat();
-      this.color = c;
+      this.hatTint = undefined;
       return;
     }
     const hm = this.hatMesh;
@@ -194,6 +193,20 @@ export class NPC extends Player {
     const b = new Builder();
     NPC_HATS[kind]?.(b, HEAD_R, this.hatColor ?? this.color, hm);
     hm.add(b.mesh());
+  }
+
+  // Toy style: an NPC's role colour stays its shirt; its skin is a palette colour picked from
+  // its spawn spot (never the shirt's own hue).
+  clothesColor() { return this.outfit?.shirt ?? this.color; }
+  skinBase() {
+    if (!this.home) return this.color; // the Player constructor paints before the spawn spot is known (applyLook repaints)
+    if (this.toySkin == null) {
+      const h = Math.abs(Math.sin(this.home.x * 12.99 + this.home.z * 78.23) * 43758.5) % 1;
+      let k = (h * 8) | 0; // the eight bright colours (not white / charcoal)
+      if (PLAYER_COLORS[k] === this.color) k = (k + 1) % 8;
+      this.toySkin = PLAYER_COLORS[k];
+    }
+    return this.toySkin;
   }
 
   groundY(x, z, fromY) {
