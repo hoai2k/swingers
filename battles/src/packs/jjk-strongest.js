@@ -35,8 +35,15 @@ import { UPY, markAt, STANCE, setArmKey, hover, refreshBeam, endBeam } from './g
 import { placeExtra } from './sm-core.js';
 import {
   jk, openDomain, domeMesh, summon, dismiss, switchTeam, onSecret, announce, isA, burntOut, ensureHitHook,
-  markerAt, markerOn, enemyOf, park,
+  markerAt, markerOn, enemyOf,
 } from './jjk-core.js';
+// (no static import of battle.js here: see jjk-core.js; this is battle.js park())
+function park(u) {
+  u.dormant = true;
+  u.alive = false;
+  for (const bd of u.rag.bodies) bd.setEnabled(false);
+  for (const e of u.extras) e.body?.setEnabled(false);
+}
 
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _q = new THREE.Quaternion(), _e = new THREE.Euler();
