@@ -73,10 +73,14 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   Static colliders: `staticmerge.js` runs after the world build and rebuilds every thin static
   box / cylinder (smallest side < 1.2 m) as one triangle mesh per 96 m area and material (~8,000
   colliders -> ~255): Rapier pays per collider every step. Solid blocks stay boxes (meshes are
-  hollow: clearance checks must find them). Scenery added after the merge stays separate; the
-  merged shapes are listed in `physics.staticShapes` (the map painter reads them). Don't hold
-  on to a static collider handle from `kit` / `physics.box` (it is gone after the merge) — use a
-  trimesh (`physics.trimesh`, never merged) when you need its handle, like the ski slopes.
+  hollow: clearance checks must find them). Nothing is baked: every load merges what the build
+  made, so moving buildings in code just works. At runtime `game.staticMerge` rebuilds only the
+  areas that change: `merge()` folds in static colliders added since, `removeIn(x0, z0, x1, z1,
+  filter?)` takes shapes out, `unmerge(...)` turns them back into separate colliders (move them,
+  then `merge()`), `shapesIn(...)` lists them. The merged shapes are in `physics.staticShapes`
+  (the map painter reads them). Don't hold on to a static collider handle from `kit` /
+  `physics.box` (it is gone after the merge) — use a trimesh (`physics.trimesh`, never merged)
+  when you need its handle, like the ski slopes.
   Draw calls (`game.lodView`): vehicle wheels / glass / light panels cast no shadows, light
   panels hide beyond 70 m by day, loose props cast shadows only within 35 m of the camera.
   Resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame
@@ -212,7 +216,14 @@ call in `world/index.js` (its own `fair` build step). Layout in `fair/layout.js`
   templates stamped with `stamp`), leaf litter, pumpkins, hay (some bales are seats), the pumpkin
   patch outside the east fence, coins, and falling leaves (one Points cloud round the players).
 - `npcs.js`: the `teen` role; ~50 teens spawned lazily (one per physics step) once a player is
-  within 260 m. `game.fair` = { times, rides }.
+  within 260 m, first the riders strapped to every other Gravitron / Starship 2000 wall pad
+  (NPC behaviour `'ride'` with `rideSeat`: sits straight in, never gets off, cheers).
+  `game.fair` = { times, rides }.
+- Camera inside enclosed rides: the saucers' wall colliders are in `game.cameraBlockers` (the
+  follow camera's sweep also stops at those, not at other moving things) and the ride is a
+  `game.camEnclosures` entry `{ x, z, r, y0, y1, top }`: inside it the camera stays close, high
+  and under the roof, and a seated rider is viewed from the middle (the riders round the wall
+  in view). The saucers cycle: 6 s stop to board, 6 s up, 18 s spinning, 7 s down.
 
 ## Missions (jobs, `src/missions/`)
 

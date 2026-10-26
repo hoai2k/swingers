@@ -5,7 +5,14 @@
 // pad, and frames vehicles with a look-ahead and speed-dependent FOV.
 import * as THREE from 'three';
 import { RAPIER } from './physics.js';
-import { CAMERA_QUERY } from './config.js';
+import { CAMERA_QUERY, G_STATIC, G_VEH, groups } from './config.js';
+
+// The camera keeps out of the static world and stays inside enclosed rides
+// (the Gravitron's spinning wall): colliders listed in game.cameraBlockers
+// (handles) count too, other moving things (cars, ride cars) don't.
+const CAMERA_QUERY_RIDES = groups(0xffff, G_STATIC | G_VEH);
+const camBlocks = (game) => (game._camPred ||= (c) => !!(c.parent()?.isFixed()) || !!game.cameraBlockers?.has(c.handle));
+void CAMERA_QUERY;
 
 const FOV = 62;
 const FOOT_DIST = 5.2, RIDE_DIST = 7.5;
@@ -38,10 +45,10 @@ export class FollowCam {
     try {
       // stopAtPenetration false: a probe that starts touching a wall the player is
       // pressed against (jumping at it) only counts surfaces it moves into
-      hit = w.castShape(from, _rot, dir, _probe, 0, max, false, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY);
+      hit = w.castShape(from, _rot, dir, _probe, 0, max, false, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY_RIDES, undefined, undefined, camBlocks(this.game));
     } catch (e) { hit = null; }
     if (hit) return hit.time_of_impact ?? hit.timeOfImpact ?? max;
-    const r = w.castRay(new RAPIER.Ray(from, dir), max, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY);
+    const r = w.castRay(new RAPIER.Ray(from, dir), max, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY_RIDES, undefined, undefined, camBlocks(this.game));
     return r ? Math.max(0, r.timeOfImpact - PROBE_R) : max;
   }
 
@@ -96,6 +103,16 @@ export class FollowCam {
         if (Math.abs(d) < 2.0) this.yaw += d * Math.min(1, dt * 0.7 * Math.min(1, spd / 6));
       }
     }
+    // inside an enclosed ride (game.camEnclosures: the Gravitron, Starship 2000): stay well
+    // inside the wall and look down over the player; strapped to the wall, look back at
+    // them from the middle so the other riders round the wall are in view
+    let pitch = this.pitch;
+    const enc = !veh && this.game.camEnclosures?.find((e) => Math.hypot(tgt.x - e.x, tgt.z - e.z) < e.r && tgt.y > e.y0 && tgt.y < e.y1);
+    if (enc) {
+      wantDist = Math.min(wantDist, enc.r * 0.62);
+      pitch = Math.max(pitch, ride ? 0.35 : 0.62);
+      if (ride) { const dx = enc.x - tgt.x, dz = enc.z - tgt.z; if (Math.hypot(dx, dz) > 1) this.yaw = Math.atan2(-dx, -dz); }
+    }
     if (this.first) { this.target.copy(tgt); this.first = false; }
     // trail: snappy sideways, softer up and down (but never lose a fast fall)
     const t = this.target;
@@ -107,13 +124,14 @@ export class FollowCam {
     this.dist += (wantDist - this.dist) * Math.min(1, dt * 3);
     this.fov += (wantFov - this.fov) * Math.min(1, dt * 2);
 
-    const cp = Math.cos(this.pitch);
-    const back = _back.set(-Math.sin(this.yaw) * cp, Math.sin(this.pitch), -Math.cos(this.yaw) * cp);
+    const cp = Math.cos(pitch);
+    const back = _back.set(-Math.sin(this.yaw) * cp, Math.sin(pitch), -Math.cos(this.yaw) * cp);
     // pull in in front of walls: in fast, out slowly
     const free = this.clearance({ x: t.x, y: t.y, z: t.z }, { x: back.x, y: back.y, z: back.z }, this.dist + 0.2);
     const d = Math.max(0.6, Math.min(this.dist, free - 0.1));
     this.curDist = d < this.curDist ? d : this.curDist + (d - this.curDist) * Math.min(1, dt * 3);
     const pos = _pos.copy(t).addScaledVector(back, this.curDist);
+    if (enc && pos.y > enc.top) pos.y = enc.top; // under the ride's roof
     const gh = this.game.groundHeight(pos.x, pos.z, pos.y + 1);
     if (pos.y < gh + 0.35) pos.y = gh + 0.35;
     const wl = this.game.physics.waterLevel(pos.x, pos.y, pos.z);

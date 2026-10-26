@@ -1,21 +1,31 @@
-// Static collider merge, run once after the world is built. Rapier pays for
-// every collider on every step (broad phase upkeep and the scene-query tree
-// refit), even when nothing near it moves: ~8,900 separate static boxes and
-// cylinders cost several ms per step. Here the thin ones (walls, fences,
-// slabs, floors, poles, trunks) are rebuilt as one triangle mesh per area
-// and material. A box becomes its exact 12 triangles, so walls stay tight to
-// what is drawn; cylinders become 16-sided prisms with their corners on the
-// radius (the drawn ones have 6-12 sides).
+// Static collider merge. Rapier pays for every collider on every step (broad
+// phase upkeep and the scene-query tree refit), even when nothing near it
+// moves: ~8,900 separate static boxes and cylinders cost several ms per step.
+// Here the thin ones (walls, fences, slabs, floors, poles, trunks) are rebuilt
+// as one triangle mesh per area and material. A box becomes its exact 12
+// triangles, so walls stay tight to what is drawn; cylinders become 16-sided
+// prisms with their corners on the radius (the drawn ones have 6-12 sides).
+//
+// It is redoable: nothing is baked. Every load merges whatever the world
+// build made, so moving or adding buildings in the code needs nothing here.
+// At runtime `game.staticMerge` keeps each area's shape list and rebuilds
+// only the areas that change:
+//   merge()                 fold static colliders added since (lazily built
+//                           scenery, a building placed in play) into their areas
+//   removeIn(x0, z0, x1, z1, filter?)  take merged shapes whose centre is in that
+//                           box out (filter(rec) => true to remove), e.g. before
+//                           moving or demolishing a building, then rebuild
+//   shapesIn(x0, z0, x1, z1)  the merged shape records there
+//   unmerge(x0, z0, x1, z1) put the shapes there back as separate colliders
+//                           (to move them as they are, then merge() again)
 //
 // Kept as they are:
 //  - big solid blocks (every side >= SOLID m): a triangle mesh is hollow, and
 //    clearance checks (phone vehicle spawns, exits) must still find them;
-//  - balls, convex hulls and existing meshes (rocks, ramps, slopes);
-//  - colliders added after the merge (lazily built scenery).
+//  - balls, convex hulls and existing meshes (rocks, ramps, slopes).
 // Build-time queries (coins, presents, booths, the ground under things) all
-// run before it, against the original colliders.
-// `physics.staticShapes` keeps a description of every merged box / cylinder
-// for the map picture (map.js paintStatics).
+// run before the first merge, against the original colliders.
+// `physics.staticShapes` lists every merged box / cylinder (map.js paints them).
 import * as THREE from 'three';
 import { RAPIER } from './physics.js';
 
@@ -23,76 +33,148 @@ const AREA = 96;    // metres: merged meshes per area (keeps each mesh's bounds 
 const SOLID = 1.2;  // a box with every full side at least this long stays a box
 const SEG = 16;     // cylinder sides
 
+const q = new THREE.Quaternion(), v = new THREE.Vector3(), p = new THREE.Vector3();
+
 export function mergeStatics(game) {
-  const ph = game.physics, W = ph.world, sb = ph.staticBody;
-  const groups = new Map();
-  const shapes = ph.staticShapes ||= [];
-  const drop = [];
-  const q = new THREE.Quaternion(), v = new THREE.Vector3(), p = new THREE.Vector3();
-  const T = RAPIER.ShapeType;
-  W.forEachCollider((c) => {
-    const par = c.parent();
-    if (!par || par.handle !== sb.handle || c.isSensor()) return;
-    const ty = c.shapeType();
-    if (ty !== T.Cuboid && ty !== T.Cylinder) return;
-    const t = c.translation(), r = c.rotation();
-    let rec;
-    if (ty === T.Cuboid) {
-      const he = c.halfExtents();
-      if (Math.min(he.x, he.y, he.z) * 2 >= SOLID) return;
-      rec = { type: 'box', x: t.x, y: t.y, z: t.z, he: { x: he.x, y: he.y, z: he.z }, rot: { x: r.x, y: r.y, z: r.z, w: r.w } };
-    } else {
-      const rr = c.radius(), hh = c.halfHeight();
-      if (rr * 2 >= SOLID && hh * 2 >= SOLID) return;
-      rec = { type: 'cyl', x: t.x, y: t.y, z: t.z, r: rr, hh, rot: { x: r.x, y: r.y, z: r.z, w: r.w } };
+  const m = game.staticMerge ||= new StaticMerge(game);
+  m.merge();
+  return m;
+}
+
+class StaticMerge {
+  constructor(game) {
+    this.game = game;
+    this.ph = game.physics;
+    this.groups = new Map(); // key -> { recs, collider, mat }
+    this.handles = new Set(); // the merged mesh colliders
+  }
+
+  get stats() { let shapes = 0; for (const g of this.groups.values()) shapes += g.recs.length; return { merged: shapes, meshes: this.groups.size }; }
+
+  // Fold every separate thin static box / cylinder into its area mesh.
+  merge() {
+    const ph = this.ph, W = ph.world, sb = ph.staticBody, T = RAPIER.ShapeType;
+    const dirty = new Set(), drop = [];
+    W.forEachCollider((c) => {
+      const par = c.parent();
+      if (!par || par.handle !== sb.handle || c.isSensor() || this.isMerged(c.handle)) return;
+      const ty = c.shapeType();
+      if (ty !== T.Cuboid && ty !== T.Cylinder) return;
+      const t = c.translation(), r = c.rotation();
+      let rec;
+      if (ty === T.Cuboid) {
+        const he = c.halfExtents();
+        if (Math.min(he.x, he.y, he.z) * 2 >= SOLID) return;
+        rec = { type: 'box', x: t.x, y: t.y, z: t.z, he: { x: he.x, y: he.y, z: he.z }, rot: { x: r.x, y: r.y, z: r.z, w: r.w } };
+      } else {
+        const rr = c.radius(), hh = c.halfHeight();
+        if (rr * 2 >= SOLID && hh * 2 >= SOLID) return;
+        rec = { type: 'cyl', x: t.x, y: t.y, z: t.z, r: rr, hh, rot: { x: r.x, y: r.y, z: r.z, w: r.w } };
+      }
+      const bounce = ph.bouncy.get(c.handle);
+      rec.mat = { groups: c.collisionGroups(), solver: c.solverGroups(), friction: c.friction(), restitution: c.restitution(),
+        fcr: c.frictionCombineRule(), rcr: c.restitutionCombineRule(), bounce, slip: ph.slippery.has(c.handle) };
+      if (bounce) rec.bounce = bounce;
+      dirty.add(this.add(rec));
+      drop.push(c);
+    });
+    for (const c of drop) { ph.bouncy.delete(c.handle); ph.slippery.delete(c.handle); W.removeCollider(c, false); }
+    this.rebuild(dirty);
+    return drop.length;
+  }
+
+  add(rec) {
+    const m = rec.mat, key = [Math.floor(rec.x / AREA), Math.floor(rec.z / AREA), m.groups, m.solver, m.friction, m.restitution, m.fcr, m.rcr, m.bounce ?? '', m.slip ? 1 : 0].join('|');
+    let g = this.groups.get(key);
+    if (!g) { g = { key, recs: [], collider: null, mat: m }; this.groups.set(key, g); }
+    g.recs.push(rec);
+    return g;
+  }
+
+  isMerged(handle) { return this.handles.has(handle); }
+
+  shapesIn(x0, z0, x1, z1) {
+    const out = [];
+    for (const g of this.groups.values()) for (const r of g.recs) if (r.x >= x0 && r.x <= x1 && r.z >= z0 && r.z <= z1) out.push(r);
+    return out;
+  }
+
+  // Take merged shapes out (centre inside the box, and filter(rec) if given); returns them.
+  removeIn(x0, z0, x1, z1, filter = null) {
+    const dirty = new Set(), out = [];
+    for (const g of this.groups.values()) {
+      const keep = [];
+      for (const r of g.recs) {
+        if (r.x >= x0 && r.x <= x1 && r.z >= z0 && r.z <= z1 && (!filter || filter(r))) { out.push(r); dirty.add(g); } else keep.push(r);
+      }
+      g.recs = keep;
     }
-    const bounce = ph.bouncy.get(c.handle), slip = ph.slippery.has(c.handle);
-    const key = [Math.floor(t.x / AREA), Math.floor(t.z / AREA), c.collisionGroups(), c.solverGroups(), c.friction(), c.restitution(),
-      c.frictionCombineRule(), c.restitutionCombineRule(), bounce ?? '', slip ? 1 : 0].join('|');
-    let gr = groups.get(key);
-    if (!gr) {
-      gr = { V: [], I: [], bounce, slip, groups: c.collisionGroups(), solver: c.solverGroups(), friction: c.friction(), restitution: c.restitution(),
-        fcr: c.frictionCombineRule(), rcr: c.restitutionCombineRule() };
-      groups.set(key, gr);
+    this.rebuild(dirty);
+    return out;
+  }
+
+  // Put merged shapes back as separate static colliders (move them, then merge() again).
+  unmerge(x0, z0, x1, z1, filter = null) {
+    const ph = this.ph, made = [];
+    for (const r of this.removeIn(x0, z0, x1, z1, filter)) {
+      const d = r.type === 'box' ? RAPIER.ColliderDesc.cuboid(r.he.x, r.he.y, r.he.z) : RAPIER.ColliderDesc.cylinder(r.hh, r.r);
+      d.setTranslation(r.x, r.y, r.z).setRotation(r.rot).setCollisionGroups(r.mat.groups).setSolverGroups(r.mat.solver)
+        .setFriction(r.mat.friction).setRestitution(r.mat.restitution).setFrictionCombineRule(r.mat.fcr).setRestitutionCombineRule(r.mat.rcr);
+      const c = ph.world.createCollider(d, ph.staticBody);
+      if (r.mat.bounce) ph.bouncy.set(c.handle, r.mat.bounce);
+      if (r.mat.slip) ph.slippery.add(c.handle);
+      made.push(c);
     }
-    if (bounce) rec.bounce = bounce;
-    shapes.push(rec);
-    // triangles, outward wound
-    q.set(r.x, r.y, r.z, r.w);
-    const o = gr.V.length / 3;
-    const put = (x, y, z) => { v.set(x, y, z).applyQuaternion(q).add(p.set(t.x, t.y, t.z)); gr.V.push(v.x, v.y, v.z); };
-    if (rec.type === 'box') {
-      const { x: a, y: b, z: d } = rec.he;
-      for (const [sx, sy, sz] of [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]]) put(sx * a, sy * b, sz * d);
-      for (const f of BOX_TRIS) gr.I.push(o + f[0], o + f[1], o + f[2]);
-    } else {
-      const { r: rr, hh } = rec;
-      for (let i = 0; i < SEG; i++) { const a = i / SEG * Math.PI * 2; put(Math.cos(a) * rr, -hh, Math.sin(a) * rr); put(Math.cos(a) * rr, hh, Math.sin(a) * rr); }
-      for (let i = 0; i < SEG; i++) {
-        const j = (i + 1) % SEG, b0 = o + i * 2, b1 = o + j * 2;
-        gr.I.push(b0, b0 + 1, b1, b1, b0 + 1, b1 + 1);        // side
-        if (i > 0 && i < SEG - 1) {                             // caps (fans from vertex 0)
-          gr.I.push(o, b1, b0);                                 // bottom
-          gr.I.push(o + 1, b0 + 1, b1 + 1);                     // top
-        }
+    ph.world.updateSceneQueries?.();
+    return made;
+  }
+
+  // Rebuild the meshes of the given groups from their shape lists.
+  rebuild(dirty) {
+    const ph = this.ph, W = ph.world;
+    for (const g of dirty) {
+      if (g.collider) {
+        this.handles.delete(g.collider.handle); ph.bouncy.delete(g.collider.handle); ph.slippery.delete(g.collider.handle);
+        W.removeCollider(g.collider, false); g.collider = null;
+      }
+      if (!g.recs.length) { this.groups.delete(g.key); continue; }
+      const V = [], I = [];
+      for (const r of g.recs) triangles(r, V, I);
+      const m = g.mat;
+      const desc = RAPIER.ColliderDesc.trimesh(new Float32Array(V), new Uint32Array(I))
+        .setCollisionGroups(m.groups).setSolverGroups(m.solver).setFriction(m.friction).setRestitution(m.restitution)
+        .setFrictionCombineRule(m.fcr).setRestitutionCombineRule(m.rcr);
+      g.collider = W.createCollider(desc, ph.staticBody);
+      this.handles.add(g.collider.handle);
+      if (m.bounce) ph.bouncy.set(g.collider.handle, m.bounce);
+      if (m.slip) ph.slippery.add(g.collider.handle);
+    }
+    ph.staticShapes = [...this.groups.values()].flatMap((g) => g.recs);
+    W.updateSceneQueries?.();
+  }
+}
+
+// A shape's triangles (outward wound) appended to V / I.
+function triangles(rec, V, I) {
+  const o = V.length / 3, r = rec.rot;
+  q.set(r.x, r.y, r.z, r.w);
+  const put = (x, y, z) => { v.set(x, y, z).applyQuaternion(q).add(p.set(rec.x, rec.y, rec.z)); V.push(v.x, v.y, v.z); };
+  if (rec.type === 'box') {
+    const { x: a, y: b, z: d } = rec.he;
+    for (const [sx, sy, sz] of [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]]) put(sx * a, sy * b, sz * d);
+    for (const f of BOX_TRIS) I.push(o + f[0], o + f[1], o + f[2]);
+  } else {
+    const { r: rr, hh } = rec;
+    for (let i = 0; i < SEG; i++) { const a = i / SEG * Math.PI * 2; put(Math.cos(a) * rr, -hh, Math.sin(a) * rr); put(Math.cos(a) * rr, hh, Math.sin(a) * rr); }
+    for (let i = 0; i < SEG; i++) {
+      const j = (i + 1) % SEG, b0 = o + i * 2, b1 = o + j * 2;
+      I.push(b0, b0 + 1, b1, b1, b0 + 1, b1 + 1);  // side
+      if (i > 0 && i < SEG - 1) {                   // caps (fans from vertex 0)
+        I.push(o, b1, b0);                          // bottom
+        I.push(o + 1, b0 + 1, b1 + 1);              // top
       }
     }
-    drop.push(c);
-  });
-  for (const c of drop) { ph.bouncy.delete(c.handle); ph.slippery.delete(c.handle); W.removeCollider(c, false); }
-  let made = 0;
-  for (const gr of groups.values()) {
-    const desc = RAPIER.ColliderDesc.trimesh(new Float32Array(gr.V), new Uint32Array(gr.I));
-    desc.setCollisionGroups(gr.groups).setSolverGroups(gr.solver)
-      .setFriction(gr.friction).setRestitution(gr.restitution)
-      .setFrictionCombineRule(gr.fcr).setRestitutionCombineRule(gr.rcr);
-    const c = W.createCollider(desc, sb);
-    if (gr.bounce) ph.bouncy.set(c.handle, gr.bounce);
-    if (gr.slip) ph.slippery.add(c.handle);
-    made++;
   }
-  W.updateSceneQueries?.();
-  return { merged: drop.length, meshes: made };
 }
 
 // 8 corners: 0-3 at -z (bl, br, tr, tl), 4-7 at +z

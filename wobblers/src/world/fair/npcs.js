@@ -72,6 +72,16 @@ export function spawnTeens(game, R, F) {
       add(x, z, { behaviour: 'idle', yaw: Math.atan2(gx - x, gz - z) });
     }
   }
+  // riders strapped to the Gravitron / Starship 2000 wall pads (every other pad, first in the
+  // spawn queue so they are on board when you walk in)
+  for (const label of ['Ride Gravitron', 'Ride Starship 2000']) {
+    const seats = F.seats.filter((s) => s.label === label);
+    seats.forEach((s, i) => {
+      if (i % 2) return;
+      const t = s.body.translation();
+      list.unshift([t.x + s.pos[0], t.z + s.pos[2], { ...look(list.length), behaviour: 'ride', rideSeat: s, area: { x: t.x, z: t.z, r: 3 } }]);
+    });
+  }
   // a few on the benches, at the pumpkin patch and by the entrance arch
   for (const x of [-110, -52, 24, 82]) add(x, MIDWAY.z - 7, { behaviour: 'sit' });
   for (let i = 0; i < 3; i++) add(PATCH.x - 6, PATCH.z - 5 + i * 5, { area: { x: PATCH.x, z: PATCH.z, r: 10 } });

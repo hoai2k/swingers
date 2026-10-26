@@ -260,6 +260,12 @@ export class NPC extends Player {
       if (d.flee !== false && ai.attacker) { ai.mode = 'flee'; ai.t = 2.5 + r01() * 1.5; }
       else { ai.mode = 'idle'; ai.t = 2; }
     }
+    // 'ride': strapped into a ride seat (opts.rideSeat): sit straight in, never get off, cheer now and then
+    if (d.behaviour === 'ride') {
+      if (!this.seat && d.rideSeat && !d.rideSeat.occupant) this.sitIn(d.rideSeat);
+      if (this.seat && ai.t <= 0) { ai.t = 3 + r01() * 6; if (r01() < 0.5) this.say(pick(d.rideLines || ['Wheee!', 'Whoaaa!', 'Again!', 'Faster!', 'Woohoo!']), 1.6); }
+      return [inp, pr];
+    }
     // forms.js: everyone runs from a player in raptor form
     const scare = this.game.forms?.scareOf(this);
     if (scare && ai.mode !== 'flee' && this.def.flee !== false) {

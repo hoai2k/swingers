@@ -45,7 +45,7 @@ function saucer(F, kit, at, kind) {
   const b = new Builder();
   b.cyl(RS, RS, 0.3, 0x5a5f6a, [0, 0, 0], null, 32);
   b.add(new THREE.CylinderGeometry(RS, RS, WH, 40, 1, true, DOOR + DH, TAU - 2 * DH), shellC, [0, WH / 2, 0]);
-  b.add(new THREE.CylinderGeometry(RS - 0.15, RS - 0.15, WH, 40, 1, true, DOOR + DH, TAU - 2 * DH), 0x2a2a34, [0, WH / 2, 0]);
+  b.add(new THREE.CylinderGeometry(RS - 0.15, RS - 0.15, WH, 40, 1, true, DOOR + DH, TAU - 2 * DH), star ? 0x4a5aa0 : 0x8a7aa8, [0, WH / 2, 0]);
   b.add(new THREE.CylinderGeometry(2.4, RS + 0.5, 1.8, 40, 1, true), shellC, [0, WH + 0.9, 0]);
   b.add(new THREE.CylinderGeometry(RS + 0.5, RS + 0.5, 0.3, 40, 1, true), trimC, [0, WH + 0.05, 0]);
   b.cyl(2.4, 2.4, 0.25, trimC, [0, WH + 1.8, 0], null, 24);
@@ -66,6 +66,11 @@ function saucer(F, kit, at, kind) {
     cols.push(RAPIER.ColliderDesc.cuboid(1.45, WH / 2, 0.15).setTranslation(Math.sin(a) * RS, WH / 2, Math.cos(a) * RS).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
   }
   const saucerBody = F.body({ x, y: BY, z }, cols, b.mesh(matVCDouble));
+  // the camera stays inside the spinning wall (camera.js), and the inside is lit
+  const cb = F.game.cameraBlockers ||= new Set();
+  for (let i = 0; i < saucerBody.numColliders(); i++) cb.add(saucerBody.collider(i).handle);
+  (F.game.camEnclosures ||= []).push({ x, z, r: RS - 0.3, y0: BY - 0.5, y1: BY + WH + 2, top: BY + WH - 0.25 });
+  F.game.interiorLights?.add(x, BY + WH - 0.4, z, { color: star ? 0x9fe8ff : 0xe0c8ff, range: 12 });
   // wall pads with the seats: one body that turns with the saucer and slides up the wall at speed
   const pb = new Builder(), pads = F.body({ x, y: BY, z });
   for (let k = 0; k < NP; k++) {
@@ -81,7 +86,7 @@ function saucer(F, kit, at, kind) {
   const padMesh = pb.mesh();
   F.group.add(padMesh);
   F.game.physics.objects.push({ body: pads, mesh: padMesh, buoy: null, kind: 'ride' });
-  const W = 12, UP = 6, RUN = 16, DOWN = 7, VM = vmaxFor(8 * TAU, UP, RUN, DOWN), OFF = star ? 21 : 3;
+  const W = 6, UP = 6, RUN = 18, DOWN = 7, VM = vmaxFor(8 * TAU, UP, RUN, DOWN), OFF = star ? 21 : 3; // a short stop to board, then up to speed
   F.animate(kind, (t) => {
     const k = cyc(t, OFF, W, UP, RUN, DOWN, VM);
     const rise = 1.1 * sstep((k.p - 0.6) / 0.35);
