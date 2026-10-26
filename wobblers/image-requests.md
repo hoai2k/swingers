@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 12, 13 remain OPEN; delivered rows are in `image-requests-history.md`.**
+**Status: rounds 13 remain OPEN; delivered rows are in `image-requests-history.md`.**
 
 ## How delivery works
 
@@ -48,24 +48,6 @@ to the top of `image-requests-history.md`.
   frame's proportions).
 - **Reference sheets** (`assets/reference/`): any 16:9 around 1920 × 1080.
 
-## OPEN round 12 — paintings with characters in our real character style (6 posters + 1 cover)
-
-The owner chose the default look (chunky toy, the head as in the game since 2026-10-26);
-`assets/reference/ref_character_sheet.png` is rendered from it: use it as the character
-reference for every image here. (The in-game "toy style" option, with coloured skin, is
-not what these pictures show.)
-
-These replace delivered images whose characters were drawn yellow and featureless
-(not our game). Keep each picture's subject, layout and size; only the characters
-change. `painting_island.png` is also the Wobblers cover picture in the mini game
-library, so it matters most. Same paths and sizes, opaque, filling the frame.
-
-| File (`assets/…`) | Size | Prompt |
-|---|---|---|
-| `posters/wanted_pete.png` | 512 × 716 | Matching WANTED poster: **WANTED** at the top, **WOBBLY PETE** / **REWARD 100 COINS** below; a Wobbler outlaw in an orange shirt and black cowboy hat with a red bandana over the lower face, holding a toy water pistol, in a desert town. Peach-skinned round head with printed cartoon eyes, white mitten hands, dark shoes. |
-| `posters/clothes_fashion.png` | 512 × 716 | Bright fashion-shop poster with the words **NEW LOOKS** in big bubbly letters at the top; a Wobbler in a teal shirt striking a happy pose in a colourful sombrero and striped poncho with heart sunglasses, on a sunny plaza. Peach-skinned round head, darker trousers, white mitten hands. |
-| `posters/homes_cottage.png` | 768 × 528 | Estate-agent sign poster: a red **FOR SALE** board in front of a cosy cream cottage with a red roof, garden flowers and a white picket fence by the sea; a Wobbler in a purple shirt with a straw hat waving in front. Peach-skinned round head with a printed smiling face, darker trousers, white mitten hands. |
-| `ui/cover.png` | 1600 × 900 | NEW. Key art / cover for Wobblers (game libraries and share images): a sunny toy-like island town street with a ferris wheel and the sea behind; in front, five Wobblers in different shirt colours (red, blue, green, yellow, pink) having fun — one mid-jump, one riding a bouncy ball, two carrying a box together, one waving from a little red car. Peach-skinned round heads with printed cartoon faces, darker trousers, white mitten hands, dark shoes, a couple of hats. Leave the top fifth calm sky for a logo; no text. |
 
 ## OPEN round 13 — closed-eye (blink) frames for the painted faces (8 faces)
 

@@ -821,24 +821,48 @@
       "round": 5
     },
     {
-      "index": 80,
       "file": "posters/clothes_fashion.png",
       "width": 512,
       "height": 716,
+      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the fashion poster, sunny plaza, sombrero, striped poncho, heart sunglasses, pose and EXACT words NEW LOOKS. Replace only the character: peach round head, smiling mouth, teal shirt under poncho, darker teal trousers, white mitten hands, dark charcoal shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d97272eb-b1b5-4c13-9421-ba73b93f8652.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5e9952fa-46fe-44a8-bdf4-3710b8f46bc4.png",
-      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Fashion poster with exact heading \"NEW LOOKS\", a wobbly bean person posing in a sombrero and heart sunglasses. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
-      "round": 5
+      "index": 80,
+      "previousGenerations": [
+        {
+          "index": 80,
+          "file": "posters/clothes_fashion.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5e9952fa-46fe-44a8-bdf4-3710b8f46bc4.png",
+          "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Fashion poster with exact heading \"NEW LOOKS\", a wobbly bean person posing in a sombrero and heart sunglasses. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+          "round": 5
+        }
+      ]
     },
     {
-      "index": 81,
       "file": "posters/homes_cottage.png",
       "width": 768,
       "height": 528,
+      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the cottage, red roof, flowers, white picket fence, sea and EXACT FOR SALE sign. Replace only the waving person: peach-skinned round head with printed smiling cartoon face, purple shirt, darker purple trousers, white mitten hands, straw hat, dark shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 768x528.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5aad254e-a084-4ac8-a5c7-54d36df415cc.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2e837617-df1b-4cd8-a99f-faf78faeeb67.png",
-      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, exact words \"FOR SALE\" on a tag in one corner. Output aspect 768:528. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
-      "round": 5
+      "index": 81,
+      "previousGenerations": [
+        {
+          "index": 81,
+          "file": "posters/homes_cottage.png",
+          "width": 768,
+          "height": 528,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2e837617-df1b-4cd8-a99f-faf78faeeb67.png",
+          "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, exact words \"FOR SALE\" on a tag in one corner. Output aspect 768:528. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+          "round": 5
+        }
+      ]
     },
     {
       "index": 82,
@@ -1473,14 +1497,26 @@
       "round": 9
     },
     {
-      "index": 140,
       "file": "posters/wanted_pete.png",
       "width": 512,
       "height": 716,
+      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the aged paper WANTED poster and EXACT text WANTED / WOBBLY PETE / REWARD 100 COINS. Replace only the outlaw with a peach-skinned round head, printed cartoon eyes, orange shirt, darker trousers, white mittens and dark shoes; black cowboy hat, red bandana covering lower face, holding a brightly coloured toy water pistol. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c63e8d84-faf6-4500-940a-3d18d0e89d92.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-559bd4f0-038f-4cc9-8203-7c7fa80f5ac7.png",
-      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"WOBBLY PETE\" beneath portrait; \"REWARD 100 COINS\" below. A goofy wobbly bean-person outlaw with black hat and red bandana in the middle. Toy-like, silly, not scary. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
-      "round": 9
+      "index": 140,
+      "previousGenerations": [
+        {
+          "index": 140,
+          "file": "posters/wanted_pete.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-559bd4f0-038f-4cc9-8203-7c7fa80f5ac7.png",
+          "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"WOBBLY PETE\" beneath portrait; \"REWARD 100 COINS\" below. A goofy wobbly bean-person outlaw with black hat and red bandana in the middle. Toy-like, silly, not scary. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
+          "round": 9
+        }
+      ]
     },
     {
       "file": "posters/wanted_kid.png",
@@ -1780,6 +1816,16 @@
       "batch": 3,
       "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-101387a2-bb16-4d71-a66c-934d7adf65d8.png",
       "initialPrompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"PADDLE BALL\". Design: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark."
+    },
+    {
+      "file": "ui/cover.png",
+      "width": 1600,
+      "height": 900,
+      "prompt": "Use case: stylized-concept. New WOBBLERS game library cover, landscape 16:9, final 1600x900. Attached image is the REQUIRED character design reference, use its actual peach-skinned Wobblers. Sunny toy-like island town street with a ferris wheel and turquoise sea behind. Exactly five Wobblers in five different shirts red, blue, green, yellow, pink having fun: one mid-jump, one riding a bouncy ball, two carrying one box together, one waving from a little red car. Couple of hats. Chunky soft-toy figures with round peach #ffd9b8 heads about as wide as shoulders, slightly flat fronts with simple printed cartoon faces, happy eyes/smiling mouths/pink cheeks. Smooth bean shirt bodies, darker matching trousers, thick tube arms, white mitten hands, chunky dark charcoal shoes with pale soles. Bright saturated candy colours, clean flat shading with soft highlight. Leave top fifth calm open sky for later logo; NO text. Full-frame opaque illustration. No yellow-skinned faceless blobs, no other game's characters, logos or watermarks.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4c1b4928-70df-4d90-94b5-ae921d009bc7.png",
+      "round": 12,
+      "transparent": false,
+      "index": 167
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
