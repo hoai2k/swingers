@@ -2,13 +2,15 @@
 // peck), Banana Thrower (enemies who step on a peel slip and fall),
 // Bomb on a Stick (runs in and blows up), Cheerleader (cheers allies on: faster, harder
 // hitting, no panic, a little healing), Lightning Gun (arcs that chain through a group),
-// Ullr (a skiing archer god: frost volleys slow, three hits freeze solid).
+// Ullr (a skiing archer god: frost volleys slow, three hits freeze solid), Bubble Blower
+// (traps an enemy in a soap bubble that floats it off the ground until it pops).
 import { register } from '../ext.js';
 import {
-  THREE, rand, PART, EXPR, rangedThink, crossed, aimPoint, launchVel, addProjectile,
+  THREE, rand, PART, EXPR, rangedThink, crossed, aimPoint, launchVel, addProjectile, sweepParts,
   strike, blast, addStatus, arrowProj, arrowMesh, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo,
 } from './common.js';
 import { UPY, mark, markAt, refreshBeam, supportMove } from './ges-core.js';
+import { carry, trackFall, small } from './bc-core.js';
 
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const YEL = '#ffd93a';
@@ -17,9 +19,78 @@ const YEL = '#ffd93a';
 const STATE = new WeakMap();
 function S(b) {
   let s = STATE.get(b);
-  if (!s) STATE.set(b, (s = { peels: [] }));
+  if (!s) STATE.set(b, (s = { peels: [], bubbles: [] }));
   return s;
 }
+
+// ------------------------------------------------------------------ bubbles
+// A soap bubble drifts at the target. Whoever it catches (anyone small enough) floats up
+// inside it, helpless, until it pops: when its time is up, or as soon as the trapped
+// unit is hurt. Then they fall. Big units just get wet.
+const bubbler = {
+  aim: true,
+  init(u) { u.attackDur = u.def.weapon.windup; },
+  think: rangedThink,
+  event(u, t0, t1) {
+    const w = u.def.weapon, b = u.battle;
+    if (!crossed(t0, t1, w.releaseAt)) return;
+    u.released = true;
+    // from the ring of the wand, held out in front
+    u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset - 0.45 * u.s, 0.1 * u.s, _o);
+    const t = u.aimAt && u.aimAt.alive ? u.aimAt : null;
+    aimPoint(u, _p, 0.6, t ? _o.distanceTo(t.chestPos) / w.speed : 0.6);
+    if (!t && u.control && !u.control.aimPt) _p.y = _o.y + Math.tan(u.control.aimPitch) * 14;
+    launchVel(_o, _p, w.speed, BUBBLE.g, false, w.spread, _v);
+    addProjectile(b, 'sc_bubble', _o, _v, u, { life: 4 });
+    b.sound('pop', _o, 0.3, 2.4);
+  },
+};
+function catchIn(b, pr, v) {
+  const o = pr.owner, w = o.def.weapon, s = S(b);
+  const c = v.chestPos;
+  b.sound('pop', c, 0.6, 1.6);
+  if (v.scBubble || !small(v, 1.4) || v.pos.y - b.terrain.height(v.pos.x, v.pos.z) > v.skel.standHeight * 1.6) {
+    v.hit(pr.damage, PART.chest, 0, 0, 0, o, 'bubble');
+    b.emit('atrail', c.x, c.y, c.z, 0.5);
+    return;
+  }
+  v.hit(pr.damage, PART.chest, 0, 0, 0, o, 'bubble');
+  if (!v.alive) return;
+  const k = { v, owner: o, t: w.hold, age: 0, x: c.x, z: c.z, y0: c.y, hp: v.hp, dx: rand(-0.4, 0.4), dz: rand(-0.4, 0.4), mk: null };
+  k.mk = mark(b, v, 'sc_bubble_big', PART.chest, w.hold + 1);
+  v.scBubble = k;
+  s.bubbles.push(k);
+  if (Math.random() < 0.5) b.voice(v, 'scream', true);
+}
+function popBubble(b, k) {
+  const v = k.v, c = v.chestPos;
+  k.mk.t = 0;
+  v.scBubble = null;
+  b.sound('pop', c, 0.9, 1.2);
+  for (let i = 0; i < 4; i++) b.emit('atrail', c.x + rand(-0.5, 0.5), c.y + rand(-0.5, 0.5), c.z + rand(-0.5, 0.5), 0.35);
+  if (v.alive) trackFall(b, v, k.owner, 13);
+}
+function stepBubbles(b, dt) {
+  const s = STATE.get(b);
+  if (!s || !s.bubbles.length) return;
+  for (let i = s.bubbles.length - 1; i >= 0; i--) {
+    const k = s.bubbles[i], v = k.v;
+    k.t -= dt; k.age += dt;
+    if (!v.alive || k.t <= 0 || v.hp < k.hp - 0.5) { popBubble(b, k); s.bubbles.splice(i, 1); continue; }
+    k.hp = Math.max(k.hp, v.hp);
+    // float up and drift a little (above the ground under it)
+    k.x += k.dx * dt; k.z += k.dz * dt;
+    const gy = b.terrain.height(k.x, k.z);
+    _p.set(k.x, Math.max(k.y0, gy + 0.9) + Math.min(3.8, k.age * 2.2), k.z);
+    carry(v, _p, dt, null, 5);
+  }
+}
+const BUBBLE = {
+  g: 0.4, len: 0, r: 0.3, life: 4,
+  step(b, pr) { const h = sweepParts(b, pr, 0.3); if (h) { catchIn(b, pr, h.v); pr.life = -1; } },
+  hit(b, pr, v) { catchIn(b, pr, v); return true; },
+  ground(b, pr) { b.sound('pop', pr.pos, 0.4, 2.0); b.emit('atrail', pr.pos.x, pr.pos.y, pr.pos.z, 0.4); return true; },
+};
 
 // ------------------------------------------------------------------ chickens
 // A thrown chicken lands and hops after the nearest enemy, pecking its ankles until
@@ -344,6 +415,14 @@ const units = [
     armor: 0.15, stagger: 0.5,
     desc: 'God of winter and archery, on skis. Freezes whatever he hits three times.',
   },
+  {
+    id: 'sc_bubble', name: 'Bubble Blower', faction: 'secret', cost: 100, hp: 90, speed: 4.4,
+    build: { scale: 0.95, girth: 1.0, head: 1.1 },
+    weapon: { line: 'Ranged · traps enemies in bubbles that float them away until they pop', kind: 'sc_bubble', style: 'staff', anim: 'cast', item: 'sc_wand', damage: 10, speed: 9, range: 18, minRange: 4, cooldown: 2.8, force: 20, spread: 0.04, releaseAt: 0.6, windup: 0.8, hold: 3.0 },
+    look: { skin: '#f2c8a0', hat: 'sc_propeller', top: 'sc_bubble', legs: '#4a6ab0' },
+    personality: { aggro: 0.35, bravery: 0.3, voice: 1.55, chatter: 1, cry: 'yip', idle: 'hop' },
+    desc: 'Blows bubbles. Big ones. Whatever is inside floats away.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -369,6 +448,13 @@ function buildItem(name, s, team, g, H) {
   const tc = tcol(H, team);
   if (name === 'sc_chicken_hand') { const c = new THREE.Group(); chickenMesh(H, c, team, s); c.rotation.x = -Math.PI / 2; c.position.y = 0.05 * s; g.add(c); return true; }
   if (name === 'sc_banana_hand') { mesh(tube(H, 'scban' + s.toFixed(3), [[0, 0, -0.1], [0, 0.12, 0], [0, 0.16, 0.12], [0, 0.1, 0.24]].map((p) => p.map((q) => q * s)), 0.04 * s, 0.02 * s, 8), mat(YEL), 0, 0, 0, g); return true; }
+  if (name === 'sc_wand') { // a bubble wand: a stick with a ring, a soap bottle on the grip
+    mesh(cyl(0.015 * s, 0.015 * s, 0.4 * s, 6), mat('#f4f0e6'), 0, 0.2 * s, 0, g);
+    const ring = mesh(torus(H, 0.08 * s, 0.012 * s, Math.PI * 2, 14), tc, 0, 0.47 * s, 0, g); ring.rotation.y = Math.PI / 2;
+    mesh(H.geo('scfilm', () => new THREE.CircleGeometry(0.075, 14)), mat('#cfefff', { emit: 0.4, transparent: true, opacity: 0.4, depthWrite: false }), 0, 0.47 * s, 0, g).rotation.y = Math.PI / 2;
+    mesh(cyl(0.035 * s, 0.035 * s, 0.1 * s, 8), mat('#7ad0ff', { spec: 0.8 }), 0, 0.0, 0, g);
+    return true;
+  }
   if (name === 'sc_pompom') { // a fluffy pom-pom in the team colour
     for (let i = 0; i < 14; i++) {
       const a = i * 2.4, e = Math.acos(1 - 2 * (i + 0.5) / 14);
@@ -450,6 +536,14 @@ function buildHat(kind, r, team, g, H) {
       mesh(sphere(r * 0.12, 8, 6), tc, 0, r * 1.05, -r * 0.7, g);
       return true;
     }
+    case 'sc_propeller': { // a propeller beanie in the team colours
+      for (let i = 0; i < 6; i++) mesh(H.geo('scbean' + i + r.toFixed(3), () => new THREE.SphereGeometry(r * 1.06, 6, 8, (i / 6) * Math.PI * 2, Math.PI / 3, 0, Math.PI * 0.5)), i % 2 ? tc : mat(YEL), 0, r * 0.12, 0, g);
+      headBand(H, r, 0.12, 0.14, td, g, 0.08);
+      mesh(cyl(r * 0.05, r * 0.05, r * 0.3, 6), mat('#4a4a52', { spec: 0.8 }), 0, r * 1.25, 0, g);
+      for (const sd of [-1, 1]) { const bl = mesh(box(r * 0.75, r * 0.04, r * 0.18), sd > 0 ? mat('#e8342a') : mat('#2a6ee8'), sd * r * 0.38, r * 1.42, 0, g); bl.rotation.x = sd * 0.25; }
+      mesh(sphere(r * 0.08, 6, 5), mat(YEL), 0, r * 1.44, 0, g);
+      return true;
+    }
     case 'sc_bandana': { // a team bandana, knot at the back
       mesh(dome(H, r * 1.05, 0.5), tc, 0, r * 0.2, 0, g).scale.set(1, 0.85, 1);
       headBand(H, r, 0.25, 0.2, td, g, 0.06);
@@ -491,6 +585,18 @@ function decorate(def, team, vis, H) {
       mesh(cyl(sp.r * 1.2, sp.r * (fore ? wide * 1.3 : 1.25), sp.hh * (fore ? 1.6 : 2.0), 10), m, 0, fore ? sp.hh * 0.2 : 0, 0, parts[p]);
     }
   };
+  if (top === 'sc_bubble') { // a stripy team shirt, dungarees, soap-bubble buttons
+    chestShell(H, ch, wh, C);
+    for (const y of [0.6, 0.0, -0.6]) mesh(cyl(r * 1.19, r * 1.19, r * 0.22, 16), tc, 0, hh * y, 0, C).scale.set(1, 1, 0.94);
+    const dg = mat('#4a6ab0');
+    mesh(box(r * 1.2, (hh + r) * 0.9, r * 0.06), dg, 0, -hh * 0.55, r * 1.05, C);
+    for (const sd of [-1, 1]) {
+      const st = mesh(box(r * 0.18, (hh + r) * 1.3, r * 0.05), dg, sd * r * 0.45, hh * 0.25, r * 1.04, C); st.rotation.z = sd * 0.1;
+      mesh(sphere(r * 0.12, 8, 6), mat('#cfefff', { spec: 1, emit: 0.3 }), sd * r * 0.45, hh * 0.55, r * 1.1, C);
+    }
+    mesh(cyl(r * 1.2, r * 1.2, r * 0.2, 16), dg, 0, -hh - r * 0.38, 0, C);
+    sleeves(wh, 1.0);
+  }
   if (top === 'sc_feathers') { // feathery white body, a team belt, wing-ish sleeves
     chestShell(H, ch, wh, C);
     for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, y = (i % 3 - 1) * hh * 0.8; const f = mesh(sphere(r * 0.3, 8, 6), mat('#efeadc'), Math.sin(a) * r * 1.05, y, Math.cos(a) * r * 0.95, C); f.scale.set(0.7, 1.1, 0.25); f.rotation.y = a; }
@@ -546,6 +652,13 @@ function decorate(def, team, vis, H) {
 
 function buildProj(type, g, H) {
   const { mesh, cyl, sphere, cone, box, octa, mat, glow } = H;
+  if (type === 'sc_bubble' || type === 'sc_bubble_big') { // a soap bubble with a shine on it
+    const R = type === 'sc_bubble' ? 0.3 : 0.95;
+    const o = mesh(sphere(R, 18, 14), mat('#cfefff', { emit: 0.35, transparent: true, opacity: 0.28, depthWrite: false }), 0, 0, 0, g); o.castShadow = false; o.renderOrder = 4;
+    const rim = mesh(torus(H, R * 0.98, R * 0.025, Math.PI * 2, 24), mat('#f4c8ff', { emit: 0.6, transparent: true, opacity: 0.35, depthWrite: false }), 0, 0, 0, g); rim.castShadow = false;
+    const hi = mesh(sphere(R * 0.16, 8, 6), mat('#ffffff', { emit: 1, transparent: true, opacity: 0.8 }), R * 0.45, R * 0.55, R * 0.5, g); hi.castShadow = false; hi.scale.set(1, 0.6, 0.4);
+    return true;
+  }
   if (type === 'sc_chicken' || type === 'sc_chicken0' || type === 'sc_chicken1') {
     chickenMesh(H, g, type === 'sc_chicken' ? null : +type.slice(-1), 1.25);
     return true;
@@ -590,8 +703,9 @@ register({
     sc_bomb_stick: { len: 1.25, r: 0.08, grip: 30, mass: 1.2 },
     sc_tesla: { len: 0.8, r: 0.08, grip: 90, mass: 3.0 },
     sc_ullr_bow: { len: 1.5, r: 0.04, grip: 0, center: true, mass: 0.9 },
+    sc_wand: { len: 0.5, r: 0.05, grip: 30, mass: 0.3, phys: false },
   },
-  kinds: { sc_bombstick: bombStick, sc_cheer: cheer, sc_zap: zap, sc_ullr: ullr },
+  kinds: { sc_bombstick: bombStick, sc_cheer: cheer, sc_zap: zap, sc_ullr: ullr, sc_bubble: bubbler },
   proj: {
     sc_chicken: CHICKEN, sc_chicken0: CHICKEN, sc_chicken1: CHICKEN,
     sc_banana: {
@@ -600,10 +714,11 @@ register({
       ground(bt, pr) { dropPeel(bt, pr.pos, pr.owner); return true; },
     },
     sc_peel: { g: 0, len: 0, r: 0, life: 1 },
+    sc_bubble: BUBBLE, sc_bubble_big: { g: 0, len: 0, r: 0, life: 1 },
     sc_iceblock: { g: 0, len: 0, r: 0, life: 1 },
     sc_arc: { g: 0, len: 0, r: 0, life: 1 },
     sc_frost_arrow: arrowProj({ onHit(bt, v, pr) { frostHit(bt, v, pr); } }),
   },
   buildItem, buildHat, decorate, buildProj,
-  battleStep: stepPeels,
+  battleStep(b, dt) { stepPeels(b, dt); stepBubbles(b, dt); },
 });

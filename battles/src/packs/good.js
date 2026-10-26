@@ -1,12 +1,14 @@
 // Good: Shield Bearer (a huge tower shield that blocks and bulldozes), Cleric (a heal
 // beam on the most hurt ally), Angel (flies, holy sword dives, brings one fallen ally
 // back to life), Phoenix (flies, dives in a fiery explosion and rises from its ashes
-// once), Super Peasant (flies about and punches people into orbit).
+// once), Super Peasant (flies about and punches people into orbit), Divine Archer
+// (arrows of light that curve after their target) and Flag Bearer (allies near the
+// banner take a third less damage).
 import { register } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
-  THREE, clamp, rand, PART, EXPR, meleeThink, crossed, inFront, blast, addStatus,
-  torus, tube, dome, headBand, tcol, tdark, chestShell,
+  THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, blast, addStatus, aimPoint, launchVel,
+  addProjectile, arrowProj, arrowMesh, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo,
 } from './common.js';
 import { valkInit, valkThink, valkStep, valkControl, diveTarget, wingLayout, restSt, VALK } from './sm-valkyrie.js';
 import {
@@ -95,6 +97,104 @@ const shieldBearer = {
 
 // Cleric: a beam of light from the staff heals the most hurt ally in range, all the
 // time; it hides behind the line and only punches when cornered.
+// Divine Archer: arrows of light that bend toward their target in flight (they rarely
+// miss a moving target, but still fly into whoever is in the way).
+const divine = {
+  aim: true,
+  init(u) { u.attackDur = u.def.weapon.windup; },
+  think: rangedThink,
+  event(u, t0, t1) {
+    const w = u.def.weapon, b = u.battle;
+    if (!crossed(t0, t1, w.releaseAt)) return;
+    u.released = true;
+    u.rag.worldPoint(PART.farmL, 0, -u.skel.handOffset, 0, _o);
+    const tgt = u.aimAt && u.aimAt.alive ? u.aimAt : null;
+    aimPoint(u, _p, 0.5, tgt ? _o.distanceTo(tgt.chestPos) / w.speed : 0.6);
+    if (!tgt && u.control && !u.control.aimPt) _p.y = _o.y + Math.tan(u.control.aimPitch) * 14;
+    launchVel(_o, _p, w.speed, HOLY_ARROW.g, false, w.spread, _d);
+    addProjectile(b, 'gd_holy_arrow', _o, _d, u, { life: 4, seek: tgt });
+    b.sound('heal', _o, 0.25, 1.8);
+  },
+};
+const HOLY_ARROW = arrowProj({
+  g: 4, len: 0.9, life: 4,
+  onHit(b, v) { const c = v.chestPos; b.emit('spark', c.x, c.y, c.z, 2); },
+});
+const _sk = new THREE.Vector3();
+{
+  const base = HOLY_ARROW.step;
+  HOLY_ARROW.step = (b, pr, dt) => {
+    const t = pr.seek;
+    if (t && t.alive) {
+      // turn the velocity toward the target's chest, at most `turn` radians a second
+      const sp = pr.vel.length(), turn = pr.owner.def.weapon.turn * dt;
+      _sk.copy(t.chestPos).sub(pr.pos).normalize();
+      _d.copy(pr.vel).divideScalar(sp || 1);
+      const a = Math.acos(clamp(_d.dot(_sk), -1, 1));
+      if (a > 1e-4 && a < 1.4) _d.lerp(_sk, Math.min(1, turn / a)).normalize();
+      pr.vel.copy(_d).multiplyScalar(sp);
+    }
+    pr.trailT = (pr.trailT || 0) - 1;
+    if (pr.trailT <= 0) { pr.trailT = 2; b.emit('atrail', pr.pos.x, pr.pos.y, pr.pos.z, 0.25); }
+    base(b, pr, dt);
+  };
+}
+
+// Flag Bearer: allies around the banner take a third less damage (the lost hp is
+// partly given back each step; a killing blow still kills). Bearers don't stack.
+// (it follows the fighters: other banners, healers and the like are no anchor)
+const SUPPORT = new Set(['heal', 'bard', 'gd_flag', 'gd_cleric', 'sc_cheer', 'ev_fan', 'ev_necro']);
+function fighterNear(u) {
+  let best = null, bd = Infinity;
+  for (const o of u.battle.teams[u.team]) {
+    if (!o.alive || o === u || SUPPORT.has(o.def.weapon.kind)) continue;
+    const d = (o.pos.x - u.pos.x) ** 2 + (o.pos.z - u.pos.z) ** 2;
+    if (d < bd) { bd = d; best = o; }
+  }
+  return best;
+}
+const flag = {
+  melee: true,
+  think(u, dt, c) {
+    const a = fighterNear(u);
+    if (!a) return meleeThink(u, dt, c); // nobody left to stand behind: fight
+    const { t, gap, dirx, dirz, spd } = c;
+    if (gap < 2.5) { // too close: a whack with the pole, and step back
+      if (c.dist - t.skel.radius < u.reachDist + 0.3 && u.cooldown <= 0 && !u.st.attack) u.startAttack();
+      u.desired.set(-dirx * spd * 0.6, 0, -dirz * spd * 0.6);
+      u.expr = EXPR.angry;
+      return t;
+    }
+    // just behind the nearest fighter, so the banner covers the thick of the fight
+    _d.set(a.pos.x - dirx * 2 - u.pos.x, 0, a.pos.z - dirz * 2 - u.pos.z);
+    const d = _d.length();
+    if (d > 1.2) u.desired.copy(_d).multiplyScalar((spd / d) * clamp(d / 3, 0.3, 1.1));
+    u.expr = EXPR.normal;
+    return gap < 10 ? t : null;
+  },
+};
+function stepWards(b) {
+  const now = b.time;
+  for (const f of b.units) {
+    if (!f.alive || f.def.weapon.kind !== 'gd_flag') continue;
+    const R = f.def.weapon.radius, k = f.def.weapon.ward;
+    for (const o of b.teams[f.team]) {
+      if (!o.alive || (o.pos.x - f.pos.x) ** 2 + (o.pos.z - f.pos.z) ** 2 > R * R) continue;
+      o.gdWard = now; o.gdWardK = k;
+    }
+  }
+  for (const o of b.units) {
+    if (!o.alive) { o.gdHp = undefined; continue; }
+    if (o.gdWard === now && o.gdHp !== undefined && o.hp < o.gdHp) {
+      const back = (o.gdHp - o.hp) * o.gdWardK;
+      o.hp += back;
+      o.gdSpark = (o.gdSpark || 0) + back;
+      if (o.gdSpark > 12) { o.gdSpark = 0; const c = o.chestPos; b.emit('spark', c.x, c.y + 0.2, c.z, 1); }
+    }
+    o.gdHp = o.hp;
+  }
+}
+
 const cleric = {
   melee: true,
   init(u) { u.beam = {}; u.healSnd = 0; },
@@ -485,6 +585,22 @@ const units = [
     armor: 0.1, stagger: 0.15,
     desc: 'Just a peasant. Who can fly. And punch through walls.',
   },
+  {
+    id: 'gd_divine_archer', name: 'Divine Archer', faction: 'good', cost: 150, hp: 85, speed: 4.4,
+    build: { scale: 0.98, girth: 0.95 },
+    weapon: { line: 'Ranged · arrows of light curve after their target', kind: 'gd_divine', style: 'bow', anim: 'bow', item: 'gd_light_bow', damage: 34, speed: 30, range: 34, minRange: 7, cooldown: 2.8, force: 90, spread: 0.06, releaseAt: 0.78, windup: 1.0, turn: 2.0 },
+    look: { skin: '#f4d2b4', hat: 'gd_laurel', top: 'gd_archer', legs: '#f0ece0', quiver: true },
+    personality: { aggro: 0.3, bravery: 0.25, voice: 1.25, chatter: 0.5, cry: 'la', idle: 'pray' },
+    desc: 'Blessed arrows that bend in flight to find their mark.',
+  },
+  {
+    id: 'gd_flag_bearer', name: 'Flag Bearer', faction: 'good', cost: 150, hp: 140, speed: 4.3,
+    build: { scale: 1.0, girth: 1.05 },
+    weapon: { line: 'Support · allies near the banner take a third less damage', kind: 'gd_flag', style: 'staff', anim: 'overhead', item: 'gd_banner', damage: 14, reach: 1.2, cooldown: 1.4, force: 220, radius: 8, ward: 0.33 },
+    look: { skin: '#f2c8a0', hat: 'gd_helm', top: 'gd_tabard_flag', legs: '#8d939c' },
+    personality: { aggro: 0.3, bravery: 0.2, voice: 1.0, chatter: 0.8, cry: 'charge', idle: 'regal' },
+    desc: 'Holds the banner high. Nobody near it falls easily.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -506,6 +622,31 @@ function buildItem(name, s, team, g, H) {
     }
     return true;
   }
+  if (name === 'gd_light_bow') { // a white-and-gold bow with a glowing grip (held centred)
+    const R = 0.7 * s, half = Math.PI * 0.36;
+    const tg = H.geo('gdbow' + s.toFixed(3), () => {
+      const t = new THREE.TorusGeometry(R, 0.03 * s, 6, 22, half * 2);
+      t.rotateZ(-half); t.rotateY(-Math.PI / 2); t.translate(0, 0, -R);
+      return t;
+    });
+    mesh(tg, mat(WHITE, { spec: 0.6 }), 0, 0, 0, g);
+    for (const sd of [-1, 1]) { const w = mesh(cone(0.05 * s, 0.18 * s, 5), gold(), 0, sd * R * Math.sin(half), -R * (1 - Math.cos(half)) - 0.05 * s, g); w.rotation.x = Math.PI / 2 + sd * 0.4; }
+    mesh(cyl(0.045 * s, 0.045 * s, 0.16 * s, 8), glow(HOLY), 0, 0, 0, g);
+    mesh(cyl(0.004 * s, 0.004 * s, 2 * R * Math.sin(half), 3), glow(HOLY), 0, 0, -R * (1 - Math.cos(half)), g).castShadow = false;
+    return true;
+  }
+  if (name === 'gd_banner') { // a tall pole with a crossbar, a team banner and a gold sun on top
+    const L = 2.4 * s, y0 = -0.3 * L, top = y0 + L;
+    mesh(cyl(0.025 * s, 0.03 * s, L, 7), H.darkWood(), 0, y0 + L / 2, 0, g);
+    mesh(cyl(0.018 * s, 0.018 * s, 0.7 * s, 6), gold(), 0, top - 0.12 * s, 0, g).rotation.x = Math.PI / 2;
+    mesh(box(0.02 * s, 0.85 * s, 0.66 * s), tc, 0, top - 0.58 * s, 0, g);
+    mesh(box(0.024 * s, 0.85 * s, 0.08 * s), mat(WHITE), 0, top - 0.58 * s, 0, g);
+    mesh(box(0.024 * s, 0.08 * s, 0.6 * s), mat(WHITE), 0, top - 0.45 * s, 0, g);
+    for (const z of [-0.22, 0, 0.22]) { const t = mesh(cone(0.07 * s, 0.14 * s, 4), tc, 0, top - 1.07 * s, z * s, g); t.rotation.x = Math.PI; t.scale.set(0.3, 1, 1); }
+    mesh(sphere(0.07 * s, 10, 8), gold(), 0, top + 0.06 * s, 0, g);
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const r = mesh(cone(0.02 * s, 0.08 * s, 4), gold(), 0, top + 0.06 * s + Math.cos(a) * 0.11 * s, Math.sin(a) * 0.11 * s, g); r.rotation.x = a; }
+    return true;
+  }
   if (name === 'gd_holy_sword') { // a long shining blade with gold wings on the guard
     const L = 1.25 * s, bw = 0.1 * s;
     mesh(box(0.024 * s, L * 0.78, bw), mat('#eef4ff', { spec: 1, emit: 0.35 }), 0, L * 0.6, 0, g);
@@ -523,6 +664,17 @@ function buildHat(kind, r, team, g, H) {
   const { mesh, cyl, box, sphere, cone, octa, mat, metal, gold, leather, glow } = H;
   const tc = tcol(H, team), td = tdark(H, team);
   switch (kind) {
+    case 'gd_laurel': { // golden laurel wreath and a short white hood down the back
+      mesh(hoodGeo(H, r, 1.08, 1.2), mat(WHITE), 0, -r * 0.05, 0, g);
+      for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) {
+        const a = sd * (0.35 + i * 0.4);
+        const l = mesh(sphere(r * 0.14, 6, 5), gold(), Math.sin(a) * r * 1.04, r * (0.42 + i * 0.02), Math.cos(a) * r * 1.04, g);
+        l.scale.set(0.5, 0.35, 1); l.rotation.y = a;
+      }
+      mesh(sphere(r * 0.11, 8, 6), glow(HOLY), 0, r * 0.55, r * 1.0, g);
+      headBand(H, r, 0.42, 0.08, tc, g, 0.06);
+      return true;
+    }
     case 'gd_helm': { // round white-and-gold helmet, face open, team plume
       mesh(dome(H, r * 1.1, 0.55), mat('#e8ecf0', { spec: 0.9 }), 0, r * 0.25, 0, g).scale.set(1, 1.05, 1.02);
       headBand(H, r, 0.3, 0.2, gold(), g, 0.12);
@@ -646,6 +798,24 @@ function decorate(def, team, vis, H) {
       for (const [y, z] of [[0.42, 0.3], [-0.42, 0.3], [0.42, -0.3], [-0.42, -0.3]]) mesh(sphere(0.03 * s, 6, 5), gold(), 0.045 * s, y * Hh, z * W, sh);
     }
   }
+  if (top === 'gd_archer') { // white tunic with gold trim, a team baldric
+    chestShell(H, ch, wh, C);
+    skirt(wh, 1.7, 1.45);
+    mesh(cyl(r * 1.14, r * 1.16, r * 0.14, 14), gold(), 0, -hh - r * 0.38, 0, C);
+    const bd = mesh(box(r * 0.26, (hh + r) * 2.3, r * 0.06), tc, 0, 0, r * 1.04, C); bd.rotation.z = -0.55;
+    const bb = mesh(box(r * 0.26, (hh + r) * 2.3, r * 0.06), tc, 0, 0, -r * 1.04, C); bb.rotation.z = 0.55;
+    for (const sd of [-1, 1]) { const pd = mesh(sphere(r * 0.42, 10, 8), gold(), sd * r * 0.95, hh + r * 0.25, 0, C); pd.scale.set(1, 0.5, 1); }
+    sleeves(wh, 1.0);
+  }
+  if (top === 'gd_tabard_flag') { // mail and a tabard with the team sun, a gold-trimmed cape
+    chestShell(H, ch, mat('#a9b0b8', { spec: 0.8 }), C);
+    for (const z of [1, -1]) mesh(box(r * 1.5, (hh + r) * 1.9, r * 0.06), tc, 0, -r * 0.2, z * r * 1.0, C);
+    mesh(cyl(r * 0.4, r * 0.4, r * 0.05, 14), wh, 0, hh * 0.1, r * 1.04, C).rotation.x = Math.PI / 2;
+    mesh(cyl(r * 0.22, r * 0.22, r * 0.06, 10), gold(), 0, hh * 0.1, r * 1.06, C).rotation.x = Math.PI / 2;
+    mesh(cyl(r * 1.13, r * 1.15, r * 0.16, 14), leather(), 0, -hh - r * 0.38, 0, C);
+    const cp = mesh(box(r * 1.9, (hh + r) * 2.2, r * 0.05), td, 0, -hh * 0.4, -r * 1.12, C); cp.rotation.x = 0.1;
+    mesh(box(r * 1.95, r * 0.12, r * 0.06), gold(), 0, hh + r * 0.15, -r * 1.12, C);
+  }
   if (top === 'gd_vestment') { // white robe, gold stole with a team cross
     chestShell(H, ch, wh, C);
     skirt(wh, 2.8, 1.65);
@@ -704,6 +874,11 @@ function decorate(def, team, vis, H) {
 
 function buildProj(type, g, H) {
   const { mesh, cyl, sphere, cone, mat, glow } = H;
+  if (type === 'gd_holy_arrow') { // a shaft of light with a gold head
+    arrowMesh(H, g, GOLD, '#fff3b0', true);
+    const h = mesh(cyl(0.035, 0.035, 0.9, 6), mat(HOLY, { emit: 1, transparent: true, opacity: 0.45, depthWrite: false }), 0, 0, 0, g); h.castShadow = false;
+    return true;
+  }
   if (type === 'gd_beam') {
     mesh(cyl(0.05, 0.05, 0.9, 6), glow('#fff2a0'), 0, 0, 0, g).castShadow = false;
     mesh(cyl(0.14, 0.14, 0.9, 8), mat('#ffd84a', { emit: 1, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, g).castShadow = false;
@@ -733,12 +908,16 @@ register({
   items: {
     gd_sun_staff: { len: 1.8, r: 0.05, grip: 0, center: true, mass: 1.5 },
     gd_holy_sword: { len: 1.25, r: 0.09, grip: 25, metal: true, mass: 2.0 },
+    gd_light_bow: { len: 1.4, r: 0.04, grip: 0, center: true, mass: 0.8 },
+    gd_banner: { len: 2.4, r: 0.05, grip: 0, back: 0.3, mass: 2.2 },
   },
-  kinds: { gd_shield: shieldBearer, gd_cleric: cleric, gd_angel: angel, gd_phoenix: phoenix, gd_super: superPeasant },
+  kinds: { gd_shield: shieldBearer, gd_cleric: cleric, gd_angel: angel, gd_phoenix: phoenix, gd_super: superPeasant, gd_divine: divine, gd_flag: flag },
   proj: {
+    gd_holy_arrow: HOLY_ARROW,
     gd_beam: { g: 0, len: 0, r: 0, life: 1 },
     gd_light: { g: 0, len: 0, r: 0, life: 1 },
     gd_embers: { g: 0, len: 0, r: 0, life: 1 },
   },
   buildItem, buildHat, decorate, buildProj,
+  battleStep: stepWards,
 });
