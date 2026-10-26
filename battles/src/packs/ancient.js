@@ -1,11 +1,13 @@
 // Ancient: Hoplite (shield wall: tougher next to other hoplites), Sarissa (a very
 // long pike), Snake Archer (poison arrows), Minotaur (charges and tosses units into
-// the air), Zeus (calls lightning down from the sky).
+// the air), Zeus (calls lightning down from the sky), Gladiator (plays to the crowd:
+// each kill heals him and makes him faster and harder hitting).
 import { register } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, aimPoint,
   addStatus, arrowProj, arrowMesh, lightning, torus, tube, dome, headBand, lathe, tcol, tdark, chestShell,
 } from './common.js';
+import { mark } from './ges-core.js';
 
 const _p = new THREE.Vector3();
 
@@ -91,6 +93,35 @@ const zeus = {
   },
 };
 
+// Gladiator: every kill wins glory (up to w.maxGlory): a quarter of his hp back,
+// harder and faster blows, a quicker step, and the crowd roars. Each gladiator gets
+// its own copy of the def so the stats can grow.
+const glory = {
+  melee: true,
+  init(u) {
+    u.def = { ...u.def, weapon: { ...u.def.weapon } };
+    u.base = { damage: u.def.weapon.damage, cooldown: u.def.weapon.cooldown, speed: u.def.speed };
+    u.glory = 0; u.kills0 = u.kills;
+  },
+  think: meleeThink,
+  step(u) {
+    if (u.kills <= u.kills0 || !u.alive) return;
+    const n = u.kills - u.kills0, d = u.def, w = d.weapon, b = u.battle;
+    u.kills0 = u.kills;
+    u.glory = Math.min(w.maxGlory, u.glory + n);
+    w.damage = u.base.damage * (1 + 0.15 * u.glory);
+    w.cooldown = u.base.cooldown * (1 - 0.06 * u.glory);
+    d.speed = u.base.speed * (1 + 0.05 * u.glory);
+    u.hp = Math.min(u.maxHp, u.hp + u.maxHp * w.heal * n);
+    const c = u.chestPos;
+    b.emit('heal', c.x, c.y, c.z, 6);
+    b.emit('spark', c.x, c.y + 0.6 * u.s, c.z, 3 + u.glory);
+    b.sound('crowd', c, 0.35 + 0.1 * u.glory, 1);
+    b.voice(u, 'cheer', true);
+    if (!u.gloryMark) u.gloryMark = mark(b, u, 'an_glory', PART.head, 9999, new THREE.Vector3(0, u.skel.rHead * 0.95, 0));
+  },
+};
+
 // ------------------------------------------------------------------ units
 const units = [
   {
@@ -135,6 +166,14 @@ const units = [
     armor: 0.15, stagger: 0.3,
     desc: 'Calls lightning down on the enemy. Mind your own side.',
   },
+  {
+    id: 'an_gladiator', name: 'Gladiator', faction: 'ancient', cost: 200, hp: 165, speed: 4.6,
+    build: { scale: 1.03, girth: 1.08 },
+    weapon: { line: 'Melee · each kill heals him and makes him stronger', kind: 'an_glory', style: 'shield', anim: 'overhead', item: 'an_gladius', shield: 'round', damage: 28, reach: 1.2, cooldown: 0.85, force: 220, blockMelee: 0.3, maxGlory: 5, heal: 0.25 },
+    look: { skin: '#d9a173', hat: 'an_galea', top: 'an_glad', legs: '#d9a173', bare: true },
+    personality: { aggro: 1, bravery: 0, voice: 0.85, chatter: 0.9, cry: 'royal', idle: 'regal' },
+    desc: 'Are you not entertained? He gets better with every kill.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -151,6 +190,15 @@ function buildItem(name, s, team, g, H) {
     mesh(cyl(0.032 * s, 0.032 * s, 0.1 * s, 7), bronze, 0, c + L - 0.05 * s, 0, g);
     mesh(cone(0.03 * s, 0.12 * s, 6), bronze, 0, c - 0.04 * s, 0, g).rotation.x = Math.PI; // butt spike
     if (name === 'an_sarissa') mesh(cyl(0.036 * s, 0.036 * s, 0.05 * s, 7), tcol(H, team), 0, c + L * 0.5, 0, g);
+    return true;
+  }
+  if (name === 'an_gladius') { // a short broad blade with a round pommel
+    const L = 0.85 * s;
+    mesh(box(0.025 * s, L * 0.7, 0.1 * s), metal(), 0, L * 0.55, 0, g);
+    mesh(cone(0.072 * s, 0.14 * s, 4), metal(), 0, L * 0.97, 0, g).scale.set(0.35, 1, 1);
+    mesh(box(0.05 * s, 0.04 * s, 0.17 * s), bronze, 0, L * 0.19, 0, g);
+    mesh(cyl(0.03 * s, 0.033 * s, L * 0.16, 8), mat('#e8dcc0'), 0, L * 0.09, 0, g);
+    mesh(sphere(0.05 * s, 10, 8), bronze, 0, 0, 0, g);
     return true;
   }
   if (name === 'an_bolt') { // a zig-zag thunderbolt held like a sceptre
@@ -227,6 +275,17 @@ function buildHat(kind, r, team, g, H) {
       g.userData.hidesFace = true;
       return true;
     }
+    case 'an_galea': { // a broad-brimmed gladiator's helmet with a grille visor and a tall crest
+      mesh(dome(H, r * 1.12, 0.55), bronze, 0, r * 0.22, 0, g).scale.set(1, 1.05, 1.05);
+      const br = mesh(cyl(r * 1.55, r * 1.6, r * 0.05, 20), bronze, 0, r * 0.12, -r * 0.05, g); br.rotation.x = -0.12;
+      mesh(sphere(r * 1.05, 14, 10), mat('#7a5a2a', { spec: 0.6 }), 0, -r * 0.05, r * 0.08, g).scale.set(0.95, 0.95, 0.95);
+      for (let i = -2; i <= 2; i++) mesh(box(r * 0.04, r * 0.85, r * 0.05), bronze, i * r * 0.18, -r * 0.1, r * 1.0 - Math.abs(i) * r * 0.06, g);
+      for (let k = 0; k < 3; k++) mesh(box(r * 0.85, r * 0.04, r * 0.05), bronze, 0, -r * 0.4 + k * r * 0.3, r * 0.99, g);
+      mesh(box(r * 0.22, r * 0.55, r * 1.7), bronze, 0, r * 1.25, -r * 0.05, g);
+      for (let i = 0; i < 9; i++) { const a = (i / 8) * Math.PI; const p = mesh(sphere(r * 0.2, 8, 6), i % 2 ? td : tc, 0, r * 1.4 + Math.sin(a) * r * 0.4, Math.cos(a) * r * 0.9, g); p.scale.set(0.45, 1, 1); }
+      g.userData.hidesFace = true;
+      return true;
+    }
     case 'an_laurel': { // white curls and a golden laurel wreath
       const hair = mat('#f4f4f4', { spec: 0.05 });
       mesh(sphere(r * 1.02, 14, 10), hair, 0, r * 0.32, -r * 0.18, g).scale.set(1.05, 0.85, 1);
@@ -281,6 +340,15 @@ function decorate(def, team, vis, H) {
     skirt.scale.set(1, 1, 0.95);
     for (const p of [PART.uarmL]) mesh(cyl(skel.parts[p].r * 1.3, skel.parts[p].r * 1.4, skel.parts[p].hh * 1.6, 10), wh, 0, 0, 0, parts[p]);
   }
+  if (top === 'an_glad') { // bare chest, a leather belt and kilt, an armoured sword arm and a greave
+    const bronze = mat(BRONZE, { spec: 0.9 });
+    mesh(cyl(r * 1.14, r * 1.16, r * 0.4, 16), leather(), 0, -hh - r * 0.3, 0, C);
+    mesh(cyl(r * 0.3, r * 0.3, r * 0.1, 12), bronze, 0, -hh - r * 0.3, r * 1.12, C).rotation.x = Math.PI / 2;
+    const k = mesh(cyl(pel.r * 1.1, pel.r * 1.3, pel.r * 1.0, 14), mat('#efe6cf'), 0, -pel.r * 0.35, 0, P); k.scale.set(1, 1, 0.95);
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; const s2 = mesh(box(pel.r * 0.4, pel.r * 0.9, pel.r * 0.06), tc, Math.sin(a) * pel.r * 1.2, -pel.r * 0.4, Math.cos(a) * pel.r * 1.2, P); s2.rotation.y = a; }
+    for (const p of [PART.uarmR, PART.farmR]) for (let j = 0; j < 4; j++) mesh(cyl(skel.parts[p].r * 1.25, skel.parts[p].r * 1.3, skel.parts[p].hh * 0.45, 10), j % 2 ? mat('#a8a08a', { spec: 0.7 }) : bronze, 0, skel.parts[p].hh * (0.7 - j * 0.45), 0, parts[p]);
+    mesh(cyl(skel.parts[PART.shinL].r * 1.3, skel.parts[PART.shinL].r * 1.2, skel.parts[PART.shinL].hh * 1.4, 10), bronze, 0, 0, 0, parts[PART.shinL]);
+  }
   if (def.id === 'an_minotaur') { // a tail and hooves
     mesh(H.geo('mintail' + pel.r.toFixed(3), () => new THREE.CylinderGeometry(pel.r * 0.08, pel.r * 0.06, pel.r * 2.2, 5)), mat('#6e4428'), 0, -pel.r * 0.8, -pel.r * 1.15, P).rotation.x = -0.4;
     mesh(sphere(pel.r * 0.22, 8, 6), mat('#3a2414'), 0, -pel.r * 1.8, -pel.r * 1.55, P);
@@ -295,15 +363,25 @@ register({
     an_dory: { len: 2.2, r: 0.07, grip: 95, back: 0.45, metal: true },
     an_sarissa: { len: 4.0, r: 0.07, grip: 95, back: 0.35, metal: true },
     an_bolt: { len: 1.0, r: 0.06, grip: 60 },
+    an_gladius: { len: 0.85, r: 0.08, grip: 30, metal: true, mass: 1.2 },
   },
-  kinds: { an_phalanx: phalanx, an_charge: charge, an_zeus: zeus },
+  kinds: { an_phalanx: phalanx, an_charge: charge, an_zeus: zeus, an_glory: glory },
   proj: {
     venom_arrow: arrowProj({ onHit(b, v, pr) { addStatus(b, v, 'poison', 5, 9, pr.owner); } }),
+    an_glory: { g: 0, len: 0, r: 0, life: 1 }, // marker: a gold laurel won in the arena
   },
   buildProj(type, g, H) {
-    if (type !== 'venom_arrow') return false;
-    arrowMesh(H, g, '#8cff5a', '#4f8a2e', true);
-    return true;
+    if (type === 'venom_arrow') { arrowMesh(H, g, '#8cff5a', '#4f8a2e', true); return true; }
+    if (type === 'an_glory') {
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        if (Math.abs(Math.cos(a) - 1) < 0.1) continue;
+        const l = H.mesh(H.sphere(0.05, 6, 5), H.mat('#f0c03c', { spec: 1, emit: 0.3 }), Math.sin(a) * 0.27, 0, Math.cos(a) * 0.27, g);
+        l.scale.set(0.5, 0.35, 1.2); l.rotation.y = a + 0.6; l.castShadow = false;
+      }
+      return true;
+    }
+    return false;
   },
   buildItem, buildHat, decorate,
 });

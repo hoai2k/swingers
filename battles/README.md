@@ -143,6 +143,7 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
 - `src/body.js` skeleton (11 parts, joints, FK) · `src/pose.js` procedural target poses and attack animations
 - `src/ragdoll.js` Rapier bodies/joints + muscle servo · `src/unit.js` balance, locomotion, AI, personalities
 - `src/units.js` the roster (stats, weapons, looks, personality; `setFactionUnits` swaps a faction's units at runtime and bumps `rosterVersion` / calls `rosterHooks`) · `src/creator.js` the Unit Creator screen · `src/packs/custom.js` custom-unit recipes, storage, derived stats and cost · `src/items.js` held items: hit geometry, mass, shields (held items are colliders on the forearm and drop as rigid bodies on death)
+- `src/packs/` faction packs registered through `src/ext.js` (`index.js` lists them): one file per pack faction (`viking.js`, `ancient.js`, `dynasty.js`, `wildwest.js`...), shared helpers in `common.js`, and `classic.js` with the extra Tribal, Farmer and Legacy units (Stoner, Bone Mage, Scarecrow, Harvester, Wheelbarrow, Peasant, Poacher, Barbarian)
 - `src/battle.js` simulation: melee sweeps, projectiles, explosions, healing, bard aura; emits events
 - `src/replay.js` quantised 30 Hz recording + interpolated playback with event replay
 - `src/visual.js` unit meshes (baked per part), faces, hats, weapons, portraits
