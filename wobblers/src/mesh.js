@@ -9,6 +9,9 @@ import { addGlow } from './look.js';
 
 export const matVC = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true }));
 export const matVCDouble = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+// flat decals (window quads) drawn over a wall far away: pulled a few depth steps in
+// front of it, so they never z-fight with it however far off they are
+export const matVCDecal = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
 
 // Colours that light up at night (see look.js addGlow): 1 = window (most
 // windows lit, warm), 2 = lamp globe (always lit, bright). World code can add

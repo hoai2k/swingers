@@ -228,6 +228,7 @@ function drawFace(kind) {
 }
 
 const faceCache = new Map();
+export const clearFaceCache = () => faceCache.clear(); // after a look-style change
 export function faceMaterial(i) {
   if (!i) return headMaterials().normal;
   let m = faceCache.get(i);

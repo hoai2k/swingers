@@ -3,6 +3,7 @@
 // prompts, name tags and toasts. Everything is driven by controller or
 // keyboard (and the mouse where it helps). Menus capture their device's
 // input (Input.capture) so the game sees nothing while a menu is open.
+import { TOY_STYLE } from './charstyle.js';
 import * as THREE from 'three';
 import { HATS, PLAYER_CSS, MAX_PLAYERS, PLAYER_COLORS } from './config.js';
 import { settings, saveSettings, devicePrefs } from './settings.js';
@@ -116,6 +117,8 @@ function sharedSettingItems(ui) {
       const v = [0, 0.5, 0.75, 1], i = Math.max(0, Math.min(3, v.indexOf(settings.res) + d));
       settings.res = v[i]; g.setResScale(v[i] || 1); saveSettings();
     } },
+    // character look: our chunky Wobblers, or the toy style (coloured skin, Wobbly Life proportions, clothes on top)
+    { label: 'Toy style characters', value: settings.toyStyle ? 'On' : 'Off', adj: () => { settings.toyStyle = !settings.toyStyle; saveSettings(); g.setCharStyle(settings.toyStyle ? TOY_STYLE : 'chunky'); } },
     { label: 'Show FPS', value: settings.showFps ? 'On' : 'Off', adj: () => { settings.showFps = !settings.showFps; saveSettings(); ui.perfOverlay?.(null); } },
     ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
   ];

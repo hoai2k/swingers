@@ -1,4 +1,7 @@
 // Game: renderer, split-screen views, fixed-step physics loop, players.
+import { setCharStyle } from './charstyle.js';
+import { resetCharCaches } from './player.js';
+import { clearFaceCache, setFace } from './cosmetics.js';
 import { buildSimCull } from './simcull.js';
 import * as THREE from 'three';
 import { settings } from './settings.js';
@@ -352,6 +355,13 @@ export class Game {
   //   from anywhere with frustum culling off: they get a bounding sphere (+15 m for
   //   their motion) and hide beyond 700 m (only ever un-hidden by us);
   // - vehicle wheels go beyond 120 m (the body still reads).
+  // Switch the characters' look style at runtime (Settings > Toy style characters).
+  setCharStyle(id) {
+    setCharStyle(id); resetCharCaches(); clearFaceCache();
+    for (const p of this.players) { p.restyle(); setFace(p, p.face || 0); }
+    for (const n of this.npcs?.list || []) { n.restyle(); n.applyLook(); }
+  }
+
   // Distance gates for animations and per-step checks: true while some player
   // is within r metres (horizontally) of (x, z); positions are sampled at the
   // start of each step. With nobody playing (title screen) everything counts as near.

@@ -63,6 +63,7 @@ export class Quads {
       const idx = new Uint32Array(n / 4 * 6);
       for (let q = 0, i = 0; q < n; q += 4) { idx[i++] = q; idx[i++] = q + 1; idx[i++] = q + 2; idx[i++] = q; idx[i++] = q + 2; idx[i++] = q + 3; }
       g.setIndex(new THREE.BufferAttribute(idx, 1));
+      g.userData.decal = true; // kit.finish draws it with a depth offset in the far version
       this.kit.b(c.x, c.z).parts.push(g);
     }
     this.chunks.clear();

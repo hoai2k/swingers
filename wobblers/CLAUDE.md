@@ -53,7 +53,13 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
 - Look styles (`src/charstyle.js`): `CHAR_STYLES` changes the drawn proportions (head size /
   drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
   toon + outline, or `wobbly`: one colour all over, plain head with two black oval eyes) without
-  touching the ragdoll. Chosen with `?style=<id>` (default `chunky`; `?head=0.85` scales the head);
+  touching the ragdoll. Default `chunky`; Settings > Toy style characters switches to `dressed`
+  at runtime (`game.setCharStyle(id)`: `setCharStyle` + `resetCharCaches` + `player.restyle()`
+  for players and NPCs; `STYLE` / `FACE_FLAT` are live bindings). `dressed` = Wobbly Life
+  proportions with a smooth skin body in `skinTone(color)` (the colour's skin version) and the
+  shirt / trousers as layered shells on it (`STYLE.layered`); the faces' peach background is
+  swapped for the skin tone in the shader (`skinColored`, uniform set in the head's
+  onBeforeRender). `?style=<id>` overrides it for trials; `?head=0.85` scales the head;
   `charMat()` makes the skin, head and face materials in the current style. `FACE_FLAT`
   (`style.faceFlat`: chunky 0.5; try others with `?flat=`) flattens the face side of the head (`headGeometry`).
   Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features
@@ -85,6 +91,8 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   (the map painter reads them). Don't hold on to a static collider handle from `kit` /
   `physics.box` (it is gone after the merge) — use a trimesh (`physics.trimesh`, never merged)
   when you need its handle, like the ski slopes.
+  Far chunk versions draw flat decals (the city's window quads, `geometry.userData.decal`) as
+  a child mesh with `matVCDecal` (polygon offset), or they z-fight with their walls far off.
   Draw calls (`game.lodView`): vehicle wheels / glass / light panels cast no shadows, light
   panels hide beyond 70 m by day, loose props cast shadows only within 35 m of the camera.
   Resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame

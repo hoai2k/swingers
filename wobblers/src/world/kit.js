@@ -1,7 +1,7 @@
 // Static scenery kit: adds coloured geometry to spatial chunks (merged into
 // one mesh per chunk for cheap drawing and culling) plus matching colliders.
 import * as THREE from 'three';
-import { Builder, matVC, matVCDouble } from '../mesh.js';
+import { Builder, matVC, matVCDouble, matVCDecal } from '../mesh.js';
 import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RAPIER, yawQuat } from '../physics.js';
 
@@ -206,10 +206,17 @@ export class Kit {
       // far version: only the big pieces (walls, roofs, trunks, hulls), drawn
       // instead of the full chunk beyond game.farCull's LOD distance
       const big = b.parts.filter((g) => { if (!g.boundingSphere) g.computeBoundingSphere(); return g.boundingSphere.radius >= FAR_PART_R; });
+      // flat decals (city window quads, 3 cm off their walls) would z-fight with the walls far
+      // away: in the far version they are their own mesh drawn with a depth offset
+      const decals = big.filter((g) => g.userData.decal), solid = big.filter((g) => !g.userData.decal);
       let far = null;
-      if (big.length && big.length < b.parts.length * 0.85) {
-        const fg = mergeGeometries(big, false);
-        if (fg) { far = new THREE.Mesh(fg, matVC); far.castShadow = false; far.receiveShadow = false; far.visible = false; this.game.scene.add(far); }
+      if (big.length && (big.length < b.parts.length * 0.85 || decals.length)) {
+        const fg = solid.length ? mergeGeometries(solid, false) : new THREE.BufferGeometry();
+        if (fg) {
+          far = new THREE.Mesh(fg, matVC); far.castShadow = false; far.receiveShadow = false; far.visible = false; this.game.scene.add(far);
+          const dg = decals.length ? mergeGeometries(decals, false) : null;
+          if (dg) { const dm = new THREE.Mesh(dg, matVCDecal); dm.castShadow = false; dm.receiveShadow = false; far.add(dm); }
+        }
       }
       const m = b.mesh(matVC);
       this.game.scene.add(m);

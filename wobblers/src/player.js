@@ -9,7 +9,7 @@ import { buildExtraHat } from './hats.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/BufferGeometryUtils.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
-import { STYLE, FACE_FLAT, charMat, outlineMat } from './charstyle.js'; // look styles to compare (?style=)
+import { STYLE, FACE_FLAT, charMat, outlineMat, skinTone } from './charstyle.js'; // look styles to compare (?style=)
 
 export const S = 0.8; // overall character scale
 const UP = new THREE.Vector3(0, 1, 0);
@@ -68,7 +68,9 @@ const RIDE_DRAIN = 0.4;       // grip drains slower hanging off a ride (~20 s fr
 const SKIN = 0xffd9b8;
 const HEAD_R = 0.31 * S;
 // soft plastic sheen so the rounded shapes read
-const PLAYER_MAT = charMat({ vertexColors: true }); // the look style (charstyle.js) picks the shading
+let PLAYER_MAT = charMat({ vertexColors: true }); // the look style (charstyle.js) picks the shading
+// After a look-style change (game.setCharStyle): drop everything built for the old style.
+export function resetCharCaches() { PLAYER_MAT = charMat({ vertexColors: true }); _headMats = null; _headGeo = null; _skinTemplate = null; }
 // The head ball (face texture centred on +z). FACE_FLAT squashes the front
 // cap so the face sits on a flatter, gently rounded area.
 let _headGeo = null;
@@ -89,6 +91,7 @@ function headGeometry() {
   return g;
 }
 const MONO_EYE = new THREE.SphereGeometry(0.075 * 0.8, 12, 8).scale(0.72, 1.25, 0.32), MONO_EYE_MAT = new THREE.MeshBasicMaterial({ color: 0x15151c });
+const DRESS_SHIRTS = [0xffffff, 0xffd23f, 0xff8ac8, 0x55d85a, 0xff8a3d, 0x7ad0ff, 0xb98cff, 0xff5a5a, 0x2ab5a5, 0xffe9b0]; // 'dressed' style shirts by colour slot
 const HEAD_OUTLINE = new THREE.MeshBasicMaterial({ color: 0x23202a, side: THREE.BackSide });
 let _headMats = null;
 export function headMaterials() {
@@ -210,8 +213,16 @@ function skinTemplate() {
     for (let i = 0; i < P.count; i++) { P.setX(i, P.getX(i) * shoulderWiden(P.getY(i)) * STYLE.body); P.setZ(i, P.getZ(i) * BODY_DEPTH * STYLE.body); }
     return g;
   };
-  add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
-  add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
+  if (STYLE.layered) {
+    // smooth rounded skin all over, then the clothes as shells on top of it
+    const shell = (pts, k) => pts.map(([r, y]) => [r * k + 0.006, y]);
+    add(shape(lathe(prof, 24)), 'skin', waist);
+    add(shape(lathe(shell(prof.filter((p) => p[1] <= BODY_SPLIT + 0.03), 1.05), 24)), 'pants', waist);
+    add(shape(lathe(shell(prof.filter((p) => p[1] >= BODY_SPLIT - 0.04 && p[1] <= 1.17), 1.045), 24)), 'shirt', waist);
+  } else {
+    add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
+    add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
+  }
   const L = STYLE.limb, LL = 1 + (L - 1) * 0.6, Lp = 1 + (L - 1) * 0.7, Hs = STYLE.hand, Fs = STYLE.shoe; // style: limb / leg / shoulder / mitten / shoe sizes
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
@@ -223,17 +234,25 @@ function skinTemplate() {
     const sh = JI['uArm' + h], el = JI['lArm' + h];
     const arm = (x, y) => (y > (sh.pivot[1] + el.pivot[1]) / 2 ? band(sh, sh.pivot[1] - y) : band(el, el.pivot[1] - y));
     const HEM = 0.885;
-    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm); // the top cap ends inside the shoulder pad
-    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
+    if (STYLE.layered) { // a whole skin arm, and a short sleeve over its top
+      add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.068, 0.9], [0.075, 1.0], [0.078, 1.06]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
+      add(at(lathe(tubeProfile([[0.08, HEM], [0.086, 1.0], [0.09, 1.07]], { bottom: false, top: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm);
+    } else {
+      add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm); // the top cap ends inside the shoulder pad
+      add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
+    }
     // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff
     const hy = 0.745 - 0.13; // lower-arm centre + HAND_OFF
     add(at(new THREE.SphereGeometry(0.108 * Hs, 12, 9), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
     add(at(new THREE.SphereGeometry(0.048 * Hs, 10, 8), x - s * 0.045 * Hs, hy + 0.035 * Hs, 0.055 * Hs, 1, 1.25, 1), 'mitten', 'lArm' + h);
-    add(at(new THREE.CylinderGeometry(0.082 * L, 0.09 * L, 0.035, 14), x, hy + 0.075 * Hs, 0), 'cuff', 'lArm' + h, { smooth: false });
+    if (!STYLE.layered) add(at(new THREE.CylinderGeometry(0.082 * L, 0.09 * L, 0.035, 14), x, hy + 0.075 * Hs, 0), 'cuff', 'lArm' + h, { smooth: false });
     // the leg: one trouser tube from inside the seat down into the shoe, bending at hip and knee
     const hp = JI['uLeg' + h], kn = JI['lLeg' + h];
     const leg = (x, y) => (y > (hp.pivot[1] + kn.pivot[1]) / 2 ? band(hp, hp.pivot[1] - y) : band(kn, kn.pivot[1] - y));
-    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 12), lx, 0, 0, LL, 1, LL), 'pants', leg);
+    if (STYLE.layered) { // a skin leg with a trouser leg over it, the hem just above the shoe
+      add(at(lathe(tubeProfile([[0.07, 0.1], [0.078, 0.18], [0.086, 0.26], [0.096, 0.4], [0.1, 0.48]]), 12), lx, 0, 0, LL, 1, LL), 'skin', leg);
+      add(at(lathe(tubeProfile([[0.086, 0.15], [0.092, 0.26], [0.104, 0.4], [0.11, 0.5]], { bottom: false, top: false }), 12), lx, 0, 0, LL, 1, LL), 'pants', leg);
+    } else add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 12), lx, 0, 0, LL, 1, LL), 'pants', leg);
     // round chunky shoe, toe forward, pale sole
     add(at(new THREE.SphereGeometry(0.105 * Fs, 12, 9), lx, 0.045 * Fs, 0.045 * Fs, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
     add(at(new THREE.SphereGeometry(0.102 * Fs, 12, 9), lx, 0.022 * Fs, 0.045 * Fs, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
@@ -422,6 +441,7 @@ export class Player {
       m.position.y = -STYLE.drop * S;
       m.castShadow = true;
       if (STYLE.outline) { const o = new THREE.Mesh(m.geometry, HEAD_OUTLINE); o.scale.setScalar(1.05); m.add(o); }
+      if (STYLE.skinColored) m.onBeforeRender = (r, s, c, geo, mat) => { const u = mat.userData.skinU; if (u) { u.value.set(skinTone(this.color)); mat.uniformsNeedUpdate = true; } };
       this.headMesh = m;
       g.add(m);
       this.hatMesh = new THREE.Group();
@@ -444,7 +464,10 @@ export class Player {
     const pants = this.outfit?.pants ?? this.pantsColor ?? new THREE.Color(this.color).multiplyScalar(0.55).getHex(); // outfit trousers (outfits.js), pantsColor: customiser (cosmetics.js)
     const cols = STYLE.mono // 'wobbly' style: one colour all over, blue shoes
       ? { shirt: this.color, pants: this.color, skin: this.color, mitten: this.color, cuff: this.color, shoe: 0x2f6fe0, sole: 0x2a5cc0 }
-      : { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
+      : STYLE.skinColored // 'dressed': skin in the character colour, clothes in their own colours
+        ? { shirt: this.outfit?.shirt ?? DRESS_SHIRTS[(this.colorIndex ?? 0) % DRESS_SHIRTS.length], pants: this.outfit?.pants ?? this.pantsColor ?? 0x3b5c9a,
+          skin: skinTone(this.color), mitten: skinTone(this.color), cuff: skinTone(this.color), shoe: 0x3a3340, sole: 0xe8e8e8 }
+        : { shirt, pants, skin: SKIN, mitten: 0xffffff, cuff: 0xf1f1f1, shoe: 0x3a3340, sole: 0xe8e8e8 };
     if (!this.skin) {
       const m = new THREE.SkinnedMesh(skinTemplate().clone(), PLAYER_MAT);
       m.castShadow = true; m.receiveShadow = true;
@@ -495,6 +518,16 @@ export class Player {
       jb[j.n].matrixWorld.compose(_jp, _jq, _one);
     }
   }
+  // Rebuild everything drawn, head included, after a look-style change (game.setCharStyle).
+  restyle() {
+    for (const m of [this.skin, this.skinOutline]) if (m) { m.parent?.remove(m); m.geometry.dispose(); }
+    this.skin = this.skinOutline = null; this.monoHeadMat = null;
+    const head = this.parts.head, hm = this.partMesh(head.def);
+    hm.position.copy(head.mesh.position); hm.quaternion.copy(head.mesh.quaternion); hm.visible = head.mesh.visible;
+    this.group.remove(head.mesh); head.mesh = hm; this.group.add(hm);
+    this.rebuildMeshes();
+  }
+
   // Rebuild the part groups (outfit / gadget / colour change) and re-bind the skin.
   rebuildMeshes() {
     for (const n in this.parts) {
