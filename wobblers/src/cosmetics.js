@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { headMaterials } from './player.js';
 import { charMat } from './charstyle.js';
-import { paintFace, closeEye } from './assets.js';
+import { paintFace, blinkEyes, blinkFrames, blinkFrameTime } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { settings, devicePrefs, saveSettings } from './settings.js';
 import { EXTRA_HAT_NAMES } from './hats.js';
@@ -26,8 +26,8 @@ export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', '
 // Faces whose eyes are always shut or winking: kept so saved looks keep their indices, but
 // never offered (every face has open eyes that blink: blink.js).
 export const RETIRED_FACES = new Set(['Joyful', 'Sleepy', 'Cheeky', 'Winky']);
-// Faces whose eyes are hidden (shades, screens): no blink.
-const NO_BLINK = new Set(['Cool shades', 'Robot']);
+// Faces whose eyes can't be seen blink their own way (assets.js FACE_BLINK): sunglasses lift, screens flash.
+const OWN_BLINK = new Set(['Cool shades', 'Robot']);
 export const PANTS = [
   { name: 'Matching', color: null },
   { name: 'Denim', color: 0x3b5c9a },
@@ -62,7 +62,8 @@ export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange'
 
 // Same layout as mesh.js faceCanvas: 512x256, the face centred at u = 0.25.
 const DOT_FACES = new Set(['Dot eyes', 'Calm', 'Content', 'Oh', 'Shy', 'Smirk']);
-function drawFace(kind, closed = false) {
+function drawFace(kind, frame = 0) {
+  const closed = frame > 0;
   const W = 512, H = 256, cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const g = cv.getContext('2d'); // features on a transparent background (laid over the skin: charstyle.js)
@@ -89,11 +90,12 @@ function drawFace(kind, closed = false) {
       break;
     }
     case 'Cool shades': {
+      const gy = closed ? ey - 6 : ey; // blink: the shades lift for an instant
       g.fillStyle = '#16161e';
-      for (const x of ex) { g.beginPath(); g.roundRect(x - 24, ey - 16, 48, 32, 10); g.fill(); }
-      g.fillRect(cx - 8, ey - 10, 16, 6);
+      for (const x of ex) { g.beginPath(); g.roundRect(x - 24, gy - 16, 48, 32, 10); g.fill(); }
+      g.fillRect(cx - 8, gy - 10, 16, 6);
       g.fillStyle = 'rgba(255,255,255,.55)';
-      for (const x of ex) { g.beginPath(); g.ellipse(x - 9, ey - 5, 7, 4, -0.4, 0, 7); g.fill(); }
+      for (const x of ex) { g.beginPath(); g.ellipse(x - 9, gy - 5, 7, 4, -0.4, 0, 7); g.fill(); }
       g.strokeStyle = '#5a2a2a'; g.lineWidth = 6; g.beginPath(); g.arc(cx + 6, H * 0.58, 18, 0.15 * Math.PI, 0.6 * Math.PI); g.stroke();
       break;
     }
@@ -155,7 +157,7 @@ function drawFace(kind, closed = false) {
     case 'Robot': {
       g.fillStyle = '#c8ccd6'; g.beginPath(); g.roundRect(cx - 70, ey - 32, 140, 64, 14); g.fill();
       g.fillStyle = '#2a2f3a'; g.beginPath(); g.roundRect(cx - 62, ey - 24, 124, 48, 10); g.fill();
-      g.fillStyle = '#3af0ff'; for (const x of ex) { g.beginPath(); g.roundRect(x - 14, ey - 10, 28, 20, 5); g.fill(); }
+      g.fillStyle = closed ? '#d8ffff' : '#3af0ff'; for (const x of ex) { g.beginPath(); g.roundRect(x - 14, ey - 10, 28, 20, 5); g.fill(); } // blink: screens flash
       g.fillStyle = '#9aa3ad'; g.fillRect(cx - 30, H * 0.66, 60, 16);
       g.fillStyle = '#2a2f3a'; for (let k = 0; k < 5; k++) g.fillRect(cx - 26 + k * 12, H * 0.66 + 3, 6, 10);
       break;
@@ -241,26 +243,28 @@ function drawFace(kind, closed = false) {
     }
   }
   // blink frame: the standard eye spots closed (the dot faces close their own eyes above)
-  if (closed && !DOT_FACES.has(kind)) for (const x of ex) closeEye(g, x, ey + 2, 24, 28);
+  if (closed && !DOT_FACES.has(kind) && !OWN_BLINK.has(kind)) blinkEyes(g, kind, frame, ex.map((x) => [x, ey + 2, 25, 29]));
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   t.premultiplyAlpha = true;
-  paintFace(t, kind, closed);
+  paintFace(t, kind, frame);
   return t;
 }
 
 const faceCache = new Map();
 export const clearFaceCache = () => faceCache.clear(); // after a look-style change
-// The material for face i, open or closed (blink frame); faces with hidden eyes have no closed one.
-export function faceMaterial(i, closed = false) {
-  if (closed && NO_BLINK.has(FACES[i])) closed = false;
-  if (!i) return closed ? headMaterials().closed : headMaterials().normal;
-  const key = i * 2 + (closed ? 1 : 0);
+// The material for face i: frame 0 open, 1..faceBlinkFrames(i) its blink frames (true = 1).
+export function faceMaterial(i, frame = 0) {
+  frame = frame === true ? 1 : frame || 0;
+  if (!i) return frame ? headMaterials().closed : headMaterials().normal;
+  const key = i * 16 + frame;
   let m = faceCache.get(key);
-  if (!m) { m = charMat({ map: drawFace(FACES[i], closed) }); faceCache.set(key, m); }
+  if (!m) { m = charMat({ map: drawFace(FACES[i], frame) }); faceCache.set(key, m); }
   return m;
 }
+export const faceBlinkFrames = (i) => (i ? blinkFrames(FACES[i]) : 1);
+export const faceBlinkTime = (i) => (i ? blinkFrameTime(FACES[i]) : 0.13);
 
 // Keep the chosen face on the head unless the player is showing the KO face.
 export function syncFace(p) {

@@ -134,7 +134,7 @@ function faceCanvas(kind) {
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   t.premultiplyAlpha = true; // clean filtering at the features' transparent edges
-  paintFace(t, kind === 'ko' ? 'ko' : 'happy', kind === 'closed');
+  paintFace(t, kind === 'ko' ? 'ko' : 'happy', kind === 'closed' ? 1 : 0);
   return t;
 }
 

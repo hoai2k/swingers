@@ -1,12 +1,11 @@
-// Blinking: every character (players and awake NPCs) shuts its eyes for a moment every few
-// seconds, now and then twice in a row. A blink swaps the head to its face's closed-eye
-// material (cosmetics.js faceMaterial(i, true)) and back; it only touches a head showing
-// that face's open eyes, so the KO face, the 'wobbly' style's plain head and faces with
-// hidden eyes (shades, robot: no closed version) are left alone.
-import { faceMaterial } from './cosmetics.js';
+// Blinking: every character (players and awake NPCs) blinks every few seconds, now and then
+// twice in a row. A blink plays its face's blink frames (cosmetics.js faceMaterial(i, frame):
+// eyes closing, sunglasses lifting, robot screens flashing, hearts beating, spirals spinning)
+// and goes back to the open face. It only touches a head showing that face's open or blink
+// materials, so the KO face and the 'wobbly' style's plain head are left alone.
+import { faceMaterial, faceBlinkFrames, faceBlinkTime } from './cosmetics.js';
 import { STYLE } from './charstyle.js';
 
-const SHUT = 0.13;               // seconds the eyes stay closed
 const GAP = [2.2, 6.2];          // seconds between blinks
 const DOUBLE = 0.18, DOUBLE_GAP = 0.28;
 
@@ -18,15 +17,19 @@ export function buildBlink(game) {
       const hm = p.headMesh;
       if (!hm || p.parked) continue;
       let s = st.get(p);
-      if (!s) { s = { t: 0.5 + Math.random() * GAP[1], shut: 0 }; st.set(p, s); }
-      if (s.shut > 0) {
-        if ((s.shut -= dt) <= 0) { const c = faceMaterial(p.face || 0, true); if (hm.material === c) hm.material = faceMaterial(p.face || 0); }
+      if (!s) { s = { t: 0.5 + Math.random() * GAP[1], frame: 0, ft: 0 }; st.set(p, s); }
+      const face = p.face || 0;
+      if (s.frame) { // mid-blink: next frame, or back to the open face
+        if ((s.ft -= dt) > 0) continue;
+        if (hm.material !== faceMaterial(face, s.frame)) { s.frame = 0; continue; } // something else took the head (KO)
+        s.frame++;
+        if (s.frame > faceBlinkFrames(face)) { s.frame = 0; hm.material = faceMaterial(face); }
+        else { hm.material = faceMaterial(face, s.frame); s.ft = faceBlinkTime(face); }
         continue;
       }
       if ((s.t -= dt) > 0) continue;
       s.t = Math.random() < DOUBLE ? DOUBLE_GAP : GAP[0] + Math.random() * (GAP[1] - GAP[0]);
-      const open = faceMaterial(p.face || 0), closed = faceMaterial(p.face || 0, true);
-      if (closed !== open && hm.material === open) { hm.material = closed; s.shut = SHUT; }
+      if (hm.material === faceMaterial(face)) { s.frame = 1; s.ft = faceBlinkTime(face); hm.material = faceMaterial(face, 1); }
     }
   });
 }

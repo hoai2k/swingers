@@ -66,12 +66,14 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   (`style.faceFlat`: chunky 0.5; try others with `?flat=`) flattens the face side of the head (`headGeometry`).
   Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features
   compact (eyes near the equator, mouth just below), or they climb onto the forehead / chin.
-  Blinking (`src/blink.js`): every character swaps to its face's closed-eye material
-  (`faceMaterial(i, true)`) for 0.13 s every 2-6 s. Closed frames: painted faces clear their
-  eyes from `FACE_EYES` (`assets.js`, eye boxes in the 512 px art; a new painted face needs an
-  entry) and draw a lid curve (`closeEye`); drawn faces close their own eyes. Every offered face
-  must have open eyes that can blink: faces with eyes always shut / winking are in
-  `RETIRED_FACES` (kept for saved-look indices, never offered); shades / robot don't blink.
+  Blinking (`src/blink.js`): every 2-6 s each character plays its face's blink frames
+  (`faceMaterial(i, frame)`, frame 1..`faceBlinkFrames(i)`, then back to 0). How a face blinks
+  is `FACE_BLINK` in `assets.js` (by face slug): eyes close by default (painted faces clear the
+  eyes in `FACE_EYES` — eye boxes in the 512 px art, a new painted face needs an entry — and
+  draw a lid curve; a hand-painted `faces/face_<name>_closed.png` is used instead when
+  delivered), `lift` (sunglasses rise), `flash` (robot screens), `beat` (hearts swell),
+  `spin` (spirals turn round). Every offered face must have a blink: faces with eyes always
+  shut / winking are in `RETIRED_FACES` (kept for saved-look indices, never offered).
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
   150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
   vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
