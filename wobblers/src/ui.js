@@ -9,7 +9,6 @@ import { settings, saveSettings, devicePrefs } from './settings.js';
 import { glyph, formatHint, promptRow, deviceKind } from './glyphs.js';
 import { FACES, PANTS, OUTFITS, HAT_NAMES, COLOR_NAMES, setFace, setPants, setHat, saveLook, restoreLook, randomLook, syncFace, cycleHat, cycleFace, cyclePants, cycleOutfit } from './cosmetics.js';
 import { TOTAL as PRESENTS_TOTAL, foundCount, lockedCount, shopLockedCount, jobLockedCount, resetPresents } from './unlocks.js';
-import { buildTitleCrowd } from './title.js';
 import { MapPanel, buildMapImage, cornerHintHTML } from './map.js';
 import { PhonePanel } from './phone.js';
 import { ShopPanel } from './life/shops.js';
@@ -432,7 +431,6 @@ export class UI {
     this.ready = false;
     this.settingsCard = null;
     this.buildCorner();
-    buildTitleCrowd(document.getElementById('crowd'));
     buildMapImage(game); // the island map picture, painted once
     // apply stored settings
     game.shadows = settings.shadows;

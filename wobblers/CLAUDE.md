@@ -47,6 +47,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   instead of covering it: `shirt` / `pants` on an `OUTFIT_LIST` entry (jackets, overalls), and
   `beltRing` fits a belt to the bean. Probe close-ups by rendering `__wob.scene` with your own
   camera (`__wob.frame = () => {}` stops the loop).
+- Look styles (`src/charstyle.js`): `CHAR_STYLES` changes the drawn proportions (head size /
+  drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
+  toon + outline) without touching the ragdoll. Chosen with `?style=<id>` (default `classic`);
+  `charMat()` makes the skin, head and face materials in the current style.
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
   150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
   vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel

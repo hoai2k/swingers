@@ -9,6 +9,7 @@ import { buildExtraHat } from './hats.js';
 import { mergeGeometries, mergeVertices } from 'three/addons/BufferGeometryUtils.js';
 import { Builder, faceMaterials, matVC } from './mesh.js';
 import { emoteStep } from './emotes.js'; // emotes: pose overrides after animate()
+import { STYLE, charMat, outlineMat } from './charstyle.js'; // look styles to compare (?style=)
 
 export const S = 0.8; // overall character scale
 const UP = new THREE.Vector3(0, 1, 0);
@@ -64,12 +65,13 @@ const RIDE_DRAIN = 0.4;       // grip drains slower hanging off a ride (~20 s fr
 const SKIN = 0xffd9b8;
 const HEAD_R = 0.31 * S;
 // soft plastic sheen so the rounded shapes read
-const PLAYER_MAT = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 24, specular: 0x2a2a2a });
+const PLAYER_MAT = charMat({ vertexColors: true }); // the look style (charstyle.js) picks the shading
+const HEAD_OUTLINE = new THREE.MeshBasicMaterial({ color: 0x23202a, side: THREE.BackSide });
 let _headMats = null;
 export function headMaterials() {
   if (!_headMats) {
     const f = faceMaterials();
-    const mk = (src) => new THREE.MeshPhongMaterial({ map: src.map, shininess: 24, specular: 0x2a2a2a });
+    const mk = (src) => charMat({ map: src.map });
     _headMats = { normal: mk(f.normal), ko: mk(f.ko) };
   }
   return _headMats;
@@ -182,35 +184,36 @@ function skinTemplate() {
   const mid = [a[0] + (b[0] - a[0]) * t, BODY_SPLIT];
   const shape = (g) => { // widen towards the shoulders, flatten front to back
     const P = g.attributes.position;
-    for (let i = 0; i < P.count; i++) { P.setX(i, P.getX(i) * shoulderWiden(P.getY(i))); P.setZ(i, P.getZ(i) * BODY_DEPTH); }
+    for (let i = 0; i < P.count; i++) { P.setX(i, P.getX(i) * shoulderWiden(P.getY(i)) * STYLE.body); P.setZ(i, P.getZ(i) * BODY_DEPTH * STYLE.body); }
     return g;
   };
   add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
   add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
+  const L = STYLE.limb, LL = 1 + (L - 1) * 0.6, Lp = 1 + (L - 1) * 0.7, Hs = STYLE.hand, Fs = STYLE.shoe; // style: limb / leg / shoulder / mitten / shoe sizes
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
     // shoulder pad (chest): a flattened oval stretched in toward the neck, so the
     // shoulder line slopes from the neck down into the arm (no round knob on top)
-    add(at(new THREE.SphereGeometry(SHOULDER_R, 12, 9), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6, 0.62, 0.95), 'shirt', 'chest');
+    add(at(new THREE.SphereGeometry(SHOULDER_R, 12, 9), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6 * Lp, 0.62 * Lp, 0.95 * Lp), 'shirt', 'chest');
     // the arm: one tube from inside the shoulder to inside the mitten, bending
     // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
     const sh = JI['uArm' + h], el = JI['lArm' + h];
     const arm = (x, y) => (y > (sh.pivot[1] + el.pivot[1]) / 2 ? band(sh, sh.pivot[1] - y) : band(el, el.pivot[1] - y));
     const HEM = 0.885;
-    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0), 'shirt', arm); // the top cap ends inside the shoulder pad
-    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0), 'skin', arm);
+    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0, L, 1, L), 'shirt', arm); // the top cap ends inside the shoulder pad
+    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0, L, 1, L), 'skin', arm);
     // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff
     const hy = 0.745 - 0.13; // lower-arm centre + HAND_OFF
-    add(at(new THREE.SphereGeometry(0.108, 12, 9), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
-    add(at(new THREE.SphereGeometry(0.048, 10, 8), x - s * 0.045, hy + 0.035, 0.055, 1, 1.25, 1), 'mitten', 'lArm' + h);
-    add(at(new THREE.CylinderGeometry(0.082, 0.09, 0.035, 14), x, hy + 0.075, 0), 'cuff', 'lArm' + h, { smooth: false });
+    add(at(new THREE.SphereGeometry(0.108 * Hs, 12, 9), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
+    add(at(new THREE.SphereGeometry(0.048 * Hs, 10, 8), x - s * 0.045 * Hs, hy + 0.035 * Hs, 0.055 * Hs, 1, 1.25, 1), 'mitten', 'lArm' + h);
+    add(at(new THREE.CylinderGeometry(0.082 * L, 0.09 * L, 0.035, 14), x, hy + 0.075 * Hs, 0), 'cuff', 'lArm' + h, { smooth: false });
     // the leg: one trouser tube from inside the seat down into the shoe, bending at hip and knee
     const hp = JI['uLeg' + h], kn = JI['lLeg' + h];
     const leg = (x, y) => (y > (hp.pivot[1] + kn.pivot[1]) / 2 ? band(hp, hp.pivot[1] - y) : band(kn, kn.pivot[1] - y));
-    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 12), lx, 0, 0), 'pants', leg);
+    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 12), lx, 0, 0, LL, 1, LL), 'pants', leg);
     // round chunky shoe, toe forward, pale sole
-    add(at(new THREE.SphereGeometry(0.105, 12, 9), lx, 0.045, 0.045, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
-    add(at(new THREE.SphereGeometry(0.102, 12, 9), lx, 0.022, 0.045, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
+    add(at(new THREE.SphereGeometry(0.105 * Fs, 12, 9), lx, 0.045 * Fs, 0.045 * Fs, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
+    add(at(new THREE.SphereGeometry(0.102 * Fs, 12, 9), lx, 0.022 * Fs, 0.045 * Fs, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
   }
   const g = mergeGeometries(pieces, false);
   for (const p of pieces) p.dispose();
@@ -382,11 +385,14 @@ export class Player {
     const g = new THREE.Group();
     if (p.n === 'head') {
       const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 18), headMaterials().normal);
-      m.scale.set(1, 0.97, 0.98);
+      m.scale.set(1, 0.97, 0.98).multiplyScalar(STYLE.head);
+      m.position.y = -STYLE.drop * S;
       m.castShadow = true;
+      if (STYLE.outline) { const o = new THREE.Mesh(m.geometry, HEAD_OUTLINE); o.scale.setScalar(1.05); m.add(o); }
       this.headMesh = m;
       g.add(m);
       this.hatMesh = new THREE.Group();
+      this.hatMesh.scale.setScalar(STYLE.head); this.hatMesh.position.y = -STYLE.drop * S;
       g.add(this.hatMesh);
       this.buildHat();
       return g;
@@ -410,6 +416,11 @@ export class Player {
       m.boundingSphere = SKIN_BOUNDS.clone();
       m.boundingBox = new THREE.Box3().setFromCenterAndSize(SKIN_BOUNDS.center, new THREE.Vector3(2.1, 2.1, 2.1));
       this.skin = m;
+      if (STYLE.outline) { // cel style: a second skinned mesh on the same skeleton, back faces pushed out
+        const o = new THREE.SkinnedMesh(m.geometry, outlineMat());
+        o.boundingSphere = m.boundingSphere; o.boundingBox = m.boundingBox;
+        this.skinOutline = o;
+      }
     }
     const g = this.skin.geometry, key = g.attributes.ckey.array, c = g.attributes.color, a = c.array;
     const rgb = CK.map((k) => _col.set(cols[k]).toArray());
@@ -432,7 +443,8 @@ export class Player {
     sk.update = () => { this.poseJoints(); upload.call(sk); };
     this.skin.bind(sk, new THREE.Matrix4());
     old?.dispose();
-    P.chest.mesh.add(this.skin); // follows the chest's visibility (forms.js hides the part groups)
+    P.chest.mesh.add(this.skin);
+    if (this.skinOutline) { this.skinOutline.bind(sk, new THREE.Matrix4()); P.chest.mesh.add(this.skinOutline); } // follows the chest's visibility (forms.js hides the part groups)
   }
   // Joint bones: at the pivot (the mean of where each side puts it), turned
   // half way between the two parts. Part groups sit in this.group at the origin,

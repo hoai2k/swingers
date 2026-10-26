@@ -4,6 +4,7 @@
 // normal face (the knocked-out face still comes from mesh.js).
 import * as THREE from 'three';
 import { headMaterials } from './player.js';
+import { charMat } from './charstyle.js';
 import { paintFace } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { settings, devicePrefs, saveSettings } from './settings.js';
@@ -207,7 +208,7 @@ const faceCache = new Map();
 export function faceMaterial(i) {
   if (!i) return headMaterials().normal;
   let m = faceCache.get(i);
-  if (!m) { m = new THREE.MeshPhongMaterial({ map: drawFace(FACES[i]), shininess: 24, specular: 0x2a2a2a }); faceCache.set(i, m); }
+  if (!m) { m = charMat({ map: drawFace(FACES[i]) }); faceCache.set(i, m); }
   return m;
 }
 

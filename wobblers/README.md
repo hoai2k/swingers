@@ -290,7 +290,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
 | `src/forms.js` | the Magic Tent and shape-shifting (goat / velociraptor / giant grasshopper): animal looks on the ragdoll, attacks, timer HUD, chooser panel, magic puffs |
 | `src/emotes.js` | emotes (wave, point, dance, clap, flex, bow, sit, flop, cheer, laugh) as ragdoll pose overrides, the per-view emote wheel and quick emotes |
-| `src/glyphs.js`, `src/title.js` | Xbox-style button glyphs / key caps; the title screen's wobbling characters |
+| `src/glyphs.js` | Xbox-style button glyphs / key caps |
 | `src/gadgets.js`, `src/world/gadgetshop.js` | gadgets (jetpack, boots, glider, laser gun, grappling hook): behaviour, meshes, sounds, HUD hint; the GADGETS shop building |
 | `src/cosmetics.js`, `src/settings.js` | faces, trousers and saved looks (locked items skipped); persistent settings |
 | `src/hats.js`, `src/unlocks.js`, `src/world/presents.js` | unlockable hats; which present unlocks what (saved progress); the presents in the world (placement, bob/glow, touch to open, confetti) |
