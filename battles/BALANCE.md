@@ -463,3 +463,12 @@ Re-run with:
 
     node battles/dev/balance/run.mjs --units jk_toji,jk_dagon,jk_mahito,jk_jogo,jk_hanami,jk_geto,jk_choso,jk_hakari,jk_flyhead --runs 4 --out /tmp/jkc.jsonl
     node battles/dev/balance/report.mjs /tmp/jkc.jsonl
+
+## Collision fix (limbs touch bodies, neck limit)
+
+Limbs now collide with bodies, so arms no longer pass through torsos, and heads have
+a neck limit. Re-scored after it (4 runs per pairing): most units moved by less than
+±0.1 (squire +0.11, knight +0.10, hoplite +0.12, chieftain +0.19). The Giant fell to
+−0.31: its big arms are now blocked by bodies. A lower price barely helps (the harness
+still fields one Giant), so its hp went 1600 → **2400**: −0.20, still the archers'
+and gunslingers' prey (−0.99).
