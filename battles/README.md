@@ -154,6 +154,20 @@ when delivered; without one the tab shows just the name in the faction colour.
   (red energy sword, force push and force choke) and the Walker (a four-legged mech
   with twin heavy cannons that stomps whatever gets in among its legs). Bolts glow cyan
   for Blue and red for Red.
+- **Jujutsu Kaisen: the strongest** (`src/packs/jjk-strongest.js`, on the shared core
+  `jjk-core.js`): **Satoru Gojo** (Infinity with short gaps, Red, Blue, Hollow Purple;
+  domain *Unlimited Void* freezes everyone inside), **Ryomen Sukuna** (Dismantle and
+  Cleave, the Fuga fire arrow; domain *Malevolent Shrine*, no barrier, cuts everything
+  inside, his own side a little), **Megumi Fushiguro** (shadow blade; Ten Shadows
+  shikigami from his shadow: two Divine Dogs, Nue, Toad, Max Elephant; domain *Chimera
+  Shadow Garden*; badly hurt, the Mahoraga ritual) and **Mahoraga** (Sword of
+  Extermination; the wheel over its head clicks round each time it adapts to a kind of
+  harm, Infinity included). The shikigami are Megumi's reserves (faction `jjk_shiki`, not
+  in the shop). Secrets: *Meguna* (an enemy Sukuna near Megumi's ritual may take his
+  body: Megumi changes sides with Sukuna's tattoos, techniques and domain, and all his
+  shikigami), the Gojo vs Sukuna domain clash, "Nah, I'd win", "Throughout heaven and
+  earth…", "Stand proud", all twenty fingers, Mahoraga adapting to Infinity and Sukuna's
+  World-Cutting Slash, the King of Curses exorcising Mahoraga.
 
 ## Code map
 

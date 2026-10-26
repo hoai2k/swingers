@@ -386,3 +386,25 @@ Against four flyers, damage dealt while they were in the air went from 329 → 2
 the Tree Giant throws at flyers, and ground-only attacks (Bone Mage spikes, catapult
 lobs) pick targets on the ground. Scores after the change (4 runs): Void Monarch
 −0.02, Tree Giant −0.06, Bone Mage +0.05, Catapult −0.12.
+
+## Jujutsu Kaisen: the strongest (Gojo, Sukuna, Megumi, Mahoraga)
+
+`src/packs/jjk-strongest.js`, priced alone against the reference panel, 4 battles per
+pairing (36 per unit), sides swapped. Summoned reserves (Megumi's shikigami and his
+ritual Mahoraga) now count toward their summoner's gold in the harness
+(`dev/balance/lib.mjs valueLeft`: a summoner's slot is worth its cost times the best hp
+fraction of itself or any summon still standing), so a shikigami adds no value of its
+own and Megumi's gold lives on in Mahoraga after the ritual.
+
+| unit | cost | hp | role | score | notes |
+|---|---:|---:|---|---:|---|
+| Satoru Gojo (`jk_gojo`) | **3500** | 620 | hero | +0.09 | first draft at 2600 scored +0.60; Red 70→48 (blast 3.0→2.4), Purple 240→200, Infinity 7 s on / 2.2 off → 6 / 2.8, Void 5→3.5 s, awakening heal 40→30%. Crushes swarms (+0.67), loses to archers, gunslingers and kings in the Infinity gaps |
+| Ryomen Sukuna (`jk_sukuna`) | **3300** | 1700 | boss | +0.03 | 2700 → +0.39; Dismantle 42→38, shrine 13→11 per 0.35 s tick. Flattens melee blobs (+1.0 vs clubbers), dies to massed ranged (−0.8…−0.95) |
+| Megumi Fushiguro (`jk_megumi`) | **1200** | 380 | summoner | −0.05 | 900 → +0.67 once the ritual's Mahoraga counted; the ritual Mahoraga now leaves after 20 s |
+| Mahoraga (`jk_mahoraga`) | **3400** | 2100 | boss | +0.05 | damage 120→160; adapts (−30% per click, up to −85%, per kind of harm, 140 dmg a click) |
+
+The shikigami (`jk_dog_white`, `jk_dog_black`, `jk_nue`, `jk_toad`, `jk_elephant`) are
+not sold (faction `jjk_shiki`) and are not priced on their own.
+
+    node battles/dev/balance/run.mjs --units jk_gojo,jk_sukuna,jk_megumi,jk_mahoraga --runs 4 --procs 3 --out /tmp/jjk-strongest.jsonl
+    node battles/dev/balance/report.mjs /tmp/jjk-strongest.jsonl

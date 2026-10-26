@@ -16,4 +16,5 @@ import './jujutsu.js';
 import './classic.js'; // more Tribal, Farmer and Legacy units
 import './galactic.js';
 import './jjk-core.js'; // Jujutsu Kaisen: domains, barriers, secrets (characters: jjk-*.js)
+import './jjk-strongest.js'; // JJK: Gojo, Sukuna, Megumi (+ shikigami), Mahoraga
 import './custom.js'; // Unit Creator: the Custom faction (keep last: reads the other packs)
