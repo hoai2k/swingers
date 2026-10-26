@@ -27,7 +27,7 @@ import {
 import { UPY, STANCE, setArmKey, refreshBeam, endBeam } from './ges-core.js';
 import {
   FACTION, jk, onSecret, announce, isA, burntOut, openDomain, closeDomain, domeMesh, markerAt, markerOn,
-  summon, dismiss, switchTeam, seal, ensureHitHook, park,
+  summon, dismiss, switchTeam, seal, ensureHitHook,
 } from './jjk-core.js';
 
 const FAC = FACTION.id, SUMMON = 'jjk_summon';
@@ -35,6 +35,14 @@ const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3
 const _e = new THREE.Euler();
 // domain radii (the dome meshes are built at these sizes)
 export const DOM_R = { dagon: 9, mahito: 7, jogo: 8, hakari: 7.5 };
+// a body out of play (battle.js park(); a copy: importing battle.js from a pack would
+// build its projectile table before the later packs register)
+function park(u) {
+  u.dormant = true;
+  u.alive = false;
+  for (const bd of u.rag.bodies) bd.setEnabled(false);
+  for (const e of u.extras) e.body?.setEnabled(false);
+}
 const flat = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
 const foe = (u, v) => v && v.alive && !v.dormant && v.team !== u.team;
 
@@ -151,7 +159,7 @@ const sureHit = (v, dmg, att) => v.hit(dmg, PART.chest, 0, v.M * 0.3, 0, att, 'd
 const toji = {
   melee: true,
   init(u) {
-    ensureHitHook();
+    ensureHitHook(u);
     u.jkNoCE = true; u.jkPierce = true;
     u.jkPC = rand(2, 4); u.jkDash = rand(0.3, 1.2); u.jkFl = 0; u.jkCloud = null;
   },
@@ -1717,7 +1725,7 @@ function buildProj(type, g, H) {
       ns(mesh(H.geo('jkmh-floor', () => new T.CircleGeometry(R, 40).rotateX(-Math.PI / 2)), mat('#140e1a', { transparent: true, opacity: 0.8, depthWrite: false }), 0, 0.05, 0, g));
       const skin = mat('#e2d6cc', { spec: 0.15 }), pale = mat('#c9c0b8', { spec: 0.15 });
       for (let i = 0; i < 22; i++) { // out of the dome, reaching in
-        const a = i * 2.39996, el = 0.15 + (i % 6) * 0.22, rr = R * 0.97;
+        const a = i * 2.39996, el = 0.15 + (i % 6) * 0.22, rr = R - 1.7;
         const p = new T.Vector3(Math.sin(a) * Math.cos(el) * rr, Math.sin(el) * rr, Math.cos(a) * Math.cos(el) * rr);
         hand(H, g, i % 3 ? skin : pale, p, p.clone().multiplyScalar(-1).add(new T.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1))), 1.1 + (i % 3) * 0.3, 0.2 + (i % 4) * 0.2);
       }
