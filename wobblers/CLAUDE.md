@@ -95,7 +95,12 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   signs); `game.setTimeOfDay(h)` and `game.daySpeed` (0 freezes time) drive it. Builder
   colours listed in `GLOW` (`mesh.js`) light up at night; `kit.lamp` lamps get halos.
   Small top-level scene objects are hidden per view by on-screen size (`game.cullSmall`);
-  set `userData.noCull` to opt out. Check draw calls with `game.renderStats` for 1 and 8
+  set `userData.noCull` to opt out. It also hides loose props beyond 160 m, vehicles beyond
+  220 m and anything else small beyond 350 m. `game.lodView(cam)` gives top-level instanced
+  sets a bounding sphere (hidden beyond 700 m) and hides vehicle wheels beyond 120 m;
+  `game.viewHooks` (fn(cam) per view) lets a region add its own level of detail (the fair
+  hides its small instanced parts beyond 170 m, 130 m split screen). Coins pack only the
+  ones within 160 m of a camera into the instance list. Check draw calls with `game.renderStats` for 1 and 8
   players after adding many meshes.
 - World helpers live in `world/common.js`: `Local` (building-local kit placement, `wall`
   with door holes, `stairs`, `rail`), `addDoor` (hinged physics door), `useSpot` (a seat with

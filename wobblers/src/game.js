@@ -40,6 +40,7 @@ export class Game {
     this.vehicles = [];
     this.seats = [];
     this.updaters = [];   // fn(dt) per frame (visual animation)
+    this.viewHooks = [];  // fn(camera) before each view draws (level of detail)
     this.steppers = [];   // fn() per physics step
     this.shadows = true;
     this.paused = false;
@@ -313,17 +314,22 @@ export class Game {
     if (!this.cullList || this.cullList.n !== this.scene.children.length || this.cullAge > 600) {
       this.cullAge = 0;
       if (this.cullList) for (const it of this.cullList.list) if (it.hid) it.o.visible = true;
+      const props = new Set(this.physics.objects.map((ob) => ob.mesh).filter(Boolean));
+      const vehs = new Set(this.vehicles.map((v) => { let a = v.shell || v.group || v.mesh; while (a && a.parent && a.parent !== this.scene) a = a.parent; return a; }));
       const list = [];
       const box = new THREE.Box3(), sph = new THREE.Sphere();
       for (const o of this.scene.children) {
         if (o.isLight || o === this.sky || o.userData.noCull) continue;
         if (o.isMesh && o.position.lengthSq() === 0 && !o.userData.dynamic) continue; // merged static chunk
         if (this.players.some((p) => p.group === o)) continue;
+        // besides the size test, details stop at a distance: loose props by 160 m,
+        // vehicles by 220 m, any other small thing by 350 m
+        const maxD = props.has(o) ? 160 : vehs.has(o) ? 220 : 350;
         box.setFromObject(o);
         if (box.isEmpty()) continue;
         box.getBoundingSphere(sph);
         if (sph.radius > 9) continue;
-        list.push({ o, r: Math.max(sph.radius, 0.3) });
+        list.push({ o, r: Math.max(sph.radius, 0.3), maxD2: maxD * maxD });
       }
       this.cullList = { n: this.scene.children.length, list };
     }
@@ -331,10 +337,37 @@ export class Game {
     const cp = cam.position;
     for (const it of this.cullList.list) {
       const p = it.o.position, d2 = (p.x - cp.x) ** 2 + (p.z - cp.z) ** 2 + (p.y - cp.y) ** 2;
-      const lim = it.r * k, show = d2 < lim * lim;
+      const lim = it.r * k, show = d2 < lim * lim && d2 < it.maxD2;
       // only undo our own hiding: other code may hide objects too
       if (it.hid) { if (show) { it.o.visible = true; it.hid = false; } }
       else if (!show && it.o.visible) { it.o.visible = false; it.hid = true; }
+    }
+  }
+
+  // Per-view level of detail for things the chunk / small-object culling misses:
+  // - instanced sets laid out once (chairlift chairs, fish, decorations...) were drawn
+  //   from anywhere with frustum culling off: they get a bounding sphere (+15 m for
+  //   their motion) and hide beyond 700 m (only ever un-hidden by us);
+  // - vehicle wheels go beyond 120 m (the body still reads).
+  lodView(cam) {
+    if (!this.instLOD || this.instLOD.n !== this.scene.children.length) {
+      const list = this.instLOD?.list || [];
+      for (const o of this.scene.children) {
+        if (!o.isInstancedMesh || o.frustumCulled || o.userData.noCull || o === this.skyRig?.clouds || list.some((it) => it.o === o)) continue;
+        o.computeBoundingSphere(); o.boundingSphere.radius += 15; o.frustumCulled = true;
+        list.push({ o, hid: false });
+      }
+      this.instLOD = { n: this.scene.children.length, list };
+    }
+    const p = cam.position;
+    for (const it of this.instLOD.list) {
+      const s = it.o.boundingSphere, far = p.distanceTo(s.center) - s.radius > 700;
+      if (far && it.o.visible) { it.o.visible = false; it.hid = true; } else if (!far && it.hid) { it.o.visible = true; it.hid = false; }
+    }
+    for (const v of this.vehicles) {
+      if (!v.wheelMeshes?.length) continue;
+      const t = v.body.translation(), near = (t.x - p.x) ** 2 + (t.z - p.z) ** 2 < 120 * 120;
+      if (v.wheelsShown !== near) { v.wheelsShown = near; for (const w of v.wheelMeshes) if (w) w.visible = near; }
     }
   }
 
@@ -376,6 +409,8 @@ export class Game {
       this.cullSmall(cam, h);
       this.farCull(cam);
       this.interiorLights?.view(cam);
+      for (const h of this.viewHooks) h(cam); // per-view level of detail (e.g. world/fair/common.js)
+      this.lodView(cam);
       this.detail?.view(cam);
       this.scene.userData.terrainLOD?.view(cam);
       r.setViewport(x, H - y - h, w, h);

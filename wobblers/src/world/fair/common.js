@@ -30,6 +30,7 @@ export class FairRides {
     (game.staticChunks ||= []).push({ mesh: this.group, x: CENTRE.x, z: CENTRE.z, r: 135, tall: false });
     this.active = false;
     this.inst = [];
+    this.lodSmall = []; // small instanced pieces hidden from afar (lodHook)
     this.seats = [];
     this.rides = {};
     let k = 0;
@@ -82,6 +83,16 @@ export class FairRides {
     // cull by a sphere round the whole ride (its parts' reach + room to swing), so a
     // view or shadow pass that can't see the ride skips it (they were drawn always)
     for (const m of meshes) { m.computeBoundingSphere(); m.boundingSphere.radius += 25; m.frustumCulled = true; }
+    // small pieces (seats, horses, little cars) only near: from afar the ride's big
+    // shapes carry it (game.viewHooks, per view)
+    for (const m of meshes) { if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); if (m.geometry.boundingSphere.radius < 2.5) this.lodSmall.push(m); }
+    if (!this.lodHook) {
+      this.lodHook = (cam) => {
+        const far = this.game.players.length > 1 ? 130 : 170, p = cam.position;
+        for (const m of this.lodSmall) m.visible = p.distanceTo(m.boundingSphere.center) < far + m.boundingSphere.radius - 25;
+      };
+      this.game.viewHooks.push(this.lodHook);
+    }
     return meshes;
   }
 

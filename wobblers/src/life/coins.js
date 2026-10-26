@@ -135,6 +135,7 @@ export function buildCoins(game) {
 
   game.updaters.push((dt, t) => {
     const cams = game.players.map((pl) => pl.camera?.cam?.position).filter(Boolean);
+    let n = 0; // only coins someone can see are packed into the instance list (and drawn)
     for (let i = 0; i < coins.length; i++) {
       const c = coins[i];
       let sc = c.big ? 1.9 : 1, y = c.y + Math.sin(t * 2.4 + c.phase) * 0.08, spin = t * 3 + c.phase;
@@ -147,10 +148,11 @@ export function buildCoins(game) {
         for (const cp of cams) if (v.set(c.x - cp.x, y - cp.y, c.z - cp.z).lengthSq() < 160 * 160) { near = true; break; }
         if (!near) sc = 0;
       }
+      if (!sc) continue;
       m4.compose(p.set(c.x, y, c.z), q.setFromAxisAngle(Y, spin), s.setScalar(sc));
-      mesh.setMatrixAt(i, m4);
+      mesh.setMatrixAt(n++, m4);
     }
-    mesh.count = coins.length;
+    mesh.count = n;
     mesh.instanceMatrix.needsUpdate = true;
   });
 
