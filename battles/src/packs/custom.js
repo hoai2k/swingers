@@ -67,11 +67,14 @@ export const BEARDS = [null, '#7a5232', '#d27a2c', '#3a2a1e', '#1d1a1a', '#d9d9d
 // reads everything from def.weapon (no def.id checks, no extra bodies or mounts).
 const GENERIC = new Set(['melee', 'ranged', 'heal', 'bard']);
 const SAFE = new Set(['ww_gun', 'pr_gun', 'dy_parry', 'rn_fencer', 'sp_vampire', 'an_phalanx', 'an_zeus', 'vk_jarl',
-  'pi_harpoon', 'gd_cleric', 'gd_shield', 'ev_spinner', 'ev_fan', 'ev_necro', 'ev_chrono', 'sc_bombstick', 'sc_cheer', 'sc_zap', 'sc_ullr']);
+  'pi_harpoon', 'gd_cleric', 'gd_shield', 'ev_spinner', 'ev_fan', 'ev_necro', 'ev_chrono', 'sc_bombstick', 'sc_cheer', 'sc_zap', 'sc_ullr',
+  'jj_brawler', 'ga_blaster', 'ga_saber']);
 const NICE = {
   none: 'Fists', club: 'Club', bone: 'Bone', big_axe: 'Giant axe', pitchfork_small: 'Little fork', pitchfork: 'Pitchfork',
   sword: 'Sword', greatsword: 'Greatsword', kingsword: 'Royal sword', axe: 'Axe', lute: 'Lute', bow: 'Bow',
   staff: 'Fire staff', spear_hand: 'Throwing spears', hay_hand: 'Hay bales', potion_hand: 'Potions', bomb_hand: 'Bombs',
+  ga_esword: 'Energy sword', ga_esword_red: 'Red energy sword', ga_droid_gun: 'Droid blaster', ga_rifle: 'Blaster rifle',
+  ga_pistol: 'Blaster pistol', ga_xbow: 'Crossbow blaster',
 };
 const NICE_LOOK = {
   helm_knight: 'Knight helm', cap_metal: 'Kettle hat', hood_green: 'Green hood', feathercap: 'Feathered cap', skullcap: 'Skull cap',

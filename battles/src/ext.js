@@ -3,7 +3,8 @@
 // without editing the core files. src/packs/index.js lists the packs.
 //
 // pack = {
-//   factions: [{id, name, color}],
+//   factions: [{id, name, color, icon}],      // icon: inline SVG for the tab until
+//                                           //   assets/ui/faction-<id>.png is delivered
 //   units: [unitDef],                      // same shape as src/units.js entries
 //   items: { name: {len, r, grip, ...} },   // hit geometry, see src/items.js
 //   buildItem(name, s, team, g, H) -> bool  // add meshes for a held item to group g

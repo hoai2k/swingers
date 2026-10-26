@@ -1,6 +1,8 @@
 // Dynasty: Monk (palm strikes that send enemies flying), Samurai (fast katana, parries
 // blows from the front and strikes back), Firework Archer (exploding rocket arrows),
-// Hwacha (a rocket rack on its back that fires a volley of rockets).
+// Hwacha (a rocket rack on its back that fires a volley of rockets), Ninja (vanishes
+// in smoke and flips over its target to land behind it; stabs in the back hit far
+// harder).
 import { register } from '../ext.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, aimPoint,
@@ -72,6 +74,50 @@ const rocketStep = (b, pr) => {
   if (pr.trailT <= 0) { pr.trailT = 3; b.emit('trail', pr.pos.x, pr.pos.y, pr.pos.z, Math.random() < 0.5 ? 1 : 0); }
 };
 
+// Ninja: leaps over the target in a puff of smoke and lands behind it. A target
+// that has its back to the ninja takes w.backstab times the damage. Each ninja gets
+// its own copy of the def (the damage changes with where it stands).
+const ninja = {
+  melee: true,
+  init(u) {
+    u.def = { ...u.def, weapon: { ...u.def.weapon } };
+    u.baseDmg = u.def.weapon.damage;
+    u.leapCD = rand(0.2, 1.0);
+  },
+  think(u, dt, c) {
+    const w = u.def.weapon, b = u.battle, { t, gap, dirx, dirz } = c;
+    u.leapCD -= dt;
+    if (u.leaping) { u.expr = EXPR.angry; return t; }
+    if (u.leapCD <= 0 && gap > w.leapMin && gap < w.leapMax && !u.st.attack && u.stun <= 0 && !u.isDown() && u.groundGap() < 0.3) {
+      const tx = t.pos.x + dirx * (t.skel.radius + 0.9 * u.s), tz = t.pos.z + dirz * (t.skel.radius + 0.9 * u.s);
+      const dx = tx - u.pos.x, dz = tz - u.pos.z, d = Math.hypot(dx, dz) || 1;
+      const h = clamp(1.3 * t.s, 1.3, 3), vy = Math.sqrt(2 * 9.81 * h), T = 2 * vy / 9.81, vh = Math.min(d / T, 14);
+      const v0 = u.rag.vel[PART.pelvis];
+      u.rag.impulseAll((dx / d * vh - v0.x) * u.M, (vy - v0.y) * u.M, (dz / d * vh - v0.z) * u.M);
+      u.leaping = true; u.leapT = 0; u.leapCD = w.leapCD * rand(0.85, 1.15);
+      const p = u.pos;
+      b.emit('dust', p.x, b.terrain.height(p.x, p.z), p.z, 4);
+      b.emit('trail', p.x, p.y, p.z, 0); b.emit('trail', p.x, p.y + 0.4, p.z, 0);
+      b.sound('whoosh', p, 0.9, 1.5);
+      return t;
+    }
+    return meleeThink(u, dt, c);
+  },
+  step(u, dt) {
+    const t = u.target, w = u.def.weapon;
+    w.damage = t && t.alive && !inFront(t, u.pos.x, u.pos.z, -0.3) ? u.baseDmg * w.backstab : u.baseDmg;
+    if (!u.leaping) return;
+    u.leapT += dt;
+    if (u.leapT < 0.3 || (u.groundGap() > 0.35 * u.s && u.leapT < 2.2)) return;
+    u.leaping = false;
+    const b = u.battle, p = u.pos;
+    b.emit('dust', p.x, b.terrain.height(p.x, p.z), p.z, 3);
+    b.emit('trail', p.x, p.y, p.z, 0);
+    if (t && t.alive) u.heading = Math.atan2(t.pos.x - p.x, t.pos.z - p.z);
+    u.cooldown = Math.min(u.cooldown, 0.05); // strike at once
+  },
+};
+
 // ------------------------------------------------------------------ units
 const units = [
   {
@@ -107,6 +153,14 @@ const units = [
     personality: { aggro: 0.25, bravery: 0.2, voice: 0.9, chatter: 0.6, cry: 'cackle', idle: 'shake' },
     desc: 'Lights the rack on its back: a dozen rockets rain down.',
   },
+  {
+    id: 'dy_ninja', name: 'Ninja', faction: 'dynasty', cost: 110, hp: 130, speed: 6.0,
+    build: { scale: 0.95, girth: 0.9 },
+    weapon: { line: 'Melee · flips behind its target · backstabs hit 2.5x', kind: 'dy_ninja', style: 'sword', anim: 'overhead', item: 'dy_ninjato', damage: 22, reach: 1.15, cooldown: 0.6, force: 160, backstab: 2.5, leapMin: 2.5, leapMax: 10, leapCD: 6 },
+    look: { skin: '#f0c8a0', hat: 'dy_ninja', top: 'dy_ninja', legs: '#1d1a22' },
+    personality: { aggro: 1, bravery: 0.15, voice: 1.1, chatter: 0.2, cry: 'hey', idle: 'brace' },
+    desc: 'Now you see it. Now it is behind you.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -128,6 +182,15 @@ function buildItem(name, s, team, g, H) {
     mesh(cyl(0.065 * s, 0.065 * s, 0.015 * s, 10), H.gold(), 0, L * 0.25, 0, g); // tsuba
     mesh(cyl(0.028 * s, 0.03 * s, L * 0.24, 8), mat('#1d1a1a'), 0, L * 0.12, 0, g);
     for (let k = 0; k < 4; k++) mesh(octa(0.022 * s), tcol(H, team), 0, L * (0.03 + k * 0.055), 0.025 * s, g);
+    return true;
+  }
+  if (name === 'dy_ninjato') { // a short straight blade with a square guard
+    const L = 0.95 * s;
+    mesh(box(0.016 * s, L * 0.66, 0.045 * s), metal(), 0, L * 0.58, 0, g);
+    mesh(cone(0.032 * s, 0.1 * s, 4), metal(), 0, L * 0.95, 0, g).scale.set(0.35, 1, 1);
+    mesh(box(0.012 * s, 0.012 * s, 0.1 * s), mat('#1d1a1a', { spec: 0.6 }), 0, L * 0.25, 0, g).scale.set(5, 1, 1);
+    mesh(cyl(0.024 * s, 0.026 * s, L * 0.22, 8), mat('#1d1a1a'), 0, L * 0.12, 0, g);
+    for (let k = 0; k < 3; k++) mesh(octa(0.018 * s), tcol(H, team), 0, L * (0.04 + k * 0.06), 0.02 * s, g);
     return true;
   }
   if (name === 'dy_torch') {
@@ -166,6 +229,20 @@ function buildHat(kind, r, team, g, H) {
       mesh(cyl(r * 1.0, r * 1.0, r * 0.1, 16), tc, 0, r * 0.78, 0, g);
       mesh(sphere(r * 0.1, 6, 5), tc, 0, r * 1.28, 0, g);
       for (const sd of [-1, 1]) { const st = mesh(box(r * 0.04, r * 0.9, r * 0.04), tc, sd * r * 0.75, r * 0.1, r * 0.25, g); st.rotation.z = sd * 0.2; }
+      return true;
+    }
+    case 'dy_ninja': { // a black hood and mask, only the eyes show; a team headband
+      const blk = mat('#1d1a22', { spec: 0.15 });
+      mesh(sphere(r * 1.06, 16, 12), blk, 0, r * 0.06, -r * 0.04, g);
+      mesh(box(r * 1.2, r * 0.32, r * 0.3), mat('#f0c8a0'), 0, r * 0.18, r * 0.97, g); // the eye slit
+      for (const sd of [-1, 1]) {
+        mesh(sphere(r * 0.11, 8, 6), mat('#fbfbf7'), sd * r * 0.3, r * 0.18, r * 1.1, g).scale.set(1, 0.7, 0.5);
+        mesh(sphere(r * 0.06, 6, 5), mat('#1e1512'), sd * r * 0.29, r * 0.18, r * 1.15, g);
+        const br = mesh(box(r * 0.3, r * 0.07, r * 0.06), blk, sd * r * 0.3, r * 0.36, r * 1.12, g); br.rotation.z = sd * -0.3;
+      }
+      headBand(H, r, 0.5, 0.14, tc, g, 0.1);
+      for (const sd of [-1, 1]) { const t = mesh(box(r * 0.12, r * 0.7, r * 0.04), tc, sd * r * 0.15, r * 0.1, -r * 1.15, g); t.rotation.set(0.4, 0, sd * 0.3); }
+      g.userData.hidesFace = true;
       return true;
     }
     case 'dy_gat': { // black horsehair hat with a wide brim and a topknot
@@ -216,6 +293,16 @@ function decorate(def, team, vis, H) {
       s.rotation.y = a; s.rotation.x = 0.15;
     }
   }
+  if (top === 'dy_ninja') { // black wrap suit, team sash, a pouch of smoke bombs, shin wraps
+    const blk = mat('#1d1a22', { spec: 0.15 });
+    const sh = H.mesh(H.capsule(r * 1.12, hh * 2), blk, 0, 0, 0, C); sh.scale.set(1, 0.92, 0.92);
+    mesh(cyl(r * 1.13, r * 1.15, r * 0.3, 16), tc, 0, -hh - r * 0.3, 0, C);
+    const kt = mesh(box(r * 0.25, r * 0.6, r * 0.06), tc, r * 0.6, -hh - r * 0.75, r * 0.75, C); kt.rotation.z = 0.3;
+    for (let k = 0; k < 3; k++) mesh(sphere(r * 0.13, 8, 6), mat('#3a3a40'), -r * 0.9 + k * r * 0.2, -hh - r * 0.3, r * 0.6 + k * r * 0.15, C);
+    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.16, (hh + r) * 1.5, r * 0.05), mat('#2e2a36'), sd * r * 0.16, hh * 0.3, r * 1.0, C); l.rotation.z = sd * 0.45; }
+    for (const p of [PART.shinL, PART.shinR, PART.farmL, PART.farmR]) mesh(cyl(skel.parts[p].r * 1.18, skel.parts[p].r * 1.12, skel.parts[p].hh * 1.2, 10), mat('#3a3640', { spec: 0 }), 0, 0, 0, parts[p]);
+    const sc = mesh(cyl(r * 0.07, r * 0.07, r * 2.6, 6), mat('#1d1a1a', { spec: 0.6 }), 0, 0, -r * 1.15, C); sc.rotation.z = 0.7; // a sheath across the back
+  }
   if (def.id === 'dy_hwacha') { // the rocket rack strapped to its back
     const B = new THREE.Group();
     B.position.set(0, hh + r * 0.4, -r * 1.25);
@@ -260,8 +347,9 @@ register({
     dy_katana_sword: { len: 1.25, r: 0.07, grip: 25, metal: true },
     dy_torch: { len: 0.9, r: 0.05, grip: 10, center: true },
     dy_palm: { len: 0.4, r: 0.1, grip: 90 },
+    dy_ninjato: { len: 0.95, r: 0.07, grip: 30, metal: true, mass: 1.0 },
   },
-  kinds: { dy_parry: parry, dy_hwacha: hwacha },
+  kinds: { dy_parry: parry, dy_hwacha: hwacha, dy_ninja: ninja },
   proj: {
     firework: { g: 4, len: 0.6, r: 0.07, explode: 'fire', life: 5, step: rocketStep },
     hrocket: { g: 9.81, len: 0.5, r: 0.07, explode: 'fire', life: 7, step: rocketStep },

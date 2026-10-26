@@ -4,7 +4,9 @@
 // Painter (throws paint: painted enemies are slowed) and the Da Vinci Tank: a wooden
 // cone on wheels (an extra rigid body) with its engineer in the hatch; it rolls slowly
 // at the enemy firing a ripple of cannons all round. Wreck it and the engineer climbs
-// out; kill the engineer and it stops.
+// out; kill the engineer and it stops. The Jouster is a tournament knight on a horse
+// (the mount code of sm-mounts.js) with a shield: he picks the most valuable enemy,
+// takes a long run-up and charges it; his lance knocks riders out of the saddle.
 // Shared guns, cannonballs and paint: pr-shared.js.
 import { register, EXT } from '../ext.js';
 import { RAPIER } from '../physics.js';
@@ -20,6 +22,8 @@ import {
 import { FIELD } from '../world.js';
 import { PR, PROJ as PRP, paint, paintCol, barrel as gunBarrel } from './pr-shared.js';
 import { ballisticAngle } from '../util.js';
+import { HORSE, mountLayout, mountInit, riderHit, riderDie, riderStep, setupRidePoses, dismount } from './sm-mounts.js';
+import * as SMM from './sm-meshes.js';
 
 const V3 = THREE.Vector3, Q4 = THREE.Quaternion;
 const V = (x, y, z) => new V3(x, y, z);
@@ -56,6 +60,69 @@ const fencer = {
     u.rag.impulseAll(u.lx * u.M * 2.6, u.M * 0.35, u.lz * u.M * 2.6);
     u.battle.sound('whoosh', u.pos, 0.55, 1.6);
   },
+};
+
+// ------------------------------------------------------------------ jouster
+// A caparisoned horse; the rider is a cavalry rider with a different eye for targets.
+const JHORSE = { ...HORSE, hp: 420, torsoMesh: (H, t) => joustHorse(H, t) };
+function jousterThink(u, dt, ctx) {
+  const m = u.sm;
+  if (!m.mounted) return footMelee(u, ctx, u.def.weapon.cooldown);
+  const b = u.battle, cfg = m.cfg, p = m.torso.pos;
+  m.thinkT = b.time;
+  // the champion: the enemy worth the most (nearer and healthier ones preferred)
+  u.jPick = (u.jPick ?? 0) - dt;
+  if (!u.jFoe || !u.jFoe.alive || u.jPick <= 0) {
+    u.jPick = 2.5;
+    let best = null, bv = -1;
+    for (const o of b.teams[1 - u.team]) {
+      if (!o.alive) continue;
+      const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
+      const v = (o.def.cost * (0.4 + 0.6 * o.hp / o.maxHp)) / (1 + d / 25);
+      if (v > bv) { bv = v; best = o; }
+    }
+    if (best && best !== u.jFoe && Math.random() < 0.5) b.voice(u, 'cry', true);
+    u.jFoe = best || ctx.t;
+  }
+  const t = u.jFoe;
+  const yaw = yawOf(m.torso.quat);
+  const dx = t.pos.x - p.x, dz = t.pos.z - p.z, dist = Math.hypot(dx, dz);
+  const bear = angleDiff(yaw, Math.atan2(dx, dz));
+  // tilt: ride straight through, keep going for a long run-up, wheel round, charge again
+  if (m.pass) { if (b.time > m.passT || (dist > 14 && b.time > m.passT - 1)) m.pass = false; }
+  else if (dist < 5.5 && Math.abs(bear) > 1.2) { m.pass = true; m.passT = b.time + 2.6; }
+  const goal = m.pass ? yaw : Math.atan2(dx, dz);
+  m.goalYaw = Math.abs(p.x) > FIELD.x + 5 || Math.abs(p.z) > FIELD.z + 4 ? Math.atan2(-p.x, -p.z) : goal;
+  m.goalSpeed = m.pass ? cfg.speed : Math.abs(bear) > 1.2 ? cfg.speed * 0.45 : cfg.speed;
+  u.expr = dist < 18 ? EXPR.angry : EXPR.normal;
+  // stuck next to someone: a stab with the lance
+  const lv = m.torso.body.linvel();
+  if (Math.hypot(lv.x, lv.z) < 3 && ctx.dist - ctx.t.skel.radius < u.reachDist + 0.4 && u.cooldown <= 0 && !u.st.attack && u.stun <= 0) u.startAttack();
+  m.ahead.pos.set(p.x + Math.sin(yaw) * 10, p.y, p.z + Math.cos(yaw) * 10);
+  return m.ahead;
+}
+// lance hits: riders are knocked out of the saddle, the champion takes a heavier blow
+function jousterStep(u, dt) {
+  riderStep(u);
+  const b = u.battle, w = u.def.weapon;
+  u.jSeen ??= new Set();
+  if (u.hitSet.size === 0) u.jSeen.clear();
+  for (const v of u.hitSet) {
+    if (u.jSeen.has(v) || !u.sm || !v.rag) continue; // (the set also holds big bodies)
+    u.jSeen.add(v);
+    const c = v.chestPos;
+    b.emit('spark', c.x, c.y, c.z, 3);
+    b.emit('dust', c.x, c.y, c.z, 1);
+    b.sound('debris', c, 0.6, 1.5);
+    if (v.sm && v.sm.mounted && v.alive) dismount(b, v.sm);
+    if (v === u.jFoe && v.alive && u.sm.mounted) {
+      v.hit(w.damage * w.champion, PART.chest, 0, 0, 0, u, 'lance');
+      b.sound('crowd', c, 0.5, 1.2); // the crowd goes wild
+    }
+  }
+}
+const jouster = {
+  melee: true, init: (u) => mountInit(u, JHORSE), think: jousterThink, step: jousterStep, hit: riderHit, die: riderDie,
 };
 
 // ------------------------------------------------------------------ painter
@@ -399,6 +466,15 @@ const units = [
     personality: { aggro: 0.6, bravery: 0, voice: 0.75, chatter: 0.6, cry: 'magic', idle: 'regal' },
     desc: 'Leonardo\'s wooden war machine. Cannons on every side.',
   },
+  {
+    id: 'rn_jouster', name: 'Jouster', faction: 'renaissance', cost: 950, hp: 260, speed: 4.0,
+    build: { scale: 1, girth: 1.05, mass: 1.3, radius: 1.25 },
+    weapon: { line: 'Mounted · charges the most valuable enemy · shield · lance unhorses riders', kind: 'rn_jouster', style: 'rn_joust', footStyle: 'spear', anim: 'stab', item: 'sm_lance', shield: 'round', blockMelee: 0.3, damage: 85, reach: 2.6, cooldown: 1.3, force: 950, champion: 0.6 },
+    look: { skin: '#f0c8a0', hat: 'rn_tilt', top: 'armor', legs: '#8d939c', armor: true },
+    personality: { aggro: 1, bravery: 0, voice: 0.9, chatter: 0.6, cry: 'royal', idle: 'regal' },
+    armor: 0.3, stagger: 0.6,
+    desc: 'A tournament champion. Picks the finest knight on the field and rides him down.',
+  },
 ];
 const DEF = Object.fromEntries(units.map((d) => [d.id, d]));
 
@@ -407,6 +483,8 @@ const DEF = Object.fromEntries(units.map((d) => [d.id, d]));
   const sk = makeSkeleton(DEF.rn_davinci.build);
   RIDE.rn_tank = { lift: TANK.pos.y + TANK.seat.y - sk.standHeight, roll: 0.25, pitch: -1.25, bend: 1.35, arms: (pose) => { setArm(pose, 1, LEVER); setArm(pose, -1, LEVER); } };
 }
+
+setupRidePoses({ rn_joust: { cfg: HORSE, standHeight: makeSkeleton(DEF.rn_jouster.build).standHeight } });
 
 // ------------------------------------------------------------------ visuals
 function buildItem(name, s, team, g, H) {
@@ -501,6 +579,20 @@ function buildHat(kind, r, team, g, H) {
       }
       return true;
     }
+    case 'rn_tilt': { // a frog-mouthed jousting helm with a crest, plumes and mantling
+      const st = metal();
+      const hm = mesh(sphere(r * 1.12, 18, 14), st, 0, r * 0.12, -r * 0.05, g); hm.scale.set(1, 1.05, 1.12);
+      const beak = mesh(cone(r * 0.8, r * 0.9, 4), st, 0, -r * 0.05, r * 0.85, g); beak.rotation.x = Math.PI / 2; beak.scale.set(1.15, 1, 0.55);
+      mesh(box(r * 1.3, r * 0.07, r * 0.2), mat('#121214'), 0, r * 0.38, r * 0.98, g); // the sight
+      mesh(box(r * 1.6, r * 0.12, r * 1.1), st, 0, -r * 0.62, r * 0.1, g); // the bevor
+      mesh(box(r * 0.12, r * 0.5, r * 1.3), gold(), 0, r * 1.15, -r * 0.05, g); // crest
+      plume(tc, 0, r * 1.5, -r * 0.2, -0.3, 0, 1.2);
+      plume(mat('#f6f2ea'), r * 0.2, r * 1.42, -r * 0.45, -0.6, -0.3, 1.0);
+      plume(td, -r * 0.2, r * 1.42, -r * 0.45, -0.6, 0.3, 1.0);
+      for (const sd of [-1, 1]) { const mt = mesh(box(r * 0.08, r * 1.3, r * 0.9), sd > 0 ? tc : mat('#f6f2ea'), sd * r * 0.6, -r * 0.2, -r * 1.05, g); mt.rotation.set(0.35, 0, sd * 0.3); }
+      g.userData.hidesFace = true;
+      return true;
+    }
     case 'rn_leo': { // the master's soft cap and long white hair
       const cap = mat('#6a2830', { spec: 0.05 });
       const c = mesh(sphere(r * 1.1, 16, 8), cap, 0, r * 0.55, -r * 0.05, g); c.scale.set(1.05, 0.55, 1.05);
@@ -519,6 +611,7 @@ function decorate(def, team, vis, H) {
   // extra bodies first, in the order init() makes them
   if (def.id === 'rn_davinci') for (const l of tankLayout()) vis.extraParts.push({ group: l.mesh(H, team), pos: l.pos, quat: l.quat });
   if (def.id === 'rn_balloon') for (const l of balloonLayout(vis.skel)) vis.extraParts.push({ group: l.mesh(H, team), pos: l.pos, quat: l.quat });
+  if (def.id === 'rn_jouster') for (const l of mountLayout(JHORSE)) vis.extraParts.push({ group: l.mesh(H, team), pos: l.pos, quat: l.quat });
   const { parts, skel } = vis;
   const { mesh, sphere, box, cyl, cone, mat, gold, leather, metal } = H;
   const tc = tcol(H, team), td = tdark(H, team);
@@ -551,6 +644,14 @@ function decorate(def, team, vis, H) {
       const cp = mesh(box(r * 1.5, (hh + r) * 1.45, r * 0.07), td, r * 0.35, -hh * 0.1, -r * 1.08, C); cp.rotation.set(0.12, 0, 0.18);
       mesh(sphere(r * 0.12, 6, 5), gold(), r * 0.85, hh + r * 0.2, r * 0.3, C);
     }
+  }
+  if (def.id === 'rn_jouster') { // a quartered surcoat over the plate
+    for (const z of [1, -1]) {
+      for (const sd of [-1, 1]) mesh(box(r * 0.75, (hh + r) * 1.05, r * 0.05), sd * z > 0 ? tc : white, sd * r * 0.37, hh * 0.35, z * r * 1.12, C);
+      for (const sd of [-1, 1]) mesh(box(r * 0.75, (hh + r) * 1.05, r * 0.05), sd * z > 0 ? white : tc, sd * r * 0.37, -hh * 0.65 - r * 0.2, z * r * 1.12, C);
+    }
+    mesh(cyl(r * 1.24, r * 1.24, r * 0.18, 16), gold(), 0, -hh - r * 0.38, 0, C).scale.set(1, 1, 0.95);
+    for (const sd of [-1, 1]) { const pa = mesh(sphere(r * 0.55, 10, 8), metal(), sd * r * 1.05, hh + r * 0.3, 0, C); pa.scale.set(1, 0.6, 1); }
   }
   if (top === 'rn_tabard') { // musketeer's tabard with a cross, bandolier of powder charges
     chestShell(H, ch, td, C);
@@ -612,6 +713,29 @@ function balloonMesh(H, team) {
   mesh(box(0.012, 0.14, 0.22), tc, -0.2, -1.2, -0.1, g);
   return g;
 }
+// The jouster's horse: the cavalry horse under a long striped caparison, a chanfron
+// on its head and a plume.
+function joustHorse(H, team) {
+  const out = SMM.horseTorso(H, team);
+  const g = new THREE.Group(); g.scale.setScalar(SMM.HORSE_SCALE); out.add(g);
+  const { mesh, box, cyl, sphere, cone, mat, metal, gold } = H;
+  const tc = mat(H.TEAM_COLORS[team]), wh = mat('#f4f0e6', { spec: 0.05 });
+  // stripes down each flank to a gold hem, a cloth over the back and the rump
+  for (const sd of [-1, 1]) for (let i = 0; i < 7; i++) {
+    const z = 0.5 - i * 0.18;
+    mesh(box(0.03, 0.46, 0.18), i % 2 ? wh : tc, sd * 0.47, 0.0, z, g).rotation.z = sd * 0.08;
+    mesh(box(0.035, 0.06, 0.18), gold(), sd * 0.49, -0.24, z, g);
+  }
+  mesh(box(0.8, 0.42, 0.03), tc, 0, 0.02, -0.74, g);
+  mesh(box(0.84, 0.04, 1.3), tc, 0, 0.385, -0.1, g);
+  // chanfron: a steel plate down the face, a spike and a plume
+  const ch = mesh(box(0.2, 0.06, 0.42), metal(), 0, 0.74, 1.3, g); ch.rotation.x = 1.0;
+  const sp = mesh(cone(0.03, 0.18, 6), metal(), 0, 0.86, 1.32, g); sp.rotation.x = 0.6;
+  for (const k of [-1, 0, 1]) { const f = mesh(sphere(0.07, 8, 6), k ? wh : tc, k * 0.05, 1.02, 1.02, g); f.scale.set(0.6, 1.8, 0.8); f.rotation.x = -0.4; }
+  mesh(sphere(0.05, 6, 5), gold(), 0, 0.72, 1.12, g);
+  return out;
+}
+
 // The tank hull (origin at the body centre, 0.45 above the ground at rest).
 function tankMesh(H, team) {
   const g = new THREE.Group();
@@ -663,7 +787,7 @@ register({
     rn_musket: { len: 1.6, r: 0.06, grip: 90, back: 0.3, mass: 2.6 },
     rn_brush: { len: 0.55, r: 0.04, grip: 40, mass: 0.3 },
   },
-  kinds: { rn_fencer: fencer, rn_balloon: balloon, rn_davinci: tank },
+  kinds: { rn_fencer: fencer, rn_balloon: balloon, rn_davinci: tank, rn_jouster: jouster },
   proj: { rn_paint: paintBlob },
   buildItem, buildHat, decorate, buildProj,
   battleStep(b, dt) {

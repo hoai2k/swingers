@@ -2,7 +2,9 @@
 // dizzy), Fan Bearer (gusts of wind blow enemies and their arrows back), Necromancer
 // (raises the dead of either side as zombies on its own team), Chronomancer (slows
 // time in a bubble: enemies inside crawl, swing slowly and their shots hang in the
-// air), Tree Giant (huge and slow; uproots a tree and throws it, then slaps).
+// air), Tree Giant (huge and slow; uproots a tree and throws it, then slaps), Void
+// Monarch (opens rifts that drag enemies in, then collapse) and Shadow Assassin (vanishes
+// in a puff of smoke and reappears behind the enemy's archers, mages and healers).
 import { register, EXT } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
@@ -10,6 +12,9 @@ import {
   addProjectile, sweepParts, strike, torus, tube, dome, headBand, tcol, tdark, chestShell, hoodGeo, twoSided,
 } from './common.js';
 import { UPY, revivable, revive, fists, mark, markAt, nearest, STANCE, setArmKey } from './ges-core.js';
+import { pushUnit, slowBeast, blast } from './common.js';
+import { moveRag } from './sm-core.js';
+import { FIELD } from '../world.js';
 
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const PURPLE = '#5a2a8a', IRON = '#4a4652', VOID = '#2a1838';
@@ -29,7 +34,7 @@ STANCE.ev_fan = (st, pose) => { setArmKey(pose, -1, [-0.3, 0.6, -0.35, -1.3]); s
 const STATE = new WeakMap();
 function S(b) {
   let s = STATE.get(b);
-  if (!s) STATE.set(b, (s = { bubbles: [] }));
+  if (!s) STATE.set(b, (s = { bubbles: [], rifts: [] }));
   return s;
 }
 
@@ -295,6 +300,143 @@ function stepBubbles(b, dt) {
   }
 }
 
+// Void Monarch: a slow orb of nothing flies to the target and tears open a rift. The
+// rift drags enemies around it into its centre, gnawing at them, then collapses with a
+// bang. Big units are barely moved.
+const voidKing = {
+  aim: true,
+  init(u) { u.attackDur = u.def.weapon.windup; },
+  think: rangedThink,
+  event(u, t0, t1) {
+    const w = u.def.weapon, b = u.battle;
+    if (!crossed(t0, t1, w.releaseAt)) return;
+    u.released = true;
+    u.rag.worldPoint(PART.farmR, 0, -u.skel.handOffset, 0, _o);
+    _o.y += 0.9 * u.s; // from the orb on the sceptre
+    aimPoint(u, _p, 0.3, 0.8);
+    const gy = b.terrain.height(_p.x, _p.z);
+    _p.y = gy + 1.0;
+    launchVel(_o, _p, w.speed, 0, false, 0.02, _v);
+    addProjectile(b, 'ev_voidball', _o, _v, u, { life: _o.distanceTo(_p) / w.speed + 0.05, goal: _p.clone() });
+    b.sound('gong', _o, 0.35, 0.35);
+  },
+};
+function openRift(b, pr, at) {
+  const o = pr.owner, w = o.def.weapon, s = S(b);
+  const gy = b.terrain.height(at.x, at.z);
+  const pos = new THREE.Vector3(at.x, Math.max(gy + 1.0, Math.min(at.y, gy + 1.6)), at.z);
+  s.rifts.push({ pos, t: w.duration, team: pr.team, owner: o, w, tick: 0, mk: markAt(b, 'ev_rift', pos, w.duration) });
+  b.emit('spark', pos.x, pos.y, pos.z, 6);
+  b.sound('gong', pos, 0.7, 0.4);
+}
+function stepRifts(b, dt) {
+  const s = STATE.get(b);
+  if (!s || !s.rifts.length) return;
+  for (let i = s.rifts.length - 1; i >= 0; i--) {
+    const r = s.rifts[i], w = r.w, R = w.radius;
+    r.t -= dt; r.tick -= dt;
+    const tick = r.tick <= 0;
+    if (tick) r.tick = 0.5;
+    const att = r.owner.alive ? r.owner : null;
+    if (r.t <= 0) { // collapse
+      blast(b, r.pos, w.blast, w.implode, w.force, r.owner, { fx: 1, friendly: 0, sound: 'boom', pitch: 0.55 });
+      s.rifts.splice(i, 1);
+      continue;
+    }
+    if (Math.random() < dt * 8) {
+      const a = rand(0, 6.28), d = rand(1, R);
+      b.emit('atrail', r.pos.x + Math.cos(a) * d, r.pos.y + rand(-0.6, 0.4), r.pos.z + Math.sin(a) * d, 0.3);
+    }
+    b.grid.query(r.pos.x, r.pos.z, R + 2, (v) => {
+      if (!v.alive || v.team === r.team) return;
+      const dx = r.pos.x - v.pos.x, dz = r.pos.z - v.pos.z, d = Math.hypot(dx, dz);
+      if (d > R + v.skel.radius || v.pos.y > r.pos.y + 2.5) return;
+      // the pull is strongest near the edge (it holds them once they are in the middle)
+      const k = w.pull * dt * v.M * clamp(d / 1.5, 0, 1) / Math.max(1, v.s * v.s);
+      if (d > 0.3) pushUnit(v, (dx / d) * k, v.M * 2 * dt, (dz / d) * k);
+      slowBeast(v, 0.4);
+      if (!v.bc && !(v.sm && v.sm.mounted)) v.stun = Math.max(v.stun, 0.2);
+      if (tick) v.hit(w.damage * 0.5, PART.chest, 0, 0, 0, att, 'void');
+    });
+  }
+}
+const voidBall = {
+  g: 0, len: 0, r: 0.25, life: 3,
+  step(b, pr) {
+    if (Math.random() < 0.6) b.emit('atrail', pr.pos.x, pr.pos.y, pr.pos.z, 0.35);
+    if (pr.life <= 0.06 || sweepParts(b, pr, 0.3)) { openRift(b, pr, pr.life <= 0.06 ? pr.goal : pr.pos); pr.life = -1; }
+  },
+  hit(b, pr) { openRift(b, pr, pr.pos); return true; },
+  ground(b, pr) { openRift(b, pr, pr.pos); return true; },
+};
+
+// Shadow Assassin: every few seconds it vanishes and reappears behind a shooter, caster
+// or healer (else the most valuable enemy within reach); its first stab from behind
+// is a backstab.
+const BACKLINE = new Set(['ranged', 'heal', 'bard', 'gd_cleric', 'gd_flag', 'gd_divine', 'ev_necro', 'ev_chrono', 'ev_void', 'ev_fan', 'sc_cheer', 'sc_zap', 'sp_candle', 'sp_swordcast', 'pr_gun']);
+function preyFor(u) {
+  const b = u.battle, w = u.def.weapon, p = u.pos;
+  let best = null, bv = 0;
+  for (const o of b.teams[1 - u.team]) {
+    if (!o.alive || o.bc || o.sm || o.s > 1.7) continue;
+    const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
+    if (d > w.blink || d < 5) continue;
+    if (o.pos.y - b.terrain.height(o.pos.x, o.pos.z) > o.skel.standHeight * 1.5 + 0.5) continue; // flying
+    const back = BACKLINE.has(o.def.weapon.kind) || (o.def.weapon.range || 0) >= 8;
+    const v = (back ? 3 : 1) * o.def.cost / (1 + d / 15);
+    if (v > bv) { bv = v; best = o; }
+  }
+  return best;
+}
+function blink(u, prey) {
+  const b = u.battle, p = u.pos;
+  const hx = Math.sin(prey.heading), hz = Math.cos(prey.heading);
+  const x = clamp(prey.pos.x - hx * 1.3, -FIELD.x - 4, FIELD.x + 4), z = clamp(prey.pos.z - hz * 1.3, -FIELD.z - 3, FIELD.z + 3);
+  const y0 = b.terrain.height(p.x, p.z), y1 = b.terrain.height(x, z);
+  b.emit('death', p.x, p.y, p.z, u.team);
+  b.sound('whoosh', p, 0.7, 0.55);
+  moveRag(u, x - p.x, y1 - y0 + 0.05, z - p.z);
+  u.rag.impulseAll(-u.rag.vel[PART.pelvis].x * u.M, 0, -u.rag.vel[PART.pelvis].z * u.M);
+  u.heading = u.faceYaw = Math.atan2(prey.pos.x - x, prey.pos.z - z);
+  b.emit('death', x, y1 + u.skel.standHeight, z, u.team);
+  b.sound('whoosh', u.pos, 0.6, 0.8);
+  u.shPrey = prey; u.target = prey; u.retarget = 4;
+  u.shStab = true; u.cooldown = 0;
+  if (Math.random() < 0.5) b.voice(u, 'cry', true);
+}
+const shadow = {
+  melee: true,
+  init(u) { u.shCd = rand(0.5, 1.5); u.shHit = new Set(); },
+  think(u, dt, c) {
+    const w = u.def.weapon;
+    if (u.shCd <= 0 && !u.st.attack && u.stun <= 0 && !u.isDown()) {
+      const prey = preyFor(u);
+      if (prey) { blink(u, prey); u.shCd = w.blinkCd * rand(0.9, 1.1); }
+      else u.shCd = 0.5;
+    }
+    // stay on the prey once behind it
+    const t = u.shPrey && u.shPrey.alive ? u.shPrey : c.t;
+    if (t !== c.t) {
+      const dx = t.pos.x - u.pos.x, dz = t.pos.z - u.pos.z, dist = Math.hypot(dx, dz);
+      if (dist > 8) u.shPrey = null;
+      c = { ...c, t, dist, gap: dist - t.skel.radius - u.skel.radius, dirx: dx / (dist || 1), dirz: dz / (dist || 1) };
+    }
+    return meleeThink(u, dt, c);
+  },
+  step(u, dt) {
+    u.shCd -= dt;
+    if (!u.st.attack) { if (u.shHit.size) { u.shHit.clear(); u.shStab = false; } return; }
+    if (!u.shStab) return;
+    for (const v of u.hitSet) {
+      if (u.shHit.has(v) || !v.rag || !v.alive) continue;
+      u.shHit.add(v);
+      v.hit(u.def.weapon.damage * u.def.weapon.backstab, PART.chest, 0, 0, 0, u, 'backstab');
+      const c = v.chestPos;
+      u.battle.emit('blood', c.x, c.y, c.z, 8, 0, 0);
+    }
+  },
+};
+
 // Tree Giant: slaps with huge fists; every so often it rips a tree out of the ground
 // and hurls it, the trunk rolling on through the enemy line.
 const treeGiant = {
@@ -376,6 +518,8 @@ const PJ = {
   ev_zombie0: { g: 0, len: 0, r: 0, life: 1 },
   ev_zombie1: { g: 0, len: 0, r: 0, life: 1 },
   ev_bubble: { g: 0, len: 0, r: 0, life: 1 },
+  ev_rift: { g: 0, len: 0, r: 0, life: 1 },
+  ev_voidball: voidBall,
   ev_tree_held: { g: 0, len: 0, r: 0, life: 1 },
 };
 function hexHit(b, pr, v, part) {
@@ -429,6 +573,23 @@ const units = [
     armor: 0.15, stagger: 0.1,
     desc: 'A walking oak. Throws trees. Slowly.',
   },
+  {
+    id: 'ev_void_monarch', name: 'Void Monarch', faction: 'evil', cost: 1800, hp: 700, speed: 3.6,
+    build: { scale: 1.2, girth: 1.0, head: 1.0, mass: 1.3 },
+    weapon: { line: 'Magic · rifts drag enemies into their centre, then collapse', kind: 'ev_void', style: 'staff', anim: 'cast', item: 'ev_void_sceptre', damage: 8, speed: 12, range: 26, minRange: 6, cooldown: 6.0, force: 650, releaseAt: 0.6, windup: 1.1, radius: 5.5, pull: 18, duration: 3.2, blast: 3.2, implode: 60 },
+    look: { skin: '#8a7a9a', hat: 'ev_void_crown', top: 'ev_void', legs: '#140c1c' },
+    personality: { aggro: 0.35, bravery: 0, voice: 0.55, chatter: 0.5, cry: 'royal', idle: 'regal' },
+    armor: 0.1, stagger: 0.5,
+    desc: 'Ruler of the empty places. Its rifts swallow whole regiments.',
+  },
+  {
+    id: 'ev_shadow', name: 'Shadow Assassin', faction: 'evil', cost: 170, hp: 170, speed: 5.6,
+    build: { scale: 0.98, girth: 0.88, legs: 1.04 },
+    weapon: { line: 'Melee · vanishes and reappears behind the enemy\'s shooters and healers', kind: 'ev_shadow', style: 'dual', anim: 'dual', item: 'ev_dagger', item2: 'ev_dagger', damage: 24, reach: 1.0, cooldown: 0.55, force: 150, blink: 34, blinkCd: 6, backstab: 2 },
+    look: { skin: '#c8b8b0', hat: 'ev_shadow_hood', top: 'ev_shadow', legs: '#16121c' },
+    personality: { aggro: 1, bravery: 0.15, voice: 1.1, chatter: 0.4, cry: 'cackle', idle: 'shift' },
+    desc: 'Now you see it... A puff of smoke, and it is behind your archers.',
+  },
 ];
 
 // ------------------------------------------------------------------ visuals
@@ -448,6 +609,26 @@ function buildItem(name, s, team, g, H) {
       const sp = mesh(cone(0.04 * s, 0.12 * s, 5), mat('#8a8690', { spec: 1 }), dx * 0.15 * s, L - 0.12 * s + dy * 0.15 * s, dz * 0.15 * s, g);
       sp.quaternion.setFromUnitVectors(UPY, new THREE.Vector3(dx, dy, dz));
     }
+    return true;
+  }
+  if (name === 'ev_dagger') { // a black curved dagger
+    const L = 0.55 * s, bl = mat('#2a2632', { spec: 1 });
+    mesh(cyl(0.022 * s, 0.022 * s, 0.13 * s, 6), leather(), 0, 0.03 * s, 0, g);
+    mesh(box(0.03 * s, 0.025 * s, 0.14 * s), tc, 0, 0.1 * s, 0, g);
+    const b1 = mesh(box(0.012 * s, L * 0.75, 0.05 * s), bl, 0, 0.1 * s + L * 0.37, 0.01 * s, g); b1.rotation.x = 0.08;
+    const tip = mesh(cone(0.026 * s, 0.1 * s, 4), bl, 0, 0.1 * s + L * 0.78, 0.035 * s, g); tip.rotation.x = 0.2; tip.scale.set(0.45, 1, 1);
+    mesh(box(0.004 * s, L * 0.6, 0.008 * s), glow('#c040ff'), 0.008 * s, 0.1 * s + L * 0.35, 0.03 * s, g).castShadow = false;
+    return true;
+  }
+  if (name === 'ev_void_sceptre') { // a black sceptre with an orb of nothing in purple rings (held centred)
+    const L = 1.8 * s;
+    mesh(cyl(0.03 * s, 0.035 * s, L, 8), mat('#1a1222', { spec: 0.6 }), 0, 0, 0, g);
+    for (const y of [-0.3, 0.2]) mesh(cyl(0.045 * s, 0.045 * s, 0.05 * s, 8), gold(), 0, y * L, 0, g);
+    mesh(cyl(0.05 * s, 0.05 * s, 0.12 * s, 8), tc, 0, 0.05 * L, 0, g);
+    const top = L / 2 + 0.14 * s;
+    mesh(sphere(0.12 * s, 14, 10), mat('#05030a', { spec: 1 }), 0, top, 0, g);
+    for (let i = 0; i < 2; i++) { const r = mesh(torus(H, 0.19 * s + i * 0.05 * s, 0.014 * s, Math.PI * 2, 18), glow(i ? '#c040ff' : '#7a3cff'), 0, top, 0, g); r.rotation.set(0.6 + i * 1.2, i * 0.8, 0); r.castShadow = false; }
+    for (let i = 0; i < 4; i++) { const a = (i / 4) * Math.PI * 2; const c = mesh(cone(0.025 * s, 0.14 * s, 4), gold(), Math.sin(a) * 0.1 * s, top - 0.16 * s, Math.cos(a) * 0.1 * s, g); c.rotation.set(Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5); }
     return true;
   }
   if (name === 'ev_fan') { // a huge folding fan, purple silk with a team rim
@@ -499,6 +680,29 @@ function buildHat(kind, r, team, g, H) {
   const { mesh, cyl, box, sphere, cone, octa, mat, metal, gold, leather, glow } = H;
   const tc = tcol(H, team), td = tdark(H, team);
   switch (kind) {
+    case 'ev_void_crown': { // a crown of black spikes, a face of nothing with two violet eyes
+      mesh(sphere(r * 1.03, 14, 10), mat('#0a0610'), 0, 0, r * 0.02, g);
+      for (const sd of [-1, 1]) mesh(sphere(r * 0.12, 8, 6), glow('#c040ff'), sd * r * 0.34, r * 0.12, r * 0.9, g).scale.set(1.4, 0.6, 0.6);
+      mesh(hoodGeo(H, r, 1.14, 0.9), mat('#24123a'), 0, 0, -r * 0.04, g);
+      headBand(H, r, 0.55, 0.22, gold(), g, 0.16);
+      for (let i = 0; i < 7; i++) {
+        const a = ((i - 3) / 7) * Math.PI * 1.2;
+        const sp = mesh(cone(r * 0.11, r * (0.65 + (i === 3 ? 0.35 : (i % 2) * 0.15)), 5), mat('#120a18', { spec: 0.9 }), Math.sin(a) * r * 0.95, r * 0.95, Math.cos(a) * r * 0.95, g);
+        sp.rotation.set(Math.cos(a) * 0.25, 0, -Math.sin(a) * 0.25);
+      }
+      mesh(octa(r * 0.13), glow('#c040ff'), 0, r * 0.6, r * 1.12, g);
+      g.userData.hidesFace = true;
+      return true;
+    }
+    case 'ev_shadow_hood': { // a black hood and a face wrap, only the eyes showing
+      const blk = mat('#16121c');
+      mesh(hoodGeo(H, r, 1.1, 0.95), blk, 0, 0, 0, g);
+      const wr = mesh(sphere(r * 1.04, 14, 8, 0, Math.PI * 2, Math.PI * 0.52, Math.PI * 0.48), blk, 0, r * 0.02, 0, g); wr.castShadow = true;
+      headBand(H, r, 0.62, 0.16, blk, g, 0.08);
+      headBand(H, r, 0.4, 0.1, tc, g, 0.12);
+      for (const sd of [-1, 1]) { const t = mesh(box(r * 0.1, r * 0.5, r * 0.05), tc, sd * r * 0.12, r * 0.0, -r * 1.12, g); t.rotation.z = sd * 0.3; }
+      return true;
+    }
     case 'ev_spike_helm': { // a black iron bucket with spikes and slit eyes
       g.userData.hidesFace = true;
       const iron = mat(IRON, { spec: 0.7 });
@@ -598,6 +802,28 @@ function decorate(def, team, vis, H) {
       for (let k = -3; k <= 3; k++) { const a = k * 0.3; mesh(sphere(r * 0.08, 6, 5), mat('#ece4cc'), Math.sin(a) * r * 0.9, hh + r * 0.25 - Math.abs(k) * r * 0.05, Math.cos(a) * r * 0.85, C); }
     }
   }
+  if (top === 'ev_void') { // robes of night down to the ground, a cape, violet seams
+    const night = mat('#140c1c'), seam = glow('#7a3cff');
+    chestShell(H, ch, night, C);
+    robe(night, 3.4, 2.0);
+    sleeves(night, 1.6);
+    mesh(box(r * 0.1, (hh + r) * 1.8, r * 0.05), seam, 0, -hh * 0.1, r * 1.1, C).castShadow = false;
+    for (const sd of [-1, 1]) {
+      const ep = mesh(cone(r * 0.45, r * 0.7, 6), mat('#120a18', { spec: 0.9 }), sd * r * 1.0, hh + r * 0.45, 0, C); ep.rotation.z = -sd * 0.5;
+      const cp = mesh(box(r * 1.0, (hh + r) * 2.6, r * 0.05), td, sd * r * 0.5, -hh * 0.6, -r * 1.15, C); cp.rotation.set(0.12, 0, sd * 0.06);
+    }
+    mesh(cyl(r * 1.15, r * 1.17, r * 0.16, 14), tc, 0, -hh - r * 0.38, 0, C);
+    mesh(H.geo('evvoidhem' + pel.r.toFixed(3), () => new THREE.TorusGeometry(pel.r * 1.98, pel.r * 0.07, 6, 22)), seam, 0, -pel.r * 3.25, 0, P).rotation.x = Math.PI / 2;
+  }
+  if (top === 'ev_shadow') { // a tight black wrap, a team sash, knives on the belt
+    const blk = mat('#16121c');
+    chestShell(H, ch, blk, C);
+    const sash = mesh(box(r * 0.28, (hh + r) * 2.3, r * 0.05), tc, 0, 0, r * 1.06, C); sash.rotation.z = 0.6;
+    const sb = mesh(box(r * 0.28, (hh + r) * 2.3, r * 0.05), tc, 0, 0, -r * 1.06, C); sb.rotation.z = -0.6;
+    mesh(cyl(r * 1.13, r * 1.15, r * 0.16, 14), leather(), 0, -hh - r * 0.38, 0, C);
+    for (const sd of [-1, 1]) { const k = mesh(box(r * 0.06, r * 0.45, r * 0.1), mat('#2a2632', { spec: 1 }), sd * r * 0.8, -hh - r * 0.6, r * 0.6, C); k.rotation.z = sd * 0.3; }
+    for (const p of [PART.uarmL, PART.farmL, PART.uarmR, PART.farmR]) { const sp = skel.parts[p]; mesh(H.capsule(sp.r * 1.1, sp.hh * 2), blk, 0, 0, 0, parts[p]); }
+  }
   if (top === 'ev_silk') { // a long purple silk coat with team trim, gold buttons
     const silk = mat(PURPLE, { spec: 0.4 });
     chestShell(H, ch, silk, C);
@@ -634,6 +860,20 @@ function tree(H, g, k = 1) {
 function buildProj(type, g, H) {
   const { mesh, cyl, sphere, cone, box, mat, glow } = H;
   if (type === 'ev_tree') { tree(H, g, 1); return true; }
+  if (type === 'ev_voidball') { // a ball of nothing in a violet haze
+    mesh(sphere(0.2, 12, 10), mat('#05030a', { spec: 1 }), 0, 0, 0, g).castShadow = false;
+    mesh(sphere(0.34, 12, 10), mat('#7a3cff', { emit: 1, transparent: true, opacity: 0.4, depthWrite: false }), 0, 0, 0, g).castShadow = false;
+    return true;
+  }
+  if (type === 'ev_rift') { // a black hole with a violet rim and rings swirling round it
+    mesh(sphere(0.55, 16, 12), mat('#020104', { spec: 0.2 }), 0, 0, 0, g).castShadow = false;
+    const h = mesh(sphere(0.95, 16, 12), mat('#7a3cff', { emit: 1, transparent: true, opacity: 0.3, depthWrite: false }), 0, 0, 0, g); h.castShadow = false;
+    for (let i = 0; i < 4; i++) {
+      const t = mesh(torus(H, 1.4 + i * 0.95, 0.04 + 0.02 * (3 - i), Math.PI * (1.2 + i * 0.15), 30), mat(i % 2 ? '#c040ff' : '#5a2a9a', { emit: 1, transparent: true, opacity: 0.75 - i * 0.12, depthWrite: false }), 0, -0.4 - i * 0.12, 0, g);
+      t.rotation.set(Math.PI / 2 + (i % 2 ? 0.12 : -0.1), 0, i * 1.7); t.castShadow = false;
+    }
+    return true;
+  }
   if (type === 'ev_tree_held') { const t = new THREE.Group(); tree(H, t, 1); t.position.y = 1.0; g.add(t); return true; }
   if (type === 'ev_gust') { // a swirl of air
     const m = mat('#eef4ff', { emit: 0.6, transparent: true, opacity: 0.45, depthWrite: false });
@@ -675,9 +915,11 @@ register({
     ev_fan: { len: 0.95, r: 0.2, grip: 80, mass: 0.8, phys: false },
     ev_skull_staff: { len: 1.8, r: 0.05, grip: 0, center: true, mass: 1.4 },
     ev_hourglass: { len: 1.8, r: 0.05, grip: 0, center: true, mass: 1.4 },
+    ev_void_sceptre: { len: 1.8, r: 0.05, grip: 0, center: true, mass: 1.4 },
+    ev_dagger: { len: 0.55, r: 0.05, grip: 30, metal: true, mass: 0.5 },
   },
-  kinds: { ev_spinner: spinner, ev_fan: fanBearer, ev_necro: necro, ev_chrono: chrono, ev_treegiant: treeGiant, ev_zombie: zombie },
+  kinds: { ev_spinner: spinner, ev_fan: fanBearer, ev_necro: necro, ev_chrono: chrono, ev_treegiant: treeGiant, ev_zombie: zombie, ev_void: voidKing, ev_shadow: shadow },
   proj: PJ,
   buildItem, buildHat, decorate, buildProj,
-  battleStep: stepBubbles,
+  battleStep(b, dt) { stepBubbles(b, dt); stepRifts(b, dt); },
 });
