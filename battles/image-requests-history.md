@@ -1,8 +1,28 @@
 # Wobbly Battles — image request history
 
-Delivered requests (rounds 1–5, items 1–51). Kept for the record: the
+Delivered requests (rounds 1–6, 54 images). Kept for the record: the
 briefs, final paths and where each image is used. Open requests live in
 `image-requests.md`.
+
+## Delivered round 6 — new faction emblems (2 images)
+
+Delivered 2026-10-26 with built-in imagegen. Both transparent emblems are 128 × 128.
+Full-size originals are preserved in `assets/originals/ui/`; exact prompts and source
+paths are recorded in `assets/generation.json`. Checked for dimensions, alpha,
+requested subjects and browser loading through the game preload module.
+
+### Round 6 — new faction emblems
+
+Two new factions are being added, inspired by a sorcery anime and a space-opera saga.
+The emblems must be **original**: no logos, symbols, lettering, characters or designs
+from those franchises (no hand-sign or eye emblems copied from the show, no starbird,
+Imperial cog or rebel crest). Same flat sticker style as the other 16 emblems, bold dark
+outline, no text, readable at 28 px.
+
+| # | File | Size | Status | Brief |
+|---|---|---|---|---|
+| 53 | `assets/ui/faction-jujutsu.png` | 128×128, transparent PNG | delivered | Faction emblem for **Jujutsu** (cursed-energy sorcerers): a cracked paper talisman (ofuda) with a swirl of blue-violet cursed flame curling up out of it, and a tiny round straw doll with a nail behind it. Deep indigo (#3b2a7a) and electric violet (#9b5cff), a touch of black. |
+| 54 | `assets/ui/faction-galactic.png` | 128×128, transparent PNG | delivered | Faction emblem for **Galactic** (space knights, troopers and droids): a chunky toy-like glowing energy sword hilt (one cyan beam, short) crossed with a stubby ray-gun blaster in front of a small ringed planet and two stars. Night blue (#1d2a5a), cyan glow (#4fe3ff) and white. |
 
 ## Delivered round 5 — Unit Creator (2 images)
 
