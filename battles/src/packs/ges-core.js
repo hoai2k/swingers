@@ -20,7 +20,7 @@ const _v = new THREE.Vector3(), _w = new THREE.Vector3(), _q = new THREE.Quatern
 // flyers, siege crews) and skeletons that fell apart can't be brought back.
 const CORE_KINDS = new Set(['melee', 'ranged', 'heal', 'bard']);
 export function revivable(u, b) {
-  if (u.alive || u.brokenApart || u.def.fallApart || u.extras.length || u.sm || u.gesNoRevive) return false;
+  if (u.alive || u.dormant || u.brokenApart || u.def.fallApart || u.extras.length || u.sm || u.gesNoRevive) return false;
   if (u.pos.y < b.terrain.height(u.pos.x, u.pos.z) - 2 || u.deadT < 0.6) return false;
   return true;
 }

@@ -15,4 +15,8 @@ import './secret.js';
 import './jujutsu.js';
 import './classic.js'; // more Tribal, Farmer and Legacy units
 import './galactic.js';
+import './jjk-core.js'; // Jujutsu Kaisen: domains, barriers, secrets (characters: jjk-*.js)
+import './jjk-students.js'; // JJK: Yuji, Todo, Nobara, Nanami, Maki, Panda, Inumaki, Yuta (+ Rika)
+import './jjk-strongest.js'; // JJK: Gojo, Sukuna, Megumi (+ shikigami), Mahoraga
+import './jjk-curses.js'; // JJK: Toji, Dagon, Mahito, Jogo, Hanami, Geto, Choso, Hakari, Fly Heads
 import './custom.js'; // Unit Creator: the Custom faction (keep last: reads the other packs)

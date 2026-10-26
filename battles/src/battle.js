@@ -46,6 +46,15 @@ const _q = new THREE.Quaternion();
 let projId = 1;
 const MAX_STUCK = 800, STUCK_LIFE = 600;
 
+// A reserve out of play: not in a team, not alive, bodies switched off (summon() brings
+// it in; the recording marks it dormant so the replay hides it).
+export function park(u) {
+  u.dormant = true;
+  u.alive = false;
+  for (const bd of u.rag.bodies) bd.setEnabled(false);
+  for (const e of u.extras) e.body?.setEnabled(false);
+}
+
 export class Battle {
   // armies: [[{type, x, z}], [{...}]]
   constructor(terrain, armies, sink) {
@@ -77,11 +86,30 @@ export class Battle {
         this.teams[t].push(u);
       }
     }
+    // reserves (def.reserve: [{ type, n }]): summons made with the army but kept out of
+    // the fight until a kind calls summon() - so the recording, the visuals and the
+    // replay know them from the start (see packs/jjk-core.js summon/dismiss)
+    for (const u of [...this.units]) {
+      for (const r of u.def.reserve || []) {
+        const def = UNIT_BY_ID[r.type];
+        if (!def) continue;
+        for (let k = 0; k < (r.n || 1); k++) {
+          const s = new Unit(this, def, u.team, u.pos.x, u.pos.z, u.spawnYaw);
+          s.kind?.init?.(s);
+          s.reserveOf = u;
+          this.units.push(s);
+          park(s);
+        }
+      }
+    }
     this.startCounts = [this.teams[0].length, this.teams[1].length];
     this.startValue = [0, 1].map((t) => this.teams[t].reduce((s, u) => s + u.def.cost, 0));
     // opening battle cries
     for (const u of this.units) if (Math.random() < 0.5) this.delayed.push([rand(0, 0.9), () => this.voice(u, 'cry', true)]);
   }
+
+  // the reserves of u (dormant or summoned) of a given type
+  reservesOf(u, type) { return this.units.filter((s) => s.reserveOf === u && (!type || s.def.id === type)); }
 
   emit(kind, x, y, z, a = 0, b = 0, c = 0) { this.sink && this.sink([kind, x, y, z, a, b, c]); }
   sound(name, p, vol = 1, pitch = 1) { this.emit('snd:' + name, p.x, p.y, p.z, vol, pitch); }
@@ -182,7 +210,7 @@ export class Battle {
     for (const u of this.units) { u.mobbed = 0; if (u.alive) this.grid.insert(u); }
     for (const u of this.units) if (u.alive && u.target && u.def.weapon.kind === 'melee') u.target.mobbed++;
     this.updateFront();
-    for (const u of this.units) u.step(dt);
+    for (const u of this.units) if (!u.dormant) u.step(dt);
     this.stepProjectiles(dt);
     this.world.timestep = dt;
     this.world.step();

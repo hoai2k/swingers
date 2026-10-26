@@ -62,7 +62,7 @@ export class Recorder {
     const hp = new Uint8Array(b.units.length);
     b.units.forEach((u, i) => {
       // bit 5: the unit's team now (a raised zombie changes side), bit 6: a zombie
-      us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0) | (u.team ? 32 : 0) | (u.zombie ? 64 : 0);
+      us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0) | (u.team ? 32 : 0) | (u.zombie ? 64 : 0) | (u.dormant ? 128 : 0);
       hp[i] = Math.round(255 * Math.max(0, u.hp) / u.maxHp);
     });
     // arrows stuck in the ground (or in a corpse / dropped shield at rest) don't
