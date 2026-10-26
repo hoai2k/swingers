@@ -1,7 +1,6 @@
 # Wobblers image requests
 
-**Status: round 12 is OPEN (on hold until the owner picks the final character look, see
-round 12).** Rounds 1–11 are delivered; see `image-requests-history.md` for those requests
+**Status: round 12 is OPEN.** Rounds 1–11 are delivered; see `image-requests-history.md` for those requests
 and their review notes.
 
 ## How delivery works
@@ -23,7 +22,7 @@ to the top of `image-requests-history.md`.
   game's characters.
 - **Characters** must look like *our* Wobblers, as rendered in the game — see
   `assets/reference/ref_character_sheet.png` (made from in-game renders):
-  a chunky soft-toy figure with a big round **peach-skinned head** (#ffd9b8)
+  a chunky soft-toy figure with a round **peach-skinned head** (#ffd9b8), about as wide as the shoulders,
   whose slightly flat front carries a simple printed cartoon face (dot or
   glossy cartoon eyes, small smile, pink cheeks); one smooth bean body in a
   single bright **shirt colour** (red, blue, green, yellow, teal, pink,
@@ -52,11 +51,10 @@ to the top of `image-requests-history.md`.
 
 ## OPEN round 12 — paintings with characters in our real character style (6 posters + 1 cover)
 
-**On hold until the owner confirms the character look** (the default "chunky toy"
-look, a smaller head, or the one-colour "wobbly" look — compare with `?style=` /
-`?head=` in the game). Before generating, re-render
-`assets/reference/ref_character_sheet.png` from the chosen look and use it as the
-character reference for every image here.
+The owner chose the default look (chunky toy, the head as in the game since 2026-10-26);
+`assets/reference/ref_character_sheet.png` is rendered from it: use it as the character
+reference for every image here. (The in-game "toy style" option, with coloured skin, is
+not what these pictures show.)
 
 These replace delivered images whose characters were drawn yellow and featureless
 (not our game). Keep each picture's subject, layout and size; only the characters
