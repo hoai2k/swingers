@@ -178,7 +178,7 @@ const units = [
     desc: 'Lowers its horns and charges. Sends whole lines flying.',
   },
   {
-    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 2450, hp: 1100, speed: 3.6,
+    id: 'an_zeus', name: 'Zeus', faction: 'ancient', cost: 3000, hp: 1100, speed: 3.6,
     build: { scale: 1.4, girth: 1.12, head: 1.05, mass: 1.5 },
     weapon: { line: 'Magic · hurls thunderbolts that strike where they hit, on the ground or in the air', kind: 'an_zeus', style: 'staff', anim: 'cast', item: 'an_bolt', damage: 150, range: 38, minRange: 6, cooldown: 2.1, force: 700, blast: 3.6, spread: 0.02, boltSpeed: 34, releaseAt: 0.62, windup: 1.1 },
     look: { skin: '#f0c8a8', hat: 'an_laurel', top: 'an_toga', legs: '#f0c8a8', beard: '#f4f4f4' },
