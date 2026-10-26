@@ -253,6 +253,18 @@ function paintStatics(ctx, game, bounds) {
   const [bx0, bx1, bz0, bz1] = bounds;
   const boxes = [], trees = [];
   const inPit = (x, z) => PITS.some((p) => x >= p[0] - 5 && x <= p[1] + 5 && z >= p[2] - 5 && z <= p[3] + 5);
+  // merged static boxes / cylinders (staticmerge.js) are described in ph.staticShapes
+  for (const s of ph.staticShapes || []) {
+    if (s.x < bx0 || s.x > bx1 || s.z < bz0 || s.z > bz1) continue;
+    if (s.type === 'box') {
+      const he = s.he, r = s.rot;
+      if (Math.abs(r.x) > 0.2 || Math.abs(r.z) > 0.2 || he.x > 45 || he.z > 45) continue;
+      const g = inPit(s.x, s.z) ? 0 : heightAt(s.x, s.z);
+      const tall = s.y + he.y - Math.max(g, SEA_LEVEL);
+      if (tall < 1.9 || he.x * he.z < 0.25) continue;
+      boxes.push({ x: s.x, z: s.z, hx: he.x, hz: he.z, yaw: 2 * Math.atan2(r.y, r.w), top: tall });
+    } else if (s.r > 0.2 && s.r < 0.5 && s.hh > 1.1 && s.hh < 2.0) trees.push({ x: s.x, z: s.z, s: s.r / 0.3 });
+  }
   ph.world.forEachCollider((c) => {
     const par = c.parent();
     if (!par || par.handle !== sb.handle || c.isSensor()) return;

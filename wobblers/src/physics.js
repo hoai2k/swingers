@@ -16,6 +16,16 @@ export const eulerQuat = (x, y, z, order = 'YXZ') => {
   return { x: _q.x, y: _q.y, z: _q.z, w: _q.w };
 };
 
+// A kinematic body switched out of the physics (simcull.js: far from every
+// player) still moves where its animator puts it, as a picture: the
+// next-kinematic pose is applied straight away, so the mesh (physics.sync,
+// instanced ride parts) follows and it is in place when it is switched back on.
+{
+  const P = RAPIER.RigidBody.prototype, nt = P.setNextKinematicTranslation, nr = P.setNextKinematicRotation;
+  P.setNextKinematicTranslation = function (t) { if (this.isEnabled()) nt.call(this, t); else this.setTranslation(t, false); };
+  P.setNextKinematicRotation = function (q) { if (this.isEnabled()) nr.call(this, q); else this.setRotation(q, false); };
+}
+
 export class Physics {
   constructor() {
     this.world = new RAPIER.World({ x: 0, y: GRAVITY, z: 0 });
@@ -24,7 +34,8 @@ export class Physics {
     this.staticBody = this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
     this.objects = [];        // {body, mesh, buoy}
     this.animators = [];      // fn(t, dt)
-    this.kinRange = new Map(); // kinematic body handle -> metres it stays live from a player (simcull.js; default 220)
+    this.kinRange = new Map(); // kinematic body handle -> metres it keeps animating from a player (simcull.js; default 220)
+    this.kinAnim = new Map();  // kinematic body handle -> animating? (simcull.js)
     this.bouncy = new Map();  // collider handle -> bounce speed
     this.slippery = new Set();// collider handle
     this.waterBoxes = [];     // {minX,maxX,minZ,maxZ,minY,level}
@@ -154,9 +165,10 @@ export class Physics {
     b.setAngvel({ x: av.x * k, y: av.y * k, z: av.z * k }, true);
   }
 
-  // An animator tied to a kinematic body: it only runs while that body is
-  // switched on (simcull.js turns rides off far from every player; give big
-  // landmarks a longer reach with kinRange.set(body.handle, metres)).
+  // An animator tied to a kinematic body: it only runs while that body is in
+  // its animation range (simcull.js; give big landmarks a longer reach with
+  // kinRange.set(body.handle, metres)). Beyond KIN_PHYS the body is out of the
+  // physics and its poses are applied directly (see the patch below).
   animate(body, fn, range) {
     fn.body = body;
     if (range) this.kinRange.set(body.handle, range);
@@ -166,7 +178,7 @@ export class Physics {
 
   step() {
     this.time += DT;
-    for (const a of this.animators) if (!a.body || a.body.isEnabled()) a(this.time, DT);
+    for (const a of this.animators) if (!a.body || this.kinAnim.get(a.body.handle) !== false) a(this.time, DT);
     for (const o of this.objects) this.applyBuoyancy(o);
     this.world.step(this.events);
     this.capture();

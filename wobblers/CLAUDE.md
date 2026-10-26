@@ -62,12 +62,23 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `game.farCull` switches `chunk.mesh` / `chunk.far`. Parked NPCs stay visible
   (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
   Audio starts on the first controller press too (`game.wakeAudio`).
-  Kinematic rides are switched off beyond 220 m too (`simcull.js`; big landmarks get more with
-  `physics.kinRange.set(body.handle, m)`: ferris wheels / drop towers 700, the city crane and
-  ski lift 900, coasters 300-400; ferries 300, sailing on as a picture beyond that). Tie a
-  ride's animator to its body with `physics.animate(body, fn)` so it stops with it; other
-  animations and per-step checks use `game.whenNear(x, z, r, fn)` (the fair: `RIDE_RANGE`).
-  Switched-off bodies set `rec.off`, so `physics.capture` / `sync` skip them.
+  Kinematic bodies (rides, lifts, doors, ferries) are real physics only within 90 m of a player
+  (`simcull.js` KIN_PHYS); further out they keep animating as a picture (body switched off, the
+  next-kinematic pose applied directly by the patch in `physics.js`, meshes follow) up to their
+  animation range (default 220 m; `physics.kinRange.set(body.handle, m)`: ferris wheels / drop
+  towers 700, the city crane and ski lift 900, coasters 300-400, ferries Infinity), and stand still
+  beyond it. Tie a ride's animator to its body with `physics.animate(body, fn)` so it stops with
+  it; other animations and per-step checks use `game.whenNear(x, z, r, fn)` (the fair:
+  `RIDE_RANGE`). Bodies standing still set `rec.off`, so `physics.capture` / `sync` skip them.
+  Static colliders: `staticmerge.js` runs after the world build and rebuilds every thin static
+  box / cylinder (smallest side < 1.2 m) as one triangle mesh per 96 m area and material (~8,000
+  colliders -> ~255): Rapier pays per collider every step. Solid blocks stay boxes (meshes are
+  hollow: clearance checks must find them). Scenery added after the merge stays separate; the
+  merged shapes are listed in `physics.staticShapes` (the map painter reads them). Don't hold
+  on to a static collider handle from `kit` / `physics.box` (it is gone after the merge) — use a
+  trimesh (`physics.trimesh`, never merged) when you need its handle, like the ski slopes.
+  Draw calls (`game.lodView`): vehicle wheels / glass / light panels cast no shadows, light
+  panels hide beyond 70 m by day, loose props cast shadows only within 35 m of the camera.
   Resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame
   time); Settings > Show FPS shows `game.perf` (ms per frame, physics+game, render, draw calls,
   triangles). Instanced meshes that never move far should get a bounding sphere and

@@ -9,16 +9,21 @@
 // Never culled: occupied vehicles, anything a player is holding, objects
 // flagged `noCull`.
 //
-// Kinematic bodies (rides, lifts, elevators, doors) are switched off beyond
-// KIN_FAR too: a moving ride costs the solver every step even with nobody
-// near. Big landmarks that are seen from far away (ferris wheels, the drop
-// tower, the city crane, the ski lift) keep going out to the range given with
-// `physics.kinRange.set(body.handle, metres)`; ferries pass Infinity (their timetable
-// runs everywhere). A switched-off body keeps its last pose and mesh.
+// Kinematic bodies (rides, lifts, elevators, doors, ferries) have two ranges:
+//  - within KIN_PHYS of a player they are real physics (you can touch, ride,
+//    grab them): a moving ride costs the solver every step;
+//  - beyond that, out to their animation range (KIN_FAR, or what was given
+//    with `physics.kinRange.set(body.handle, metres)`: big landmarks seen
+//    from afar, Infinity for ferries on a timetable) they keep moving as a
+//    picture: the body is switched off and the animator's next-kinematic
+//    pose is applied directly (physics.js), so the mesh still follows it;
+//  - past the animation range the animator stops too and the ride stands
+//    still where it was (physics.animate / kinAnim).
 const FAR = 150, NEAR = 125;   // metres from the nearest player (hysteresis)
 const FAR_AUTO = 300, NEAR_AUTO = 270; // self-driving traffic stays live further out: it's the life of the streets
 const EVERY = 15;              // steps between checks (~4 per second)
-const KIN_FAR = 220, KIN_NEAR = 200; // kinematic rides (unless physics.kinRange says otherwise)
+const KIN_FAR = 220, KIN_NEAR = 200; // kinematic animation range (unless physics.kinRange says otherwise)
+const KIN_PHYS = 90, KIN_PHYS_IN = 75; // kinematic bodies are real physics within this of a player
 
 export function buildSimCull(game) {
   const ph = game.physics;
@@ -65,19 +70,24 @@ export function buildSimCull(game) {
         cull.kin = list;
       }
       const title = !game.players.length; // title screen: the idle camera flies about, keep everything going
-      let off = 0;
+      let off = 0, still = 0;
       for (const k of cull.kin) {
         const range = ph.kinRange.get(k.b.handle) ?? KIN_FAR;
-        if (range === Infinity) continue;
         const t = k.b.translation();
         let d2 = title ? 0 : Infinity;
         for (const q of pts) d2 = Math.min(d2, (t.x - q.x) ** 2 + (t.z - q.z) ** 2);
-        if (!k.off && d2 > range * range) { k.off = true; k.b.setEnabled(false); }
-        else if (k.off && d2 < (range - (KIN_FAR - KIN_NEAR)) ** 2) { k.off = false; k.b.setEnabled(true); }
-        if (k.o?.rec) k.o.rec.off = k.off; // physics.capture / sync skip it
+        // animated at all? (hysteresis: stop beyond range, start again inside range - 20)
+        const anim = k.anim === false ? d2 < (range - (KIN_FAR - KIN_NEAR)) ** 2 : d2 <= range * range;
+        // real physics? only near a player
+        const phys = anim && (k.off ? d2 < KIN_PHYS_IN * KIN_PHYS_IN : d2 <= KIN_PHYS * KIN_PHYS);
+        if (phys === k.off) { k.off = !phys; k.b.setEnabled(phys); }
+        k.anim = anim;
+        ph.kinAnim.set(k.b.handle, anim);
+        if (k.o?.rec) k.o.rec.off = !anim; // standing still: physics.capture / sync skip it
         if (k.off) off++;
+        if (!anim) still++;
       }
-      cull.kinOff = off;
+      cull.kinOff = off; cull.kinStill = still;
     },
   };
   game.steppers.push(() => { if (++tick % EVERY === 0) cull.check(); });

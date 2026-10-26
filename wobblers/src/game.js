@@ -384,10 +384,34 @@ export class Game {
       const s = it.o.boundingSphere, far = p.distanceTo(s.center) - s.radius > 700;
       if (far && it.o.visible) { it.o.visible = false; it.hid = true; } else if (!far && it.hid) { it.o.visible = true; it.hid = false; }
     }
+    const night = this.isNight;
     for (const v of this.vehicles) {
-      if (!v.wheelMeshes?.length) continue;
-      const t = v.body.translation(), near = (t.x - p.x) ** 2 + (t.z - p.z) ** 2 < 120 * 120;
-      if (v.wheelsShown !== near) { v.wheelsShown = near; for (const w of v.wheelMeshes) if (w) w.visible = near; }
+      if (!v.lod) { // once per vehicle: its small parts (wheels, glass, light panels) never cast shadows (they sit in the body's)
+        const wheels = new Set(v.wheelMeshes || []), lights = [];
+        for (const r of [v.shell, v.group, v.mesh]) r?.traverse((o) => {
+          if (!o.isMesh) return;
+          const basic = o.material?.type === 'MeshBasicMaterial';
+          if (wheels.has(o) || o.material?.transparent || basic) o.castShadow = false;
+          if (basic && !wheels.has(o)) lights.push(o);
+        });
+        v.lod = { lights, lightsShown: true };
+      }
+      const t = v.body.translation(), d2 = (t.x - p.x) ** 2 + (t.z - p.z) ** 2;
+      if (v.wheelMeshes?.length) {
+        const near = d2 < 120 * 120;
+        if (v.wheelsShown !== near) { v.wheelsShown = near; for (const w of v.wheelMeshes) if (w) w.visible = near; }
+      }
+      // light panels (head / tail lights, sirens): only up close by day, everywhere at night
+      const show = night || d2 < 70 * 70;
+      if (v.lod.lightsShown !== show) { v.lod.lightsShown = show; for (const m of v.lod.lights) m.visible = show; }
+    }
+    // loose props only cast shadows near the camera (each small shadow far off is a draw call)
+    for (const o of this.physics.objects) {
+      if (o.kind === 'ride' || !o.mesh || o.culled) continue;
+      if (!o.casters) { o.casters = []; o.mesh.traverse((m) => { if (m.isMesh && m.castShadow) o.casters.push(m); }); }
+      if (!o.casters.length) continue;
+      const q = o.mesh.position, cast = (q.x - p.x) ** 2 + (q.z - p.z) ** 2 < 35 * 35;
+      if (o.shadowNear !== cast) { o.shadowNear = cast; for (const m of o.casters) m.castShadow = cast; }
     }
   }
 

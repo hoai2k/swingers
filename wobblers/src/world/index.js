@@ -1,5 +1,6 @@
 // Builds the whole archipelago: the home island, then every region in
 // world/regions/ (terrain first, see terrain.js), the bridge, ferries and NPCs.
+import { mergeStatics } from '../staticmerge.js';
 import * as THREE from 'three';
 import { buildTerrain, REGIONS, terrainStats, heightAt, meshHeight, biomeAt, regionAt } from '../terrain.js';
 import { defineRegions, buildRegions } from './regions/index.js';
@@ -70,6 +71,7 @@ export function buildWorld(game) {
   T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)
   T('grabHandles', () => { game.grabHandles = addGrabHandles(game); }); // ride seats with no colliders get something to hang from
   T('kitFinish', () => { kit.finish(); game.interiorLights.finish(); });
+  T('mergeColliders', () => { game.staticMerge = mergeStatics(game); }); // thin static colliders -> one mesh per area (staticmerge.js)
   T('detail', () => buildDetail(game));        // grass, flowers, road edges, lamp glow
   animateWater(game, game.waterMats);
 }
