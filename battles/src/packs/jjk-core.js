@@ -24,7 +24,6 @@ import { register } from '../ext.js';
 import { THREE, clamp, rand, PART, newId } from './common.js';
 import { RAPIER, GROUPS } from '../physics.js';
 import { Unit } from '../unit.js';
-import { park } from '../battle.js';
 
 export const FACTION = { id: 'jjk', name: 'Jujutsu Kaisen', color: '#2b2f6b' };
 const UPY = new THREE.Vector3(0, 1, 0);
@@ -212,6 +211,14 @@ export function summon(b, owner, type, at, yaw = owner.heading) {
   b.emit('spark', at.x, gy + 0.5, at.z, 8);
   b.emit('dust', at.x, gy, at.z, 3);
   return s;
+}
+// (a copy of battle.js park(): a pack must not import battle.js, or battle.js runs before
+// the packs after it have registered their projectile types)
+export function park(u) {
+  u.dormant = true;
+  u.alive = false;
+  for (const bd of u.rag.bodies) bd.setEnabled(false);
+  for (const e of u.extras) e.body?.setEnabled(false);
 }
 export function dismiss(b, s) {
   if (s.dormant) return;

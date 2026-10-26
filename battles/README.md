@@ -154,6 +154,19 @@ when delivered; without one the tab shows just the name in the faction colour.
   (red energy sword, force push and force choke) and the Walker (a four-legged mech
   with twin heavy cannons that stomps whatever gets in among its legs). Bolts glow cyan
   for Blue and red for Red.
+- **Jujutsu Kaisen: the curses** (`src/packs/jjk-curses.js`, on `jjk-core.js`): Toji
+  Fushiguro (no cursed energy, so sure-hits miss him; the Inverted Spear of Heaven cuts
+  through Infinity and barriers; Playful Cloud flurry; the Inventory Curse worm), Dagon
+  (shikigami fish; domain *Horizon of the Captivating Skandha*, a beach), Mahito (Idle
+  Transfiguration turns the people he kills into his transfigured humans; domain
+  *Self-Embodiment of Perfection*, hands everywhere), Jogo (Ember Insects, *Maximum:
+  Meteor*; domain *Coffin of the Iron Mountain*), Hanami (wooden balls, roots, a flower
+  field that saps), Suguru Geto / Kenjaku (stored curses come out as reserves; *Maximum:
+  Uzumaki*), Choso (Piercing Blood beam, Supernova), Kinji Hakari (domain *Idle Death
+  Gamble*: a JACKPOT makes him all but immortal) and Fly Heads (cheap swarm). Secrets:
+  Prison Realm (Geto next to an enemy Gojo), the spear cuts through Infinity, Toji cuts a
+  domain open, Mahito can't reshape Yuji (and Yuji's fists hurt his soul), Choso switches
+  sides when he meets Yuji ("Big brother!").
 
 ## Code map
 
