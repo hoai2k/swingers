@@ -1,4 +1,5 @@
 // Game: renderer, split-screen views, fixed-step physics loop, players.
+import { buildBlink } from './blink.js';
 import { setCharStyle } from './charstyle.js';
 import { resetCharCaches } from './player.js';
 import { clearFaceCache, setFace } from './cosmetics.js';
@@ -57,6 +58,7 @@ export class Game {
     this.npcs = new NPCManager(this); // world builders spawn NPCs into it
     buildWorld(this);
     this.simCull = buildSimCull(this); // far-away props and parked vehicles stop simulating (simcull.js)
+    buildBlink(this); // characters blink now and then (blink.js)
     this.ui = new UI(this);
     this.regionBanners = new RegionBanners(this); // "Welcome to Frostpeak!"; sets player.region
     this.emotes = new Emotes(this); // emote wheel + quick emotes

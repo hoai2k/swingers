@@ -27,7 +27,7 @@ const hoodie = (color) => (part, b) => {
 const SHIRTS = [0xff5a8a, 0x3fe0d0, 0xffd23f, 0x9b5cff, 0xff8a1a, 0x55d85a, 0x3f8cff, 0xff4040, 0xffffff, 0x2a2a33, 0xe8742a, 0x7a2430];
 const PANTS = [0x3b5c9a, 0x2a2a33, 0x6a6f7a, 0xc8ad7a, 0x3b5c9a, 0x5a3a24];
 const HATS = ['cap', 'cap', 'beanie', 'beanie', 'bucket', 'none', 'none', 'none'];
-const FACES = ['Happy', 'Joyful', 'Cool shades', 'Cheeky', 'Star eyes', 'Winky', 'Tongue out', 'Heart eyes', 'Surprised', 'Lashes', 'Nerd'];
+const FACES = ['Happy', 'Sparkle', 'Cool shades', 'Content', 'Star eyes', 'Dot eyes', 'Tongue out', 'Heart eyes', 'Surprised', 'Lashes', 'Nerd'];
 const PROPS = ['phone', 'phone', 'candyfloss', 'soda', 'apple', 'cornDog', null, null];
 export const TEEN_LINES = ['This ride is sick!', 'Again! Again!', 'Best fair ever!', 'Did you see the Zipper?!', 'I\'m gonna hurl...', 'Candy floss!!',
   'Let\'s do the Gravitron!', 'No way, it\'s so high!', 'Selfie!', 'Wanna go on the Ferris wheel?', 'The Drop Tower is wild!', 'Ring of Fire, let\'s go!',

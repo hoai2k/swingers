@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/RoundedBoxGeometry.js';
-import { paintFace, loadImage, slug } from './assets.js';
+import { paintFace, closeEye, loadImage, slug } from './assets.js';
 import { addGlow } from './look.js';
 
 export const matVC = addGlow(new THREE.MeshLambertMaterial({ vertexColors: true }));
@@ -129,11 +129,12 @@ function faceCanvas(kind) {
     g.strokeStyle = '#6b4a3a'; g.lineWidth = 5;
     for (const x of ex) { g.beginPath(); g.moveTo(x - 14, ey - 34); g.lineTo(x + 12, ey - 37); g.stroke(); }
   }
+  if (kind === 'closed') for (const x of ex) closeEye(g, x, ey + 2, 20, 26); // blink frame (blink.js)
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   t.premultiplyAlpha = true; // clean filtering at the features' transparent edges
-  paintFace(t, kind === 'ko' ? 'ko' : 'happy');
+  paintFace(t, kind === 'ko' ? 'ko' : 'happy', kind === 'closed');
   return t;
 }
 
@@ -143,6 +144,7 @@ export function faceMaterials() {
     _faces = {
       normal: new THREE.MeshLambertMaterial({ map: faceCanvas('normal') }),
       ko: new THREE.MeshLambertMaterial({ map: faceCanvas('ko') }),
+      closed: new THREE.MeshLambertMaterial({ map: faceCanvas('closed') }),
     };
   }
   return _faces;

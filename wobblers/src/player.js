@@ -98,7 +98,7 @@ export function headMaterials() {
   if (!_headMats) {
     const f = faceMaterials();
     const mk = (src) => charMat({ map: src.map });
-    _headMats = { normal: mk(f.normal), ko: mk(f.ko) };
+    _headMats = { normal: mk(f.normal), ko: mk(f.ko), closed: mk(f.closed) };
   }
   return _headMats;
 }

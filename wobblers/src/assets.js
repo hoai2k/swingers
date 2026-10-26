@@ -65,7 +65,39 @@ function featureBox(im) {
 }
 
 const FACE_BOX = [0.24, 0.38, 0.52]; // painted features: max width / height (share of the texture), centre height
-export function paintFace(tex, name) {
+// Where each painted face's eyes are ([x0, x1, y0, y1] in the 512 px source image), for its
+// closed-eye (blink) version: those pixels are cleared (blush pinks kept) and a closed-eye
+// curve is drawn instead. Found by blob detection and checked by eye; faces whose eyes are
+// hidden (shades, robot) don't blink.
+export const FACE_EYES = {
+  happy: [[72, 208, 180, 308], [300, 436, 180, 308]],
+  surprised: [[104, 228, 136, 348], [280, 404, 136, 348]],
+  lashes: [[92, 232, 184, 344], [276, 416, 184, 344]],
+  grumpy: [[120, 220, 216, 262], [288, 388, 216, 262]],
+  star_eyes: [[40, 224, 120, 292], [284, 468, 120, 292]],
+  moustache: [[76, 212, 160, 284], [296, 428, 160, 284]],
+  heart_eyes: [[36, 240, 116, 276], [268, 472, 116, 276]],
+  tongue_out: [[64, 224, 136, 288], [284, 444, 136, 288]],
+  dizzy: [[44, 224, 148, 304], [280, 464, 148, 304]],
+  nerd: [[124, 184, 204, 264], [320, 380, 204, 264]],
+};
+// Clear an eye's pixels in an ellipse (keeping blush / tongue pinks) and draw a closed lid curve.
+export function closeEye(g, cx, cy, rx, ry) {
+  const x0 = Math.max(0, Math.floor(cx - rx)), y0 = Math.max(0, Math.floor(cy - ry));
+  const w = Math.ceil(rx * 2), h = Math.ceil(ry * 2);
+  const img = g.getImageData(x0, y0, w, h), d = img.data;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ux = (x0 + x - cx) / rx, uy = (y0 + y - cy) / ry;
+    if (ux * ux + uy * uy > 1) continue;
+    const i = (y * w + x) * 4, r = d[i], gg = d[i + 1], b = d[i + 2];
+    if (r > 200 && r - gg > 50 && b > 90) continue; // blush
+    d[i + 3] = 0;
+  }
+  g.putImageData(img, x0, y0);
+  g.strokeStyle = '#2a1a1e'; g.lineCap = 'round'; g.lineWidth = Math.max(3, Math.min(rx, ry) * 0.32);
+  g.beginPath(); g.moveTo(cx - rx * 0.8, cy); g.quadraticCurveTo(cx, cy + ry * 0.55, cx + rx * 0.8, cy); g.stroke();
+}
+export function paintFace(tex, name, closed = false) {
   return paintOver(tex, `faces/face_${slug(name)}.png`, (g, im, cv) => {
     const W = cv.width, H = cv.height;
     g.clearRect(0, 0, W, H); // features only: the head material lays them over the skin
@@ -76,6 +108,11 @@ export function paintFace(tex, name) {
     const [bx, by, bw, bh] = featureBox(im);
     const k = Math.min(W * FACE_BOX[0] / bw, H * FACE_BOX[1] / bh);
     const dw = bw * k, dh = bh * k;
-    g.drawImage(im, bx, by, bw, bh, W * 0.25 - dw / 2, H * FACE_BOX[2] - dh / 2, dw, dh);
+    const ox = W * 0.25 - dw / 2, oy = H * FACE_BOX[2] - dh / 2;
+    g.drawImage(im, bx, by, bw, bh, ox, oy, dw, dh);
+    if (closed) for (const [x0, x1, y0, y1] of FACE_EYES[slug(name)] || []) {
+      const cx = ox + ((x0 + x1) / 2 - bx) * k, cy = oy + ((y0 + y1) / 2 - by) * k;
+      closeEye(g, cx, cy, (x1 - x0) / 2 * k * 1.22, (y1 - y0) / 2 * k * 1.2);
+    }
   });
 }

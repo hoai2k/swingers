@@ -16,7 +16,7 @@ export const PRESENTS = [
   ['under-pier', 'hat:pirate'],
   ['lifeguard', 'hat:propeller'],
   ['lighthouse', 'hat:santa'],
-  ['water-slide', 'face:Winky'],
+  ['water-slide', 'face:Sparkle'],
   ['high-dive', 'hat:astronaut'],
   ['slide-tower', 'hat:bunny'],
   ['sandbox', 'pants:Pink'],

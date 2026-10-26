@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { headMaterials } from './player.js';
 import { charMat } from './charstyle.js';
-import { paintFace } from './assets.js';
+import { paintFace, closeEye } from './assets.js';
 import { HATS, PLAYER_COLORS } from './config.js';
 import { settings, devicePrefs, saveSettings } from './settings.js';
 import { EXTRA_HAT_NAMES } from './hats.js';
@@ -20,7 +20,14 @@ export const OUTFITS = OUTFIT_LIST.map((o) => o.name);
 export const FACES = ['Happy', 'Joyful', 'Cool shades', 'Sleepy', 'Surprised', 'Cheeky', 'Lashes', 'Grumpy', 'Star eyes', 'Winky', 'Robot', 'Moustache',
   'Heart eyes', 'Tongue out', 'Dizzy', 'Nerd',
   // plain, neutral faces with dot eyes (free; drawn here, no painted art)
-  'Dot eyes', 'Calm', 'Content', 'Oh', 'Shy', 'Smirk'];
+  'Dot eyes', 'Calm', 'Content', 'Oh', 'Shy', 'Smirk',
+  // big glossy eyes with sparkles (the water-slide present; drawn here)
+  'Sparkle'];
+// Faces whose eyes are always shut or winking: kept so saved looks keep their indices, but
+// never offered (every face has open eyes that blink: blink.js).
+export const RETIRED_FACES = new Set(['Joyful', 'Sleepy', 'Cheeky', 'Winky']);
+// Faces whose eyes are hidden (shades, screens): no blink.
+const NO_BLINK = new Set(['Cool shades', 'Robot']);
 export const PANTS = [
   { name: 'Matching', color: null },
   { name: 'Denim', color: 0x3b5c9a },
@@ -54,7 +61,8 @@ export const HAT_NAMES = { none: 'No hat', cap: 'Cap', tophat: 'Top hat', beanie
 export const COLOR_NAMES = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Teal', 'Pink', 'White', 'Charcoal'];
 
 // Same layout as mesh.js faceCanvas: 512x256, the face centred at u = 0.25.
-function drawFace(kind) {
+const DOT_FACES = new Set(['Dot eyes', 'Calm', 'Content', 'Oh', 'Shy', 'Smirk']);
+function drawFace(kind, closed = false) {
   const W = 512, H = 256, cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const g = cv.getContext('2d'); // features on a transparent background (laid over the skin: charstyle.js)
@@ -189,8 +197,13 @@ function drawFace(kind) {
     case 'Dot eyes': case 'Calm': case 'Content': case 'Oh': case 'Shy': case 'Smirk': {
       g.clearRect(0, 0, W, H); // no default cheeks
       const dy = H * 0.47, dx = kind === 'Shy' ? 22 : 27, r = kind === 'Oh' ? 8 : 7, my = H * 0.565;
-      g.fillStyle = '#1c1c28';
-      for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * dx, kind === 'Shy' ? dy + 3 : dy, r, r * 1.15, 0, 0, 7); g.fill(); }
+      g.fillStyle = '#1c1c28'; g.strokeStyle = '#1c1c28'; g.lineWidth = 4;
+      for (const s of [-1, 1]) {
+        const y = kind === 'Shy' ? dy + 3 : dy;
+        g.beginPath();
+        if (closed) { g.moveTo(cx + s * dx - r * 1.1, y); g.quadraticCurveTo(cx + s * dx, y + r * 0.8, cx + s * dx + r * 1.1, y); g.stroke(); }
+        else { g.ellipse(cx + s * dx, y, r, r * 1.15, 0, 0, 7); g.fill(); }
+      }
       if (kind === 'Content' || kind === 'Shy') {
         g.fillStyle = 'rgba(255,120,120,.4)';
         for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 43, my - 4, 11, 7, 0, 0, 7); g.fill(); }
@@ -206,6 +219,14 @@ function drawFace(kind) {
       g.stroke();
       break;
     }
+    case 'Sparkle': {
+      eye(ex[0], ey, 19, 25); eye(ex[1], ey, 19, 25);
+      g.fillStyle = '#fff';
+      for (const x of ex) { g.beginPath(); g.arc(x - 6, ey + 9, 3, 0, 7); g.fill(); }
+      g.fillStyle = '#7a2a2a'; g.beginPath(); g.arc(cx, H * 0.6, 18, 0, Math.PI); g.closePath(); g.fill();
+      g.fillStyle = '#ff7a8a'; g.beginPath(); g.ellipse(cx, H * 0.6 + 11, 9, 5, 0, 0, 7); g.fill();
+      break;
+    }
     case 'Nerd': {
       eye(ex[0], ey, 14, 19); eye(ex[1], ey, 14, 19);
       g.strokeStyle = '#2a2a33'; g.lineWidth = 7;
@@ -219,20 +240,25 @@ function drawFace(kind) {
       eye(ex[0], ey); eye(ex[1], ey); smile(); brows();
     }
   }
+  // blink frame: the standard eye spots closed (the dot faces close their own eyes above)
+  if (closed && !DOT_FACES.has(kind)) for (const x of ex) closeEye(g, x, ey + 2, 24, 28);
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   t.premultiplyAlpha = true;
-  paintFace(t, kind);
+  paintFace(t, kind, closed);
   return t;
 }
 
 const faceCache = new Map();
 export const clearFaceCache = () => faceCache.clear(); // after a look-style change
-export function faceMaterial(i) {
-  if (!i) return headMaterials().normal;
-  let m = faceCache.get(i);
-  if (!m) { m = charMat({ map: drawFace(FACES[i]) }); faceCache.set(i, m); }
+// The material for face i, open or closed (blink frame); faces with hidden eyes have no closed one.
+export function faceMaterial(i, closed = false) {
+  if (closed && NO_BLINK.has(FACES[i])) closed = false;
+  if (!i) return closed ? headMaterials().closed : headMaterials().normal;
+  const key = i * 2 + (closed ? 1 : 0);
+  let m = faceCache.get(key);
+  if (!m) { m = charMat({ map: drawFace(FACES[i], closed) }); faceCache.set(key, m); }
   return m;
 }
 
@@ -265,7 +291,7 @@ export function setPants(p, i) {
 // ---- locked items (found in presents) --------------------------------------
 export { HATS };
 export const hatLocked = (i) => isLocked('hat:' + HATS[i]);
-export const faceLocked = (i) => isLocked('face:' + FACES[i]);
+export const faceLocked = (i) => RETIRED_FACES.has(FACES[i]) || isLocked('face:' + FACES[i]);
 export const pantsLocked = (i) => isLocked('pants:' + PANTS[i].name);
 export const outfitLocked = (i) => isLocked('outfit:' + OUTFIT_LIST[i].id);
 // Next unlocked index from i in direction d (wraps; i itself if nothing else is free).

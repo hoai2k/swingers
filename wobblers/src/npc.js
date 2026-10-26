@@ -135,7 +135,7 @@ function resolveDef(role, opts) {
     d.colors.shirt ??= pick(SHIRTS); d.colors.pants ??= pick(PANTS);
     if (d.hat === undefined) d.hat = pick(['none', 'none', 'cap', 'beanie', 'bucket', 'sunhat']);
     d.colors.hat ??= pick(SHIRTS);
-    if (d.face === undefined) d.face = pick([0, 0, 1, 3, 5, 6, 9]);
+    if (d.face === undefined) d.face = pick(['Happy', 'Happy', 'Surprised', 'Dot eyes', 'Content', 'Lashes', 'Smirk', 'Calm', 'Sparkle']);
   }
   return d;
 }
