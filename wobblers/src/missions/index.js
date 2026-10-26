@@ -72,8 +72,8 @@ export class Missions {
     try {
       if (kind === 'start') chime(g, null, [67, 72, 76, 79], 0.25);
       else if (kind === 'step') chime(g, null, [76, 81], 0.22);
-      else if (kind === 'done') chime(g, null, [72, 76, 79, 84, 88], 0.3);
-      else if (kind === 'fail') [0, 1, 2].forEach((i) => tone(g, null, NOTE(64 - i * 3), NOTE(63 - i * 3), 0.25, 0.22, 'square', i * 0.18));
+      else if (kind === 'done') { if (!g.audio?.stinger?.('job-complete')) chime(g, null, [72, 76, 79, 84, 88], 0.3); }
+      else if (kind === 'fail') { if (!g.audio?.stinger?.('job-failed')) [0, 1, 2].forEach((i) => tone(g, null, NOTE(64 - i * 3), NOTE(63 - i * 3), 0.25, 0.22, 'square', i * 0.18)); }
       else if (kind === 'drop') { g.audio?.play('pop', p || null, 0.8); chime(g, p || null, [79, 84], 0.18); }
       else if (kind === 'found') g.audio?.play('pop', p || null, 1);
       else if (kind === 'board') g.audio?.play('seat', p || null, 1);

@@ -1,6 +1,6 @@
 # Wobblers — music requests
 
-**Status: 20 open requests, none delivered yet.** They are listed from most to least
+**Status: 17 open requests; 3 delivered: #7 job complete, #8 job failed and #19 present found (ElevenLabs Music stingers, in the game). Full songs are made separately by the owner.** They are listed from most to least
 important. The first five cover what players hear almost all the time: the island by
 day, by night, and the title screen.
 
@@ -98,7 +98,7 @@ repeat and leave room for engine noises, splashes and laughter.
 > snare rolls before looping. Urgent but fun, like a frantic cartoon chase where
 > nobody gets hurt. No vocals.
 
-## 7. Job complete stinger — `job-complete.mp3`
+## 7. Job complete stinger — `job-complete.mp3` — ✅ delivered
 
 > Instrumental short, happy success jingle for finishing a job and getting paid in a
 > cheerful sandbox game, about 5 seconds, one shot with a natural ending. A bright
@@ -106,7 +106,7 @@ repeat and leave room for engine noises, splashes and laughter.
 > cash-register-like bell ding, a quick drum fill and a final big, bouncy major
 > chord with a cymbal splash. Proud, satisfying and a bit cheesy. No vocals.
 
-## 8. Job failed stinger — `job-failed.mp3`
+## 8. Job failed stinger — `job-failed.mp3` — ✅ delivered
 
 > Instrumental short comedic "out of time" sting for failing a job in a cheerful
 > sandbox game, about 4 seconds, one shot with a natural ending. A muted trombone
@@ -217,7 +217,7 @@ repeat and leave room for engine noises, splashes and laughter.
 > second half. Breezy, salty and content, like watching the next island get closer.
 > No vocals.
 
-## 19. Present found stinger — `present.mp3`
+## 19. Present found stinger — `present.mp3` — ✅ delivered
 
 > Instrumental short magical "you found a present" jingle for unlocking a new hat or
 > outfit in a cosy sandbox game, about 3 seconds, one shot with a natural ending. A

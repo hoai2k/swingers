@@ -1745,5 +1745,27 @@
       "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-101387a2-bb16-4d71-a66c-934d7adf65d8.png",
       "initialPrompt": "Use case: stylized-concept. Original Wobblers arcade cabinet marquee, bright toy-like cartoon, chunky shapes and bold outlines. Exact text: \"PADDLE BALL\". Design: arcade cabinet marquee for a two-player paddle game: black board, glowing white letters, small paddle-and-ball icon. Single horizontal front-facing 4:1 black board with requested glowing neon lettering, one small icon, for 1024x256 delivery. Exact spelling, all words clearly legible. Transparent outside board, safe margins. No extra text, existing game characters, logos, real brands, scene or watermark."
     }
-  ]
+  ],
+  "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
+  "music": [
+    {
+      "file": "assets/music/job-complete.mp3",
+      "tool": "ElevenLabs Music",
+      "prompt": "Instrumental short, happy success jingle for finishing a job and getting paid in a cheerful sandbox game, about 5 seconds, one shot with a natural ending. A bright brass fanfare in B-flat major rising up the scale, a glockenspiel sparkle and a cash-register-like bell ding, a quick drum fill and a final big, bouncy major chord with a cymbal splash. Proud, satisfying and a bit cheesy. No vocals.",
+      "request_ms": 5000
+    },
+    {
+      "file": "assets/music/job-failed.mp3",
+      "tool": "ElevenLabs Music",
+      "prompt": "Instrumental short comedic out-of-time sting for failing a job in a cheerful sandbox game, about 4 seconds, one shot with a natural ending. A muted trombone slides down wah-wah-waaah, a bassoon bumbles underneath, and it ends on a single soft, wobbly tuba note and a little slide whistle falling away. Funny and sheepish, never harsh or sad. No vocals.",
+      "request_ms": 4000
+    },
+    {
+      "file": "assets/music/present.mp3",
+      "tool": "ElevenLabs Music",
+      "prompt": "Instrumental short magical you-found-a-present jingle for unlocking a new hat or outfit in a cosy sandbox game, about 3 seconds, one shot with a natural ending. A quick ascending harp glissando, a twinkling glockenspiel and celesta motif in C major, a soft cymbal shimmer, and a final bright bell chord. Delightful and surprising, like opening a gift. No vocals.",
+      "request_ms": 3500
+    }
+  ],
+  "sfx_tool": "ElevenLabs sound-generation API via dev/sfx/generate.py; prompts, variants and levels in dev/sfx/sfx.json"
 }

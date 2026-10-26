@@ -1,0 +1,163 @@
+{
+ "punch": [
+  "assets/sfx/punch-1.mp3",
+  "assets/sfx/punch-2.mp3",
+  "assets/sfx/punch-3.mp3",
+  "assets/sfx/punch-4.mp3"
+ ],
+ "thud": [
+  "assets/sfx/thud-1.mp3",
+  "assets/sfx/thud-2.mp3",
+  "assets/sfx/thud-3.mp3"
+ ],
+ "land": [
+  "assets/sfx/land-1.mp3",
+  "assets/sfx/land-2.mp3",
+  "assets/sfx/land-3.mp3"
+ ],
+ "splash": [
+  "assets/sfx/splash-1.mp3",
+  "assets/sfx/splash-2.mp3",
+  "assets/sfx/splash-3.mp3"
+ ],
+ "boing": [
+  "assets/sfx/boing-1.mp3",
+  "assets/sfx/boing-2.mp3",
+  "assets/sfx/boing-3.mp3"
+ ],
+ "swish": [
+  "assets/sfx/swish-1.mp3",
+  "assets/sfx/swish-2.mp3",
+  "assets/sfx/swish-3.mp3"
+ ],
+ "door": [
+  "assets/sfx/door-1.mp3",
+  "assets/sfx/door-2.mp3"
+ ],
+ "wheee": [
+  "assets/sfx/wheee-1.mp3",
+  "assets/sfx/wheee-2.mp3",
+  "assets/sfx/wheee-3.mp3",
+  "assets/sfx/wheee-4.mp3"
+ ],
+ "ko": [
+  "assets/sfx/ko-1.mp3",
+  "assets/sfx/ko-2.mp3"
+ ],
+ "bark": [
+  "assets/sfx/bark-1.mp3",
+  "assets/sfx/bark-2.mp3",
+  "assets/sfx/bark-3.mp3"
+ ],
+ "meow": [
+  "assets/sfx/meow-1.mp3",
+  "assets/sfx/meow-2.mp3"
+ ],
+ "quack": [
+  "assets/sfx/quack-1.mp3",
+  "assets/sfx/quack-2.mp3"
+ ],
+ "laser": [
+  "assets/sfx/laser-1.mp3",
+  "assets/sfx/laser-2.mp3",
+  "assets/sfx/laser-3.mp3"
+ ],
+ "zap": [
+  "assets/sfx/zap-1.mp3",
+  "assets/sfx/zap-2.mp3"
+ ],
+ "thwip": [
+  "assets/sfx/thwip-1.mp3",
+  "assets/sfx/thwip-2.mp3"
+ ],
+ "clink": [
+  "assets/sfx/clink-1.mp3",
+  "assets/sfx/clink-2.mp3"
+ ],
+ "puff": [
+  "assets/sfx/puff-1.mp3",
+  "assets/sfx/puff-2.mp3"
+ ],
+ "bleat": [
+  "assets/sfx/bleat-1.mp3",
+  "assets/sfx/bleat-2.mp3",
+  "assets/sfx/bleat-3.mp3"
+ ],
+ "roar": [
+  "assets/sfx/roar-1.mp3",
+  "assets/sfx/roar-2.mp3"
+ ],
+ "chomp": [
+  "assets/sfx/chomp-1.mp3",
+  "assets/sfx/chomp-2.mp3"
+ ],
+ "chirp": [
+  "assets/sfx/chirp-1.mp3",
+  "assets/sfx/chirp-2.mp3"
+ ],
+ "thwack": [
+  "assets/sfx/thwack-1.mp3",
+  "assets/sfx/thwack-2.mp3"
+ ],
+ "creak": [
+  "assets/sfx/creak-1.mp3",
+  "assets/sfx/creak-2.mp3"
+ ],
+ "ride_screams": [
+  "assets/sfx/ride_screams-1.mp3"
+ ],
+ "fair_crowd": [
+  "assets/sfx/fair_crowd-1.mp3"
+ ],
+ "park_crowd": [
+  "assets/sfx/park_crowd-1.mp3"
+ ],
+ "city_street": [
+  "assets/sfx/city_street-1.mp3"
+ ],
+ "plaza_chatter": [
+  "assets/sfx/plaza_chatter-1.mp3"
+ ],
+ "arcade_room": [
+  "assets/sfx/arcade_room-1.mp3"
+ ],
+ "_levels": {
+  "punch": 0.8,
+  "thud": 0.8,
+  "land": 0.6,
+  "splash": 0.8,
+  "boing": 0.7,
+  "swish": 0.6,
+  "door": 0.7,
+  "wheee": 0.8,
+  "ko": 0.8,
+  "bark": 0.7,
+  "meow": 0.6,
+  "quack": 0.6,
+  "laser": 0.6,
+  "zap": 0.6,
+  "thwip": 0.6,
+  "clink": 0.5,
+  "puff": 0.7,
+  "bleat": 0.7,
+  "roar": 0.7,
+  "chomp": 0.7,
+  "chirp": 0.5,
+  "thwack": 0.7,
+  "creak": 0.5,
+  "ride_screams": 0.5,
+  "fair_crowd": 0.45,
+  "park_crowd": 0.4,
+  "city_street": 0.4,
+  "plaza_chatter": 0.35,
+  "arcade_room": 0.35
+ },
+ "_loops": [
+  "ride_screams",
+  "fair_crowd",
+  "park_crowd",
+  "city_street",
+  "plaza_chatter",
+  "arcade_room"
+ ]
+}

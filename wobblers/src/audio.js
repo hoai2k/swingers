@@ -56,6 +56,8 @@ export class Audio {
     this.ambientSpot('plaza_chatter', FOUNTAIN.x, FOUNTAIN.z, 45);
     this.ambientSpot('arcade_room', -19, 49, 14);
     this.ambientSpot('city_street', 875, 0, 260);
+    this.ambientSpot('fair_crowd', 0, 226, 150); // Stratford Fall Fair (world/fair)
+    this.ambientSpot('ride_screams', -60, 200, 70); this.ambientSpot('ride_screams', 65, 255, 70);
     const resume = () => this.start();
     for (const ev of ['keydown', 'mousedown', 'pointerdown', 'touchstart', 'click']) addEventListener(ev, resume);
     document.addEventListener('visibilitychange', () => this.applyMute());
@@ -139,7 +141,12 @@ export class Audio {
   // ambient beds that play at places registered with ambientSpot(). Anything
   // not delivered (or not decoded yet) falls back to the synth / silence.
   loadSamples() {
-    this.samples = {}; this.sampleLevel = {}; this.loopNames = new Set();
+    this.samples = {}; this.sampleLevel = {}; this.loopNames = new Set(); this.stings = {};
+    // musical stingers (dev/sfx/stingers.py): assets/music/<name>.mp3, played by stinger()
+    for (const name of ['job-complete', 'job-failed', 'present']) {
+      fetch('assets/music/' + name + '.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => b && this.ctx.decodeAudioData(b))
+        .then((buf) => { if (buf) this.stings[name] = buf; }).catch(() => {});
+    }
     fetch('assets/sfx/index.json').then((r) => (r.ok ? r.json() : null)).then((ix) => {
       if (!ix) return;
       Object.assign(this.sampleLevel, ix._levels || {});
@@ -166,6 +173,20 @@ export class Audio {
     src.connect(g); g.connect(out); src.start();
     return true;
   }
+  // A recorded stinger at music volume over briefly ducked music; false if it isn't
+  // loaded (the caller plays its synthesised jingle instead).
+  stinger(name) {
+    const buf = this.stings?.[name];
+    if (!buf || !this.running()) return false;
+    const c = this.ctx, t = c.currentTime;
+    const src = c.createBufferSource(), g = c.createGain();
+    src.buffer = buf; g.gain.value = Math.min(1, settings.music * 1.4); // follows the music volume (silent with music off)
+    src.connect(g); g.connect(this.master); src.start();
+    this.musicBus.gain.setTargetAtTime(settings.music * 0.7 * 0.25, t, 0.08);
+    this.musicBus.gain.setTargetAtTime(settings.music * 0.7, t + buf.duration * 0.85, 0.4);
+    return true;
+  }
+
   // A looping ambient bed (a recorded `_loops` sound) heard within r metres of
   // (x, z), loudest within r / 4. Safe to call before audio starts.
   ambientSpot(name, x, z, r = 60, vol = 1) { (this.spots ||= []).push({ name, x, z, r, vol, src: null, g: null }); }

@@ -188,7 +188,7 @@ export function buildPresents(game) {
     const pos = pr.pos.clone();
     burst(pos);
     game.audio?.play('pop', pos);
-    chime(game, pos, [72, 76, 79, 84, 88], 0.25);
+    if (!game.audio?.stinger?.('present')) chime(game, pos, [72, 76, 79, 84, 88], 0.25);
     const n = list.filter((q) => q.found).length;
     game.wallet?.add(p, 25, 'Present bonus');
     game.ui?.toast(`P${p.index + 1} found a present: ${rewardName(key)}! <small>${n}/${TOTAL}</small>`, p.color);

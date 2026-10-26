@@ -1,6 +1,6 @@
 # Spider Swingers — music requests
 
-**Status: 10 tracks requested, none delivered yet.** Until a track is
+**Status: 10 tracks requested; 2 delivered: #6 `win.mp3` and #7 `lose.mp3` (ElevenLabs Music stingers, listed in the manifest). Full songs are made separately by the owner.** Until a track is
 delivered the game keeps playing the shared Rounders soundtrack, so
 nothing is blocked.
 
@@ -71,13 +71,13 @@ So long VS sessions don't repeat one song. A different flavor from
 
 > An energetic instrumental battle track for a cartoon arena brawler with spiders fighting with glowing plasma sabers, in a surf-rock and spaghetti-western fusion style. About 160 BPM. Twangy, reverb-drenched lead guitar plays a fast, galloping melody with tremolo-picked runs, backed by a driving surf drum beat, a walking bass, organ stabs, and a big whistled counter-melody. Add a trumpet duel section where two horns trade dramatic phrases like a standoff, with a whip-crack snare hit on the downbeat. Playful, cocky and cinematic, like a cartoon showdown at high noon. Structure: short guitar intro, main theme, standoff section, return of the theme with full band. Seamless loop, about two and a half minutes, instrumental, no vocals.
 
-### 6. `win.mp3` — match win stinger (one-shot, ~5 s)
+### 6. `win.mp3` — match win stinger (one-shot, ~5 s) — ✅ delivered
 
 Plays once over the music when someone wins a VS match.
 
 > A short, triumphant instrumental victory fanfare, about five seconds long, for a cartoon party game about spiders with plasma swords. Bright brass and a whistling synth play a cheeky, celebratory rising motif, backed by a snare roll and a cymbal crash, finishing on a big major chord with a playful glockenspiel sparkle and a quick upward synth whoosh. Joyful, cartoonish and punchy. Clean ending with a natural ring-out, no loop, no vocals.
 
-### 7. `lose.mp3` — survival game over stinger (one-shot, ~6 s)
+### 7. `lose.mp3` — survival game over stinger (one-shot, ~6 s) — ✅ delivered
 
 Plays once when the whole team is out in survival.
 

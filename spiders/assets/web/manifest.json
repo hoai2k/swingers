@@ -15,5 +15,9 @@
     "bg_storm.jpg",
     "bg_dunes.jpg",
     "tile_spider_frost_ice.png"
+  ],
+  "music": [
+    "win.mp3",
+    "lose.mp3"
   ]
 }

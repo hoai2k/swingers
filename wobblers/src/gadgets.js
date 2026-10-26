@@ -537,6 +537,7 @@ function sfx(name, pos, s = 1) {
     const sp = A.spatial(pos), v = sp.v * s;
     if (v < 0.02) return;
     const out = A.outNode(1, sp.pan, 0.4);
+    if (A.playSample?.(name, out, v)) return; // a delivered recording (dev/sfx) wins over the synth
     if (name === 'laser') { A.tone('square', 1900, 260, 0.16, 0.07 * v, 0, out, 0.002); A.tone('sine', 2600, 600, 0.12, 0.08 * v, 0, out, 0.002); }
     else if (name === 'zap') { A.burst(0.12, 0.2 * v, 2400, 2, 'bandpass', 0, out, 600); A.tone('sawtooth', 500, 120, 0.12, 0.06 * v, 0, out); }
     else if (name === 'thwip') { A.burst(0.14, 0.16 * v, 1500, 3, 'bandpass', 0, out, 4000); A.tone('triangle', 500, 1200, 0.1, 0.06 * v, 0, out); }

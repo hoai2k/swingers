@@ -261,6 +261,7 @@ function sfx(game, name, pos) {
     const sp = a.spatial(pos), v = sp.v;
     if (v < 0.02) return;
     const out = a.outNode(1, sp.pan, 0.5);
+    if (a.playSample?.(name, out, v)) return; // a delivered recording (dev/sfx) wins over the synth
     if (name === 'puff') {
       a.burst(0.55, 0.35 * v, 1500, 0.8, 'bandpass', 0, out, 250);
       [1568, 2093, 2637, 3136, 4186].forEach((f, i) => a.tone('triangle', f, f * 1.02, 0.18, 0.06 * v, 0.05 + i * 0.05, out, 0.002));
