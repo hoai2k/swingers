@@ -63,10 +63,6 @@ any lashes kept on the lid (`lashes`). The game finds them by name
 
 | File (`assets/faces/…`) | Open face it matches |
 |---|---|
-| `face_happy_closed.png` | `face_happy.png` — glossy round eyes, small smile, blush |
-| `face_surprised_closed.png` | `face_surprised.png` — tall oval eyes, raised brows, small "o" mouth (keep the brows raised) |
-| `face_lashes_closed.png` | `face_lashes.png` — round eyes with lashes (closed lids keep their lashes) |
-| `face_grumpy_closed.png` | `face_grumpy.png` — half-lidded eyes under angry brows (keep the brows) |
 | `face_star_eyes_closed.png` | `face_star_eyes.png` — star eyes, big open smile (closed: happy curved lids, the smile stays) |
 | `face_moustache_closed.png` | `face_moustache.png` — glossy eyes over a moustache and nose |
 | `face_tongue_out_closed.png` | `face_tongue_out.png` — big round eyes, brows, tongue out |

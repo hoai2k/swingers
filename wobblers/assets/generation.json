@@ -1826,6 +1826,59 @@
       "round": 12,
       "transparent": false,
       "index": 167
+    },
+    {
+      "file": "faces/face_happy_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each as wide as the original eye and at the same eye center. CRITICAL preserve identical 512x512 canvas, pixel positions and scale for ALL non-eye features: brows, mouth, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, no new features, no head or skin, no background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with the target so features must not jump.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-32449f87-7ea7-4afa-98ba-59cf0f2a7d07.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_happy.png",
+      "index": 168
+    },
+    {
+      "file": "faces/face_surprised_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Correct ONLY closed eyelids in this blink frame. Remove the four stray thin curved lines below the closed eyelids; they are remnants of the old eye outlines. Keep the two existing main closed lids exactly. Preserve all other pixels, canvas framing, mouth, blush, nose, moustache and brows exactly. True transparent background, no head or skin. Matching 512x512 animation frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-cb25c960-42e6-4a52-a498-57153d70e846.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_surprised.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1ae0194f-0832-463f-be34-757d0e3ffc2b.png",
+      "initialPrompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each as wide as the original eye and at the same eye center. Keep the raised eyebrows and tiny o mouth exactly. CRITICAL preserve identical 512x512 canvas, pixel positions and scale for ALL non-eye features: brows, mouth, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, no new features, no head or skin, no background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with the target so features must not jump.",
+      "index": 169
+    },
+    {
+      "file": "faces/face_lashes_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Image1 is the blink edit target. Image2 is the original open face. Keep image1 closed eyes with connected lashes exactly. Copy the original mouth and pink cheeks from image2 into image1 at precisely their original positions and size. Original mouth center is x255 y325 on 512 canvas, cheeks centers x147 y326 and x363 y326. Target mouth and cheeks are currently too LOW; align them to image2. Do not move any other feature or recenter the canvas. Match original thin mouth line thickness and blush shapes. Identical 512x512 transparent framing. No background, skin or head.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9d98361e-254b-4809-a184-80aef616e688.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_lashes.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d4ad7815-a9ef-43de-85ac-77c84b4a0c58.png",
+      "initialPrompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each as wide as the original eye and at the same eye center. Keep bold lashes attached to the closed lids. CRITICAL preserve identical 512x512 canvas, pixel positions and scale for ALL non-eye features: brows, mouth, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, no new features, no head or skin, no background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with the target so features must not jump.",
+      "discardedCorrections": [
+        "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-009a3549-14ea-43fa-8b3e-ae6c84c892b4.png",
+        "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-587e2cde-2a0a-467a-ab8c-3451505e82bc.png",
+        "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9dffc6d4-8288-4e28-853e-77eafc3a766f.png"
+      ],
+      "index": 170
+    },
+    {
+      "file": "faces/face_grumpy_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each as wide as the original eye and at the same eye center. Keep angry eyebrows and wavy frown exactly; remove pupils below lids. CRITICAL preserve identical 512x512 canvas, pixel positions and scale for ALL non-eye features: brows, mouth, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, no new features, no head or skin, no background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with the target so features must not jump.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f0498a8d-53cd-4299-8343-346c6aa6d28a.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_grumpy.png",
+      "index": 171
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
