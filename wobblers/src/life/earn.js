@@ -31,6 +31,7 @@ export function buildEarning(game) {
       const d = v.def || {};
       if (d.heli || d.boat || !v.wheels?.length || v.destroyed) continue;
       const driver = v.seats?.find((s) => s.kind === 'driver')?.occupant;
+      if (!air.has(v) && !game.players.includes(driver)) continue; // only player-driven stunts pay
       let r = air.get(v);
       if (!r) { r = { max: 0, driver: null, cool: 0 }; air.set(v, r); }
       if (r.cool > 0) r.cool -= 1 / 60;

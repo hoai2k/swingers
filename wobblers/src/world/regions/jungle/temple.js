@@ -132,7 +132,7 @@ export function buildTemple(game, kit, R) {
       game.life?.reward(player, 15, 'Temple puzzle!', { x: dp.x, y: dp.y, z: dp.z });
     }
   }
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(dbody, (t, dt) => {
     if (st.open > 0) { st.open -= dt; if (st.open <= 0) reset(); }
     if (st.resetT > 0) { st.resetT -= dt; if (st.resetT <= 0) reset(); }
     const target = st.open > 0 ? -3.35 : 0;

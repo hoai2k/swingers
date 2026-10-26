@@ -6,11 +6,19 @@
 // pose and mesh) and switched back on as a player approaches. Vehicles that
 // are culled skip their update() too (game.step checks vehicle.culled).
 //
-// Never culled: kinematic bodies (rides, ferries), occupied vehicles, anything
-// a player is holding, objects flagged `noCull`.
+// Never culled: occupied vehicles, anything a player is holding, objects
+// flagged `noCull`.
+//
+// Kinematic bodies (rides, lifts, elevators, doors) are switched off beyond
+// KIN_FAR too: a moving ride costs the solver every step even with nobody
+// near. Big landmarks that are seen from far away (ferris wheels, the drop
+// tower, the city crane, the ski lift) keep going out to the range given with
+// `physics.kinRange.set(body.handle, metres)`; ferries pass Infinity (their timetable
+// runs everywhere). A switched-off body keeps its last pose and mesh.
 const FAR = 150, NEAR = 125;   // metres from the nearest player (hysteresis)
 const FAR_AUTO = 300, NEAR_AUTO = 270; // self-driving traffic stays live further out: it's the life of the streets
 const EVERY = 15;              // steps between checks (~4 per second)
+const KIN_FAR = 220, KIN_NEAR = 200; // kinematic rides (unless physics.kinRange says otherwise)
 
 export function buildSimCull(game) {
   const ph = game.physics;
@@ -36,15 +44,40 @@ export function buildSimCull(game) {
         const keep = held.has(b) || (v && v.seats.some((s) => s.occupant));
         const far = v?.route ? FAR_AUTO : FAR, near = v?.route ? NEAR_AUTO : NEAR;
         if (!o.culled && d > far && !keep) {
-          o.culled = true; b.setEnabled(false);
+          o.culled = true; b.setEnabled(false); if (o.rec) o.rec.off = true;
           if (v) v.culled = true;
         } else if (o.culled && (d < near || keep)) {
-          o.culled = false; b.setEnabled(true); b.wakeUp();
+          o.culled = false; b.setEnabled(true); b.wakeUp(); if (o.rec) { o.rec.off = false; o.rec.snap = true; }
           if (v) v.culled = false;
         }
         if (o.culled) off++;
       }
       cull.off = off;
+      cull.checkKinematic(pts);
+    },
+    kin: null,
+    kinOff: 0,
+    checkKinematic(pts) {
+      if (!cull.kin || tick % 600 === 0) { // the kinematic list (rides built later, ferries)
+        const list = [];
+        const objs = new Map(ph.objects.filter((o) => o.body).map((o) => [o.body.handle, o]));
+        ph.world.forEachRigidBody((b) => { if (b.isKinematic()) list.push({ b, off: !b.isEnabled(), o: objs.get(b.handle) }); });
+        cull.kin = list;
+      }
+      const title = !game.players.length; // title screen: the idle camera flies about, keep everything going
+      let off = 0;
+      for (const k of cull.kin) {
+        const range = ph.kinRange.get(k.b.handle) ?? KIN_FAR;
+        if (range === Infinity) continue;
+        const t = k.b.translation();
+        let d2 = title ? 0 : Infinity;
+        for (const q of pts) d2 = Math.min(d2, (t.x - q.x) ** 2 + (t.z - q.z) ** 2);
+        if (!k.off && d2 > range * range) { k.off = true; k.b.setEnabled(false); }
+        else if (k.off && d2 < (range - (KIN_FAR - KIN_NEAR)) ** 2) { k.off = false; k.b.setEnabled(true); }
+        if (k.o?.rec) k.o.rec.off = k.off; // physics.capture / sync skip it
+        if (k.off) off++;
+      }
+      cull.kinOff = off;
     },
   };
   game.steppers.push(() => { if (++tick % EVERY === 0) cull.check(); });

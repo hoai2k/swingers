@@ -140,7 +140,8 @@ function mineRide(game, kit, R) {
   const ride = { cars, length: L, get s() { return s0; }, get waiting() { return wait > 0; } };
   game.desertMineRide = ride;
   let clack = 0;
-  game.physics.animators.push((t, dt) => {
+  for (const b of cars) game.physics.kinRange.set(b.handle, 300); // the whole train switches on and off together
+  game.physics.animate(cars[0], (t, dt) => {
     if (wait > 0) {
       wait -= dt; v = 0; traveled = 0;
       if (wait > 0.5 && !near(game, xe - 60, canyonZ(xe), 90)) wait = Math.max(wait, 2); // nobody around: stay parked

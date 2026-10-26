@@ -113,6 +113,7 @@ export class Ferry {
     const p0 = this.legs[0].curve.getPointAt(0), t0 = this.legs[0].curve.getTangentAt(0);
     this.pos.set(p0.x, SEA_LEVEL, p0.z); this.yaw = Math.atan2(t0.x, t0.z);
     this.build();
+    game.physics.kinRange.set(this.body.handle, 300); // out of the solver beyond 300 m (simcull.js); tick() keeps the timetable
     game.physics.animators.push((t, dt) => this.tick(dt));
     (game.ferries ||= []).push(this);
     // route on the map
@@ -225,7 +226,8 @@ export class Ferry {
     }
     mesh.castShadow = true; mesh.userData.noCull = true;
     game.scene.add(mesh);
-    game.physics.objects.push({ body, mesh, buoy: null, kind: 'ride' });
+    this.obj = { body, mesh, buoy: null, kind: 'ride' };
+    game.physics.objects.push(this.obj);
   }
 
   setGates(closed) {
@@ -270,6 +272,17 @@ export class Ferry {
     // gentle roll / pitch, leaning out of turns
     const roll = 0.012 * Math.sin(this.t * 0.7) - this.yawRate * this.v * 0.004, pitch = 0.008 * Math.sin(this.t * 0.53 + 2);
     _q.setFromEuler(_e.set(pitch, this.yaw, roll, 'YXZ'));
+    if (!this.body.isEnabled()) { // nobody near (simcull.js): sail on as a picture, out of the physics
+      this.off = true;
+      this.mesh.position.copy(this.pos); this.mesh.quaternion.copy(_q);
+      return;
+    }
+    if (this.off) { // back in the physics: jump the body to where the timetable put the boat
+      this.off = false;
+      this.body.setTranslation({ x: this.pos.x, y: this.pos.y, z: this.pos.z }, true);
+      this.body.setRotation({ x: _q.x, y: _q.y, z: _q.z, w: _q.w }, true);
+      if (this.obj.rec) this.obj.rec.snap = true;
+    }
     this.body.setNextKinematicTranslation({ x: this.pos.x, y: this.pos.y, z: this.pos.z });
     this.body.setNextKinematicRotation({ x: _q.x, y: _q.y, z: _q.z, w: _q.w });
   }

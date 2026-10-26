@@ -199,7 +199,7 @@ function surf(game, kit, R) {
     control(inp) { st.steer = Math.max(-1, Math.min(1, inp.moveX || 0)); },
   });
   const q = new THREE.Quaternion(), e = new THREE.Euler();
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(body, (t, dt) => {
     const rider = seat.occupant;
     let y = SEA_LEVEL + 0.05, yaw = Math.PI / 2, pitch = 0, roll = 0;
     if (st.mode === 'out') {

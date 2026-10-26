@@ -165,6 +165,9 @@ export class Game {
 
   step() {
     this.stepCount = (this.stepCount || 0) + 1; // nearestSeat's position cache
+    const pxz = this.playerXZ ||= [];
+    pxz.length = 0;
+    for (const p of this.players) { const c = p.chest.translation(); pxz.push(c.x, c.z); }
     const blank = { state: {}, pressed: {} };
     for (const p of this.players) {
       const d = this.paused ? null : this.input.get(p.deviceId);
@@ -349,6 +352,23 @@ export class Game {
   //   from anywhere with frustum culling off: they get a bounding sphere (+15 m for
   //   their motion) and hide beyond 700 m (only ever un-hidden by us);
   // - vehicle wheels go beyond 120 m (the body still reads).
+  // Distance gates for animations and per-step checks: true while some player
+  // is within r metres (horizontally) of (x, z); positions are sampled at the
+  // start of each step. With nobody playing (title screen) everything counts as near.
+  nearPlayer(x, z, r) {
+    const P = this.playerXZ;
+    if (!P || !P.length) return true;
+    for (let i = 0; i < P.length; i += 2) { const dx = P[i] - x, dz = P[i + 1] - z; if (dx * dx + dz * dz < r * r) return true; }
+    return false;
+  }
+  // Wraps an animator / stepper / updater so it only runs near a player
+  // (re-checked every 15 calls). Animators driven by the clock pick up where
+  // they should be when someone comes back.
+  whenNear(x, z, r, fn) {
+    let k = 0, on = true;
+    return (...a) => { if (k++ % 15 === 0) on = this.nearPlayer(x, z, r); if (on) return fn(...a); };
+  }
+
   lodView(cam) {
     if (!this.instLOD || this.instLOD.n !== this.scene.children.length) {
       const list = this.instLOD?.list || [];

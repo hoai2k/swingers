@@ -55,7 +55,7 @@ export function zipLine(game, kit, from, to, opts = {}) {
   });
   const p = new THREE.Vector3();
   const minV = opts.minV ?? 3.5;
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(body, (t, dt) => {
     const rider = seat.occupant;
     if (st.mode === 'ride') {
       const a = 9.81 * -dir.y - 0.011 * st.v * st.v;
@@ -214,7 +214,7 @@ export function pathRide(game, opts) {
   }));
   const p = new THREE.Vector3(), ahead = new THREE.Vector3(), q = new THREE.Quaternion(), e = new THREE.Euler();
   let yawS = Math.atan2(p1.x - p0.x, p1.z - p0.z);
-  game.physics.animators.push((time, dt) => {
+  game.physics.animate(body, (time, dt) => {
     const riders = seats.filter((s) => s.occupant);
     let dirSign = 1;
     if (st.mode === 'wait') {

@@ -460,7 +460,7 @@ function zipLine(game, kit) {
   });
   const rot = yawQuat(yawD);
   const p = new THREE.Vector3();
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(body, (t, dt) => {
     const rider = seat.occupant;
     if (st.mode === 'lift') {
       if (!rider) st.mode = 'down';

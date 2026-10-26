@@ -218,6 +218,7 @@ export class NPC extends Player {
     this.showable = ok && this.state === 'normal';
     if (this.showable) for (const k in this.parts) { const p = this.parts[k], b = p.body, t = b.translation(), r = b.rotation(); p.mesh.position.set(t.x, t.y, t.z); p.mesh.quaternion.set(r.x, r.y, r.z, r.w); }
     for (const b of this.bodies) b.setEnabled(false);
+    for (const k in this.parts) this.parts[k].rec.off = true; // physics.capture skips them
     this.group.visible = false;
     this.bubble = null;
     this.parked = true;
@@ -226,6 +227,7 @@ export class NPC extends Player {
     if (!this.parked) return;
     const { x, z } = this.parkPos;
     for (const b of this.bodies) b.setEnabled(true);
+    for (const k in this.parts) this.parts[k].rec.off = false; // teleport below snaps them
     this.wake(false); this.recover = 1; this.state = 'normal'; this.mantle = null;
     this.teleport(x, this.groundY(x, z, (this.parkPos.y || 0) + 2.5), z, this.yaw);
     this.group.visible = true;

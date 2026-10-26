@@ -166,7 +166,9 @@ export function buildPresents(game) {
 
   // touch check at physics rate: chest or either hand within reach of the box
   const hand = new THREE.Vector3();
+  let tick = 0;
   game.steppers.push(() => {
+    if (tick++ % 3) return; // 20 checks a second is plenty
     for (const pr of list) {
       if (pr.found) continue;
       const c = place(pr);

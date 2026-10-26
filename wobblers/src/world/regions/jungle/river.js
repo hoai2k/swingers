@@ -179,7 +179,7 @@ export function buildRiver(game, kit, R) {
   // ---- river current: pushes floating things and swimmers toward the sea ------------
   const objs = game.physics.objects;
   let k = 0;
-  game.steppers.push(() => {
+  game.steppers.push(game.whenNear(-455, 850, 260, () => {
     if ((k++ & 1)) return;
     const push = (body, mass, x, z, scale) => {
       const [d, s] = polyDist(x, z, RIVER);
@@ -201,7 +201,7 @@ export function buildRiver(game, kit, R) {
       if (t.x < -580 || t.x > -330 || t.z < 800 || t.z > 900) continue;
       for (const b of p.bodies) push(b, b.mass(), t.x, t.z, 0.6);
     }
-  });
+  }));
 
   // ---- RAFT RIDE --------------------------------------------------------------------
   const S0 = [-551, 814];

@@ -118,7 +118,8 @@ function ferrisWheel(game, kit, cx, cz) {
     cabins.push(body);
     for (const s of [1, -1]) addSeat(game, { body, pos: [0, -0.2, s * 0.55], yaw: s > 0 ? Math.PI : 0, label: 'Ride', hint: 'Enjoy the view! · Y exit', exit: [0, -0.2, s * 2.2], exitPush: 1.5 });
   }
-  game.physics.animators.push((t) => {
+  for (const b of [wheel, ...cabins]) game.physics.kinRange.set(b.handle, 700); // a big landmark, seen from afar
+  game.physics.animate(wheel, (t) => {
     const ang = t * 0.07;
     _q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), ang);
     setPose(wheel, { x: cx, y: H, z: cz }, _q);
@@ -176,11 +177,11 @@ function carousel(game, kit, cx, cz) {
   // horses are children of the platform mesh
   const platMesh = game.physics.objects[game.physics.objects.length - 1].mesh;
   for (const h of horses) platMesh.add(h.m);
-  game.physics.animators.push((t) => {
+  game.physics.animate(plat, (t) => {
     _q.setFromAxisAngle(UP, t * 0.45);
     setPose(plat, { x: cx, y: 0.45, z: cz }, _q);
   });
-  game.updaters.push((dt, t) => { for (const h of horses) h.m.position.y = 0.95 + Math.sin(t * 2.2 + h.phase) * 0.18; });
+  game.updaters.push(game.whenNear(cx, cz, 220, (dt, t) => { for (const h of horses) h.m.position.y = 0.95 + Math.sin(t * 2.2 + h.phase) * 0.18; }));
 }
 
 function swingRide(game, kit, cx, cz) {
@@ -211,7 +212,7 @@ function swingRide(game, kit, cx, cz) {
     addSeat(game, { body, pos: [0, 0.18, 0], yaw: 0, label: 'Swing ride', hint: 'Hold on! · Y exit', exit: [0, 0.2, 0.9] });
   }
   let ang = 0, w = 0;
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(chairs[0], (t, dt) => {
     const c = t % 40;
     const target = c < 8 ? 0 : c < 34 ? 1.15 : 0;
     w += Math.max(-0.12, Math.min(0.12, target - w)) * dt * 2.5 * 4;
@@ -262,7 +263,8 @@ function dropTower(game, kit, cx, cz) {
     addSeat(game, { body: ring, pos: [Math.sin(a) * 2.0, -0.15, Math.cos(a) * 2.0], yaw: a, label: 'Drop tower', hint: 'Here we go… · Y exit', exit: [Math.sin(a) * 3.3, 0, Math.cos(a) * 3.3], exitPush: 1.5 });
   }
   const low = 1.2, high = 31;
-  game.physics.animators.push((t) => {
+  game.physics.kinRange.set(ring.handle, 700); // a big landmark, seen from afar
+  game.physics.animate(ring, (t) => {
     const c = t % 34;
     let y;
     if (c < 8) y = low;
@@ -426,7 +428,8 @@ function coaster(game, kit) {
   const hTop = P[4].y + 0.8;
   const mod = (x) => ((x % L) + L) % L;
   let s0 = sStation, v = 0, wait = 5, traveled = 0;
-  game.physics.animators.push((t, dt) => {
+  for (const b of cars) game.physics.kinRange.set(b.handle, 400); // the coaster loop is big: the whole train runs while anyone is near it
+  game.physics.animate(cars[0], (t, dt) => {
     const p = new THREE.Vector3(), q = new THREE.Quaternion();
     if (wait > 0) { wait -= dt; v = 0; traveled = 0; }
     else {

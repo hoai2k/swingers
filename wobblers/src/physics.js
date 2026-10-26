@@ -24,6 +24,7 @@ export class Physics {
     this.staticBody = this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
     this.objects = [];        // {body, mesh, buoy}
     this.animators = [];      // fn(t, dt)
+    this.kinRange = new Map(); // kinematic body handle -> metres it stays live from a player (simcull.js; default 220)
     this.bouncy = new Map();  // collider handle -> bounce speed
     this.slippery = new Set();// collider handle
     this.waterBoxes = [];     // {minX,maxX,minZ,maxZ,minY,level}
@@ -153,9 +154,19 @@ export class Physics {
     b.setAngvel({ x: av.x * k, y: av.y * k, z: av.z * k }, true);
   }
 
+  // An animator tied to a kinematic body: it only runs while that body is
+  // switched on (simcull.js turns rides off far from every player; give big
+  // landmarks a longer reach with kinRange.set(body.handle, metres)).
+  animate(body, fn, range) {
+    fn.body = body;
+    if (range) this.kinRange.set(body.handle, range);
+    this.animators.push(fn);
+    return fn;
+  }
+
   step() {
     this.time += DT;
-    for (const a of this.animators) a(this.time, DT);
+    for (const a of this.animators) if (!a.body || a.body.isEnabled()) a(this.time, DT);
     for (const o of this.objects) this.applyBuoyancy(o);
     this.world.step(this.events);
     this.capture();
@@ -176,6 +187,7 @@ export class Physics {
   untrack(rec) { this.records.delete(rec); }
   capture() {
     for (const r of this.records) {
+      if (r.off) continue; // switched-off body (parked NPC, culled prop / ride): pose can't change
       r.p0.copy(r.p1); r.q0.copy(r.q1);
       const t = r.body.translation(), q = r.body.rotation();
       r.p1.set(t.x, t.y, t.z); r.q1.set(q.x, q.y, q.z, q.w);
@@ -193,7 +205,9 @@ export class Physics {
     for (const o of this.objects) {
       if (!o.mesh) continue;
       if (!o.rec) o.rec = this.track(o.body);
+      if (o.rec.off && o.rec.posed) continue;
       this.pose(o.rec, o.mesh);
+      o.rec.posed = o.rec.off;
     }
   }
 

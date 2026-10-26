@@ -49,7 +49,7 @@ export function buildVolcano(game, kit, R) {
   const smokeMat = new THREE.SpriteMaterial({ map: puffTexture(), color: 0x8a8580, transparent: true, opacity: 0.5, depthWrite: false, fog: false });
   const puffs = [];
   for (let i = 0; i < 12; i++) { const s = new THREE.Sprite(smokeMat.clone()); s.userData.noCull = true; game.scene.add(s); puffs.push(s); }
-  game.updaters.push((dt, t) => {
+  game.updaters.push(game.whenNear(cx, cz, 900, (dt, t) => {
     tex.offset.set(t * 0.01, t * 0.013);
     tex.rotation = t * 0.01;
     glowMat.opacity = 0.25 + 0.15 * Math.sin(t * 1.7);
@@ -65,7 +65,7 @@ export function buildVolcano(game, kit, R) {
       s.scale.setScalar(8 + k * 26);
       s.material.opacity = 0.55 * (1 - k) * Math.min(1, k * 6);
     });
-  });
+  }));
   // ---- the lava flings you ----------------------------------------------------------
   const cool = new Map();
   const fling = (bodies, mass, x, z, who) => {
@@ -77,7 +77,7 @@ export function buildVolcano(game, kit, R) {
     tone(game, { x, y: LAVA.y, z }, 180, 900, 0.5, 0.25, 'sawtooth');
     void mass; void who;
   };
-  game.steppers.push(() => {
+  game.steppers.push(game.whenNear(cx, cz, 120, () => {
     for (const p of game.players) {
       const t = p.hips.translation();
       if (t.y > LAVA.y + 1.0 || Math.hypot(t.x - cx, t.z - cz) > LAVA.r + 2.5) continue;
@@ -104,7 +104,7 @@ export function buildVolcano(game, kit, R) {
       cool.set(v, game.physics.time + 0.8);
       fling([v.body], 0, t.x, t.z);
     }
-  });
+  }));
   game.lava = { ...LAVA, cool };
 
   // ---- trail furniture: start sign, marker posts, the rim stairs and viewing ledge -----

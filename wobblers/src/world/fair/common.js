@@ -4,15 +4,17 @@
 // and the timing helpers the ride animators use.
 //
 // Rides only animate while a player is within ACTIVE_R of the fair (checked
-// every 30 steps); far away they just stand still where they stopped.
+// every 30 steps) and within the ride's own RIDE_RANGE (animate()); far away
+// they just stand still where they stopped.
 import * as THREE from 'three';
 import { kinematic, setPose } from '../park.js';
 import { addSeat } from '../playground.js';
 import { matVC, GLOW, Builder, RoundedBoxGeometry } from '../../mesh.js';
-import { CENTRE } from './layout.js';
+import { CENTRE, RIDES } from './layout.js';
 
 export { setPose };
-export const ACTIVE_R = 400;
+export const ACTIVE_R = 700;
+const RIDE_RANGE = { default: 220, train: 280, ferris: 700, droptower: 700 }; // metres from a player
 
 // colours that light up at night (string lights, ride bulbs, neon); unique to the fair
 export const BULB = 0xffd27a, BULB2 = 0xff7b3a, NEON_CYAN = 0x6ff6ff, NEON_PURPLE = 0xc77dff, NEON_PINK = 0xff6ad5;
@@ -56,7 +58,9 @@ export class FairRides {
   // A kinematic body at pos {x, y, z} with colliders and (optionally) its own mesh.
   body(pos, descs = [], mesh = null) {
     if (mesh) mesh.castShadow = true;
-    return kinematic(this.game, pos, descs, mesh, this.group);
+    const b = kinematic(this.game, pos, descs, mesh, this.group);
+    (this.newBodies ||= []).push(b); // given its ride's range in animate()
+    return b;
   }
 
   // One draw call for many bodies with the same look: builders = [{ b: Builder, tint: bool }],
@@ -103,11 +107,18 @@ export class FairRides {
     return s;
   }
 
-  // An animator that only runs while someone is near the fair; runs once now to pose the ride.
+  // An animator that only runs while someone is near the ride (RIDE_RANGE; the
+  // big ones, seen from far, keep turning further out); runs once now to pose
+  // the ride. The ride's bodies (made since the last animate) get the same
+  // range in simcull's kinematic culling.
   animate(name, fn) {
     this.rides[name] = { fn };
     fn(0, 1 / 60);
-    this.game.physics.animators.push((t, dt) => { if (this.active) fn(t, dt); });
+    const at = RIDES[name] || CENTRE, r = RIDE_RANGE[name] || RIDE_RANGE.default;
+    for (const b of this.newBodies || []) this.game.physics.kinRange.set(b.handle, r);
+    this.newBodies = [];
+    const run = this.game.whenNear(at.x, at.z, r, fn);
+    this.game.physics.animators.push((t, dt) => { if (this.active) run(t, dt); });
   }
 
   // The ride's name board on two posts, facing `yaw`, at height y (sign centre).

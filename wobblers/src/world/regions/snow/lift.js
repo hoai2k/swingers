@@ -86,7 +86,7 @@ export function buildLift(game, kit, R) {
   chairs.forEach((c, i) => im.setColorAt(i, tint.setHex(c.color).lerp(new THREE.Color(0xffffff), 0.15)));
   game.scene.add(im);
 
-  game.physics.animators.push((t, dt) => {
+  game.physics.animators.push(game.whenNear(X, (zb + zt) / 2, 900, (t, dt) => {
     for (const c of chairs) {
       c.prev.x = c.p.x; c.prev.y = c.p.y; c.prev.z = c.p.z; c.prev.yaw = c.p.yaw;
       c.s = (c.s + speedAt(c.p.z) * dt) % LEN;
@@ -106,9 +106,9 @@ export function buildLift(game, kit, R) {
         }
       }
     }
-  });
+  }));
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), Y = new THREE.Vector3(0, 1, 0);
-  game.updaters.push(() => {
+  game.updaters.push(game.whenNear(X, (zb + zt) / 2, 900, () => {
     const a = game.physics.alpha ?? 1;
     chairs.forEach((c, i) => {
       let dy = c.p.yaw - c.prev.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
@@ -117,7 +117,7 @@ export function buildLift(game, kit, R) {
       im.setMatrixAt(i, m4.compose(v, q, one));
     });
     im.instanceMatrix.needsUpdate = true;
-  });
+  }));
 
   // ---- towers and cables
   for (const [z, y] of towers) {

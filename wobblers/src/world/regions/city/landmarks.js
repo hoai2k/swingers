@@ -212,7 +212,8 @@ function towerCrane(game, kit, R, x, z, fx, fz) {
   game.physics.objects.push({ body, mesh, buoy: null, kind: 'ride' });
   // aim the girder over the frame now and then: a slow back-and-forth sweep
   const a0 = Math.atan2(fx - x, fz - z), q = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0);
-  game.physics.animators.push((t) => {
+  game.physics.kinRange.set(body.handle, 900); // a big landmark, seen from afar
+  game.physics.animate(body, (t) => {
     const a = a0 + Math.sin(t * 0.07) * 1.6;
     q.setFromAxisAngle(UP, a);
     body.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w });

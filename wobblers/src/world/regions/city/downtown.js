@@ -88,7 +88,7 @@ function revolvingDoor(game, kit, L, lx, lz) {
   const j = W.createImpulseJoint(RAPIER.JointData.revolute({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0, y: 1, z: 0 }), hub, o.body, true);
   j.configureMotorVelocity(0.55, 3);
   // keep it turning (a sleeping body ignores its motor)
-  game.steppers.push(() => { if (o.body.isSleeping()) o.body.wakeUp(); });
+  game.steppers.push(() => { if (!o.culled && o.body.isSleeping()) o.body.wakeUp(); }); // (culled far away: simcull.js)
   return o;
 }
 
@@ -156,7 +156,7 @@ function elevator(game, kit, SX, SZ, top) {
   };
   const toggle = () => go(st.y < (yB + yT) / 2 ? yT : yB);
   const inside = (p) => { const t = p.hips.translation(); return Math.abs(t.x - SX) < HX && Math.abs(t.z - SZ) < HZ && t.y > st.y - 0.2 && t.y < st.y + 2.8; };
-  game.physics.animators.push((t, dt) => {
+  game.physics.animate(body, (t, dt) => {
     if (st.moving) {
       st.t += dt;
       const u = Math.min(1, st.t / st.T), s = u * u * (3 - 2 * u);
