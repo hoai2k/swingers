@@ -386,3 +386,80 @@ Against four flyers, damage dealt while they were in the air went from 329 → 2
 the Tree Giant throws at flyers, and ground-only attacks (Bone Mage spikes, catapult
 lobs) pick targets on the ground. Scores after the change (4 runs): Void Monarch
 −0.02, Tree Giant −0.06, Bone Mage +0.05, Catapult −0.12.
+
+## Jujutsu Kaisen: the students (`src/packs/jjk-students.js`)
+
+Priced against the reference panel at equal gold (`run.mjs --runs 4`, 36 battles per
+unit, sides swapped). Inumaki is support, so he is also scored inside a Squire line
+with a quarter of the gold. Rika (`jk_rika`) is Yuta's reserve (cost 0, not in any
+setup tab): she is part of Yuta's price, and the harness doesn't count her hp as gold
+left standing, so Yuta's score slightly understates him.
+
+First drafts were weak: bare fists (item `none`) out-reached by every weapon and units
+knocked flat for seconds (Yuji −0.52, Todo −0.70, Panda −0.49). Fists became a short
+pack item (`jk_fist`, like the Brawler's), the fighters get back up quickly (Yuji,
+Todo, Maki, Panda), Todo's punches sweep, and then prices moved:
+
+| unit | cost | hp | role | alone | in line (25%) | notes |
+|---|---:|---:|---|---:|---:|---|
+| Yuji Itadori (`jk_yuji`) | 520 → **430** | 470 → 520 | brawler | −0.05 | | Divergent Fist (+45% a beat later), Black Flash 12% (+25% for 6 s after one), ×2.5 |
+| Aoi Todo (`jk_todo`) | 900 → **680** | 1000 → 1100 | brawler | +0.09 | | Boogie Woogie every 7 s; beats knights (+0.62), loses a little to squire walls |
+| Nobara Kugisaki (`jk_nobara`) | 250 → **310** | 150 | ranged | +0.15 | | 3 nails per blow, Hairpin 14 per nail, Resonance 40 every 5.5 s; crushes giants and kings, loses to rushes (like every ranged unit) |
+| Kento Nanami (`jk_nanami`) | 640 → **470** | 560 → 600 | melee | −0.02 | | Ratio 30% (55% on Overtime) ×2.4; Overtime from 30 s: +35% damage, faster |
+| Maki Zen'in (`jk_maki`) | 560 → **460** | 420 | melee | −0.11 | | Split Soul every 3rd hit ignores armour; awakens once below 30% (back to 55%) |
+| Panda (`jk_panda`) | **600** | 640 | brawler | −0.00 | | Gorilla Core once (55% hp): Drumming Beat +60% through guards, +50% to the one behind |
+| Toge Inumaki (`jk_inumaki`) | 300 → **560** | 150 | support | −0.81 | +0.06 | "Don't move!" 2.4 → 2.0 s freeze; at 300 he was +0.41 in line |
+| Yuta Okkotsu (`jk_yuta`) | **1500** | 560 | special grade | −0.10 | | Rika (950 hp) 12 s when in trouble, full manifestation below 30%; domain r 9 m, 6 s, power 9; −1.00 vs gunslingers |
+
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jk_yuji,jk_todo,jk_nobara,jk_nanami,jk_maki,jk_panda,jk_inumaki,jk_yuta,squire+jk_inumaki@0.25 --runs 4 --out /tmp/jks.jsonl
+    node battles/dev/balance/report.mjs /tmp/jks.jsonl
+
+## Jujutsu Kaisen: the strongest (Gojo, Sukuna, Megumi, Mahoraga)
+
+`src/packs/jjk-strongest.js`, priced alone against the reference panel, 4 battles per
+pairing (36 per unit), sides swapped. Summoned reserves (Megumi's shikigami and his
+ritual Mahoraga) now count toward their summoner's gold in the harness
+(`dev/balance/lib.mjs valueLeft`: a summoner's slot is worth its cost times the best hp
+fraction of itself or any summon still standing), so a shikigami adds no value of its
+own and Megumi's gold lives on in Mahoraga after the ritual.
+
+| unit | cost | hp | role | score | notes |
+|---|---:|---:|---|---:|---|
+| Satoru Gojo (`jk_gojo`) | **3500** | 620 | hero | +0.09 | first draft at 2600 scored +0.60; Red 70→48 (blast 3.0→2.4), Purple 240→200, Infinity 7 s on / 2.2 off → 6 / 2.8, Void 5→3.5 s, awakening heal 40→30%. Crushes swarms (+0.67), loses to archers, gunslingers and kings in the Infinity gaps |
+| Ryomen Sukuna (`jk_sukuna`) | **3300** | 1700 | boss | +0.03 | 2700 → +0.39; Dismantle 42→38, shrine 13→11 per 0.35 s tick. Flattens melee blobs (+1.0 vs clubbers), dies to massed ranged (−0.8…−0.95) |
+| Megumi Fushiguro (`jk_megumi`) | **1200** | 380 | summoner | −0.05 | 900 → +0.67 once the ritual's Mahoraga counted; the ritual Mahoraga now leaves after 20 s |
+| Mahoraga (`jk_mahoraga`) | **3400** | 2100 | boss | +0.05 | damage 120→160; adapts (−30% per click, up to −85%, per kind of harm, 140 dmg a click) |
+
+The shikigami (`jk_dog_white`, `jk_dog_black`, `jk_nue`, `jk_toad`, `jk_elephant`) are
+not sold (faction `jjk_shiki`) and are not priced on their own.
+
+    node battles/dev/balance/run.mjs --units jk_gojo,jk_sukuna,jk_megumi,jk_mahoraga --runs 4 --procs 3 --out /tmp/jjk-strongest.jsonl
+    node battles/dev/balance/report.mjs /tmp/jjk-strongest.jsonl
+
+## Jujutsu Kaisen: the curses (`src/packs/jjk-curses.js`)
+
+Priced with the harness against the reference panel at equal gold, sides swapped, 4
+battles per pairing (36 per unit). Summons (Geto's Stored Curses, Mahito's Transfigured
+Humans) are reserves with cost 0, so they fight but add nothing to the score. Three
+rounds of 2-battle drafts moved the prices; the final 4-battle round:
+
+| unit | cost | hp | role | first draft | final avg | notes |
+|---|---:|---:|---|---:|---:|---|
+| Toji Fushiguro (`jk_toji`) | **1000** | 640 | assassin | +0.07 | +0.13 | fast leaps + Playful Cloud; beats blobs and knights, loses to gunslingers and the King |
+| Dagon (`jk_dagon`) | 950 → **1050** | 1200 | caster | +0.12 | +0.08 | fish swarms; domain (r 9, 7 s, 14 per 0.5 s) once 4+ enemies are close |
+| Mahito (`jk_mahito`) | 1050 → **850** | 470 | melee | −0.11 | +0.01 | +42 soul damage per touch; kills (and victims under 30% hp) become his transfigured humans (5 reserves); regen 9/s; domain (r 7, 4.5 s, 34 per 0.6 s) |
+| Jogo (`jk_jogo`) | 1100 → **1250** | 430 | caster | +0.21 | −0.01 | Ember Insects (4 × 20 + burn), Meteor every 15 s (170, r 4.6, burn); domain (r 8, 6 s, 12 + burn) |
+| Hanami (`jk_hanami`) | 750 → **1150** | 980 → 820 | bruiser | +0.58 | −0.00 | armor 0.3 → 0.22; polarised: flattens cheap melee (+0.97), loses to knights and elites |
+| Suguru Geto (`jk_geto`) | 1150 → **700** | 520 | summoner | −0.76 | −0.06 | curses out 2 at a time (6 stored, up to 4 out; 120 → 170 hp, 24 → 30 dmg); Uzumaki 70 + 35 per curse |
+| Choso (`jk_choso`) | 430 → **540** | 300 | ranged | +0.32 | +0.02 | Piercing Blood 54 through a whole line every 3.8 s; Supernova 50 when crowded |
+| Kinji Hakari (`jk_hakari`) | 900 → **600** | 560 | brawler | −0.39 | +0.07 | domain does no damage (a daze); 16% jackpot chance per spin: 14 s of 120 hp/s regen, +60% damage, +25% speed |
+| Fly Head (`jk_flyhead`) | 30 → **26** | 58 | swarm | −0.18 | −0.11 | beats archers and gunslingers by mobbing them, loses to anything sturdier |
+
+All nine are within ±0.2 of even (standard error about ±0.05). Domains clash only with
+other domains, and the secrets need Gojo or Yuji, so neither shows against the panel.
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jk_toji,jk_dagon,jk_mahito,jk_jogo,jk_hanami,jk_geto,jk_choso,jk_hakari,jk_flyhead --runs 4 --out /tmp/jkc.jsonl
+    node battles/dev/balance/report.mjs /tmp/jkc.jsonl

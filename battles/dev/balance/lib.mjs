@@ -130,8 +130,20 @@ function mulberry32(a) {
 }
 
 // hp-weighted gold still standing, per team
+// Summoned reserves (shikigami and the like, def.reserve) are part of their summoner's
+// gold, not extra value of their own: a summoner's slot is worth its cost times the
+// best hp fraction of itself or any of its summons still standing (so Megumi's gold
+// lives on in Mahoraga after the ritual, and a summon adds nothing while he stands).
 function valueLeft(bt, t) {
-  return bt.teams[t].reduce((s, u) => s + (u.alive ? u.def.cost * Math.max(0, Math.min(1, u.hp / u.maxHp)) : 0), 0);
+  const best = new Map();
+  for (const u of bt.teams[t]) {
+    if (!u.alive) continue;
+    const k = u.reserveOf || u, f = Math.max(0, Math.min(1, u.hp / u.maxHp));
+    best.set(k, Math.max(best.get(k) || 0, f));
+  }
+  let s = 0;
+  for (const [k, f] of best) s += k.def.cost * f;
+  return s;
 }
 
 // One battle. a plays team (swap ? 1 : 0). Returns score for a in [-1, 1]:
