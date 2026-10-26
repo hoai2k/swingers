@@ -148,6 +148,16 @@ Keyboard fallback for both players is listed on the title screen's *Controls* pa
 - `src/visual.js` unit meshes (baked per part), faces, hats, weapons, portraits
 - `src/world.js` maps/terrain/scenery · `src/fx.js` particles · `src/audio.js` synthesised sfx, voices, music
 - `src/maps-new.js` feature maps (castle, river, cove, volcano, canyon, graveyard) · `src/features.js` hills, plateaus, water, bridges, walls and breakables: height grid, colliders, AI steering, placement checks, projectile blocking (all mirrored through the centre for fairness) · `src/mapscene.js` their meshes and set dressing
+- `src/packs/` the faction packs (registered through `src/ext.js`, listed in `src/packs/index.js`).
+  The newest, `src/packs/jujutsu.js`, is the **Jujutsu** faction (cursed-energy sorcerers, an
+  original take on the anime genre): Cursed Spirit (cheap many-eyed swarm), Cursed Brawler
+  (fists, random "black flash" crits), Nail Witch (nails at range; a straw doll hurts the last
+  one nailed), Shadow Summoner (two shadow wolves rise from his shadow: kinematic extra bodies
+  that hunt for a while), Cursed Speaker (one word knocks down a cone of enemies), Blindfolded
+  Sorcerer (hero: "infinity" stops shots and blows short of him on and off; a void orb ploughs
+  a line) and the Four-Armed King (boss: invisible cuts around him and a domain dome where cuts
+  hit everyone inside). Its tab emblem (`assets/ui/faction-jujutsu.png`) is requested; until
+  it arrives the tab shows the name only.
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 
 Vendored: three.js r170 (`vendor/three.module.min.js`), Rapier 0.14 compat (`vendor/rapier.es.js`).

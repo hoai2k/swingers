@@ -250,3 +250,29 @@ reference panel; +1 flawless win, −1 flawless loss): archer −0.02 (was +0.06
 skeleton archer −0.01, gunslinger −0.03, spear thrower −0.05, musketeer −0.09,
 flintlock −0.09. They now lose to clubbers and squires (−0.4 to −0.97) and still beat
 giants and kings (+0.4 to +0.96).
+
+## Jujutsu faction (new units)
+
+Priced with the same harness: 6 battles per pairing against the reference panel (54 per
+unit), sides swapped. Support units are also scored in a Squire line with 25% of the
+gold. First drafts (2 runs per pairing) were far off: the Four-Armed King at 2400 scored
++0.42 (the domain flattened every melee blob), the Shadow Summoner at 280 +0.49 (the
+wolves are rarely targeted), Cursed Spirits at 40 with fists −0.70 and Brawlers −0.24
+(fists are out-reached by every sword). Fists became short pack items (`jj_fist`,
+`jj_claw`, like the Monk's palm), and prices and numbers moved to the final values:
+
+| unit | cost | hp | role | alone | in line (25%) | notes |
+|---|---:|---:|---|---:|---:|---|
+| Cursed Spirit (`jj_spirit`) | **35** | 80 | cheap swarm | −0.10 | | beats archers and gunslingers by mobbing them, loses to anything sturdier |
+| Cursed Brawler (`jj_brawler`) | **125** | 160 | melee | −0.05 | | 20% black flash: 2.5× damage, big knockback |
+| Nail Witch (`jj_nail`) | **160** | 95 | ranged | −0.03 | | cooldown 2.9 s (in line with the reload pass); resonance 30 dmg at most every 5 s; loses to rushes, beats giants and kings |
+| Shadow Summoner (`jj_shadow`) | **420** | 120 | summoner | +0.08 | −0.04 | two wolves (90 hp, 20 per bite) for 11 s, 4 s between summons; polarised: +0.85…+1.0 vs giants and kings, −0.86 vs gunslingers |
+| Cursed Speaker (`jj_speaker`) | **200** | 105 | support | −0.57 | +0.02 | knock-down cone every 7 s; alone it stalls (13 of 54 battles hit the time cap) |
+| Blindfolded Sorcerer (`jj_sorcerer`) | **1450** | 460 | hero | −0.01 | | infinity 6 s on / 3 s off; orb 110 dmg every 5.5 s; beats ranged (+0.45…+0.79), loses to giants and kings |
+| Four-Armed King (`jj_king`) | **2800** | 2000 | boss | +0.07 | | 4 cuts of 50 per 1.4 s within 6.5 m; domain (r 8 m, 4 s, 12 per 0.4 s tick, allies take half) every 14 s once 4+ enemies are close; beats blobs, loses to knights and the mixed army |
+
+Every one is within ±0.10 of even (standard error about ±0.05; the elites are lumpier).
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jj_spirit,jj_brawler,jj_nail,jj_shadow,jj_speaker,jj_sorcerer,jj_king,squire+jj_speaker@0.25,squire+jj_shadow@0.25 --runs 6 --procs 4 --out /tmp/jj.jsonl
+    node battles/dev/balance/report.mjs /tmp/jj.jsonl
