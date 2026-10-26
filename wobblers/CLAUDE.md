@@ -55,6 +55,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `game.farCull` switches `chunk.mesh` / `chunk.far`. Parked NPCs stay visible
   (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
   Audio starts on the first controller press too (`game.wakeAudio`).
+  Resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame
+  time); Settings > Show FPS shows `game.perf` (ms per frame, physics+game, render, draw calls,
+  triangles). Instanced meshes that never move far should get a bounding sphere and
+  `frustumCulled = true` (the fair's rides were drawn in every view and shadow pass); keep
+  world-wide instanced sets (coins) out of the shadow pass.
 - Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds
   in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
   `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`

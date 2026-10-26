@@ -78,7 +78,7 @@ function cloudGeometry() {
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const blobs = [[0, 0, 0, 1], [1.1, -0.15, 0.2, 0.75], [-1.05, -0.2, -0.1, 0.7], [0.45, 0.35, -0.3, 0.7], [-0.4, 0.25, 0.35, 0.65], [1.9, -0.35, 0, 0.45], [-1.8, -0.35, 0.15, 0.45]];
   for (const [x, y, z, r] of blobs) {
-    const g = new THREE.IcosahedronGeometry(r, 2);
+    const g = new THREE.IcosahedronGeometry(r, 1); // soft enough at sky distance, a third of the triangles
     g.translate(x, y, z);
     parts.push(g);
   }

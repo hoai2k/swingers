@@ -38,7 +38,7 @@ import { injectCSS } from './map.js';
 import { meshHeight } from './terrain.js';
 
 export const WAKE_R = 80, SLEEP_R = 95, CAP = 18;
-const SHOW_R = 130; // parked NPCs this close to a player stay visible, standing still
+const SHOW_R = 100; // parked NPCs this close to a player stay visible, standing still
 const NPC_SLOTS = 5;                 // player indices 8..12 -> collision bits 11..15
 const HEAD_R = 0.31 * S, HAND_OFF = -0.13 * S;
 const r01 = () => Math.random();

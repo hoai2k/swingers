@@ -1,6 +1,7 @@
 // Game: renderer, split-screen views, fixed-step physics loop, players.
 import { buildSimCull } from './simcull.js';
 import * as THREE from 'three';
+import { settings } from './settings.js';
 import './look.js';
 import { Sky } from './sky.js';
 import { Physics, RAPIER } from './physics.js';
@@ -33,6 +34,7 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(0xbfe6ff, 140, 620);
     this.renderStats = { calls: 0, triangles: 0 };
+    this.perf = { step: 0, render: 0, frame: 0, dt: 0 }; // ms of the last frame (Settings > Show FPS)
     this.time = 0;
     this.players = [];
     this.vehicles = [];
@@ -210,8 +212,21 @@ export class Game {
     }
   }
 
+  // Auto resolution (settings.res = 0): frames averaging over ~22 ms for 2 s drop the
+  // render scale a step (down to 60%), comfortably fast frames for 6 s raise it again.
+  adaptResolution(dt) {
+    const A = this.adapt ||= { avg: 1 / 60, slow: 0, fast: 0 };
+    A.avg += (dt - A.avg) * 0.1;
+    if (settings.res !== 0 || !this.players.length || this.paused) { A.slow = A.fast = 0; return; }
+    if (A.avg > 0.022) { A.fast = 0; if ((A.slow += dt) > 1.5 && this.resScale > 0.6) { this.setResScale(Math.round((this.resScale - 0.1) * 10) / 10); A.slow = 0; } }
+    else if (A.avg < 0.0172) { A.slow = 0; if ((A.fast += dt) > 6 && this.resScale < 1) { this.setResScale(Math.round((this.resScale + 0.1) * 10) / 10); A.fast = 0; } }
+    else A.slow = A.fast = 0;
+  }
+
   frame(dt) {
     dt = Math.max(0, Math.min(dt, 0.1));
+    this.adaptResolution(dt);
+    const tFrame = performance.now();
     this.time += dt;
     this.input.poll();
     this.wakeAudio();
@@ -228,7 +243,9 @@ export class Game {
       let n = 0;
       // at most two physics steps per frame: on a slow frame the world runs a
       // little slow instead of spending even longer catching up (and falling further behind)
+      const tStep = performance.now();
       while (this.acc >= DT && n < 2) { this.step(); this.acc -= DT; n++; }
+      this.perf.step = performance.now() - tStep;
       if (n === 2) this.acc = Math.min(this.acc, DT);
       this.physics.recover();
       this.physics.alpha = Math.min(1, this.acc / DT);
@@ -238,7 +255,11 @@ export class Game {
     for (const p of this.players) p.sync();
     for (const v of this.vehicles) v.sync();
     this.audio.updateEngines(this.vehicles);
+    const tRender = performance.now();
     this.render(dt);
+    const P = this.perf;
+    P.render = performance.now() - tRender; P.frame = performance.now() - tFrame; P.dt = dt;
+    if (settings.showFps) this.ui.perfOverlay?.(P);
   }
 
   views() {
@@ -382,7 +403,7 @@ export class Game {
     if (this.players.length) {
       const groups = this.shadowGroups(views);
       // players apart need one shadow pass each: use a smaller map so those passes stay cheap
-      const want = groups.length > 1 ? 1024 : 2048;
+      const want = this.players.length > 1 ? 1024 : 2048; // split screen: a smaller map for every shadow pass
       if (this.sun.shadow.mapSize.x !== want) {
         this.sun.shadow.mapSize.set(want, want);
         if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }

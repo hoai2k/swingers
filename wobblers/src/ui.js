@@ -112,7 +112,12 @@ function sharedSettingItems(ui) {
     { label: 'Music volume', slider: settings.music, adj: (d) => { settings.music = Math.max(0, Math.min(1, Math.round(settings.music * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); } },
     { label: 'Sound effects', slider: settings.sfx, adj: (d) => { settings.sfx = Math.max(0, Math.min(1, Math.round(settings.sfx * 10 + d) / 10)); g.audio.setVolumes?.(); saveSettings(); ui.sfx('pop'); } },
     { label: 'Shadows', value: g.shadows ? 'On' : 'Off', adj: () => { g.shadows = !g.shadows; settings.shadows = g.shadows; saveSettings(); } },
-    { label: 'Resolution', value: Math.round(g.resScale * 100) + '%', adj: (d) => { const v = [0.5, 0.75, 1], i = Math.max(0, Math.min(2, v.indexOf(nearest(v, g.resScale)) + d)); g.setResScale(v[i]); settings.res = v[i]; saveSettings(); } },
+    // 0 = auto: game.adaptResolution lowers / raises it to keep frames smooth
+    { label: 'Resolution', value: settings.res === 0 ? `Auto (${Math.round(g.resScale * 100)}%)` : Math.round(settings.res * 100) + '%', adj: (d) => {
+      const v = [0, 0.5, 0.75, 1], i = Math.max(0, Math.min(3, v.indexOf(settings.res) + d));
+      settings.res = v[i]; g.setResScale(v[i] || 1); saveSettings();
+    } },
+    { label: 'Show FPS', value: settings.showFps ? 'On' : 'Off', adj: () => { settings.showFps = !settings.showFps; saveSettings(); ui.perfOverlay?.(null); } },
     ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
   ];
 }
@@ -431,7 +436,7 @@ export class UI {
     buildMapImage(game); // the island map picture, painted once
     // apply stored settings
     game.shadows = settings.shadows;
-    if (settings.res !== 1) game.setResScale?.(settings.res);
+    if (settings.res && settings.res !== 1) game.setResScale?.(settings.res); // 0 = auto: starts at full
     game.input.prefs = (id) => devicePrefs(id);
     game.canvas.addEventListener('click', () => {
       if (game.players.some((p) => p.deviceId === 'kb1' && !this.panels.has(p))) game.input.lockMouse();
@@ -499,6 +504,27 @@ export class UI {
     }, 250);
     this.refreshCorner();
   }
+  // Settings > Show FPS: frame rate and where the frame time goes (ms), refreshed twice a second.
+  perfOverlay(P) {
+    let el = this.perfEl;
+    if (!settings.showFps || !P) { if (el) el.style.display = 'none'; return; }
+    if (!el) {
+      el = this.perfEl = document.createElement('div');
+      Object.assign(el.style, { position: 'fixed', left: '50%', bottom: '6px', transform: 'translateX(-50%)', zIndex: 41, pointerEvents: 'none',
+        font: '700 12px/1.3 ui-monospace, monospace', color: '#fff', background: 'rgba(10,20,40,.6)', padding: '3px 10px', borderRadius: '10px', whiteSpace: 'nowrap' });
+      document.body.appendChild(el);
+      this.perfAcc = { n: 0, dt: 0, step: 0, render: 0, frame: 0, t: 0 };
+    }
+    el.style.display = '';
+    const A = this.perfAcc, g = this.game;
+    A.n++; A.dt += P.dt; A.step += P.step; A.render += P.render; A.frame += P.frame;
+    const now = performance.now();
+    if (now - A.t < 500) return;
+    const f = (x) => (x / A.n).toFixed(1), rs = g.renderStats;
+    el.textContent = `${Math.round(A.n / A.dt)} fps · ${f(A.dt * 1000)} ms/frame · physics+game ${f(A.step)} · render ${f(A.render)} · cpu ${f(A.frame)} · ${rs.calls} calls ${(rs.triangles / 1e6).toFixed(2)}M tris · res ${Math.round(g.resScale * 100)}% · ${g.npcs.awake.size} npcs`;
+    Object.assign(A, { n: 0, dt: 0, step: 0, render: 0, frame: 0, t: now });
+  }
+
   poke() { this.idle = Math.max(this.idle, 2.5); this.corner.classList.remove('idle'); }
   refreshCorner() {
     this.btnFull.innerHTML = fsElement() ? ICONS.unfull : ICONS.full;

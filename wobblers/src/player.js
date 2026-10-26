@@ -185,32 +185,32 @@ function skinTemplate() {
     for (let i = 0; i < P.count; i++) { P.setX(i, P.getX(i) * shoulderWiden(P.getY(i))); P.setZ(i, P.getZ(i) * BODY_DEPTH); }
     return g;
   };
-  add(shape(lathe([...prof.slice(0, split), mid], 32)), 'pants', waist);
-  add(shape(lathe([mid, ...prof.slice(split)], 32)), 'shirt', waist);
+  add(shape(lathe([...prof.slice(0, split), mid], 24)), 'pants', waist);
+  add(shape(lathe([mid, ...prof.slice(split)], 24)), 'shirt', waist);
   for (const s of [1, -1]) {
     const h = s > 0 ? 'L' : 'R', x = SHOULDER[0] * s, lx = 0.12 * s;
     // shoulder pad (chest): a flattened oval stretched in toward the neck, so the
     // shoulder line slopes from the neck down into the arm (no round knob on top)
-    add(at(new THREE.SphereGeometry(SHOULDER_R, 16, 12), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6, 0.62, 0.95), 'shirt', 'chest');
+    add(at(new THREE.SphereGeometry(SHOULDER_R, 12, 9), x * 0.86, SHOULDER[1] - 0.03, 0, 1.6, 0.62, 0.95), 'shirt', 'chest');
     // the arm: one tube from inside the shoulder to inside the mitten, bending
     // at the shoulder and the elbow; short sleeve (with a hem) over a bare forearm
     const sh = JI['uArm' + h], el = JI['lArm' + h];
     const arm = (x, y) => (y > (sh.pivot[1] + el.pivot[1]) / 2 ? band(sh, sh.pivot[1] - y) : band(el, el.pivot[1] - y));
     const HEM = 0.885;
-    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 16), x, 0, 0), 'shirt', arm); // the top cap ends inside the shoulder pad
-    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 14), x, 0, 0), 'skin', arm);
+    add(at(lathe(tubeProfile([[0.066, HEM - 0.004], [0.073, HEM], [0.08, 1.0], [0.083, 1.06]], { bottom: false }), 12), x, 0, 0), 'shirt', arm); // the top cap ends inside the shoulder pad
+    add(at(lathe(tubeProfile([[0.055, 0.69], [0.06, 0.78], [0.066, HEM - 0.004]], { top: false }), 12), x, 0, 0), 'skin', arm);
     // mitten: a fat rounded paddle with a thumb pointing forward-in, and a cuff
     const hy = 0.745 - 0.13; // lower-arm centre + HAND_OFF
-    add(at(new THREE.SphereGeometry(0.108, 16, 12), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
+    add(at(new THREE.SphereGeometry(0.108, 12, 9), x, hy, 0, 0.95, 1.12, 0.82), 'mitten', 'lArm' + h);
     add(at(new THREE.SphereGeometry(0.048, 10, 8), x - s * 0.045, hy + 0.035, 0.055, 1, 1.25, 1), 'mitten', 'lArm' + h);
     add(at(new THREE.CylinderGeometry(0.082, 0.09, 0.035, 14), x, hy + 0.075, 0), 'cuff', 'lArm' + h, { smooth: false });
     // the leg: one trouser tube from inside the seat down into the shoe, bending at hip and knee
     const hp = JI['uLeg' + h], kn = JI['lLeg' + h];
     const leg = (x, y) => (y > (hp.pivot[1] + kn.pivot[1]) / 2 ? band(hp, hp.pivot[1] - y) : band(kn, kn.pivot[1] - y));
-    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 16), lx, 0, 0), 'pants', leg);
+    add(at(lathe(tubeProfile([[0.074, 0.1], [0.082, 0.18], [0.09, 0.26], [0.1, 0.4], [0.104, 0.48]]), 12), lx, 0, 0), 'pants', leg);
     // round chunky shoe, toe forward, pale sole
-    add(at(new THREE.SphereGeometry(0.105, 16, 12), lx, 0.045, 0.045, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
-    add(at(new THREE.SphereGeometry(0.102, 16, 12), lx, 0.022, 0.045, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
+    add(at(new THREE.SphereGeometry(0.105, 12, 9), lx, 0.045, 0.045, 1, 0.68, 1.45), 'shoe', 'lLeg' + h);
+    add(at(new THREE.SphereGeometry(0.102, 12, 9), lx, 0.022, 0.045, 1, 0.3, 1.47), 'sole', 'lLeg' + h);
   }
   const g = mergeGeometries(pieces, false);
   for (const p of pieces) p.dispose();
@@ -381,7 +381,7 @@ export class Player {
   partMesh(p) {
     const g = new THREE.Group();
     if (p.n === 'head') {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 32, 24), headMaterials().normal);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 18), headMaterials().normal);
       m.scale.set(1, 0.97, 0.98);
       m.castShadow = true;
       this.headMesh = m;

@@ -79,6 +79,9 @@ export class FairRides {
       dummy.position.set(t.x, t.y, t.z); dummy.quaternion.set(r.x, r.y, r.z, r.w); dummy.updateMatrix();
       for (const m of meshes) m.setMatrixAt(i, dummy.matrix);
     });
+    // cull by a sphere round the whole ride (its parts' reach + room to swing), so a
+    // view or shadow pass that can't see the ride skips it (they were drawn always)
+    for (const m of meshes) { m.computeBoundingSphere(); m.boundingSphere.radius += 25; m.frustumCulled = true; }
     return meshes;
   }
 

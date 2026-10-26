@@ -102,7 +102,7 @@ export function buildCoins(game) {
   const geo = new THREE.CylinderGeometry(0.3, 0.3, 0.07, 20).rotateX(Math.PI / 2);
   const mat = new THREE.MeshPhongMaterial({ color: 0xffc61a, emissive: 0x6a4a00, specular: 0xfff4c0, shininess: 70 });
   const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, coins.length));
-  mesh.frustumCulled = false; mesh.userData.noCull = true; mesh.castShadow = true;
+  mesh.frustumCulled = false; mesh.userData.noCull = true; mesh.castShadow = false; // ~800 coins: no shadow pass for them
   game.scene.add(mesh);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
 
