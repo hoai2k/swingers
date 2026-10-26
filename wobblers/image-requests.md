@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 13 remain OPEN; delivered rows are in `image-requests-history.md`.**
+**Status: all requested images delivered; no open requests.** Rounds 1–13 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -49,27 +49,6 @@ to the top of `image-requests-history.md`.
 - **Reference sheets** (`assets/reference/`): any 16:9 around 1920 × 1080.
 
 
-## OPEN round 13 — closed-eye (blink) frames for the painted faces (8 faces)
-
-Characters blink every few seconds. Until these arrive the game makes each blink frame by
-wiping the painted eyes and drawing a simple lid curve; a hand-painted frame looks better.
-Each file is the **same face with the eyes closed**: identical canvas (512 × 512,
-transparent), identical framing and positions for everything else (brows, mouth, blush,
-nose, glasses, moustache) so nothing jumps when it swaps in — start from the open file and
-only repaint the eyes. Closed eyes: a soft, relaxed downward-curved lid line in the same dark
-outline colour and thickness as the face's other lines, about as wide as the open eye, with
-any lashes kept on the lid (`lashes`). The game finds them by name
-(`faces/face_<name>_closed.png`) and uses them automatically.
-
-| File (`assets/faces/…`) | Open face it matches |
-|---|---|
-| `face_star_eyes_closed.png` | `face_star_eyes.png` — star eyes, big open smile (closed: happy curved lids, the smile stays) |
-| `face_moustache_closed.png` | `face_moustache.png` — glossy eyes over a moustache and nose |
-| `face_tongue_out_closed.png` | `face_tongue_out.png` — big round eyes, brows, tongue out |
-| `face_nerd_closed.png` | `face_nerd.png` — dot eyes behind round glasses (the glasses stay, eyes closed behind them) |
-
-Not needed: heart eyes (they beat bigger instead of blinking), dizzy (the spirals spin),
-cool shades (the glasses lift) and robot (the screens flash) are animated from the open art.
 
 ## For agents adding requests
 

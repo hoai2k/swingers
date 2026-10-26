@@ -1879,6 +1879,54 @@
       "transparent": true,
       "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_grumpy.png",
       "index": 171
+    },
+    {
+      "file": "faces/face_star_eyes_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Correct ONLY closed eyelids in this blink frame. Reverse curvature of each closed lid to a relaxed shallow U-shaped curve: ends higher, center slightly lower (like a smile-shaped arc), matching the rest of our blink frames. Keep identical line thickness and eye centers. Do not draw arched brow-like closed lids. Preserve all other pixels, canvas framing, mouth, blush, nose, moustache and brows exactly. True transparent background, no head or skin. Matching 512x512 animation frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c62d4492-1412-463b-8825-ab0bc326e252.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_star_eyes.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e7568d22-05b2-458a-bf9c-d7b3b5239141.png",
+      "initialPrompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each about as wide as the original eye and at the same eye center. Replace both gold stars entirely with happy curved closed lids; preserve the big open smile and blush exactly. CRITICAL preserve identical 512x512 canvas, positions and scale for ALL non-eye features: brows, mouth, tongue, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, new features, head, skin or background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with target so features must not jump.",
+      "index": 172
+    },
+    {
+      "file": "faces/face_moustache_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Correct ONLY closed eyelids in this blink frame. Reverse curvature of each closed lid to a relaxed shallow U-shaped curve: ends higher, center slightly lower (like a smile-shaped arc), matching the rest of our blink frames. Keep identical line thickness and eye centers. Do not draw arched brow-like closed lids. Preserve all other pixels, canvas framing, mouth, blush, nose, moustache and brows exactly. True transparent background, no head or skin. Matching 512x512 animation frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-f4362582-be9f-41cd-bacf-eb27db3b8ab9.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_moustache.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c04569e1-98f4-4315-90c2-7d47bbc5fafa.png",
+      "initialPrompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each about as wide as the original eye and at the same eye center. CRITICAL preserve identical 512x512 canvas, positions and scale for ALL non-eye features: brows, mouth, tongue, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, new features, head, skin or background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with target so features must not jump.",
+      "index": 173
+    },
+    {
+      "file": "faces/face_tongue_out_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each about as wide as the original eye and at the same eye center. CRITICAL preserve identical 512x512 canvas, positions and scale for ALL non-eye features: brows, mouth, tongue, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, new features, head, skin or background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with target so features must not jump.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7defc6ef-a320-468c-9c02-5b9475dc0e5a.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_tongue_out.png",
+      "index": 174
+    },
+    {
+      "file": "faces/face_nerd_closed.png",
+      "width": 512,
+      "height": 512,
+      "prompt": "Use case: precise-object-edit. Attached image is the exact edit target. Create its matching CLOSED-EYE blink animation frame. Change ONLY the two eyes to soft relaxed downward-curved closed eyelid lines of matching dark outline colour/thickness, each about as wide as the original eye and at the same eye center. Keep the round glasses completely unchanged; replace only pupils inside glasses with closed lids. Preserve teeth, mouth and blush exactly. CRITICAL preserve identical 512x512 canvas, positions and scale for ALL non-eye features: brows, mouth, tongue, blush, nose, glasses, moustache. Do not move or redraw anything else. No reframing, new features, head, skin or background. Preserve original transparent margins and genuine alpha transparency. This frame swaps with target so features must not jump.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-68812621-f178-4043-843f-cce647ae07ad.png",
+      "round": 13,
+      "transparent": true,
+      "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_nerd.png",
+      "index": 175
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",

@@ -7,8 +7,17 @@ files are recorded in `assets/generation.json`.
 ## Delivered round 13 — painted blink frames
 
 Delivered in batches with built-in imagegen on 2026-10-26. Exact prompts, source
-paths and dimensions are in `assets/generation.json`. Replaced artwork is preserved
-in `assets/originals/pre-round12/`. Checked dimensions, alpha and browser loading.
+paths and dimensions are in `assets/generation.json`. Checked dimensions, alpha and browser loading.
+
+Characters blink every few seconds. Until these arrive the game makes each blink frame by
+wiping the painted eyes and drawing a simple lid curve; a hand-painted frame looks better.
+Each file is the **same face with the eyes closed**: identical canvas (512 × 512,
+transparent), identical framing and positions for everything else (brows, mouth, blush,
+nose, glasses, moustache) so nothing jumps when it swaps in — start from the open file and
+only repaint the eyes. Closed eyes: a soft, relaxed downward-curved lid line in the same dark
+outline colour and thickness as the face's other lines, about as wide as the open eye, with
+any lashes kept on the lid (`lashes`). The game finds them by name
+(`faces/face_<name>_closed.png`) and uses them automatically.
 
 | File (`assets/faces/…`) | Open face it matches |
 |---|---|
@@ -16,6 +25,10 @@ in `assets/originals/pre-round12/`. Checked dimensions, alpha and browser loadin
 | `face_surprised_closed.png` | `face_surprised.png` — tall oval eyes, raised brows, small "o" mouth (keep the brows raised) |
 | `face_lashes_closed.png` | `face_lashes.png` — round eyes with lashes (closed lids keep their lashes) |
 | `face_grumpy_closed.png` | `face_grumpy.png` — half-lidded eyes under angry brows (keep the brows) |
+| `face_star_eyes_closed.png` | `face_star_eyes.png` — star eyes, big open smile (closed: happy curved lids, the smile stays) |
+| `face_moustache_closed.png` | `face_moustache.png` — glossy eyes over a moustache and nose |
+| `face_tongue_out_closed.png` | `face_tongue_out.png` — big round eyes, brows, tongue out |
+| `face_nerd_closed.png` | `face_nerd.png` — dot eyes behind round glasses (the glasses stay, eyes closed behind them) |
 
 ## Delivered round 12 — character artwork corrections and cover
 
