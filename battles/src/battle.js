@@ -211,6 +211,7 @@ export class Battle {
     for (const u of this.units) if (u.alive && u.target && u.def.weapon.kind === 'melee') u.target.mobbed++;
     this.updateFront();
     for (const u of this.units) if (!u.dormant) u.step(dt);
+    for (const u of this.units) if (!u.dormant && !u.bc) u.rag.limits(dt);
     this.stepProjectiles(dt);
     this.world.timestep = dt;
     this.world.step();

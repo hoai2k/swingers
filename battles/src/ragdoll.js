@@ -11,6 +11,8 @@ const _qt = new THREE.Quaternion();
 const _v = new THREE.Vector3();
 const _yawQ = new THREE.Quaternion();
 const UP = new THREE.Vector3(0, 1, 0);
+const _lim = new THREE.Vector3(), _ax = new THREE.Vector3();
+const NECK_MAX = 0.75; // rad (~43 degrees): how far a head may lean from the chest's axis
 
 export class Ragdoll {
   // restQuats: unit-frame orientations for the spawn pose (array of NPARTS)
@@ -67,6 +69,11 @@ export class Ragdoll {
       this.inertia[up] = (iu + parts[lo].mass * (2 * parts[up].hh + parts[lo].hh) ** 2 * 0.6) * 0.3;
       this.inertia[lo] = il * 0.3;
     }
+    // The head swings about the neck too: its muscle must work against the inertia
+    // about the joint, or (a small head is a light ball on a long lever) it can't
+    // hold itself up and flops into the chest.
+    const jn = skel.parentJoint[P.head];
+    if (jn) this.inertia[P.head] += parts[P.head].mass * jn.anchorB.lengthSq() * 0.7;
     this.joints = [];
     for (const j of skel.joints) {
       const a = { x: j.anchorA.x, y: j.anchorA.y, z: j.anchorA.z };
@@ -153,6 +160,28 @@ export class Ragdoll {
     const m = Math.hypot(ix, iy, iz), cap = maxT * dt;
     if (m > cap) { const sc = cap / m; ix *= sc; iy *= sc; iz *= sc; }
     this.bodies[i].applyTorqueImpulse({ x: ix, y: iy, z: iz }, true);
+  }
+
+  // A soft neck limit, alive or dead: when the head leans more than NECK_MAX from the
+  // chest's axis, a torque (and its reaction on the chest) pushes it back, so a head
+  // never folds down into the body.
+  limits(dt) {
+    const hb = this.bodies[PART.head];
+    if (hb.isSleeping()) return;
+    _v.set(0, 1, 0).applyQuaternion(this.quat[PART.chest]);
+    _lim.set(0, 1, 0).applyQuaternion(this.quat[PART.head]);
+    const c = clamp(_v.dot(_lim), -1, 1), ang = Math.acos(c);
+    if (ang < NECK_MAX) return;
+    _ax.crossVectors(_lim, _v); // turns the head's axis back toward the chest's
+    const n = _ax.length();
+    if (n < 1e-6) _ax.set(1, 0, 0).applyQuaternion(this.quat[PART.chest]); else _ax.multiplyScalar(1 / n);
+    // a stiff spring past the limit, damped by the head's swing rate about that axis
+    const av = this.angvel[PART.head], cv = this.angvel[PART.chest];
+    const rel = (av.x - cv.x) * _ax.x + (av.y - cv.y) * _ax.y + (av.z - cv.z) * _ax.z;
+    const I = this.inertia[PART.head];
+    const imp = Math.max(0, (ang - NECK_MAX) * 60 - rel * 0.5) * I * dt * 60;
+    hb.applyTorqueImpulse({ x: _ax.x * imp, y: _ax.y * imp, z: _ax.z * imp }, true);
+    this.bodies[PART.chest].applyTorqueImpulse({ x: -_ax.x * imp, y: -_ax.y * imp, z: -_ax.z * imp }, true);
   }
 
   impulse(i, x, y, z) {
