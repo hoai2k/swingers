@@ -1512,6 +1512,16 @@ export class Game {
     for (const v of this.battleVis) this.resetVis(v);
     const armies = this.armies.map((a) => a.map(({ type, x, z }) => ({ type, x, z })));
     this.battle = new Battle(this.terrain, armies, (e) => this.onEvent(e, true));
+    // reserves (summons made with the army, dormant until called) get their own visuals
+    this.extraVis = [];
+    for (let i = this.battleVis.length; i < this.battle.units.length; i++) {
+      const u = this.battle.units[i];
+      const v = buildUnitVisual(u.def, u.team, { skel: skelOf(u.def), share: true });
+      v.root.visible = false;
+      this.scene.add(v.root);
+      this.battleVis.push(v);
+      this.extraVis.push(v);
+    }
     this.rec = new Recorder(this.battle);
     this.rec.capture(this.battle);
     this.state = 'battle';
@@ -1547,6 +1557,8 @@ export class Game {
   }
 
   disposeBattle() {
+    for (const v of this.extraVis || []) disposeVisual(v);
+    this.extraVis = [];
     if (this.battle) {
       for (const u of this.battle.units) u.control = null;
       this.battle.destroy();
@@ -1564,6 +1576,7 @@ export class Game {
     if (k.startsWith('snd:')) { if (!this.muteEvents) this.audio.play(k.slice(4), pos, e[4], e[5]); }
     else if (k === 'voice') { if (!this.muteEvents) this.audio.voice(pos, e[4], e[5], e[6]); }
     else if (k === 'over') { /* handled by state */ }
+    else if (k === 'announce') { if (!this.muteEvents) this.ui.toast(`<span class="announce">${e[4]}</span>`, 2.6); } // packs: domains, secrets
     else {
       this.fx.event(e);
       if (k === 'explode') {
@@ -1585,7 +1598,7 @@ export class Game {
       const vis = this.battleVis[i];
       if (!vis) return;
       // Performance → Fallen units: a unit down for a while leaves the picture
-      const hide = !u.alive && u.diedAt < gone && !u.kind?.standing?.(u);
+      const hide = u.dormant || (!u.alive && u.diedAt < gone && !u.kind?.standing?.(u));
       vis.root.visible = !hide;
       if (hide) return;
       const r = u.rag;
@@ -2198,7 +2211,7 @@ export class Game {
         for (const it of vis.items) it.visible = !hide;
         const px = this.proxies[i];
         px.alive = !!(f & 8);
-        vis.root.visible = !this.settings.corpses || px.alive || P.fallenFor(i) <= CORPSE_SECONDS;
+        vis.root.visible = !(f & 128) && (!this.settings.corpses || px.alive || P.fallenFor(i) <= CORPSE_SECONDS);
         // a raised zombie fights for the side that raised it from then on
         px.team = f & 32 ? 1 : 0;
         px.def = f & 64 ? px.zdef || (px.zdef = { ...px.def0, name: 'Zombie ' + px.def0.name }) : px.def0;
