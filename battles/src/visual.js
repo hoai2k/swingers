@@ -870,7 +870,7 @@ export function buildUnitVisual(def, team, opts = {}) {
           f.castShadow = false;
           g.add(f);
           g.userData.face = f;
-          if (LOOK.googly) googlyEyes(g, r, FACE_VARIANTS[faceVariant(id, def)]);
+          if (LOOK.googly && !opts.ghost) g.userData.pupils = googlyEyes(g, r, FACE_VARIANTS[faceVariant(id, def)]);
         }
         const V = FACE_VARIANTS[faceVariant(id, def)];
         if (!hat.userData.hidesFace) mesh(sphere(r * V.nose, 10, 8), skin, 0, -r * 0.1, r * 0.98, g).scale.set(1, 0.9, 0.85);
@@ -996,13 +996,13 @@ export function buildUnitVisual(def, team, opts = {}) {
     if (opts.share) {
       let byDef = BAKE_SHARE.get(def);
       if (!byDef) BAKE_SHARE.set(def, (byDef = new Map()));
-      const k = `${team}|${s}`;
+      const k = `${team}|${s}|${LOOK.googly ? 'g' : ''}`;
       shared = byDef.get(k);
       if (!shared) byDef.set(k, (shared = new Map()));
     }
     parts.forEach((g, i) => {
       [...g.children].forEach((it, j) => { if (heldObjs.includes(it)) bake(it, it, undefined, shared, `h${i}.${j}`); });
-      bake(g, g, (o) => o !== g.userData.face && !heldObjs.some((it) => isDesc(o, it)), shared, `p${i}`);
+      bake(g, g, (o) => o !== g.userData.face && !g.userData.pupils?.includes(o) && !heldObjs.some((it) => isDesc(o, it)), shared, `p${i}`);
     });
     extraParts.forEach((e, j) => bake(e.group, e.group, undefined, shared, `e${j}`));
   }
@@ -1025,7 +1025,7 @@ export function buildUnitVisual(def, team, opts = {}) {
     const k = LOOK.headK, drop = (1 - k) * skel.rHead * 0.85;
     for (const c of parts[PART.head].children) { c.position.multiplyScalar(k); c.position.y -= drop; c.scale.multiplyScalar(k); }
   }
-  const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id, def) };
+  const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, pupils: parts[PART.head].userData.pupils || null, expr: 0, faceVar: faceVariant(id, def) };
   // each part's baked mesh, for the distant stand-ins (setFar)
   if (!opts.noBake && !opts.ghost && !opts.portrait) {
     vis.lod = [];
@@ -1078,11 +1078,15 @@ BAKED.customProgramCacheKey = () => 'wobbly-baked';
 // Proportion / face previews (dev/lineup.html?head=0.8&googly=1); the game uses the
 // defaults. headK shrinks the head (look only: its collider is unchanged) and seats it
 // back on the neck; googly puts TABS-style 3D googly eyes over the drawn ones.
-const LOOK = { headK: 1, googly: false };
+const LOOK = { headK: 1, googly: true };
 export function setLookPreview(o) { Object.assign(LOOK, o); }
+export function setGoogly(on) { LOOK.googly = !!on; } // Options → Googly eyes
 // 3D eyes where the face texture draws them (see drawFace / faceGeo: the eyes sit at
 // v = 0.5 and u = 0.5 ± 1.5·gap/256 of the face patch)
+// The whites are baked into the head; the pupils stay their own meshes (returned), so
+// every unit gets its own loose stare even when units share baked meshes.
 function googlyEyes(g, r, V) {
+  const pupils = [];
   const white = mat('#fbfbf6', { spec: 0.6 }), ink = mat('#141014', { spec: 0.9 });
   const re = r * 0.36, th = Math.PI * (0.14 + 0.5 * 0.62);
   for (const side of [-1, 1]) {
@@ -1094,9 +1098,13 @@ function googlyEyes(g, r, V) {
     mesh(sphere(re, 16, 12), white, 0, 0, 0, e).scale.set(1, 1, 0.75);
     // the pupil rattles loose: each eye looks its own way
     const a = Math.random() * Math.PI * 2, d = re * (0.15 + Math.random() * 0.3);
-    mesh(sphere(re * 0.52, 12, 8), ink, Math.cos(a) * d, Math.sin(a) * d, re * 0.7, e).scale.set(1, 1, 0.45);
+    const pu = mesh(sphere(re * 0.52, 12, 8), ink, Math.cos(a) * d, Math.sin(a) * d, re * 0.7, e);
+    pu.scale.set(1, 1, 0.45);
+    pu.castShadow = false;
+    pupils.push(pu);
     g.add(e);
   }
+  return pupils;
 }
 export const UNIT_STYLES = ['classic', 'toon', 'clay', 'vinyl', 'lowpoly', 'chibi'];
 let STYLE = 'classic';
@@ -1248,6 +1256,7 @@ export function setFar(vis, far) {
   vis.far = far;
   for (const l of vis.lod) l.m.geometry = far ? loGeo(l.hi, l.part) : l.hi;
   if (vis.face) vis.face.visible = !far;
+  for (const p of vis.pupils || []) p.visible = !far;
 }
 
 // Expressions: see FACE_MATS. Normal and angry faces blink every few seconds.

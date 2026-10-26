@@ -8,7 +8,7 @@ import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
 import { Creator } from './creator.js';
 import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
-import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar } from './visual.js';
+import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar, setGoogly } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
 import { CamRig } from './camera.js';
 import { Battle, PROJ } from './battle.js';
@@ -85,7 +85,7 @@ export class Game {
     this.canvas = canvas;
     const st = loadStore();
     this.settings = Object.assign({
-      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, sound: true, autoFs: true, // sandbox: unlimited gold and units
+      map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, sound: true, autoFs: true, googly: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
       rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
       // performance options (see perfItems)
@@ -108,6 +108,7 @@ export class Game {
     this.input = new Input();
     this.audio = new Audio();
     this.audio.noSamples = this.settings.sfxRec === false;
+    setGoogly(this.settings.googly !== false);
     this.audio.setMuted(this.settings.sound === false);
     this.corner = new Corner({
       sound: () => this.adjustSetting('sound', 1),
@@ -573,6 +574,7 @@ export class Game {
         ...this.perfItems(),
         { label: 'Look speed', value: `${LOOK[s.look]}×`, key: 'look' },
         { label: 'Invert look Y', value: onOff(s.invertY), key: 'invertY' },
+        { label: 'Googly eyes', value: onOff(s.googly !== false), key: 'googly' },
         { label: 'Blood', value: onOff(s.blood), key: 'blood' },
         { label: 'Sound', value: onOff(s.sound !== false), key: 'sound' },
         { label: 'Music', value: onOff(s.music), key: 'music' },
@@ -605,6 +607,19 @@ export class Game {
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
     ];
+  }
+
+  // rebuild every unit's look (Options → Googly eyes): placed armies, title units, portraits
+  refreshLooks() {
+    if (this.state !== 'title') return; // (Options is only on the title: nothing is fighting)
+    this.disposeBattle();
+    for (let t = 0; t < 2; t++) {
+      for (const v of this.setupVis[t]) disposeVisual(v);
+      this.setupVis[t] = [];
+      for (const a of this.armies[t]) this.addSetupVis(t, a);
+    }
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.ui.portraits = renderPortraits(UNITS, 112);
   }
 
   // the corner gear: the settings for where you are
@@ -664,6 +679,7 @@ export class Game {
       case 'music': s.music = !s.music; this.audio.setVolumes(0.8, s.music ? 0.45 : 0); this.corner?.refresh(); break;
       case 'sound': s.sound = s.sound === false; this.audio.setMuted(!s.sound); this.corner?.refresh(); break;
       case 'autoFs': s.autoFs = s.autoFs === false; break;
+      case 'googly': s.googly = s.googly === false; setGoogly(s.googly); this.refreshLooks(); break;
       case 'res': s.res = cyc(s.res | 0, RES.length); this.applyQuality(); break;
       case 'autoRes': s.autoRes = !s.autoRes; this.perf.adapt(0, s.autoRes); this.applyQuality(); break;
       case 'shadows': s.shadows = !s.shadows; this.applyQuality(); break;

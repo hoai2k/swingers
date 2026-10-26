@@ -10,7 +10,13 @@ export const PART = {
 export const PART_NAMES = Object.keys(PART);
 export const NPARTS = PART_NAMES.length;
 
-// build: { scale, girth, head, legs, arms, mass }
+// Head size for every unit (the look the owner picked: smaller, more natural heads;
+// build.head still scales it per unit).
+export const HEAD = 0.68;
+
+// build: { scale, girth, head, legs, arms, mass, neck }
+//   neck: lifts the head (in head radii) for outfits whose collar or armour rises
+//   above the chest and would cover the face
 export function makeSkeleton(build = {}) {
   const s = build.scale ?? 1;
   const G = build.girth ?? 1;
@@ -29,8 +35,11 @@ export function makeSkeleton(build = {}) {
   const rChest = 0.24 * G * s, hhChest = 0.12 * s;
   const chestY = waistY + 0.2 * s;
   const neckY = chestY + hhChest + rChest * 0.55;
-  const rHead = 0.22 * H * s;
-  const headY = neckY + rHead * 0.85;
+  const rHead = 0.22 * HEAD * H * s;
+  // the head sits on the chest's curve, high enough that the whole face (down to the
+  // mouth, ~0.4 r under its centre) clears it
+  const chestTop = chestY + hhChest + rChest * 0.94;
+  const headY = Math.max(neckY + rHead * 0.85, chestTop + rHead * (0.58 + (build.neck ?? 0)));
   const shoulderY = chestY + hhChest * 0.9;
   const shoulderX = rChest + 0.05 * s;
   const rArm = 0.068 * s * (build.armThick ?? 1), uLen = 0.27 * A * s, fLen = 0.27 * A * s;

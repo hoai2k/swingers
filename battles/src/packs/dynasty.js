@@ -147,7 +147,7 @@ const units = [
   },
   {
     id: 'dy_hwacha', name: 'Hwacha', faction: 'dynasty', cost: 450, hp: 450, speed: 3.6,
-    build: { scale: 1.08, girth: 1.1, mass: 1.3 },
+    build: { scale: 1.08, girth: 1.1, mass: 1.3, neck: 0.15 },
     weapon: { line: 'Siege · volleys of 16 rockets', kind: 'dy_hwacha', style: 'staff', anim: 'cast', item: 'dy_torch', damage: 60, speed: 21, range: 36, minRange: 10, cooldown: 5, force: 380, blast: 2.4, releaseAt: 0.55, windup: 1.4, volley: 16, scatter: 2.6 },
     look: { skin: '#f0c8a0', hat: 'dy_gat', top: 'dy_robe', legs: '#4a3a2a' },
     personality: { aggro: 0.25, bravery: 0.2, voice: 0.9, chatter: 0.6, cry: 'cackle', idle: 'shake' },
