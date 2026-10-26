@@ -250,3 +250,28 @@ reference panel; +1 flawless win, −1 flawless loss): archer −0.02 (was +0.06
 skeleton archer −0.01, gunslinger −0.03, spear thrower −0.05, musketeer −0.09,
 flintlock −0.09. They now lose to clubbers and squires (−0.4 to −0.97) and still beat
 giants and kings (+0.4 to +0.96).
+
+## New units: Spooky, Pirate, Renaissance, Prehistoric, Good, Evil, Secret
+
+Eleven units bring these factions to seven each. Each was priced with `run.mjs` (4 runs
+per pairing, equal gold, the reference panel above) after the ranged reload pass.
+Support, bomber and control units are also scored in line (inside a Squire frontline,
+50% of the gold; the Flag Bearer 25%). Final scores (+1 flawless win, −1 flawless loss):
+
+| unit | faction | cost | alone | in line | other changes while pricing | notes |
+|---|---|---:|---:|---:|---|---|
+| Ghost (`sp_ghost`) | spooky | 150 → **115** | +0.02 |  |  | shots, bites and blasts do 25% (no blood, no push); its touch makes enemies flee. Beats archers, guns, knights and kings; loses to cheap melee and giants |
+| Swordcaster (`sp_swordcaster`) | spooky | **300** | +0.01 |  |  | three ghost swords that pierce up to 4 in a line; strong vs giants, weak vs squire walls |
+| Powder Monkey (`pi_monkey`) | pirate | 130 → **200** | +0.00 | +0.13 | keg damage 130 → 100 | wrecks melee blobs, helpless vs gunslingers; like the Mammoth, its cost alone barely moved it (+0.29 at 130, +0.15 at 210) |
+| Jouster (`rn_jouster`) | renaissance | 700 → **950** | +0.09 |  |  | shielded lancer that rides down the most valuable enemy |
+| Triceratops (`pr_triceratops`) | prehistoric | **1300** | +0.01 |  |  | charges and tosses groups; loses to knights, chieftains and giants |
+| Tar Slinger (`pr_tar`) | prehistoric | 110 → **85** |  | −0.01 | splash and a 6 dps scald added | area slow; alone it loses (−0.58 at 110), judged in line like the throwers |
+| Divine Archer (`gd_divine_archer`) | good | 170 → **150** | −0.00 |  |  | homing arrows (turn 2 rad/s); reload in line with the slowed archers |
+| Flag Bearer (`gd_flag_bearer`) | good | **150** |  | +0.05 |  | allies within 8 m take a third less damage (not a killing blow); bearers don't stack |
+| Void Monarch (`ev_void_monarch`) | evil | 1400 → **1800** | −0.09 |  | implode 150 → 60, tick damage 16 → 8, cooldown 5 → 6 | at first one rift killed a whole Squire army (+0.65); still crushes blobs (+0.7 to +0.85) and loses to elites, guns and the mixed army |
+| Shadow Assassin (`ev_shadow`) | evil | 220 → **170** | −0.03 |  | hp 150 → 170 | blinks behind shooters and healers: +0.9 vs archers, loses to giants |
+| Bubble Blower (`sc_bubble`) | secret | 180 → **100** | −0.22 | −0.02 | cooldown 3.2 → 2.8 | control unit (floats one small enemy for 3 s); fair in line, a little weak alone |
+
+Re-run:
+
+    node battles/dev/balance/run.mjs --runs 4 --out /tmp/new.jsonl --units sp_ghost,sp_swordcaster,pi_monkey,rn_jouster,pr_triceratops,gd_divine_archer,ev_void_monarch,ev_shadow,sc_bubble,squire+pr_tar,squire+gd_flag_bearer@0.25,squire+sc_bubble,squire+pi_monkey

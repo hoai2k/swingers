@@ -458,6 +458,71 @@ export function howdahArcher(H, team) {
   return g;
 }
 
+// ======================================================================= triceratops
+export const TRI_C = { skin: '#8c8a5c', dark: '#5a5636', belly: '#cfc49a', frill: '#c8703a', horn: '#efe4c4', beak: '#3a3226' };
+// body: a barrel on four legs, team war paint and a blanket over the back
+export function triTorso(H, team) {
+  const g = new THREE.Group();
+  const sk = H.mat(TRI_C.skin, { spec: 0.15 }), dk = H.mat(TRI_C.dark, { spec: 0.1 }), be = H.mat(TRI_C.belly, { spec: 0.1 });
+  put(H, g, H.sphere(0.95, 20, 14), sk, [0, 0, -0.1], null, [0.95, 0.88, 1.55]);
+  put(H, g, H.sphere(0.8, 16, 12), sk, [0, 0.05, 0.85], null, [0.92, 0.9, 0.9]);
+  put(H, g, H.sphere(0.85, 16, 12), be, [0, -0.32, 0.1], null, [0.85, 0.6, 1.4]);
+  // a row of knobbly scutes down the spine
+  for (let i = 0; i < 7; i++) put(H, g, H.sphere(0.1, 8, 6), dk, [0, 0.84 - Math.abs(i - 2) * 0.03, 1.0 - i * 0.36], null, [1.3, 0.7, 1.3]);
+  // team blanket with gold rings and three war-paint stripes on each flank
+  put(H, g, H.geo('tribl', () => new THREE.CylinderGeometry(0.98, 0.98, 1.1, 18, 1, true, Math.PI - 0.9, 1.8)), tc(H, team), [0, 0.0, -0.05], [Math.PI / 2, 0, 0], [1.0, 1, 0.92]);
+  for (const sd of [-1, 1]) {
+    put(H, g, H.sphere(0.06, 6, 5), H.gold(), [sd * 0.72, 0.58, 0.45]);
+    put(H, g, H.sphere(0.06, 6, 5), H.gold(), [sd * 0.72, 0.58, -0.55]);
+    for (let k = 0; k < 3; k++) put(H, g, H.box(0.04, 0.42, 0.09), td(H, team), [sd * (0.88 - k * 0.02), -0.12, -0.75 - k * 0.2], [0.25, 0, sd * 0.1]);
+  }
+  return g;
+}
+// head (pivot at the neck): beak, nose horn, two long brow horns and a big frill
+export function triHead(H, team) {
+  const g = new THREE.Group();
+  const sk = H.mat(TRI_C.skin, { spec: 0.18 }), dk = H.mat(TRI_C.dark), hn = H.mat(TRI_C.horn, { spec: 0.4 }), fr = H.mat(TRI_C.frill, { spec: 0.15 });
+  put(H, g, H.sphere(0.5, 16, 12), sk, [0, -0.05, 0.45], null, [0.9, 0.85, 1.25]);
+  put(H, g, H.sphere(0.36, 14, 10), sk, [0, -0.15, 0.95], null, [0.75, 0.75, 1.15]);
+  const bk = put(H, g, H.cone(0.2, 0.42, 10), H.mat(TRI_C.beak, { spec: 0.4 }), [0, -0.25, 1.32], [Math.PI / 2 + 0.35, 0, 0]); bk.scale.set(1, 1, 0.7);
+  put(H, g, H.cone(0.09, 0.32, 8), hn, [0, 0.12, 1.15], [0.4, 0, 0]); // nose horn
+  for (const sd of [-1, 1]) {
+    eye(H, g, sd * 0.32, 0.12, 0.72, 0.08, '#d8a018');
+    put(H, g, H.box(0.18, 0.06, 0.2), dk, [sd * 0.3, 0.22, 0.72], [0.2, 0, sd * -0.3]); // brow
+    put(H, g, tube(H, 'trihorn', [[0, 0, 0], [0, 0.2, 0.35], [0, 0.32, 0.8]], 0.1, 0.012, 8), hn, [sd * 0.24, 0.2, 0.62], [0, sd * -0.12, 0]);
+  }
+  // the frill: a broad shield behind the head, edged with spikes; team spots on it
+  const fg = put(H, g, H.geo('trifrill', () => twoSided(new THREE.CircleGeometry(0.95, 24, 0, Math.PI))), fr, [0, 0.05, 0.05], [-0.5, 0, 0]);
+  fg.scale.set(1.1, 1.0, 1);
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 8) * Math.PI;
+    const x = Math.cos(a) * 1.02, y = Math.sin(a) * 0.98;
+    const sp = put(H, g, H.cone(0.08, 0.22, 5), hn, [x * 1.1, 0.05 + y * Math.cos(0.5), 0.05 - y * Math.sin(0.5)], null);
+    sp.quaternion.setFromUnitVectors(_up, V(x, y * Math.cos(0.5), -y * Math.sin(0.5)).normalize());
+  }
+  for (const sd of [-1, 1]) put(H, g, H.sphere(0.16, 10, 8), tc(H, team), [sd * 0.42, 0.5, -0.22], [-0.5, 0, 0], [1, 1, 0.25]);
+  put(H, g, H.sphere(0.13, 10, 8), td(H, team), [0, 0.72, -0.33], [-0.5, 0, 0], [1, 1, 0.25]);
+  return g;
+}
+export function triTail(H, team, i) {
+  const g = new THREE.Group();
+  const sk = H.mat(TRI_C.skin, { spec: 0.15 }), dk = H.mat(TRI_C.dark);
+  const R = i ? [0.3, 0.06] : [0.55, 0.3], L = i ? 1.1 : 1.0;
+  put(H, g, tube(H, 'trit' + i, [[0, 0, 0], [0, -0.05, -L / 2], [0, -0.15, -L]], R[0], R[1], 8), sk);
+  for (let j = 0; j < 2; j++) put(H, g, H.sphere(R[0] * 0.2 + 0.03, 6, 5), dk, [0, R[0] * (0.95 - j * 0.2), -0.25 - j * L * 0.4], null, [1.3, 0.7, 1.3]);
+  return g;
+}
+// a pillar of a leg hanging from the hip, foot at y = -1.1
+export function triLeg(H, team, front) {
+  const g = new THREE.Group();
+  const sk = H.mat(TRI_C.skin, { spec: 0.15 }), cl = H.mat(TRI_C.beak, { spec: 0.3 });
+  put(H, g, H.sphere(0.34, 12, 10), sk, [0, -0.2, 0], null, [0.85, 1.35, 1.0]);
+  beam(H, g, [0, -0.45, front ? 0.04 : -0.05], [0, -0.98, 0.02], 0.2, sk, 10, 0.17);
+  put(H, g, H.cyl(0.22, 0.25, 0.14, 12), sk, [0, -1.03, 0.04]);
+  for (const dx of [-0.13, 0, 0.13]) put(H, g, H.sphere(0.07, 6, 5), cl, [dx, -1.06, 0.22], null, [1, 0.7, 1]);
+  return g;
+}
+
 // ======================================================================= cavemen
 export function femur(H, s, g) {
   const b = H.mat('#efe6cf', { spec: 0.15 });
