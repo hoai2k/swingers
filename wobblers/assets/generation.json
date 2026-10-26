@@ -426,22 +426,46 @@
       "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An arcade racing poster for \"TURBO WOBBLE KART\": a bean person drifting a go-kart, motion lines, chequered flag, orange and purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
     },
     {
-      "index": 42,
       "file": "posters/painting_island.png",
       "width": 768,
       "height": 528,
+      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the sunny island landscape, hilltop fence, town fountain plaza, ferris wheel, lighthouse, suspension bridge, piers, boats, mountains and puppy exactly as composed. Replace only the two foreground people: one red shirt/red cap/blue backpack, other blue shirt/straw hat; both have peach heads, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 768x528.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e95f3800-7e54-4ebc-b3fb-aa21ee55e5f1.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5619c13b-12af-4489-b0d8-4d48695123ac.png",
-      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cosy painted landscape of a sunny toy-like island: green hills, a little town, a ferris wheel and a lighthouse by a blue sea. Soft storybook painting. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 768 x 528 pixels. Generate this one asset only."
+      "index": 42,
+      "previousGenerations": [
+        {
+          "index": 42,
+          "file": "posters/painting_island.png",
+          "width": 768,
+          "height": 528,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5619c13b-12af-4489-b0d8-4d48695123ac.png",
+          "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cosy painted landscape of a sunny toy-like island: green hills, a little town, a ferris wheel and a lighthouse by a blue sea. Soft storybook painting. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 768 x 528 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
-      "index": 43,
       "file": "posters/portrait_family.png",
       "width": 512,
       "height": 666,
+      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the warm orange family portrait composition: three hugging and waving. Tall person yellow shirt, black top hat and red bow tie; pink shirt person with purple bow; small blue shirt child. Replace the old featureless coloured people with peach round heads, happy printed cartoon eyes and smiling mouths, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x666.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ad020eec-a431-4114-88c9-c25de833cd9b.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2f4f6768-0ef9-4221-a76b-f35892132a10.png",
-      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A silly family portrait: three wobbly bean people (two adults and a small one) posing proudly, one wearing a top hat, in front of a plain warm background. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 666 pixels. Generate this one asset only."
+      "index": 43,
+      "previousGenerations": [
+        {
+          "index": 43,
+          "file": "posters/portrait_family.png",
+          "width": 512,
+          "height": 666,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2f4f6768-0ef9-4221-a76b-f35892132a10.png",
+          "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A silly family portrait: three wobbly bean people (two adults and a small one) posing proudly, one wearing a top hat, in front of a plain warm background. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 666 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
       "index": 44,
@@ -1459,14 +1483,26 @@
       "round": 9
     },
     {
-      "index": 141,
       "file": "posters/wanted_kid.png",
       "width": 512,
       "height": 716,
+      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Preserve the aged paper WANTED poster, desert, cactus, framing and EXACT text WANTED / CACTUS KID / REWARD 50 COINS. Replace only the person hugging cactus: peach-skinned head, printed winking cartoon face with smile, green shirt, darker green trousers, white mittens, dark shoes, brown cowboy hat, red neckerchief. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bf307f19-4907-418b-8d10-f46188c0bacc.png",
+      "round": 12,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef716b78-79f3-4339-b30a-717883638c0e.png",
-      "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"CACTUS KID\" beneath portrait; \"REWARD 50 COINS\" below. A cheeky little wobbly bean-person cowboy hugging a cactus in middle. Toy-like and silly. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
-      "round": 9
+      "index": 141,
+      "previousGenerations": [
+        {
+          "index": 141,
+          "file": "posters/wanted_kid.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef716b78-79f3-4339-b30a-717883638c0e.png",
+          "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"CACTUS KID\" beneath portrait; \"REWARD 50 COINS\" below. A cheeky little wobbly bean-person cowboy hugging a cactus in middle. Toy-like and silly. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
+          "round": 9
+        }
+      ]
     },
     {
       "index": 142,

@@ -1,7 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 12 and 13 are OPEN.** Rounds 1–11 are delivered; see `image-requests-history.md` for those requests
-and their review notes.
+**Status: rounds 12, 13 remain OPEN; delivered rows are in `image-requests-history.md`.**
 
 ## How delivery works
 
@@ -63,9 +62,6 @@ library, so it matters most. Same paths and sizes, opaque, filling the frame.
 
 | File (`assets/…`) | Size | Prompt |
 |---|---|---|
-| `posters/painting_island.png` | 768 × 528 | A cosy, bright toy-like storybook painting of a sunny island seen from a grassy hilltop with a wooden fence: green hills, a little colourful town with a fountain plaza, a ferris wheel, a red-and-white lighthouse on cliffs, a suspension bridge, piers and boats on a turquoise sea, snowy mountains far off. In the foreground two Wobblers seen from behind and the side, waving at the view: one in a red shirt and red cap with a blue backpack, one in a blue shirt with a straw sun hat, with a small puppy; both with peach-skinned round heads, darker trousers, white mitten hands and dark shoes (see the character sheet). |
-| `posters/portrait_family.png` | 512 × 666 | A framed, warm family portrait painting of three Wobblers hugging and waving against a sunny orange backdrop: a tall one in a yellow shirt with a black top hat and red bow tie, one in a pink shirt with a purple bow on the head, a small one in a blue shirt; peach-skinned round heads with happy printed cartoon faces, darker trousers, white mitten hands. |
-| `posters/wanted_kid.png` | 512 × 716 | Old west WANTED poster on aged paper with torn edges: the words **WANTED** at the top and **CACTUS KID** / **REWARD 50 COINS** below; in the picture a cheeky Wobbler in a green shirt with a brown cowboy hat and red neckerchief, winking and hugging a cactus in a desert town. Peach-skinned round head with a printed cartoon face, white mitten hands, dark shoes. |
 | `posters/wanted_pete.png` | 512 × 716 | Matching WANTED poster: **WANTED** at the top, **WOBBLY PETE** / **REWARD 100 COINS** below; a Wobbler outlaw in an orange shirt and black cowboy hat with a red bandana over the lower face, holding a toy water pistol, in a desert town. Peach-skinned round head with printed cartoon eyes, white mitten hands, dark shoes. |
 | `posters/clothes_fashion.png` | 512 × 716 | Bright fashion-shop poster with the words **NEW LOOKS** in big bubbly letters at the top; a Wobbler in a teal shirt striking a happy pose in a colourful sombrero and striped poncho with heart sunglasses, on a sunny plaza. Peach-skinned round head, darker trousers, white mitten hands. |
 | `posters/homes_cottage.png` | 768 × 528 | Estate-agent sign poster: a red **FOR SALE** board in front of a cosy cream cottage with a red roof, garden flowers and a white picket fence by the sea; a Wobbler in a purple shirt with a straw hat waving in front. Peach-skinned round head with a printed smiling face, darker trousers, white mitten hands. |
