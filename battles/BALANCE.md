@@ -276,3 +276,38 @@ Re-run with:
 
     node battles/dev/balance/run.mjs --units jj_spirit,jj_brawler,jj_nail,jj_shadow,jj_speaker,jj_sorcerer,jj_king,squire+jj_speaker@0.25,squire+jj_shadow@0.25 --runs 6 --procs 4 --out /tmp/jj.jsonl
     node battles/dev/balance/report.mjs /tmp/jj.jsonl
+
+## New units (Tribal, Farmer, Legacy, Viking, Ancient, Dynasty, Wild West)
+
+Fourteen units, so each of these factions has at least seven. Each was priced with the
+harness against the reference panel at equal gold (`run.mjs --runs 6`, 54 battles per
+unit). The Volva is support, so she is scored inside a Squire line with a quarter of
+the gold. The new ranged units follow the reload pass above: slow cooldowns, they lose
+to cheap melee rushes and beat giants and kings. Code: `src/packs/classic.js` (the
+core factions) and each pack faction's own file.
+
+| unit | faction | cost | gimmick | score | notes |
+|---|---|---:|---|---:|---|
+| Stoner (`tb_stoner`) | tribal | 105 | cheap stones; a head hit dazes | −0.08 | +0.36 at 80; cooldown 2.8 → 3.0 |
+| Bone Mage (`tb_bone_mage`) | tribal | 300 | a rune ring marks the spot, then bone spikes erupt and toss enemies up | −0.00 | +0.12 at 270 |
+| Scarecrow (`fm_scarecrow`) | farmer | 105 | homing crows peck at the face: the target panics and runs, then is steady for 4 s | +0.01 | +1.00 vs Knight and King before the fear had a cooldown; −0.26 at 130 after; fear 2.6 → 3.0 s |
+| Harvester (`fm_harvester`) | farmer | 200 | the scythe sweeps a wide arc in front and trips up to six enemies | −0.06 | |
+| Wheelbarrow (`fm_wheelbarrow`) | farmer | 320 | never stops: the barrow shoves the enemy line along, knocks it over and catches shots from the front | +0.04 | +0.39 at 230 (knock 1.0 → 0.6 s, front guard 75% → 60%) |
+| Peasant (`lg_peasant`) | legacy | 30 | bold (inspired) with 3+ allies close, runs when left alone next to an enemy | −0.01 | |
+| Poacher (`lg_poacher`) | legacy | 120 | bolas tangle the legs (a shuffle for 3 s); a running target trips | −0.09 | |
+| Barbarian (`lg_barbarian`) | legacy | 280 | grabs the enemy in front and hurls it at the next one | −0.10 | −0.26 at 330; can't lift giants (−0.87 vs Giant) |
+| Raider (`vk_raider`) | viking | 125 | two throwing axes on the way in, then a hand axe | −0.03 | −0.17 at 140 |
+| Volva (`vk_volva`) | viking | 115 | a rune ward on every ally within 6 m soaks up 65 damage for 7 s | −0.12 in line | −0.20 at 150 with a 45 ward |
+| Gladiator (`an_gladiator`) | ancient | 200 | every kill heals 25% and adds damage, swing speed and pace (up to 5 kills) | −0.00 | +0.22 at 170 |
+| Ninja (`dy_ninja`) | dynasty | 110 | flips over its target and lands behind it; backstabs hit 2.5x | −0.06 | −0.32 at 130 with 115 hp; hp → 130 |
+| Quick Draw (`ww_quickdraw`) | wildwest | 190 | duels the most expensive enemy shooter in range first; one aimed shot, 2.5x on the head | +0.03 | |
+| Miner (`ww_miner`) | wildwest | 125 | the pick ignores armour and hooks shields out of their bearers' hands (60%) | −0.08 | −0.33 at 150 with 150 hp; hp → 160 |
+
+Against single opponents (−1 to +1, same runs): the Wheelbarrow flattens melee blobs
+(+0.81 vs Squires) but loses to guns and the King. The Quick Draw, Stoner, Scarecrow and
+Poacher beat Giants and Knights and lose to Clubber and Squire rushes (−0.4 to −0.8),
+like the other ranged units. The Barbarian, Harvester and Peasant beat cheap melee and
+lose to the elites. To re-run:
+
+    node battles/dev/balance/run.mjs --units tb_stoner,tb_bone_mage,fm_scarecrow,fm_harvester,fm_wheelbarrow,lg_peasant,lg_poacher,lg_barbarian,vk_raider,an_gladiator,dy_ninja,ww_quickdraw,ww_miner,squire+vk_volva@0.25 --runs 6 --out /tmp/new.jsonl
+    node battles/dev/balance/report.mjs /tmp/new.jsonl --sort

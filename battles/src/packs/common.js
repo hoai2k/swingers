@@ -123,7 +123,7 @@ export function strike(b, v, dmg, dir, force, attacker, kind, part = PART.chest,
 // A raised shield in front catches it (for arrow-like pack projectiles).
 export function shieldBlocks(b, v, dir, chance = 0.85) {
   const vw = v.def.weapon;
-  if (!vw.shield || v.stun > 0 || v.isDown()) return false;
+  if (!vw.shield || (v.shield && !v.shield()) || v.stun > 0 || v.isDown()) return false; // (a dropped shield blocks nothing)
   if (-(dir.x * Math.sin(v.heading) + dir.z * Math.cos(v.heading)) <= 0.3 || Math.random() > chance) return false;
   const p = v.rag.pos[PART.farmL];
   b.emit('spark', p.x, p.y, p.z, 4);
