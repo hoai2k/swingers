@@ -405,6 +405,9 @@ export function fling(v, dvx, dvy, dvz, stun = 1.2) {
 }
 
 // Hit everything (units and big bodies) in a circle on the ground: a stomp or landing.
+// (`at` may be a shared scratch vector, e.g. the point footfalls() hands out, so the
+// closest point on each big body goes in a vector of its own.)
+const _qc = new V3();
 export function quake(b, u, at, R, dmg, kv, opts = {}) {
   const team = u.team;
   b.grid.query(at.x, at.z, R + 1.5, (o) => {
@@ -417,12 +420,12 @@ export function quake(b, u, at, R, dmg, kv, opts = {}) {
   });
   for (const g of S(b).bigs) {
     if (!g.alive || g.team === team || g.u === u) continue;
-    closestOnSeg(g.A, g.B, at, _a);
-    const d = Math.hypot(_a.x - at.x, _a.z - at.z);
+    closestOnSeg(g.A, g.B, at, _qc);
+    const d = Math.hypot(_qc.x - at.x, _qc.z - at.z);
     if (d > R + g.r) continue;
     const f = clamp(1 - d / (R + g.r), 0.25, 1);
     hurtBig(b, g, dmg * f * 0.6, u);
-    shoveBig(g, (_a.x - at.x) / (d || 1) * g.mass * f, g.mass * 1.5 * f, (_a.z - at.z) / (d || 1) * g.mass * f, _a, 3);
+    shoveBig(g, (_qc.x - at.x) / (d || 1) * g.mass * f, g.mass * 1.5 * f, (_qc.z - at.z) / (d || 1) * g.mass * f, _qc, 3);
   }
 }
 
