@@ -870,6 +870,7 @@ export function buildUnitVisual(def, team, opts = {}) {
           f.castShadow = false;
           g.add(f);
           g.userData.face = f;
+          if (LOOK.googly) googlyEyes(g, r, FACE_VARIANTS[faceVariant(id, def)]);
         }
         const V = FACE_VARIANTS[faceVariant(id, def)];
         if (!hat.userData.hidesFace) mesh(sphere(r * V.nose, 10, 8), skin, 0, -r * 0.1, r * 0.98, g).scale.set(1, 0.9, 0.85);
@@ -1019,6 +1020,11 @@ export function buildUnitVisual(def, team, opts = {}) {
     root.userData.ghostMat = gm;
   }
   if (STYLE === 'chibi') parts[PART.head].scale.setScalar(1.3); // (the look only: the head's collider is unchanged)
+  if (LOOK.headK !== 1) {
+    // a smaller head, seated back down on the neck
+    const k = LOOK.headK, drop = (1 - k) * skel.rHead * 0.85;
+    for (const c of parts[PART.head].children) { c.position.multiplyScalar(k); c.position.y -= drop; c.scale.multiplyScalar(k); }
+  }
   const vis = { root, parts, items, held, skel, extraParts, face: parts[PART.head].userData.face || null, expr: 0, faceVar: faceVariant(id, def) };
   // each part's baked mesh, for the distant stand-ins (setFar)
   if (!opts.noBake && !opts.ghost && !opts.portrait) {
@@ -1069,6 +1075,29 @@ BAKED.customProgramCacheKey = () => 'wobbly-baked';
 
 // Look styles, to compare (dev/lineup.html?style=…); the game uses 'classic'.
 // Every style keeps the baked vertex colours and the per-vertex glow (fx.y).
+// Proportion / face previews (dev/lineup.html?head=0.8&googly=1); the game uses the
+// defaults. headK shrinks the head (look only: its collider is unchanged) and seats it
+// back on the neck; googly puts TABS-style 3D googly eyes over the drawn ones.
+const LOOK = { headK: 1, googly: false };
+export function setLookPreview(o) { Object.assign(LOOK, o); }
+// 3D eyes where the face texture draws them (see drawFace / faceGeo: the eyes sit at
+// v = 0.5 and u = 0.5 ± 1.5·gap/256 of the face patch)
+function googlyEyes(g, r, V) {
+  const white = mat('#fbfbf6', { spec: 0.6 }), ink = mat('#141014', { spec: 0.9 });
+  const re = r * 0.36, th = Math.PI * (0.14 + 0.5 * 0.62);
+  for (const side of [-1, 1]) {
+    const phi = Math.PI / 2 + side * (1.5 * V.gap / 256) * Math.PI * 0.95;
+    const n = new THREE.Vector3(-Math.cos(phi) * Math.sin(th), Math.cos(th), Math.sin(phi) * Math.sin(th));
+    const e = new THREE.Group();
+    e.position.copy(n).multiplyScalar(r * 0.98);
+    e.lookAt(n.clone().multiplyScalar(5));
+    mesh(sphere(re, 16, 12), white, 0, 0, 0, e).scale.set(1, 1, 0.75);
+    // the pupil rattles loose: each eye looks its own way
+    const a = Math.random() * Math.PI * 2, d = re * (0.15 + Math.random() * 0.3);
+    mesh(sphere(re * 0.52, 12, 8), ink, Math.cos(a) * d, Math.sin(a) * d, re * 0.7, e).scale.set(1, 1, 0.45);
+    g.add(e);
+  }
+}
 export const UNIT_STYLES = ['classic', 'toon', 'clay', 'vinyl', 'lowpoly', 'chibi'];
 let STYLE = 'classic';
 export function setUnitStyle(s) { STYLE = UNIT_STYLES.includes(s) ? s : 'classic'; }

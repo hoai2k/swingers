@@ -7,9 +7,11 @@
 //   faces=1          draw the face atlas (all variants x expressions) instead
 //   only=id,id       just these units                    w,h   canvas size
 //   style=toon|clay|vinyl|lowpoly|chibi   look style to compare (default: the game's 'classic')
+//   head=0.8         smaller heads (look only)           googly=1  3D googly eyes
 import { THREE } from '../src/util.js';
 import { UNITS } from '../src/units.js';
-import { buildUnitVisual, poseVisual, setExpression, initFaces, FACE_MATS, TEAM_COLORS, setUnitStyle } from '../src/visual.js';
+import { buildUnitVisual, poseVisual, setExpression, initFaces, FACE_MATS, TEAM_COLORS, setUnitStyle, setLookPreview } from '../src/visual.js';
+setLookPreview({ headK: +(q0().get('head') || 1), googly: q0().get('googly') === '1' });
 if (q0().get('style')) setUnitStyle(q0().get('style'));
 function q0() { return new URLSearchParams(location.search); }
 const q = new URLSearchParams(location.search);
