@@ -15,6 +15,7 @@
 
 import { clamp, lerp, TAU, angDiff, rand, rgba } from './util.js';
 import { castAt, drawBody } from './cast.js';
+import { settings } from './settings.js';
 import { sfx } from './audio.js';
 
 export const SP = {
@@ -35,14 +36,15 @@ export const SP = {
   webMax: 900,
   webMin: 30,
   webReel: 520,          // left stick along the rope reels in / pays out
-  webReelAuto: 220,      // a held web keeps shortening its rest length (the pull)
-  webRest: 0.5,          // the elastic web's rest length, as a fraction of the hit distance
-  webK: 16,              // spring: u/s^2 of pull per unit of stretch...
-  webMaxPull: 4600,      // ...capped
-  webDamp: 2.2,          // damping on the stretch (keeps it bouncy, not jittery)
+  webReelAuto: 600,      // a held web keeps shortening its rest length (the pull)
+  webRest: 0.15,          // the elastic web's rest length, as a fraction of the hit distance
+  webK: 34,              // spring: u/s^2 of pull per unit of stretch...
+  webMaxPull: 9000,      // ...capped
+  webDamp: 3.5,          // damping on the stretch (keeps it bouncy, not jittery)
   webSlack: 0.45,        // max stretch beyond rest (x hit distance) before it goes taut
   webPump: 1500,
-  webMinHold: 0.25,      // a web stays on at least this long
+  webMinHold: 0.25,
+  grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
   webCoolStep: 0.08,
   airAnchor: 0.3,        // a web into empty air clings to nothing this long
@@ -172,17 +174,13 @@ export class Spider {
     //  on a surface: jump. In the air: shoot a web (hold to keep it, release to
     //  let go). Holding the button through a jump slings a web at the top.
     this.webCooldown = Math.max(0, (this.webCooldown || 0) - dt);
-    const jwHeld = !!inp && (inp.held.a || inp.held.lt);
-    const jwPressed = !!inp && (inp.pressed.a || inp.pressed.lt);
+    // LB is the original's jump / web button; A and LT do the same
+    const jwHeld = !!inp && (inp.held.lb || inp.held.a || inp.held.lt);
+    const jwPressed = !!inp && (inp.pressed.lb || inp.pressed.a || inp.pressed.lt);
     if (jwPressed) {
-      if (this.ground || this.coyote > 0) { this.jump(move); this.jwHoldJump = 0; }
+      if (this.ground || this.coyote > 0) this.jump(move);
       else if (!this.web) this.shootWeb(move, inp);
     }
-    if (jwHeld && this.jwHoldJump !== undefined && this.jwHoldJump !== null && !this.ground && !this.web) {
-      this.jwHoldJump += dt;
-      if (this.jwHoldJump > 0.2) { this.shootWeb(move, inp); this.jwHoldJump = null; }
-    }
-    if (!jwHeld || this.ground) this.jwHoldJump = this.ground && jwHeld ? this.jwHoldJump : null;
     if (this.web && !jwHeld && this.web.t >= SP.webMinHold) this.releaseWeb(true);
     if (this.web) this.updateWeb(dt, move);
 
@@ -204,14 +202,17 @@ export class Spider {
     // weapon
     const hadWeapon = !!this.weapon;
     if (this.weapon) this.weapon.update(dt, this.ctl);
-    if (inp && this.weapon && (inp.pressed.lb || inp.pressed.b)) this.throwWeapon();
+    // RB (the original's grab button): holding something -> throw it; empty
+    // -> grab: take a weapon within reach, else pull one to you from across
+    // the board (your thrown blade first). B throws too; X swaps.
+    if (inp && inp.pressed.rb) { if (hadWeapon && this.weapon) this.throwWeapon(); else if (!hadWeapon) this.recall(); }
+    else if (inp && this.weapon && inp.pressed.b) this.throwWeapon();
     if (inp && inp.pressed.x) this.swapWeapon();
-    // RB: recall — your thrown blade flies back; otherwise the nearest loose
-    // weapon is pulled to you
-    if (inp && inp.pressed.rb && !hadWeapon) this.recall();
+    // weapons you pulled are caught on arrival; walking over one only picks it
+    // up with the auto-pickup setting
     if (!this.weapon && this.pickCooldown <= 0) {
-      const p = game.pickupNear(this.x, this.y, this.r + 16, this);
-      if (p) game.takePickup(this, p);
+      const p = game.pickupNear(this.x, this.y, this.r + 18, this);
+      if (p && (p.yankedBy === this || settings.autoPickup)) game.takePickup(this, p);
     }
 
     // hazards
@@ -547,12 +548,25 @@ export class Spider {
 
   recall() {
     if (this.recallable && this.recallable.pickup && !this.recallable.pickup.removed) { this.recallable.recall(this); return; }
-    const p = this.game.pickupNear(this.x, this.y, 520, this, true);
+    // within reach: just take it
+    const near = this.game.pickupNear(this.x, this.y, this.r + 40, this, true);
+    if (near && !near.stuck) { this.game.takePickup(this, near); return; }
+    // otherwise pull the best one in range: favour the aim direction
+    let p = null, best = Infinity;
+    for (const q of this.game.pickups) {
+      if (!q.canTake) continue;
+      const dx = q.x - this.x, dy = q.y - this.y, d = Math.hypot(dx, dy);
+      if (d > SP.grabRange) continue;
+      const along = (dx * this.aim.x + dy * this.aim.y) / (d || 1);
+      const score = d * (1.6 - 0.8 * along);
+      if (score < best) { best = score; p = q; }
+    }
     if (!p || p.stuck && !(p.weapon && p.weapon.recall)) return;
     if (p.weapon && p.weapon.mode === 'stuck' && p.weapon.recall) { p.weapon.thrower = this; p.weapon.pickup = p; p.weapon.recall(this); return; }
     const dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
     p.stuck = false;
-    p.vx = (dx / m) * 1150; p.vy = (dy / m) * 1150 - 200; p.yankedBy = this; p.yankT = 0.6;
+    const sp = clamp(m * 2.4, 700, 1500);
+    p.vx = (dx / m) * sp; p.vy = (dy / m) * sp - 160; p.yankedBy = this; p.yankT = 0.9;
     sfx.webStick();
     this.game.fx.line(this.x, this.y, p.x, p.y, 'rgba(255,255,255,0.7)', 1.5, 0.15, false);
   }

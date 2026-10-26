@@ -5,8 +5,8 @@
 // Gamepads use the standard (Xbox) mapping; up to 8 are supported.
 //
 // Keyboard + mouse: WASD move, mouse aims, left click = RT (use weapon),
-// Space or right click = jump / web (A / LT), Q = throw (LB), E = recall (RB),
-// F = swap (X), R = B, Esc = start, Z/X = d-pad left/right.
+// Space or right click = jump / web (LB), E = grab / throw (RB), Q = throw (B),
+// F = swap (X), Esc = start, Z/X = d-pad left/right.
 
 const DEADZONE = 0.2;
 
@@ -75,8 +75,8 @@ export class Input {
       l, r,
       lt: this.mouse.r || k('ShiftLeft') ? 1 : 0,
       rt: this.mouse.l || k('ControlLeft') ? 1 : 0,
-      lb: k('KeyQ'), rb: k('KeyE'),
-      a: k('Space'), b: k('KeyR'), x: k('KeyF'), y: k('KeyC'),
+      lb: k('Space'), rb: k('KeyE'),
+      a: k('Space'), b: k('KeyQ'), x: k('KeyF'), y: k('KeyC'),
       ls: false, rs: false,
       start: k('Escape') || k('Enter'), back: k('Backspace'),
       dpad: { up: k('Digit1'), down: k('Digit2'), left: k('KeyZ'), right: k('KeyX') },
