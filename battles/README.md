@@ -176,6 +176,12 @@ when delivered; without one the tab shows just the name in the faction colour.
   a line) and the Four-Armed King (boss: invisible cuts around him and a domain dome where cuts
   hit everyone inside). Its tab emblem (`assets/ui/faction-jujutsu.png`) is requested; until
   it arrives the tab shows the name only.
+- `src/packs/jjk-*.js` the **Jujutsu Kaisen** faction (`jjk`): `jjk-core.js` (domains with barriers,
+  clashes, Prison Realm, Infinity, reserves, secrets) and the characters. `jjk-students.js`: Yuji
+  (Divergent Fist, Black Flash), Todo (Boogie Woogie swaps), Nobara (nails, Hairpin, Resonance),
+  Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
+  Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
+  Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 

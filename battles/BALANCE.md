@@ -386,3 +386,32 @@ Against four flyers, damage dealt while they were in the air went from 329 → 2
 the Tree Giant throws at flyers, and ground-only attacks (Bone Mage spikes, catapult
 lobs) pick targets on the ground. Scores after the change (4 runs): Void Monarch
 −0.02, Tree Giant −0.06, Bone Mage +0.05, Catapult −0.12.
+
+## Jujutsu Kaisen: the students (`src/packs/jjk-students.js`)
+
+Priced against the reference panel at equal gold (`run.mjs --runs 4`, 36 battles per
+unit, sides swapped). Inumaki is support, so he is also scored inside a Squire line
+with a quarter of the gold. Rika (`jk_rika`) is Yuta's reserve (cost 0, not in any
+setup tab): she is part of Yuta's price, and the harness doesn't count her hp as gold
+left standing, so Yuta's score slightly understates him.
+
+First drafts were weak: bare fists (item `none`) out-reached by every weapon and units
+knocked flat for seconds (Yuji −0.52, Todo −0.70, Panda −0.49). Fists became a short
+pack item (`jk_fist`, like the Brawler's), the fighters get back up quickly (Yuji,
+Todo, Maki, Panda), Todo's punches sweep, and then prices moved:
+
+| unit | cost | hp | role | alone | in line (25%) | notes |
+|---|---:|---:|---|---:|---:|---|
+| Yuji Itadori (`jk_yuji`) | 520 → **430** | 470 → 520 | brawler | −0.05 | | Divergent Fist (+45% a beat later), Black Flash 12% (+25% for 6 s after one), ×2.5 |
+| Aoi Todo (`jk_todo`) | 900 → **680** | 1000 → 1100 | brawler | +0.09 | | Boogie Woogie every 7 s; beats knights (+0.62), loses a little to squire walls |
+| Nobara Kugisaki (`jk_nobara`) | 250 → **310** | 150 | ranged | +0.15 | | 3 nails per blow, Hairpin 14 per nail, Resonance 40 every 5.5 s; crushes giants and kings, loses to rushes (like every ranged unit) |
+| Kento Nanami (`jk_nanami`) | 640 → **470** | 560 → 600 | melee | −0.02 | | Ratio 30% (55% on Overtime) ×2.4; Overtime from 30 s: +35% damage, faster |
+| Maki Zen'in (`jk_maki`) | 560 → **460** | 420 | melee | −0.11 | | Split Soul every 3rd hit ignores armour; awakens once below 30% (back to 55%) |
+| Panda (`jk_panda`) | **600** | 640 | brawler | −0.00 | | Gorilla Core once (55% hp): Drumming Beat +60% through guards, +50% to the one behind |
+| Toge Inumaki (`jk_inumaki`) | 300 → **560** | 150 | support | −0.81 | +0.06 | "Don't move!" 2.4 → 2.0 s freeze; at 300 he was +0.41 in line |
+| Yuta Okkotsu (`jk_yuta`) | **1500** | 560 | special grade | −0.10 | | Rika (950 hp) 12 s when in trouble, full manifestation below 30%; domain r 9 m, 6 s, power 9; −1.00 vs gunslingers |
+
+Re-run with:
+
+    node battles/dev/balance/run.mjs --units jk_yuji,jk_todo,jk_nobara,jk_nanami,jk_maki,jk_panda,jk_inumaki,jk_yuta,squire+jk_inumaki@0.25 --runs 4 --out /tmp/jks.jsonl
+    node battles/dev/balance/report.mjs /tmp/jks.jsonl
