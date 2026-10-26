@@ -51,7 +51,7 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   drop into the body, limb, mitten, shoe and torso size) and shading (phong / matte / vinyl /
   toon + outline) without touching the ragdoll. Chosen with `?style=<id>` (default `chunky`);
   `charMat()` makes the skin, head and face materials in the current style. `FACE_FLAT`
-  (`style.faceFlat`, try `?flat=0.5`) flattens the face side of the head (`headGeometry`).
+  (`style.faceFlat`: chunky 0.5; try others with `?flat=`) flattens the face side of the head (`headGeometry`).
   Painted faces are fitted into `FACE_BOX` (`assets.js`) on the head texture; keep features
   compact (eyes near the equator, mouth just below), or they climb onto the forehead / chin.
 - Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than

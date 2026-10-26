@@ -189,19 +189,19 @@ function drawFace(kind) {
     // neutral dot-eye faces: small and close together, like a toy's printed face
     case 'Dot eyes': case 'Calm': case 'Content': case 'Oh': case 'Shy': case 'Smirk': {
       g.fillStyle = '#ffd9b8'; g.fillRect(0, 0, W, H); // no default cheeks
-      const dy = H * 0.47, dx = kind === 'Shy' ? 17 : 21, r = kind === 'Oh' ? 8 : 7, my = H * 0.565;
+      const dy = H * 0.47, dx = kind === 'Shy' ? 22 : 27, r = kind === 'Oh' ? 8 : 7, my = H * 0.565;
       g.fillStyle = '#1c1c28';
       for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * dx, kind === 'Shy' ? dy + 3 : dy, r, r * 1.15, 0, 0, 7); g.fill(); }
       if (kind === 'Content' || kind === 'Shy') {
         g.fillStyle = 'rgba(255,120,120,.4)';
-        for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 38, my - 4, 11, 7, 0, 0, 7); g.fill(); }
+        for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 43, my - 4, 11, 7, 0, 0, 7); g.fill(); }
       }
       g.strokeStyle = '#4a2a2a'; g.fillStyle = '#4a2a2a'; g.lineWidth = 4;
       g.beginPath();
       if (kind === 'Dot eyes') g.arc(cx, my - 8, 10, 0.25 * Math.PI, 0.75 * Math.PI);
       else if (kind === 'Calm') { g.moveTo(cx - 8, my); g.lineTo(cx + 8, my); }
       else if (kind === 'Content') g.arc(cx, my - 10, 13, 0.2 * Math.PI, 0.8 * Math.PI);
-      else if (kind === 'Oh') { g.ellipse(cx, my + 1, 5, 6, 0, 0, 7); g.fill(); }
+      else if (kind === 'Oh') { g.ellipse(cx, my + 2, 8, 10, 0, 0, 7); g.fill(); }
       else if (kind === 'Shy') g.arc(cx, my - 5, 6, 0.2 * Math.PI, 0.8 * Math.PI);
       else { g.moveTo(cx - 8, my); g.quadraticCurveTo(cx + 4, my + 3, cx + 11, my - 5); } // Smirk
       g.stroke();

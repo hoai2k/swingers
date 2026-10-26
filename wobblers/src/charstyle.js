@@ -9,7 +9,7 @@ import * as THREE from 'three';
 
 export const CHAR_STYLES = {
   classic: { name: 'Classic (current)', head: 1, drop: 0, limb: 1, hand: 1, shoe: 1, body: 1, mat: 'phong' },
-  chunky: { name: 'Chunky toy', head: 1.18, drop: 0.04, limb: 1.4, hand: 1.22, shoe: 1.18, body: 1.07, mat: 'matte' },
+  chunky: { name: 'Chunky toy', head: 1.18, drop: 0.04, limb: 1.4, hand: 1.22, shoe: 1.18, body: 1.07, mat: 'matte', faceFlat: 0.5 },
   vinyl: { name: 'Vinyl figure', head: 1.12, drop: 0.02, limb: 1.15, hand: 1.1, shoe: 1.08, body: 1, mat: 'vinyl' },
   toon: { name: 'Cel toon', head: 1.05, drop: 0, limb: 1.12, hand: 1.05, shoe: 1.05, body: 1, mat: 'toon', outline: true },
   blob: { name: 'Wobbly blob', head: 1.3, drop: 0.13, limb: 1.3, hand: 1.12, shoe: 1.12, body: 1.16, mat: 'matte' },
