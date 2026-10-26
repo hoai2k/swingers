@@ -23,8 +23,13 @@
 import { register } from '../ext.js';
 import { THREE, clamp, rand, PART, newId } from './common.js';
 import { RAPIER, GROUPS } from '../physics.js';
-import { Unit } from '../unit.js';
-import { park } from '../battle.js';
+// (unit.js and battle.js are loaded lazily: a static import here would evaluate items.js
+// and battle.js in the middle of src/packs/index.js, so ITEMS and PROJ would be built
+// before the packs after this one - and this one - had registered their items and
+// projectile types; in a browser their meshes were then missing)
+let UnitP = null, park = null;
+import('../unit.js').then((m) => { UnitP = m.Unit.prototype; });
+import('../battle.js').then((m) => { park = m.park; });
 
 export const FACTION = { id: 'jjk', name: 'Jujutsu Kaisen', color: '#2b2f6b' };
 const UPY = new THREE.Vector3(0, 1, 0);
@@ -59,7 +64,7 @@ export const burntOut = (u) => (u.jkBurnout || 0) > u.battle.time;
 //      default the owner's feet) }
 // Returns the domain (null if a clash kills it at once).
 export function openDomain(b, owner, o) {
-  ensureHitHook();
+  ensureHitHook(owner);
   const s = jk(b);
   const at = (o.at || owner.pos).clone();
   at.y = b.terrain.height(at.x, at.z);
@@ -238,12 +243,15 @@ export function infinityBlocks(v, attacker) {
 // Every hit goes through Unit.hit: a sealed unit takes nothing, and Infinity stops
 // any blow, shot or blast (a ripple where it stopped) unless the attacker pierces it.
 // Sure-hits (kind 'domain') and the unit's own Infinity off-time get through.
-// (installed on first use: unit.js is still loading when this module runs)
+// (installed on first use: unit.js is still loading when this module runs; pass any unit
+// if you can, in case the lazy import above has not finished)
 let hit0 = null;
-export function ensureHitHook() {
+export function ensureHitHook(u = null) {
   if (hit0) return;
-  hit0 = Unit.prototype.hit;
-  Unit.prototype.hit = jkHit;
+  const P = UnitP || (u && Object.getPrototypeOf(u));
+  if (!P || typeof P.hit !== 'function') return;
+  hit0 = P.hit;
+  P.hit = jkHit;
 }
 function jkHit(amount, part, ix, iy, iz, attacker, kind) {
   if (this.jkSealedT > this.battle.time) return;
@@ -259,7 +267,7 @@ function jkHit(amount, part, ix, iy, iz, attacker, kind) {
 // ------------------------------------------------------------------ Prison Realm
 // seal v for t seconds: frozen in a cube, can't act, nothing hurts it
 export function seal(b, v, t) {
-  ensureHitHook();
+  ensureHitHook(v);
   if (!v.alive) return;
   v.jkSealedT = b.time + t;
   v.jkSealHp = v.hp;
@@ -299,7 +307,7 @@ register({
     return false;
   },
   battleStep(b, dt) {
-    ensureHitHook();
+    ensureHitHook(b.units[0]);
     const s = STATE.get(b);
     for (const f of SECRETS) f(b, dt);
     if (!s) return;
