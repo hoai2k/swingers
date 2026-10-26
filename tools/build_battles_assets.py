@@ -15,7 +15,7 @@ MAPS = ("grass", "desert", "winter", "autumn", "castle", "river", "cove", "volca
 SIZES = {"logo": (1200, 525), "icon": (512, 512), "loading": (1920, 1080)}
 FACTIONS = ("tribal", "farmer", "medieval", "legacy", "viking", "ancient",
             "dynasty", "wildwest", "spooky", "pirate", "renaissance", "prehistoric",
-            "good", "evil", "secret", "custom")
+            "good", "evil", "secret", "custom", "jujutsu", "galactic")
 SIZES.update({f"faction-{name}": (128, 128) for name in FACTIONS})
 SIZES.update({f"map-{name}": (640, 360) for name in MAPS})
 SIZES.update({f"victory-{name}": (1200, 400) for name in ("blue", "red")})
