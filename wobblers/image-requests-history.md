@@ -17,6 +17,11 @@ browser loading. Replaced files are preserved in `assets/originals/pre-round15/`
 | `posters/cafe_cake.png` | 512 × 716 | the four little chefs round the cake (CAKE!): rose pink, soft blue, warm gold and lilac skin; white chef jackets and hats |
 | `posters/cafe_coffee.png` | 512 × 716 | the barista hugging the cup (COFFEE): coral skin, green apron over a cream shirt |
 | `posters/cars_sale.png` | 512 × 716 | the salesperson by the car and the helicopter pilot (BIG DEALS): teal and warm gold skin; red and blue shirts, shades kept |
+| `posters/clothes_fashion.png` | 512 × 716 | the model in the sombrero, poncho and heart shades (NEW LOOKS): lilac skin, the striped poncho as the top layer |
+| `posters/homes_cottage.png` | 768 × 528 | the waving person by the FOR SALE sign: soft blue skin, purple shirt, straw hat |
+| `posters/painting_island.png` | 768 × 528 | everyone on the island painting (the people on the hilltop and in town): varied soft skins, contrasting shirts |
+| `posters/portrait_family.png` | 512 × 666 | the family of three (top hat, bow, child): warm gold, rose pink and soft blue skin; yellow, pink and blue shirts kept |
+| `posters/wanted_kid.png` | 512 × 716 | CACTUS KID hugging the cactus: mint green skin, green shirt, brown cowboy hat |
 
 ## Delivered round 14 — factory and farm signs
 

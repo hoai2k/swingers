@@ -477,10 +477,10 @@
       "file": "posters/painting_island.png",
       "width": 768,
       "height": 528,
-      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the sunny island landscape, hilltop fence, town fountain plaza, ferris wheel, lighthouse, suspension bridge, piers, boats, mountains and puppy exactly as composed. Replace only the two foreground people: one red shirt/red cap/blue backpack, other blue shirt/straw hat; both have peach heads, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 768x528.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e95f3800-7e54-4ebc-b3fb-aa21ee55e5f1.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required in-game toy character reference. Change ONLY character skin/clothes to current WOBBLERS toy style. Repaint ALL people on hilltop and in town with varied soft blue, coral, mint, gold, pink skin and contrasting shirts. Foreground red cap/backpack person: soft blue skin, red shirt; straw-hat person: coral skin, blue shirt. Skin-coloured mitten hands, dark navy trousers and dark shoes. Keep island painting, views, puppy and landscape EXACTLY. Match reference2 chunky soft-toy proportions, round shoulder-wide heads with slightly flat printed cartoon faces and blush, smooth bodies, thick tube limbs. Skin head/arms/mitten hands one SOFT muted colour per person; shirt layered on top in contrasting bright colour; exposed arms must show skin colour. No white gloves or peach skin. Preserve original scene, pose, framing, layout, composition, palette and exact wording. No other changes or added details. Opaque full-frame, same aspect ratio for 768x528.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a752dc8-1cce-412b-b1b0-60387c0608a1.png",
       "index": 42,
       "previousGenerations": [
         {
@@ -491,6 +491,16 @@
           "transparent": false,
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5619c13b-12af-4489-b0d8-4d48695123ac.png",
           "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cosy painted landscape of a sunny toy-like island: green hills, a little town, a ferris wheel and a lighthouse by a blue sea. Soft storybook painting. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 768 x 528 pixels. Generate this one asset only."
+        },
+        {
+          "file": "posters/painting_island.png",
+          "width": 768,
+          "height": 528,
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the sunny island landscape, hilltop fence, town fountain plaza, ferris wheel, lighthouse, suspension bridge, piers, boats, mountains and puppy exactly as composed. Replace only the two foreground people: one red shirt/red cap/blue backpack, other blue shirt/straw hat; both have peach heads, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 768x528.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e95f3800-7e54-4ebc-b3fb-aa21ee55e5f1.png",
+          "round": 12,
+          "transparent": false,
+          "index": 42
         }
       ]
     },
@@ -498,10 +508,10 @@
       "file": "posters/portrait_family.png",
       "width": 512,
       "height": 666,
-      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the warm orange family portrait composition: three hugging and waving. Tall person yellow shirt, black top hat and red bow tie; pink shirt person with purple bow; small blue shirt child. Replace the old featureless coloured people with peach round heads, happy printed cartoon eyes and smiling mouths, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x666.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ad020eec-a431-4114-88c9-c25de833cd9b.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required in-game toy character reference. Change ONLY character skin/clothes to current WOBBLERS toy style. Repaint family of three: top-hat adult warm-gold skin and yellow shirt/red bowtie, bow-wearing adult rose-pink skin and pink shirt, child soft-blue skin and blue shirt. Make shirt colours distinctly brighter/darker from skin, printed smiling faces. Skin-coloured hands, navy trousers, dark shoes. Keep warm background, composition and accessories. Match reference2 chunky soft-toy proportions, round shoulder-wide heads with slightly flat printed cartoon faces and blush, smooth bodies, thick tube limbs. Skin head/arms/mitten hands one SOFT muted colour per person; shirt layered on top in contrasting bright colour; exposed arms must show skin colour. No white gloves or peach skin. Preserve original scene, pose, framing, layout, composition, palette and exact wording. No other changes or added details. Opaque full-frame, same aspect ratio for 512x666.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef225a16-160b-4c94-a7a4-c59022996259.png",
       "index": 43,
       "previousGenerations": [
         {
@@ -512,6 +522,16 @@
           "transparent": false,
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2f4f6768-0ef9-4221-a76b-f35892132a10.png",
           "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A silly family portrait: three wobbly bean people (two adults and a small one) posing proudly, one wearing a top hat, in front of a plain warm background. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 666 pixels. Generate this one asset only."
+        },
+        {
+          "file": "posters/portrait_family.png",
+          "width": 512,
+          "height": 666,
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Keep the warm orange family portrait composition: three hugging and waving. Tall person yellow shirt, black top hat and red bow tie; pink shirt person with purple bow; small blue shirt child. Replace the old featureless coloured people with peach round heads, happy printed cartoon eyes and smiling mouths, darker trousers, white mittens, dark shoes. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x666.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ad020eec-a431-4114-88c9-c25de833cd9b.png",
+          "round": 12,
+          "transparent": false,
+          "index": 43
         }
       ]
     },
@@ -872,10 +892,10 @@
       "file": "posters/clothes_fashion.png",
       "width": 512,
       "height": 716,
-      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the fashion poster, sunny plaza, sombrero, striped poncho, heart sunglasses, pose and EXACT words NEW LOOKS. Replace only the character: peach round head, smiling mouth, teal shirt under poncho, darker teal trousers, white mitten hands, dark charcoal shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d97272eb-b1b5-4c13-9421-ba73b93f8652.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required in-game toy character reference. Change ONLY character skin/clothes to current WOBBLERS toy style. Repaint sombrero/poncho/heart-sunglasses model with lilac skin, printed smiling face, skin-coloured lilac mitten hands, striped poncho kept as top layer, darker navy trousers and dark shoes. Keep NEW LOOKS text. Match reference2 chunky soft-toy proportions, round shoulder-wide heads with slightly flat printed cartoon faces and blush, smooth bodies, thick tube limbs. Skin head/arms/mitten hands one SOFT muted colour per person; shirt layered on top in contrasting bright colour; exposed arms must show skin colour. No white gloves or peach skin. Preserve original scene, pose, framing, layout, composition, palette and exact wording. No other changes or added details. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-60024ea3-5376-4574-a67b-a1c61edaa2db.png",
       "index": 80,
       "previousGenerations": [
         {
@@ -887,6 +907,16 @@
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5e9952fa-46fe-44a8-bdf4-3710b8f46bc4.png",
           "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Fashion poster with exact heading \"NEW LOOKS\", a wobbly bean person posing in a sombrero and heart sunglasses. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
           "round": 5
+        },
+        {
+          "file": "posters/clothes_fashion.png",
+          "width": 512,
+          "height": 716,
+          "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the fashion poster, sunny plaza, sombrero, striped poncho, heart sunglasses, pose and EXACT words NEW LOOKS. Replace only the character: peach round head, smiling mouth, teal shirt under poncho, darker teal trousers, white mitten hands, dark charcoal shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d97272eb-b1b5-4c13-9421-ba73b93f8652.png",
+          "round": 12,
+          "transparent": false,
+          "index": 80
         }
       ]
     },
@@ -894,10 +924,10 @@
       "file": "posters/homes_cottage.png",
       "width": 768,
       "height": 528,
-      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the cottage, red roof, flowers, white picket fence, sea and EXACT FOR SALE sign. Replace only the waving person: peach-skinned round head with printed smiling cartoon face, purple shirt, darker purple trousers, white mitten hands, straw hat, dark shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 768x528.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5aad254e-a084-4ac8-a5c7-54d36df415cc.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required in-game toy character reference. Change ONLY character skin/clothes to current WOBBLERS toy style. Repaint waving person with soft blue skin, purple shirt, straw hat, blue mitten hands, darker navy trousers and dark shoes. Keep FOR SALE text and all cottage/garden details. Match reference2 chunky soft-toy proportions, round shoulder-wide heads with slightly flat printed cartoon faces and blush, smooth bodies, thick tube limbs. Skin head/arms/mitten hands one SOFT muted colour per person; shirt layered on top in contrasting bright colour; exposed arms must show skin colour. No white gloves or peach skin. Preserve original scene, pose, framing, layout, composition, palette and exact wording. No other changes or added details. Opaque full-frame, same aspect ratio for 768x528.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-df80b123-414c-4754-900e-5e2d978afbd8.png",
       "index": 81,
       "previousGenerations": [
         {
@@ -909,6 +939,16 @@
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2e837617-df1b-4cd8-a99f-faf78faeeb67.png",
           "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Estate-agent landscape picture of a cute pastel bungalow with a red roof and garden, exact words \"FOR SALE\" on a tag in one corner. Output aspect 768:528. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
           "round": 5
+        },
+        {
+          "file": "posters/homes_cottage.png",
+          "width": 768,
+          "height": 528,
+          "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the cottage, red roof, flowers, white picket fence, sea and EXACT FOR SALE sign. Replace only the waving person: peach-skinned round head with printed smiling cartoon face, purple shirt, darker purple trousers, white mitten hands, straw hat, dark shoes. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 768x528.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5aad254e-a084-4ac8-a5c7-54d36df415cc.png",
+          "round": 12,
+          "transparent": false,
+          "index": 81
         }
       ]
     },
@@ -1582,10 +1622,10 @@
       "file": "posters/wanted_kid.png",
       "width": 512,
       "height": 716,
-      "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Preserve the aged paper WANTED poster, desert, cactus, framing and EXACT text WANTED / CACTUS KID / REWARD 50 COINS. Replace only the person hugging cactus: peach-skinned head, printed winking cartoon face with smile, green shirt, darker green trousers, white mittens, dark shoes, brown cowboy hat, red neckerchief. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x716.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bf307f19-4907-418b-8d10-f46188c0bacc.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required in-game toy character reference. Change ONLY character skin/clothes to current WOBBLERS toy style. Repaint cactus-hugging CACTUS KID with mint-green skin, green shirt distinct from skin, brown cowboy hat, red neckerchief, mint mitten hands, dark navy trousers and charcoal shoes. Keep winking smiling face. Keep EXACT words WANTED / CACTUS KID / REWARD 50 COINS, paper, cactus and desert. Match reference2 chunky soft-toy proportions, round shoulder-wide heads with slightly flat printed cartoon faces and blush, smooth bodies, thick tube limbs. Skin head/arms/mitten hands one SOFT muted colour per person; shirt layered on top in contrasting bright colour; exposed arms must show skin colour. No white gloves or peach skin. Preserve original scene, pose, framing, layout, composition, palette and exact wording. No other changes or added details. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4009ef01-d1ec-482f-a3ae-e49cfa21939d.png",
       "index": 141,
       "previousGenerations": [
         {
@@ -1597,6 +1637,16 @@
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ef716b78-79f3-4339-b30a-717883638c0e.png",
           "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"CACTUS KID\" beneath portrait; \"REWARD 50 COINS\" below. A cheeky little wobbly bean-person cowboy hugging a cactus in middle. Toy-like and silly. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
           "round": 9
+        },
+        {
+          "file": "posters/wanted_kid.png",
+          "width": 512,
+          "height": 716,
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target; image 2 is the required in-game character reference. Preserve the aged paper WANTED poster, desert, cactus, framing and EXACT text WANTED / CACTUS KID / REWARD 50 COINS. Replace only the person hugging cactus: peach-skinned head, printed winking cartoon face with smile, green shirt, darker green trousers, white mittens, dark shoes, brown cowboy hat, red neckerchief. Match image 2: chunky soft-toy figures, round peach #ffd9b8 heads as wide as shoulders with slightly flat face front, simple printed cartoon faces and pink cheeks, smooth bean shirt body, thick tube arms, white mitten hands, charcoal shoes with pale soles. Bright saturated colours and soft shading. Preserve image1's scene, composition, decorations, wording, aspect ratio and artwork style. No yellow-skinned or faceless blob characters. No new text or objects. Opaque full-frame output, final 512x716.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bf307f19-4907-418b-8d10-f46188c0bacc.png",
+          "round": 12,
+          "transparent": false,
+          "index": 141
         }
       ]
     },

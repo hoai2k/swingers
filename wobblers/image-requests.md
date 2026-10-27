@@ -15,11 +15,6 @@ pairing is fine.
 
 | File (`assets/…`) | Size | Characters to repaint |
 |---|---|---|
-| `posters/clothes_fashion.png` | 512 × 716 | the model in the sombrero, poncho and heart shades (NEW LOOKS): lilac skin, the striped poncho as the top layer |
-| `posters/homes_cottage.png` | 768 × 528 | the waving person by the FOR SALE sign: soft blue skin, purple shirt, straw hat |
-| `posters/painting_island.png` | 768 × 528 | everyone on the island painting (the people on the hilltop and in town): varied soft skins, contrasting shirts |
-| `posters/portrait_family.png` | 512 × 666 | the family of three (top hat, bow, child): warm gold, rose pink and soft blue skin; yellow, pink and blue shirts kept |
-| `posters/wanted_kid.png` | 512 × 716 | CACTUS KID hugging the cactus: mint green skin, green shirt, brown cowboy hat |
 | `posters/wanted_pete.png` | 512 × 716 | WOBBLY PETE the outlaw: coral skin, orange shirt, red bandana, black hat |
 | `ui/cover.png` | 1600 × 900 | all five Wobblers on the cover (jumping, bouncy ball, carrying a box, waving from the car): varied soft skins (blue, coral, mint, gold, pink) with contrasting shirts; still no text, calm sky at the top |
 | `signs/jump.png` | 1024 × 256 | the little diving figure on the right of JUMP: soft blue skin, red-and-white swimsuit |
