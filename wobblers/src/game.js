@@ -4,6 +4,7 @@ import { setCharStyle } from './charstyle.js';
 import { resetCharCaches } from './player.js';
 import { clearFaceCache, setFace } from './cosmetics.js';
 import { buildSimCull } from './simcull.js';
+import { railStep } from './world/regions/city/traffic.js';
 import * as THREE from 'three';
 import { settings } from './settings.js';
 import './look.js';
@@ -208,6 +209,7 @@ export class Game {
     for (const p of this.players) for (const h of ['L', 'R']) if (p.hands?.[h]?.body) held.add(p.hands[h].body);
     for (const v of this.vehicles) {
       if (v.culled) continue; // far from every player (simcull.js)
+      if (v.rail) { railStep(v, DT); continue; } // far self-driving traffic, out of the physics
       // a parked, empty vehicle at rest sleeps: its wheel controller would
       // otherwise nudge it every step and keep the solver busy forever
       const b = v.body, empty = !v.route && !v.seats.some((s) => s.occupant) && !held.has(b);

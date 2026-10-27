@@ -87,42 +87,8 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   delivered), `lift` (sunglasses rise), `flash` (robot screens), `beat` (hearts swell),
   `spin` (spirals turn round). Every offered face must have a blink: faces with eyes always
   shut / winking are in `RETIRED_FACES` (kept for saved-look indices, never offered).
-- Performance: `src/simcull.js` switches off loose bodies (props, parked vehicles) more than
-  150 m from every player (self-driving traffic: 300 m) and back on within 125 / 270 m; culled
-  vehicles skip `update()`. Parked empty vehicles at rest are put to sleep and skip their wheel
-  update (game.step). At most two physics steps run per frame. Kit chunks get a far version (only parts
-  with bounding radius >= 1.4 m, no shadows) drawn instead beyond 160 m (120 m in split screen);
-  `game.farCull` switches `chunk.mesh` / `chunk.far`. Parked NPCs stay visible
-  (frozen, standing) out to `SHOW_R`; `CAP` / `WAKE_R` in `npc.js` set how many are simulated.
-  Audio starts on the first controller press too (`game.wakeAudio`).
-  Kinematic bodies (rides, lifts, doors, ferries) are real physics only within 90 m of a player
-  (`simcull.js` KIN_PHYS); further out they keep animating as a picture (body switched off, the
-  next-kinematic pose applied directly by the patch in `physics.js`, meshes follow) up to their
-  animation range (default 220 m; `physics.kinRange.set(body.handle, m)`: ferris wheels / drop
-  towers 700, the city crane and ski lift 900, coasters 300-400, ferries Infinity), and stand still
-  beyond it. Tie a ride's animator to its body with `physics.animate(body, fn)` so it stops with
-  it; other animations and per-step checks use `game.whenNear(x, z, r, fn)` (the fair:
-  `RIDE_RANGE`). Bodies standing still set `rec.off`, so `physics.capture` / `sync` skip them.
-  Static colliders: `staticmerge.js` runs after the world build and rebuilds every thin static
-  box / cylinder (smallest side < 1.2 m) as one triangle mesh per 96 m area and material (~8,000
-  colliders -> ~255): Rapier pays per collider every step. Solid blocks stay boxes (meshes are
-  hollow: clearance checks must find them). Nothing is baked: every load merges what the build
-  made, so moving buildings in code just works. At runtime `game.staticMerge` rebuilds only the
-  areas that change: `merge()` folds in static colliders added since, `removeIn(x0, z0, x1, z1,
-  filter?)` takes shapes out, `unmerge(...)` turns them back into separate colliders (move them,
-  then `merge()`), `shapesIn(...)` lists them. The merged shapes are in `physics.staticShapes`
-  (the map painter reads them). Don't hold on to a static collider handle from `kit` /
-  `physics.box` (it is gone after the merge) — use a trimesh (`physics.trimesh`, never merged)
-  when you need its handle, like the ski slopes.
-  Far chunk versions draw flat decals (the city's window quads, `geometry.userData.decal`) as
-  a child mesh with `matVCDecal` (polygon offset), or they z-fight with their walls far off.
-  Draw calls (`game.lodView`): vehicle wheels / glass / light panels cast no shadows, light
-  panels hide beyond 70 m by day, loose props cast shadows only within 35 m of the camera.
-  Resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame
-  time); Settings > Show FPS shows `game.perf` (ms per frame, physics+game, render, draw calls,
-  triangles). Instanced meshes that never move far should get a bounding sphere and
-  `frustumCulled = true` (the fair's rides were drawn in every view and shadow pass); keep
-  world-wide instanced sets (coins) out of the shadow pass.
+- Performance: see the **Performance** section below before adding anything big.
+- Audio starts on the first controller press too (`game.wakeAudio`).
 - Recorded sound effects: `dev/sfx/sfx.json` lists the sounds (one-shots named like the synth sounds
   in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
   `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`
@@ -157,14 +123,7 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `game.isNight` for anything that should react to the day/night cycle (headlights, lit
   signs); `game.setTimeOfDay(h)` and `game.daySpeed` (0 freezes time) drive it. Builder
   colours listed in `GLOW` (`mesh.js`) light up at night; `kit.lamp` lamps get halos.
-  Small top-level scene objects are hidden per view by on-screen size (`game.cullSmall`);
-  set `userData.noCull` to opt out. It also hides loose props beyond 160 m, vehicles beyond
-  220 m and anything else small beyond 350 m. `game.lodView(cam)` gives top-level instanced
-  sets a bounding sphere (hidden beyond 700 m) and hides vehicle wheels beyond 120 m;
-  `game.viewHooks` (fn(cam) per view) lets a region add its own level of detail (the fair
-  hides its small instanced parts beyond 170 m, 130 m split screen). Coins pack only the
-  ones within 160 m of a camera into the instance list. Check draw calls with `game.renderStats` for 1 and 8
-  players after adding many meshes.
+  Level of detail and culling per view: **Performance** section below.
 - World helpers live in `world/common.js`: `Local` (building-local kit placement, `wall`
   with door holes, `stairs`, `rail`), `addDoor` (hinged physics door), `useSpot` (a seat with
   `use(player)` that Y triggers instead of sitting), `throwable` (punch to throw, optional
@@ -270,6 +229,79 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `join(p, cab)`, `invites`, `tick(cab)`; probe game logic by stepping `cab.machine` directly, or
   headless in node with `node tools/arcade-sim.mjs`. Marquees are `signMesh` texts (art requested
   in round 11).
+
+## Performance (read before adding anything big)
+
+The archipelago is large and full: most of it is far from every player most of the time, and
+it is easy to add something that quietly costs every frame everywhere. Rules:
+
+- **Physics is the budget.** `world.step` is most of the frame on slow machines. Measured on a
+  CPU renderer: a ragdoll (player / awake NPC) ~0.35 ms a step, a self-driving vehicle ~0.6 ms
+  (wheel raycasts against the merged statics), an awake prop ~0.05 ms, a kinematic ride body
+  near a player a little; parked / sleeping / disabled bodies nothing. Two steps can run per
+  frame. Measure with a Playwright probe wrapping `game.physics.world.step` (time it at several
+  places: town (-20, 20), the fair (0, 230), Bigtown (870, -14), the farm, the sea) and count
+  awake bodies with `world.forEachRigidBody` before and after a change.
+- **Nothing simulates far from players.** Every per-step cost must stop away from them:
+  - loose bodies: `src/simcull.js` switches props and parked vehicles off beyond 150 m of every
+    player (back on within 125 m); culled vehicles skip `update()`. Parked empty vehicles at
+    rest sleep and skip their wheel update (game.step).
+  - self-driving traffic: live (wheel physics, red lights, bus stops) within 110 m; from 110 m
+    to 300 m it drives **on rails** (`v.rail`, body disabled, `traffic.js railStep` moves it along
+    its loop at cruising speed, slowing for corners and keeping behind cars ahead; handed back to
+    the wheels at the same speed within 95 m, `exitRail`); beyond 300 m it stops. Rails learn each
+    type's ride height from driving (`REST`), so the hand-over doesn't bump.
+  - NPCs (`npc.js`): only the `CAP` = 12 nearest within `WAKE_R` = 60 m of a player are ragdolls
+    (parked again past `SLEEP_R` = 72 m); the rest stand still, shown out to `SHOW_R` = 100 m.
+    Raising these is the quickest way to make the fair or Bigtown slow.
+  - kinematic bodies (rides, lifts, doors, ferries) are real physics only within 90 m
+    (`simcull.js` KIN_PHYS); further out they keep animating as a picture (body switched off, the
+    next-kinematic pose applied directly by the patch in `physics.js`, meshes follow) up to their
+    animation range (default 220 m; `physics.kinRange.set(body.handle, m)`: ferris wheels / drop
+    towers 700, the city crane and ski lift 900, coasters 300-400, ferries Infinity), and stand
+    still beyond it. Tie a ride's animator to its body with `physics.animate(body, fn)`.
+  - any other per-step or per-frame work (belts, smoke, crop pushers, ambient animation) goes
+    through `game.whenNear(x, z, r, fn)` in `game.steppers` / `game.updaters`, with r about how
+    far it can be seen (the fair: `RIDE_RANGE`). Bodies standing still set `rec.off`, so
+    `physics.capture` / `sync` skip them.
+  - don't keep bodies awake for nothing: things that settle should be allowed to sleep; a
+    stepper that pushes bodies (conveyors) only runs near players.
+- **Static colliders are merged.** `staticmerge.js` runs after the world build and rebuilds every
+  thin static box / cylinder (smallest side < 1.2 m) as one triangle mesh per 96 m area and
+  material (~8,000 colliders -> ~255): Rapier pays per collider every step. Solid blocks stay
+  boxes (meshes are hollow: clearance checks must find them; `insideAt` / `exitToward` help).
+  Nothing is baked: every load merges what the build made. At runtime `game.staticMerge`
+  rebuilds only the areas that change: `merge()` folds in static colliders added since,
+  `removeIn(x0, z0, x1, z1, filter?)` takes shapes out, `unmerge(...)` turns them back into
+  separate colliders (move them, then `merge()`), `shapesIn(...)` lists them. The merged shapes
+  are in `physics.staticShapes` (the map painter reads them). Don't hold on to a static collider
+  handle from `kit` / `physics.box` (it is gone after the merge) — use a trimesh
+  (`physics.trimesh`, never merged) when you need its handle, like the ski slopes.
+- **Render: draw what can be seen, simply when far.** Never hide something that is on screen at
+  a size that matters, or that a player is about to reach; hide what is too far or too small.
+  - kit chunks get a far version (only parts with bounding radius >= 1.4 m, no shadows) beyond
+    160 m (120 m split screen): `game.farCull` switches `chunk.mesh` / `chunk.far`. Far chunk
+    versions draw flat decals (`geometry.userData.decal`) as a child mesh with `matVCDecal`.
+  - small top-level objects are hidden per view by on-screen size (`game.cullSmall`; opt out with
+    `userData.noCull`); it also hides loose props beyond 160 m, vehicles beyond 220 m and
+    anything else small beyond 350 m. `game.lodView(cam)` gives top-level instanced sets a
+    bounding sphere (hidden beyond 700 m) and hides vehicle wheels beyond 120 m.
+  - `game.viewHooks` (fn(cam) per view) for a region's own level of detail: the fair hides its
+    small instanced parts beyond 170 m (130 m split screen), crop fields beyond 160 m, Bigtown's
+    graffiti beyond 520 m of the city.
+  - draw calls (`game.lodView`): vehicle wheels / glass / light panels cast no shadows, light
+    panels hide beyond 70 m by day, loose props cast shadows only within 35 m of the camera.
+    Merge decoration into one mesh or an InstancedMesh (shop-front signs, light pools, graffiti,
+    crops) instead of many small meshes; instanced meshes that never move far get a bounding
+    sphere and `frustumCulled = true`; keep world-wide instanced sets (coins: only those within
+    160 m are packed) out of the shadow pass. Keep triangle counts sane (crops: open-ended stems,
+    ~300k triangles for every field, hidden far off).
+  - resolution defaults to Auto (`settings.res = 0`, `game.adaptResolution`: 60-100% by frame
+    time); Settings > Show FPS shows `game.perf` (ms per frame, physics+game, render, draw calls,
+    triangles). Check `game.renderStats` for 1 and 8 players after adding many meshes.
+- **Animals and other ambient life** follow the same rules: simulate (even with simple maths)
+  only near a player, and draw only where they can be seen (sea life only for a camera under
+  water, except the few that surface).
 
 ## Stratford Fall Fair (`src/world/fair/`)
 

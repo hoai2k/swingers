@@ -19,8 +19,11 @@
 //    pose is applied directly (physics.js), so the mesh still follows it;
 //  - past the animation range the animator stops too and the ride stands
 //    still where it was (physics.animate / kinAnim).
+import { exitRail } from './world/regions/city/traffic.js';
+
 const FAR = 150, NEAR = 125;   // metres from the nearest player (hysteresis)
 const FAR_AUTO = 300, NEAR_AUTO = 270; // self-driving traffic stays live further out: it's the life of the streets
+const RAIL_FAR = 110, RAIL_NEAR = 95;  // ...but beyond this it drives "on rails" (no physics: traffic.js railStep)
 const EVERY = 15;              // steps between checks (~4 per second)
 const KIN_FAR = 220, KIN_NEAR = 200; // kinematic animation range (unless physics.kinRange says otherwise)
 const KIN_PHYS = 90, KIN_PHYS_IN = 75; // kinematic bodies are real physics within this of a player
@@ -55,6 +58,12 @@ export function buildSimCull(game) {
           o.culled = false; b.setEnabled(true); b.wakeUp(); if (o.rec) { o.rec.off = false; o.rec.snap = true; }
           if (v) v.culled = false;
         }
+        // self-driving traffic between RAIL_FAR and FAR_AUTO: still moving, but not simulated
+        // (each one with its wheel raycasts cost ~0.6 ms a step even far out of reach)
+        if (v?.route && !o.culled) {
+          const rail = !keep && (v.rail ? d > RAIL_NEAR : d > RAIL_FAR);
+          if (rail !== !!v.rail) { v.rail = rail; b.setEnabled(!rail); if (!rail) { exitRail(v); b.wakeUp(); } }
+        } else if (v?.rail && o.culled) { v.rail = false; exitRail(v); }
         if (o.culled) off++;
       }
       cull.off = off;

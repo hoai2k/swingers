@@ -11,6 +11,8 @@ import { registerHandling, registerVehicle, VEHICLES } from '../../../vehicles.j
 import { Builder, matVC } from '../../../mesh.js';
 import { RW } from './layout.js';
 
+const REST = {}; // vehicle type -> body height over routeY while driving (learned; railStep)
+const routeY = (R, x, z) => (R.yAt ? R.yAt(x, z) : 3.6);
 const AUTO = { auto: true }; // stands in for a driver in updateWheels
 const LANE = 2.2;            // lane centre from the road centre line
 
@@ -20,6 +22,10 @@ registerHandling('cityauto', {
     if (v.autoDriver) v.autoDriver.visible = !drv;
     if (drv || !v.route) { v.updateWheels(drv, vel, fwd, up, side); return; }
     const on = autopilot(v, fwd);
+    if (on && v.speed > 3 && up.y > 0.97) { // learn its ride height for railStep
+      const p = v.body.translation();
+      REST[v.type] = p.y - routeY(v.route, p.x, p.z);
+    }
     v.updateWheels(on ? AUTO : null, vel, fwd, up, side);
   },
 });
@@ -161,4 +167,51 @@ export function addAutoDriver(v, color = 0xffd23f) {
   const m = b.mesh(matVC);
   v.shell.add(m);
   v.autoDriver = m;
+}
+
+// Far from every player a self-driving vehicle runs "on rails" (simcull.js sets v.rail): its
+// body is out of the physics and this moves it along the loop at cruising speed, slowing for
+// corners and keeping behind whatever is in front, so the streets still look alive from afar
+// for almost nothing. Coming back within range it is handed back to the wheel physics at the
+// same speed (exitRail). Red lights and bus stops only matter up close.
+export function railStep(v, dt) {
+  const R = v.route, A = v.auto ||= { wait: 0, nextStop: 0, stuck: 0, honk: 0, gone: 0 };
+  const b = v.body, p = b.translation();
+  if (A.railS === undefined) {
+    const pr = project(R.segs, p.x, p.z);
+    A.railS = pr.s; A.railV = Math.max(0, v.speed || 0);
+    // ride height: as last seen driving, else from the wheels (sitting at rest on its springs)
+    const a = v.def.axles?.[0];
+    A.railDy = REST[v.type] ?? (a ? -a.y + a.rest * 0.6 + a.r - 1.6 : p.y - routeY(R, p.x, p.z));
+  }
+  const big = v.def.half[2] > 3;
+  const [, , seg] = at(R, A.railS);
+  const toCorner = seg.s0 + seg.len - A.railS;
+  let target = big ? 9 : 11;
+  if (toCorner < 22) target = Math.min(target, 4 + toCorner * 0.25);
+  // keep behind anything ahead on the road (another car, a crowd)
+  const [hx, hz] = at(R, A.railS + 2), fx = hx - p.x, fz = hz - p.z, fl = Math.hypot(fx, fz) || 1;
+  const reach = v.def.half[2] + 4 + A.railV * 0.8;
+  let block = false;
+  for (const o of v.game.vehicles) {
+    if (o === v || o.culled) continue;
+    const q = o.body.translation(), rx = q.x - p.x, rz = q.z - p.z, a = (rx * fx + rz * fz) / fl;
+    if (a > 0 && a < reach && Math.abs((-rx * fz + rz * fx) / fl) < v.def.half[0] + 1) { block = true; break; }
+  }
+  A.railBlock = block ? (A.railBlock || 0) + dt : 0; // stuck behind a parked one: pass through after a while
+  if (block && A.railBlock < 10) target = 0;
+  A.railV += Math.max(-6 * dt, Math.min(3 * dt, target - A.railV));
+  A.railS = (A.railS + A.railV * dt) % R.total;
+  const [x, z] = at(R, A.railS), [nx, nz] = at(R, A.railS + 4);
+  const yaw = Math.atan2(nx - x, nz - z);
+  b.setTranslation({ x, y: routeY(R, x, z) + A.railDy, z }, false);
+  b.setRotation({ x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) }, false);
+}
+export function exitRail(v) {
+  const A = v.auto, b = v.body;
+  if (!A || A.railS === undefined) return;
+  const q = b.rotation(), yaw = 2 * Math.atan2(q.y, q.w), s = A.railV;
+  b.setLinvel({ x: Math.sin(yaw) * s, y: 0, z: Math.cos(yaw) * s }, true);
+  b.setAngvel({ x: 0, y: 0, z: 0 }, true);
+  A.railS = undefined;
 }
