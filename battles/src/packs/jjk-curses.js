@@ -130,13 +130,16 @@ function wantDomain(u, dt) {
   u.jkDomCD -= dt;
   if (u.jkDomCD > 0 || b.over || burntOut(u) || myDomain(u) || u.stun > 0.3 || u.jkSealedT > b.time || u.st.attack || u.fleeT > 0 || u.isDown()) return false;
   for (const d of jk(b).domains) if (d.team !== u.team && flat(u.pos, d.pos) < d.R) return true;
-  let n = 0, big = 0;
+  let n = 0, big = 0, left = 0;
   for (const v of b.teams[1 - u.team]) {
-    if (!v.alive || flat(v.pos, u.pos) > w.domR * 0.7) continue;
+    if (!v.alive) continue;
+    left++;
+    if (flat(v.pos, u.pos) > w.domR * 0.7) continue;
     n++;
     if (v.def.cost >= 900) big++;
   }
-  if (n >= w.domMin || big || (u.control && n > 0)) return true;
+  // enough of them close, an elite, or everyone still standing (to finish a duel)
+  if (n >= Math.min(w.domMin, left) || big || (u.control && n > 0)) return true;
   u.jkDomCD = 0.4;
   return false;
 }
@@ -702,8 +705,9 @@ function supernova(u) {
 // ------------------------------------------------------------------ Kinji Hakari
 // A brawler. His domain, Idle Death Gamble, doesn't hurt: the pachinko rules are forced
 // on everyone inside (a dazed moment every spin) while he spins for a JACKPOT. A jackpot
-// ends the domain and for a while he regenerates faster than anything can hurt him and
-// hits harder and moves faster.
+// ends the domain and for a while he regenerates faster than anything can hurt him,
+// shrugs off knockdowns, hits harder and moves faster. If the domain is broken open (or
+// loses a clash), the reel already spinning may still pay out.
 const jackpotOn = (u) => (u.jkJack || 0) > u.battle.time;
 const hakari = {
   melee: true,
@@ -721,6 +725,7 @@ const hakari = {
     });
     if (jp) {
       u.hp = Math.min(u.maxHp, u.hp + w.jackRegen * dt);
+      u.stun = Math.min(u.stun, w.jackStun); // knocked about, he is straight back up
       if (!u.jkAura) u.jkAura = markerOn(b, u, 'jk_jackpot', PART.chest, w.jackDur + 1);
       if (Math.random() < dt * 6) { const c = u.chestPos; b.emit('heal', c.x, c.y, c.z, 1); }
     } else if (u.jkAura) { u.jkAura.t = 0; u.jkAura = null; }
@@ -743,16 +748,11 @@ const hakari = {
           const p = u.headPos;
           b.sound('tick', p, 0.8, 1.6);
           markerAt(b, 'jk_reel', _o.set(p.x, p.y + 1.1, p.z), w.spin * 0.8, u.heading);
-          if (Math.random() < w.jackP) {
-            u.jkJack = b.time + w.jackDur;
-            u.hp = u.maxHp;
-            announce(b, 'JACKPOT!', p);
-            b.sound('gong', p, 1.2, 1.2);
-            b.sound('heal', p, 1.0, 0.8);
-            b.voice(u, 'cheer', true);
-            b.emit('heal', p.x, p.y, p.z, 12);
-            dom.t = 0; // the domain ends with the payout
-          }
+          if (Math.random() < w.jackP) { jackpot(u); dom.t = 0; } // the domain ends with the payout
+        },
+        // broken open (or overwhelmed in a clash): the reel already spinning still pays out
+        onClose(b, dom, why) {
+          if ((why === 'broken' || why === 'clash') && u.alive && !jackpotOn(u) && Math.random() < w.jackP) jackpot(u, 'JACKPOT! The last spin pays out');
         },
       });
     }
@@ -764,6 +764,17 @@ const hakari = {
   },
   die(u) { if (u.jkAura) { u.jkAura.t = 0; u.jkAura = null; } },
 };
+
+function jackpot(u, text = 'JACKPOT!') {
+  const b = u.battle, w = u.def.weapon, p = u.headPos;
+  u.jkJack = b.time + w.jackDur;
+  u.hp = u.maxHp;
+  announce(b, text, p);
+  b.sound('gong', p, 1.2, 1.2);
+  b.sound('heal', p, 1.0, 0.8);
+  b.voice(u, 'cheer', true);
+  b.emit('heal', p.x, p.y, p.z, 12);
+}
 
 // ------------------------------------------------------------------ secrets
 onSecret((b, dt) => {
@@ -916,16 +927,16 @@ function emberBurst(b, pr) {
 const CURSE = { aggro: 1, bravery: 0, voice: 0.7, chatter: 0.8, cry: 'cackle', idle: 'shift' };
 const units = [
   {
-    id: 'jk_toji', name: 'Toji Fushiguro', faction: FAC, cost: 1000, hp: 640, speed: 7.4,
+    id: 'jk_toji', name: 'Toji Fushiguro', faction: FAC, cost: 1400, hp: 950, speed: 7.4,
     build: { scale: 1.08, girth: 1.0, arms: 1.05, armThick: 1.15, legs: 1.04 },
     weapon: {
       line: 'Assassin · Inverted Spear of Heaven cuts through Infinity · Playful Cloud flurry · no cursed energy: sure-hits miss him',
-      kind: 'jk_toji', style: 'sword', anim: 'overhead', item: 'jk_isoh', damage: 62, reach: 1.1, cooldown: 0.5, force: 420,
-      dashCD: 2.6, dashV: 8, pcCD: 6.5, pcDur: 0.95, pcR: 2.9, pcDmg: 48, pcForce: 900, cutT: 1.6,
+      kind: 'jk_toji', style: 'sword', anim: 'overhead', item: 'jk_isoh', damage: 70, reach: 1.1, cooldown: 0.5, force: 420,
+      dashCD: 1.6, dashV: 8, pcCD: 6.5, pcDur: 0.95, pcR: 2.9, pcDmg: 48, pcForce: 900, cutT: 1.6,
     },
     look: { skin: '#e8b48c', hat: 'jk_toji_hair', top: 'jk_toji', legs: '#ece6d6', accent: '#24222c' },
     personality: { aggro: 1, bravery: 0, voice: 0.85, chatter: 0.35, cry: 'roar', idle: 'brace' },
-    armor: 0.1, stagger: 0.35,
+    armor: 0.1, stagger: 0.2,
     desc: 'The Sorcerer Killer. No cursed energy at all: just speed, strength and a worm full of weapons.',
   },
   {
@@ -954,7 +965,7 @@ const units = [
     reserve: [{ type: 'jk_transfig', n: 5 }],
     look: { skin: '#e2d8cf', hat: 'jk_mahito_hair', top: 'jk_mahito', legs: '#3b4152', accent: '#d8c8bc' },
     personality: { aggro: 0.95, bravery: 0, voice: 1.1, chatter: 1, cry: 'cackle', idle: 'bounce' },
-    stagger: 0.7,
+    stagger: 0.4,
     desc: 'Touches your soul and kneads it into something new. Patches himself up the same way.',
   },
   {
@@ -973,7 +984,7 @@ const units = [
     desc: 'Short temper, shorter fuse. Insects of fire, and when that bores him, a meteor.',
   },
   {
-    id: 'jk_hanami', name: 'Hanami', faction: FAC, cost: 1150, hp: 820, speed: 4.3,
+    id: 'jk_hanami', name: 'Hanami', faction: FAC, cost: 1150, hp: 1000, speed: 4.3,
     build: { scale: 1.2, girth: 1.15, head: 1.08, arms: 1.15, armThick: 1.2, mass: 1.25 },
     weapon: {
       line: 'Curse · wooden fists, wooden balls, roots out of the ground · a flower field that saps',
@@ -988,7 +999,7 @@ const units = [
     desc: 'A curse of the forest. Calm, polite, and made of very hard wood.',
   },
   {
-    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: FAC, cost: 700, hp: 520, speed: 4.7,
+    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: FAC, cost: 700, hp: 650, speed: 4.7,
     build: { scale: 1.08, girth: 0.98, legs: 1.05 },
     weapon: {
       line: 'Summoner · Cursed Spirit Manipulation releases his stored curses · Maximum: Uzumaki',
@@ -1004,31 +1015,32 @@ const units = [
     desc: 'Swallows curses and lets them out again. Mind the stitches across his forehead.',
   },
   {
-    id: 'jk_choso', name: 'Choso', faction: FAC, cost: 540, hp: 300, speed: 4.8,
+    id: 'jk_choso', name: 'Choso', faction: FAC, cost: 800, hp: 520, speed: 4.8,
     build: { scale: 1.02, girth: 0.95 },
     weapon: {
       line: 'Ranged · Blood Manipulation: Convergence, Piercing Blood (pierces a line), Supernova',
-      kind: 'jk_choso', style: 'jk_blood', anim: 'jk_push', item: 'none', damage: 54, range: 22, minRange: 5, cooldown: 3.8, force: 260,
+      kind: 'jk_choso', style: 'jk_blood', anim: 'jk_push', item: 'none', damage: 70, range: 22, minRange: 5, cooldown: 3.2, force: 260,
       windup: 1.0, releaseAt: 0.62, width: 0.45, spread: 0.03,
-      novaCD: 9, novaR: 3.4, novaDmg: 50, novaForce: 520,
+      novaCD: 6, novaR: 3.4, novaDmg: 70, novaForce: 520,
       broR: 7, broT: 1.5,
     },
     look: { skin: '#e9c6aa', hat: 'jk_choso_hair', top: 'jk_choso', legs: '#2a2630', accent: '#1d1a20' },
     personality: { aggro: 0.35, bravery: 0, voice: 0.9, chatter: 0.4, cry: 'hey', idle: 'lean' },
+    stagger: 0.6,
     desc: 'The eldest of the Death Painting brothers. His blood flies faster than a bullet.',
   },
   {
-    id: 'jk_hakari', name: 'Kinji Hakari', faction: FAC, cost: 600, hp: 560, speed: 5.4,
+    id: 'jk_hakari', name: 'Kinji Hakari', faction: FAC, cost: 1500, hp: 900, speed: 5.4,
     build: { scale: 1.07, girth: 1.05, armThick: 1.15 },
     weapon: {
       line: 'Brawler · Domain: Idle Death Gamble - hit the JACKPOT and he is all but immortal',
-      kind: 'jk_hakari', style: 'fists', anim: 'punch', item: 'jk_fist', damage: 36, reach: 1.0, cooldown: 0.62, force: 400,
-      domR: DOM_R.hakari, domDur: 8, domPow: 7, domTick: 0.7, domDmg: 3, domDaze: 0.35, domCD: 18, domFirst: 4, domMin: 2,
-      spin: 0.9, jackP: 0.16, jackDur: 14, jackRegen: 120, jackDmg: 0.6, jackSpeed: 1.25,
+      kind: 'jk_hakari', style: 'fists', anim: 'punch', item: 'jk_fist', damage: 55, reach: 1.0, cooldown: 0.62, force: 400,
+      domR: DOM_R.hakari, domDur: 8, domPow: 8, domTick: 0.7, domDmg: 3, domDaze: 0.5, domCD: 18, domFirst: 1.5, domMin: 1,
+      spin: 0.7, jackP: 0.3, jackDur: 20, jackRegen: 200, jackDmg: 1.3, jackSpeed: 1.25, jackStun: 0.25,
     },
     look: { skin: '#e6c0a0', hat: 'jk_hakari_hair', top: 'jk_hakari', legs: '#1c1c22', accent: '#141418' },
     personality: { aggro: 1, bravery: 0, voice: 1.0, chatter: 1, cry: 'charge', idle: 'bounce' },
-    stagger: 0.6,
+    stagger: 0.3,
     desc: 'Lives for the gamble. When the jackpot hits, nothing can put him down.',
   },
   {

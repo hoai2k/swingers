@@ -182,6 +182,12 @@ when delivered; without one the tab shows just the name in the faction colour.
   Prison Realm (Geto next to an enemy Gojo), the spear cuts through Infinity, Toji cuts a
   domain open, Mahito can't reshape Yuji (and Yuji's fists hurt his soul), Choso switches
   sides when he meets Yuji ("Big brother!").
+- **JJK power levels**: one on one the faction follows the anime: Gojo (who teleports
+  clear of blows Infinity can't stop, and whose Unlimited Void wins the clash with the
+  Shrine) beats Sukuna; Sukuna beats the rest; Toji, Hakari, Yuta and Mahoraga come next
+  (Toji is a real threat to Gojo); then the A tier, Nanami / Yuji / Panda, and Nobara /
+  Inumaki. Prices follow strength (Gojo 6000, Sukuna 3300). The duel table and its harness
+  (`dev/balance/duel.mjs`) are in BALANCE.md, *JJK power levels*.
 
 ## Code map
 

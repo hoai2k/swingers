@@ -389,6 +389,8 @@ lobs) pick targets on the ground. Scores after the change (4 runs): Void Monarch
 
 ## Jujutsu Kaisen: the students (`src/packs/jjk-students.js`)
 
+> Prices and stats here were superseded by *JJK power levels* below.
+
 Priced against the reference panel at equal gold (`run.mjs --runs 4`, 36 battles per
 unit, sides swapped). Inumaki is support, so he is also scored inside a Squire line
 with a quarter of the gold. Rika (`jk_rika`) is Yuta's reserve (cost 0, not in any
@@ -418,6 +420,8 @@ Re-run with:
 
 ## Jujutsu Kaisen: the strongest (Gojo, Sukuna, Megumi, Mahoraga)
 
+> Prices and stats here were superseded by *JJK power levels* below.
+
 `src/packs/jjk-strongest.js`, priced alone against the reference panel, 4 battles per
 pairing (36 per unit), sides swapped. Summoned reserves (Megumi's shikigami and his
 ritual Mahoraga) now count toward their summoner's gold in the harness
@@ -439,6 +443,8 @@ not sold (faction `jjk_shiki`) and are not priced on their own.
     node battles/dev/balance/report.mjs /tmp/jjk-strongest.jsonl
 
 ## Jujutsu Kaisen: the curses (`src/packs/jjk-curses.js`)
+
+> Prices and stats here were superseded by *JJK power levels* below.
 
 Priced with the harness against the reference panel at equal gold, sides swapped, 4
 battles per pairing (36 per unit). Summons (Geto's Stored Curses, Mahito's Transfigured
@@ -472,3 +478,218 @@ a neck limit. Re-scored after it (4 runs per pairing): most units moved by less 
 −0.31: its big arms are now blocked by bodies. A lower price barely helps (the harness
 still fields one Giant), so its hp went 1600 → **2400**: −0.20, still the archers'
 and gunslingers' prey (−0.99).
+
+## JJK power levels
+
+The Jujutsu Kaisen faction was priced for equal-gold fairness, so cheap characters were
+weak one on one (Toji at 1000 and Hakari at 600 lost to most of the cast, and Sukuna beat
+Gojo 12-0). It now follows the anime/manga tiers in a **duel**, and price follows strength:
+
+| tier | units |
+|---|---|
+| S+ | Gojo |
+| S | Sukuna |
+| A+ | Toji, Hakari, Yuta (with Rika), Mahoraga |
+| A | Geto, Jogo, Mahito, Megumi (with shikigami), Choso, Todo, Maki, Hanami, Dagon |
+| B | Nanami, Yuji, Panda |
+| C | Nobara, Inumaki (support) · fodder: Fly Head |
+
+**Duel harness**: `dev/balance/duel.mjs` (documented at its top). One unit against one on
+the first map with a flat field (the hills round it stay), 12 m apart, sides swapped every
+run, seeded, 90 s cap (a draw). Re-run a row with
+`node battles/dev/balance/duel.mjs --pairs jk_gojo:jk_sukuna,jk_toji:jk_gojo --runs 12`.
+
+### What changed
+
+Domains clash by power (an open domain gets +1): Unlimited Void **12** (was 10) beats the
+Shrine's 10 + 1; Yuta 9, Hakari **8** (was 7), Mahito 7, Dagon / Jogo 6, Megumi 4. The
+power now lives on each weapon (`domPow`).
+
+| unit | cost | stats | mechanics |
+|---|---|---|---|
+| Gojo | 3500 → **6000** | hp 620 → 900; Red 48 → 60 every 3.0 → 2.4 s; Purple every 20 → 15 s; Void sure-hit 5 → 20 (shared out among everyone inside: `voidSplit`), Void only for 6+ enemies or a hero/boss (domMin 3 → 6); burnout after the Void 7 → 3 s | teleports 7 m clear when a blow he can't stop is close (Infinity down, or a piercing weapon; every 12 s); floats straight back up when knocked down |
+| Sukuna | 3300 | unchanged | Mahoraga can't fully adapt to him (see Mahoraga) |
+| Mahoraga | 3400 → **2600** | hp 2100 → 1500; damage 160 → 115, force 1100 → 900; heal per click 5% → 3% | adaptation numbers on its weapon; against Gojo and Sukuna it adapts at most 20% (`adaptTop`; banner "...faster than the wheel can turn") |
+| Yuta | 1500 → **1700** | hp 560 → 850; katana 48 → 58; Rika comes at 80% hp (was 65%); Rika's slap 70 → 55 | |
+| Toji | 1000 → **1400** | hp 640 → 950; spear 62 → 70; leap every 1.6 s (was 2.6); stagger 0.35 → 0.2 | |
+| Hakari | 600 → **1500** | hp 560 → 900; fists 36 → 55; stagger 0.6 → 0.3; domain opens at 1.5 s even for one enemy (domMin 2 → 1), daze 0.35 → 0.5, a spin every 0.7 s (was 0.9); jackpot 16% → 30% a spin, 14 → 20 s, regen 120 → 200 hp/s, +60% → +130% damage | shrugs off knockdowns during a jackpot; a domain broken open (Toji) or overwhelmed in a clash gets one last spin |
+| Geto | 700 | hp 520 → 650 | |
+| Choso | 540 → **800** | hp 300 → 520; Piercing Blood 54 → 70 every 3.8 → 3.2 s; Supernova 50 → 70 every 9 → 6 s; stagger 1 → 0.6 | |
+| Hanami | 1150 | hp 820 → 1000 | |
+| Maki | 460 → **580** | hp 420 → 560; naginata 46 → 56; stagger 0.6 → 0.35; awakens below 40% (was 30%) back to 80% (was 55%) | |
+| Mahito | 850 | stagger 0.7 → 0.4 | |
+| Nanami | 470 → **400** | hp 600 → 520; Ratio 30% → 22%, ×2.4 → ×2.0; force 420 → 320 | |
+| Panda | 600 → **420** | hp 640 → 560; fists 40 → 34 | |
+
+The curses' domains (Dagon, Mahito, Jogo, Hakari) also open when every enemy still
+standing is in reach (finishing a duel), not only for 2-4 enemies or an elite.
+
+### Duel table (win rate of the first unit; draws count half)
+
+Key pairs, 30 duels each (final stats):
+
+| pair | wins-losses-draws | rate |
+|---|---|---:|
+| Gojo vs Sukuna | 29-1-0 | 97% |
+| Toji vs Gojo | 13-17-0 | 43% |
+| Toji vs Sukuna | 2-28-0 | 7% |
+| Toji vs Yuta | 18-11-1 | 62% |
+| Toji vs Hakari | 18-12-0 | 60% |
+| Toji vs Mahoraga | 13-16-1 | 45% |
+| Hakari vs Yuta | 14-8-8 | 60% |
+| Hakari vs Mahoraga | 0-8-22 | 37% |
+| Yuta vs Mahoraga | 6-15-9 | 35% |
+| Gojo vs Mahoraga | 22-7-1 | 75% |
+| Sukuna vs Mahoraga | 26-4-0 | 87% |
+| Gojo vs Hakari | 8-0-22 | 63% |
+| Gojo vs Yuta | 28-0-2 | 97% |
+
+All pairs, before → after (12 duels each, sides swapped; W-L-D):
+
+| pair | before | after |
+|---|---:|---:|
+| gojo vs sukuna | 0% (0-12-0) | 92% (11-1-0) |
+| toji vs gojo | 100% (12-0-0) | 42% (5-7-0) |
+| toji vs sukuna | 0% (0-12-0) | 17% (2-10-0) |
+| toji vs yuta | 0% (0-12-0) | 63% (7-4-1) |
+| toji vs hakari | 100% (12-0-0) | 67% (8-4-0) |
+| toji vs megumi | 50% (6-6-0) | 83% (10-2-0) |
+| toji vs geto | 75% (9-3-0) | 92% (11-1-0) |
+| toji vs todo | 42% (5-7-0) | 100% (12-0-0) |
+| toji vs yuji | 79% (9-2-1) | 100% (12-0-0) |
+| toji vs mahoraga | 4% (0-11-1) | 50% (6-6-0) |
+| toji vs jogo | 100% (12-0-0) | 100% (12-0-0) |
+| toji vs mahito | 100% (12-0-0) | 100% (12-0-0) |
+| toji vs maki | 100% (12-0-0) | 96% (11-0-1) |
+| toji vs choso | 100% (12-0-0) | 100% (12-0-0) |
+| toji vs hanami | 100% (12-0-0) | 100% (12-0-0) |
+| toji vs dagon | 100% (12-0-0) | 100% (12-0-0) |
+| toji vs nanami | 100% (12-0-0) | 100% (12-0-0) |
+| hakari vs yuta | 4% (0-11-1) | 63% (7-4-1) |
+| hakari vs mahoraga | 21% (0-7-5) | 42% (0-2-10) |
+| hakari vs geto | 8% (0-10-2) | 96% (11-0-1) |
+| hakari vs jogo | 25% (3-9-0) | 100% (12-0-0) |
+| hakari vs mahito | 0% (0-12-0) | 100% (12-0-0) |
+| hakari vs megumi | 4% (0-11-1) | 92% (11-1-0) |
+| hakari vs choso | 8% (1-11-0) | 100% (12-0-0) |
+| hakari vs todo | 0% (0-12-0) | 100% (12-0-0) |
+| hakari vs maki | 0% (0-12-0) | 100% (12-0-0) |
+| hakari vs hanami | 17% (0-8-4) | 92% (11-1-0) |
+| hakari vs dagon | 8% (0-10-2) | 75% (6-0-6) |
+| hakari vs nanami | 0% (0-12-0) | 100% (12-0-0) |
+| hakari vs yuji | 4% (0-11-1) | 100% (12-0-0) |
+| yuta vs mahoraga | 13% (0-9-3) | 42% (3-5-4) |
+| yuta vs geto | 75% (9-3-0) | 100% (12-0-0) |
+| yuta vs jogo | 100% (12-0-0) | 100% (12-0-0) |
+| yuta vs mahito | 100% (12-0-0) | 100% (12-0-0) |
+| yuta vs megumi | 79% (9-2-1) | 100% (12-0-0) |
+| yuta vs choso | 100% (12-0-0) | 100% (12-0-0) |
+| yuta vs todo | 92% (10-0-2) | 100% (12-0-0) |
+| yuta vs maki | 100% (12-0-0) | 100% (12-0-0) |
+| yuta vs hanami | 100% (12-0-0) | 100% (12-0-0) |
+| yuta vs dagon | 100% (12-0-0) | 100% (12-0-0) |
+| sukuna vs mahoraga | 21% (0-7-5) | 83% (10-2-0) |
+| sukuna vs yuta | 92% (11-1-0) | 100% (12-0-0) |
+| sukuna vs hakari | 100% (12-0-0) | 100% (12-0-0) |
+| gojo vs mahoraga | 21% (0-7-5) | 88% (10-1-1) |
+| gojo vs yuta | 75% (6-0-6) | 96% (11-0-1) |
+| gojo vs hakari | 54% (1-0-11) | 63% (3-0-9) |
+| gojo vs geto | 71% (6-1-5) | 100% (12-0-0) |
+| gojo vs jogo | 100% (12-0-0) | 100% (12-0-0) |
+| gojo vs todo | 100% (12-0-0) | 100% (12-0-0) |
+| sukuna vs geto | 100% (12-0-0) | 100% (12-0-0) |
+| sukuna vs todo | 96% (11-0-1) | 100% (12-0-0) |
+| sukuna vs megumi | 100% (12-0-0) | 100% (12-0-0) |
+| sukuna vs jogo | 100% (12-0-0) | 100% (12-0-0) |
+| mahoraga vs geto | 88% (9-0-3) | 92% (10-0-2) |
+| mahoraga vs jogo | 92% (10-0-2) | 88% (9-0-3) |
+| mahoraga vs todo | 100% (12-0-0) | 96% (11-0-1) |
+| geto vs nanami | 50% (6-6-0) | 50% (6-6-0) |
+| geto vs yuji | 100% (12-0-0) | 100% (12-0-0) |
+| geto vs panda | 100% (12-0-0) | 100% (12-0-0) |
+| jogo vs nanami | 17% (2-10-0) | 75% (9-3-0) |
+| jogo vs yuji | 92% (10-0-2) | 100% (12-0-0) |
+| jogo vs panda | 92% (11-1-0) | 100% (12-0-0) |
+| mahito vs nanami | 0% (0-12-0) | 75% (9-3-0) |
+| mahito vs yuji | 4% (0-11-1) | 4% (0-11-1) |
+| mahito vs panda | 92% (10-0-2) | 92% (10-0-2) |
+| megumi vs nanami | 100% (12-0-0) | 100% (12-0-0) |
+| megumi vs yuji | 100% (12-0-0) | 100% (12-0-0) |
+| megumi vs panda | 100% (12-0-0) | 96% (11-0-1) |
+| choso vs nanami | 8% (1-11-0) | 67% (8-4-0) |
+| choso vs yuji | 0% (0-12-0) | 0% (0-12-0) |
+| choso vs panda | 8% (1-11-0) | 83% (10-2-0) |
+| todo vs nanami | 100% (12-0-0) | 96% (11-0-1) |
+| todo vs yuji | 100% (12-0-0) | 100% (12-0-0) |
+| todo vs panda | 100% (12-0-0) | 100% (12-0-0) |
+| maki vs nanami | 0% (0-12-0) | 67% (8-4-0) |
+| maki vs yuji | 21% (2-9-1) | 75% (8-2-2) |
+| maki vs panda | 17% (1-9-2) | 88% (10-1-1) |
+| hanami vs nanami | 33% (4-8-0) | 92% (11-1-0) |
+| hanami vs yuji | 83% (10-2-0) | 100% (12-0-0) |
+| hanami vs panda | 25% (3-9-0) | 67% (8-4-0) |
+| dagon vs nanami | 0% (0-12-0) | 100% (12-0-0) |
+| dagon vs yuji | 100% (12-0-0) | 100% (12-0-0) |
+| dagon vs panda | 0% (0-12-0) | 100% (12-0-0) |
+| geto vs jogo | 67% (8-4-0) | 67% (8-4-0) |
+| mahito vs todo | 54% (3-2-7) | 50% (5-5-2) |
+| megumi vs maki | 92% (11-1-0) | 75% (9-3-0) |
+| choso vs hanami | 0% (0-12-0) | 8% (1-11-0) |
+| dagon vs jogo | 100% (12-0-0) | 100% (12-0-0) |
+| todo vs maki | 88% (10-1-1) | 63% (6-3-3) |
+| geto vs megumi | 0% (0-12-0) | 0% (0-12-0) |
+| mahito vs hanami | 83% (8-0-4) | 75% (9-3-0) |
+| nanami vs nobara | 83% (10-2-0) | 92% (11-1-0) |
+| nanami vs inumaki | 96% (11-0-1) | 100% (12-0-0) |
+| yuji vs nobara | 75% (9-3-0) | 92% (11-1-0) |
+| yuji vs inumaki | 100% (12-0-0) | 100% (12-0-0) |
+| panda vs nobara | 92% (11-1-0) | 88% (10-1-1) |
+| panda vs inumaki | 92% (10-0-2) | 96% (11-0-1) |
+| nanami vs yuji | 29% (3-8-1) | 50% (6-6-0) |
+| yuji vs panda | 0% (0-12-0) | 25% (3-9-0) |
+| nanami vs panda | 75% (9-3-0) | 46% (5-6-1) |
+| nobara vs inumaki | 100% (12-0-0) | 100% (12-0-0) |
+| nobara vs flyhead | 100% (12-0-0) | 100% (12-0-0) |
+| inumaki vs flyhead | 100% (12-0-0) | 100% (12-0-0) |
+
+Deliberate upsets (lore secrets): Yuji beats Mahito (his fists hurt Mahito's soul) and
+Choso switches sides next to Yuji ("Big brother!"), so those two A-vs-B rows read 0-4%.
+Not quite on target: Hakari draws a lot (a jackpot out-heals Gojo's and Mahoraga's damage
+until the 90 s cap; he never loses to Gojo); Toji is Hakari's counter (the sure-hit can't
+find him and the spear cuts the domain open: about 60% for Toji); within the A tier Geto
+loses to Megumi (the ritual Mahoraga) and Choso to Hanami.
+
+### Equal-gold scores (final stats, 4 battles per pairing, 36 per unit)
+
+| unit | cost | score |
+|---|---:|---:|
+| Gojo | 6000 | +0.21 |
+| Sukuna | 3300 | −0.03 |
+| Mahoraga | 2600 | +0.03 |
+| Yuta | 1700 | +0.03 |
+| Hakari | 1500 | +0.06 |
+| Toji | 1400 | −0.03 |
+| Jogo | 1250 | +0.12 |
+| Megumi | 1200 | −0.16 |
+| Hanami | 1150 | +0.15 |
+| Dagon | 1050 | +0.04 |
+| Mahito | 850 | +0.06 |
+| Choso | 800 | +0.19 |
+| Geto | 700 | −0.10 |
+| Todo | 680 | −0.11 |
+| Maki | 580 | +0.17 |
+| Yuji | 430 | −0.12 |
+| Panda | 420 | −0.14 |
+| Nanami | 400 | −0.03 |
+| Nobara | 310 | +0.07 |
+| Inumaki | 560 | −0.78 alone; −0.05 with a quarter of the gold in a Squire line (support) |
+| Fly Head | 26 | −0.31 (unchanged; drifted since the collision fix) |
+
+Gojo's score barely moved with price (one Gojo against 3500 or 6000 gold scored about the
+same: behind Infinity the size of the crowd matters little), so his army strength was cut
+with stats a duel doesn't use: the Void's damage is shared out among everyone inside, and
+it opens for 6+ enemies (or a hero or boss) instead of 3. Prices follow the tiers except
+Inumaki, whose 560 is his worth as support inside a line.
+
+    node battles/dev/balance/run.mjs --units jk_gojo,jk_sukuna,jk_mahoraga,jk_megumi,jk_yuta,jk_toji,jk_hakari,jk_geto,jk_jogo,jk_mahito,jk_choso,jk_todo,jk_maki,jk_hanami,jk_dagon,jk_nanami,jk_yuji,jk_panda,jk_nobara,jk_inumaki,jk_flyhead,squire+jk_inumaki@0.25 --runs 4 --procs 4 --out /tmp/jjk-power.jsonl
+    node battles/dev/balance/report.mjs /tmp/jjk-power.jsonl

@@ -812,7 +812,7 @@ const yuta = {
       const boss = nearestWhere(b, u.pos, AML_R * 0.7, (v) => enemyOf(u, v) && v.maxHp >= 1000);
       if (n >= w.domMin || boss || (u.control && n > 0)) {
         u.domCD = w.domCD;
-        openDomain(b, u, { name: 'Authentic Mutual Love', radius: AML_R, duration: w.domDur, power: 9, tick: w.domTick, marker: 'jk_aml', sureHit: amlHit, burnout: 5 });
+        openDomain(b, u, { name: 'Authentic Mutual Love', radius: AML_R, duration: w.domDur, power: w.domPow, tick: w.domTick, marker: 'jk_aml', sureHit: amlHit, burnout: 5 });
       } else u.domCD = 0.5;
     }
     // copied techniques, now and then
@@ -927,27 +927,27 @@ const units = [
     desc: 'A hammer, a pouch of nails and a straw doll. Nails she hits explode.',
   },
   {
-    id: 'jk_nanami', name: 'Kento Nanami', faction: F, cost: 470, hp: 600, speed: 4.7,
+    id: 'jk_nanami', name: 'Kento Nanami', faction: F, cost: 400, hp: 520, speed: 4.7,
     build: { scale: 1.1, girth: 1.0, legs: 1.06 },
-    weapon: { line: 'Melee · Ratio 7:3 crits · Overtime after 30 s: stronger', kind: 'jk_nanami', style: 'jk_cleaver', anim: 'overhead', item: 'jk_cleaver', damage: 52, reach: 1.25, cooldown: 1.0, force: 420, ratio: 0.3, ratioOT: 0.55, ratioMul: 2.4, otAt: 30, otBonus: 0.35 },
+    weapon: { line: 'Melee · Ratio 7:3 crits · Overtime after 30 s: stronger', kind: 'jk_nanami', style: 'jk_cleaver', anim: 'overhead', item: 'jk_cleaver', damage: 52, reach: 1.25, cooldown: 1.0, force: 320, ratio: 0.22, ratioOT: 0.55, ratioMul: 2.0, otAt: 30, otBonus: 0.35 },
     look: { skin: '#f0caa8', hat: 'jk_hair_nanami', top: 'jk_nanami', legs: '#c9b48a', accent: '#5a3a24' },
     personality: { aggro: 0.8, bravery: 0, voice: 0.85, chatter: 0.3, cry: 'charge', idle: 'shift' },
     armor: 0.08, stagger: 0.55,
     desc: 'Works by the clock. Hits the 7:3 point. After thirty seconds, he is on overtime.',
   },
   {
-    id: 'jk_maki', name: "Maki Zen'in", faction: F, cost: 460, hp: 420, speed: 6.5,
+    id: 'jk_maki', name: "Maki Zen'in", faction: F, cost: 580, hp: 560, speed: 6.5,
     build: { scale: 1.0, girth: 0.95, legs: 1.05 },
-    weapon: { line: 'Melee · no cursed energy (sure-hits miss her) · Split Soul Katana', kind: 'jk_maki', style: 'spear', anim: 'stab', item: 'jk_naginata', damage: 46, reach: 2.0, cooldown: 0.8, force: 360, soul: 0.7, awakeAt: 0.3, awakeHp: 0.55 },
+    weapon: { line: 'Melee · no cursed energy (sure-hits miss her) · Split Soul Katana', kind: 'jk_maki', style: 'spear', anim: 'stab', item: 'jk_naginata', damage: 56, reach: 2.0, cooldown: 0.8, force: 360, soul: 0.7, awakeAt: 0.4, awakeHp: 0.8 },
     look: { skin: '#f2cdb2', hat: 'jk_hair_maki', top: 'jk_maki', legs: '#22242c', accent: '#16161a' },
     personality: { ...STUDENT, aggro: 1, voice: 1.25, chatter: 0.5, cry: 'hey', idle: 'shift' },
-    stagger: 0.6,
+    stagger: 0.35,
     desc: 'No cursed energy at all. Doesn\'t need it. Cursed tools and a lot of anger.',
   },
   {
-    id: 'jk_panda', name: 'Panda', faction: F, cost: 600, hp: 640, speed: 4.8, face: 2,
+    id: 'jk_panda', name: 'Panda', faction: F, cost: 420, hp: 560, speed: 4.8, face: 2,
     build: { scale: 1.25, girth: 1.42, head: 1.6, legs: 0.85, arms: 1.0, armThick: 1.4, mass: 1.2, neck: 0.1 },
-    weapon: { line: 'Brawler · knocked out once, the Gorilla Core takes over', kind: 'jk_panda', style: 'dual', anim: 'dual', item: 'jk_fist', damage: 40, reach: 1.0, cooldown: 0.9, force: 600, coreHp: 0.55, drum: 0.6, drumBehind: 0.5 },
+    weapon: { line: 'Brawler · knocked out once, the Gorilla Core takes over', kind: 'jk_panda', style: 'dual', anim: 'dual', item: 'jk_fist', damage: 34, reach: 1.0, cooldown: 0.9, force: 600, coreHp: 0.55, drum: 0.6, drumBehind: 0.5 },
     look: { skin: '#f2f0ea', hat: 'jk_panda', top: 'jk_panda', legs: '#1c1c20', accent: '#1c1c20' },
     personality: { aggro: 0.9, bravery: 0, voice: 0.8, chatter: 0.8, cry: 'roar', idle: 'bounce' },
     stagger: 0.4,
@@ -962,10 +962,10 @@ const units = [
     desc: 'Only says onigiri ingredients. Until he says "Don\'t move."',
   },
   {
-    id: 'jk_yuta', name: 'Yuta Okkotsu', faction: F, cost: 1500, hp: 560, speed: 5.6,
+    id: 'jk_yuta', name: 'Yuta Okkotsu', faction: F, cost: 1700, hp: 850, speed: 5.6,
     build: { scale: 1.02, girth: 0.92, legs: 1.04 },
-    weapon: { line: 'Special grade · katana, Rika, Copy · Domain: Authentic Mutual Love', kind: 'jk_yuta', style: 'sword', anim: 'overhead', item: 'jk_katana', damage: 48, reach: 1.3, cooldown: 0.85, force: 420,
-      copyR: 14, copyCD: 6, copyReso: 35, rikaT: 12, rikaCD: 12, rikaAt: 0.65, fullAt: 0.3, rct: 0.3, domFirst: 8, domCD: 30, domDur: 6, domTick: 0.8, domDmg: 22, domMin: 3 },
+    weapon: { line: 'Special grade · katana, Rika, Copy · Domain: Authentic Mutual Love', kind: 'jk_yuta', style: 'sword', anim: 'overhead', item: 'jk_katana', damage: 58, reach: 1.3, cooldown: 0.85, force: 420,
+      copyR: 14, copyCD: 6, copyReso: 35, rikaT: 12, rikaCD: 12, rikaAt: 0.8, fullAt: 0.3, rct: 0.3, domFirst: 8, domCD: 30, domPow: 9, domDur: 6, domTick: 0.8, domDmg: 22, domMin: 3 },
     look: { skin: '#f2d2bc', hat: 'jk_hair_yuta', top: 'jk_yuta', legs: '#e8e6e0', accent: '#2a2a30' },
     personality: { aggro: 0.8, bravery: 0, voice: 1.0, chatter: 0.4, cry: 'charge', idle: 'shift' },
     reserve: [{ type: 'jk_rika', n: 1 }],
@@ -976,7 +976,7 @@ const units = [
     // Yuta's Rika: a reserve (summoned by him; not in any setup tab)
     id: 'jk_rika', name: 'Rika', faction: 'jjk_summon', cost: 0, hp: 950, speed: 5.6,
     build: { scale: 1.9, girth: 1.05, head: 1.5, legs: 0.85, arms: 1.75, armThick: 1.15, mass: 1.0, radius: 0.55 },
-    weapon: { line: 'Cursed spirit · long arms, huge slaps', kind: 'jk_rika', style: 'fists', anim: 'slam', item: 'none', damage: 70, reach: 2.2, cooldown: 1.25, force: 1300, sweep: true },
+    weapon: { line: 'Cursed spirit · long arms, huge slaps', kind: 'jk_rika', style: 'fists', anim: 'slam', item: 'none', damage: 55, reach: 2.2, cooldown: 1.25, force: 1300, sweep: true },
     look: { skin: '#e2ddd6', hat: 'jk_rika', top: 'jk_rika', legs: '#cfc8c0', accent: '#2a2430' },
     personality: { aggro: 1, bravery: 0, voice: 1.6, chatter: 1, cry: 'cackle', idle: 'thump' },
     armor: 0.1, stagger: 0.2,

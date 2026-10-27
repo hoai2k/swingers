@@ -2,7 +2,10 @@
 //  - Satoru Gojo (jk_gojo): Infinity (on, with short gaps; off while he charges Purple
 //    and while burnt out after his domain), Blue (a point that drags enemies in), Red
 //    (a blast that throws them out), Hollow Purple (a huge orb that erases a line).
-//    Domain: Unlimited Void (power 10, barrier): everyone inside is frozen, overwhelmed.
+//    Domain: Unlimited Void (power 12, barrier): everyone inside is frozen, overwhelmed
+//    (it beats the Shrine's 10 + 1 for having no barrier: the Strongest wins that clash).
+//    Teleports clear of a blow he can't stop (Infinity down, or Toji's spear) and floats
+//    straight back up when knocked down.
 //  - Ryomen Sukuna (jk_sukuna): Dismantle (invisible cuts at range), Cleave (a cut that
 //    scales with the target's toughness), Fuga (a fire arrow drawn on a bow of flame).
 //    Domain: Malevolent Shrine (power 10, NO barrier, bigger): cuts everything inside,
@@ -14,7 +17,8 @@
 //    may perform the ritual: Mahoraga appears and its first blow is for him.
 //  - Mahoraga (jk_mahoraga): the Divine General. Huge, the Sword of Extermination on its
 //    arm, the eight-handled wheel over its head. Each kind of harm turns the wheel (a
-//    visible click) and hurts it less from then on. It adapts to Infinity too.
+//    visible click) and hurts it less from then on. It adapts to Infinity too, but
+//    Gojo and Sukuna change their technique faster than the wheel turns (adaptTop).
 // Secrets: Meguna (an enemy Sukuna near Megumi's ritual may take his body: Megumi
 // changes sides with Sukuna's tattoos, techniques and domain, and all his shikigami);
 // Gojo vs Sukuna domain clash; "Nah, I'd win"; "Throughout heaven and earth..." (Gojo
@@ -27,6 +31,7 @@ import { register } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import { RAPIER } from '../physics.js';
 import { makeSkeleton } from '../body.js';
+import { FIELD } from '../world.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, crossed, aimPoint, launchVel, addProjectile, strike, handPos,
   torus, dome, headBand, tcol, tdark, chestShell, blast, addStatus,
@@ -129,7 +134,7 @@ const gojo = {
     const w = u.def.weapon;
     u.attackDur = w.windup;
     u.infOn = true; u.infT = w.infUp * rand(0.6, 1); u.rippleT = 0;
-    u.blueCD = rand(1.5, 3); u.purpleCD = w.purpleFirst * rand(0.8, 1.2); u.domCD = w.domFirst * rand(0.85, 1.15);
+    u.blinkCD = 1; u.blueCD = rand(1.5, 3); u.purpleCD = w.purpleFirst * rand(0.8, 1.2); u.domCD = w.domFirst * rand(0.85, 1.15);
     u.jkInfinity = true; u.jkTech = 'red'; u.infMk = null;
   },
   think(u, dt, c) {
@@ -141,10 +146,11 @@ const gojo = {
       u.expr = EXPR.scared;
       return t;
     }
-    // domain ready: stroll in among them (Infinity on); otherwise keep at range
-    const stroll = u.domCD <= 0 && u.jkInfinity;
+    // domain ready: stroll in among them (Infinity on); otherwise keep at range (and
+    // well away from anything that cuts through Infinity)
+    const stroll = u.domCD <= 0 && u.jkInfinity && !t.jkPierce;
     if (stroll ? gap > 2 : dist > w.range * 0.8) u.desired.set(dirx * spd, 0, dirz * spd);
-    else if (gap < 2.5 && !u.jkInfinity) u.desired.set(-dirx * spd * 0.6, 0, -dirz * spd * 0.6);
+    else if (gap < 2.5 && !u.jkInfinity) u.desired.set(-dirx * spd * 0.8, 0, -dirz * spd * 0.8);
     if (!u.st.attack && u.cooldown <= 0 && u.stun <= 0 && !u.isDown() && dist < w.range) {
       gojoCast(u, gojoPick(u, t));
       u.aimAt = t;
@@ -234,6 +240,14 @@ const gojo = {
       b.sound('heal', u.chestPos, 1.0, 0.8);
     }
     if (on && u.stun < 0.5) holdShots(b, u, dt);
+    if (!sl) getUp(u, dt);
+    // a blow he can't stop is coming (Infinity down, or a weapon that cuts through it):
+    // he teleports clear
+    u.blinkCD -= dt;
+    if (u.blinkCD <= 0 && !sl && !burntOut(u) && !b.over) {
+      const v = nearestEnemyTo(b, u, u.pos, w.blinkR + u.skel.radius);
+      if (v && v.def.weapon.range === undefined && (v.jkPierce || !u.jkInfinity)) blink(b, u, v);
+    }
     // Unlimited Void
     if (u.domCD <= 0 && !sl && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
       if (!domainWorth(b, u, w.domR * 0.9, w.domMin)) u.domCD = 0.3;
@@ -260,6 +274,50 @@ const gojo = {
     if (sukunaLike(killer)) announce(b, 'SECRET: "Stand proud. You are strong." - Sukuna', u.headPos, 'standproud');
   },
 };
+// back on his feet at once (he floats up)
+function getUp(u, dt) {
+  const w = u.def.weapon;
+  if (!w.rise || u.stun > 0.05 || !u.isDown() || u.airT > 0.1) { u.jkDownT = 0; if (!u.isDown()) u.jkUps = 0; return; }
+  u.jkDownT = (u.jkDownT || 0) + dt;
+  if (u.jkDownT < w.rise) return;
+  u.jkDownT = 0;
+  u.jkUps = (u.jkUps || 0) + 1;
+  const k = Math.min(2, 1 + u.jkUps * 0.25);
+  u.rag.impulse(PART.chest, 0, u.M * 2.4 * k, 0);
+  u.rag.impulse(PART.head, 0, u.M * 0.7 * k, 0);
+  u.rag.impulseAll(0, u.M * 1.6, 0);
+}
+// teleport w.blinkD away from v (staying on the field, and inside any domain he is in)
+function blink(b, u, v) {
+  const w = u.def.weapon;
+  const dx = u.pos.x - v.pos.x, dz = u.pos.z - v.pos.z, L = Math.hypot(dx, dz) || 1;
+  const dom = jk(b).domains.find((d) => d.barrier && d.inside.has(u));
+  let best = null;
+  for (const a of [0, 0.6, -0.6, 1.2, -1.2]) {
+    const c = Math.cos(a), sn = Math.sin(a), fx = (dx * c - dz * sn) / L, fz = (dx * sn + dz * c) / L;
+    const x = u.pos.x + fx * w.blinkD, z = u.pos.z + fz * w.blinkD;
+    if (Math.abs(x) > FIELD.x - 2 || Math.abs(z) > FIELD.z - 2) continue;
+    if (dom && flat({ x, z }, dom.pos) > dom.R - 1.2) continue;
+    best = [x, z]; break;
+  }
+  u.blinkCD = best ? w.blinkCD : 0.5;
+  if (!best) return;
+  const p = u.pos;
+  markAt(b, 'jj_ripple', _p.set(p.x, p.y, p.z), 0.35);
+  b.emit('spark', p.x, p.y, p.z, 4);
+  const gy = b.terrain.height(best[0], best[1]), ddx = best[0] - p.x, ddz = best[1] - p.z, ddy = gy + u.skel.standHeight + 0.05 - p.y;
+  for (const bd of u.rag.bodies) {
+    const t = bd.translation();
+    bd.setTranslation({ x: t.x + ddx, y: t.y + ddy, z: t.z + ddz }, true);
+    bd.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  }
+  u.rag.read();
+  for (const l of u.legs || []) l.state = 'free';
+  u.stun = 0;
+  markAt(b, 'jj_ripple', u.chestPos, 0.35);
+  b.sound('whoosh', u.pos, 0.8, 1.8);
+  if (v.jkPierce) announce(b, 'Gojo teleports out of reach', u.headPos, 'blink' + u.id);
+}
 function gojoPick(u, t) {
   const b = u.battle, w = u.def.weapon;
   if (u.purpleCD <= 0 && (t.maxHp >= 700 || lineCount(u, t) >= 3)) return 'purple';
@@ -322,7 +380,8 @@ function openVoid(b, u) {
   clashBanner(b, u, w.domR);
   const mks = [];
   const dom = openDomain(b, u, {
-    name: 'Unlimited Void', radius: w.domR, duration: w.domDur, power: 10, tick: 0.25, marker: 'jk_void', burnout: w.burnout,
+    name: 'Unlimited Void', radius: w.domR, duration: w.domDur, power: w.domPow, tick: 0.25, marker: 'jk_void', burnout: w.burnout,
+    step(b, d) { d.data.k = enemiesIn(b, u, d.pos, d.R).length; },
     sureHit(b, d, v) {
       // infinite information: frozen where they stand
       v.stun = Math.max(v.stun, 0.45);
@@ -331,7 +390,8 @@ function openVoid(b, u) {
       const vel = v.rag.vel[PART.pelvis];
       if (!v.bc) v.rag.impulseAll(-vel.x * v.M * 0.25, 0, -vel.z * v.M * 0.25);
       d.data.n = (d.data.n || 0) + 1;
-      if (d.data.n % 2 === 0) v.hit(w.voidDmg, PART.head, 0, 0, 0, u.alive ? u : null, 'domain');
+      // the overload is shared out: one victim takes it all, a crowd a share each
+      if (d.data.n % 2 === 0) v.hit(w.voidDmg / Math.max(1, d.data.k || 1) ** w.voidSplit, PART.head, 0, 0, 0, u.alive ? u : null, 'domain');
       if ((!v.jkVoidMk || v.jkVoidMk.t <= 0) && mks.length < 24) {
         v.jkVoidMk = markerOn(b, v, 'jk_overload', PART.head, d.t + 0.3, V(0, v.skel.rHead * 2.2, 0));
         mks.push(v.jkVoidMk);
@@ -440,7 +500,7 @@ function openShrine(b, u) {
   clashBanner(b, u, w.domR);
   let marks = 0;
   openDomain(b, u, {
-    name: 'Malevolent Shrine', radius: w.domR, duration: w.domDur, power: 10, barrier: false, tick: w.shrineTick, marker: 'jk_shrine', burnout: 5,
+    name: 'Malevolent Shrine', radius: w.domR, duration: w.domDur, power: w.domPow, barrier: false, tick: w.shrineTick, marker: 'jk_shrine', burnout: 5,
     sureHit(b, d, v) {
       // Gojo meets it with Domain Amplification: half
       const dmg = w.shrineDmg * u.jkPow * (isA(v, 'jk_gojo') ? 0.5 : 1);
@@ -564,7 +624,7 @@ function mgSummon(u, type, life = true) {
 function openGarden(b, u) {
   const w = u.def.weapon;
   openDomain(b, u, {
-    name: 'Chimera Shadow Garden', radius: w.domR, duration: w.domDur, power: 4, tick: 0.4, marker: 'jk_garden', burnout: 5,
+    name: 'Chimera Shadow Garden', radius: w.domR, duration: w.domDur, power: w.domPow, tick: 0.4, marker: 'jk_garden', burnout: 5,
     sureHit(b, d, v) {
       // sinking into the shadows; now and then something bites from below
       v.stun = Math.max(v.stun, 0.5);
@@ -665,7 +725,9 @@ function megunaStep(u, dt) {
 const SK_HP = 1700;
 
 // ------------------------------------------------------------------ Mahoraga
-const ADAPT_AT = 140, ADAPT_STEP = 0.3, ADAPT_MAX = 0.85;
+// adaptation numbers live on its weapon: adaptAt (harm of one kind per click), adaptStep
+// (less harm per click), adaptMax; adaptTop caps what it can adapt to the Strongest
+// and the King of Curses (they change their technique faster than the wheel turns)
 function adaptKey(kind) {
   if (!kind || kind === 'melee') return 'melee';
   if (kind === 'blast' || kind === 'poison' || kind === 'domain' || kind === 'thorns') return kind;
@@ -713,11 +775,17 @@ const mahoraga = {
     u.jkSeenN = u.hitSet.size;
   },
   hit(u, amount, part, att, kind) {
-    const k = adaptKey(kind), r = u.jkAdapt[k] || 0, a = amount * (1 - r);
+    const w = u.def.weapon, k = adaptKey(kind);
+    let r = u.jkAdapt[k] || 0;
+    if (r > w.adaptTop && (isA(att, 'jk_gojo') || sukunaLike(att))) {
+      r = w.adaptTop;
+      announce(u.battle, isA(att, 'jk_gojo') ? 'SECRET: The Strongest hits harder than the wheel can turn' : 'SECRET: The King of Curses cuts faster than the wheel can turn', u.headPos, 'outpace' + u.id);
+    }
+    const a = amount * (1 - r);
     u.jkAdaptDmg[k] = (u.jkAdaptDmg[k] || 0) + a;
-    if (u.jkAdaptDmg[k] >= ADAPT_AT && r < ADAPT_MAX) {
+    if (u.jkAdaptDmg[k] >= w.adaptAt && (u.jkAdapt[k] || 0) < w.adaptMax) {
       u.jkAdaptDmg[k] = 0;
-      u.jkAdapt[k] = Math.min(ADAPT_MAX, r + ADAPT_STEP);
+      u.jkAdapt[k] = Math.min(w.adaptMax, (u.jkAdapt[k] || 0) + w.adaptStep);
       adaptClick(u, k);
     }
     return a;
@@ -730,7 +798,7 @@ function adaptClick(u, k) {
   const b = u.battle;
   u.jkClicks++;
   u.jkWheelT += Math.PI / 4;
-  u.hp = Math.min(u.maxHp, u.hp + u.maxHp * 0.05); // it heals as it adapts
+  u.hp = Math.min(u.maxHp, u.hp + u.maxHp * u.def.weapon.adaptHeal); // it heals as it adapts
   const hp = u.skel.parts[PART.head];
   markerOn(b, u, 'jk_wheelflash', PART.head, 0.45, V(0, hp.r * WHEEL_UP, 0));
   const p = u.headPos;
@@ -972,15 +1040,15 @@ const SUMMON = 'jjk_shiki'; // shikigami: not a shop faction (they come from Meg
 const MEGUMI_BUILD = { scale: 1.0, girth: 0.92, legs: 1.04 };
 const units = [
   {
-    id: 'jk_gojo', name: 'Satoru Gojo', faction: 'jjk', cost: 3500, hp: 620, speed: 5.0,
+    id: 'jk_gojo', name: 'Satoru Gojo', faction: 'jjk', cost: 6000, hp: 900, speed: 5.0,
     build: { scale: 1.16, girth: 0.86, legs: 1.25, arms: 1.08 },
     weapon: {
       line: 'Hero · Infinity · Red blasts, Blue drags, Hollow Purple erases a line · Domain: Unlimited Void', kind: 'jk_gojo', style: 'jj_pockets', anim: 'jk_flick', item: 'none',
-      damage: 48, speed: 18, range: 22, minRange: 3, cooldown: 3.0, force: 850, windup: 0.8, releaseAt: 0.55, blast: 2.4,
+      damage: 60, speed: 18, range: 22, minRange: 3, cooldown: 2.4, force: 850, windup: 0.8, releaseAt: 0.55, blast: 2.4,
       blueCD: 7, blueR: 4.5, blueDmg: 7, blueT: 1.6, blueSpeed: 16,
-      purpleCD: 20, purpleFirst: 9, purpleDmg: 200, purpleR: 1.4, purpleSpeed: 11, purpleWind: 1.8,
-      infUp: 6, infDown: 2.8, awakeAt: 0.4, rct: 0.3,
-      domR: VOID_R, domDur: 3.5, domCD: 26, domFirst: 8, domMin: 3, voidDmg: 5, burnout: 7,
+      purpleCD: 15, purpleFirst: 9, purpleDmg: 200, purpleR: 1.4, purpleSpeed: 11, purpleWind: 1.8,
+      infUp: 6, infDown: 2.8, awakeAt: 0.4, rct: 0.3, blinkCD: 12, blinkR: 2.5, blinkD: 7, rise: 0.2,
+      domR: VOID_R, domPow: 12, domDur: 3.5, domCD: 26, domFirst: 8, domMin: 6, voidDmg: 20, voidSplit: 1, burnout: 3,
     },
     look: { skin: '#f4d8c4', hat: 'jk_gojo_hair', top: 'jk_gojo_uniform', legs: UNIFORM, accent: '#141418' },
     personality: { aggro: 0.6, bravery: 0, voice: 1.05, chatter: 1.0, cry: 'la', idle: 'regal' },
@@ -994,7 +1062,7 @@ const units = [
       line: 'Boss · Dismantle and Cleave cut unseen · Fuga fire arrow · Domain: Malevolent Shrine (no barrier)', kind: 'jk_sukuna', style: 'jj_king', anim: 'dual', item: 'none',
       damage: 38, range: 7, cooldown: 1.5, force: 380, cuts: 4, cleaveDmg: 50, cleaveK: 0.06, cleaveMax: 180,
       fugaCD: 16, fugaFirst: 8, fugaDmg: 130, fugaBlast: 4, fugaSpeed: 24, fugaRange: 24, fugaBurn: 14,
-      domR: SHRINE_R, domDur: 4.5, domCD: 28, domFirst: 9, domMin: 3, shrineDmg: 11, shrineTick: 0.35, allyK: 0.35,
+      domR: SHRINE_R, domPow: 10, domDur: 4.5, domCD: 28, domFirst: 9, domMin: 3, shrineDmg: 11, shrineTick: 0.35, allyK: 0.35,
     },
     look: { skin: '#eebd9e', hat: 'jk_sukuna_hair', top: 'jk_sukuna_kimono', legs: '#ece6d6', accent: '#1a1418' },
     personality: { aggro: 0.95, bravery: 0, voice: 0.6, chatter: 0.9, cry: 'cackle', idle: 'regal' },
@@ -1009,18 +1077,19 @@ const units = [
       line: 'Summoner · Ten Shadows: Divine Dogs, Nue, Toad, Max Elephant · Domain: Chimera Shadow Garden · the Mahoraga ritual', kind: 'jk_megumi', style: 'jj_sign', anim: 'overhead', item: 'jk_shadow_blade',
       damage: 34, reach: 1.1, cooldown: 1.0, force: 260,
       summonR: 22, nueLife: 14, nueCD: 12, toadLife: 12, toadCD: 14, eleLife: 9, eleCD: 22, eleFirst: 8,
-      domR: GARDEN_R, domDur: 6, domCD: 30, domFirst: 10, domMin: 3, gardenDmg: 5, gardenBite: 22, ritualHp: 0.3, ritualLife: 20,
+      domR: GARDEN_R, domPow: 4, domDur: 6, domCD: 30, domFirst: 10, domMin: 3, gardenDmg: 5, gardenBite: 22, ritualHp: 0.3, ritualLife: 20,
     },
     look: { skin: '#f0d0b8', hat: 'jk_megumi_hair', top: 'jk_megumi_uniform', legs: UNIFORM, accent: '#121218' },
     personality: { aggro: 0.55, bravery: 0, voice: 0.95, chatter: 0.5, cry: 'magic', idle: 'brace' },
     desc: 'Ten Shadows: his shikigami climb out of his shadow. If it all goes wrong, there is always the ritual.',
   },
   {
-    id: 'jk_mahoraga', name: 'Mahoraga', faction: 'jjk', cost: 3400, hp: 2100, speed: 4.7,
+    id: 'jk_mahoraga', name: 'Mahoraga', faction: 'jjk', cost: 2600, hp: 1500, speed: 4.7,
     build: { scale: 1.75, girth: 1.12, head: 0.95, arms: 1.12, armThick: 1.35, legs: 1.05, mass: 1.3 },
     weapon: {
       line: 'Divine General · Sword of Extermination · adapts: every kind of harm turns the wheel and hurts it less', kind: 'jk_mahoraga', style: 'jk_blade', anim: 'overhead', item: 'jk_exterminate',
-      damage: 160, reach: 1.9, cooldown: 1.5, force: 1100, sweep: true,
+      damage: 115, reach: 1.9, cooldown: 1.5, force: 900, sweep: true,
+      adaptAt: 140, adaptStep: 0.3, adaptMax: 0.85, adaptTop: 0.2, adaptHeal: 0.03,
     },
     look: { skin: '#ebe6da', hat: 'jk_mahoraga_head', top: 'jk_mahoraga_body', legs: '#3a3a40', accent: '#d8d2c4' },
     personality: { aggro: 1, bravery: 0, voice: 0.4, chatter: 0.25, cry: 'roar', idle: 'thump' },
