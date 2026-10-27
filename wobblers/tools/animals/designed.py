@@ -27,17 +27,27 @@ def runs(col):
     return list(zip(np.where(d == 1)[0], np.where(d == -1)[0]))  # [a, b)
 
 
+class Lite:
+    """a panel's silhouette and its box (what build.write and the designs use)"""
+    def __init__(self, rgb, m):
+        self.rgb, self.m, self.body, self.comps = rgb, m, m, []
+        rows = np.where(m.any(axis=1))[0]; cols = np.where(m.any(axis=0))[0]
+        self.r0, self.r1, self.c0, self.c1 = rows[0], rows[-1], cols[0], cols[-1]
+
+
 class Sheet:
     """One row of a reference sheet: side view (facing +z = right) and top view (head right), in
     metres. L = the side view's length; land: feet on y = 0, else centred on the side view."""
-    def __init__(self, sheet, L, row=0, rows=1, land=False, cuts=(), belly=0, open_=0.3, cols=None):
+    def __init__(self, sheet, L, row=0, rows=1, land=False, cuts=(), belly=0, open_=0.3, full=False):
         img = load(sheet)
         self.sp, self.tp = panel(img, row, 0, rows), panel(img, row, 1, rows)
         sm = mask(self.sp)
         if land:
             sm = drop_ground_shadow(self.sp, sm, 0.45)
-        self.S = View(self.sp, sm, open_, land, cuts, belly)
-        self.T = View(self.tp, mask(self.tp), open_)
+        # (full: build.py's View with the opened body and parts; designs only need the silhouettes)
+        V = (lambda rgb, m, *a: View(rgb, m, *a)) if full else (lambda rgb, m, *a: Lite(rgb, m))
+        self.S = V(self.sp, sm, open_, land, cuts, belly)
+        self.T = V(self.tp, mask(self.tp), open_)
         S, T = self.S, self.T
         self.L = L
         self.ks = L / (S.c1 - S.c0)
@@ -136,6 +146,43 @@ def chain_sdf(G, pts, rad, h):
             d = np.minimum(d, np.sqrt(dz * dz + dy * dy + dx * dx) - (rad[i] + (rad[i + 1] - rad[i]) * t))
     D[iz, iy, ix] = d
     return D
+
+
+def trace(m, seed, step=None):
+    """centre line of a limb-like mask from where it starts (seed: pixels where it joins the body),
+    by flood-fill distance: [(col, row, half-width px), ...] from the base to the tip"""
+    from collections import deque
+    dt = ndi.distance_transform_edt(m)
+    dist = np.full(m.shape, -1, np.int32); q = deque()
+    for r, c in zip(*np.where(seed & m)):
+        dist[r, c] = 0; q.append((r, c))
+    H, W = m.shape
+    while q:
+        r, c = q.popleft()
+        for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            r2, c2 = r + dr, c + dc
+            if 0 <= r2 < H and 0 <= c2 < W and m[r2, c2] and dist[r2, c2] < 0:
+                dist[r2, c2] = dist[r, c] + 1; q.append((r2, c2))
+    if dist.max() < 2:
+        return np.zeros((0, 3))
+    step = step or max(2.0, 0.8 * float(np.median(dt[m])))
+    out = []
+    for k in np.arange(0, dist.max() + 1, step):
+        sel = (dist >= k) & (dist < k + step)
+        if sel.sum() < 2:
+            continue
+        rr, cc = np.where(sel)
+        out.append((cc.mean(), rr.mean(), np.percentile(dt[sel], 85)))
+    out = np.array(out)
+    if len(out) > 3:
+        for _ in range(2):
+            out[1:-1, :2] = (out[:-2, :2] + out[1:-1, :2] * 2 + out[2:, :2]) / 4
+    return out
+
+
+def biggest(m):
+    lab, n = ndi.label(m)
+    return lab == (np.argmax(ndi.sum(m, lab, range(1, n + 1))) + 1) if n else m
 
 
 def mask_sdf(sheet, m, view='t'):
@@ -349,6 +396,279 @@ def bird(name, C):
     finish(name, C, fields, G, sh, blend=0.02)
 
 
+def _top_axes(sh):
+    T = sh.T
+    return sh.xt(np.arange(T.m.shape[0]))[:, None], sh.zt(np.arange(T.m.shape[1]))[None, :]
+
+
+def _flippers(sh, G, fields, keep_out, bodyx, yroot, droop, root_t, wing_parts, leg_parts, zsplit, min_frac=0.02):
+    """flippers / fins: the top view's pieces sticking out sideways (outside keep_out), the biggest
+    one per side in front of zsplit (wing_parts) and behind it (leg_parts); each a plate in its
+    outline, rooted at bodyx(z), drooping by droop(|x| beyond the root, tip) from yroot"""
+    from build import disk
+    T = sh.T
+    xT, zT = _top_axes(sh)
+    rest = T.m & ~keep_out
+    lab, n = ndi.label(rest)
+    pieces = []
+    for i in range(1, n + 1):
+        m = lab == i
+        if m.sum() < min_frac * T.m.sum():
+            continue
+        zc_ = float((zT * m).sum() / m.sum() * 1) if False else float(np.mean(np.broadcast_to(zT, m.shape)[m]))
+        xc_ = float(np.mean(np.broadcast_to(xT, m.shape)[m]))
+        pieces.append((m, zc_, xc_))
+    out = []
+    for front, parts in ((True, wing_parts), (False, leg_parts)):
+        for sgn, part in ((1, parts[0]), (-1, parts[1])):
+            c = [p for p in pieces if (p[1] > zsplit) == front and p[2] * sgn > 0]
+            if not c:
+                continue
+            m, zc_, xc_ = max(c, key=lambda p: p[0].sum())
+            zcols = np.broadcast_to(zT, m.shape)[m]; xs_ = np.abs(np.broadcast_to(xT, m.shape)[m])
+            xr = bodyx(zc_); xtip = float(xs_.max())
+            grow = ndi.binary_dilation(m, structure=disk(max(3, 0.06 * (T.r1 - T.r0)))) & T.m & (np.abs(xT) > 0.3 * xr)
+            pm = ndi.binary_closing(m | grow, iterations=2)
+            sdf = mask_sdf(sh, pm)
+            th0 = root_t
+            thick = lambda gz, gx, xr=xr, xtip=xtip, th0=th0: th0 * np.clip(1 - (np.abs(gx) - xr) / max(1e-6, xtip - xr), 0.08, 1)
+            ymid = lambda gz, gx, xr=xr, xtip=xtip, fr=front: yroot - droop(fr) * np.clip((np.abs(gx) - xr) / max(1e-6, xtip - xr), 0, 1) * (xtip - xr)
+            zroot = float(np.mean(zcols[xs_ < xr + 0.25 * (xtip - xr)])) if (xs_ < xr + 0.25 * (xtip - xr)).any() else zc_
+            fields.append(dict(name=part, d=G.plate(sdf, thick, ymid), part=part, pivot=(zroot, yroot, sgn * xr), blend=0.012 * sh.L))
+            out.append(part)
+    return out
+
+
+def turtle(name, C):
+    """a sea turtle: a domed shell (an ellipsoid, higher above its rim than below) as outlined from
+    above, a head on a short neck, flat flippers cut from the top view (front ones flap: WING_L /
+    WING_R, back ones paddle: BL / BR), a short tail"""
+    from build import disk
+    sh = Sheet(C['sheet'], C['L'])
+    S, T = sh.S, sh.T
+    xT, zT = _top_axes(sh)
+    shell = biggest(ndi.binary_opening(T.m, structure=disk(0.2 * (T.r1 - T.r0) * C.get('shell_open', 0.5))))
+    zsh = np.broadcast_to(zT, shell.shape)[shell]; xsh = np.abs(np.broadcast_to(xT, shell.shape)[shell])
+    z0, z1 = float(zsh.min()), float(zsh.max()); rz = (z1 - z0) / 2; zc_ = (z0 + z1) / 2; rx = float(xsh.max())
+    zS_, topS, botS = sh.side_profile()
+    on = (zS_ > z0) & (zS_ < z1)
+    ytop = float(topS[on].max())
+    ybot = float(np.median(botS[(zS_ > z0 + 0.2 * rz) & (zS_ < zc_)])) if ((zS_ > z0 + 0.2 * rz) & (zS_ < zc_)).any() else float(botS[on].min())
+    yeq = ybot + 0.32 * (ytop - ybot)
+    lo = (float(sh.zs(S.c0)) - 0.03, float(sh.ys(S.r1)) - 0.03, -float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max()) - 0.03)
+    hi = (float(sh.zs(S.c1)) + 0.03, float(sh.ys(S.r0)) + 0.03, -lo[2])
+    G = Grid(lo, hi, C['res'])
+    ryt, ryb = ytop - yeq, yeq - ybot
+    ry = np.where(G.gy > yeq, ryt, ryb)
+    e = np.sqrt(((G.gz - zc_) / rz) ** 2 + ((G.gy - yeq) / ry) ** 2 + (G.gx / rx) ** 2)
+    fields = [dict(name='shell', d=((e - 1) * np.minimum(ry, min(rz, rx))).astype(np.float32), part='body')]
+    # head: the top view in front of the shell, as wide as it is there; height from the side view
+    hm = biggest(T.m & (zT > z1 - 0.05 * rz) & (np.abs(xT) < 0.45 * rx))
+    hz = np.broadcast_to(zT, hm.shape)[hm]; hx = np.abs(np.broadcast_to(xT, hm.shape)[hm])
+    ztip = float(hz.max()); hw = float(np.percentile(hx, 97))
+    zh = ztip - 1.1 * hw
+    yh = float(np.interp(zh, zS_, (topS + botS) / 2)); hry = float(np.interp(zh, zS_, (topS - botS) / 2))
+    hry = min(hry, 1.1 * hw)
+    piv = (z1 - 0.25 * rz, yeq + 0.1 * ryt, 0)
+    fields.append(dict(name='head', d=G.ell((zh, yh, 0), (1.15 * hw, hry, hw)), part='HEAD', pivot=piv))
+    fields.append(dict(name='neck', d=G.cone([[z1 - 0.3 * rz, yeq + 0.05 * ryt, 0], [zh - 0.4 * hw, yh, 0]], [0.75 * hw, 0.7 * hw], xs=1.1), part='HEAD', pivot=piv))
+    keep = ndi.binary_dilation(shell, iterations=3) | hm
+    _flippers(sh, G, fields, keep, lambda z: rx * np.sqrt(max(0.05, 1 - ((z - zc_) / rz) ** 2)) * 0.85, yeq - 0.15 * ryb,
+              lambda fr: C.get('droop', 0.35) if fr else C.get('droop_back', 0.15), 0.3 * ryb, ('WING_L', 'WING_R'), ('BL', 'BR'), zc_)
+    fields.append(dict(name='tail', d=G.cone([[z0 + 0.15 * rz, yeq, 0], [z0 - 0.12 * rz, yeq - 0.1 * ryb, 0]], [0.16 * ryb * 2, 0.04 * ryb * 2]), part='body'))
+    finish(name, C, fields, G, sh, blend=0.02)
+
+
+def plesiosaur(name, C):
+    """a plesiosaur: a smooth torso (measured cross-sections), a long neck and head along the drawn
+    neck's centre line (HEAD), a tapering tail along the drawn tail (TAIL), four flippers cut from
+    the top view (front: WING_L / WING_R, back: BL / BR) held out a little below the body"""
+    from build import disk
+    sh = Sheet(C['sheet'], C['L'])
+    S, T = sh.S, sh.T
+    xT, zT = _top_axes(sh)
+    # torso from above: the central run's width, opened hard (neck, tail, flippers off)
+    axis_r = int(round(sh.axis))
+    cw = np.zeros(T.m.shape[1])
+    for c in range(T.m.shape[1]):
+        for a, b in runs(T.m[:, c]):
+            if a <= axis_r < b:
+                cw[c] = (b - a) / 2
+    bwpx = np.percentile(cw[cw > 0], 90)
+    torso_t = biggest(ndi.binary_opening(T.m, structure=disk(C.get('torso_open', 0.75) * bwpx)))
+    tzz = np.broadcast_to(zT, torso_t.shape)[torso_t]
+    tz0, tz1 = float(tzz.min()), float(tzz.max())
+    # side: top / bottom per column over the torso, flipper dips under it closed
+    zS_, topS, botS = sh.side_profile()
+    on = (zS_ >= tz0) & (zS_ <= tz1)
+    zc = zS_[on]; top = topS[on]
+    bot = np.maximum(botS[on], np.percentile(botS[on], 80))       # flippers hang below most of the belly
+    top = ndi.gaussian_filter1d(top, 3); bot = ndi.gaussian_filter1d(bot, 3)
+    wcol = np.array([((torso_t[:, int(round(float(sh.col_t(z))))]).sum() / 2) * sh.kt for z in zc])
+    wcol = ndi.gaussian_filter1d(wcol, 3)
+    # (side-on, flippers reach the ground under nearly all of the torso: its depth follows its width)
+    ax = wcol; ay = np.maximum(C.get('depth', 0.85) * ax, 1e-3); yc = top - ay
+    lo = (float(sh.zs(S.c0)) - 0.05, float(sh.ys(S.r1)) - 0.05, -float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max()) - 0.05)
+    hi = (float(sh.zs(S.c1)) + 0.05, float(sh.ys(S.r0)) + 0.05, -lo[2])
+    G = Grid(lo, hi, C['res'])
+    zq = np.clip(G.gz, zc[0], zc[-1])
+    Yc, Ay, Ax = (np.interp(zq, zc, v) for v in (yc, ay, ax))
+    ez = np.where(G.gz < zc[0], (zc[0] - G.gz) / (0.8 * min(ay[0], ax[0])), np.where(G.gz > zc[-1], (G.gz - zc[-1]) / (0.8 * min(ay[-1], ax[-1])), 0))
+    f = np.sqrt(((G.gy - Yc) / Ay) ** 2 + (G.gx / Ax) ** 2 + ez ** 2)
+    fields = [dict(name='torso', d=((f - 1) * np.minimum(Ay, Ax)).astype(np.float32), part='body')]
+    zmid = (tz0 + tz1) / 2
+    # neck + head, tail: traced in the side view from where they leave the torso
+    # (only above the torso's lower half there: flippers hang under the tail base and the neck)
+    Z = sh.zs(np.arange(S.m.shape[1]))[None, :]; Yr = sh.ys(np.arange(S.m.shape[0]))[:, None]
+    yfl = lambda z: float(np.interp(z, zc, yc)) - 0.6 * float(np.interp(z, zc, ay))
+    # the tail: its thickness from above (the central run), hanging from the side view's back line by it
+    tcols = [c for c in range(T.m.shape[1]) if cw[c] > 0 and float(sh.zt(c)) < tz0 + 0.06 * sh.L]
+    if len(tcols) > 3:
+        ztl = sh.zt(np.array(tcols)); rtl = ndi.gaussian_filter1d(cw[tcols] * sh.kt, 2)
+        ytl = np.interp(ztl, zS_, ndi.gaussian_filter1d(topS, 3)) - rtl
+        o = np.argsort(-ztl)                                       # from the torso back to the tip
+        pts = np.stack([ztl[o], ytl[o], np.zeros(len(o))], 1); rad = rtl[o]
+        r0 = min(float(np.percentile(rtl, 60)), float(ax[0]))   # (the run beside the torso includes flipper roots)
+        rad = r0 + (max(float(rad[-1]), 0.12 * r0) - r0) * np.linspace(0, 1, len(rad))
+        pts[:, 1] = np.interp(pts[:, 0], zS_, ndi.gaussian_filter1d(topS, 3)) - rad
+        fields.append(dict(name='tail', d=G.cone(pts[::3], np.maximum(rad[::3], 0.8 * G.h)), part='TAIL', pivot=pts[0]))
+    for nm, sel, seedz, part in (('neck', (Z > tz1 - 0.04 * sh.L) & (Yr > yfl(tz1)), tz1 - 0.04 * sh.L, 'HEAD'),):
+        m = biggest(S.m & sel)
+        seed = m & (np.abs(Z - seedz) < 0.01 * sh.L)
+        tr = trace(m, seed)
+        if len(tr) < 3:
+            continue
+        pts = np.stack([sh.zs(tr[:, 0]), sh.ys(tr[:, 1]), np.zeros(len(tr))], 1); rad = tr[:, 2] * sh.ks
+        if nm == 'tail':
+            rad = rad[0] + (max(rad[-1], 0.15 * rad[0]) - rad[0]) * np.linspace(0, 1, len(rad))
+        else:
+            # the neck tapers smoothly to the head; the head (its last stretch) gets a skull and snout
+            nh = max(3, int(len(pts) * C.get('head_frac', 0.2)))
+            rad = ndi.gaussian_filter1d(rad, 2)
+            hp = pts[-nh:]; hr = float(rad[-nh:].max())
+            skull = hp[int(nh * 0.35)]
+            fields.append(dict(name='skull', d=G.ell(skull, (1.3 * hr, hr, 0.95 * hr)), part='HEAD', pivot=pts[0]))
+            fields.append(dict(name='snout', d=G.cone([skull, pts[-1] - (pts[-1] - skull) * 0.05], [0.85 * hr, 0.35 * hr], xs=0.9), part='HEAD', pivot=pts[0]))
+            pts, rad = pts[:-nh // 2], np.minimum(rad[:-nh // 2], np.linspace(rad[0], 0.7 * hr, len(rad[:-nh // 2])) * 1.15)
+        fields.append(dict(name=nm, d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=part, pivot=pts[0]))
+    keep = ndi.binary_dilation(torso_t, iterations=4) | (np.abs(xT) < 0.6 * bwpx * sh.kt)
+    yr = float(np.interp(zmid, zc, yc)) - 0.3 * float(np.interp(zmid, zc, ay))
+    _flippers(sh, G, fields, keep, lambda z: 0.7 * float(np.interp(z, zc, ax)), yr, lambda fr: C.get('droop', 0.3),
+              0.32 * float(ay.max()), ('WING_L', 'WING_R'), ('BL', 'BR'), zmid)
+    finish(name, C, fields, G, sh, blend=0.02)
+
+
+def manta(name, C):
+    """a manta ray: a flat egg of a body, wings cut from the top view's outline (WING_L / WING_R,
+    a slight lift to the tips), the curled cephalic lobes (HEAD), a long whip tail (TAIL). Undersides
+    take the white of the side view's belly. u: side / top box along z (tail tip 0 .. front 1),
+    v: top box across (0 .. 1), w: side box down (0 top .. 1 bottom)"""
+    sh = Sheet(C['sheet'], C['L'])
+    S, T = sh.S, sh.T
+    xT, zT = _top_axes(sh)
+    zu = lambda u: float(sh.zs(S.c0 + u * (S.c1 - S.c0)))
+    yw = lambda w: float(sh.ys(S.r0 + w * (S.r1 - S.r0)))
+    span = (T.r1 - T.r0) * sh.kt                                  # wing tip to wing tip (m)
+    (bu0, bu1), (bw0, bw1) = C['body_u'], C['body_w']
+    zb0, zb1 = zu(bu0), zu(bu1); ry = (yw(bw1) - yw(bw0)) / -2 if yw(bw1) < yw(bw0) else (yw(bw0) - yw(bw1)) / 2
+    ry = abs(ry); ymid = (yw(bw0) + yw(bw1)) / 2; rx = C['body_x'] * span
+    lo = (zu(0) - 0.05, yw(1) - 0.1, -span / 2 - 0.05); hi = (zu(1) + 0.05, yw(0) + 0.1, span / 2 + 0.05)
+    G = Grid(lo, hi, C['res'])
+    zc_ = (zb0 + zb1) / 2
+    fields = [dict(name='body', d=G.ell((zc_, ymid, 0), ((zb1 - zb0) / 2, ry, rx)), part='body')]
+    dih = np.tan(np.radians(C.get('lift', 6)))
+    surf = lambda gz, gx: ymid + 0.1 * ry + np.maximum(np.abs(gx) - rx, 0) * dih
+    cu = C['ceph_u']; zcf = zu(cu)
+    for sgn, part in ((1, 'WING_L'), (-1, 'WING_R')):
+        wm = T.m & (xT * sgn > 0.45 * rx) & ~((zT < zu(C['tail_u'])) & (np.abs(xT) < 0.12 * span)) & (zT < zcf)
+        wm = ndi.binary_opening(biggest(wm), iterations=2)
+        tip = float(np.abs(np.broadcast_to(xT, wm.shape)[wm]).max())
+        th = lambda gz, gx, tip=tip: 0.75 * ry * np.clip(1 - (np.abs(gx) - 0.5 * rx) / (tip - 0.5 * rx), 0.04, 1) ** 1.3
+        fields.append(dict(name=part, d=G.plate(mask_sdf(sh, wm), th, surf), part=part, pivot=(zc_, ymid, sgn * 0.8 * rx), blend=0.02 * sh.L))
+        # cephalic lobe: the top view's lobe in front of the head, a thick curled-down plate
+        cm = biggest(T.m & (zT > zcf - 0.02 * sh.L) & (xT * sgn > 0.25 * rx))
+        if cm.sum() > 10:
+            fields.append(dict(name='lobe', d=G.plate(mask_sdf(sh, cm), lambda gz, gx: 0.28 * ry + 0 * gz, lambda gz, gx: ymid - 0.15 * ry + 0 * gz), part='HEAD', pivot=(zb1 - 0.2 * (zb1 - zb0), ymid, 0), blend=0.015 * sh.L))
+    # tail: a whip along the side view's tail line
+    zS_, topS, botS = sh.side_profile()
+    tz = np.linspace(zu(C['tail_u']) + 0.03 * sh.L, zu(0) + 0.005, 24)
+    ty = np.interp(tz, zS_, ndi.gaussian_filter1d((topS + botS) / 2, 3))
+    tr = np.linspace(0.16 * ry, 0.025 * ry, len(tz))
+    fields.append(dict(name='tail', d=G.cone(np.stack([tz, ty, 0 * tz], 1), np.maximum(tr, 0.7 * G.h)), part='TAIL', pivot=(tz[0], ty[0], 0)))
+    # paint: anything below the wings' mid-surface takes the side view's white belly
+    ybel = yw(C.get('belly_w', 0.88))
+    def inv(P):
+        z, y, x = P[:, 0], P[:, 1], P[:, 2]
+        under = y < surf(z, x) - 0.05 * ry
+        out = P.copy()
+        out[under, 0] = np.clip(z[under], zu(0.5), zu(0.72)); out[under, 1] = ybel
+        return out
+    for f in fields:
+        if f['part'] in ('body', 'WING_L', 'WING_R'):
+            f['inv'] = inv
+    finish(name, C, fields, G, sh, blend=0.02)
+
+
+def jellyfish(name, C):
+    """a jellyfish, upright (the sheet draws it swimming sideways): a domed bell with a hollow
+    underside (the body: the game's pulse squeezes it), frilly oral arms from its middle and thin
+    tentacles from its rim (each its own tentacle part: the game waves them). Painted from the side
+    view only, each part mapped back onto where the drawing has it."""
+    sh = Sheet(C['sheet'], C['L'])
+    S = sh.S
+    zu = lambda u: float(sh.zs(S.c0 + u * (S.c1 - S.c0)))
+    yv = lambda v: float(sh.ys(S.r0 + v * (S.r1 - S.r0)))
+    z_rim_s, z_apex_s = zu(C['rim_u']), zu(1.0)
+    axis_s = yv(0.5); Rs = (yv(0) - yv(1)) / 2                     # the drawn bell's radius (across)
+    R, D, Lt = C['R'], C['D'], C['tent']                            # our bell radius, depth, tentacle length
+    G = Grid((-R * 1.6, -Lt - 0.05, -R * 1.6), (R * 1.6, D * 1.15, R * 1.6), C['res'])
+    gz, gy, gx = G.gz, G.gy, G.gx
+    outer = np.sqrt((gx / R) ** 2 + (gy / D) ** 2 + (gz / R) ** 2)
+    inner = np.sqrt((gx / (0.86 * R)) ** 2 + ((gy + 0.12 * D) / (0.78 * D)) ** 2 + (gz / (0.86 * R)) ** 2)
+    bell = np.maximum.reduce([(outer - 1) * min(R, D), -(inner - 1) * 0.8 * min(R, D), -(gy + 0.04 * D)])
+    fields = [dict(name='bell', d=bell.astype(np.float32), part='body')]
+    rng = np.random.default_rng(7)
+    k = 0
+    def wavy(x0, z0, length, n, amp, ph, out):
+        t = np.linspace(0, 1, n)
+        ang = np.arctan2(z0, x0) if (x0 or z0) else 0
+        rr = np.hypot(x0, z0) + out * t
+        w = amp * np.sin(t * 3 * np.pi + ph) * t
+        return np.stack([np.sin(ang) * rr + np.cos(ang) * w, -t * length, np.cos(ang) * rr - np.sin(ang) * w], 1)  # (z, y, x)
+    # oral arms: 4 frilly ribbons from the middle
+    for i in range(C.get('arms', 4)):
+        a = np.pi / 4 + i * np.pi / 2
+        pts = wavy(0.18 * R * np.cos(a), 0.18 * R * np.sin(a), Lt * 0.62, 18, 0.06 * R, rng.uniform(0, 6), 0.1 * R)
+        pts = np.vstack([[pts[0, 0], 0.62 * D, pts[0, 2]], pts])    # rooted on the inside of the dome
+        tt_ = np.linspace(0, 1, len(pts))
+        rad = (0.075 * R - 0.04 * R * tt_) * (1 + 0.35 * np.sin(tt_ * 44 + i))   # frilly
+        fields.append(dict(name='arm', d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=10 + k, pivot=pts[0], vband=0.5 + 0.1 * np.cos(a), ln=Lt * 0.62, base=pts[0]))
+        k += 1
+    # tentacles from the rim
+    nt = C.get('tentacles', 10)
+    for i in range(nt):
+        a = 2 * np.pi * i / nt + 0.2
+        pts = wavy(0.9 * R * np.cos(a), 0.9 * R * np.sin(a), Lt * rng.uniform(0.75, 1.0), 22, 0.08 * R, rng.uniform(0, 6), 0.15 * R)
+        rad = np.linspace(0.04 * R, 0.018 * R, len(pts))
+        fields.append(dict(name='tentacle', d=G.cone(pts, np.maximum(rad, 0.75 * G.h)), part=10 + k, pivot=pts[0], vband=[0.06, 0.94, 0.2, 0.8, 0.12, 0.88][i % 6], ln=Lt, base=pts[0]))
+        k += 1
+    # paint: the bell maps onto the drawn bell (our height -> along its axis, our z -> across it);
+    # arms and tentacles run left from the drawn rim along their own band of the drawing
+    len_s = z_rim_s - zu(0.02)
+    def inv_bell(P):
+        z, y, x = P[:, 0], P[:, 1], P[:, 2]
+        return np.stack([z_rim_s + np.clip(y, 0, None) / D * (z_apex_s - z_rim_s), axis_s + z / R * Rs, x], 1)
+    fields[0]['inv'] = inv_bell
+    for f in fields[1:]:
+        def inv(P, f=f):
+            z, y, x = P[:, 0], P[:, 1], P[:, 2]
+            down = np.clip((f['base'][1] - y) / f['ln'], 0, 1)
+            off = (z - f['base'][0]) * 0.3
+            return np.stack([z_rim_s - down * len_s, yv(f['vband']) + off * Rs / R, x], 1)
+        f['inv'] = inv
+    finish(name, C, fields, G, sh, blend=0.015, length=2 * R)
+
+
 DESIGNS = {
     # birds: u along the side view tail tip 0 .. beak tip 1, v top 0 .. bottom 1 (fractions of its box)
     'parrot': (bird, dict(sheet='parrot_toucan.png', row=0, rows=2, L=0.85, res=130, wing_top=True, body_u=(0.47, 0.86), body_v=(0.62, 0.9),
@@ -358,6 +678,11 @@ DESIGNS = {
     'toucan': (bird, dict(sheet='parrot_toucan.png', row=1, rows=2, L=0.62, res=130, wing_top=True, body_u=(0.33, 0.73), body_v=(0.6, 0.92),
                           body_w=0.085, head=(0.735, 0.6, 0.11), wing_u=(0.36, 0.66), tail_u=0.3, feet=(0.47, 0.9),
                           beak=[(0.77, 0.6, 0.11), (0.86, 0.6, 0.09), (0.94, 0.63, 0.06), (0.99, 0.69, 0.02)], beak_xs=0.62)),
+    'turtle': (turtle, dict(sheet='sea_turtle.png', L=1.0, res=120, wing_top=True)),
+    'plesiosaur': (plesiosaur, dict(sheet='plesiosaur.png', L=6.0, res=150, wing_top=True)),
+    'manta': (manta, dict(sheet='manta_ray.png', L=4.0, res=150, body_u=(0.4, 0.93), body_w=(0.42, 0.95), body_x=0.09,
+                          ceph_u=0.88, tail_u=0.42, belly_w=0.9, lift=6)),
+    'jelly': (jellyfish, dict(sheet='jellyfish.png', L=1.2, R=0.22, D=0.2, tent=0.75, rim_u=0.7, res=150, side_only=True, tentacles=10)),
     'snake': (snake, dict(sheet='snake.png', L=1.6, length=4.6, radius=0.14, res=300, wave=0.1, wavelength=1.6)),
 }
 

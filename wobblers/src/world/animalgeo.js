@@ -28,7 +28,7 @@ function pump() { // main-thread fallback
 
 // Models built from the reference sheets (tools/animals/build.py -> assets/animals/): a mesh
 // and two paint images projected onto it (critters.js Species `proj`).
-export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc', 'snake', 'parrot', 'toucan']);
+export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc', 'snake', 'parrot', 'toucan', 'turtle', 'plesiosaur', 'manta', 'jelly']);
 const texLoader = new THREE.TextureLoader();
 async function sheetGeometry(name) {
   const base = 'assets/animals/' + name;
@@ -52,7 +52,7 @@ async function sheetGeometry(name) {
   const PIV = { 1: 'FL', 2: 'FR', 3: 'BL', 4: 'BR', 5: 'TAIL', 6: 'HEAD', 7: 'WING_L', 8: 'WING_R', 9: 'JAW' };
   for (let i = 0; i < n; i++) {
     for (let k = 0; k < 3; k++) { pos[i * 3 + k] = lo[k] + (q[i * 3 + k] / 65535) * (hi[k] - lo[k]); nrm[i * 3 + k] = nq[i * 3 + k] / 127; }
-    const pv = meta.pivots[PIV[part[i]]] || [0, 0, 0];
+    const pv = meta.pivots[part[i] >= 10 ? 'TENT' + (part[i] - 10) : PIV[part[i]]] || [0, 0, 0];
     rigA.set([part[i], pv[0], pv[1], pv[2]], i * 4);
     w[i] = wq[i] / 255;
   }
