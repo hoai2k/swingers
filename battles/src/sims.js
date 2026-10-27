@@ -108,7 +108,7 @@ export const SCENARIOS = [
     desc: 'King Leonidas and his Greeks hold the narrow pass against the vast army of Xerxes. Can the phalanx hold against wave after wave of Persians and their Immortals?',
     sides: [
       { name: 'Spartans & Greeks', army: army(block('an_hoplite', 10, 4, 5, 0, 1.7), line('an_sarissa', 8, 12, 0, 2), line('an_snake_archer', 6, 16, 0, 2.5)) },
-      { name: 'Persian Empire', army: army(block('squire', 12, 3, 7), line('knight', 2, 14, 0, 4), line('sm_cavalry', 1, 18, -16), line('sm_cavalry', 1, 18, 16), line('archer', 10, 20, 0, 2.2)) },
+      { name: 'Persian Empire', army: army(block('squire', 12, 2, 7), line('squire', 8, 11, 0, 2), line('knight', 2, 14, 0, 4), line('sm_cavalry', 1, 18, -16), line('sm_cavalry', 1, 18, 16), line('archer', 10, 20, 0, 2.2)) },
     ],
   },
   {
@@ -116,7 +116,7 @@ export const SCENARIOS = [
     desc: "Hannibal's thin centre bends back while his cavalry swings round both flanks: the most famous double envelopment in history. Rome brought twice the men.",
     sides: [
       { name: 'Carthage (Hannibal)', army: army(line('an_gladiator', 10, 6, 0, 2), block('an_hoplite', 4, 3, 7, -16), block('an_hoplite', 4, 3, 7, 16), line('sm_cavalry', 4, 10, -26, 2.5), line('sm_cavalry', 4, 10, 26, 2.5), line('spear_thrower', 10, 13, 0, 2.2), one('chieftain', 16)) },
-      { name: 'Roman Republic', army: army(block('squire', 12, 3, 6, 0, 1.8), line('spear_thrower', 12, 4.5, 0, 1.8), line('an_hoplite', 10, 13, 0, 1.8), line('sm_cavalry', 3, 10, -22, 2.5), line('sm_cavalry', 3, 10, 22, 2.5)) },
+      { name: 'Roman Republic', army: army(block('squire', 12, 3, 6, 0, 1.8), line('spear_thrower', 12, 4.5, 0, 1.8), line('an_hoplite', 6, 13, 0, 2), line('sm_cavalry', 3, 10, -22, 2.5), line('sm_cavalry', 3, 10, 22, 2.5)) },
     ],
   },
   {
@@ -131,8 +131,8 @@ export const SCENARIOS = [
     id: 'stamford', cat: 'history', name: 'Stamford Bridge', when: '1066 · the end of the Viking Age', map: 'river',
     desc: 'Harald Hardrada\'s Norwegians are caught by surprise at the river. A lone giant Viking held the bridge for a while... the English still have to cross.',
     sides: [
-      { name: 'English (Harold)', army: army(block('squire', 12, 3, 8), line('archer', 10, 15, 0, 2.5), line('knight', 4, 18, 0, 3), one('king', 21)) },
-      { name: 'Norwegian Vikings', army: army(block('vk_raider', 8, 2, 6), line('vk_brawler', 8, 10, 0, 2.2), line('vk_headbutter', 6, 12, 0, 2.5), line('vk_ice_archer', 8, 16, 0, 2.5), one('vk_jarl', 19)) },
+      { name: 'English (Harold)', army: army(block('squire', 10, 2, 8), line('archer', 10, 13, 0, 2.5), line('knight', 2, 16, 0, 4), one('king', 19)) },
+      { name: 'Norwegian Vikings', army: army(block('vk_raider', 8, 2, 6), line('vk_brawler', 8, 10, 0, 2.2), line('vk_headbutter', 6, 12, 0, 2.5), line('vk_ice_archer', 8, 16, 0, 2.5), one('vk_jarl', 19), one('sm_valkyrie', 22)) },
     ],
   },
   {
@@ -148,14 +148,14 @@ export const SCENARIOS = [
     desc: 'Tokugawa Ieyasu against Ishida Mitsunari in the fog: the battle that decided who would rule Japan for 250 years.',
     sides: [
       { name: 'Eastern Army (Tokugawa)', army: army(block('dy_samurai', 8, 2, 6), line('dy_ninja', 8, 11, 0, 2.5), line('dy_firework', 4, 16, 0, 4), line('dy_hwacha', 2, 20, 0, 8)) },
-      { name: 'Western Army (Ishida)', army: army(line('dy_monk', 10, 5), block('dy_samurai', 8, 2, 10), line('dy_firework', 4, 16, 0, 4), line('dy_hwacha', 2, 20, 0, 8)) },
+      { name: 'Western Army (Ishida)', army: army(line('dy_monk', 10, 5, 0, 1.9), block('dy_samurai', 8, 2, 10), line('dy_firework', 4, 16, 0, 4), line('dy_hwacha', 2, 20, 0, 8)) },
     ],
   },
   {
     id: 'nassau', cat: 'history', name: 'The Republic of Pirates', when: '1718 · Nassau', map: 'cove',
     desc: 'The Royal Navy comes to clear the pirates out of Nassau. Blackbeard\'s crews have cannons, bombs, harpoons and a monkey.',
     sides: [
-      { name: 'Royal Navy', army: army(block('rn_musketeer', 10, 2, 7), line('rn_halberd', 8, 5, 0, 2.2), line('rn_fencer', 4, 12, 0, 3), line('pi_cannon', 2, 18, 0, 8)) },
+      { name: 'Royal Navy', army: army(block('rn_musketeer', 10, 3, 7), line('rn_halberd', 8, 5, 0, 2.2), line('rn_fencer', 4, 12, 0, 3), line('pi_cannon', 2, 18, 0, 8)) },
       { name: 'Pirates', army: army(line('pi_harpooner', 8, 6, 0, 2.2), line('pi_flintlock', 10, 9, 0, 2.2), line('pi_bomb', 6, 12, 0, 2.5), line('pi_monkey', 3, 5, 0, 4), one('pi_captain', 14), one('pi_queen', 17), line('pi_cannon', 2, 20, 0, 8)) },
     ],
   },
@@ -172,7 +172,7 @@ export const SCENARIOS = [
     desc: "Custer's 7th Cavalry rides into the largest gathering of Lakota and Cheyenne warriors ever seen. Revolvers and rifles against numbers and courage.",
     sides: [
       { name: '7th Cavalry (Custer)', army: army(block('ww_gunslinger', 11, 2, 7, 0, 2.2), line('ww_quickdraw', 6, 10, 0, 2.5), line('ww_blunderbuss', 4, 12, 0, 3), one('ww_dynamite', 14)) },
-      { name: 'Lakota & Cheyenne', army: army(block('clubber', 12, 2, 6), line('protector', 10, 4.5, 0, 2), line('spear_thrower', 10, 12, 0, 2.2), line('tb_stoner', 6, 17, 0, 3), heroes(['chieftain', 'chieftain'], 9, 0, 16)) },
+      { name: 'Lakota & Cheyenne', army: army(block('clubber', 10, 2, 6), line('protector', 10, 4.5, 0, 2), line('spear_thrower', 10, 12, 0, 2.2), line('tb_stoner', 6, 17, 0, 3), heroes(['chieftain', 'chieftain'], 9, 0, 16)) },
     ],
   },
   // ---------------------------------------------------------------- Jujutsu Kaisen
@@ -181,7 +181,7 @@ export const SCENARIOS = [
     desc: 'One of every jujutsu sorcerer against one of every curse and curse user, each side worth about the same. Who wins the war between the sorcerers and the curses?',
     sides: [
       { name: 'Jujutsu Sorcerers', army: everyone('sorcerer') },
-      { name: 'Curses', army: everyone('curse', line('jk_flyhead', 12, 30, 0, 2.2)) },
+      { name: 'Curses', army: everyone('curse', line('jk_flyhead', 4, 30, 0, 2.2)) },
     ],
   },
   {
@@ -257,19 +257,19 @@ export const SCENARIOS = [
     ],
   },
   {
-    id: 'hidden', cat: 'jjk', name: 'Hidden Inventory', when: 'Toji vs Gojo & Geto', map: 'grass',
-    desc: 'Toji Fushiguro, the Sorcerer Killer, takes the contract on the Star Plasma Vessel. Between him and her: the two strongest students of their year.',
+    id: 'hidden', cat: 'jjk', name: 'Hidden Inventory', when: 'Toji vs the young Gojo', map: 'grass',
+    desc: 'Toji Fushiguro, the Sorcerer Killer, takes the contract on the Star Plasma Vessel. In his way: Satoru Gojo, before he became the strongest. The Inverted Spear of Heaven goes straight through Infinity.',
     sides: [
-      { name: 'Gojo & Geto', army: heroes(['jk_gojo', 'jk_geto'], 7, 0, 4) },
+      { name: 'Satoru Gojo', army: one('jk_gojo', 7) },
       { name: 'Toji Fushiguro', army: army(one('jk_toji', 8), line('jk_flyhead', 6, 14, 0, 2)) },
     ],
   },
   {
     id: 'kenjaku', cat: 'jjk', name: 'Yuki & Choso vs Kenjaku', when: 'the battle at Jujutsu High', map: 'grass',
-    desc: 'The special grade Yuki Tsukumo and Choso against the thousand-year-old Kenjaku, Uraume, and the curses Kenjaku keeps: the Smallpox Deity and the Rainbow Dragon.',
+    desc: 'The special grade Yuki Tsukumo and Choso against the thousand-year-old Kenjaku in Geto\'s body, with Uraume at his side.',
     sides: [
       { name: 'Yuki & Choso', army: heroes(['jk_yuki', 'jk_choso'], 7, 0, 4) },
-      { name: 'Kenjaku', army: army(heroes(['jk_geto', 'jk_uraume'], 10, 0, 4), heroes(['jk_smallpox', 'jk_rainbowdragon'], 15, 0, 7)) },
+      { name: 'Kenjaku', army: army(heroes(['jk_geto', 'jk_uraume'], 10, 0, 4), one('jk_kuchisake', 7), line('jk_flyhead', 6, 14, 0, 2)) },
     ],
   },
   {
@@ -286,7 +286,7 @@ export const SCENARIOS = [
     desc: "General Iroh, the Dragon of the West, leads the Fire Nation against the Earth Kingdom's great wall. The earthbenders have held it for six hundred days.",
     sides: [
       { name: 'Earth Kingdom', army: army(block('av_earthbender', 10, 2, 7, 0, 2.2), line('av_kyoshi', 8, 4.5, 0, 2.2), one('av_toph', 14)) },
-      { name: 'Fire Nation', army: army(block('av_fn_soldier', 12, 3, 6), one('av_iroh', 14), one('av_sparky', 18)) },
+      { name: 'Fire Nation', army: army(block('av_fn_soldier', 10, 2, 6), one('av_iroh', 14), one('av_sparky', 18)) },
     ],
   },
   {
@@ -294,15 +294,15 @@ export const SCENARIOS = [
     desc: 'During the eclipse the firebenders lose their fire. Team Avatar, the earthbenders and the Kyoshi Warriors storm the capital. Azula was waiting for them.',
     sides: [
       { name: 'Team Avatar & allies', army: army(heroes(['av_aang', 'av_katara', 'av_sokka', 'av_toph'], 10, 0, 3.5), line('av_earthbender', 8, 6, 0, 2.5), line('av_kyoshi', 8, 13, 0, 2.5)) },
-      { name: 'Fire Nation', army: army(block('av_fn_soldier', 12, 3, 6), one('av_azula', 14), one('av_zuko', 16, 5)) },
+      { name: 'Fire Nation', army: army(block('av_fn_soldier', 12, 2, 6), one('av_azula', 14), one('av_zuko', 16, 5)) },
     ],
   },
   {
     id: 'crossroads', cat: 'avatar', name: 'The Crossroads of Destiny', when: 'the fall of Ba Sing Se', map: 'basingse',
     desc: 'In the crystal catacombs Zuko chooses his sister. Aang and Katara, with Uncle Iroh, against Azula, Zuko and the Dai Li... played here by Fire Nation soldiers.',
     sides: [
-      { name: 'Aang, Katara & Iroh', army: army(heroes(['av_aang', 'av_katara', 'av_iroh'], 8, 0, 3.5), line('av_earthbender', 4, 12, 0, 3)) },
-      { name: 'Azula & Zuko', army: army(heroes(['av_azula', 'av_zuko'], 8, 0, 3.5), line('av_fn_soldier', 8, 12, 0, 2.2)) },
+      { name: 'Aang, Katara & Iroh', army: heroes(['av_aang', 'av_katara', 'av_iroh'], 8, 0, 3.5) },
+      { name: 'Azula & Zuko', army: army(heroes(['av_azula', 'av_zuko'], 8, 0, 3.5), line('av_fn_soldier', 12, 12, 0, 2.2)) },
     ],
   },
   {
@@ -326,7 +326,7 @@ export const SCENARIOS = [
     id: 'hangar', cat: 'other', name: 'Hangar Assault', when: 'a galaxy far, far away', map: 'starbase',
     desc: 'A droid army with a walker storms the hangar. Laser knights and blaster troopers hold the deck.',
     sides: [
-      { name: 'Republic', army: army(line('ga_knight', 4, 7, 0, 3), block('ga_trooper', 8, 2, 10, 0, 2.2), line('ga_furball', 2, 9, 0, 10), one('ga_hunter', 16)) },
+      { name: 'Republic', army: army(line('ga_knight', 6, 7, 0, 3), block('ga_trooper', 10, 2, 10, 0, 2.2), line('ga_furball', 2, 9, 0, 10), one('ga_hunter', 16)) },
       { name: 'Droid Army', army: army(block('ga_droid', 12, 4, 6, 0, 1.8), one('ga_walker', 18), one('ga_lord', 14)) },
     ],
   },
@@ -334,7 +334,7 @@ export const SCENARIOS = [
     id: 'village_raid', cat: 'other', name: 'Village Raid', when: 'night falls on the plains', map: 'blocky',
     desc: 'The sun goes down and the mobs come for the village. Steve and the iron golems stand in the way.',
     sides: [
-      { name: 'Village', army: army(line('mc_steve', 4, 7, 0, 3), line('mc_golem', 2, 9, 0, 8), line('mc_villager', 10, 14, 0, 2.2)) },
+      { name: 'Village', army: army(line('mc_steve', 7, 7, 0, 3), line('mc_golem', 2, 9, 0, 8), line('mc_villager', 10, 14, 0, 2.2)) },
       { name: 'Mobs', army: army(block('mc_zombie', 10, 2, 6), line('mc_creeper', 6, 4.5, 0, 3), line('mc_skeleton', 8, 12, 0, 2.5), line('mc_witch', 3, 15, 0, 5), line('mc_enderman', 2, 10, 0, 12)) },
     ],
   },
@@ -343,7 +343,7 @@ export const SCENARIOS = [
     desc: 'Somewhere in the canyons a gold rush digs up something that should have stayed extinct.',
     sides: [
       { name: 'Wild West', army: army(line('ww_gunslinger', 10, 7, 0, 2.2), line('ww_lasso', 6, 5, 0, 2.5), line('ww_blunderbuss', 6, 10, 0, 2.5), line('ww_dynamite', 4, 13, 0, 3), line('ww_quickdraw', 4, 15, 0, 3)) },
-      { name: 'Dinosaurs', army: army(block('pr_raptor', 8, 2, 6, 0, 2.2), one('pr_trex', 14), one('pr_triceratops', 12, 10), line('pr_ptero', 3, 16, 0, 5)) },
+      { name: 'Dinosaurs', army: army(block('pr_raptor', 10, 2, 6, 0, 2.2), one('pr_trex', 14), one('pr_triceratops', 12, 10), line('pr_ptero', 3, 16, 0, 5)) },
     ],
   },
   {
@@ -351,7 +351,7 @@ export const SCENARIOS = [
     desc: 'The Reaper raises the skeletons. The good folk and their angels answer the bells.',
     sides: [
       { name: 'Good', army: army(line('gd_shield_bearer', 10, 6, 0, 2), line('gd_divine_archer', 8, 11, 0, 2.5), line('gd_cleric', 4, 13, 0, 3), line('gd_angel', 2, 16, 0, 8)) },
-      { name: 'Undead', army: army(block('sp_skeleton', 12, 3, 5, 0, 1.8), line('sp_skel_archer', 8, 12, 0, 2.5), line('sp_ghost', 4, 9, 0, 4), line('sp_vampire', 3, 14, 0, 4), one('sp_reaper', 20)) },
+      { name: 'Undead', army: army(block('sp_skeleton', 12, 4, 5, 0, 1.8), line('sp_swordcaster', 3, 16, 0, 5), line('sp_skel_archer', 8, 12, 0, 2.5), line('sp_ghost', 4, 9, 0, 4), line('sp_vampire', 3, 14, 0, 4), one('sp_reaper', 20)) },
     ],
   },
   // ---------------------------------------------------------------- crossovers
@@ -367,7 +367,7 @@ export const SCENARIOS = [
     id: 'king_vs_world', cat: 'cross', name: 'The King of Curses vs History', when: 'Sukuna vs a medieval army', map: 'castle',
     desc: 'Ryomen Sukuna alone against a whole medieval army with its king. Dismantle. Cleave.',
     sides: [
-      { name: 'Medieval Kingdom', army: army(block('squire', 10, 3, 7), block('archer', 10, 2, 15, 0, 2.2), line('knight', 6, 12, 0, 3), one('king', 22)) },
+      { name: 'Medieval Kingdom', army: army(block('squire', 10, 2, 7), line('archer', 8, 15, 0, 2.5), line('knight', 2, 12, 0, 4), one('king', 20)) },
       { name: 'Ryomen Sukuna', army: one('jk_sukuna', 8) },
     ],
   },

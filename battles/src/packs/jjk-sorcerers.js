@@ -22,7 +22,7 @@
 //  - Atsuya Kusakabe: katana; Simple Domain - a circle where every enemy who steps in
 //    meets a quick-draw, and sure-hits don't land on him
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
-import { register } from '../ext.js';
+import { register, EXT } from '../ext.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel, addProjectile,
@@ -273,8 +273,17 @@ const uro = {
       for (const pr of b.projectiles) {
         if (pr.team === u.team || pr.sure || pr.uroK) continue;
         if (pr.pos.distanceTo(c) > w.defR) continue;
-        const back = pr.owner && pr.owner.alive && pr.owner !== u ? pr.owner : null;
         pr.uroK = true;
+        // a pack's own projectile reads its owner's technique when it lands (an ice block's
+        // radius, a fish's bite...), so it can't change hands: the bent sky just stops it
+        if (EXT.proj[pr.type]) {
+          pr.life = -1;
+          b.emit('spark', pr.pos.x, pr.pos.y, pr.pos.z, 4);
+          b.sound('whoosh', pr.pos, 0.6, 1.8);
+          techBanner(b, 'Uro bends the sky: the attack slides off!', c, 10);
+          continue;
+        }
+        const back = pr.owner && pr.owner.alive && pr.owner !== u ? pr.owner : null;
         pr.team = u.team; pr.owner = u; pr.hits.clear(); pr.aim = null; pr.tgt = back;
         if (back) { _v.copy(back.chestPos).sub(pr.pos).normalize().multiplyScalar(Math.max(10, pr.vel.length())); pr.vel.copy(_v); }
         else { pr.vel.multiplyScalar(-1); pr.vel.y = Math.abs(pr.vel.y) * 0.3 + 1; }

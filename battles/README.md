@@ -221,6 +221,29 @@ when delivered; without one the tab shows just the name in the faction colour.
   Prison Realm (Geto next to an enemy Gojo), the spear cuts through Infinity, Toji cuts a
   domain open, Mahito can't reshape Yuji (and Yuji's fists hurt his soul), Choso switches
   sides when he meets Yuji ("Big brother!").
+- **Jujutsu Kaisen: more sorcerers** (`src/packs/jjk-sorcerers.js`): **Ryu Ishigori** (Granite
+  Blast: a charged beam through a whole line), **Takako Uro** (Sky Manipulation: Thin Ice Breaker
+  flings a cone of enemies away, and the bent sky turns shots back), **Hajime Kashimo** (lightning
+  that can't be parried and arcs on; badly hurt, *Mythical Beast Amber*, and his body burns out
+  15 s later), **Hiromi Higuruma** (domain *Deadly Sentencing*: Judgeman tries the costliest enemy
+  inside; GUILTY means Confiscation and the Executioner's Sword), **Yuki Tsukumo** (Star Rage
+  blows that bowl over everyone round the target, Garuda; at the end, a *Black Hole*), **Mei Mei**
+  (great axe, homing crows, Bird Strike), **Noritoshi Kamo** (homing blood arrows; Flowing Red
+  Scale), **Naoya Zen'in** (Projection Sorcery: 24-frame blinks that freeze victims in a frame),
+  **Ultimate Mechamaru** (Ultra Cannon, thrusters, Absolute Mode) and **Atsuya Kusakabe**
+  (Simple Domain: a quick-draw circle, and domain sure-hits can't land on him).
+- **Jujutsu Kaisen: more curses** (`src/packs/jjk-spirits.js`): **Kurourushi** (flesh-eating
+  bites, swarms of homing cockroaches), **Uraume** (Icefall; Frost Calm freezes a cone solid, and
+  a frozen victim shatters), **Eso** and **Kechizu** (rotting blood; if one brother dies the other
+  flies into a rage), the **Smallpox Deity** (pox aura; shuts the strongest enemy in a coffin and
+  counts "One... Two... Three!"), the **Rainbow Dragon** (armoured hide, rams through lines), the
+  **Finger Bearer** (swallows a Sukuna finger once when hurt), **Kuchisake-onna** ("Am I
+  beautiful?" dazes, then the scissors), the **Grasshopper Curse** (cheap, leaps in with a kick)
+  and **Yorozu** (Construction blades, Insect Armour, the True Sphere).
+- **Sorcerers and curses**: every JJK unit has `side: 'sorcerer'` or `side: 'curse'` (21
+  sorcerers, 20 curses and curse users: Toji, Geto/Kenjaku, Choso, Uraume and Yorozu fight
+  with the curses). The Simulation *Sorcerers vs Curses* puts one of each on its side and is
+  tuned to an even fight (see BALANCE.md).
 - **JJK power levels**: one on one the faction follows the anime: Gojo (who teleports
   clear of blows Infinity can't stop, and whose Unlimited Void wins the clash with the
   Shrine) beats Sukuna; Sukuna beats the rest; Toji, Hakari, Yuta and Mahoraga come next
@@ -246,6 +269,9 @@ when delivered; without one the tab shows just the name in the faction colour.
   Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
   Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
   Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
+- `src/packs/jjk-sorcerers.js` / `jjk-spirits.js` the 20 JJK characters added with the Simulation
+  mode (sorcerer and curse halves; each file is self-contained on `jjk-core.js`).
+- `src/sims.js` the Simulation scenarios (format at its top) · `dev/balance/sims.mjs` fights them headless
 - `src/packs/jjk-shared.js` the JJK packs' shared hand-sign/shout animations, Gojo's and Sukuna's
   stances, the curses' claws and the effect markers (Infinity ripple, cuts, shadow pools, Black Flash).
 - `src/packs/minecraft.js` the **Minecraft** faction (`minecraft`): Villager (cheap, panics),

@@ -5,7 +5,7 @@
 //   node battles/dev/balance/sims.mjs                     every scenario, 4 runs, Small
 //   node battles/dev/balance/sims.mjs --ids jjk_war,hastings --runs 8 --size 1
 //
-// Options: --ids a,b  --runs n [4]  --size k (army size: 0.5 Small, 1 Normal, 2 Epic) [0.5]
+// Options: --ids a,b  --runs n [4]  --seed n (first seed) [1000]  --size k (army size: 0.5 Small, 1 Normal, 2 Epic) [0.5]
 //          --procs n [cpus]  --maxT s (sim-time cap, a draw) [150]
 // Env OVERRIDE works as for run.mjs. Output per scenario: Blue wins / Red wins / draws,
 // Blue's rate (draws count half), mean battle time.
@@ -57,9 +57,9 @@ if (process.send && process.env.SIMS_WORKER) {
   await load();
   const S = await import(SRC + 'sims.js');
   const ids = arg('ids') ? arg('ids').split(',') : S.SCENARIOS.map((s) => s.id);
-  const runs = +arg('runs', 4), size = +arg('size', 0.5), maxT = +arg('maxT', 150), procs = +arg('procs', os.cpus().length);
+  const runs = +arg('runs', 4), size = +arg('size', 0.5), maxT = +arg('maxT', 150), procs = +arg('procs', os.cpus().length), seed0 = +arg('seed', 1000);
   const jobs = [];
-  for (const id of ids) for (let r = 0; r < runs; r++) jobs.push({ id, size, maxT, seed: 1000 + r * 7919 });
+  for (const id of ids) for (let r = 0; r < runs; r++) jobs.push({ id, size, maxT, seed: seed0 + r * 7919 });
   console.error(`${jobs.length} battles, ${procs} workers`);
   const res = [];
   let next = 0;
