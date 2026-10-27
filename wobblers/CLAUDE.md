@@ -93,7 +93,10 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   in `audio.js` `playInner`, which a recording replaces; `loop: true` ambient beds placed with
   `audio.ambientSpot(name, x, z, r)`). `ELEVENLABS_API_KEY=... python3 dev/sfx/generate.py [name ...]`
   makes originals in `assets/originals/sfx/` (not deployed) and the processed `assets/sfx/` +
-  `index.json` the game loads; nothing delivered = synth only.
+  `index.json` the game loads; nothing delivered = synth only. **Ambient loops need the owner's
+  ear first** (ElevenLabs loops are often poor): add them with `hold: true`, which generates the
+  original but keeps it out of the game; send the owner the original and a preview playing the
+  loop twice (seam), and only drop `hold` once they approve. One-shots can go straight in.
 - Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
   route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
   `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in
@@ -344,8 +347,8 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   those within 170 m of a camera are posed. Crocodiles drift along the river (or bask on the
   banks, snapping when you come close), capybaras also swim, monkeys hang from the vines of the
   `jtree2` trees (`game.jungleTrees`, recorded by Flora), birds circle over the canopy. Each
-  makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; synthesised in
-  audio.js, recordable via `dev/sfx/sfx.json`) when a player comes within its `hear` range.
+  makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; recorded, with
+  synth fallbacks in audio.js; plus the `jungle_ambience` bed of birds, frogs and distant monkeys) when a player comes within its `hear` range.
   Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 

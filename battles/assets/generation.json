@@ -692,6 +692,62 @@
         128
       ],
       "round": 8
+    },
+    {
+      "id": "starbase",
+      "file": "assets/ui/map-starbase.jpg",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Starbase Hangar: huge sci-fi hangar deck of grey metal floor plates, yellow-black hazard stripes, glowing blue landing circles. Low blast barriers and stacked cargo crates cover on both halves. Parked fighter ship at each end, mirrored. Raised control platform in center. Open hangar mouth beyond reveals star field, large ringed planet and moon. Cool greys, blue lights, tiny orange warning lamps. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-43eaee90-1fd2-4a43-8d59-752fc4f4d281.png",
+      "round": 9,
+      "size": [
+        640,
+        360
+      ],
+      "original": "assets/originals/ui/map-starbase.png",
+      "mode": "built-in",
+      "transparent": false
+    },
+    {
+      "id": "shibuya",
+      "file": "assets/ui/map-shibuya.jpg",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Shibuya Crossing at Halloween night: wide city scramble crossing, dark asphalt with bold white zebra stripes forming a big X. Abandoned cars and taxis at angles, traffic lights and lamp posts paired on both halves, small subway entrance kiosk in center. Tall buildings around with glowing neon sign panels and giant screens, abstract unreadable light graphics only. Deep blue-purple night sky, faint dome-shaped dark barrier shimmering overhead. Neon pink, cyan, warm streetlight yellow. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-6d849028-f4d7-4984-9697-667ab2217f66.png",
+      "round": 9,
+      "size": [
+        640,
+        360
+      ],
+      "original": "assets/originals/ui/map-shibuya.png",
+      "mode": "built-in",
+      "transparent": false
+    },
+    {
+      "id": "blocky",
+      "file": "assets/ui/map-blocky.jpg",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Blocky Plains, Minecraft voxel landscape made entirely of crisp cubes. Grass blocks with dirt sides, blocky oak and birch trees, small cobblestone/plank village hut on each side mirrored. Little lava pool and stone outcrop paired across both halves. Square obsidian portal frame with swirling purple in center. Square clouds, square sun, bright blue sky, blocky distant hills. No creatures or players. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-fdadcb47-d9a1-4577-b788-1fdf74ed9162.png",
+      "round": 9,
+      "size": [
+        640,
+        360
+      ],
+      "original": "assets/originals/ui/map-blocky.png",
+      "mode": "built-in",
+      "transparent": false
+    },
+    {
+      "id": "basingse",
+      "file": "assets/ui/map-basingse.jpg",
+      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Ba Sing Se Walls from Avatar: green-and-tan Earth Kingdom outer wall towering beyond field with great gate. Earthbent rock pillars and slabs jutting from ground symmetrically on both halves, small stone pavilion with curved green roof in center. Bamboo and pine trees, paved road across middle. Earthy greens, ochre stone, warm afternoon light. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4b6842b5-9777-430a-a870-e34effb1196f.png",
+      "round": 9,
+      "size": [
+        640,
+        360
+      ],
+      "original": "assets/originals/ui/map-basingse.png",
+      "mode": "built-in",
+      "transparent": false
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental); trailing silence trimmed with a 0.5 s fade"

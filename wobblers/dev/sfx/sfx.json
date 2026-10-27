@@ -249,7 +249,7 @@
   {
    "name": "snap",
    "n": 2,
-   "dur": 0.4,
+   "dur": 0.5,
    "level": 0.7,
    "prompt": "Cartoon crocodile jaws snapping shut, wooden chomp"
   },
@@ -273,6 +273,23 @@
    "dur": 0.6,
    "level": 0.5,
    "prompt": "Colourful parrot squawk, cartoony and bright"
+  },
+  {
+   "name": "jungle_ambience",
+   "n": 1,
+   "dur": 22,
+   "loop": true,
+   "level": 0.4,
+   "prompt": "Tropical rainforest ambience loop with only birds, frogs and monkeys: colourful tropical bird calls and songs near and far, a chorus of tree frogs chirping and croaking, playful monkey hoots and chatter in the distant trees now and then, a little water dripping. No insects, no crickets, no buzzing, no wind, no music"
+  },
+  {
+   "name": "underwater",
+   "n": 3,
+   "dur": 22,
+   "loop": true,
+   "level": 0.5,
+   "hold": true,
+   "prompt": "Underwater ambience loop heard by a diver: soft muffled deep water hum, gentle bubbles rising now and then, faint distant whale and dolphin calls far away, calm and dreamy, cartoon game. No music, no voices, no breathing"
   }
  ]
 }

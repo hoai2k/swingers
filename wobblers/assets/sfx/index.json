@@ -121,6 +121,50 @@
  "arcade_room": [
   "assets/sfx/arcade_room-1.mp3"
  ],
+ "dolphin": [
+  "assets/sfx/dolphin-1.mp3",
+  "assets/sfx/dolphin-2.mp3",
+  "assets/sfx/dolphin-3.mp3"
+ ],
+ "whale": [
+  "assets/sfx/whale-1.mp3",
+  "assets/sfx/whale-2.mp3"
+ ],
+ "growl": [
+  "assets/sfx/growl-1.mp3",
+  "assets/sfx/growl-2.mp3",
+  "assets/sfx/growl-3.mp3"
+ ],
+ "monkey": [
+  "assets/sfx/monkey-1.mp3",
+  "assets/sfx/monkey-2.mp3",
+  "assets/sfx/monkey-3.mp3"
+ ],
+ "hiss": [
+  "assets/sfx/hiss-1.mp3",
+  "assets/sfx/hiss-2.mp3"
+ ],
+ "snap": [
+  "assets/sfx/snap-1.mp3",
+  "assets/sfx/snap-2.mp3"
+ ],
+ "grunt": [
+  "assets/sfx/grunt-1.mp3",
+  "assets/sfx/grunt-2.mp3",
+  "assets/sfx/grunt-3.mp3"
+ ],
+ "squeak": [
+  "assets/sfx/squeak-1.mp3",
+  "assets/sfx/squeak-2.mp3"
+ ],
+ "squawk": [
+  "assets/sfx/squawk-1.mp3",
+  "assets/sfx/squawk-2.mp3",
+  "assets/sfx/squawk-3.mp3"
+ ],
+ "jungle_ambience": [
+  "assets/sfx/jungle_ambience-1.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -150,7 +194,18 @@
   "park_crowd": 0.4,
   "city_street": 0.4,
   "plaza_chatter": 0.35,
-  "arcade_room": 0.35
+  "arcade_room": 0.35,
+  "dolphin": 0.6,
+  "whale": 0.7,
+  "growl": 0.7,
+  "monkey": 0.6,
+  "hiss": 0.5,
+  "snap": 0.7,
+  "grunt": 0.6,
+  "squeak": 0.5,
+  "squawk": 0.5,
+  "jungle_ambience": 0.4,
+  "underwater": 0.5
  },
  "_loops": [
   "ride_screams",
@@ -158,6 +213,7 @@
   "park_crowd",
   "city_street",
   "plaza_chatter",
-  "arcade_room"
+  "arcade_room",
+  "jungle_ambience"
  ]
 }
