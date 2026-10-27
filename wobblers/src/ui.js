@@ -627,6 +627,7 @@ export class UI {
     if (p.seat) {
       if (p.seat.kind === 'driver' && p.seat.vehicle) {
         const def = p.seat.vehicle.def || {}, boat = def.boat;
+        if (def.driveHint) return def.driveHint(G); // the vehicle's own controls (forklift forks...)
         if (def.heli) return `${G('GAS')} Up ${G('BRAKE')} Down ${G('LS')} Fly ${G('Y')} Get out`;
         if (def.handling === 'hopper') return `${G('LS')} Lean ${G('A')} Big bounce ${G('Y')} Get off`; // world/bouncy.js
         if (def.siren) return `${G('GAS')} Gas ${G('BRAKE')} Brake ${G('HORN')} Siren ${G('Y')} Get out`;

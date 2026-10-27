@@ -912,7 +912,12 @@ export class Player {
   groundVelocity(out) {
     out.set(0, 0, 0);
     const gb = this.groundBody;
-    if (!gb || gb.isFixed()) return out;
+    if (!gb) return out;
+    if (gb.isFixed()) { // a conveyor belt (game.belts, world/factory.js) moves its surface
+      const p = this.groundPoint, B = this.game.belts;
+      if (B && p) for (const b of B) if (p.x > b.x0 && p.x < b.x1 && p.z > b.z0 && p.z < b.z1 && Math.abs(p.y - b.y) < 0.25) return out.set(b.vx, 0, b.vz);
+      return out;
+    }
     // kinematic bodies (rides, ferries) don't keep worldCom() up to date as they
     // move, so measure the lever arm from the body origin (their pivot) instead
     const v = gb.linvel(), w = gb.angvel(), c = gb.isKinematic() ? gb.translation() : gb.worldCom(), p = this.groundPoint;

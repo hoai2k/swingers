@@ -178,6 +178,18 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   monkey bars, trampolines, spring riders, sandbox.
 - **Swimming pool** (SE) — shallow and deep ends, springy diving board, 5 m high-dive,
   twisting water slide, pool toys and a giant rubber duck.
+- **Wobble Works** (the west meadow, down the road west from town) — a toy factory: walk into the
+  saw-tooth-roofed hall where conveyor belts carry toy boxes through a wrapping machine into
+  bins (ride a belt yourself), climb the catwalk, the stacked shipping containers or the water
+  tower, and drive the **forklifts** (A raises the forks, B lowers them) to lift pallets of crates
+  at the LOADING BAY. Two smokestacks puff away.
+- **Happy Acres** (just south of the factory, a lane off the west ring road) — a farm with a red
+  barn and hayloft, silos and a machinery shed full of giant machines: a **combine harvester**
+  that really cuts the wheat field as you drive through it (dropping round straw bales; the
+  wheat grows back), a huge **4WD tractor** and a **crop sprayer**. Wheat, sunflowers and corn
+  sway in the wind and bend out of your way as you push through.
+- **Corn Maze** (south-west of the farm) — tall corn you can push through (slowly), with paths
+  to the lookout in the middle (coins on top) and a scarecrow.
 - **Fun Park** (on its own grassy shelf at Bigtown's west shore, just north of the bridge;
   a ramp road runs up from its gate to Brick Row) — ferris wheel, carousel, roller coaster
   (catch hold of a car's side handles and hang on for the ride), swing ride, drop tower,

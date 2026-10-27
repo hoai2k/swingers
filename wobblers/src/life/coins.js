@@ -42,6 +42,8 @@ const CLUSTERS = [
   [95.3, 85, 9, 'one', 1, 0, { big: true }],      // water slide top
   // fun park
   [-242 + FUN_DX, -10 + FUN_DZ, 2, 'ring', 10, 8],
+  [-244, 160, 12, 'ring', 6, 1.0],                // corn maze lookout (farmland.js)
+  [-245, -55, 20, 'line', 6, 10],                 // along the factory roof (factory.js)
   [-252.6 + FUN_DX, -64.2 + FUN_DZ, 2, 'line', 4, 4],
   [-250 + FUN_DX, 98.2 + FUN_DZ, 3, 'line', 4, 4],
   [-205 + FUN_DX, -78 + FUN_DZ, 3, 'ring', 4, 1.6],                 // bouncy castle

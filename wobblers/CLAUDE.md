@@ -218,6 +218,28 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   ramp road along z = FUN_DZ). Anything placed at the Fun Park adds that shift to its old
   coordinates (presents, coins, the Magic Tent, sounds, bouncy ball, booth). Coaster cars have
   side grab handles and the station platform reaches to within a hand of them.
+- Factory (`world/factory.js`, Wobble Works in the west meadow `FACTORY` x -300..-190, z -105..10):
+  hall with two conveyor lines (`game.belts`: each belt top `{ x0, x1, z0, z1, y, vx, vz }`;
+  loose bodies on one are eased to its speed by a per-step query, and characters ride via
+  `player.groundVelocity`, which returns a belt's speed when standing on fixed ground over one);
+  each line's toy boxes are a fixed pool cycling dispenser -> belt -> bin -> dispenser (bin walls
+  stay below the belt top). Forklift vehicle `forklift`: the fork colliders and carriage plate
+  sit on the body and move with `setTranslationWrtParent` (A / B through the driver seat's
+  `control`, which also clears the handbrake); `FORK0` puts the forks ~0.08 m off the ground at
+  rest, inside a pallet's slot (deck on two runners, 0..0.2 m clear). `def.driveHint(G)` gives a
+  vehicle its own control hint (ui.js hintFor).
+- Farm (`world/farmland.js`, Happy Acres; `FARM_CLEAR` keeps the forest scatter out, skipped after
+  the random draws so the layout elsewhere is unchanged): farmyard and wheat field in the
+  meadow's south half, sunflowers and the corn maze on the hills to the south-west, a lane from
+  the west ring road (`ROADS`). Crops are `world/crops.js` `cropField`s (one InstancedMesh each;
+  the shader bends stalks away from up to 16 pushers per frame (players, awake NPCs, vehicles
+  near a field) and adds wind; `aGrow` scales a stalk; fields hide beyond 160 m per view).
+  Plants are drawn by the thousand: keep them to open-ended stems and few-sided heads (~300k
+  triangles for all three fields). Giant machines registered here: `combine` (its `header`
+  cuts wheat cells under the cutter bar: `game.wheat.cutAt`, regrow after 100 s; a bale every 70
+  cells from a pool of 10), `bigtractor`, `sprayer`. The maze is a seeded DFS on a block grid
+  (`game.cornMaze`: open blocks, origin, block size); characters inside a corn wall block are
+  capped at 2.2 m/s.
 - Shape-shifting (`src/forms.js`, the Magic Tent at `TENT` in the Fun Park; built by
   `buildMagicTent` in `world/index.js`'s home step): `game.forms.transform(p, kind)` /
   `revert(p)` / `of(p)`; `p.form` is the live record. Forms keep the same ragdoll: the human part
