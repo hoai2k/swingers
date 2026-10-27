@@ -388,7 +388,7 @@ const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
 const PATCH = ['#62a638', '#71b445', '#5b9b33', '#78ba4a', '#6aad3e'];
 
 MAPS.push({
-  id: 'blocky', name: 'Blocky Plains',
+  id: 'blocky', name: 'Blocky Plains', music: 'battle_blocky', // (the Minecraft theme, once delivered)
   ground: ['#67a93b', '#74b446', '#5c9c34'], patch: '#7cbc4a', dirt: '#87603e', high: '#74b446', far: '#5c9a40', rock: '#6d4e33',
   sky: ['#6b9cf0', '#c4dcff'], fog: '#bcd4f4', sun: '#fff6dc', sunI: 2.7, hemiGround: '#5e8a3a', hemiI: 1.3,
   hills: 1.35, bumps: 0.12, trees: ['mcoak', 'mcbirch', 'mcoak', 'mcspruce'], grass: '#62a238', grassTip: '#8cc858',

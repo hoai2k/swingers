@@ -264,7 +264,7 @@ register({ scenery: { basingse: basingseScenery } });
 const pillar = (L, x, z, hw, hd, h, rot = 0) => L.box('earthpillar', x, z, hw, hd, h, rot);
 
 MAPS.push({
-  id: 'basingse', name: 'Ba Sing Se Walls',
+  id: 'basingse', name: 'Ba Sing Se Walls', music: 'battle_avatar',
   ground: ['#8fa24e', '#a6b660', '#76893e'], patch: '#c8b86c', dirt: '#a8875a', high: '#a6b462', far: '#8e9a5c', rock: ROCK,
   sky: ['#5a92d2', '#f6d8a6'], fog: '#ead2a8', fogNear: 130, fogFar: 540, sun: '#ffd49a', sunI: 2.9, hemiGround: '#8a6e40', hemiI: 1.2,
   hills: 1.4, bumps: 0.35, trees: ['pine', 'bamboo', 'pine', 'oak'], grass: '#8eaa48', grassTip: '#d6c470',

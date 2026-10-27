@@ -257,8 +257,15 @@ when delivered; without one the tab shows just the name in the faction colour.
   and crates, a control platform in the middle, a parked fighter at each end, hangar mouths onto stars,
   a ringed planet and a moon) and **Shibuya Crossing** (`maps-shibuya.js`, JJK: the scramble crossing on
   Halloween night, zebra stripes, abandoned cars and taxis, traffic lights and a subway entrance among
-  neon-lit buildings and big screens, under the dark shimmering curtain). A map's `music` names its
-  battle theme.
+  neon-lit buildings and big screens, under the dark shimmering curtain), **Blocky Plains**
+  (`maps-blocky.js`, Minecraft: a voxel meadow of pixel-textured cubes, cobblestone and ore outcrops, a
+  village hut and a nether portal on each side, a lava pool in the middle, stepped hills, cube trees,
+  mountains, clouds and sun, a village with sheep, cows and pigs) and **Ba Sing Se Walls**
+  (`maps-basingse.js`, Avatar: an Earth Kingdom field before the great outer wall, a paved road to a
+  green-roofed pavilion, earthbent rock pillars and slabs, low stone walls and bamboo, the wall's gate
+  and watchtowers over the far edge, terraced fields on the hills). A map's `music` names its battle
+  theme: Shibuya → JJK, Ba Sing Se → Avatar; Starbase and Blocky Plains name the Galactic and
+  Minecraft themes for when they're delivered.
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 
