@@ -307,6 +307,37 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   only near a player, and draw only where they can be seen (sea life only for a camera under
   water, except the few that surface).
 
+## Wildlife (`world/critters.js`, `world/sealife.js`, `regions/jungle/animals.js`)
+
+- Every species is one `Species` (critters.js): an InstancedMesh, one draw call however many are
+  about, with no physics (scenery; you walk through it). Models are built from Builder
+  primitives as rig parts (`rig([{ part, pivot, build }])`, facing +z, feet at y = 0); the vertex
+  shader swings legs (FL/FR/BL/BR), sways the tail, bobs the head, flaps wings / fins, opens a
+  jaw and waves tentacles, plus whole-body modes (`swim`, `swimv`, `slither`, `pulse`). Per frame
+  an animal is `put(x, y, z, yaw, pitch, roll, scale, phase, amount)` between `begin()` /
+  `end()`. Check new models with a turnaround render (a probe that hides everything but one
+  species' mesh); `assets/reference/ref_sea_creatures.png` / `ref_jungle_animals.png` (image
+  round 16) are the look to aim for once delivered.
+- Poses are functions of time (loops, circles, drifts; `travelled()` = walk, rest, walk on), so
+  nothing is stored or stepped while nobody is near, and animals are where they "would be" when
+  you arrive.
+- Sea life under water only exists for cameras under water: 20 m cells within 52 m of such a
+  camera are filled in from a hash of the cell (depth and latitude pick what lives there: warm
+  south z > 300, cold north z < -560), and the meshes are drawn only in under-water views
+  (`cameraUnder`, a view hook). Dolphin pods and whales cruise loops found at load in open sea
+  (no region within reach), posed only while a camera is within 420 m; dolphins leap, whales
+  blow and every third cycle breach (`spray` particles, `splash` / `whale` / `dolphin` sounds).
+  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`).
+- Jungle animals walk loops through clear ground (no village, temple, river, trail, steep or
+  volcanic ground) densified with ground heights at load (no terrain queries per frame); only
+  those within 170 m of a camera are posed. Crocodiles drift along the river (or bask on the
+  banks, snapping when you come close), capybaras also swim, monkeys hang from the vines of the
+  `jtree2` trees (`game.jungleTrees`, recorded by Flora), birds circle over the canopy. Each
+  makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; synthesised in
+  audio.js, recordable via `dev/sfx/sfx.json`) when a player comes within its `hear` range.
+  Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
+- New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
+
 ## Stratford Fall Fair (`src/world/fair/`)
 
 The fairground on the home island in the flat strip south of the ring road, either side of the

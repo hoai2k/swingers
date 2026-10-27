@@ -259,11 +259,21 @@ to do (a banner welcomes you as you arrive; the map zooms out to show them all):
 - **Tiki Jungle** (south-west) — a volcano with a lava lake that flings you out, a river with
   rapids and a raft ride, a waterfall with a crystal cave behind it, a stilt village with
   treehouses, rope bridges, zip lines and vines, a temple with a lever puzzle, and bouncy
-  mushrooms. Jeeps, canoes and log rafts.
+  mushrooms. Jeeps, canoes and log rafts. Wild animals live there: monkey troops (and monkeys
+  swinging from the tree vines), tigers and leopards that prowl and lie down, red river hogs,
+  capybaras (some paddling in the river), tapirs, snakes, crocodiles drifting down the river or
+  basking with their jaws open, and parrots and toucans over the trees. Get close and they let
+  you know.
 - **Coconut Cove** (south-east) — tropical islets in a turquoise lagoon: a resort hotel with a
   pool and swim-up bar, beach volleyball, surfing, a harbour full of boats (speedboats, a
   sailboat, pedalos, a banana boat, jet skis), a lighthouse, a snorkel reef with fish and
   turtles, and a pirate shipwreck. Beach buggies and golf carts.
+
+**Sea life**: dive anywhere and the sea is alive: schools of fish (bright reef fish,
+clownfish and angelfish in the warm south, silvery ones up north), pufferfish, jellyfish, sea
+stars, crabs, seahorses, octopuses, sea turtles, manta rays, sharks and, if you're lucky, a
+plesiosaur. From boats and the shore you can watch dolphin pods leaping and whales coming up
+to blow, and now and then a whale breaches with a huge splash.
 
 Every island has its own people (sheriffs, skiers, tiki villagers, taxi drivers...), coins
 to collect, presents to find and jobs to do.
