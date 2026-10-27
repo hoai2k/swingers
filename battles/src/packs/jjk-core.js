@@ -63,11 +63,27 @@ export const burntOut = (u) => (u.jkBurnout || 0) > u.battle.time;
 //      drawn at the centre for the duration: build it with domeMesh), at (centre,
 //      default the owner's feet) }
 // Returns the domain (null if a clash kills it at once).
+// Sounds (assets/sfx/jjk, from jjkbrawler): the caster's "Domain Expansion: ..." line
+// and the domain's own stinger, by domain name (whoever opens Malevolent Shrine is
+// Sukuna speaking); a domain not listed gets neither, only the gong.
+const DOMAIN_SFX = {
+  'Unlimited Void': ['vo_dom_gojo', 'jk_dom_void'],
+  'Malevolent Shrine': ['vo_dom_sukuna', 'jk_dom_shrine'],
+  'Chimera Shadow Garden': ['vo_dom_megumi', 'jk_dom_garden'],
+  'Self-Embodiment of Perfection': ['vo_dom_mahito', 'jk_dom_mahito'],
+  'Coffin of the Iron Mountain': ['vo_dom_jogo', 'jk_dom_jogo'],
+  'Horizon of the Captivating Skandha': ['vo_dom_dagon', 'jk_dom_dagon'],
+  'Idle Death Gamble': ['vo_dom_hakari', 'jk_dom_hakari'],
+  'Authentic Mutual Love': ['vo_dom_yuta', 'jk_dom_yuta'],
+};
 export function openDomain(b, owner, o) {
   ensureHitHook(owner);
   const s = jk(b);
   const at = (o.at || owner.pos).clone();
   at.y = b.terrain.height(at.x, at.z);
+  // the call-out comes first, whether or not the domain survives a clash
+  const sfx = DOMAIN_SFX[o.name];
+  if (sfx && owner.alive) b.sound(sfx[0], owner.chestPos, 1.0, 1);
   const dom = {
     id: newId(), owner, team: owner.team, name: o.name, pos: at, R: o.radius, t: o.duration,
     power: o.power ?? 5, barrier: o.barrier !== false, tick: o.tick ?? 0.5, tickT: 0.2,
@@ -84,7 +100,7 @@ export function openDomain(b, owner, o) {
     b.emit('spark', mid.x, mid.y, mid.z, 20);
     b.sound('boom', mid, 1.2, 0.6);
     if (pa > pb) { announce(b, `Domain clash: ${dom.name} overwhelms ${d.name}!`, mid); closeDomain(b, d, 'clash'); }
-    else if (pb > pa) { announce(b, `Domain clash: ${d.name} overwhelms ${dom.name}!`, mid); owner.jkBurnout = b.time + dom.burnout; return null; }
+    else if (pb > pa) { announce(b, `Domain clash: ${d.name} overwhelms ${dom.name}!`, mid); b.sound('jk_dom_collapse', at, 1.0, 1); owner.jkBurnout = b.time + dom.burnout; return null; }
     else { announce(b, `Domain clash: ${dom.name} and ${d.name} cancel out!`, mid); closeDomain(b, d, 'clash'); owner.jkBurnout = b.time + dom.burnout; return null; }
   }
   if (o.marker) dom.mk = markerAt(b, o.marker, at, o.duration);
@@ -93,7 +109,10 @@ export function openDomain(b, owner, o) {
   s.domains.push(dom);
   b.emit('spark', at.x, at.y + 1, at.z, 14);
   b.sound('gong', at, 1.0, 0.5);
-  if (owner.alive) b.voice(owner, 'attack', true);
+  if (sfx) b.sound(sfx[1], at, 1.0, 1);
+  if (dom.barrier) b.sound('jk_barrier', at, 1.0, 1);
+  // (the gibberish battle cry only for a domain without a spoken line)
+  if (owner.alive && !sfx) b.voice(owner, 'attack', true);
   announce(b, `Domain Expansion: ${o.name}`, at);
   return dom;
 }
@@ -109,6 +128,7 @@ export function closeDomain(b, dom, why = 'end') {
   const p = dom.pos;
   b.emit('spark', p.x, p.y + 1.5, p.z, 10);
   if (why === 'clash' || why === 'broken') b.sound('debris', p, 1.0, 0.7);
+  b.sound('jk_dom_collapse', p, why === 'clash' || why === 'broken' ? 1.0 : 0.6, 1);
 }
 // the enemy domain (if any) whose barrier/reach covers this point
 export function domainAt(b, pos) {

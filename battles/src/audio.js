@@ -143,6 +143,16 @@ const TRACKS = {
 };
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
+// Faction sample sets, fetched only once a battle has that faction in it (wantSamples).
+// jjk: voice lines and signature effects from the owner's jjkbrawler game (README).
+const SAMPLE_SETS = { jjk: 'assets/sfx/jjk/index.json' };
+// Spoken lines (vo_*) are recorded only, so they play with Sound effects: Synthesised
+// too; never pitch-shifted (no variation, no slow motion); on the voice bus; heard
+// across the field (a floor under the distance falloff; a lower one for the domain
+// stingers and barrier). Recorded-only effects (jk_*) have no synthesised version:
+// they layer over synth sounds and are skipped without their recording.
+const isLine = (name) => name.startsWith('vo_');
+const recOnly = (name) => name.startsWith('vo_') || name.startsWith('jk_');
 
 export class Audio {
   constructor() {
@@ -187,6 +197,7 @@ export class Audio {
     if (this.musicMode) this.startMusic(this.musicMode, true);
     this.loadStingers();
     this.loadSamples();
+    for (const k of this.wanted || []) this.loadSet(k);
   }
 
   // Recorded sound effects (assets/sfx/index.json, made by dev/sfx/generate.py):
@@ -194,7 +205,24 @@ export class Audio {
   loadSamples() {
     this.samples = {};
     this.sampleLevel = {};
-    fetch('assets/sfx/index.json').then((r) => (r.ok ? r.json() : null)).then((ix) => {
+    this.setsLoaded = new Set();
+    this.loadIndex('assets/sfx/index.json');
+  }
+
+  // a faction's sample set (SAMPLE_SETS), loaded once; remembered until sound is unlocked
+  wantSamples(set) {
+    (this.wanted ||= new Set()).add(set);
+    if (this.ctx && this.samples) this.loadSet(set);
+  }
+
+  loadSet(set) {
+    if (!SAMPLE_SETS[set] || this.setsLoaded.has(set)) return;
+    this.setsLoaded.add(set);
+    this.loadIndex(SAMPLE_SETS[set]);
+  }
+
+  loadIndex(url) {
+    fetch(url).then((r) => (r.ok ? r.json() : null)).then((ix) => {
       if (!ix) return;
       Object.assign(this.sampleLevel, ix._levels || {});
       for (const [name, files] of Object.entries(ix)) {
@@ -213,7 +241,7 @@ export class Audio {
   // returns its duration, or 0 when there's no recording
   sample(name, o, t, p) {
     const bank = this.samples?.[name];
-    if (!bank?.length || this.noSamples) return 0;
+    if (!bank?.length || (this.noSamples && !isLine(name))) return 0;
     let i = (Math.random() * bank.length) | 0;
     if (bank.length > 1 && i === bank.last) i = (i + 1) % bank.length;
     bank.last = i;
@@ -533,13 +561,18 @@ export class Audio {
   // ------------------------------------------------------------------ sfx
   play(name, pos, vol = 1, pitch = 1) {
     if (!this.ctx) return;
-    const { gain, pan, dist } = this.spatial(pos, vol);
+    const line = isLine(name);
+    if (recOnly(name) && (!this.samples?.[name]?.length || (this.noSamples && !line))) return;
+    let { gain, pan, dist } = this.spatial(pos, vol);
+    if (line) { gain = Math.max(gain, vol * 0.45); dist = Math.min(dist, 12); }
+    else if (name.startsWith('jk_dom') || name === 'jk_barrier') { gain = Math.max(gain, vol * 0.25); dist = Math.min(dist, 25); } // domains are big moments
     if (!this.admitSfx(name, gain)) return;
     const c = this.ctx, t = c.currentTime + 0.005;
-    const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : 0.04;
-    const o = this.out(gain, pan, dist, this.sfx, wet);
-    const p = pitch * rand(0.96, 1.04) * this.slowPitch;
+    const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : line ? 0.08 : 0.04;
+    const o = this.out(gain, pan, dist, line ? this.voiceBus : this.sfx, wet);
+    const p = line ? 1 : pitch * rand(0.96, 1.04) * this.slowPitch;
     const dur = this.sample(name, o, t, p) || this.synth(name, o, t, p, gain) || 0.3;
+    if (line) this.duckMusic(0.35, dur, false);
     this.sfxList.push({ end: t + dur, gain, out: o });
     this.active = this.sfxList.length + this.voiceList.length;
   }
