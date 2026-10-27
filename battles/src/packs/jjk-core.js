@@ -31,7 +31,7 @@ let UnitP = null, park = null;
 import('../unit.js').then((m) => { UnitP = m.Unit.prototype; });
 import('../battle.js').then((m) => { park = m.park; });
 
-export const FACTION = { id: 'jjk', name: 'Jujutsu Kaisen', color: '#2b2f6b' };
+export const FACTION = { id: 'jjk', name: 'JJK', color: '#2b2f6b' };
 const UPY = new THREE.Vector3(0, 1, 0);
 const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 
