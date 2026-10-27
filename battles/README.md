@@ -100,12 +100,16 @@ the current screen. Leaving the title with a controller (or key) press goes full
 as in the other games.
 
 Audio: the title, planning and battle songs and the victory / defeat / battle-start
-stingers are recorded files in `assets/music/` (see `music-requests.md`), as are four
-world battle themes (Tribal, Medieval, Pirate, Wild West). Each battle picks its song
-(`battleTheme` in `src/game.js`): a campaign world's theme, else the theme of the factions
+stingers are recorded files in `assets/music/` (see `music-requests.md`), as are eight
+world / faction battle themes (Tribal, Medieval, Pirate, Wild West, Viking, Dynasty, JJK,
+Avatar). Each battle picks its song
+(`battleTheme` in `src/game.js`): the battleground's own theme (`music` on the map, once
+delivered: Castle → Medieval, Pirate Cove → Pirate, Volcano Jungle → Tribal, Canyon Ruins →
+Wild West), else a campaign world's theme, else the theme of the factions
 holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
-Legacy / Renaissance → Medieval; Pirate; Wild West), else the main battle theme or, half
-the time, one of the world themes. Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
+Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avatar), else the
+main battle theme or, half the time, one of the world themes (not JJK's electric one,
+which stays with JJK armies). Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
 recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
 `dev/sfx/generate.py` and `calibrate.cjs` remake them). Voices and the other music are
 synthesised, and every recorded sound falls back to its synth if its file is missing.

@@ -673,6 +673,12 @@ export function buildScene(scene, map, terrain) {
     }
   }
   // walls, water, bridges and the map's own set dressing
-  buildFeatureScene(group, map, terrain, { merged, T, lumpy, TREES, PROPS, instanced, vcMat, comp, scatter, groves, outDist, FIELD, SIZE });
+  buildFeatureScene(group, map, terrain, MAP_H);
   return { group, sun, hemi };
 }
+
+// Scenery helpers for maps added by packs (src/packs/maps-*.js): they push their map into
+// MAPS, add trees / props to MAP_H.TREES / MAP_H.PROPS (geometry makers built with
+// merged / T / lumpy), and draw their own obstacle kinds and set dressing through
+// register({ obstacles, scenery }) (src/ext.js, used by src/mapscene.js).
+export const MAP_H = { merged, T, lumpy, TREES, PROPS, instanced, vcMat, comp, scatter, groves, outDist, FIELD, SIZE };

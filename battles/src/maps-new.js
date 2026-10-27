@@ -5,14 +5,15 @@
 //
 // Extra map keys used here: layout(L), stone / wood (obstacle colours), water / bed
 // (water and river-bed colours), shape(x, z, y, out) (reshape the land outside the
-// field), sea (a sea plane), tufts (grass density in the field), fogNear/fogFar.
+// field), sea (a sea plane), tufts (grass density in the field), fogNear/fogFar,
+// music (the battleground's battle theme, a TRACKS key in src/audio.js; used once delivered).
 
 const smooth = (t) => t * t * (3 - 2 * t);
 const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
 export const NEW_MAPS = [
   {
-    id: 'castle', name: 'Castle Courtyard',
+    id: 'castle', name: 'Castle Courtyard', music: 'battle_medieval',
     ground: ['#6fb53e', '#8ccc4c', '#55982f'], patch: '#b8d35a', dirt: '#a48a5c', high: '#9ccf52', far: '#5d9a40', rock: '#9b978c',
     sky: ['#4c97e6', '#d4ecfb'], fog: '#c8e2f2', sun: '#fff1d6', sunI: 2.7, hemiGround: '#5e8a3a', hemiI: 1.25,
     hills: 1.15, bumps: 0.3, trees: ['oak', 'pine', 'oak'], grass: '#7cc43e', grassTip: '#b8e86a',
@@ -59,7 +60,7 @@ export const NEW_MAPS = [
     },
   },
   {
-    id: 'cove', name: 'Pirate Cove',
+    id: 'cove', name: 'Pirate Cove', music: 'battle_pirate',
     ground: ['#ecd49a', '#f6e2b0', '#dcc083'], patch: '#e4c98a', dirt: '#c8a86a', high: '#b8d070', far: '#a6c074', rock: '#a89a86',
     sky: ['#3fa2ec', '#dff3fb'], fog: '#d6eef6', sun: '#fff4dc', sunI: 2.9, hemiGround: '#b8a070', hemiI: 1.25,
     hills: 0.9, bumps: 0.35, trees: ['palm', 'palm', 'jungle'], grass: '#b4b860', grassTip: '#e0dc8a',
@@ -88,7 +89,7 @@ export const NEW_MAPS = [
     },
   },
   {
-    id: 'volcano', name: 'Volcano Jungle',
+    id: 'volcano', name: 'Volcano Jungle', music: 'battle_tribal',
     ground: ['#4f9a36', '#69b444', '#3c7d2a'], patch: '#86b03e', dirt: '#7a5838', high: '#6f9a3a', far: '#4f7a3a', rock: '#7b6e62',
     sky: ['#7aa6c8', '#f0d8b0'], fog: '#d8cfb2', sun: '#ffe2b0', sunI: 2.6, hemiGround: '#5a6a30', hemiI: 1.2,
     hills: 1.35, bumps: 0.6, trees: ['jungle', 'palm', 'jungle'], grass: '#5aa83a', grassTip: '#a4d860',
@@ -112,7 +113,7 @@ export const NEW_MAPS = [
     },
   },
   {
-    id: 'canyon', name: 'Canyon Ruins',
+    id: 'canyon', name: 'Canyon Ruins', music: 'battle_wildwest',
     ground: ['#dcae74', '#e8c18a', '#c99660'], patch: '#d6a468', dirt: '#b97a4a', high: '#d69060', far: '#c8865a', rock: '#b8643e',
     sky: ['#4f9fe0', '#f8dcb0'], fog: '#f0d2a8', sun: '#fff0cc', sunI: 2.9, hemiGround: '#b38058', hemiI: 1.2,
     hills: 2.0, bumps: 0.4, trees: ['cactus'], grass: '#b9a35a', grassTip: '#dcc77a',
@@ -138,7 +139,7 @@ export const NEW_MAPS = [
     },
   },
   {
-    id: 'graveyard', name: 'Spooky Graveyard',
+    id: 'graveyard', name: 'Spooky Graveyard', music: 'battle_spooky',
     ground: ['#4f6a5a', '#5d7a68', '#3f584a'], patch: '#6a7a5a', dirt: '#5a5048', high: '#6a7e72', far: '#3e4e5a', rock: '#7a7e88',
     sky: ['#151a3a', '#4b4a78'], fog: '#3a3d5e', fogNear: 70, fogFar: 330, sun: '#cfd8ff', sunI: 1.8, hemiGround: '#2c2c40', hemiI: 1.2,
     hills: 1.1, bumps: 0.4, trees: ['dead', 'dead', 'pine'], grass: '#4d6656', grassTip: '#7a9a86',
