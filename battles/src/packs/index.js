@@ -12,7 +12,6 @@ import './big-beasts.js';
 import './good.js';
 import './evil.js';
 import './secret.js';
-import './jujutsu.js';
 import './classic.js'; // more Tribal, Farmer and Legacy units
 import './galactic.js';
 import './jjk-core.js'; // Jujutsu Kaisen: domains, barriers, secrets (characters: jjk-*.js)

@@ -68,7 +68,7 @@ export const BEARDS = [null, '#7a5232', '#d27a2c', '#3a2a1e', '#1d1a1a', '#d9d9d
 const GENERIC = new Set(['melee', 'ranged', 'heal', 'bard']);
 const SAFE = new Set(['ww_gun', 'pr_gun', 'dy_parry', 'rn_fencer', 'sp_vampire', 'an_phalanx', 'an_zeus', 'vk_jarl',
   'pi_harpoon', 'gd_cleric', 'gd_shield', 'ev_spinner', 'ev_fan', 'ev_necro', 'ev_chrono', 'sc_bombstick', 'sc_cheer', 'sc_zap', 'sc_ullr',
-  'jj_brawler', 'ga_blaster', 'ga_saber']);
+  'ga_blaster', 'ga_saber']);
 const NICE = {
   none: 'Fists', club: 'Club', bone: 'Bone', big_axe: 'Giant axe', pitchfork_small: 'Little fork', pitchfork: 'Pitchfork',
   sword: 'Sword', greatsword: 'Greatsword', kingsword: 'Royal sword', axe: 'Axe', lute: 'Lute', bow: 'Bow',
