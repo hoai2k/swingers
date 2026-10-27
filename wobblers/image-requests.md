@@ -1,26 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 15 remain open; delivered rows are in `image-requests-history.md`.**
-
-## OPEN round 15 — repaint every character in the toy style (12 pictures, 3 signs)
-
-The game's characters now default to the **toy style** (see *Characters* above and the
-re-rendered `assets/reference/ref_character_sheet.png`). These delivered images still show
-older looks: yellow faceless blobs (Wobbly Life style) or the peach-skinned look. Repaint
-**only the characters** in toy style; keep each image's scene, composition, colours, layout
-and **exact words** as they are now (edit the existing file; same path and size; posters stay
-opaque, signs keep their board and a background `clean_signs.py` can key out). Suggested
-skin / shirt pairs are given so the cast varies; any similar soft-skin + contrasting-shirt
-pairing is fine.
-
-| File (`assets/…`) | Size | Characters to repaint |
-|---|---|---|
-| `posters/wanted_pete.png` | 512 × 716 | WOBBLY PETE the outlaw: coral skin, orange shirt, red bandana, black hat |
-| `ui/cover.png` | 1600 × 900 | all five Wobblers on the cover (jumping, bouncy ball, carrying a box, waving from the car): varied soft skins (blue, coral, mint, gold, pink) with contrasting shirts; still no text, calm sky at the top |
-| `signs/jump.png` | 1024 × 256 | the little diving figure on the right of JUMP: soft blue skin, red-and-white swimsuit |
-| `signs/ski_jump.png` | 1024 × 256 | the skier on the right of SKI JUMP: coral skin, red ski jacket and helmet, goggles |
-| `signs/wobblecorp.png` | 1024 × 256 | the round mascot face on the left of WOBBLECORP: a toy-style Wobbler head (teal skin, printed smile, pink cheeks) instead of the yellow blob |
-
+**Status: all requested images delivered; no open requests.** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 

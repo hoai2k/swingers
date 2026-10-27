@@ -1257,15 +1257,27 @@
       "batch": 3
     },
     {
-      "index": 109,
       "file": "signs/ski_jump.png",
       "width": 1024,
       "height": 256,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-73d2b950-06d9-4675-a81e-7396fe938d5d.png",
-      "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"SKI JUMP\". Board design: bright blue board, white letters, skier flying off a ramp. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
-      "round": 7,
-      "batch": 3
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current WOBBLERS toy character reference. Repaint ONLY skier right of SKI JUMP: coral skin, printed smiling face and cheeks, red ski jacket and helmet, original goggles and skis. Skin-coloured coral hands. Preserve exact SKI JUMP word and board. Match reference2 chunky soft-toy figures, round shoulder-wide heads, slightly flat printed cartoon faces, smooth body and thick tube arms/legs. Soft muted coloured skin on head, exposed arms and mitten hands; contrasting bright clothing layered on top. No white gloves, peach skin or faceless yellow blobs. Preserve all non-character pixels, original text, composition, scene, colour palette, board, framing and aspect ratio. No new details/text. Preserve transparent background outside board, keep board opaque,4:1 horizontal1024x256.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-013de46c-2ddc-47a9-84fc-ae61b0332757.png",
+      "index": 109,
+      "previousGenerations": [
+        {
+          "index": 109,
+          "file": "signs/ski_jump.png",
+          "width": 1024,
+          "height": 256,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-73d2b950-06d9-4675-a81e-7396fe938d5d.png",
+          "prompt": "Use case: stylized-concept. Wobblers game sign. Bright soft toy-like Wobbly Life look: chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Exact words: \"SKI JUMP\". Board design: bright blue board, white letters, skier flying off a ramp. One horizontal front-facing 4:1 board, 1024x256 delivery. Big rounded lettering spelled EXACTLY as requested, clearly readable far away, one small requested icon. Board fills canvas with safe padding, genuinely transparent outside board. No surrounding scene, people, additional words, real brands or watermark.",
+          "round": 7,
+          "batch": 3
+        }
+      ]
     },
     {
       "index": 110,
@@ -1521,28 +1533,52 @@
       "batch": 6
     },
     {
-      "index": 133,
       "file": "signs/jump.png",
       "width": 1024,
       "height": 256,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a13ffd1f-4886-4357-8026-ccd3663b9bb9.png",
-      "prompt": "Use case: precise-object-edit. Edit only the small icon on the RIGHT of this Wobblers sign. Replace the diving-board structure with a SMALL DIVING WOBBLY BEAN PERSON icon: yellow round head, little pear-shaped body, stubby limbs and mitten hands, shown mid-air diving head-first with arms forward and legs trailing. Simple cheerful toy-like cartoon silhouette, white and yellow with blue swimming trunks. The icon must clearly depict the bean person diving, not just a diving board. Preserve red rounded signboard, exact white text JUMP, all lettering, composition, gloss, outline and transparent background. Do not add extra text or change any other part.",
-      "round": 7,
-      "batch": 7,
-      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8bc8b44c-6485-43b3-b41b-435883ec5d21.png",
-      "initialPrompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"JUMP\". Board design: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon."
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current WOBBLERS toy character reference. Repaint ONLY little diving figure right of JUMP: soft blue skin, printed happy face and pink cheeks, red-and-white swimsuit, blue mitten hands. Preserve exact JUMP word and board. Match reference2 chunky soft-toy figures, round shoulder-wide heads, slightly flat printed cartoon faces, smooth body and thick tube arms/legs. Soft muted coloured skin on head, exposed arms and mitten hands; contrasting bright clothing layered on top. No white gloves, peach skin or faceless yellow blobs. Preserve all non-character pixels, original text, composition, scene, colour palette, board, framing and aspect ratio. No new details/text. Preserve transparent background outside board, keep board opaque,4:1 horizontal1024x256.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ddd6898b-a1d3-4c43-9ac0-bdf49a2df014.png",
+      "index": 133,
+      "previousGenerations": [
+        {
+          "index": 133,
+          "file": "signs/jump.png",
+          "width": 1024,
+          "height": 256,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-a13ffd1f-4886-4357-8026-ccd3663b9bb9.png",
+          "prompt": "Use case: precise-object-edit. Edit only the small icon on the RIGHT of this Wobblers sign. Replace the diving-board structure with a SMALL DIVING WOBBLY BEAN PERSON icon: yellow round head, little pear-shaped body, stubby limbs and mitten hands, shown mid-air diving head-first with arms forward and legs trailing. Simple cheerful toy-like cartoon silhouette, white and yellow with blue swimming trunks. The icon must clearly depict the bean person diving, not just a diving board. Preserve red rounded signboard, exact white text JUMP, all lettering, composition, gloss, outline and transparent background. Do not add extra text or change any other part.",
+          "round": 7,
+          "batch": 7,
+          "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8bc8b44c-6485-43b3-b41b-435883ec5d21.png",
+          "initialPrompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"JUMP\". Board design: bright red board, white letters, small diving-bean icon (the jump-off plank on top of Bigtown Tower). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon."
+        }
+      ]
     },
     {
-      "index": 134,
       "file": "signs/wobblecorp.png",
       "width": 1024,
       "height": 256,
       "transparent": true,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ec0200e9-d2bd-4015-b6d4-5701899958a0.png",
-      "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"WOBBLECORP\". Board design: teal glass-office board, white letters, little wobbly-bean logo icon (invented company). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
-      "round": 7,
-      "batch": 7
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current WOBBLERS toy character reference. Repaint ONLY round mascot face left of WOBBLECORP: teal-skinned toy-style Wobbler head with printed smiling mouth, eyes and pink cheeks; preserve surrounding ring, exact WOBBLECORP word and board. Match reference2 chunky soft-toy figures, round shoulder-wide heads, slightly flat printed cartoon faces, smooth body and thick tube arms/legs. Soft muted coloured skin on head, exposed arms and mitten hands; contrasting bright clothing layered on top. No white gloves, peach skin or faceless yellow blobs. Preserve all non-character pixels, original text, composition, scene, colour palette, board, framing and aspect ratio. No new details/text. Preserve transparent background outside board, keep board opaque,4:1 horizontal1024x256.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-023a0841-5d3b-49cd-b058-68bc0fedc693.png",
+      "index": 134,
+      "previousGenerations": [
+        {
+          "index": 134,
+          "file": "signs/wobblecorp.png",
+          "width": 1024,
+          "height": 256,
+          "transparent": true,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-ec0200e9-d2bd-4015-b6d4-5701899958a0.png",
+          "prompt": "Use case: stylized-concept. Wobblers game sign, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Exact words: \"WOBBLECORP\". Board design: teal glass-office board, white letters, little wobbly-bean logo icon (invented company). One front-facing 4:1 horizontal signboard for 1024x256 delivery. Bold readable lettering, exact requested spelling, one small requested icon. Board fills canvas, safe margin, transparent outside board. No surrounding scene, extra words, real-world company logos or watermark. Characters only if specifically requested as the small icon.",
+          "round": 7,
+          "batch": 7
+        }
+      ]
     },
     {
       "index": 135,
@@ -1600,10 +1636,10 @@
       "file": "posters/wanted_pete.png",
       "width": 512,
       "height": 716,
-      "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the aged paper WANTED poster and EXACT text WANTED / WOBBLY PETE / REWARD 100 COINS. Replace only the outlaw with a peach-skinned round head, printed cartoon eyes, orange shirt, darker trousers, white mittens and dark shoes; black cowboy hat, red bandana covering lower face, holding a brightly coloured toy water pistol. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c63e8d84-faf6-4500-940a-3d18d0e89d92.png",
-      "round": 12,
       "transparent": false,
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current WOBBLERS toy character reference. Repaint WOBBLY PETE outlaw with coral skin, orange shirt, red bandana, black hat, coral mitten hands, navy trousers, dark shoes. Preserve toy water pistol and EXACT words WANTED / WOBBLY PETE / REWARD 100 COINS. Match reference2 chunky soft-toy figures, round shoulder-wide heads, slightly flat printed cartoon faces, smooth body and thick tube arms/legs. Soft muted coloured skin on head, exposed arms and mitten hands; contrasting bright clothing layered on top. No white gloves, peach skin or faceless yellow blobs. Preserve all non-character pixels, original text, composition, scene, colour palette, board, framing and aspect ratio. No new details/text. Opaque full-frame output at 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-47e371ed-c427-46dc-b383-dd2f60a626b9.png",
       "index": 140,
       "previousGenerations": [
         {
@@ -1615,6 +1651,16 @@
           "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-559bd4f0-038f-4cc9-8203-7c7fa80f5ac7.png",
           "prompt": "Use case: stylized-concept. Wobblers game art, bright soft toy-like Wobbly Life style, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly, never realistic. Bean people have round heads, pear bodies, stubby limbs, mitten hands, simple cartoon faces. Old-west WANTED poster on aged parchment. Mandatory text spelled exactly: big \"WANTED\" at top; \"WOBBLY PETE\" beneath portrait; \"REWARD 100 COINS\" below. A goofy wobbly bean-person outlaw with black hat and red bandana in the middle. Toy-like, silly, not scary. No extra text. Portrait 512x716 poster, fill entire opaque frame edge to edge. All required text must be prominent and legible. No real company logos, brands or watermark.",
           "round": 9
+        },
+        {
+          "file": "posters/wanted_pete.png",
+          "width": 512,
+          "height": 716,
+          "prompt": "Use case: precise-object-edit. Image 1 is edit target; image 2 required in-game character reference. Keep the aged paper WANTED poster and EXACT text WANTED / WOBBLY PETE / REWARD 100 COINS. Replace only the outlaw with a peach-skinned round head, printed cartoon eyes, orange shirt, darker trousers, white mittens and dark shoes; black cowboy hat, red bandana covering lower face, holding a brightly coloured toy water pistol. Match reference2 chunky soft-toy proportions: round peach #ffd9b8 head about shoulder width with slightly flat front, simple printed face and blush, one smooth bean body with bright shirt and darker trousers, thick tube arms, white mittens, charcoal shoes with pale soles. Preserve target scene, framing, aspect ratio, wording and composition. Bright cheerful soft shading; no yellow-skinned faceless blobs. Opaque full frame, final 512x716.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-c63e8d84-faf6-4500-940a-3d18d0e89d92.png",
+          "round": 12,
+          "transparent": false,
+          "index": 140
         }
       ]
     },
@@ -1931,11 +1977,23 @@
       "file": "ui/cover.png",
       "width": 1600,
       "height": 900,
-      "prompt": "Use case: stylized-concept. New WOBBLERS game library cover, landscape 16:9, final 1600x900. Attached image is the REQUIRED character design reference, use its actual peach-skinned Wobblers. Sunny toy-like island town street with a ferris wheel and turquoise sea behind. Exactly five Wobblers in five different shirts red, blue, green, yellow, pink having fun: one mid-jump, one riding a bouncy ball, two carrying one box together, one waving from a little red car. Couple of hats. Chunky soft-toy figures with round peach #ffd9b8 heads about as wide as shoulders, slightly flat fronts with simple printed cartoon faces, happy eyes/smiling mouths/pink cheeks. Smooth bean shirt bodies, darker matching trousers, thick tube arms, white mitten hands, chunky dark charcoal shoes with pale soles. Bright saturated candy colours, clean flat shading with soft highlight. Leave top fifth calm open sky for later logo; NO text. Full-frame opaque illustration. No yellow-skinned faceless blobs, no other game's characters, logos or watermarks.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4c1b4928-70df-4d90-94b5-ae921d009bc7.png",
-      "round": 12,
       "transparent": false,
-      "index": 167
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current WOBBLERS toy character reference. Repaint all five people with varied soft blue, coral, mint, warm-gold and rose-pink skin, contrasting red/blue/green/yellow/pink shirts. Keep one jumping, one on bouncy ball, two carrying box, one waving from red car. All exposed arms and mitten hands same colour as own head, dark navy trousers/dark shoes. Preserve calm top sky with NO text and original scene. Match reference2 chunky soft-toy figures, round shoulder-wide heads, slightly flat printed cartoon faces, smooth body and thick tube arms/legs. Soft muted coloured skin on head, exposed arms and mitten hands; contrasting bright clothing layered on top. No white gloves, peach skin or faceless yellow blobs. Preserve all non-character pixels, original text, composition, scene, colour palette, board, framing and aspect ratio. No new details/text. Opaque full-frame output at 1600x900.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-aab9f1b2-25c9-4fae-a1a6-9d3b32466fc0.png",
+      "index": 167,
+      "previousGenerations": [
+        {
+          "file": "ui/cover.png",
+          "width": 1600,
+          "height": 900,
+          "prompt": "Use case: stylized-concept. New WOBBLERS game library cover, landscape 16:9, final 1600x900. Attached image is the REQUIRED character design reference, use its actual peach-skinned Wobblers. Sunny toy-like island town street with a ferris wheel and turquoise sea behind. Exactly five Wobblers in five different shirts red, blue, green, yellow, pink having fun: one mid-jump, one riding a bouncy ball, two carrying one box together, one waving from a little red car. Couple of hats. Chunky soft-toy figures with round peach #ffd9b8 heads about as wide as shoulders, slightly flat fronts with simple printed cartoon faces, happy eyes/smiling mouths/pink cheeks. Smooth bean shirt bodies, darker matching trousers, thick tube arms, white mitten hands, chunky dark charcoal shoes with pale soles. Bright saturated candy colours, clean flat shading with soft highlight. Leave top fifth calm open sky for later logo; NO text. Full-frame opaque illustration. No yellow-skinned faceless blobs, no other game's characters, logos or watermarks.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4c1b4928-70df-4d90-94b5-ae921d009bc7.png",
+          "round": 12,
+          "transparent": false,
+          "index": 167
+        }
+      ]
     },
     {
       "file": "faces/face_happy_closed.png",

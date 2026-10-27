@@ -10,6 +10,15 @@ Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths a
 in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
 browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
 
+The game's characters now default to the **toy style** (see *Characters* above and the
+re-rendered `assets/reference/ref_character_sheet.png`). These delivered images still show
+older looks: yellow faceless blobs (Wobbly Life style) or the peach-skinned look. Repaint
+**only the characters** in toy style; keep each image's scene, composition, colours, layout
+and **exact words** as they are now (edit the existing file; same path and size; posters stay
+opaque, signs keep their board and a background `clean_signs.py` can key out). Suggested
+skin / shirt pairs are given so the cast varies; any similar soft-skin + contrasting-shirt
+pairing is fine.
+
 | File (`assets/…`) | Size | Characters to repaint |
 |---|---|---|
 | `posters/arcade_racer.png` | 512 × 716 | the kart driver (TURBO WOBBLE KART): soft blue skin, yellow shirt, red helmet in the shirt colour family |
@@ -22,6 +31,11 @@ browser loading. Replaced files are preserved in `assets/originals/pre-round15/`
 | `posters/painting_island.png` | 768 × 528 | everyone on the island painting (the people on the hilltop and in town): varied soft skins, contrasting shirts |
 | `posters/portrait_family.png` | 512 × 666 | the family of three (top hat, bow, child): warm gold, rose pink and soft blue skin; yellow, pink and blue shirts kept |
 | `posters/wanted_kid.png` | 512 × 716 | CACTUS KID hugging the cactus: mint green skin, green shirt, brown cowboy hat |
+| `posters/wanted_pete.png` | 512 × 716 | WOBBLY PETE the outlaw: coral skin, orange shirt, red bandana, black hat |
+| `ui/cover.png` | 1600 × 900 | all five Wobblers on the cover (jumping, bouncy ball, carrying a box, waving from the car): varied soft skins (blue, coral, mint, gold, pink) with contrasting shirts; still no text, calm sky at the top |
+| `signs/jump.png` | 1024 × 256 | the little diving figure on the right of JUMP: soft blue skin, red-and-white swimsuit |
+| `signs/ski_jump.png` | 1024 × 256 | the skier on the right of SKI JUMP: coral skin, red ski jacket and helmet, goggles |
+| `signs/wobblecorp.png` | 1024 × 256 | the round mascot face on the left of WOBBLECORP: a toy-style Wobbler head (teal skin, printed smile, pink cheeks) instead of the yellow blob |
 
 ## Delivered round 14 — factory and farm signs
 
