@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 is open (animal model turnarounds).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 remains open (15 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -84,11 +84,6 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 
 | file | animal |
 |---|---|
-| `shark.png` | a streamlined adult shark with visible teeth and a predatory silhouette |
-| `dolphin.png` | a bottlenose dolphin |
-| `whale.png` | a humpback whale with long white flippers |
-| `reef_fish.png` | four small fish in one image: clownfish, blue tang, yellow tang, angelfish (each in the 3 views, one row per fish) |
-| `pufferfish.png` | a pufferfish, puffed up |
 | `jellyfish.png` | a jellyfish with a soft bell and wavy tentacles |
 | `octopus.png` | an octopus with 8 curling tentacles |
 | `sea_turtle.png` | a sea turtle |

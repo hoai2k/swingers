@@ -4,6 +4,39 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 16 — animal model turnarounds
+
+Delivered in batches with built-in imagegen. All sheets are opaque 1920 × 1080,
+checked for anatomy, views, decoding and exclusion from the runtime manifest.
+Exact prompts and source paths are recorded in `assets/generation.json`.
+
+The game now has sea creatures and jungle animals (`src/world/sealife.js`,
+`src/world/regions/jungle/animals.js`) modelled in code. These renders are what the models are
+rebuilt to match, so they need to show clear, simple 3D shapes from known angles.
+
+**Owner's art direction (2026-10-27):** use a midpoint between baby-toy animals and
+realistic wildlife renders. These are rounded, expressive **stylized game animals** with
+recognisable adult anatomy, longer bodies and modestly enlarged heads/eyes. Keep broad
+painted markings, clean smooth sculpted forms and simplified materials; no realistic fur,
+tiny scales, wrinkles or skin grain. Avoid chibi proportions, blush and human baby-toy grins.
+Sharks, crocodiles and big cats should retain some danger through posture, focused eyes,
+teeth, claws and their species silhouettes. Keep the tone light-hearted rather than gory.
+Plain light grey background, soft studio lighting, no text or ground clutter.
+
+**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the
+same scale: left = exact side view (facing right), middle = exact top view (head toward the
+right), right = three-quarter front view. Whole animal in frame in every view.
+
+Files (all in `assets/reference/animals/`), with the animal to draw:
+
+| file | animal |
+|---|---|
+| `shark.png` | a streamlined adult shark with visible teeth and a predatory silhouette |
+| `dolphin.png` | a bottlenose dolphin |
+| `whale.png` | a humpback whale with long white flippers |
+| `reef_fish.png` | four small fish in one image: clownfish, blue tang, yellow tang, angelfish (each in the 3 views, one row per fish) |
+| `pufferfish.png` | a pufferfish, puffed up |
+
 ## Delivered round 15 — toy-style character repaints
 
 Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
