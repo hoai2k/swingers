@@ -276,11 +276,11 @@
   },
   {
    "name": "jungle_ambience",
-   "n": 1,
+   "n": 3,
    "dur": 22,
    "loop": true,
    "level": 0.4,
-   "prompt": "Lush tropical jungle ambience loop: buzzing insects, distant colourful bird calls, a far-off monkey hoot, gentle leaves rustling, cheerful and calm",
+   "prompt": "Tropical rainforest ambience loop with only birds, frogs and monkeys: colourful tropical bird calls and songs near and far, a chorus of tree frogs chirping and croaking, playful monkey hoots and chatter in the distant trees now and then, a little water dripping. No insects, no crickets, no buzzing, no wind, no music",
    "hold": true
   }
  ]
