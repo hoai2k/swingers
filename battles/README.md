@@ -69,6 +69,24 @@ The game is built not to freeze, however big the battle (`src/perf.js`):
   where you build both armies (tap **View** to switch side, **Y** starts the battle).
   *Players: 2* is split screen, each player builds one army and the battle starts when
   both are ready — like Versus without rounds, timer or blind setup.
+- **Simulation** (`src/sims.js`): ready-made battles to watch, picked from a screen laid
+  out like the level select, one row per category: **Real battles** (Thermopylae, Cannae,
+  Hastings, Stamford Bridge, Agincourt, Sekigahara, Nassau, Waterloo, Little Bighorn),
+  **Jujutsu Kaisen** (*Sorcerers vs Curses*: one of every sorcerer against one of every
+  curse, sides from each unit's `side`; Shibuya, the Shinjuku Showdown, the Culling Game in
+  Sendai and Tokyo No. 2, the Trial, the Goodwill Event, Death Painting, the Detention
+  Centre, Hidden Inventory, Yuki & Choso vs Kenjaku, "Nah, I'd win"), **Avatar** (the Siege
+  of Ba Sing Se, the Day of Black Sun, the Crossroads of Destiny, Agni Kai, Sozin's Comet),
+  **Sci-fi & games** (Galactic, Minecraft, dinosaurs vs cowboys, the undead) and
+  **Crossovers** (Sorcerers vs Benders, Sukuna vs a medieval army, Gods & Monsters, and a
+  *Random War* between two random factions with the same gold). **X** sets the army
+  size (Small ×½, Normal, Epic ×2: crowds scale, heroes don't), **Y** chooses between
+  watching at once and editing the armies first. A simulation plays as a 1-player sandbox
+  with no gold or unit limits; the HUD and result name the two sides. Your own sandbox
+  armies are parked meanwhile and come back on the main menu (simulation armies are never
+  saved). Formations step off walls and water on maps with features. Scenarios are data
+  (format at the top of `src/sims.js`; unknown unit ids are skipped);
+  `node battles/dev/balance/sims.mjs` fights them headless and prints who wins how often.
 - **Unit Creator**: design up to 24 custom units, with a live, turning 3D preview
   that shows the attack. Tabs (**LB/RB**): *Unit* (name with an on-screen keyboard
   or typed, personality/voice, rank), *Body* (size, build, head, legs), *Look* (every

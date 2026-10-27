@@ -51,7 +51,7 @@ export class UI {
   constructor(root) {
     this.root = root;
     this.layers = {};
-    for (const k of ['title', 'levels', 'creator', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
+    for (const k of ['title', 'levels', 'sims', 'creator', 'setup', 'battle', 'result', 'replay', 'pause', 'toast', 'help']) {
       const l = el('div', 'layer layer-' + k);
       root.appendChild(l);
       this.layers[k] = l;
@@ -151,6 +151,45 @@ export class UI {
         <small>${L.enemyCount} units · ${fmt(L.enemyValue)} gold</small></div>
       <div class="lvd-row"><small>★★★ ≤ ${fmt(L.starGold[0])} gold · ★★ ≤ ${fmt(L.starGold[1])} gold · ★ any win &nbsp;·&nbsp; units: ${L.factions.join(', ')}</small></div>`);
     this.setText(v.players, `Players: <span class="${d.coop ? '' : 'on'}">👤 1 player</span><span class="${d.coop ? 'on' : ''}">👥 2-player co-op <small>(both build the Blue army)</small></span>`);
+  }
+
+  // ------------------------------------------------------------- simulation select
+  // (laid out like the campaign's level select: a row of scenarios per category)
+  buildSims() {
+    const L = this.layers.sims;
+    L.className += ' layer-levels';
+    L.innerHTML = `<div class="lvhead">SIMULATION <span class="lvtotal"></span></div>
+      <div class="lvworlds smworlds"></div><div class="lvdetail"></div><div class="lvplayers"></div>
+      <div class="menuhint lvhint">${btn('dpad')}/${btn('LS')} ←→ battle ↑↓ category &nbsp; ${btn('A')} start &nbsp; ${btn('X')} army size &nbsp; ${btn('Y')} watch now / edit first &nbsp; ${btn('B')} back</div>`;
+    this.sm = {
+      total: L.querySelector('.lvtotal'), worlds: L.querySelector('.lvworlds'),
+      detail: L.querySelector('.lvdetail'), players: L.querySelector('.lvplayers'),
+    };
+  }
+
+  updateSims(d) {
+    const v = this.sm;
+    this.setText(v.total, `${d.count} battles`);
+    this.setText(v.worlds, d.cats.map((c) => `<div class="lvworld" style="--wc:${c.color}">
+      <div class="lvwname"><span>${c.name}</span><small>${c.list.length} battles</small></div><div class="smtiles">
+      ${c.list.map((s) => `<div class="lvtile ${s.sel ? 'sel' : ''}"><span class="lvn">${s.name}</span><b>${s.when}</b></div>`).join('')}</div></div>`).join(''));
+    const row = v.worlds.querySelector('.lvtile.sel')?.closest('.lvworld');
+    if (row && row !== this.smRow) {
+      this.smRow = row;
+      const pad = 8, top = row.offsetTop - pad, bot = row.offsetTop + row.offsetHeight + pad;
+      const box = v.worlds;
+      if (top < box.scrollTop) box.scrollTop = top;
+      else if (bot > box.scrollTop + box.clientHeight) box.scrollTop = bot - box.clientHeight;
+    }
+    const S = d.sim;
+    const side = (s, t) => `<div class="lvd-row lvd-enemy"><span style="color:${tc(t)}"><b>${s.name}</b></span>${s.units.length ? s.units.map((r) => `<span class="rc"><img src="${this.portraits[r.id + ':' + t] || ''}" alt="">×${r.n}</span>`).join('') : '<small>(its units are not in this version)</small>'}
+        <small>${s.count} units · ${fmt(s.value)} gold</small></div>`;
+    this.setText(v.detail, `<div class="lvd-top" style="--wc:${S.color}"><span class="lvd-name">${S.name}</span><small class="smwhen">${S.when}</small></div>
+      <div class="lvd-tip">${S.desc}</div>
+      ${S.mapImg ? `<img class="lvd-map" src="${S.mapImg}" alt="">` : ''}<div class="lvd-row"><span>🗺 ${S.map}</span>${S.random ? '<span>🎲 new armies every time</span>' : ''}</div>
+      ${side(S.sides[0], 0)}${side(S.sides[1], 1)}`);
+    this.setText(v.players, `Army size: ${d.sizes.map((s, i) => `<span class="${i === d.size ? 'on' : ''}">${s}</span>`).join('')}
+      &nbsp; Start: <span class="${d.watch ? 'on' : ''}">▶ watch now</span><span class="${d.watch ? '' : 'on'}">✎ edit armies first</span>`);
   }
 
   // ------------------------------------------------------------- setup
@@ -370,7 +409,7 @@ export class UI {
   showResult(d) {
     const L = this.layers.result;
     const col = d.winner >= 0 ? tc(d.winner) : '#ddd';
-    let title = d.winner >= 0 ? `${TEAM_NAMES[d.winner].toUpperCase()} VICTORY` : 'DRAW';
+    let title = d.winner >= 0 ? `${(d.winNames || TEAM_NAMES)[d.winner].toUpperCase()} ${d.winNames ? 'WIN' : 'VICTORY'}` : 'DRAW';
     const lv = d.level, m = d.match;
     if (lv) title = lv.won ? 'VICTORY!' : d.winner < 0 ? 'DRAW' : 'DEFEAT';
     if (m && m.winner >= 0) title = `${TEAM_NAMES[m.winner].toUpperCase()} WINS THE MATCH!`;

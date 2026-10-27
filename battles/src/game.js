@@ -15,6 +15,7 @@ import { Battle, PROJ } from './battle.js';
 import { FX } from './fx.js';
 import { ProjViz } from './projviz.js';
 import { Recorder, Player } from './replay.js';
+import { SCENARIOS, SIM_CATS, SIM_SIZES, simArmies, simValue, fitToMap } from './sims.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
 import { hasAsset } from './assets.js';
@@ -114,7 +115,7 @@ export class Game {
     this.settings = Object.assign({
       map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, sound: true, autoFs: true, googly: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
-      rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1,
+      rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1, simSize: 1, simWatch: true,
       // performance options (see perfItems)
       res: 0, autoRes: true, shadows: true, fxLite: false, corpses: 0, simLoad: 1, showFps: false, lod: true, sfxRec: true,
     }, st.settings || {});
@@ -122,7 +123,9 @@ export class Game {
     this.mode = 'versus'; // 'versus' (2P) | 'sandbox' (1P builds both sides) | 'campaign'
     this.progress = loadProgress();
     this.level = null; // campaign level being played
-    this.stash = null; // versus/sandbox armies parked while in the campaign
+    this.stash = null; // versus/sandbox armies parked while in the campaign (or a simulation)
+    this.sim = null; // simulation being played: { sc, names } (src/sims.js)
+    this.simSel = 0;
     this.match = null; // versus best-of-N score
     this.low = /[?&]q=low/.test(location.search);
     this.quality = this.low ? 0 : clamp(this.settings.quality | 0, 0, QUALITY.length - 1);
@@ -183,6 +186,7 @@ export class Game {
     this.ui.buildBattle();
     this.ui.buildReplay();
     this.ui.buildLevels();
+    this.ui.buildSims();
     progress?.('Growing the grass…');
     await new Promise((r) => setTimeout(r, 20));
     this.loadMap(clamp(this.settings.map | 0, 0, MAPS.length - 1));
@@ -194,6 +198,10 @@ export class Game {
   }
 
   save() {
+    if (this.sim) { // a simulation's armies aren't saved: the parked ones are
+      saveStore({ settings: this.settings, armies: packArmy2(this.stash?.armies || [[], []]), maps: this.mapArmies });
+      return;
+    }
     if (this.mode === 'campaign' && this.level) {
       // the player's army for this level lives with the campaign progress
       this.progress.armies[this.level.id] = packArmy(this.armies[0]);
@@ -207,12 +215,14 @@ export class Game {
 
   // gold and unit limits for one army (campaign: the level's; versus: plus the round bonus)
   budgetOf(t) {
+    if (this.sim) return Infinity;
     if (this.mode === 'campaign' && this.level) return t === 0 ? this.level.budget : Infinity;
     const b = BUDGETS[this.settings[this.limKeys()[0]]];
     if (this.mode === 'versus' && this.match && b !== Infinity) return Math.round(b * (1 + BONUS * this.match.bonus[t]));
     return b;
   }
   capOf(t) {
+    if (this.sim) return Infinity;
     if (this.mode === 'campaign' && this.level) return t === 0 ? this.level.cap : Infinity;
     return CAPS[this.settings[this.limKeys()[1]]];
   }
@@ -262,6 +272,8 @@ export class Game {
     if (opts.armies) {
       this.armies = opts.armies;
       for (const p of this.ps) { p.undo = []; p.stroke = p.rstroke = null; }
+    } else if (this.sim) {
+      // (a simulation takes its armies along to another map)
     } else if (this.map && this.map !== MAPS[i]) {
       // armies are kept per map: park the current ones, pick up the new map's
       this.mapArmies[this.map.id] = packArmy2(this.armies);
@@ -319,7 +331,12 @@ export class Game {
     this.setupVis = [[], []];
     for (let t = 0; t < 2; t++) {
       const keep = [];
-      for (const a of this.armies[t]) if (UNIT_BY_ID[a.type] && !this.terrain.blocked(a.x, a.z, 0)) { keep.push(a); this.addSetupVis(t, a); }
+      for (const a of this.armies[t]) {
+        if (!UNIT_BY_ID[a.type]) continue;
+        // a simulation's formations ignore the map: step a unit off a wall or out of water
+        if (this.sim) fitToMap(this.terrain, t, a, ZONE_GAP, FIELD);
+        if (!this.terrain.blocked(a.x, a.z, 0)) { keep.push(a); this.addSetupVis(t, a); }
+      }
       this.armies[t] = keep;
     }
     for (const p of this.ps) { p.ghosts = []; p.ghostId = null; }
@@ -377,6 +394,7 @@ export class Game {
     if (!this.prepping) switch (this.state) {
       case 'title': this.updateTitle(dt); break;
       case 'levels': this.updateLevels(dt); break;
+      case 'sims': this.updateSims(dt); break;
       case 'setup': this.updateSetup(dt); break;
       case 'battle': case 'result': this.updateBattle(dt); break;
       case 'replay': this.updateReplay(dt); break;
@@ -438,7 +456,7 @@ export class Game {
 
   views() {
     if (this.state === 'setup') return this.solo ? [0] : [0, 1];
-    if (this.state === 'title' || this.state === 'levels' || this.state === 'creator') return [0];
+    if (this.state === 'title' || this.state === 'levels' || this.state === 'sims' || this.state === 'creator') return [0];
     return this.split ? [0, 1] : [0];
   }
 
@@ -635,6 +653,7 @@ export class Game {
       { label: 'VERSUS', note: '2 players · build at the same time', key: 'versus' },
       { label: 'CAMPAIGN', note: `1 player or 2-player co-op · ★ ${stars} / ${LEVELS.length * 3}`, key: 'campaign' },
       { label: 'SANDBOX', note: 'free play: 1 player builds both armies, or 2 players one each', key: 'sandbox' },
+      { label: 'SIMULATION', note: `watch ${SCENARIOS.length} battles: real history, Jujutsu Kaisen, Avatar, crossovers`, key: 'sim' },
       { label: 'UNIT CREATOR', note: 'design your own units for every mode but the campaign', key: 'creator' },
       { label: 'Options', key: 'options' },
       { label: 'Controls', key: 'help' },
@@ -662,7 +681,7 @@ export class Game {
       case 'setup': if (!this.ps[0].modal) this.ps[0].modal = { kind: 'perf', sel: 0, from: 0 }; else this.ps[0].modal = null; break;
       case 'battle': case 'result': case 'replay': this.openPause(); this.pausePage = 'perf'; break;
       case 'paused': this.closePause(); break;
-      case 'levels': this.goTitle(); this.titlePage = 'options'; this.titleSel = 0; break;
+      case 'levels': case 'sims': this.goTitle(); this.titlePage = 'options'; this.titleSel = 0; break;
     }
     this.audio.play('click');
   }
@@ -788,6 +807,7 @@ export class Game {
       if (I.pressed(p, 'a')) {
         if (it.key === 'go') { this.startMode(this.titlePage); return; }
         if (it.key === 'campaign') { this.goLevels(); return; }
+        if (it.key === 'sim') { this.goSims(); return; }
         if (it.key === 'creator') { this.creator.open(); return; }
         if (it.key === 'versus' || it.key === 'sandbox' || it.key === 'options') { this.titlePage = it.key; this.titleSel = 0; this.audio.play('click'); }
         else if (it.key === 'back') back();
@@ -903,10 +923,91 @@ export class Game {
     const st = this.stash;
     this.stash = null;
     this.level = null;
+    this.sim = null;
     this.mode = 'versus';
     this.settings.map = st.map;
     if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
     this.loadMap(st.map, { armies: st.armies });
+  }
+
+  // ---------------------------------------------------------------- simulation
+  goSims() {
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.disposeBattle();
+    this.fx.clear();
+    this.projViz.clear();
+    this.rec = null;
+    this.state = 'sims';
+    this.ui.only('sims');
+    this.ui.setHelp(false);
+    this.helpOn = false;
+    this.zones.forEach((z) => (z.visible = false));
+    this.hideGhosts();
+    this.closeModals();
+    for (const r of this.rigs) { r.release(); r.zoom = 0; }
+    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.resetVis(v);
+    this.showAllSetupVis();
+    this.audio.startMusic('title');
+    this.titleT = this.titleT || 0;
+    if (this.sim) this.simSel = Math.max(0, SCENARIOS.indexOf(this.sim.sc));
+    this.simPreview = null;
+    this.input.swallow();
+  }
+
+  updateSims(dt) {
+    const I = this.input, s = this.settings;
+    this.titleScene(dt);
+    const cats = SIM_CATS.map((c) => ({ ...c, list: SCENARIOS.filter((x) => x.cat === c.id) })).filter((c) => c.list.length);
+    let sel = clamp(this.simSel, 0, SCENARIOS.length - 1);
+    const where = () => { const sc = SCENARIOS[sel]; const ci = cats.findIndex((c) => c.id === sc.cat); return [ci, cats[ci].list.indexOf(sc)]; };
+    for (let p = 0; p < 2; p++) {
+      const [ci, i] = where(), list = cats[ci].list;
+      if (I.nav(p, 'right')) sel = SCENARIOS.indexOf(list[Math.min(list.length - 1, i + 1)]);
+      if (I.nav(p, 'left')) sel = SCENARIOS.indexOf(list[Math.max(0, i - 1)]);
+      const toCat = (cj) => { const l2 = cats[cj].list; sel = SCENARIOS.indexOf(l2[Math.min(l2.length - 1, i)]); };
+      if (I.nav(p, 'down') || I.pressed(p, 'rb')) toCat(Math.min(cats.length - 1, ci + 1));
+      if (I.nav(p, 'up') || I.pressed(p, 'lb')) toCat(Math.max(0, ci - 1));
+      if (I.pressed(p, 'x')) { s.simSize = ((s.simSize | 0) + 1) % SIM_SIZES.length; this.simPreview = null; this.save(); this.audio.play('click'); }
+      if (I.pressed(p, 'y')) { s.simWatch = !s.simWatch; this.save(); this.audio.play('click'); }
+      if (I.pressed(p, 'b')) { this.simSel = sel; this.goTitle(Math.max(0, this.titleItems().findIndex((it) => it.key === 'sim'))); return; }
+      if (I.pressed(p, 'a') || I.pressed(p, 'start')) { this.simSel = sel; this.enterSim(SCENARIOS[sel]); return; }
+    }
+    if (sel !== this.simSel) { this.simSel = sel; this.audio.play('click', null, 0.5); }
+    const sc = SCENARIOS[sel];
+    const k = SIM_SIZES[s.simSize | 0]?.k ?? 1;
+    // (a random war shows what kind of battle it is, not one draw of it)
+    if (!this.simPreview || this.simPreview.sc !== sc) this.simPreview = { sc, ...simArmies(sc, k) };
+    const pv = this.simPreview;
+    const sideInfo = (t) => {
+      const counts = new Map();
+      for (const a of pv.armies[t]) counts.set(a.type, (counts.get(a.type) || 0) + 1);
+      return { name: sc.random ? 'Random faction' : pv.names[t], units: sc.random ? [] : [...counts].map(([id, n]) => ({ id, n })), count: sc.random ? '?' : pv.armies[t].length, value: simValue(pv.armies[t]) };
+    };
+    const map = MAPS.find((m) => m.id === sc.map) || MAPS[0];
+    this.ui.updateSims({
+      count: SCENARIOS.length,
+      cats: cats.map((c) => ({ name: c.name, color: c.color, list: c.list.map((x) => ({ name: x.name, when: x.when, sel: x === sc })) })),
+      sim: { name: sc.name, when: sc.when, desc: sc.desc, color: SIM_CATS.find((c) => c.id === sc.cat)?.color || '#888', map: map.name, mapImg: mapImg(map.id), random: !!sc.random, sides: [sideInfo(0), sideInfo(1)] },
+      sizes: SIM_SIZES.map((z) => z.name), size: s.simSize | 0, watch: s.simWatch !== false,
+    });
+  }
+
+  // load a simulation: its map and both armies in a 1-player sandbox; watch it at once
+  // or open setup first (Settings: simWatch)
+  enterSim(sc) {
+    if (!this.stash) this.stash = { armies: this.armies, map: this.settings.map };
+    this.mode = 'sandbox';
+    this.match = null;
+    this.level = null;
+    const k = SIM_SIZES[this.settings.simSize | 0]?.k ?? 1;
+    const { armies, names } = simArmies(sc, k);
+    this.sim = { sc, names };
+    const mi = Math.max(0, MAPS.findIndex((m) => m.id === sc.map));
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.loadMap(mi, { armies });
+    this.goSetup();
+    if (this.settings.simWatch !== false && (this.armies[0].length || this.armies[1].length)) this.startBattle();
+    else this.ui.toast(`<b>${sc.name}</b>: change the armies if you like, then ${btn('Y')} to start`, 3);
   }
 
   // campaign result: stars for a win, best (lowest) gold, unlocks
@@ -943,6 +1044,7 @@ export class Game {
     const [a, b] = this.ps;
     if (this.mode === 'versus') { a.team = 0; b.team = 1; b.active = true; }
     else if (this.mode === 'campaign') { a.team = 0; b.team = 0; b.active = !!this.progress.coop; }
+    else if (this.sim) { a.team = a.team === 1 ? 1 : 0; b.team = 1; b.active = false; } // a simulation: 1 player, both armies
     else if (this.settings.sandboxPlayers === 2) { a.team = 0; b.team = 1; b.active = true; } // 2-player sandbox: one army each
     else { a.team = a.team === 1 ? 1 : 0; b.team = 1; b.active = false; }
     a.active = true;
@@ -1243,6 +1345,7 @@ export class Game {
     items.push({ label: 'Performance…', key: 'perf' });
     items.push({ label: 'Controls', key: 'help' });
     if (this.mode === 'campaign') items.push({ label: 'Level select', key: 'levels' });
+    if (this.sim) items.push({ label: 'Simulation list', key: 'sims' });
     items.push({ label: 'Main menu', key: 'quit' });
     return items;
   }
@@ -1298,6 +1401,7 @@ export class Game {
       case 'clear': this.openClearConfirm(p); break;
       case 'help': ps.modal = null; this.helpOn = true; this.ui.setHelp(true); break;
       case 'levels': this.goLevels(); break;
+      case 'sims': this.goSims(); break;
       case 'quit': this.goTitle(); break;
       default: this.setupSetting(p, it.key, 1);
     }
@@ -1916,6 +2020,7 @@ export class Game {
     const scaleText = this.state === 'result' ? '' : sc === 0 ? 'TIME FROZEN <small>✥↑ resume</small>' : sc !== 1 ? `${sc < 1 ? 'SLOW MOTION' : 'FAST'} ${sc}×` : '';
     let banner = '';
     if (this.mode === 'campaign' && this.level) banner = `${this.level.name}`;
+    else if (this.sim) banner = `${this.sim.sc.name} · <b style="color:${TEAM_COLORS[0]}">${this.sim.names[0]}</b> vs <b style="color:${TEAM_COLORS[1]}">${this.sim.names[1]}</b>`;
     else if (this.mode === 'versus' && this.match && this.match.bestOf > 1) banner = `Round ${b.scored ? this.match.lastRound : this.match.round} · <b style="color:${TEAM_COLORS[0]}">${this.match.wins[0]}</b> – <b style="color:${TEAM_COLORS[1]}">${this.match.wins[1]}</b> · best of ${this.match.bestOf}`;
     return {
       counts, start: b.startCounts, scaleText, banner,
@@ -1952,6 +2057,15 @@ export class Game {
         { label: r && r.won ? 'Play again' : 'Retry', key: 'rematch' },
         { label: 'Edit army', key: 'edit' },
         { label: 'Level select', key: 'levels' },
+        { label: 'Main menu', key: 'title' },
+      ];
+    }
+    if (this.sim) {
+      return [
+        ...watch,
+        { label: 'Run it again', key: 'rematch' },
+        { label: 'Edit armies', key: 'edit' },
+        { label: 'Simulation list', key: 'sims' },
         { label: 'Main menu', key: 'title' },
       ];
     }
@@ -1997,8 +2111,8 @@ export class Game {
       else if (this.mode === 'versus') match = this.scoreRound(b.winner);
     }
     this.ui.only('battle', 'result');
-    const names = this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
-    this.ui.showResult({ winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
+    const names = this.sim ? [...this.sim.names] : this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
+    this.ui.showResult({ winNames: this.sim ? this.sim.names : null, winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
     this.audio.startMusic('setup');
     // the recorded stingers: defeat when the campaign player loses, or nobody wins
@@ -2029,6 +2143,7 @@ export class Game {
           case 'newmatch': this.newMatch(); this.goSetup(); return;
           case 'next': this.enterLevel(this.levelResult.next); return;
           case 'levels': this.goLevels(); return;
+          case 'sims': this.goSims(); return;
           case 'title': this.goTitle(); return;
         }
       }
@@ -2057,7 +2172,7 @@ export class Game {
     const items = [{ label: 'Resume', key: 'resume' }];
     if (this.pausePage === 'perf') {
       items.push(...this.perfItems(), { label: 'More options…', key: 'main' });
-      for (const it of this.pauseItems('main')) if (['edit', 'levels', 'title'].includes(it.key)) items.push(it);
+      for (const it of this.pauseItems('main')) if (['edit', 'levels', 'sims', 'title'].includes(it.key)) items.push(it);
       return items;
     }
     items.push({ label: 'Performance…', key: 'perf' });
@@ -2071,6 +2186,7 @@ export class Game {
     else if (!m) items.push({ label: this.mode === 'campaign' ? 'Retry' : 'Rematch', key: 'rematch' });
     if (!m || from === 'battle' || m.winner < 0) items.push({ label: this.mode === 'campaign' ? 'Edit army' : m && from !== 'battle' ? 'Next round' : 'Edit armies', key: 'edit' });
     if (this.mode === 'campaign') items.push({ label: 'Level select', key: 'levels' });
+    if (this.sim) items.push({ label: 'Simulation list', key: 'sims' });
     items.push({ label: 'Main menu', key: 'title' });
     return items;
   }
@@ -2109,6 +2225,7 @@ export class Game {
           case 'rematch': this.startBattle(); break;
           case 'edit': this.goSetup(); break;
           case 'levels': this.goLevels(); break;
+          case 'sims': this.goSims(); break;
           case 'title': this.goTitle(); break;
         }
         return;
