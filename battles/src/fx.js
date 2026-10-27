@@ -5,6 +5,7 @@
 // they run, stomp or hit the ground.
 import { THREE, rand, clamp } from './util.js';
 import { LIVE_VIS } from './visual.js';
+import { EXT } from './ext.js';
 
 const MAX_SOLID = 1800, MAX_SOFT = 1600, MAX_GLOW = 1400, MAX_SPLAT = 600, NRING = 10;
 const _m = new THREE.Matrix4();
@@ -17,6 +18,7 @@ const _c = new THREE.Color();
 
 // atlas tiles
 const T_PUFF = 0, T_SMOKE = 1, T_STAR = 2, T_NOTE = 3, T_NOTE2 = 4, T_PLUS = 5, T_FLAME = 6, T_DUST = 7;
+export const TILES = { puff: T_PUFF, smoke: T_SMOKE, star: T_STAR, flame: T_FLAME, dust: T_DUST, plus: T_PLUS };
 let ATLAS = null;
 function atlas() {
   if (ATLAS) return ATLAS;
@@ -289,6 +291,8 @@ export class FX {
       case 'fuse': // bomb fuse sparks
         this.bb(this.gs, x, y, z, rand(-1, 1), rand(0.5, 2), rand(-1, 1), rand(0.04, 0.08), rand(0.1, 0.25), '#ffd040', { tile: T_FLAME, g: 6, drag: 1, shrink: true });
         break;
+      default: // effects added by packs (EXT.fx: name -> fn(fx, x, y, z, a, b, c, TILES))
+        EXT.fx[k]?.(this, x, y, z, a, b, c, TILES);
     }
   }
 
@@ -353,6 +357,14 @@ export class FX {
     R.m.material.color.set(color);
     R.m.visible = true;
     R.r = r; R.life = life; R.max = life;
+  }
+
+  // a brief point-light flash (explosions, lightning, fire bursts)
+  flash(x, y, z, color, dist = 12) {
+    this.light.position.set(x, y, z);
+    this.light.color.set(color);
+    this.light.distance = dist;
+    this.lightT = 0.22;
   }
 
   // ---- unit-driven dust: footfalls while running, and thumps when a body lands

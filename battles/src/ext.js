@@ -40,10 +40,13 @@
 //                  ground(battle, pr) -> bool handled, step(battle, pr, dt)} },
 //   buildProj(type, g, H) -> bool,          // projectile meshes
 //   battleStep(battle, dt),                 // once per physics step
+//   fx: { name: fn(fx, x, y, z, a, b, c, T) }, // particle effects for battle.emit(name, ...)
+//                                           //   (src/fx.js: fx.bb/chunk/ring/dust/flash,
+//                                           //   fx.gs = glowing, fx.ss = soft; T = atlas tiles)
 // }
 export const EXT = {
   factions: [], units: [], items: {}, kinds: {}, proj: {},
-  buildItem: [], buildHat: [], decorate: [], buildProj: [], battleStep: [],
+  buildItem: [], buildHat: [], decorate: [], buildProj: [], battleStep: [], fx: {},
 };
 
 export function register(pack) {
@@ -52,6 +55,7 @@ export function register(pack) {
   if (pack.items) Object.assign(EXT.items, pack.items);
   if (pack.kinds) Object.assign(EXT.kinds, pack.kinds);
   if (pack.proj) Object.assign(EXT.proj, pack.proj);
+  if (pack.fx) Object.assign(EXT.fx, pack.fx);
   for (const k of ['buildItem', 'buildHat', 'decorate', 'buildProj', 'battleStep']) if (pack[k]) EXT[k].push(pack[k]);
 }
 

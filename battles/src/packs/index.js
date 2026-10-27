@@ -20,4 +20,7 @@ import './jjk-students.js'; // JJK: Yuji, Todo, Nobara, Nanami, Maki, Panda, Inu
 import './jjk-strongest.js'; // JJK: Gojo, Sukuna, Megumi (+ shikigami), Mahoraga
 import './jjk-curses.js'; // JJK: Toji, Dagon, Mahito, Jogo, Hanami, Geto, Choso, Hakari, Fly Heads
 import './minecraft.js';
+import './avatar-core.js'; // Avatar: the faction, elemental effects (fire, water, ice, air, earth, lightning)
+import './avatar-fire.js'; // Avatar: the Fire Nation
+import './avatar-benders.js'; // Avatar: Team Avatar, Earth Kingdom, Kyoshi Warriors
 import './custom.js'; // Unit Creator: the Custom faction (keep last: reads the other packs)
