@@ -6,25 +6,22 @@
 // animalgeo.js modelGeometry(name, ...args) by world/sealife.js and regions/jungle/animals.js.
 import { FL, FR, BL, BR, TAIL, HEAD, WING_L, WING_R, JAW, TENT } from './rigparts.js';
 
-const sculpt = (shapes, opts = {}) => ({ shapes, opts });
+// eyes / smiles are marks (snapped onto the surface in the worker, drawn by animalgeo.js MARKS)
+const sculpt = (shapes, opts = {}) => {
+  const ex = opts.extras || [];
+  return { shapes, opts: { ...opts, marks: [...(opts.marks || []), ...ex.filter((e) => e.draw)], extras: ex.filter((e) => !e.draw) } };
+};
 
 // ---- helpers ------------------------------------------------------------------------------------
 const INK = 0x16161e;
 // a pair of glossy eyes on a surface point (x, y, z) mirrored in x, looking along +z (or `dir`)
 function eyes(part, pivot, x, y, z, r, opts = {}) {
-  // glossy black cartoon eyes (taller than wide) with a white sparkle, like the Wobblers' faces
-  const out = opts.out ?? 0.3;
-  return { part, pivot, build: (b) => {
-    for (const s of [-1, 1]) {
-      const px = s * x;
-      b.sphere(r, INK, [px, y, z], [0.85 + out * 0.1, 1.15, 0.6], 14);
-      b.sphere(r * 0.3, 0xffffff, [px + s * r * 0.25, y + r * 0.45, z + r * 0.5], [1, 1, 0.5], 8);
-      if (opts.sparkle !== false) b.sphere(r * 0.14, 0xffffff, [px - s * r * 0.25, y - r * 0.35, z + r * 0.52], [1, 1, 0.5], 6);
-    }
-  } };
+  // glossy cartoon eyes on the surface nearest (±x, y, z): opts.iris (coloured ring), opts.white
+  // (eyeball), opts.brow (eyebrow tilt, angry > 0), opts.look (pupil toward the nose)
+  return { draw: 'eye', at: [x, y, z], r: r * 1.15, part, pivot, iris: opts.iris, white: opts.white, brow: opts.brow, look: opts.look };
 }
 // a smile: half a torus, curving down
-const smile = (part, pivot, r, t, pos, tilt = 0) => ({ part, pivot, build: (b) => b.arc(r, t, INK, pos, [tilt, 0, Math.PI]) });
+const smile = (part, pivot, r, t, pos) => ({ draw: 'smile', at: pos, mirror: false, w: r, t, curve: 0.35, part, pivot });
 const hash3 = (a, b, c) => { const h = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453; return h - Math.floor(h); };
 // spots: a jittered 3D cell pattern; returns 0 (no spot) .. 1 (spot centre)
 function spots(x, y, z, cell, rad) {
@@ -208,77 +205,6 @@ export function reefFish() {
     { s: 'egg', c: [0, 0.12, -0.02], r: [0.022, 0.05, 0.1], color: 0xffffff, k: 0.04 },
   ], { cell: 0.024, extras: [eyes(0, [0, 0, 0], 0.048, 0.035, 0.13, 0.022, { sparkle: false })] });
 }
-export function clownfish() {
-  const O = 0xff7a1a, W = 0xffffff, K = 0x1c1c22;
-  const stripe = (x, y, z) => { for (const [a, b] of [[0.07, 0.11], [-0.07, -0.03], [-0.19, -0.17]]) { if (z > a - 0.008 && z < b + 0.008) return z > a && z < b ? W : K; } return O; };
-  return sculpt([
-    { s: 'egg', c: [0, 0, 0], r: [0.06, 0.1, 0.17], color: stripe, k: 0.04 },
-    { s: 'egg', c: [0, 0, -0.2], r: [0.02, 0.07, 0.05], color: O, k: 0.05 },
-    { s: 'egg', c: [0, 0.09, -0.03], r: [0.02, 0.04, 0.08], color: O, k: 0.04 },
-  ], { cell: 0.02, colorSharp: 0.004, extras: [eyes(0, [0, 0, 0], 0.045, 0.03, 0.12, 0.02, { sparkle: false })] });
-}
-export function angelfish() {
-  const Yl = 0xffd23f, B = 0x2a5cd8;
-  const paint = (x, y, z) => (Math.sin(z * 30 + 1) > 0.55 ? B : Yl);
-  return sculpt([
-    { s: 'egg', c: [0, 0, 0], r: [0.04, 0.16, 0.15], color: paint, k: 0.04 },
-    { s: 'egg', c: [0, 0.2, -0.1], r: [0.012, 0.12, 0.05], rot: [-0.6, 0, 0], color: Yl, k: 0.05 },
-    { s: 'egg', c: [0, -0.2, -0.1], r: [0.012, 0.12, 0.05], rot: [0.6, 0, 0], color: Yl, k: 0.05 },
-    { s: 'egg', c: [0, 0, -0.18], r: [0.012, 0.07, 0.05], color: B, k: 0.04 },
-  ], { cell: 0.02, colorSharp: 0.004, extras: [eyes(0, [0, 0, 0], 0.035, 0.04, 0.1, 0.02, { sparkle: false })] });
-}
-export function puffer() {
-  const sh = [
-    { s: 'ball', c: [0, 0, 0], r: 0.23, color: (x, y) => (y < -0.06 ? 0xfff4d8 : 0xf2cf6a), k: 0.03 },
-    { s: 'egg', c: [0, 0, -0.27], r: [0.015, 0.09, 0.06], color: 0xf2cf6a, k: 0.06 },
-    ...[1, -1].map((s) => ({ s: 'egg', c: [s * 0.21, -0.02, 0.06], r: [0.012, 0.05, 0.04], color: 0xf2cf6a, k: 0.03 })),
-  ];
-  for (let i = 0; i < 18; i++) { const yv = 1 - (i + 0.5) / 9; if (Math.abs(yv) > 0.92) continue; const a = i * 2.4, rr = Math.sqrt(1 - yv * yv), d = [Math.cos(a) * rr, yv, Math.sin(a) * rr]; if (d[2] > 0.7) continue; sh.push({ s: 'limb', a: d.map((v) => v * 0.2), b: d.map((v) => v * 0.29), ra: 0.022, rb: 0.004, color: 0xc89a4a, k: 0.015 }); }
-  return sculpt(sh, { cell: 0.024, extras: [eyes(0, [0, 0, 0], 0.1, 0.07, 0.2, 0.035)] });
-}
-
-// ---- sea: big swimmers ----------------------------------------------------------------------------
-export function shark() { // ~2.8 m, nose at z +1.4
-  const TOP = 0x7d8ea8, BEL = 0xf0f4f8;
-  const paint = (x, y, z) => (y < -0.06 - Math.abs(x) * 0.2 ? BEL : TOP);
-  return sculpt([
-    { s: 'egg', c: [0, 0, 0.1], r: [0.32, 0.36, 1.3], color: paint, k: 0.1 },
-    { s: 'egg', c: [0, 0.48, -0.05], r: [0.045, 0.3, 0.22], rot: [-0.5, 0, 0], color: TOP, k: 0.12 },                   // dorsal fin
-    { s: 'limb', a: [0, 0.02, -1.0], b: [0, 0.04, -1.38], ra: 0.13, rb: 0.06, color: paint, k: 0.1 },
-    { s: 'egg', c: [0, 0.32, -1.55], r: [0.035, 0.3, 0.12], rot: [-0.7, 0, 0], color: TOP, k: 0.08 },                    // tail top
-    { s: 'egg', c: [0, -0.2, -1.47], r: [0.035, 0.18, 0.09], rot: [0.6, 0, 0], color: TOP, k: 0.08 },                    // tail bottom
-    { s: 'egg', c: [0.42, -0.2, 0.32], r: [0.32, 0.035, 0.15], rot: [0, 0.4, -0.35], color: TOP, part: WING_L, pivot: [0.25, -0.12, 0.4], k: 0.1 },
-    { s: 'egg', c: [-0.42, -0.2, 0.32], r: [0.32, 0.035, 0.15], rot: [0, -0.4, 0.35], color: TOP, part: WING_R, pivot: [-0.25, -0.12, 0.4], k: 0.1 },
-  ], { res: 64, extras: [eyes(0, [0, 0, 0], 0.2, 0.12, 0.98, 0.05), { build: (b) => { b.box(0.3, 0.02, 0.03, 0x3a2a3a, [0, -0.15, 1.15], [0.3, 0, 0]); for (let i = -3; i <= 3; i++) b.cone(0.016, 0.04, 0xffffff, [i * 0.04, -0.17, 1.16], [Math.PI, 0, 0], 4); } }] });
-}
-export function dolphin() { // ~2.2 m
-  const TOP = 0x6fa3d8, BEL = 0xe6f2ff;
-  const paint = (x, y) => (y < -0.08 ? BEL : TOP);
-  return sculpt([
-    { s: 'egg', c: [0, 0, 0], r: [0.29, 0.31, 0.95], color: paint, k: 0.1 },
-    { s: 'ball', c: [0, 0.05, 0.75], r: 0.25, color: paint, k: 0.15 },                                                    // melon
-    { s: 'limb', a: [0, -0.05, 0.9], b: [0, -0.08, 1.14], ra: 0.1, rb: 0.075, color: paint, k: 0.08 },                   // beak
-    { s: 'egg', c: [0, 0.36, -0.12], r: [0.04, 0.2, 0.17], rot: [-0.6, 0, 0], color: TOP, k: 0.1 },
-    { s: 'limb', a: [0, 0, -0.8], b: [0, 0, -1.05], ra: 0.12, rb: 0.06, color: TOP, k: 0.08 },
-    { s: 'egg', c: [0, 0, -1.12], r: [0.32, 0.03, 0.12], color: TOP, k: 0.06 },                                          // flukes
-    { s: 'egg', c: [0.32, -0.18, 0.3], r: [0.2, 0.03, 0.1], rot: [0, 0.4, -0.5], color: TOP, part: WING_L, pivot: [0.2, -0.12, 0.35], k: 0.08 },
-    { s: 'egg', c: [-0.32, -0.18, 0.3], r: [0.2, 0.03, 0.1], rot: [0, -0.4, 0.5], color: TOP, part: WING_R, pivot: [-0.2, -0.12, 0.35], k: 0.08 },
-  ], { res: 60, extras: [eyes(0, [0, 0, 0], 0.235, 0.09, 0.7, 0.045), smile(0, [0, 0, 0], 0.08, 0.012, [0, -0.04, 1.02], -0.4)] });
-}
-export function whale() { // humpback ~9 m
-  const TOP = 0x2c3e66, BEL = 0xdce4f0;
-  const paint = (x, y, z) => (y < -0.4 ? (Math.sin(x * 9) > 0.6 && z > 0 ? 0xaab6cc : BEL) : TOP);
-  return sculpt([
-    { s: 'egg', c: [0, 0, 0.3], r: [1.45, 1.3, 3.4], color: paint, k: 0.4 },
-    { s: 'egg', c: [0, -0.2, 2.6], r: [1.2, 1.0, 1.6], color: paint, k: 0.5 },
-    { s: 'egg', c: [0, 1.0, -1.1], r: [0.15, 0.35, 0.6], color: TOP, k: 0.4 },
-    { s: 'limb', a: [0, 0.1, -2.6], b: [0, 0.15, -4.0], ra: 0.75, rb: 0.3, color: TOP, k: 0.4 },
-    { s: 'egg', c: [0, 0.15, -4.4], r: [1.7, 0.13, 0.55], color: (x, y) => (y < 0.12 ? BEL : TOP), k: 0.3 },
-    { s: 'egg', c: [2.3, -0.8, 1.2], r: [1.6, 0.14, 0.38], rot: [0, 0.35, -0.3], color: BEL, part: WING_L, pivot: [1.2, -0.5, 1.4], k: 0.35 },
-    { s: 'egg', c: [-2.3, -0.8, 1.2], r: [1.6, 0.14, 0.38], rot: [0, -0.35, 0.3], color: BEL, part: WING_R, pivot: [-1.2, -0.5, 1.4], k: 0.35 },
-    ...[[0.5, 3.4], [-0.4, 3.7], [0.15, 4.0], [-0.2, 3.2]].map(([x, z]) => ({ s: 'ball', c: [x, 0.95, z], r: 0.13, color: 0x46588a, k: 0.15 })),
-  ], { res: 64, extras: [eyes(0, [0, 0, 0], 1.12, 0.05, 2.75, 0.13)] });
-}
 export function jelly() { // tinted
   const sh = [
     { s: 'egg', c: [0, 0.05, 0], r: [0.42, 0.32, 0.42], color: 0xffffff, k: 0.05 },
@@ -369,4 +295,163 @@ export function plesiosaur() { // ~7 m
     { s: 'egg', c: [1.15, -0.35, -0.9], r: [0.55, 0.07, 0.22], rot: [0, 0.4, -0.15], color: G, part: BL, pivot: [0.7, -0.2, -0.8], k: 0.18 },
     { s: 'egg', c: [-1.15, -0.35, -0.9], r: [0.55, 0.07, 0.22], rot: [0, -0.4, 0.15], color: G, part: BR, pivot: [-0.7, -0.2, -0.8], k: 0.18 },
   ], { res: 72, extras: [eyes(HEAD, hp, 0.2, 2.42, 3.82, 0.06), smile(HEAD, hp, 0.12, 0.018, [0, 2.26, 3.87], -0.3)] });
+}
+
+
+// ---- sea, matched to assets/reference/animals/ (round 16 turnarounds) ----------------------------
+// fins are inflated triangles ('tri'), blended into the body with a small k
+
+// shark.png: ~2.8 m, nose at z +1.4. Deep chest tapering hard to the tail, pointed snout, slate
+// top over a white belly with a ragged edge up to mid-flank, tall swept dorsal, crescent tail
+// (upper lobe longer), long swept pectorals, gill slits, angry brows and a toothy grin.
+export function shark() {
+  const TOP = 0x7189a8, BEL = 0xf8f6f0, FIN = 0x637c9c;
+  const paint = (x, y, z) => (y < 0.02 + 0.05 * Math.sin(z * 13) + 0.03 * Math.sin(z * 29) - Math.max(0, z - 0.9) * 0.25 ? BEL : TOP);
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0.32], r: [0.37, 0.45, 1.0], color: paint, k: 0.12 },
+    { s: 'egg', c: [0, 0.02, 1.0], r: [0.27, 0.28, 0.48], color: paint, k: 0.22 },                                     // snout
+    { s: 'limb', a: [0, 0.02, -0.25], b: [0, 0.08, -1.22], ra: 0.32, rb: 0.075, color: paint, k: 0.2 },
+    { s: 'tri', pts: [[0, 0.32, 0.42], [0, 0.34, -0.12], [0, 0.95, -0.22]], r: 0.054, color: FIN, k: 0.12 },          // dorsal
+    { s: 'tri', pts: [[0, 0.08, -1.12], [0, 0.12, -1.3], [0, 0.85, -1.62]], r: 0.047, color: FIN, k: 0.06 },     // tail, upper lobe
+    { s: 'tri', pts: [[0, 0.04, -1.12], [0, 0.06, -1.3], [0, -0.48, -1.5]], r: 0.047, color: FIN, k: 0.06 },     // lower lobe
+    { s: 'tri', pts: [[0, 0.2, -0.82], [0, 0.2, -0.96], [0, 0.36, -1.0]], r: 0.027, color: FIN, k: 0.04 },             // 2nd dorsal
+    { s: 'tri', pts: [[0, -0.18, -0.8], [0, -0.18, -0.94], [0, -0.32, -0.98]], r: 0.027, color: FIN, k: 0.04 },         // anal
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.24, -0.2, 0.68], [s * 0.24, -0.24, 0.36], [s * 0.88, -0.72, -0.02]], r: 0.043, color: FIN, part: s > 0 ? WING_L : WING_R, pivot: [s * 0.24, -0.22, 0.52], k: 0.09 })),
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.12, -0.3, -0.35], [s * 0.12, -0.3, -0.52], [s * 0.32, -0.5, -0.62]], r: 0.027, color: FIN, k: 0.04 })),
+  ], { res: 96, colorSharp: 0.008, marks: [
+    { draw: 'eye', at: [0.2, 0.17, 1.02], r: 0.075, white: true, brow: 0.45, look: 0.25 },
+    { draw: 'smile', at: [0, -0.12, 1.28], mirror: false, w: 0.2, t: 0.018, curve: 0.2, lift: 0.25, color: 0x6a2030 },
+    { draw: 'teeth', at: [0, -0.12, 1.28], mirror: false, w: 0.2, n: 10, s: 0.022, curve: 0.2, lift: 0.25 },
+    { draw: 'gills', at: [0.33, 0.06, 0.62], n: 4, gap: 0.065, l: 0.15, t: 0.009, color: 0x4d6282 },
+  ] });
+}
+
+
+// dolphin.png: ~2.2 m. Grey top, lighter wavy band along the flank, cream belly and chin, round
+// melon, short beak, curved dorsal, swept flukes, big friendly eyes and a smile.
+export function dolphin() {
+  const TOP = 0x7a8ea2, BAND = 0xb0c2d0, BEL = 0xf6f0e4, FIN = 0x718599;
+  const paint = (x, y, z) => (y < -0.1 + 0.06 * Math.sin(z * 3.5 + 0.5) ? BEL : y < 0.07 + 0.07 * Math.sin(z * 4 + 1) && Math.abs(x) > 0.12 ? BAND : TOP);
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0.05], r: [0.29, 0.31, 0.82], color: paint, k: 0.1 },
+    { s: 'ball', c: [0, 0.06, 0.6], r: 0.27, color: paint, k: 0.22 },                                        // melon
+    { s: 'limb', a: [0, -0.07, 0.78], b: [0, -0.09, 1.1], ra: 0.12, rb: 0.075, color: (x, y) => (y < -0.1 ? BEL : 0x7d91a5), k: 0.08 },
+    { s: 'limb', a: [0, 0, -0.5], b: [0, 0.03, -0.95], ra: 0.2, rb: 0.065, color: paint, k: 0.14 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[0, 0.03, -0.88], [s * 0.42, 0.03, -1.1], [s * 0.1, 0.03, -1.14]], r: 0.034, color: FIN, k: 0.05 })),
+    { s: 'tri', pts: [[0, 0.24, 0.14], [0, 0.26, -0.22], [0, 0.58, -0.28]], r: 0.041, color: FIN, k: 0.09 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.2, -0.16, 0.44], [s * 0.21, -0.18, 0.24], [s * 0.6, -0.44, 0.08]], r: 0.034, color: FIN, part: s > 0 ? WING_L : WING_R, pivot: [s * 0.2, -0.16, 0.34], k: 0.07 })),
+  ], { res: 96, colorSharp: 0.008, marks: [
+    { draw: 'eye', at: [0.22, 0.07, 0.74], r: 0.07, white: true, iris: 0x6a3a1a, look: 0.25 },
+    { draw: 'smile', at: [0, -0.07, 1.02], mirror: false, w: 0.12, t: 0.012, curve: 0.35 },
+  ] });
+}
+
+
+// whale.png: humpback ~9 m. Broad flat knobbly head, girth well forward, a long taper to the
+// flukes; navy top, cream grooved throat and belly with navy blotches, small dorsal hump, very
+// long white flippers with dark spots, flukes white underneath.
+export function whale() {
+  const TOP = 0x3e5b86, CR = 0xf2ecde, DK = 0x2f4468;
+  const belly = (x, y, z) => {
+    if (y > -0.2 + 0.18 * Math.sin(z * 1.3 + 1) - Math.max(0, -z - 1) * 0.15) return TOP;
+    if (z < 1.6 && spots(x, y, z, 0.75, 0.24) > 0.15) return DK;
+    return z > 0.6 && Math.sin(x * 10) > 0.6 ? 0xcfc6b4 : CR; // throat grooves
+  };
+  const flip = (x, y, z) => (spots(x, y, z, 0.55, 0.16) > 0.2 || (Math.abs(x) < 1.6 && y > -0.85) ? DK : CR);
+  const quad = (A, B, C, D, o) => [{ s: 'tri', pts: [A, B, C], ...o }, { s: 'tri', pts: [A, C, D], ...o }];
+  const sh = [
+    { s: 'egg', c: [0, 0, 0.9], r: [1.1, 0.98, 3.2], color: belly, k: 0.5 },
+    { s: 'egg', c: [0, 0.0, 3.35], r: [1.0, 0.62, 1.45], color: belly, k: 0.6 },                                 // long flat head
+    { s: 'egg', c: [0, -0.35, 2.4], r: [0.98, 0.72, 2.2], color: belly, k: 0.5 },                                // throat
+    { s: 'limb', a: [0, 0.0, -1.2], b: [0, 0.22, -4.1], ra: 0.85, rb: 0.2, color: belly, k: 0.6 },
+    { s: 'tri', pts: [[0, 0.68, -1.5], [0, 0.68, -2.2], [0, 1.08, -2.25]], r: 0.09, color: TOP, k: 0.3 },        // dorsal hump
+    ...[1, -1].flatMap((s) => quad([0, 0.22, -3.9], [s * 0.9, 0.26, -4.2], [s * 2.5, 0.28, -4.75], [s * 0.5, 0.22, -4.95], { r: 0.1, color: (x, y) => (y < 0.2 ? CR : TOP), k: 0.2 })), // flukes
+    ...[1, -1].flatMap((s) => quad([s * 0.85, -0.45, 2.3], [s * 0.85, -0.62, 1.2], [s * 3.3, -1.75, -0.65], [s * 3.6, -1.62, 0.25], { r: 0.13, color: flip, part: s > 0 ? WING_L : WING_R, pivot: [s * 0.85, -0.55, 1.75], k: 0.3 })),
+  ];
+  for (let i = 0; i < 16; i++) { const z = 2.6 + (i % 8) * 0.28, x = (i < 8 ? 1 : -1) * (0.2 + ((i * 5) % 3) * 0.24); sh.push({ s: 'ball', c: [x, 0.6 - (z - 2.6) * 0.06, z], r: 0.11, color: DK, k: 0.1 }); }
+  return sculpt(sh, { res: 96, colorSharp: 0.03, marks: [
+    { draw: 'eye', at: [0.9, 0.0, 2.75], r: 0.18, white: true, iris: 0x9a6a1a, look: 0.15 },
+    { draw: 'smile', at: [0.75, -0.2, 3.6], w: 0.9, t: 0.035, curve: -0.05, color: 0x22324e },
+  ] });
+}
+
+
+// pufferfish.png: puffed ball, golden top with brown spots, cream belly, little cream spikes,
+// fan fins and tail, big amber eyes, puckered lips
+export function puffer() {
+  const GOLD = 0xe8b44a, CR = 0xf6ead0, SPOT = 0xa8783a, FINC = 0xf0c45a;
+  const skin = (x, y, z) => (y < -0.05 + 0.03 * Math.sin(z * 20) ? CR : spots(x, y, z, 0.085, 0.032) > 0.15 ? SPOT : GOLD);
+  const sh = [
+    { s: 'egg', c: [0, 0, 0], r: [0.22, 0.21, 0.25], color: skin, k: 0.04 },
+    { s: 'limb', a: [0, 0, -0.2], b: [0, 0, -0.3], ra: 0.08, rb: 0.05, color: skin, k: 0.05 },
+    { s: 'ball', c: [0, -0.02, 0.255], r: 0.035, color: 0xe8a84a, k: 0.03 },                                    // lips
+    { s: 'tri', pts: [[0, 0, -0.29], [0, 0.13, -0.42], [0, -0.13, -0.42]], r: 0.012, color: FINC, k: 0.03 },    // tail fan
+    { s: 'tri', pts: [[0, 0.17, -0.06], [0, 0.17, -0.16], [0, 0.3, -0.16]], r: 0.01, color: FINC, k: 0.03 },
+    { s: 'tri', pts: [[0, -0.17, -0.06], [0, -0.17, -0.16], [0, -0.28, -0.16]], r: 0.01, color: FINC, k: 0.03 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.2, -0.02, 0.04], [s * 0.2, -0.05, -0.02], [s * 0.3, -0.08, -0.06]], r: 0.012, color: FINC, part: s > 0 ? WING_L : WING_R, pivot: [s * 0.2, -0.03, 0.02], k: 0.03 })),
+  ];
+  for (let i = 0; i < 40; i++) { // spikes on a Fibonacci sphere, not on the face
+    const yv = 1 - (i + 0.5) / 20, rr = Math.sqrt(Math.max(0, 1 - yv * yv)), a = i * 2.39996;
+    const d = [Math.cos(a) * rr, yv, Math.sin(a) * rr];
+    if (d[2] > 0.75 || Math.abs(yv) > 0.97) continue;
+    sh.push({ s: 'limb', a: [d[0] * 0.2, d[1] * 0.19, d[2] * 0.23], b: [d[0] * 0.28, d[1] * 0.27, d[2] * 0.31], ra: 0.016, rb: 0.003, color: CR, k: 0.01 });
+  }
+  return sculpt(sh, { cell: 0.016, colorSharp: 0.004, extras: [eyes(0, [0, 0, 0], 0.105, 0.07, 0.205, 0.038, { white: true, iris: 0xe0a020 })] });
+}
+
+// reef_fish.png (each ~0.4 m long, nose at +0.2)
+const fishEyes = (x, y, z, r = 0.02) => eyes(0, [0, 0, 0], x, y, z, r, { white: true, iris: 0x9a5a1a, sparkle: false });
+export function clownfish() {
+  const O = 0xff7a1a, W = 0xffffff, K = 0x1c1c22;
+  const bands = (x, y, z) => { for (const [a, b] of [[0.075, 0.115], [-0.04, 0.0], [-0.16, -0.14]]) { if (z > a - 0.01 && z < b + 0.01) return z > a && z < b ? W : K; } return O; };
+  const rim = (cy, cz, R) => (x, y, z) => (Math.hypot((y - cy) * 1.2, z - cz) > R ? K : O); // rounded fins with black rims
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0], r: [0.055, 0.085, 0.16], color: bands, k: 0.03 },
+    { s: 'egg', c: [0, 0.095, 0.02], r: [0.014, 0.045, 0.05], rot: [-0.3, 0, 0], color: rim(0.08, 0.02, 0.05), k: 0.025 },     // front dorsal
+    { s: 'egg', c: [0, 0.085, -0.085], r: [0.014, 0.045, 0.055], rot: [-0.5, 0, 0], color: rim(0.07, -0.08, 0.05), k: 0.025 }, // back dorsal
+    { s: 'egg', c: [0, -0.08, -0.07], r: [0.014, 0.04, 0.045], rot: [0.5, 0, 0], color: rim(-0.07, -0.07, 0.04), k: 0.025 },   // anal
+    { s: 'egg', c: [0, 0, -0.205], r: [0.015, 0.075, 0.06], color: rim(0, -0.19, 0.06), k: 0.03 },                             // tail
+    ...[1, -1].map((s) => ({ s: 'egg', c: [s * 0.065, -0.03, 0.02], r: [0.012, 0.03, 0.045], rot: [0.3, s * 0.4, 0], color: rim(-0.03, 0.02, 0.035), k: 0.02 })),
+  ], { cell: 0.01, colorSharp: 0.003, extras: [fishEyes(0.042, 0.025, 0.11)] });
+}
+export function blueTang() {
+  const B = 0x2a5ae0, K = 0x16182a, Y = 0xffd400;
+  const body = (x, y, z) => {
+    if (z < -0.13) return Y;
+    // the black 'palette': a band from the eye curving back along the top, with a blue patch inside
+    const d = Math.abs(y - (0.035 + 0.05 * Math.sin((z + 0.05) * 9)));
+    return d < 0.028 && z < 0.08 && !(Math.abs(y - 0.035) < 0.012 && z < -0.02 && z > -0.08) ? K : B;
+  };
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0], r: [0.05, 0.11, 0.16], color: body, k: 0.03 },
+    { s: 'egg', c: [0, -0.01, 0.13], r: [0.04, 0.06, 0.06], color: B, k: 0.04 },
+    { s: 'tri', pts: [[0, 0.09, 0.08], [0, 0.07, -0.13], [0, 0.15, -0.05]], r: 0.01, color: (x, y) => (y > 0.13 ? K : B), k: 0.02 },
+    { s: 'tri', pts: [[0, -0.08, 0.02], [0, -0.06, -0.13], [0, -0.13, -0.07]], r: 0.01, color: (x, y) => (y < -0.115 ? K : B), k: 0.02 },
+    { s: 'tri', pts: [[0, 0, -0.14], [0, 0.09, -0.26], [0, -0.09, -0.26]], r: 0.012, color: (x, y, z) => (z < -0.235 ? K : Y), k: 0.02 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.045, -0.01, 0.04], [s * 0.045, -0.04, 0.0], [s * 0.09, -0.04, -0.05]], r: 0.009, color: Y, k: 0.02 })),
+  ], { cell: 0.012, colorSharp: 0.003, extras: [fishEyes(0.038, 0.025, 0.115)] });
+}
+export function yellowTang() {
+  const Y = 0xffde1a, Wt = 0xffffff;
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0], r: [0.045, 0.12, 0.13], color: Y, k: 0.03 },
+    { s: 'limb', a: [0, 0.0, 0.1], b: [0, -0.01, 0.2], ra: 0.045, rb: 0.022, color: Y, k: 0.04 },         // snout
+    { s: 'tri', pts: [[0, 0.1, 0.07], [0, 0.07, -0.12], [0, 0.22, -0.04]], r: 0.01, color: Y, k: 0.02 },
+    { s: 'tri', pts: [[0, -0.1, 0.03], [0, -0.07, -0.12], [0, -0.2, -0.06]], r: 0.01, color: Y, k: 0.02 },
+    { s: 'tri', pts: [[0, 0, -0.12], [0, 0.09, -0.24], [0, -0.09, -0.24]], r: 0.012, color: Y, k: 0.02 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.04, -0.01, 0.04], [s * 0.04, -0.04, 0.0], [s * 0.085, -0.04, -0.05]], r: 0.009, color: Y, k: 0.02 })),
+    { s: 'ball', c: [0.04, 0.0, -0.1], r: 0.008, color: Wt, k: 0.005 }, { s: 'ball', c: [-0.04, 0.0, -0.1], r: 0.008, color: Wt, k: 0.005 }, // tail spine
+  ], { cell: 0.012, colorSharp: 0.003, extras: [fishEyes(0.033, 0.035, 0.085)] });
+}
+export function moorishIdol() { // the striped 'angelfish' with the long trailing dorsal
+  const C = 0xf6eccb, K = 0x16161e, Y = 0xffd23f;
+  const bands = (x, y, z) => { const u = z + y * 0.25; return (u > 0.03 && u < 0.08) || (u > -0.1 && u < -0.04) || z < -0.16 ? K : (u > -0.04 && u < -0.02 && y > 0.05 ? Y : C); };
+  return sculpt([
+    { s: 'egg', c: [0, 0, 0], r: [0.035, 0.13, 0.12], color: bands, k: 0.03 },
+    { s: 'limb', a: [0, -0.01, 0.09], b: [0, -0.02, 0.19], ra: 0.035, rb: 0.015, color: C, k: 0.03 },       // snout
+    { s: 'tri', pts: [[0, 0.1, 0.06], [0, 0.11, -0.05], [0, 0.32, -0.3]], r: 0.009, color: (x, y) => (y > 0.22 ? Y : bands(x, y, 0.05)), k: 0.02 }, // trailing dorsal
+    { s: 'tri', pts: [[0, -0.1, 0.03], [0, -0.09, -0.08], [0, -0.22, -0.12]], r: 0.009, color: K, k: 0.02 },
+    { s: 'tri', pts: [[0, 0, -0.12], [0, 0.07, -0.22], [0, -0.07, -0.22]], r: 0.011, color: K, k: 0.02 },
+    ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.03, -0.02, 0.03], [s * 0.03, -0.05, -0.01], [s * 0.07, -0.05, -0.05]], r: 0.008, color: K, k: 0.02 })),
+  ], { cell: 0.012, colorSharp: 0.003, extras: [fishEyes(0.03, 0.035, 0.07)] });
 }

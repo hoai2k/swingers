@@ -32,8 +32,10 @@ export function buildSeaLife(game) {
   const T = game.terrain, S = {};
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, ...opts }));
   mk('fish', modelGeometry('reefFish'), 260, { mode: 'swim', tint: true, k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.6 } });
-  mk('clown', modelGeometry('clownfish'), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.5 } });
-  mk('angel', modelGeometry('angelfish'), 60, { mode: 'swim', k: { WAVEK: 8, WAVEA: 0.04, TAILZ: 0.4 } });
+  mk('clown', modelGeometry('clownfish'), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.45 } });
+  mk('tangB', modelGeometry('blueTang'), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.04, TAILZ: 0.45 } });
+  mk('tangY', modelGeometry('yellowTang'), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.04, TAILZ: 0.45 } });
+  mk('idol', modelGeometry('moorishIdol'), 60, { mode: 'swim', k: { WAVEK: 8, WAVEA: 0.035, TAILZ: 0.42 } });
   mk('puffer', modelGeometry('puffer'), 16, { mode: 'swim', k: { WAVEK: 6, WAVEA: 0.03, TAILZ: 0.5 } });
   mk('jelly', modelGeometry('jelly'), 40, { mode: 'pulse', tint: true, material: { transparent: true, opacity: 0.72, depthWrite: false } });
   mk('star', modelGeometry('seaStar'), 80, { tint: true });
@@ -66,7 +68,7 @@ export function buildSeaLife(game) {
     // fish schools
     const schools = depth > 2 ? (r() < 0.75 ? 1 : 0) + (r() < 0.35 ? 1 : 0) : (r() < 0.4 ? 1 : 0);
     for (let s = 0; s < schools; s++) {
-      const [x, z] = spot(5), kind = warm ? (r() < 0.6 ? 'fish' : r() < 0.5 ? 'clown' : 'angel') : 'fish';
+      const [x, z] = spot(5), kind = warm ? ['fish', 'clown', 'tangB', 'tangY', 'idol'][(r() * 5) | 0] : 'fish';
       const pal = warm ? WARM : COLD, col = pal[(r() * pal.length) | 0], n = kind === 'fish' ? 7 + ((r() * 8) | 0) : 4 + ((r() * 4) | 0);
       list.push({ t: 'school', kind, x, z, R: 1.8 + r() * 2.5, w: (r() < 0.5 ? -1 : 1) * (0.35 + r() * 0.4), n, col, h: r(), seed: r() * 100, cold });
     }

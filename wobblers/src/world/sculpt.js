@@ -7,7 +7,8 @@
 //   { s: 'egg', c, r: [rx, ry, rz], rot?: [x, y, z] }    ellipsoid (rot: euler, radians)
 //   { s: 'limb', a: [x, y, z], b: [x, y, z], ra, rb }    tapered capsule from a (radius ra) to b (rb)
 //   { s: 'chain', pts: [[x, y, z, r], ...] }             a smooth tube through the points (necks, tails, tentacles)
-//   { s: 'slab', c, h: [hx, hy, hz], r, rot? }           rounded box (fins, flukes, flat beaks)
+//   { s: 'slab', c, h: [hx, hy, hz], r, rot? }           rounded box (flat beaks, jaws)
+//   { s: 'tri', pts: [a, b, c], r }                       a triangle inflated by r (fins, flukes, flippers)
 // Each shape also has: color (0xrrggbb, or fn(x, y, z) -> 0xrrggbb for painted markings),
 // k (how softly it blends into the others, m; default 0.06), part / pivot (critters.js rig
 // part it moves with). Where a moving part meets the body the vertices get a blended weight
@@ -32,7 +33,7 @@ function prep(sh) {
   if (sh.rot) o.inv = invRot(sh.rot);
   if (sh.s === 'chain') { o.segs = []; for (let i = 0; i < sh.pts.length - 1; i++) o.segs.push([sh.pts[i], sh.pts[i + 1]]); }
   // bounds
-  const pts = sh.s === 'chain' ? sh.pts : sh.s === 'limb' ? [[...sh.a, sh.ra], [...sh.b, sh.rb]] : [[...sh.c, (sh.h ? Math.hypot(...sh.h) + (sh.r || 0) : Math.max(...[].concat(sh.r ?? 0)))]];
+  const pts = sh.s === 'tri' ? sh.pts.map((p) => [...p, sh.r]) : sh.s === 'chain' ? sh.pts : sh.s === 'limb' ? [[...sh.a, sh.ra], [...sh.b, sh.rb]] : [[...sh.c, (sh.h ? Math.hypot(...sh.h) + (sh.r || 0) : Math.max(...[].concat(sh.r ?? 0)))]];
   o.min = [Infinity, Infinity, Infinity]; o.max = [-Infinity, -Infinity, -Infinity];
   for (const p of pts) for (let i = 0; i < 3; i++) { o.min[i] = Math.min(o.min[i], p[i] - p[3] - o.k); o.max[i] = Math.max(o.max[i], p[i] + p[3] + o.k); }
   return o;
@@ -54,6 +55,7 @@ function dist(o, x, y, z) {
     }
     case 'limb': return segDist(x, y, z, o.a, o.b, o.ra, o.rb);
     case 'chain': { let d = Infinity; for (const [a, b] of o.segs) d = Math.min(d, segDist(x, y, z, a, b, a[3], b[3])); return d; }
+    case 'tri': return triDist(x, y, z, o.pts[0], o.pts[1], o.pts[2]) - o.r;
     case 'slab': {
       const qx = Math.abs(x - o.c[0]) - o.h[0], qy = Math.abs(y - o.c[1]) - o.h[1], qz = Math.abs(z - o.c[2]) - o.h[2];
       return Math.hypot(Math.max(qx, 0), Math.max(qy, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qy, qz), 0) - (o.r || 0);
@@ -61,6 +63,21 @@ function dist(o, x, y, z) {
   }
   return Infinity;
 }
+// unsigned distance from a point to a 3D triangle (after Inigo Quilez)
+function triDist(px, py, pz, a, b, c) {
+  const sub = (u, v) => [u[0] - v[0], u[1] - v[1], u[2] - v[2]], dot = (u, v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+  const cross = (u, v) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  const p = [px, py, pz], ba = sub(b, a), pa = sub(p, a), cb = sub(c, b), pb = sub(p, b), ac = sub(a, c), pc = sub(p, c), nor = cross(ba, ac);
+  const sg = (v) => (v > 0 ? 1 : v < 0 ? -1 : 0);
+  if (sg(dot(cross(ba, nor), pa)) + sg(dot(cross(cb, nor), pb)) + sg(dot(cross(ac, nor), pc)) < 2) {
+    const edge = (e, q) => { const t = Math.max(0, Math.min(1, dot(e, q) / dot(e, e))); const d = [e[0] * t - q[0], e[1] * t - q[1], e[2] * t - q[2]]; return dot(d, d); };
+    return Math.sqrt(Math.min(edge(ba, pa), edge(cb, pb), edge(ac, pc)));
+  }
+  const dn = dot(nor, pa);
+  return Math.sqrt(dn * dn / dot(nor, nor));
+}
+// colour anti-aliasing offsets (in cells)
+const AA = [[0, 0, 0], [0.4, 0, 0], [-0.4, 0, 0], [0, 0.4, 0], [0, -0.4, 0], [0, 0, 0.4], [0, 0, -0.4], [0.25, 0.25, 0.25], [-0.25, -0.25, -0.25]];
 // polynomial smooth min
 function smin(a, b, k) { if (k <= 0) return Math.min(a, b); const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; }
 
@@ -93,7 +110,7 @@ export function sculptArrays(shapes, opts = {}) {
     pos.push(lo[0] + (i + sx / n) * h, lo[1] + (j + sy / n) * h, lo[2] + (k + sz / n) * h);
   }
   const idx = [];
-  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (flip) idx.push(a, c, b, a, d, c); else idx.push(a, b, c, a, c, d); };
+  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (flip) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c); }; // wound counter-clockwise seen from outside
   for (let k = 1; k < nz - 1; k++) for (let j = 1; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) { // x edges
     const fa = F[id(i, j, k)], fb = F[id(i + 1, j, k)]; if ((fa < 0) === (fb < 0)) continue;
     quad(vIdx[cid(i, j - 1, k - 1)], vIdx[cid(i, j, k - 1)], vIdx[cid(i, j, k)], vIdx[cid(i, j - 1, k)], fa < 0);
@@ -122,7 +139,12 @@ export function sculptArrays(shapes, opts = {}) {
     for (let s = 0; s < S.length; s++) {
       const o = S[s];
       const wc = Math.exp(-(ds[s] - dmin) / sc);
-      if (wc > 1e-4) { const c = rgb(typeof o.color === 'function' ? o.color(x, y, z) : (o.color ?? 0xffffff)); r += c[0] * wc; g += c[1] * wc; b += c[2] * wc; wsum += wc; }
+      if (wc > 1e-4) {
+        if (typeof o.color === 'function') { // painted markings: average a few nearby samples, so edges don't step along the mesh
+          for (const [ox, oy, oz] of AA) { const c = rgb(o.color(x + ox * h, y + oy * h, z + oz * h)); r += c[0] * wc / AA.length; g += c[1] * wc / AA.length; b += c[2] * wc / AA.length; }
+        } else { const c = rgb(o.color ?? 0xffffff); r += c[0] * wc; g += c[1] * wc; b += c[2] * wc; }
+        wsum += wc;
+      }
       const ww = Math.exp(-(ds[s] - dmin) / sw);
       pw[o.part] = (pw[o.part] || 0) + ww; pall += ww;
     }
@@ -134,5 +156,21 @@ export function sculptArrays(shapes, opts = {}) {
     rigA.set([best, piv[0], piv[1], piv[2]], v * 4);
     wA[v] = w * w * (3 - 2 * w); // smoothstep: firm along the limb, soft where it meets the body
   }
-  return { pos: new Float32Array(pos), nrm, col, rig: rigA, w: wA, idx: nv > 65535 ? new Uint32Array(idx) : new Uint16Array(idx) };
+  // marks (eyes, mouths...: animalgeo.js draws them): each `at` point is slid onto the surface
+  // along the field's gradient, and its outward normal recorded; `mirror` adds the x-mirrored one
+  const marks = opts.marks || [], anc = new Float32Array(marks.length * 12);
+  marks.forEach((m, i) => {
+    for (const side of [1, -1]) {
+      let x = m.at[0] * side, y = m.at[1], z = m.at[2], gx = 0, gy = 0, gz = 1;
+      for (let it = 0; it < 30; it++) {
+        const d = field(x, y, z);
+        gx = field(x + e, y, z) - field(x - e, y, z); gy = field(x, y + e, z) - field(x, y - e, z); gz = field(x, y, z + e) - field(x, y, z - e);
+        const gl = Math.hypot(gx, gy, gz) || 1; gx /= gl; gy /= gl; gz /= gl;
+        x -= d * gx; y -= d * gy; z -= d * gz;
+        if (Math.abs(d) < h * 0.02) break;
+      }
+      anc.set([x, y, z, gx, gy, gz], i * 12 + (side > 0 ? 0 : 6));
+    }
+  });
+  return { pos: new Float32Array(pos), nrm, col, rig: rigA, w: wA, idx: nv > 65535 ? new Uint32Array(idx) : new Uint16Array(idx), anc };
 }

@@ -76,11 +76,31 @@ export class Species {
     const attach = (g) => { g.setAttribute('aAnim', this.animAttr); return g; };
     this.ready = !(geo instanceof Promise);
     const g = this.ready ? attach(geo.clone()) : new THREE.BufferGeometry();
-    if (!this.ready) geo.then((real) => { this.mesh.geometry.dispose(); this.mesh.geometry = attach(real); this.ready = true; }).catch((e) => console.warn('animal model', opts.name, e));
+    if (!this.ready) geo.then((real) => { this.mesh.geometry.dispose(); this.mesh.geometry = attach(real); this.useProj(real.userData.proj); this.ready = true; }).catch((e) => console.warn('animal model', opts.name, e));
     const mat = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 28, specular: 0x262626, ...(opts.material || {}) });
     const consts = Object.entries(k).map(([n, v]) => `#define ${n} ${Number(v).toFixed(4)}`).join('\n');
     const mode = BODY_MODES[opts.mode] || '';
+    // painted by projection (models built from a reference sheet): the side view on z / y, the
+    // top view on z / x, blended by how much the surface faces up (object space, before the rig)
+    const PU = this.projU = { uSide: { value: null }, uTop: { value: null }, uSideBox: { value: new THREE.Vector4() }, uTopBox: { value: new THREE.Vector4() } };
     mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, PU);
+      if (mat.defines?.USE_PROJ) {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvObjP = position; vObjN = normal;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vObjP; varying vec3 vObjN;
+uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform vec4 uTopBox;`)
+          .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  vec2 su = vec2((vObjP.z - uSideBox.x) / (uSideBox.y - uSideBox.x), (vObjP.y - uSideBox.z) / (uSideBox.w - uSideBox.z));
+  vec2 tu = vec2((vObjP.z - uTopBox.x) / (uTopBox.y - uTopBox.x), (vObjP.x - uTopBox.w) / (uTopBox.z - uTopBox.w));
+  vec3 n = normalize(vObjN);
+  float wt = smoothstep(0.3, 0.8, n.y);
+  vec3 c = mix(texture2D(uSide, su).rgb, texture2D(uTop, tu).rgb, wt);
+  diffuseColor.rgb *= c * 1.05;
+}`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * 0.22; // the paint already has its own shading: lift the shadow side');
+      }
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', `#include <common>\n${consts}\n${GLSL_HEAD}`)
         .replace('#include <beginnormal_vertex>', 'mat3 rigR = rigRot();\nvec3 objectNormal = normalize(mix(vec3(normal), rigR * vec3(normal), aW));')
@@ -89,7 +109,7 @@ if (aRig.x > 9.5) { float d = length(position - aRig.yzw); float i = aRig.x - 10
   transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y) * aW; }
 ${mode}`);
     };
-    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '');
+    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '');
     const mesh = this.mesh = new THREE.InstancedMesh(g, mat, max);
     mesh.name = 'critters_' + (opts.name || 'x');
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -100,6 +120,14 @@ ${mode}`);
     if (opts.tint) { mesh.setColorAt(0, new THREE.Color(1, 1, 1)); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage); }
     game.scene.add(mesh);
     this.max = max; this.n = 0;
+  }
+  useProj(p) {
+    if (!p?.side || !p?.top) return;
+    const U = this.projU;
+    U.uSide.value = p.side; U.uTop.value = p.top;
+    U.uSideBox.value.set(...p.sideBox); U.uTopBox.value.set(...p.topBox);
+    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1 };
+    this.mesh.material.needsUpdate = true;
   }
   begin() { this.n = 0; }
   // position, yaw (0 faces +z), pitch (nose up > 0), roll, uniform scale, anim phase / amount, colour
