@@ -61,10 +61,10 @@ export function buildAnimals(game, R) {
   const rnd = R.rng(404), S = {};
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, shadow: true, ...opts }));
   const t0 = performance.now();
-  mk('tiger', modelGeometry('bigCat', 'tiger'), 4, { k: { LEG: 0.6 } });
-  mk('leopard', modelGeometry('bigCat', 'leopard'), 4, { k: { LEG: 0.6 } });
-  mk('monkey', modelGeometry('monkey', false), 16, { k: { LEG: 0.8, TAILA: 0.5 } });
-  mk('monkeyHang', modelGeometry('monkey', true), 10, { k: { LEG: 0.4, TAILA: 0.5 } });
+  mk('tiger', modelGeometry('tiger'), 4, { k: { LEG: 0.6 } });
+  mk('leopard', modelGeometry('leopard'), 4, { k: { LEG: 0.6 } });
+  mk('monkey', modelGeometry('monkey'), 16, { k: { LEG: 0.8, TAILA: 0.5 } });
+  mk('monkeyHang', modelGeometry('monkeyHang'), 10, { k: { LEG: 0.4, TAILA: 0.5 } });
   mk('hog', modelGeometry('hog'), 12, { k: { LEG: 0.7 } });
   mk('capybara', modelGeometry('capybara'), 14, { k: { LEG: 0.6 } });
   mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });

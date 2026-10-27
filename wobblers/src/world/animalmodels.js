@@ -103,6 +103,10 @@ export function monkey(hang) {
   return sculpt(sh, { res: 56, colorSharp: 0.006, extras: [eyes(HEAD, Y(hp), 0.055, 0.7 + dy, 0.345, 0.032)] });
 }
 
+export const monkeyHang = () => monkey(true);
+export const tiger = () => bigCat('tiger');
+export const leopard = () => bigCat('leopard');
+
 // ---- river hog ------------------------------------------------------------------------------------
 export function hog() {
   const RED = 0xd0602e, DARK = 0x2a1c1c, hp = [0, 0.48, 0.32];

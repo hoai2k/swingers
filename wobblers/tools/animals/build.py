@@ -30,7 +30,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
 sys.path.insert(0, os.path.dirname(__file__))
-from segment import load, panel, mask
+from segment import load, panel, mask, drop_ground_shadow
 
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'animals')
 PART = {'body': 0, 'FL': 1, 'FR': 2, 'BL': 3, 'BR': 4, 'TAIL': 5, 'HEAD': 6, 'WING_L': 7, 'WING_R': 8, 'JAW': 9}
@@ -47,16 +47,25 @@ CONFIG = {
                       parts={'s1': 'skip', 's2': 'tube', 't0': {'kind': 'wing', 'flat': True}, 't1': {'kind': 'wing', 'flat': True}, 't4': 'skip', 't5': 'skip'}),
     'whale':     dict(sheet='whale.png', L=9.0, open=0.2, res=110, thick=0.012,
                       parts={'s1': 'skip', 't0': {'kind': 'wing', 'flat': True}, 't1': {'kind': 'wing', 'flat': True}}),
-    'puffer':    dict(sheet='pufferfish.png', L=0.5, open=0.18, res=72, thick=0.02,
+    'puffer':    dict(sheet='pufferfish.png', L=0.5, open=0.18, res=48, thick=0.02,
                       parts={'t0': 'skip', 't1': 'skip'}),
-    'clownfish': dict(sheet='reef_fish.png', row=0, rows=4, L=0.4, open=0.2, res=64, thick=0.025,
+    'clownfish': dict(sheet='reef_fish.png', row=0, rows=4, L=0.4, open=0.2, res=36, thick=0.025,
                       parts={'s0': 'skip', 't0': 'skip', 't1': 'skip', 't2': 'skip'}),
-    'blueTang':  dict(sheet='reef_fish.png', row=1, rows=4, L=0.42, open=0.2, res=64, thick=0.025,
+    'blueTang':  dict(sheet='reef_fish.png', row=1, rows=4, L=0.42, open=0.2, res=36, thick=0.025,
                       parts={'s1': 'skip', 't0': 'skip', 't1': 'skip'}),
-    'yellowTang': dict(sheet='reef_fish.png', row=2, rows=4, L=0.4, open=0.2, res=64, thick=0.025,
+    'yellowTang': dict(sheet='reef_fish.png', row=2, rows=4, L=0.4, open=0.2, res=36, thick=0.025,
                       parts={'s1': 'tube', 't0': 'skip', 't1': 'skip', 't4': 'skip'}),
-    'moorishIdol': dict(sheet='reef_fish.png', row=3, rows=4, L=0.4, open=0.2, res=64, thick=0.025,
+    'moorishIdol': dict(sheet='reef_fish.png', row=3, rows=4, L=0.4, open=0.2, res=36, thick=0.025,
                       parts={'s3': 'tube', 't0': 'skip', 't1': 'skip', 't4': 'skip'}),
+    # land: feet on y = 0; side parts reaching the ground are legs, behind the body a tail,
+    # above the head ears (auto); paws seen from above are skipped
+    'tiger':     dict(sheet='tiger.png', L=2.4, open=0.3, res=110, thick=0.02, land=True),
+    'leopard':   dict(sheet='leopard.png', L=2.1, open=0.3, res=110, thick=0.02, land=True, belly=0.42, cuts=[(0.5, 0.3, 0.5, 1.0)]),
+    'monkey':    dict(sheet='monkey.png', L=1.0, open=0.3, res=96, thick=0.02, land=True),
+    'hog':       dict(sheet='river_hog.png', L=1.3, open=0.3, res=96, thick=0.02, land=True, belly=0.33, cuts=[(0.5, 0.3, 0.5, 1.0)]),
+    'capybara':  dict(sheet='capybara.png', L=1.1, open=0.3, res=96, thick=0.02, land=True, belly=0.24, cuts=[(0.5, 0.3, 0.5, 1.0)], parts={'s1': 'skip'}),
+    'tapir':     dict(sheet='tapir.png', L=1.9, open=0.3, res=96, thick=0.02, land=True),
+    'croc':      dict(sheet='crocodile.png', L=3.0, open=0.3, res=110, thick=0.02, land=True, belly=0.3, cuts=[(0.5, 0.3, 0.5, 1.0)]),
 }
 
 
@@ -89,15 +98,30 @@ def fill_bg(rgb, m):
 
 
 # ---- view: a panel's silhouette in metres -----------------------------------------------------
+def ellipse(rx, ry):
+    rx, ry = max(1, int(round(rx))), max(1, int(round(ry)))
+    y, x = np.mgrid[-ry:ry + 1, -rx:rx + 1]
+    return (x / rx) ** 2 + (y / ry) ** 2 <= 1
+
+
 class View:
-    def __init__(self, rgb, m, open_frac):
+    def __init__(self, rgb, m, open_frac, land=False, cuts=(), belly=0):
         self.rgb, self.m = rgb, m
         rows = np.where(m.any(axis=1))[0]; cols = np.where(m.any(axis=0))[0]
         self.r0, self.r1, self.c0, self.c1 = rows[0], rows[-1], cols[0], cols[-1]
-        # body: opened with a disc ~ open_frac of the typical height of the silhouette
+        # body: opened with a disc ~ open_frac of the typical height of the silhouette; a land
+        # animal's with a wide flat ellipse (a torso is long, legs are upright: legs drop out
+        # even where the near and far ones overlap under the belly)
         heights = m.sum(axis=0); hmed = np.percentile(heights[heights > 0], 75)
         self.rho = max(2, open_frac * hmed)
-        body = ndi.binary_opening(m, structure=disk(self.rho))
+        if land:
+            body = ndi.binary_opening(m, structure=ellipse(0.16 * (self.c1 - self.c0), self.rho * 0.7))
+            if belly:  # nothing below the belly line is body (crouched animals: legs merge under it)
+                body[int(self.r1 - belly * (self.r1 - self.r0)):, :] = False
+                body = ndi.binary_opening(body, structure=disk(self.rho * 0.5))
+        else:
+            body = ndi.binary_opening(m, structure=disk(self.rho))
+        self.cuts = cuts
         lab, n = ndi.label(body)
         if n > 1:  # keep the biggest blob (and anything at least a fifth of it: a head on a neck)
             sizes = ndi.sum(body, lab, range(1, n + 1))
@@ -109,6 +133,13 @@ class View:
         m, body = self.m, self.body
         resid = m & ~ndi.binary_dilation(body, iterations=2)
         resid = ndi.binary_opening(resid, iterations=1)
+        # cuts: lines (fractions of the silhouette's box) that separate parts touching each other
+        for (ax, ay, bx, by) in getattr(self, 'cuts', ()):
+            W_, H_ = self.c1 - self.c0, self.r1 - self.r0
+            n = 400
+            for t in np.linspace(0, 1, n):
+                x = int(self.c0 + (ax + (bx - ax) * t) * W_); y = int(self.r0 + (ay + (by - ay) * t) * H_)
+                resid[max(0, y - 2):y + 3, max(0, x - 2):x + 3] = False
         if split_row is not None:  # top view: a part never crosses the centre line (left / right wings)
             resid[int(round(split_row)), :] = False
         lab, n = ndi.label(resid)
@@ -130,15 +161,20 @@ def build(name, debug=False):
     img = load(C['sheet'])
     rows, row = C.get('rows', 1), C.get('row', 0)
     sp, tp = panel(img, row, 0, rows), panel(img, row, 1, rows)
-    S = View(sp, mask(sp), C['open'])
-    T = View(tp, mask(tp), C['open'])
     land = C.get('land', False)
+    sm = mask(sp)
+    if land:
+        sm = drop_ground_shadow(sp, sm, C.get('shadow_band', 0.45))
+    S = View(sp, sm, C['open'], land, C.get('cuts', ()), C.get('belly', 0))
+    T = View(tp, mask(tp), C['open'])
     # scale: the side silhouette's length is L; the top view is matched by the body's length
     ks = C['L'] / (S.c1 - S.c0)                      # metres per side pixel
     sb = np.where(S.body.any(axis=0))[0]; tb = np.where(T.body.any(axis=0))[0]
     kt = ks * (sb[-1] - sb[0]) / max(1, tb[-1] - tb[0])  # metres per top pixel
+    if land:  # the opened bodies differ between views (legs, shoulders); the whole outlines don't
+        kt = ks * (S.c1 - S.c0) / max(1, T.c1 - T.c0)
     zs = lambda col: (col - S.c0) * ks - C['L'] / 2  # side column -> z
-    zt = lambda col: (col - tb[0]) * kt + zs(sb[0])  # top column -> z (bodies aligned)
+    zt = (lambda col: (col - T.c1) * kt + zs(S.c1)) if land else (lambda col: (col - tb[0]) * kt + zs(sb[0]))  # top column -> z (snouts / bodies aligned)
     # vertical: land animals stand on y = 0, swimmers are centred on the body
     brow = np.where(S.body.any(axis=1))[0]
     ybase = S.r1 if land else (brow[0] + brow[-1]) / 2
@@ -150,7 +186,7 @@ def build(name, debug=False):
     # inverse maps (metres -> pixels)
     col_s = lambda z: (z + C['L'] / 2) / ks + S.c0
     row_s = lambda y: ybase - y / ks
-    col_t = lambda z: (z - zs(sb[0])) / kt + tb[0]
+    col_t = (lambda z: (z - zs(S.c1)) / kt + T.c1) if land else (lambda z: (z - zs(sb[0])) / kt + tb[0])
     row_t = lambda x: x / kt + axis_row
 
     # ---- grid -----------------------------------------------------------------------------------
@@ -189,8 +225,9 @@ def build(name, debug=False):
     tw = []
     for z, hh in zip(zz, hz):
         c = int(round(col_t(z)))
-        if 0 <= c < T.m.shape[1] and T.m[:, c].any() and hh > 0:
-            r = np.where(T.m[:, c])[0]
+        tm_ = T.body if land else T.m   # land: the opened top view (legs and paws sticking out removed)
+        if 0 <= c < T.m.shape[1] and tm_[:, c].any() and hh > 0:
+            r = np.where(tm_[:, c])[0]
             tw.append(max(abs(xt(r[0])), abs(xt(r[-1]))) / hh)
     ratio = (C.get('ratio') or float(np.percentile(tw, C.get('ratio_pct', 40)))) if tw else 1.0
     H_, W_ = T.m.shape
@@ -198,7 +235,11 @@ def build(name, debug=False):
     # (a 1D opening along z, window ~ a quarter of the length)
     tw_prof = np.array([max(abs(xt(np.where(T.m[:, c])[0][0])), abs(xt(np.where(T.m[:, c])[0][-1]))) if T.m[:, c].any() else 0 for c in range(W_)])
     win = max(3, int(0.25 * (tb[-1] - tb[0])))
-    tw_open = ndi.maximum_filter1d(ndi.minimum_filter1d(tw_prof, win), win)
+    # (over the animal's own extent only: the empty panel beyond the snout must not erode the head)
+    ext = np.where(tw_prof > 0)[0]
+    tw_open = np.zeros_like(tw_prof)
+    seg = tw_prof[ext[0]:ext[-1] + 1]
+    tw_open[ext[0]:ext[-1] + 1] = ndi.maximum_filter1d(ndi.minimum_filter1d(seg, win, mode='nearest'), win, mode='nearest')
     tbody = np.zeros_like(T.m)
     for c in range(W_):
         z = zt(c)
@@ -230,8 +271,28 @@ def build(name, debug=False):
         if isinstance(k, dict):  # {'kind': ..., plus options merged into the component: flat, x, y, part...}
             c.update({kk: v for kk, v in k.items() if kk != 'kind'}); k = k.get('kind', default)
         return k
+    bcols = np.where(S.body.any(axis=0))[0]; brows_ = np.where(S.body.any(axis=1))[0]
+    bz0, bz1, bmid = bcols[0], bcols[-1], (bcols[0] + bcols[-1]) / 2
+    def land_kind(c):
+        x0, x1, y0, y1 = c['bbox']
+        if y1 >= S.r1 - 0.1 * (S.r1 - S.r0):
+            return 'leg'                       # reaches the ground
+        if c['cx'] < bz0 + 0.1 * (bz1 - bz0):
+            return 'tail'                      # behind the body
+        if y1 < brows_[0] + 0.25 * (brows_[-1] - brows_[0]) and c['cx'] > bmid:
+            return 'ear'                       # above the head
+        if c['cx'] > bz1 - 0.15 * (bz1 - bz0):
+            return 'hull'                      # in front: the head
+        return 'tube'
     for i, c in enumerate(S.comps):
-        labels.append(('s', i, kind_of(f's{i}', 'tube' if land else 'fin', c), c))
+        labels.append(('s', i, kind_of(f's{i}', land_kind(c) if land else 'fin', c), c))
+    # legs: per front / back group only the biggest outline (near and far legs overlap side-on)
+    legs = [l for l in labels if l[2] == 'leg']
+    for grp in (lambda c: c['cx'] > bmid, lambda c: c['cx'] <= bmid):
+        g = [l for l in legs if grp(l[3])]
+        for l in g:
+            if l is not max(g, key=lambda q: q[3]['area']):
+                labels[labels.index(l)] = (l[0], l[1], 'skip', l[3])
     for i, c in enumerate(T.comps):
         labels.append(('t', i, kind_of(f't{i}', 'skip' if land else 'wing', c), c))
     thick = max(C['thick'] * C['L'], 1.1 * h)  # plates thinner than ~2 cells break up when meshed
@@ -258,6 +319,46 @@ def build(name, debug=False):
             xc = c.get('x', 0.0)
             d1 = np.maximum(bilin(s2, us, vs) * ks, np.abs(gx - xc) - bilin(hw, us, vs))
             fields.append((f's{i}:tube', d1, c))
+        elif view == 's' and kind == 'hull':
+            # like the body: an ellipse of this part's side height and the top view's width there
+            # (its width is the body's width / height ratio times its own height, centred on the axis
+            # and never wider than the top view: ears and paws seen from above don't widen it)
+            pc, ph = runs_map(cm)
+            inside = bilin(cm.astype(np.float32), us, vs) > 0.5
+            Pc, Ph = bilin(pc, us, vs), bilin(ph, us, vs)
+            topw = np.interp(ut, np.arange(len(tw_prof)), tw_prof)
+            Qh = np.minimum(Ph * ks * c.get('ratio', ratio), np.where(topw > 0, topw, 1e9))
+            eyy = (vs - Pc) / np.maximum(Ph, 0.5); exx = gx / np.maximum(Qh, 1e-3)
+            ff = np.sqrt(eyy * eyy + exx * exx)
+            dh = np.where(inside, (ff - 1) * np.minimum(Ph * ks, Qh), big)
+            d = np.maximum(bilin(s2, us, vs) * ks, dh)
+            fields.append((f's{i}:hull', d, c))
+        elif view == 's' and kind in ('leg', 'tail', 'ear'):
+            e = np.maximum(-s2, 0).astype(np.float32)
+            R = ndi.maximum_filter(e, size=int(max(3, e.max() * 1.5)))
+            hwv = bilin(np.sqrt(np.maximum(e * (2 * R - e), 0)) * ks, us, vs)
+            sd = bilin(s2, us, vs) * ks
+            x0c, x1c, y0c, y1c = c['bbox']
+            zc_ = zs(c['cx'])
+            if kind == 'tail':
+                fields.append((f's{i}:tail', np.maximum(sd, np.abs(gx) - hwv), dict(c, part='TAIL', pivot=None)))
+                continue
+            # half-width of the body (from above) at this z: legs stand under its sides, ears on top
+            colb = int(np.clip(round(col_t(zc_)), 0, T.body.shape[1] - 1))
+            rb = np.where(T.body[:, colb])[0]
+            bw = max(abs(xt(rb[0])), abs(xt(rb[-1]))) if rb.size else 0.1 * C['L']
+            if kind == 'leg':
+                # where the paws show from above, if they do
+                px = [abs(xt(tc_['cy'])) for tc_ in T.comps if abs(zt(tc_['cx']) - zc_) < 0.12 * C['L']]
+                xl = c.get('x') or (float(np.median(px)) if px else 0.55 * bw)
+                xl = min(xl, bw * 0.85)
+                front = c['cx'] > bmid
+                for sgn, part in ((1, 'FL' if front else 'BL'), (-1, 'FR' if front else 'BR')):
+                    fields.append((f's{i}:leg{"+" if sgn > 0 else "-"}', np.maximum(sd, np.abs(gx - sgn * xl) - hwv), dict(c, part=part)))
+            else:
+                xe = c.get('x') or 0.45 * bw
+                for sgn in (1, -1):
+                    fields.append((f's{i}:ear{"+" if sgn > 0 else "-"}', np.maximum(sd, np.abs(gx - sgn * xe) - np.minimum(hwv, 0.35 * hwv.max() + 1e-6)), c))
         elif view == 't' and kind == 'wing':
             # height of the plate: from where it leaves the body to its tip, linear in |x|; the tip
             # height is the extreme of the side view's silhouette over the plate's z-range below /

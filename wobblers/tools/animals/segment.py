@@ -109,3 +109,28 @@ if __name__ == '__main__':
         out.append(np.concatenate(row, axis=1))
     im = np.concatenate(out, axis=0)
     Image.fromarray((im * 255).astype(np.uint8)).resize((im.shape[1] // 2, im.shape[0] // 2)).save(sys.argv[3])
+
+
+def drop_ground_shadow(p, m, band):
+    """remove the contact shadow under a standing animal: in the bottom `band` (fraction of the
+    silhouette's height) flood in from outside through background-coloured darker pixels,
+    whatever their gradient (the shadow under a belly is soft but not smooth)."""
+    border = np.concatenate([p[:8].reshape(-1, 3), p[-8:].reshape(-1, 3), p[:, :8].reshape(-1, 3), p[:, -8:].reshape(-1, 3)])
+    bg = np.median(border, axis=0)
+    lum, bgl = p.mean(axis=2), bg.mean()
+    chroma = p - p.mean(axis=2, keepdims=True); bgc = bg - bg.mean()
+    shadowish = (lum < bgl * 1.02) & (lum > bgl * 0.3) & (np.linalg.norm(chroma - bgc * (lum / bgl)[..., None], axis=2) < 0.05)
+    rows = np.where(m.any(axis=1))[0]
+    r0 = int(rows[-1] - band * (rows[-1] - rows[0]))
+    zone = np.zeros_like(m); zone[r0:, :] = True
+    passable = (~m) | (shadowish & zone)
+    lab, n = ndi.label(passable)
+    el = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    outside = np.isin(lab, el[el > 0])
+    out = m & ~outside
+    out = ndi.binary_opening(out, iterations=2)
+    lab, n = ndi.label(out)
+    if n > 1:
+        sizes = ndi.sum(out, lab, range(1, n + 1))
+        out = np.isin(lab, [i + 1 for i, s_ in enumerate(sizes) if s_ >= sizes.max() * 0.01])
+    return out

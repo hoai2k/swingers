@@ -28,7 +28,7 @@ function pump() { // main-thread fallback
 
 // Models built from the reference sheets (tools/animals/build.py -> assets/animals/): a mesh
 // and two paint images projected onto it (critters.js Species `proj`).
-export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol']);
+export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc']);
 const texLoader = new THREE.TextureLoader();
 async function sheetGeometry(name) {
   const base = 'assets/animals/' + name;
