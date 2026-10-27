@@ -26,8 +26,9 @@ export const SP = {
   gravity: 1750,         // a touch floaty: long, readable arcs
   walkSpeed: 340,
   walkAccel: 4200,
-  airAccel: 1100,
-  airMax: 430,
+  airAccel: 2100,        // air steering (u/s^2)...
+  airMax: 640,           // ...up to this sideways speed (faster momentum is kept, not added to)
+  airBrake: 1.6,         // steering against your motion bites harder
   stickRange: 10,
   jumpSpeed: 860,
   maxSpeed: 2200,
@@ -305,8 +306,13 @@ export class Spider {
       if (this.gentleT > 0) { this.gentleT -= h; if (move.mag > 0.3 && move.y < -0.4) gk *= 0.35; else this.gentleT = 0; }
       this.vy += SP.gravity * gk * h;
       // air control
-      const ax = move.x * SP.airAccel * h;
-      if ((ax > 0 && this.vx < SP.airMax) || (ax < 0 && this.vx > -SP.airMax)) this.vx += ax;
+      // air steering: sideways, stronger when it opposes your motion, and a
+      // little vertical (up softens a fall, down speeds it)
+      const am = this.airMul ?? 1;
+      let ax = move.x * SP.airAccel * am * h;
+      if (ax * this.vx < 0) ax *= SP.airBrake;
+      if ((ax > 0 && this.vx < SP.airMax * am) || (ax < 0 && this.vx > -SP.airMax * am)) this.vx += ax;
+      this.vy += move.y * SP.airAccel * 0.3 * am * h;
       this.vx *= 1 - h * 0.15;
     }
 
@@ -618,7 +624,7 @@ export class Spider {
     const vr = this.vx * dx + this.vy * dy;               // speed toward the anchor
     if (stretch > 0) {
       const ramp = Math.min(1, w.st / SP.webRamp);
-      let acc = Math.min(SP.webMaxPull, SP.webK * stretch) * ramp;
+      let acc = Math.min(SP.webMaxPull * (this.pullMul ?? 1), SP.webK * (this.pullMul ?? 1) * stretch) * ramp;
       acc *= clamp(1 - vr / SP.webApproach, 0, 1);       // eases off as you close in
       acc -= SP.webDamp * Math.min(0, vr);                 // damp the flying-away part
       this.vx += dx * acc * h; this.vy += dy * acc * h;
@@ -934,12 +940,15 @@ export class Spider {
     this.drawLegs(ctx, true);
     this.drawLegs(ctx, false);
     this.drawLegs(ctx, 'hold');     // behind the body: only the reaching part shows
-    // player ring
-    ctx.strokeStyle = this.color.main;
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath(); ctx.arc(this.x, this.y, r + 2.5, 0, TAU); ctx.stroke();
-    ctx.globalAlpha = 1;
+    // player ring: only when another spider on the board wears the same
+    // character and they need telling apart (each look is otherwise unique)
+    if (this.game.spiders.some((o) => o !== this && o.alive && o.castIndex === this.castIndex)) {
+      ctx.strokeStyle = this.color.main;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.arc(this.x, this.y, r + 2.5, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     if (this.weapon && this.weapon.drawBehind) this.weapon.drawBehind(ctx);
     const tilt = (this.lean || 0) + clamp(Math.atan2(this.up.x, -this.up.y), -0.45, 0.45) + (this.ground ? Math.sin(this.time * 14) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 0.06 : clamp(this.vx * 0.0004, -0.3, 0.3));
     const blink = this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0;

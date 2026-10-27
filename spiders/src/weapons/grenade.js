@@ -111,7 +111,7 @@ export class Grenades extends Weapon {
   constructor(game) {
     super(game);
     this.length = 22;
-    this.holdDist = 2;
+    this.holdDist = 18;
     this.cook = -1;       // < 0: pin in
     this.tickT = 0;
   }

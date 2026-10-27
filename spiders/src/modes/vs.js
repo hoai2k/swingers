@@ -13,6 +13,8 @@ import { drawScoreboard, drawBanner, drawPlayerTags } from '../hud.js';
 import { Squeeze } from '../squeeze.js';
 import { applyRoundMods, applySpiderMods, tickMods, drawMods, drawModCards } from '../modifiers.js';
 import { POOLS } from '../pool.js';
+import { VS_PERKS, PerkPicker, offersFor } from '../perks.js';
+import { WEAPONS } from '../weapons.js';
 
 export class VsMode {
   constructor(game, opts = {}) {
@@ -21,7 +23,7 @@ export class VsMode {
     this.friendlyFire = true;
     this.boardQueue = [];
     this.boardId = opts.board || settings.board;
-    this.state = 'intro';     // intro | play | roundEnd | matchEnd
+    this.state = 'intro';     // intro | play | roundEnd | perks | matchEnd
     this.t = 0;
     this.round = 0;
     this.lastWinner = null;
@@ -31,7 +33,7 @@ export class VsMode {
   teamFor(p) { return 'p' + p.slot; }
 
   start() {
-    for (const p of this.game.players) { p.score = 0; p.kills = 0; p.deaths = 0; }
+    for (const p of this.game.players) { p.score = 0; p.kills = 0; p.deaths = 0; p.vsPerks = {}; }
     this.nextRound();
   }
 
@@ -58,6 +60,7 @@ export class VsMode {
       const [x, y] = spawns[i % spawns.length];
       const sp = game.spawnSpider(p, x, y, { invuln: 1.5 });
       applySpiderMods(game, sp);
+      this.applyPerks(sp);
     });
     this.squeeze = new Squeeze(game);
     this.cards = this.introCards();
@@ -99,8 +102,12 @@ export class VsMode {
       if (this.t > 3.2) {
         const champ = game.players.find((p) => p.score >= settings.winScore);
         if (champ) { this.state = 'matchEnd'; this.t = 0; this.champ = champ; sfx.win(); game.music.sting('win'); }
-        else this.nextRound();
+        else this.startPerks();
       }
+      return;
+    }
+    if (this.state === 'perks') {
+      if (this.picker.update(realDt)) { this.picker = null; this.nextRound(); }
       return;
     }
     if (this.state === 'matchEnd') {
@@ -134,6 +141,29 @@ export class VsMode {
     if (this.squeeze && (this.state !== 'intro' || this.squeeze.isStatic)) this.squeeze.draw(ctx);
   }
 
+  // ---- power-up cards between rounds: every spider picks its own, kept for
+  // the rest of the match
+  startPerks() {
+    this.state = 'perks'; this.t = 0;
+    for (const sp of this.game.spiders) sp.stun = 99;
+    const rows = this.game.players.map((p) => ({ p, vs: true, offers: offersFor(p.vsPerks || {}, VS_PERKS) }));
+    this.picker = new PerkPicker(this.game, rows, {
+      onChoose: (r, P) => { r.p.vsPerks = r.p.vsPerks || {}; r.p.vsPerks[P.id] = (r.p.vsPerks[P.id] || 0) + 1; },
+    });
+    sfx.perk();
+  }
+
+  applyPerks(sp) {
+    const perks = (sp.player && sp.player.vsPerks) || {};
+    for (const P of VS_PERKS) if (perks[P.id] && P.apply) P.apply(sp, perks[P.id]);
+    if (perks.saber) { const w = this.game.createWeapon('saber'); if (w) sp.giveWeapon(w); }
+    else if (perks.armory) {
+      const guns = [...WEAPONS.values()].filter((C) => C.kind === 'gun' && (C.weight ?? 1) > 0).map((C) => C.id);
+      const w = guns.length && this.game.createWeapon(pick(guns));
+      if (w) sp.giveWeapon(w);
+    }
+  }
+
   drawUI(ctx) {
     const game = this.game;
     drawPlayerTags(ctx, game);
@@ -151,6 +181,8 @@ export class VsMode {
       const txt = w ? `${castAt(w.castIndex).name} wins the round!` : 'Nobody survived!';
       drawBanner(ctx, txt, w ? `${w.player.color.name} — ${w.player.score} / ${settings.winScore}` : '', Math.min(1, this.t * 3), w ? w.color.main : '#fff');
       drawScoreboard(ctx, game, { big: true, highlight: w && w.player });
+    } else if (this.state === 'perks' && this.picker) {
+      this.picker.draw(ctx, `Round ${this.round} over · everyone picks a power-up`);
     } else if (this.state === 'matchEnd') {
       drawBanner(ctx, `${castAt(this.champ.castIndex).name} WINS THE MATCH!`, 'Press A to return to the lobby', 1, this.champ.color.main);
       drawScoreboard(ctx, game, { big: true, highlight: this.champ, stats: true });
