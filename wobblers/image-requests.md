@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 remains open (15 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 remains open (10 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -89,11 +89,6 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 | `sea_turtle.png` | a sea turtle |
 | `manta_ray.png` | a manta ray |
 | `sea_star_crab_seahorse.png` | a sea star, a crab and a seahorse (one row each) |
-| `plesiosaur.png` | a friendly long-necked plesiosaur |
-| `monkey.png` | a monkey walking on all fours, long curly tail |
-| `tiger.png` | a tiger walking |
-| `leopard.png` | a leopard walking |
-| `river_hog.png` | a red river hog (orange-red, black face, white ear tufts) |
 | `capybara.png` | a capybara |
 | `tapir.png` | a Malayan tapir (black with a white saddle) |
 | `snake.png` | a python, gently wavy, yellow and green |

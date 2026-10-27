@@ -36,6 +36,11 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 | `whale.png` | a humpback whale with long white flippers |
 | `reef_fish.png` | four small fish in one image: clownfish, blue tang, yellow tang, angelfish (each in the 3 views, one row per fish) |
 | `pufferfish.png` | a pufferfish, puffed up |
+| `plesiosaur.png` | a friendly long-necked plesiosaur |
+| `monkey.png` | a monkey walking on all fours, long curly tail |
+| `tiger.png` | a tiger walking |
+| `leopard.png` | a leopard walking |
+| `river_hog.png` | a red river hog (orange-red, black face, white ear tufts) |
 
 ## Delivered round 15 — toy-style character repaints
 
