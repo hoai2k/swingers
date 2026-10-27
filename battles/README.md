@@ -207,6 +207,15 @@ when delivered; without one the tab shows just the name in the faction colour.
   Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
   Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
   Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
+- `src/packs/jjk-shared.js` the JJK packs' shared hand-sign/shout animations, Gojo's and Sukuna's
+  stances, the curses' claws and the effect markers (Infinity ripple, cuts, shadow pools, Black Flash).
+- `src/packs/minecraft.js` the **Minecraft** faction (`minecraft`): Villager (cheap, panics),
+  Zombie (arms out, tough), Skeleton (archer that falls to bits), Creeper (walks up, hisses, explodes,
+  and still goes off if killed mid-hiss), Witch (splash potions: harming, poison or slowness), Steve
+  (diamond sword), Enderman (teleports up to its target and to whoever shoots it) and Iron Golem
+  (punches enemies into the sky; the landing hurts). Everyone is built out of boxes in `decorate`,
+  with 8×8 pixel faces made of little blocks; with Options → Googly eyes on, the pixel eyes become
+  googly ones. Its tab shows a pixel Creeper icon until the emblem (request 56) arrives.
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 

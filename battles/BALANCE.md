@@ -667,3 +667,28 @@ Inumaki, whose 560 is his worth as support inside a line.
 
     node battles/dev/balance/run.mjs --units jk_gojo,jk_sukuna,jk_mahoraga,jk_megumi,jk_yuta,jk_toji,jk_hakari,jk_geto,jk_jogo,jk_mahito,jk_choso,jk_todo,jk_maki,jk_hanami,jk_dagon,jk_nanami,jk_yuji,jk_panda,jk_nobara,jk_inumaki,jk_flyhead,squire+jk_inumaki@0.25 --runs 4 --procs 4 --out /tmp/jjk-power.jsonl
     node battles/dev/balance/report.mjs /tmp/jjk-power.jsonl
+
+## Minecraft faction
+
+`src/packs/minecraft.js`, priced against the reference panel at equal gold (`run.mjs --runs 4`,
+36 battles per unit, sides swapped). First drafts were far off (−0.4 to −1.0): bare fists lost to
+every club, the cube heads (drawn on a 1.45× head ball) kept units from getting back up, Steve's
+attack animation didn't exist, Creepers died before their fuse ran out and the tall Endermen
+swung over people's heads. Fixes: normal head balls with the cubes drawn bigger and lifted,
+two-fisted punches (like JJK's brawlers), low stagger for the Zombie, Enderman and Golem, a
+0.7 s fuse that goes off even if the Creeper is killed mid-hiss, shorter Enderman legs, and
+fall damage when the Golem's launch lands.
+
+| unit | cost | hp | role | score | notes |
+|---|---:|---:|---|---:|---|
+| Villager (`mc_villager`) | **15** | 60 | fodder | −0.08 | panics when hurt; mobs archers and gunslingers |
+| Zombie (`mc_zombie`) | **42** | 180 | melee | −0.08 | stagger 0.45 |
+| Skeleton (`mc_skeleton`) | **125** | 70 | ranged | −0.01 | falls apart when it dies |
+| Creeper (`mc_creeper`) | **65** | 60 | bomber | −0.17 | trades 1:1 with cheap armies (draws), loses to giants and kings |
+| Witch (`mc_witch`) | **125** | 110 | ranged | −0.07 | harming 80 (2 in 5), poison 18/s for 5 s (2 in 5), slowness (1 in 5); r 3.3 |
+| Steve (`mc_steve`) | **200** | 300 | melee | −0.01 | diamond sword 46 |
+| Enderman (`mc_enderman`) | **320** | 450 | assassin | +0.02 | teleports to targets 7 m+ away every ~4.5 s; dodges a shot from 5 m+ away by teleporting to the shooter (every 3.5 s) |
+| Iron Golem (`mc_golem`) | **1100** | 1400 | tank | +0.01 | punches launch (9 m/s up, less for heavy units) and the landing hurts |
+
+    node battles/dev/balance/run.mjs --units mc_villager,mc_zombie,mc_skeleton,mc_creeper,mc_witch,mc_steve,mc_enderman,mc_golem --runs 4 --out /tmp/mc.jsonl
+    node battles/dev/balance/report.mjs /tmp/mc.jsonl
