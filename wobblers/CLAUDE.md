@@ -348,7 +348,7 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   banks, snapping when you come close), capybaras also swim, monkeys hang from the vines of the
   `jtree2` trees (`game.jungleTrees`, recorded by Flora), birds circle over the canopy. Each
   makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; recorded, with
-  synth fallbacks in audio.js; the `jungle_ambience` bed is registered but held for approval) when a player comes within its `hear` range.
+  synth fallbacks in audio.js; plus the `jungle_ambience` bed of birds, frogs and distant monkeys) when a player comes within its `hear` range.
   Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 

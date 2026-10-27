@@ -162,6 +162,9 @@
   "assets/sfx/squawk-2.mp3",
   "assets/sfx/squawk-3.mp3"
  ],
+ "jungle_ambience": [
+  "assets/sfx/jungle_ambience-1.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -209,6 +212,7 @@
   "park_crowd",
   "city_street",
   "plaza_chatter",
-  "arcade_room"
+  "arcade_room",
+  "jungle_ambience"
  ]
 }
