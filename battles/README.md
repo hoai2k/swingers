@@ -69,6 +69,24 @@ The game is built not to freeze, however big the battle (`src/perf.js`):
   where you build both armies (tap **View** to switch side, **Y** starts the battle).
   *Players: 2* is split screen, each player builds one army and the battle starts when
   both are ready — like Versus without rounds, timer or blind setup.
+- **Simulation** (`src/sims.js`): ready-made battles to watch, picked from a screen laid
+  out like the level select, one row per category: **Real battles** (Thermopylae, Cannae,
+  Hastings, Stamford Bridge, Agincourt, Sekigahara, Nassau, Waterloo, Little Bighorn),
+  **Jujutsu Kaisen** (*Sorcerers vs Curses*: one of every sorcerer against one of every
+  curse, sides from each unit's `side`; Shibuya, the Shinjuku Showdown, the Culling Game in
+  Sendai and Tokyo No. 2, the Trial, the Goodwill Event, Death Painting, the Detention
+  Centre, Hidden Inventory, Yuki & Choso vs Kenjaku, "Nah, I'd win"), **Avatar** (the Siege
+  of Ba Sing Se, the Day of Black Sun, the Crossroads of Destiny, Agni Kai, Sozin's Comet),
+  **Sci-fi & games** (Galactic, Minecraft, dinosaurs vs cowboys, the undead) and
+  **Crossovers** (Sorcerers vs Benders, Sukuna vs a medieval army, Gods & Monsters, and a
+  *Random War* between two random factions with the same gold). **X** sets the army
+  size (Small ×½, Normal, Epic ×2: crowds scale, heroes don't), **Y** chooses between
+  watching at once and editing the armies first. A simulation plays as a 1-player sandbox
+  with no gold or unit limits; the HUD and result name the two sides. Your own sandbox
+  armies are parked meanwhile and come back on the main menu (simulation armies are never
+  saved). Formations step off walls and water on maps with features. Scenarios are data
+  (format at the top of `src/sims.js`; unknown unit ids are skipped);
+  `node battles/dev/balance/sims.mjs` fights them headless and prints who wins how often.
 - **Unit Creator**: design up to 24 custom units, with a live, turning 3D preview
   that shows the attack. Tabs (**LB/RB**): *Unit* (name with an on-screen keyboard
   or typed, personality/voice, rank), *Body* (size, build, head, legs), *Look* (every
@@ -203,6 +221,29 @@ when delivered; without one the tab shows just the name in the faction colour.
   Prison Realm (Geto next to an enemy Gojo), the spear cuts through Infinity, Toji cuts a
   domain open, Mahito can't reshape Yuji (and Yuji's fists hurt his soul), Choso switches
   sides when he meets Yuji ("Big brother!").
+- **Jujutsu Kaisen: more sorcerers** (`src/packs/jjk-sorcerers.js`): **Ryu Ishigori** (Granite
+  Blast: a charged beam through a whole line), **Takako Uro** (Sky Manipulation: Thin Ice Breaker
+  flings a cone of enemies away, and the bent sky turns shots back), **Hajime Kashimo** (lightning
+  that can't be parried and arcs on; badly hurt, *Mythical Beast Amber*, and his body burns out
+  15 s later), **Hiromi Higuruma** (domain *Deadly Sentencing*: Judgeman tries the costliest enemy
+  inside; GUILTY means Confiscation and the Executioner's Sword), **Yuki Tsukumo** (Star Rage
+  blows that bowl over everyone round the target, Garuda; at the end, a *Black Hole*), **Mei Mei**
+  (great axe, homing crows, Bird Strike), **Noritoshi Kamo** (homing blood arrows; Flowing Red
+  Scale), **Naoya Zen'in** (Projection Sorcery: 24-frame blinks that freeze victims in a frame),
+  **Ultimate Mechamaru** (Ultra Cannon, thrusters, Absolute Mode) and **Atsuya Kusakabe**
+  (Simple Domain: a quick-draw circle, and domain sure-hits can't land on him).
+- **Jujutsu Kaisen: more curses** (`src/packs/jjk-spirits.js`): **Kurourushi** (flesh-eating
+  bites, swarms of homing cockroaches), **Uraume** (Icefall; Frost Calm freezes a cone solid, and
+  a frozen victim shatters), **Eso** and **Kechizu** (rotting blood; if one brother dies the other
+  flies into a rage), the **Smallpox Deity** (pox aura; shuts the strongest enemy in a coffin and
+  counts "One... Two... Three!"), the **Rainbow Dragon** (armoured hide, rams through lines), the
+  **Finger Bearer** (swallows a Sukuna finger once when hurt), **Kuchisake-onna** ("Am I
+  beautiful?" dazes, then the scissors), the **Grasshopper Curse** (cheap, leaps in with a kick)
+  and **Yorozu** (Construction blades, Insect Armour, the True Sphere).
+- **Sorcerers and curses**: every JJK unit has `side: 'sorcerer'` or `side: 'curse'` (21
+  sorcerers, 20 curses and curse users: Toji, Geto/Kenjaku, Choso, Uraume and Yorozu fight
+  with the curses). The Simulation *Sorcerers vs Curses* puts one of each on its side and is
+  tuned to an even fight (see BALANCE.md).
 - **JJK power levels**: one on one the faction follows the anime: Gojo (who teleports
   clear of blows Infinity can't stop, and whose Unlimited Void wins the clash with the
   Shrine) beats Sukuna; Sukuna beats the rest; Toji, Hakari, Yuta and Mahoraga come next
@@ -228,6 +269,9 @@ when delivered; without one the tab shows just the name in the faction colour.
   Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
   Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
   Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
+- `src/packs/jjk-sorcerers.js` / `jjk-spirits.js` the 20 JJK characters added with the Simulation
+  mode (sorcerer and curse halves; each file is self-contained on `jjk-core.js`).
+- `src/sims.js` the Simulation scenarios (format at its top) · `dev/balance/sims.mjs` fights them headless
 - `src/packs/jjk-shared.js` the JJK packs' shared hand-sign/shout animations, Gojo's and Sukuna's
   stances, the curses' claws and the effect markers (Infinity ripple, cuts, shadow pools, Black Flash).
 - `src/packs/minecraft.js` the **Minecraft** faction (`minecraft`): Villager (cheap, panics),

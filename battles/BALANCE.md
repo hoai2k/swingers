@@ -729,3 +729,40 @@ at 150 scored −0.57; they are now cheaper and tougher.
 | Toph (`av_toph`) | **580** | 380 | earthbender | +0.01 | stagger 0.4; earth armour once below 50% |
 | Earthbender (`av_earthbender`) | **170** | 110 | ranged | −0.03 | crushes Knights/Giants/Kings, loses to cheap rushes |
 | Kyoshi Warrior (`av_kyoshi`) | **95** | 190 | melee | −0.01 | turns aside 35% of melee blows |
+
+## JJK: the 20 new characters and Sorcerers vs Curses
+
+Priced by duel tier like *JJK power levels* (`dev/balance/duel.mjs`, 4-6 duels a pair):
+
+| unit | cost | hp | duels |
+|---|---:|---:|---|
+| Yuki Tsukumo | 1900 | 1300 | beats the A tier and Toji 4-0; ~60% vs Hakari and Yuta; loses to Sukuna, Gojo |
+| Kashimo | 1300 | 800 | beats Todo, Yuji, Maki, Nanami; even with Choso, Mahito; loses to the A+ tier |
+| Ryu, Higuruma | 1100 | 900 / 700 | beat most of the A and B tier; lose to Toji, Hakari, Yuta (Ryu to Todo) |
+| Naoya | 950 | 620 | as Ryu |
+| Mei Mei | 850 | 650 | as Ryu |
+| Uro, Mechamaru | 750 | 900 / 620 | Uro beats Choso, Geto, Jogo; loses to Nanami, Mahito |
+| Kusakabe | 700 | 600 | beats most of the A tier; loses to Todo, Toji, Yuta |
+| Kamo | 500 | 450 | beats Yuji, Panda, Inumaki, Choso |
+| Yorozu | 1200 | 700 | Yuji, Maki 100%, Todo 75%, Hakari 50%, Toji 25% |
+| Uraume, Smallpox Deity | 1100 | 640 / 950 | beat Todo; ~35% vs Hakari; lose to Toji, Yuta |
+| Rainbow Dragon | 950 | 1100 | beats Yuji, Maki, Todo; loses to Toji, Hakari |
+| Kurourushi | 900 | 1000 | beats Yuji, Maki; 50% vs Todo |
+| Finger Bearer | 750 | 900 | beats Nobara, Yuji, Panda, Maki |
+| Eso / Kuchisake-onna | 420 / 380 | 380 / 600 | B tier: about even with Yuji |
+| Kechizu / Grasshopper Curse | 220 / 140 | 360 / 210 | fodder |
+
+Nobody new beats Gojo or Sukuna one on one (Higuruma's Executioner's Sword doesn't one-shot a
+convict worth 3000+: `topCost`).
+
+**Sorcerers vs Curses** (Simulation `jjk_war`: one of every sorcerer, 23,680 gold, against one
+of every curse plus 4 Fly Heads, about 20,600 gold, on Shibuya Crossing; Normal size):
+with 12 extra Fly Heads the curses won 62% (24 battles); with 4 it's **8-8** over 16 battles.
+Re-run with `node battles/dev/balance/sims.mjs --ids jjk_war --runs 16 --size 1 --maxT 200`.
+
+**Simulation scenarios**: the real battles are tuned so the side that won in history usually
+wins here too, but not always (4-8 runs each at Normal: Agincourt, Waterloo, Stamford Bridge,
+Sekigahara and Cannae ~75-90% for the historical winner; Thermopylae, Hastings and Little
+Bighorn ~25% for the side that lost). Anime fights lean to how they went in the story
+(Shinjuku, Kenjaku, Shibuya) and the rest are close. These battles have a lot of variance: a
+4-run sample can read 0% and 100% on two seed sets for the same armies, so use 8+ runs.
