@@ -1,6 +1,7 @@
 """Animals built from designed body parts, sized and painted from their reference sheets (dev tool).
 
     python3 wobblers/tools/animals/designed.py [name ...]      # all of DESIGNS by default
+    (needs numpy, scipy, Pillow and fast-simplification: pip install fast-simplification)
 
 The method quad.py uses for the four-legged animals, for everything else: each animal is made of
 parts that make sense for it (a snake's tapering tube and head, a bird's body, head, beak, fan
