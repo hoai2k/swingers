@@ -692,3 +692,40 @@ fall damage when the Golem's launch lands.
 
     node battles/dev/balance/run.mjs --units mc_villager,mc_zombie,mc_skeleton,mc_creeper,mc_witch,mc_steve,mc_enderman,mc_golem --runs 4 --out /tmp/mc.jsonl
     node battles/dev/balance/report.mjs /tmp/mc.jsonl
+
+## Avatar: the Fire Nation
+
+`src/packs/avatar-fire.js`, priced against the reference panel at equal gold (`run.mjs --runs 4`,
+36 battles per unit). First draft: Azula −0.30 (mobbed in melee with every move gated on range);
+she got a blue spin kick that throws crowds off her and a dash usable from 3 m. Zuko (+0.38),
+Iroh (+0.24) and Combustion Man (+0.17) were repriced up, the Soldier down.
+
+| unit | cost | hp | role | score | notes |
+|---|---:|---:|---|---:|---|
+| Fire Nation Soldier (`av_fn_soldier`) | **68** | 130 | line | −0.04 | spear 26; fire jab 20 (9 m, burn 6/s) |
+| Zuko (`av_zuko`) | **600** | 520 | melee hero | +0.07 | dao 34 + burn; daggers 2×26; spin ring 55 r3.2 every 6 s; stagger 0.6 |
+| Azula (`av_azula`) | **1000** | 600 | skirmisher | +0.04 | blue jets 2×34; dash burst 60; spin 50; lightning 220 (34 m, 1.6 s stun, every 7.5 s); stagger 0.5 |
+| Iroh (`av_iroh`) | **1150** | 950 | tank / counter | +0.08 | fists 38; blast 60; breath 90/s cone 5.5 m; redirects lightning (takes 8%, returns 120–400); stagger 0.4 |
+| Combustion Man (`av_sparky`) | **700** | 620 | artillery | −0.07 | beam blast 130 r3.6 (allies 40%), range 34 m, every 4.4 s; fists 45 inside 4 m |
+
+Duels: Iroh beats Azula 4–2 (her lightning comes back at her), Zuko beats a Soldier 6–0,
+Iroh–Zuko 3–3, Azula–Zuko 2–4.
+
+    node battles/dev/balance/run.mjs --units av_fn_soldier,av_zuko,av_azula,av_iroh,av_sparky --runs 4 --out /tmp/av.jsonl
+    node battles/dev/balance/report.mjs /tmp/av.jsonl
+
+## Avatar: Team Avatar and the Earth Kingdom
+
+`src/packs/avatar-benders.js`, priced the same way. In the first draft Katara at 300 scored +0.84
+(kiting, healing and ice slow stacked against slow heavies); a higher price, a weaker kit (whip
+34→26, heal 55→40, ice 18→14 every 5.5 s, slow 1.5 s) and less kiting fixed her. Kyoshi Warriors
+at 150 scored −0.57; they are now cheaper and tougher.
+
+| unit | cost | hp | role | score | notes |
+|---|---:|---:|---|---:|---|
+| Aang (`av_aang`) | **1450** | 520 | hero | +0.06 | Avatar State once below 35%; strong vs cheap lines, weak vs Gunslingers/Kings |
+| Katara (`av_katara`) | **500** | 260 | ranged support | −0.07 | +0.18 in a Squire line at 25%; kites heavies (+0.9 vs Giant), loses to rushes |
+| Sokka (`av_sokka`) | **140** | 150 | melee + boomerang | +0.01 | |
+| Toph (`av_toph`) | **580** | 380 | earthbender | +0.01 | stagger 0.4; earth armour once below 50% |
+| Earthbender (`av_earthbender`) | **170** | 110 | ranged | −0.03 | crushes Knights/Giants/Kings, loses to cheap rushes |
+| Kyoshi Warrior (`av_kyoshi`) | **95** | 190 | melee | −0.01 | turns aside 35% of melee blows |

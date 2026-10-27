@@ -229,6 +229,20 @@ when delivered; without one the tab shows just the name in the faction colour.
   (punches enemies into the sky; the landing hurts). Everyone is built out of boxes in `decorate`,
   with 8×8 pixel faces made of little blocks; with Options → Googly eyes on, the pixel eyes become
   googly ones. Its tab shows a pixel Creeper icon until the emblem (request 56) arrives.
+- `src/packs/avatar-*.js` the **Avatar** faction (`avatar`, *Avatar: The Last Airbender*). `avatar-core.js`
+  registers the faction and its elemental effects (fire and blue fire, water, ice, air, earth,
+  lightning, steam, the Avatar State glow) as pack effects (`EXT.fx`, drawn by `src/fx.js` and
+  recorded in replays). `avatar-fire.js`, the Fire Nation: **Fire Nation Soldier** (spear and short
+  fire jabs), **Zuko** (twin flaming dao, fire daggers, a spinning kick that throws a ring of fire),
+  **Azula** (blue fire jets, a blue-fire dash and spin kick, and charged lightning: knock her down
+  to stop it), **Iroh** (fire punches and blasts, fire breath, and lightning redirection: lightning
+  that hits him is led through his stomach and sent back) and **Combustion Man** (an explosive
+  third-eye beam). Fireballs fizzle into steam against water and ice. `avatar-benders.js`: **Aang**
+  (air blasts that throw groups up, an air scooter, his glider staff, and once when badly hurt the
+  **Avatar State**: he hovers glowing while fire, water, earth and air pulse out round him),
+  **Katara** (water whip, slowing ice spikes, healing water), **Sokka** (a boomerang that comes back,
+  then his space sword), **Toph** (rock pillars that launch enemies, thrown boulders, earth armour),
+  the **Earthbender** (hurled rock discs) and the **Kyoshi Warrior** (twin war fans; turns blows aside).
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 
