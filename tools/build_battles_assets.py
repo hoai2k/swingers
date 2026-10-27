@@ -11,7 +11,7 @@ from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent / "battles"
 MAPS = ("grass", "desert", "winter", "autumn", "castle", "river", "cove", "volcano",
-        "canyon", "graveyard")
+        "canyon", "graveyard", "starbase", "shibuya", "blocky", "basingse")
 SIZES = {"logo": (1200, 525), "icon": (512, 512), "loading": (1920, 1080)}
 FACTIONS = ("tribal", "farmer", "medieval", "legacy", "viking", "ancient",
             "dynasty", "wildwest", "spooky", "pirate", "renaissance", "prehistoric",
