@@ -177,9 +177,8 @@ export function addAutoDriver(v, color = 0xffd23f) {
 export function railStep(v, dt) {
   const R = v.route, A = v.auto ||= { wait: 0, nextStop: 0, stuck: 0, honk: 0, gone: 0 };
   const b = v.body, p = b.translation();
-  if (A.railS === undefined) {
-    const pr = project(R.segs, p.x, p.z);
-    A.railS = pr.s; A.railV = Math.max(0, v.speed || 0);
+  if (A.railS === undefined) { A.railS = project(R.segs, p.x, p.z).s; A.railV = Math.max(0, v.speed || 0); }
+  if (A.railDy === undefined) {
     // ride height: as last seen driving, else from the wheels (sitting at rest on its springs)
     const a = v.def.axles?.[0];
     A.railDy = REST[v.type] ?? (a ? -a.y + a.rest * 0.6 + a.r - 1.6 : p.y - routeY(R, p.x, p.z));
@@ -206,6 +205,26 @@ export function railStep(v, dt) {
   const yaw = Math.atan2(nx - x, nz - z);
   b.setTranslation({ x, y: routeY(R, x, z) + A.railDy, z }, false);
   b.setRotation({ x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) }, false);
+}
+// Beyond simcull's FAR_AUTO nothing of it runs at all: suspendRoute notes where it was on the
+// loop and when; resumeRoute (coming back into range) puts it where it would have got to by
+// now at an average pace, already on rails, so the roads aren't frozen as you arrive.
+export function suspendRoute(v, time) {
+  const A = v.auto ||= { wait: 0, nextStop: 0, stuck: 0, honk: 0, gone: 0 }, p = v.body.translation();
+  A.offS = A.railS ?? project(v.route.segs, p.x, p.z).s; A.offT = time; A.railS = undefined;
+}
+export function resumeRoute(v, time, pts = []) {
+  const A = v.auto, R = v.route;
+  if (!A || A.offT === undefined) return;
+  const cruise = v.def.half[2] > 3 ? 9 : 11;
+  // never pop it in where someone could see it appear: back off along the loop until it's 150 m away
+  let s = A.offS + (time - A.offT) * cruise * 0.7;
+  for (let k = 0; k < R.total / 20; k++, s -= 20) {
+    const [x, z] = at(R, s);
+    if (pts.every((q) => (x - q.x) ** 2 + (z - q.z) ** 2 > 150 * 150)) break;
+  }
+  A.railS = ((s % R.total) + R.total) % R.total; A.railV = cruise; A.offT = undefined;
+  railStep(v, 0);
 }
 export function exitRail(v) {
   const A = v.auto, b = v.body;

@@ -249,8 +249,12 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   - self-driving traffic: live (wheel physics, red lights, bus stops) within 110 m; from 110 m
     to 300 m it drives **on rails** (`v.rail`, body disabled, `traffic.js railStep` moves it along
     its loop at cruising speed, slowing for corners and keeping behind cars ahead; handed back to
-    the wheels at the same speed within 95 m, `exitRail`); beyond 300 m it stops. Rails learn each
-    type's ride height from driving (`REST`), so the hand-over doesn't bump.
+    the wheels at the same speed within 95 m, `exitRail`); beyond 300 m nothing of it runs at all:
+    `suspendRoute` keeps only its place on the loop and the time, and `resumeRoute` puts it where
+    it would have got to by now (never within 150 m of a player, so nothing pops into view),
+    straight back on rails. Rails learn each type's ride height from driving (`REST`), so the
+    hand-over doesn't bump. Use the same pattern (keep the gist, catch up on return) for any
+    future far-away life rather than simulating it.
   - NPCs (`npc.js`): only the `CAP` = 12 nearest within `WAKE_R` = 60 m of a player are ragdolls
     (parked again past `SLEEP_R` = 72 m); the rest stand still, shown out to `SHOW_R` = 100 m.
     Raising these is the quickest way to make the fair or Bigtown slow.

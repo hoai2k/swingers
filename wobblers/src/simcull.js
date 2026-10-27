@@ -19,7 +19,7 @@
 //    pose is applied directly (physics.js), so the mesh still follows it;
 //  - past the animation range the animator stops too and the ride stands
 //    still where it was (physics.animate / kinAnim).
-import { exitRail } from './world/regions/city/traffic.js';
+import { exitRail, suspendRoute, resumeRoute } from './world/regions/city/traffic.js';
 
 const FAR = 150, NEAR = 125;   // metres from the nearest player (hysteresis)
 const FAR_AUTO = 300, NEAR_AUTO = 270; // self-driving traffic stays live further out: it's the life of the streets
@@ -53,17 +53,19 @@ export function buildSimCull(game) {
         const far = v?.route ? FAR_AUTO : FAR, near = v?.route ? NEAR_AUTO : NEAR;
         if (!o.culled && d > far && !keep) {
           o.culled = true; b.setEnabled(false); if (o.rec) o.rec.off = true;
-          if (v) v.culled = true;
+          if (v) { v.culled = true; if (v.route) { v.rail = false; suspendRoute(v, ph.time); } }
         } else if (o.culled && (d < near || keep)) {
-          o.culled = false; b.setEnabled(true); b.wakeUp(); if (o.rec) { o.rec.off = false; o.rec.snap = true; }
+          o.culled = false; if (o.rec) { o.rec.off = false; o.rec.snap = true; }
           if (v) v.culled = false;
+          if (v?.route && !keep && d > RAIL_FAR) { v.rail = true; resumeRoute(v, ph.time, pts); } // straight back on rails
+          else { b.setEnabled(true); b.wakeUp(); }
         }
         // self-driving traffic between RAIL_FAR and FAR_AUTO: still moving, but not simulated
         // (each one with its wheel raycasts cost ~0.6 ms a step even far out of reach)
         if (v?.route && !o.culled) {
           const rail = !keep && (v.rail ? d > RAIL_NEAR : d > RAIL_FAR);
           if (rail !== !!v.rail) { v.rail = rail; b.setEnabled(!rail); if (!rail) { exitRail(v); b.wakeUp(); } }
-        } else if (v?.rail && o.culled) { v.rail = false; exitRail(v); }
+        }
         if (o.culled) off++;
       }
       cull.off = off;
