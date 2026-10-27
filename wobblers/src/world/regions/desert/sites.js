@@ -231,7 +231,7 @@ function gasStation(game, kit, R) {
   const L = new R.Local(kit, x - 9, z - 6, 0, y + 0.05);
   const w = 14, d = 9, h = 4.0;
   shell(game, L, {
-    w, d, h, wall: 0x9fe0d8, floor: 0xf2f2f2, roofColor: 0xe8e8e8,
+    w, d, h, wall: 0x9fe0d8, floor: 0xf2f2f2, roofColor: 0xe8e8e8, business: 'diner',
     door: { lx: 3.5, w: 1.6, h: 2.4, color: 0xd8d8de, glass: true },
     windows: [{ side: 'f', at: -3.2, y: 2.0, w: 5.5, h: 1.6 }, { side: 'l', at: 0, y: 2.0, w: 4, h: 1.4 }],
     lights: [[-4, 0, { fixture: 'panel' }], [2, 0, { fixture: 'panel' }]],

@@ -180,6 +180,15 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   words / face / poster names are known, add an `## OPEN round N` entry and commit + push
   it on its own before finishing the feature, so the art is generated in parallel. A
   subagent that may not push sends the entry to its coordinator instead, who commits it.
+- Shop fronts (`world/interiors.js`): an enterable business is a `shell()` with `business: kind`
+  (or `dressFront(game, L, o)` for buildings made another way: the desert town's `building()`,
+  the city lobby tower). Its front gets warm `LIT_GLASS` windows (a GLOW colour), the shop's
+  insides painted on each window (unlit canvas per kind: shop / cafe / arcade / diner / gadgets /
+  market; one InstancedMesh per kind, `show_<kind>`), a glowing OPEN sign in the window
+  (`open: false` to skip), a glazed door, a lamp over the door, posters beside it (`posters`),
+  flower pots (`pots`) and pools of light on the pavement that fade in with `game.nightLight`.
+  Buildings you can't enter get none of this; in Bigtown they get graffiti instead
+  (`regions/city/graffiti.js`: `tag()` from `shopBox` / `midrise`, seeded, all tags one mesh).
 - Interior lights: rooms call `game.interiorLights.add(x, y, z, opts)` (`world/lights.js`); a
   pool of 6 point lights follows each view's camera, so adding spots costs nothing per frame.
 - Vehicles can be removed at runtime with `vehicle.destroy()` (riders and grabbing hands let

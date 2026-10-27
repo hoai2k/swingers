@@ -26,6 +26,7 @@ import { buildPeople } from './city/people.js';
 import { Quads } from './city/quads.js';
 import { autoTypes, makeRoute, placeOnRoute, addAutoDriver } from './city/traffic.js';
 import { useQuads } from './city/buildings.js';
+import { finishGraffiti } from './city/graffiti.js';
 
 const CX = 895, CZ = 0, HX = 245, HZ = 262;      // land: x 650..1140, z -262..262
 export const CITY_Y = Y;                          // ground height of the city plate
@@ -162,6 +163,7 @@ export function build(game, kit, R) {
   lap('people');
   Q.flush();
   lap('flush');
+  finishGraffiti(game, [CX, CZ], 520); // tags on the walls you can't go into (city/graffiti.js)
 }
 
 // Vehicles and people are spawned the first time a player heads for Bigtown (one per
