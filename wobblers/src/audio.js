@@ -58,7 +58,7 @@ export class Audio {
     this.ambientSpot('arcade_room', -19, 49, 14);
     this.ambientSpot('city_street', 875, 0, 260);
     this.ambientSpot('fair_crowd', 0, 226, 150); // Stratford Fall Fair (world/fair)
-    this.ambientSpot('jungle_ambience', -560, 850, 330, 0.8); // Tiki Jungle: insects, birds, monkeys far off
+    this.ambientSpot('jungle_ambience', -560, 850, 330, 0.8); // Tiki Jungle: birds, frogs, monkeys far off
     this.ambientSpot('ride_screams', -60, 200, 70); this.ambientSpot('ride_screams', 65, 255, 70);
     const resume = () => this.start();
     for (const ev of ['keydown', 'mousedown', 'pointerdown', 'touchstart', 'click']) addEventListener(ev, resume);
