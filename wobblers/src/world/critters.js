@@ -14,7 +14,7 @@
 import * as THREE from 'three';
 import { Builder } from '../mesh.js';
 
-export const BODY = 0, FL = 1, FR = 2, BL = 3, BR = 4, TAIL = 5, HEAD = 6, WING_L = 7, WING_R = 8, JAW = 9, TENT = 10;
+export { BODY, FL, FR, BL, BR, TAIL, HEAD, WING_L, WING_R, JAW, TENT } from './rigparts.js';
 
 export function rig(parts) {
   const geos = [];
@@ -27,6 +27,7 @@ export function rig(parts) {
     const [x, y, z] = p.pivot || [0, 0, 0];
     for (let i = 0; i < n; i++) a.set([p.part || 0, x, y, z], i * 4);
     g.setAttribute('aRig', new THREE.BufferAttribute(a, 4));
+    g.setAttribute('aW', new THREE.BufferAttribute(new Float32Array(n).fill(1), 1)); // moves fully with its part
     if (g.attributes.glow) g.deleteAttribute('glow');
     geos.push(g);
   }
@@ -37,6 +38,7 @@ export function rig(parts) {
 
 const GLSL_HEAD = `
 attribute vec4 aRig;
+attribute float aW;
 attribute vec2 aAnim;
 mat3 rX(float a) { float c = cos(a), s = sin(a); return mat3(1., 0., 0., 0., c, s, 0., -s, c); }
 mat3 rY(float a) { float c = cos(a), s = sin(a); return mat3(c, 0., -s, 0., 1., 0., s, 0., c); }
@@ -63,24 +65,28 @@ const BODY_MODES = {
 export class Species {
   // opts: max, name, mode, tint (instances get their own colour), shadow, k: shader constants
   // { LEG, TAILA, FLAP, JAWA, WAVEK, WAVEA, TAILZ } (TAILZ: nose-to-tail length, nose at z = TAILZ / 2: the wave grows toward the tail)
+  // geo: a BufferGeometry, or a Promise of one (animalgeo.js): until it arrives the species
+  // draws nothing and put() is ignored
   constructor(game, geo, opts = {}) {
     const max = opts.max || 32;
     const k = { LEG: 0.7, TAILA: 0.35, FLAP: 0.6, JAWA: 0.5, WAVEK: 2, WAVEA: 0.15, TAILZ: 1, ...(opts.k || {}) };
-    const g = geo.clone();
     this.anim = new Float32Array(max * 2);
     this.animAttr = new THREE.InstancedBufferAttribute(this.anim, 2);
     this.animAttr.setUsage(THREE.DynamicDrawUsage);
-    g.setAttribute('aAnim', this.animAttr);
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, ...(opts.material || {}) });
+    const attach = (g) => { g.setAttribute('aAnim', this.animAttr); return g; };
+    this.ready = !(geo instanceof Promise);
+    const g = this.ready ? attach(geo.clone()) : new THREE.BufferGeometry();
+    if (!this.ready) geo.then((real) => { this.mesh.geometry.dispose(); this.mesh.geometry = attach(real); this.ready = true; }).catch((e) => console.warn('animal model', opts.name, e));
+    const mat = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 28, specular: 0x262626, ...(opts.material || {}) });
     const consts = Object.entries(k).map(([n, v]) => `#define ${n} ${Number(v).toFixed(4)}`).join('\n');
     const mode = BODY_MODES[opts.mode] || '';
     mat.onBeforeCompile = (sh) => {
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', `#include <common>\n${consts}\n${GLSL_HEAD}`)
-        .replace('#include <beginnormal_vertex>', 'mat3 rigR = rigRot();\nvec3 objectNormal = rigR * vec3(normal);')
-        .replace('#include <begin_vertex>', `vec3 transformed = rigR * (vec3(position) - aRig.yzw) + aRig.yzw;
+        .replace('#include <beginnormal_vertex>', 'mat3 rigR = rigRot();\nvec3 objectNormal = normalize(mix(vec3(normal), rigR * vec3(normal), aW));')
+        .replace('#include <begin_vertex>', `vec3 transformed = mix(vec3(position), rigR * (vec3(position) - aRig.yzw) + aRig.yzw, aW);
 if (aRig.x > 9.5) { float d = length(position - aRig.yzw); float i = aRig.x - 10.;
-  transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y); }
+  transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y) * aW; }
 ${mode}`);
     };
     mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '');
@@ -98,7 +104,7 @@ ${mode}`);
   begin() { this.n = 0; }
   // position, yaw (0 faces +z), pitch (nose up > 0), roll, uniform scale, anim phase / amount, colour
   put(x, y, z, yaw, pitch, roll, s, phase, amp, color) {
-    if (this.n >= this.max) return;
+    if (this.n >= this.max || !this.ready) return;
     const i = this.n++;
     _e.set(-pitch, yaw, roll, 'YXZ');
     _m.compose(_p.set(x, y, z), _q.setFromEuler(_e), _s.set(s, s, s));

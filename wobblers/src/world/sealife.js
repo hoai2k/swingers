@@ -16,205 +16,13 @@
 // splash. They are updated only while a camera is within POD_SEE m.
 import * as THREE from 'three';
 import { SEA_LEVEL } from '../config.js';
-import { Species, rig, hash, rng, cameraUnder, BODY, FL, FR, BL, BR, TAIL, HEAD, WING_L, WING_R, JAW, TENT } from './critters.js';
+import { Species, rig, hash, rng, cameraUnder } from './critters.js';
+import { modelGeometry } from './animalgeo.js';
 
 const CELL = 20, REACH = 52, POD_SEE = 420;
 
-// ---- models (facing +z, centred, about 1 unit = 1 m) ------------------------------------------
-const EYE = 0x1c1c28;
-const eyes = (b, x, y, z, r = 0.035) => { for (const s of [-1, 1]) { b.sphere(r * 1.5, 0xffffff, [s * x, y, z], null, 8); b.sphere(r, EYE, [s * (x + r * 0.7), y, z + r * 0.4], null, 6); } };
-
-function fishGeo() { // tintable reef fish: body takes the instance colour
-  return rig([{ build: (b) => {
-    b.sphere(0.2, 0xffffff, [0, 0, 0], [0.42, 0.85, 1.2], 10);
-    b.add(new THREE.ConeGeometry(0.14, 0.2, 4), 0xffffff, [0, 0, -0.3], [-Math.PI / 2, 0, 0], [0.35, 1, 1.3]);
-    b.box(0.03, 0.12, 0.22, 0xffffff, [0, 0.17, -0.02]);
-    eyes(b, 0.07, 0.04, 0.13, 0.025);
-  } }]);
-}
-function clownGeo() {
-  return rig([{ build: (b) => {
-    b.sphere(0.18, 0xff7a1a, [0, 0, 0], [0.5, 0.75, 1.15], 14);
-    for (const [z, w] of [[0.1, 0.145], [-0.08, 0.16]]) b.add(new THREE.CylinderGeometry(1, 1, 0.045, 14), 0xffffff, [0, 0, z], [Math.PI / 2, 0, 0], [w * 0.53, 1, w * 0.8]);
-    b.add(new THREE.ConeGeometry(0.12, 0.16, 4), 0xff7a1a, [0, 0, -0.26], [-Math.PI / 2, 0, 0], [0.35, 1, 1.2]);
-    eyes(b, 0.07, 0.04, 0.12, 0.022);
-  } }]);
-}
-function angelGeo() {
-  return rig([{ build: (b) => {
-    b.sphere(0.2, 0xffd23f, [0, 0, 0], [0.22, 1.0, 0.85], 10);
-    for (const z of [0.05, -0.08]) b.box(0.1, 0.36, 0.035, 0x2a5cd8, [0, 0, z]);
-    b.add(new THREE.ConeGeometry(0.1, 0.4, 4), 0xffd23f, [0, 0.3, -0.12], [0.5, 0, 0], [0.2, 1, 1]);
-    b.add(new THREE.ConeGeometry(0.1, 0.4, 4), 0xffd23f, [0, -0.3, -0.12], [Math.PI - 0.5, 0, 0], [0.2, 1, 1]);
-    b.add(new THREE.ConeGeometry(0.1, 0.14, 4), 0x2a5cd8, [0, 0, -0.22], [-Math.PI / 2, 0, 0], [0.3, 1, 1.4]);
-    eyes(b, 0.04, 0.05, 0.11, 0.022);
-  } }]);
-}
-function pufferGeo() {
-  return rig([{ build: (b) => {
-    b.sphere(0.24, 0xf2d27a, [0, 0, 0], null, 12);
-    b.sphere(0.2, 0xfff4d8, [0, -0.06, 0.02], [1, 0.8, 1], 10);
-    for (let i = 0; i < 14; i++) { const a = i * 2.4, y = Math.cos(i * 0.9) * 0.6; const d = new THREE.Vector3(Math.cos(a) * Math.sqrt(1 - y * y), y, Math.sin(a) * Math.sqrt(1 - y * y)); b.add(new THREE.ConeGeometry(0.025, 0.09, 4), 0xc89a4a, d.clone().multiplyScalar(0.25).toArray(), new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d)); }
-    b.add(new THREE.ConeGeometry(0.08, 0.12, 4), 0xf2d27a, [0, 0, -0.28], [-Math.PI / 2, 0, 0]);
-    eyes(b, 0.12, 0.08, 0.18, 0.035);
-  } }]);
-}
-function sharkGeo() { // ~2.8 m, nose at z +1.4
-  return rig([
-    { build: (b) => {
-      b.sphere(0.5, 0x7d8ea8, [0, 0, 0.1], [0.62, 0.7, 2.6], 14);
-      b.sphere(0.46, 0xeef2f6, [0, -0.12, 0.25], [0.55, 0.5, 2.3], 12);
-      b.add(new THREE.ConeGeometry(0.32, 0.6, 4), 0x6e7f99, [0, 0.55, 0.0], [-0.35, 0, 0], [0.25, 1, 1]);   // dorsal fin
-      b.add(new THREE.ConeGeometry(0.3, 0.7, 4), 0x6e7f99, [0, 0.38, -1.38], [-0.9, 0, 0], [0.18, 1, 1]);   // tail top
-      b.add(new THREE.ConeGeometry(0.22, 0.45, 4), 0x6e7f99, [0, -0.15, -1.3], [-2.3, 0, 0], [0.18, 1, 1]); // tail bottom
-      for (let i = 0; i < 3; i++) b.box(0.02, 0.18, 0.02, 0x5a6a80, [0.31, 0.05, 0.62 - i * 0.09]);
-      eyes(b, 0.22, 0.12, 0.95, 0.045);
-      b.box(0.28, 0.025, 0.04, 0x3a2a3a, [0, -0.14, 1.12]); // grin
-    } },
-    { part: WING_L, pivot: [0.28, -0.12, 0.45], build: (b) => b.box(0.55, 0.05, 0.3, 0x6e7f99, [0.55, -0.2, 0.4], [0, 0.3, -0.35]) },
-    { part: WING_R, pivot: [-0.28, -0.12, 0.45], build: (b) => b.box(0.55, 0.05, 0.3, 0x6e7f99, [-0.55, -0.2, 0.4], [0, -0.3, 0.35]) },
-  ]);
-}
-function dolphinGeo() { // ~2.2 m
-  return rig([
-    { build: (b) => {
-      b.sphere(0.42, 0x6fa3d8, [0, 0, 0], [0.75, 0.8, 2.4], 14);
-      b.sphere(0.36, 0xdfefff, [0, -0.1, 0.15], [0.7, 0.6, 2.1], 12);
-      b.sphere(0.12, 0x6fa3d8, [0, -0.08, 1.05], [0.8, 0.6, 1.6], 8); // beak
-      b.add(new THREE.ConeGeometry(0.22, 0.42, 4), 0x5a8cc0, [0, 0.38, -0.1], [-0.5, 0, 0], [0.25, 1, 1]);
-      b.box(0.7, 0.04, 0.22, 0x5a8cc0, [0, 0, -1.08]); // flukes
-      eyes(b, 0.25, 0.08, 0.68, 0.04);
-      b.box(0.2, 0.02, 0.03, 0x2a3a5a, [0, -0.13, 0.95]);
-    } },
-    { part: WING_L, pivot: [0.22, -0.15, 0.35], build: (b) => b.box(0.4, 0.04, 0.18, 0x5a8cc0, [0.4, -0.22, 0.3], [0, 0.3, -0.4]) },
-    { part: WING_R, pivot: [-0.22, -0.15, 0.35], build: (b) => b.box(0.4, 0.04, 0.18, 0x5a8cc0, [-0.4, -0.22, 0.3], [0, -0.3, 0.4]) },
-  ]);
-}
-function whaleGeo() { // humpback ~9 m
-  return rig([
-    { build: (b) => {
-      b.sphere(1.5, 0x2c3e66, [0, 0, 0], [1.05, 0.95, 3.0], 16);
-      b.sphere(1.35, 0xc8d4e8, [0, -0.45, 0.6], [1.0, 0.6, 2.6], 14);
-      for (let i = 0; i < 5; i++) b.box(0.06, 0.04, 3.0, 0x9aa8c4, [-0.6 + i * 0.3, -1.25, 1.2]); // throat grooves
-      b.sphere(0.5, 0x2c3e66, [0, 0.9, -1.0], [0.6, 0.8, 1.4], 8); // hump
-      b.box(3.2, 0.12, 0.9, 0x2c3e66, [0, 0.0, -4.4], [0, 0, 0]);     // flukes
-      b.box(1.4, 0.13, 0.7, 0xc8d4e8, [0, -0.06, -4.3]);
-      b.sphere(0.35, 0x2c3e66, [0, 0, -3.8], [0.8, 0.7, 1.4], 8);
-      eyes(b, 1.2, 0.0, 2.5, 0.12);
-      for (const [x, z] of [[0.5, 3.6], [-0.4, 3.9], [0.1, 4.2]]) b.sphere(0.12, 0x46588a, [x, 0.95, z], null, 6); // bumps
-    } },
-    { part: WING_L, pivot: [1.2, -0.5, 1.4], build: (b) => b.box(3.0, 0.14, 0.7, 0x2c3e66, [2.6, -0.9, 1.1], [0, 0.35, -0.3]) },
-    { part: WING_R, pivot: [-1.2, -0.5, 1.4], build: (b) => b.box(3.0, 0.14, 0.7, 0x2c3e66, [-2.6, -0.9, 1.1], [0, -0.35, 0.3]) },
-  ]);
-}
-function jellyGeo() {
-  const parts = [{ build: (b) => {
-    b.add(new THREE.SphereGeometry(0.4, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xffffff, [0, 0, 0], null, [1, 0.85, 1]);
-    b.sphere(0.18, 0xffffff, [0, 0.12, 0], null, 8);
-    eyes(b, 0.1, 0.16, 0.32, 0.03);
-  } }];
-  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, x = Math.cos(a) * 0.24, z = Math.sin(a) * 0.24; parts.push({ part: TENT + i, pivot: [x, 0, z], build: (b) => b.cyl(0.025, 0.012, 1.1, 0xffffff, [x, -0.55, z], null, 5) }); }
-  parts.push({ part: TENT + 6, pivot: [0, 0, 0], build: (b) => b.cyl(0.06, 0.03, 0.7, 0xffffff, [0, -0.35, 0], null, 6) });
-  return rig(parts);
-}
-function starGeo() {
-  return rig([{ build: (b) => {
-    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; b.add(new THREE.ConeGeometry(0.09, 0.3, 5), 0xffffff, [Math.sin(a) * 0.14, 0.03, Math.cos(a) * 0.14], [Math.PI / 2, a, 0, 'YXZ'], [1, 1, 0.45]); }
-    b.sphere(0.1, 0xffffff, [0, 0.03, 0], [1, 0.45, 1], 8);
-    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; b.sphere(0.018, 0xfff0d0, [Math.sin(a) * 0.15, 0.07, Math.cos(a) * 0.15], null, 4); }
-  } }]);
-}
-function crabGeo() {
-  const parts = [{ build: (b) => {
-    b.sphere(0.2, 0xe2452f, [0, 0.16, 0], [1.3, 0.55, 0.95], 10);
-    for (const s of [-1, 1]) { b.cyl(0.015, 0.015, 0.12, 0xe2452f, [s * 0.07, 0.3, 0.1]); b.sphere(0.035, 0xffffff, [s * 0.07, 0.37, 0.1], null, 6); b.sphere(0.02, EYE, [s * 0.07, 0.38, 0.13], null, 5); }
-    for (const s of [-1, 1]) { b.box(0.06, 0.05, 0.18, 0xe2452f, [s * 0.22, 0.14, 0.18], [0, s * 0.6, 0]); b.sphere(0.07, 0xf05a3f, [s * 0.3, 0.15, 0.3], [1, 0.7, 1.3], 8); }
-  } }];
-  [[FL, 1, 0.06], [FR, -1, 0.06], [BL, 1, -0.08], [BR, -1, -0.08]].forEach(([p, s, z]) => parts.push({ part: p, pivot: [s * 0.2, 0.15, z], build: (b) => { b.box(0.22, 0.03, 0.03, 0xc8361f, [s * 0.3, 0.1, z], [0, 0, s * 0.6]); b.box(0.2, 0.03, 0.03, 0xc8361f, [s * 0.3, 0.1, z - 0.07], [0, 0, s * 0.6]); } }));
-  return rig(parts);
-}
-function seahorseGeo() {
-  return rig([{ build: (b) => {
-    const C = 0xff9a3f;
-    b.sphere(0.07, C, [0, 0.32, 0.02], [1, 1.1, 1], 8);                     // head
-    b.cyl(0.025, 0.03, 0.1, C, [0, 0.32, 0.1], [Math.PI / 2, 0, 0], 6);      // snout
-    for (let i = 0; i < 6; i++) b.sphere(0.075 - i * 0.008, C, [0, 0.22 - i * 0.06, -0.02 + Math.sin(i * 0.8) * 0.04], null, 7);
-    b.torus(0.05, 0.015, C, [0, -0.15, 0.03], [0, Math.PI / 2, 0], 10);    // curled tail
-    b.box(0.01, 0.1, 0.06, 0xffc06a, [0, 0.16, -0.08]);                     // fin
-    eyes(b, 0.05, 0.34, 0.04, 0.018);
-  } }]);
-}
-function octopusGeo() {
-  const C = 0xd8507a, parts = [{ build: (b) => {
-    b.sphere(0.42, C, [0, 0.62, -0.08], [1, 1.15, 1.05], 14);
-    b.sphere(0.3, C, [0, 0.32, 0.05], [1.1, 0.7, 1.1], 12);
-    eyes(b, 0.14, 0.42, 0.32, 0.055);
-    for (const [x, y, z] of [[0.2, 0.85, 0.2], [-0.25, 0.7, 0.28], [0.05, 1.0, 0.0]]) b.sphere(0.05, 0xf28aa8, [x, y, z], null, 6);
-  } }];
-  for (let i = 0; i < 8; i++) {
-    const a = (i + 0.5) / 8 * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a);
-    parts.push({ part: TENT + i, pivot: [dx * 0.25, 0.32, dz * 0.25], build: (b) => {
-      // a chain of shrinking beads: down to the bed, out along it, the tip curling up
-      for (let k = 0; k < 9; k++) {
-        const u = k / 8, out = 0.28 + u * 0.75, y = Math.max(0.05, 0.3 - u * 0.6) + Math.max(0, u - 0.75) * 0.7;
-        b.sphere(0.085 - u * 0.06, C, [dx * out, y, dz * out], null, 7);
-      }
-    } });
-  }
-  return rig(parts);
-}
-function turtleGeo() {
-  return rig([
-    { build: (b) => {
-      b.sphere(0.6, 0x5f8a3a, [0, 0, 0], [1, 0.38, 1.25], 12);
-      for (const [x, z] of [[0, 0.2], [0.25, -0.15], [-0.25, -0.15], [0, -0.45]]) b.sphere(0.18, 0x7aa64a, [x, 0.17, z], [1, 0.3, 1], 6);
-      b.sphere(0.56, 0xd8c88a, [0, -0.08, 0], [1, 0.2, 1.2], 10);
-      b.sphere(0.2, 0x9ab86a, [0, 0.02, 0.85], [1, 0.9, 1.2], 10);
-      eyes(b, 0.11, 0.08, 0.98, 0.035);
-      b.cone(0.08, 0.2, 0x9ab86a, [0, 0, -0.78], [-Math.PI / 2, 0, 0], 5);
-    } },
-    { part: WING_L, pivot: [0.45, 0, 0.4], build: (b) => b.box(0.55, 0.05, 0.22, 0x9ab86a, [0.75, -0.02, 0.35], [0, 0.4, 0]) },
-    { part: WING_R, pivot: [-0.45, 0, 0.4], build: (b) => b.box(0.55, 0.05, 0.22, 0x9ab86a, [-0.75, -0.02, 0.35], [0, -0.4, 0]) },
-    { part: BL, pivot: [0.35, 0, -0.5], build: (b) => b.box(0.25, 0.05, 0.2, 0x9ab86a, [0.45, -0.02, -0.6]) },
-    { part: BR, pivot: [-0.35, 0, -0.5], build: (b) => b.box(0.25, 0.05, 0.2, 0x9ab86a, [-0.45, -0.02, -0.6]) },
-  ]);
-}
-function mantaGeo() { // ~3.4 m wingspan
-  return rig([
-    { build: (b) => {
-      b.sphere(0.5, 0x2e3550, [0, 0, 0], [1, 0.32, 1.3], 12);
-      b.sphere(0.45, 0xeeeef6, [0, -0.06, 0.05], [0.95, 0.22, 1.2], 10);
-      for (const s of [-1, 1]) b.box(0.08, 0.06, 0.35, 0x2e3550, [s * 0.25, 0, 0.75], [0, s * 0.25, 0]); // horn-lobes
-      eyes(b, 0.36, 0.06, 0.45, 0.04);
-    } },
-    { part: TAIL, pivot: [0, 0, -0.6], build: (b) => b.cyl(0.02, 0.01, 1.4, 0x2e3550, [0, 0, -1.3], [Math.PI / 2, 0, 0], 5) },
-    { part: WING_L, pivot: [0.4, 0, 0], build: (b) => b.add(new THREE.ConeGeometry(0.5, 1.5, 3), 0x2e3550, [1.15, 0, -0.05], [0, 0, -Math.PI / 2], [1, 1, 0.12]) },
-    { part: WING_R, pivot: [-0.4, 0, 0], build: (b) => b.add(new THREE.ConeGeometry(0.5, 1.5, 3), 0x2e3550, [-1.15, 0, -0.05], [0, 0, Math.PI / 2], [1, 1, 0.12]) },
-  ]);
-}
-function plesioGeo() { // friendly long-necked plesiosaur, ~7 m
-  const G = 0x4f9a7a, L = 0xbfe3c8;
-  return rig([
-    { build: (b) => {
-      b.sphere(1.1, G, [0, 0, 0], [1.0, 0.7, 1.6], 14);
-      b.sphere(1.0, L, [0, -0.25, 0.1], [0.9, 0.45, 1.45], 12);
-      for (let i = 0; i < 4; i++) b.sphere(0.28 - i * 0.05, G, [0, 0.05, -1.7 - i * 0.45], null, 8); // tail
-      for (const [x, z] of [[0.4, 0.4], [-0.3, -0.3], [0.1, -0.8]]) b.sphere(0.18, 0x3c7a5e, [x, 0.7, z], [1, 0.4, 1], 6);
-    } },
-    { part: HEAD, pivot: [0, 0.3, 1.4], build: (b) => {
-      for (let i = 0; i < 14; i++) { const k = i / 13; b.sphere(0.36 - k * 0.14, G, [0, 0.3 + Math.sin(k * 1.6) * 1.9, 1.5 + k * 1.9], null, 9); }
-      b.sphere(0.32, G, [0, 2.3, 3.55], [1, 0.9, 1.3], 10);
-      b.sphere(0.24, L, [0, 2.18, 3.75], [1, 0.6, 1.2], 8);
-      eyes(b, 0.2, 2.42, 3.7, 0.055);
-      b.box(0.24, 0.025, 0.05, 0x2a4a3a, [0, 2.2, 3.98]);
-    } },
-    { part: WING_L, pivot: [0.8, -0.2, 0.6], build: (b) => b.sphere(0.7, G, [1.5, -0.35, 0.55], [1, 0.12, 0.35], 8) },
-    { part: WING_R, pivot: [-0.8, -0.2, 0.6], build: (b) => b.sphere(0.7, G, [-1.5, -0.35, 0.55], [1, 0.12, 0.35], 8) },
-    { part: BL, pivot: [0.7, -0.2, -0.8], build: (b) => b.sphere(0.55, G, [1.2, -0.35, -0.9], [1, 0.12, 0.35], 8) },
-    { part: BR, pivot: [-0.7, -0.2, -0.8], build: (b) => b.sphere(0.55, G, [-1.2, -0.35, -0.9], [1, 0.12, 0.35], 8) },
-  ]);
-}
-function sprayGeo() { return rig([{ build: (b) => b.add(new THREE.IcosahedronGeometry(1, 1), 0xffffff) }]); }
+// ---- models: world/animalmodels.js (sculpted) -------------------------------------------------------
+const sprayGeo = () => rig([{ build: (b) => b.add(new THREE.IcosahedronGeometry(1, 1), 0xffffff) }]);
 
 // ---- the under-water cells -----------------------------------------------------------------------
 const WARM = ['#ff7a8a', '#3f8cff', '#ffd23f', '#3fe0d0', '#b46cff', '#ff8a1a', '#5ad85a'];
@@ -223,19 +31,19 @@ const COLD = ['#c8d4e0', '#9fb4c8', '#d8dce0', '#b4c0cc'];
 export function buildSeaLife(game) {
   const T = game.terrain, S = {};
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, ...opts }));
-  mk('fish', fishGeo(), 260, { mode: 'swim', tint: true, k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.6 } });
-  mk('clown', clownGeo(), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.5 } });
-  mk('angel', angelGeo(), 60, { mode: 'swim', k: { WAVEK: 8, WAVEA: 0.04, TAILZ: 0.4 } });
-  mk('puffer', pufferGeo(), 16, { mode: 'swim', k: { WAVEK: 6, WAVEA: 0.03, TAILZ: 0.5 } });
-  mk('jelly', jellyGeo(), 40, { mode: 'pulse', tint: true, material: { transparent: true, opacity: 0.72, depthWrite: false } });
-  mk('star', starGeo(), 80, { tint: true });
-  mk('crab', crabGeo(), 30, { k: { LEG: 0.5 } });
-  mk('seahorse', seahorseGeo(), 16);
-  mk('octopus', octopusGeo(), 10);
-  mk('turtle', turtleGeo(), 8, { k: { FLAP: 0.5, LEG: 0.3 } });
-  mk('manta', mantaGeo(), 6, { k: { FLAP: 0.45, TAILA: 0.2 } });
-  mk('shark', sharkGeo(), 8, { mode: 'swim', k: { WAVEK: 1.6, WAVEA: 0.22, TAILZ: 2.8, FLAP: 0.12 } });
-  mk('plesio', plesioGeo(), 2, { k: { FLAP: 0.45, LEG: 0.4 } });
+  mk('fish', modelGeometry('reefFish'), 260, { mode: 'swim', tint: true, k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.6 } });
+  mk('clown', modelGeometry('clownfish'), 60, { mode: 'swim', k: { WAVEK: 9, WAVEA: 0.05, TAILZ: 0.5 } });
+  mk('angel', modelGeometry('angelfish'), 60, { mode: 'swim', k: { WAVEK: 8, WAVEA: 0.04, TAILZ: 0.4 } });
+  mk('puffer', modelGeometry('puffer'), 16, { mode: 'swim', k: { WAVEK: 6, WAVEA: 0.03, TAILZ: 0.5 } });
+  mk('jelly', modelGeometry('jelly'), 40, { mode: 'pulse', tint: true, material: { transparent: true, opacity: 0.72, depthWrite: false } });
+  mk('star', modelGeometry('seaStar'), 80, { tint: true });
+  mk('crab', modelGeometry('crab'), 30, { k: { LEG: 0.5 } });
+  mk('seahorse', modelGeometry('seahorse'), 16);
+  mk('octopus', modelGeometry('octopus'), 10);
+  mk('turtle', modelGeometry('turtle'), 8, { k: { FLAP: 0.5, LEG: 0.3 } });
+  mk('manta', modelGeometry('manta'), 6, { k: { FLAP: 0.45, TAILA: 0.2 } });
+  mk('shark', modelGeometry('shark'), 8, { mode: 'swim', k: { WAVEK: 1.6, WAVEA: 0.22, TAILZ: 2.8, FLAP: 0.12 } });
+  mk('plesio', modelGeometry('plesiosaur'), 2, { k: { FLAP: 0.45, LEG: 0.4 } });
   const under = Object.values(S);
 
   const cells = new Map();
@@ -319,8 +127,8 @@ export function buildSeaLife(game) {
 
   // ---- dolphins and whales: loops in the open sea --------------------------------------------
   const pods = findPods(game);
-  const dol = new Species(game, dolphinGeo(), { max: pods.filter((p) => p.kind === 'dolphin').length * 4 + 1, name: 'dolphin', mode: 'swimv', k: { WAVEK: 1.8, WAVEA: 0.12, TAILZ: 2.2, FLAP: 0.15 } });
-  const wha = new Species(game, whaleGeo(), { max: pods.filter((p) => p.kind === 'whale').length + 1, name: 'whale', mode: 'swimv', k: { WAVEK: 0.5, WAVEA: 0.35, TAILZ: 9, FLAP: 0.2 } });
+  const dol = new Species(game, modelGeometry('dolphin'), { max: pods.filter((p) => p.kind === 'dolphin').length * 4 + 1, name: 'dolphin', mode: 'swimv', k: { WAVEK: 1.8, WAVEA: 0.12, TAILZ: 2.2, FLAP: 0.15 } });
+  const wha = new Species(game, modelGeometry('whale'), { max: pods.filter((p) => p.kind === 'whale').length + 1, name: 'whale', mode: 'swimv', k: { WAVEK: 0.5, WAVEA: 0.35, TAILZ: 9, FLAP: 0.2 } });
   const spray = new Species(game, sprayGeo(), { max: 200, name: 'spray', material: { transparent: true, opacity: 0.8, color: 0xffffff, emissive: 0x6a7a8a } });
   const drops = []; // { x, y, z, vx, vy, vz, life, s }
   const splash = (x, z, n, power, size) => {

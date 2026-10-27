@@ -11,153 +11,13 @@
 // near: only animals within SEE m of a camera are posed, and they make their noise (growl,
 // chatter, grunt, hiss, snap, squawk) when a player comes close. They are scenery: no
 // physics, you walk through them.
-import * as THREE from 'three';
 import { SEA_LEVEL } from '../../../config.js';
-import { Species, rig, hash, rng, BODY, FL, FR, BL, BR, TAIL, HEAD, WING_L, WING_R, JAW } from '../../critters.js';
+import { Species, hash } from '../../critters.js';
 import { VILLAGE, LAGOON, TEMPLE, RIVER, CLIFF, POOL, TRAIL, TRACK, VOLCANO, polyDist } from '../jungle.js';
 import { GROVE } from './wild.js';
+import { modelGeometry } from '../../animalgeo.js';
 
 const SEE = 170;
-const EYE = 0x1c1c28;
-const eyes = (b, x, y, z, r = 0.035) => { for (const s of [-1, 1]) { b.sphere(r * 1.5, 0xffffff, [s * x, y, z], null, 8); b.sphere(r, EYE, [s * (x + r * 0.5), y, z + r * 0.6], null, 6); } };
-const legs = (h, w, z0, z1, r, color, foot) => [[FL, 1, z0], [FR, -1, z0], [BL, 1, z1], [BR, -1, z1]].map(([p, s, z]) => ({ part: p, pivot: [s * w, h, z], build: (b) => { b.cyl(r, r * 0.85, h, color, [s * w, h / 2, z], null, 7); if (foot) b.sphere(r * 1.15, foot, [s * w, r * 0.6, z + r * 0.3], [1, 0.6, 1.3], 7); } }));
-
-// ---- models (facing +z, feet at y = 0) --------------------------------------------------------
-function cat(body, dark, belly, spots) { // tiger (stripes) / leopard (spots), ~1.9 m
-  return rig([
-    { build: (b) => {
-      b.sphere(0.4, body, [0, 0.72, 0], [0.85, 0.8, 1.9], 14);
-      b.sphere(0.34, belly, [0, 0.6, 0.05], [0.8, 0.6, 1.7], 10);
-      if (spots === 'stripes') for (let i = 0; i < 6; i++) for (const s of [-1, 1]) b.sphere(0.25, dark, [s * 0.215, 0.8, 0.5 - i * 0.2], [0.28, 0.85, 0.13], 8); // stripes over the back
-      else for (let i = 0; i < 22; i++) { const a = i * 2.39, z = 0.6 - (i / 22) * 1.3, y = 0.72 + Math.cos(a) * 0.24, x = Math.sin(a) * 0.3; if (y > 0.56) b.sphere(0.045, dark, [x, y, z], [1, 1, 1], 5); }
-    } },
-    { part: HEAD, pivot: [0, 0.95, 0.65], build: (b) => {
-      b.sphere(0.27, body, [0, 1.0, 0.85], [1.05, 0.95, 1], 12);
-      b.sphere(0.15, belly, [0, 0.92, 1.05], [1.1, 0.8, 0.9], 10);
-      b.sphere(0.04, 0x3a2a2a, [0, 0.98, 1.17], null, 6);
-      for (const s of [-1, 1]) { b.sphere(0.08, body, [s * 0.17, 1.22, 0.82], [1, 1, 0.5], 8); b.sphere(0.04, dark, [s * 0.17, 1.23, 0.84], [1, 1, 0.5], 6); }
-      if (spots === 'stripes') for (const s of [-1, 1]) b.box(0.02, 0.1, 0.03, dark, [s * 0.12, 1.2, 0.98], [0, 0, s * 0.3]);
-      eyes(b, 0.1, 1.06, 1.06, 0.035);
-    } },
-    { part: TAIL, pivot: [0, 0.82, -0.7], build: (b) => { for (let i = 0; i < 7; i++) b.sphere(0.065, i % 2 && spots === 'stripes' ? dark : body, [0, 0.82 - i * 0.03 + (i > 4 ? (i - 4) * 0.06 : 0), -0.75 - i * 0.12], null, 6); } },
-    ...legs(0.62, 0.17, 0.5, -0.5, 0.08, body, belly),
-  ]);
-}
-function monkeyParts(hang) {
-  const F = 0x7a4a2a, T = 0xe8c49a;
-  const head = { part: HEAD, pivot: [0, 0.55, 0.2], build: (b) => {
-    b.sphere(0.17, F, [0, 0.66, 0.24], null, 12);
-    b.sphere(0.12, T, [0, 0.63, 0.34], [1.1, 0.9, 0.7], 10);
-    for (const s of [-1, 1]) { b.sphere(0.06, T, [s * 0.17, 0.68, 0.22], [0.5, 1, 1], 8); }
-    eyes(b, 0.05, 0.69, 0.39, 0.025);
-    b.box(0.06, 0.012, 0.01, 0x5a2a2a, [0, 0.6, 0.42]);
-  } };
-  const body = { build: (b) => { b.sphere(0.2, F, [0, 0.45, 0], [0.9, 1.05, 1.0], 12); b.sphere(0.14, T, [0, 0.43, 0.09], [0.9, 1, 0.7], 10); } };
-  const tail = { part: TAIL, pivot: [0, 0.35, -0.15], build: (b) => { for (let i = 0; i < 9; i++) { const a = i / 8 * 2.4; b.sphere(0.035, F, [0, 0.35 + Math.sin(a) * 0.32, -0.18 - Math.sin(a * 0.6) * 0.32 + (i > 6 ? (i - 6) * 0.05 : 0)], null, 5); } } };
-  if (!hang) return [body, head, tail,
-    { part: FL, pivot: [0.12, 0.5, 0.1], build: (b) => b.cyl(0.055, 0.045, 0.46, F, [0.13, 0.27, 0.12], null, 7) },
-    { part: FR, pivot: [-0.12, 0.5, 0.1], build: (b) => b.cyl(0.055, 0.045, 0.46, F, [-0.13, 0.27, 0.12], null, 7) },
-    { part: BL, pivot: [0.1, 0.3, -0.05], build: (b) => b.cyl(0.06, 0.05, 0.3, F, [0.11, 0.15, -0.05], null, 7) },
-    { part: BR, pivot: [-0.1, 0.3, -0.05], build: (b) => b.cyl(0.06, 0.05, 0.3, F, [-0.11, 0.15, -0.05], null, 7) }];
-  // hanging by its right hand: the hand is the origin, everything hangs below it
-  const down = (p) => ({ ...p, pivot: p.pivot && [p.pivot[0], p.pivot[1] - 1.25, p.pivot[2]], build: (b) => p.build(shift(b, -1.25)) });
-  return [down(body), down(head), down(tail),
-    { build: (b) => { b.cyl(0.04, 0.035, 0.55, F, [-0.1, -0.3, 0], [0, 0, 0.15], 6); b.sphere(0.05, T, [0, 0, 0], null, 6); } }, // the arm up to the vine
-    { part: FL, pivot: [0.12, -0.75, 0.05], build: (b) => b.cyl(0.04, 0.035, 0.45, F, [0.16, -0.95, 0.08], [0.3, 0, 0.3], 6) },
-    { part: BL, pivot: [0.1, -0.95, -0.05], build: (b) => b.cyl(0.045, 0.04, 0.32, F, [0.1, -1.1, 0.0], [0.6, 0, 0], 6) },
-    { part: BR, pivot: [-0.1, -0.95, -0.05], build: (b) => b.cyl(0.045, 0.04, 0.32, F, [-0.1, -1.1, 0.0], [0.6, 0, 0], 6) }];
-}
-// a Builder that adds everything dy lower
-function shift(b, dy) {
-  return new Proxy(b, { get(t, k) {
-    const f = t[k];
-    if (typeof f !== 'function') return f;
-    const posArg = { box: 4, rbox: 5, cyl: 4, sphere: 2, cone: 3, torus: 3, capsule: 3, add: 2 }[k];
-    if (posArg === undefined) return f.bind(t);
-    return (...a) => { const p = a[posArg] || [0, 0, 0]; a[posArg] = [p[0], p[1] + dy, p[2]]; return f.apply(t, a); };
-  } });
-}
-function hog() { // red river hog ~1.1 m
-  const C = 0xc8562a, D = 0x2a1a1a;
-  return rig([
-    { build: (b) => { b.sphere(0.3, C, [0, 0.42, 0], [0.9, 0.85, 1.5], 12); b.sphere(0.3, 0xf2f2f2, [0, 0.66, -0.05], [0.08, 0.06, 0.95], 6); } },
-    { part: HEAD, pivot: [0, 0.45, 0.35], build: (b) => {
-      b.sphere(0.2, D, [0, 0.42, 0.5], [0.9, 0.9, 1.1], 10);
-      b.cyl(0.08, 0.1, 0.18, D, [0, 0.36, 0.7], [Math.PI / 2, 0, 0], 8); b.sphere(0.08, 0xd88a8a, [0, 0.36, 0.79], [1, 0.9, 0.4], 8);
-      for (const s of [-1, 1]) { b.cone(0.06, 0.16, C, [s * 0.13, 0.62, 0.43], [0, 0, -s * 0.4], 5); b.cone(0.03, 0.12, 0xffffff, [s * 0.16, 0.71, 0.42], [0, 0, -s * 0.4], 4); }
-      for (const s of [-1, 1]) b.box(0.02, 0.02, 0.18, 0xffffff, [s * 0.11, 0.48, 0.56]);
-      eyes(b, 0.1, 0.5, 0.62, 0.025);
-    } },
-    { part: TAIL, pivot: [0, 0.45, -0.42], build: (b) => b.cyl(0.015, 0.015, 0.2, C, [0, 0.4, -0.47], [0.4, 0, 0], 4) },
-    ...legs(0.28, 0.14, 0.24, -0.24, 0.05, D),
-  ]);
-}
-function capybara() { // ~1.1 m, sits low
-  const C = 0x9a6a3a, D = 0x6a4a2a;
-  return rig([
-    { build: (b) => { b.sphere(0.32, C, [0, 0.45, 0], [0.95, 0.85, 1.45], 12); } },
-    { part: HEAD, pivot: [0, 0.55, 0.35], build: (b) => {
-      b.rbox(0.28, 0.3, 0.36, 0.11, C, [0, 0.6, 0.55]);
-      b.sphere(0.07, D, [0, 0.58, 0.74], [1.6, 0.8, 0.6], 8);
-      for (const s of [-1, 1]) b.sphere(0.045, D, [s * 0.1, 0.78, 0.45], null, 6);
-      eyes(b, 0.12, 0.68, 0.62, 0.025);
-    } },
-    ...legs(0.24, 0.16, 0.25, -0.22, 0.06, C),
-  ]);
-}
-function tapir() { // ~1.9 m, dark with a white saddle
-  const D = 0x2a2a30, W = 0xf2f0ea;
-  return rig([
-    { build: (b) => { b.sphere(0.42, D, [0, 0.8, 0.25], [0.8, 0.85, 0.9], 12); b.sphere(0.45, W, [0, 0.82, -0.2], [0.82, 0.86, 0.8], 12); b.sphere(0.38, D, [0, 0.78, -0.55], [0.8, 0.85, 0.75], 12); } },
-    { part: HEAD, pivot: [0, 0.85, 0.6], build: (b) => {
-      b.sphere(0.24, D, [0, 0.85, 0.8], [0.85, 0.95, 1.2], 10);
-      b.cyl(0.05, 0.08, 0.3, D, [0, 0.72, 1.08], [1.9, 0, 0], 7);
-      for (const s of [-1, 1]) { b.sphere(0.07, D, [s * 0.14, 1.07, 0.7], [1, 1, 0.5], 6); b.sphere(0.04, W, [s * 0.14, 1.09, 0.72], [1, 1, 0.4], 5); }
-      eyes(b, 0.12, 0.94, 0.94, 0.025);
-    } },
-    ...legs(0.6, 0.18, 0.45, -0.5, 0.08, D),
-  ]);
-}
-function snake() { // python ~2.6 m, flat on the ground, nose at +1.3
-  return rig([{ build: (b) => {
-    const n = 22;
-    for (let i = 0; i < n; i++) { const u = i / (n - 1), r = 0.075 * Math.sin(Math.PI * (0.15 + u * 0.75)) + 0.02; b.sphere(r, i % 4 < 2 ? 0x5aa83a : 0xe8c84a, [0, r, 1.15 - u * 2.5], [1, 0.8, 1.6], 7); }
-    b.sphere(0.08, 0x5aa83a, [0, 0.07, 1.25], [1.2, 0.7, 1.4], 9);
-    eyes(b, 0.06, 0.12, 1.31, 0.022);
-    b.box(0.015, 0.006, 0.12, 0xe2304a, [0, 0.05, 1.42]);
-  } }]);
-}
-function croc() { // ~3 m
-  const G = 0x4f7a3a, L = 0xc8d48a, Wt = 0xffffff;
-  return rig([
-    { build: (b) => {
-      b.sphere(0.36, G, [0, 0.3, 0], [0.95, 0.5, 2.0], 12);
-      b.sphere(0.32, L, [0, 0.22, 0.05], [0.9, 0.35, 1.8], 10);
-      for (let i = 0; i < 7; i++) for (const s of [-1, 1]) b.sphere(0.05, 0x3c6a2c, [s * 0.12, 0.47, 0.5 - i * 0.18], null, 5);
-      b.rbox(0.36, 0.14, 0.75, 0.06, G, [0, 0.33, 0.95]);                 // upper jaw
-      for (const s of [-1, 1]) { b.sphere(0.08, G, [s * 0.1, 0.45, 0.68], null, 8); b.sphere(0.05, 0xffe24a, [s * 0.1, 0.49, 0.72], null, 6); b.sphere(0.025, EYE, [s * 0.1, 0.5, 0.76], null, 5); }
-      for (let i = 0; i < 5; i++) for (const s of [-1, 1]) b.cone(0.02, 0.06, Wt, [s * 0.15, 0.24, 0.72 + i * 0.12], [Math.PI, 0, 0], 4);
-    } },
-    { part: JAW, pivot: [0, 0.26, 0.6], build: (b) => b.rbox(0.34, 0.08, 0.72, 0.04, L, [0, 0.22, 0.96]) },
-    { part: TAIL, pivot: [0, 0.3, -0.6], build: (b) => { for (let i = 0; i < 8; i++) b.sphere(0.2 - i * 0.022, G, [0, 0.28, -0.7 - i * 0.2], [0.8, 0.7, 1.3], 8); for (let i = 0; i < 6; i++) b.cone(0.04, 0.1, 0x3c6a2c, [0, 0.42 - i * 0.015, -0.7 - i * 0.22], null, 4); } },
-    ...[[FL, 1, 0.45], [FR, -1, 0.45], [BL, 1, -0.45], [BR, -1, -0.45]].map(([p, s, z]) => ({ part: p, pivot: [s * 0.25, 0.25, z], build: (b) => b.cyl(0.06, 0.05, 0.3, G, [s * 0.38, 0.13, z], [0, 0, s * 0.9], 6) })),
-  ]);
-}
-function bird(body, wing, beak, big) { // parrot / toucan, ~0.5 m
-  return rig([
-    { build: (b) => {
-      b.sphere(0.12, body, [0, 0, 0], [0.85, 0.85, 1.6], 10);
-      b.sphere(0.1, body, [0, 0.06, 0.2], null, 10);
-      if (big) { b.sphere(0.07, 0xffffff, [0, 0.04, 0.27], [1.1, 1, 0.6], 8); b.cone(0.06, 0.3, beak, [0, 0.05, 0.42], [Math.PI / 2, 0, 0], 8); b.box(0.03, 0.02, 0.2, 0x2a2a2a, [0, 0.0, 0.42]); }
-      else b.cone(0.04, 0.09, beak, [0, 0.03, 0.31], [Math.PI / 2 + 0.4, 0, 0], 6);
-      b.box(0.1, 0.02, 0.28, wing, [0, 0, -0.3]); // tail feathers
-      eyes(b, 0.06, 0.1, 0.24, 0.02);
-    } },
-    { part: WING_L, pivot: [0.08, 0.04, 0], build: (b) => b.sphere(0.2, wing, [0.24, 0.04, -0.03], [1, 0.12, 0.45], 8) },
-    { part: WING_R, pivot: [-0.08, 0.04, 0], build: (b) => b.sphere(0.2, wing, [-0.24, 0.04, -0.03], [1, 0.12, 0.45], 8) },
-  ]);
-}
-
 // ---- paths ---------------------------------------------------------------------------------------
 // A closed loop round (hx, hz) of about radius r through clear ground, densified every ~1 m with
 // the ground height: { pts: Float32Array [x, y, z]*, len } or null if no clear loop fits there.
@@ -200,18 +60,20 @@ function travelled(t, v, walk, rest, off) {
 export function buildAnimals(game, R) {
   const rnd = R.rng(404), S = {};
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, shadow: true, ...opts }));
-  mk('tiger', cat(0xf08a2a, 0x2a1a1a, 0xfff2e0, 'stripes'), 4, { k: { LEG: 0.6 } });
-  mk('leopard', cat(0xe8c060, 0x3a2a1a, 0xfff4dc, 'spots'), 4, { k: { LEG: 0.6 } });
-  mk('monkey', rig(monkeyParts(false)), 16, { k: { LEG: 0.8, TAILA: 0.5 } });
-  mk('monkeyHang', rig(monkeyParts(true)), 10, { k: { LEG: 0.4, TAILA: 0.5 } });
-  mk('hog', hog(), 12, { k: { LEG: 0.7 } });
-  mk('capybara', capybara(), 14, { k: { LEG: 0.6 } });
-  mk('tapir', tapir(), 4, { k: { LEG: 0.5 } });
-  mk('snake', snake(), 8, { mode: 'slither', k: { WAVEK: 4.5, WAVEA: 0.16 } });
-  mk('croc', croc(), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
-  mk('parrot', bird(0xe8322b, 0x2a6ae8, 0xf2e6c4, false), 8, { k: { FLAP: 0.8 }, shadow: false });
-  mk('toucan', bird(0x1c1c22, 0x1c1c22, 0xff9a1a, true), 6, { k: { FLAP: 0.8 }, shadow: false });
+  const t0 = performance.now();
+  mk('tiger', modelGeometry('bigCat', 'tiger'), 4, { k: { LEG: 0.6 } });
+  mk('leopard', modelGeometry('bigCat', 'leopard'), 4, { k: { LEG: 0.6 } });
+  mk('monkey', modelGeometry('monkey', false), 16, { k: { LEG: 0.8, TAILA: 0.5 } });
+  mk('monkeyHang', modelGeometry('monkey', true), 10, { k: { LEG: 0.4, TAILA: 0.5 } });
+  mk('hog', modelGeometry('hog'), 12, { k: { LEG: 0.7 } });
+  mk('capybara', modelGeometry('capybara'), 14, { k: { LEG: 0.6 } });
+  mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });
+  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 4.5, WAVEA: 0.16 } });
+  mk('croc', modelGeometry('croc'), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
+  mk('parrot', modelGeometry('bird', 'parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
+  mk('toucan', modelGeometry('bird', 'toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
+  (game.buildTimes ||= {}).sculptJungle = Math.round(performance.now() - t0);
 
   // where land animals may walk
   const [bx0, bx1, bz0, bz1] = R.bounds;
