@@ -1927,6 +1927,46 @@
       "transparent": true,
       "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_nerd.png",
       "index": 175
+    },
+    {
+      "file": "signs/wobble_works.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Industrial steel-grey board with yellow-and-black hazard stripes along edges, chunky bright orange letters, small cog-wheel icon. Exact text: \"WOBBLE WORKS\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-522fe70d-5932-4c88-ac36-c066efb1dd35.png",
+      "round": 14,
+      "index": 176
+    },
+    {
+      "file": "signs/loading_bay.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Dark navy board, white stencil-style rounded letters, small forklift icon. Exact text: \"LOADING BAY\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-55f8fdd1-a22c-4678-aed2-e20f3faaa877.png",
+      "round": 14,
+      "index": 177
+    },
+    {
+      "file": "signs/pooh_berry_farm.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Warm wooden board, barn-red letters with cream outline, small smiling sunflower icon. Exact text: \"POOH BERRY FARM\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b8a0a817-5e22-4c05-baf4-618858419dee.png",
+      "round": 14,
+      "index": 178
+    },
+    {
+      "file": "signs/corn_maze.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Straw-yellow board, deep green letters, small corn-cob icon. Exact text: \"CORN MAZE\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bee2619a-46e4-468c-9b15-9ac0604b03f5.png",
+      "round": 14,
+      "index": 179
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",

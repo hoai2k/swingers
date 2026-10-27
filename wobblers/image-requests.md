@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: rounds 14 (4 signs) and 15 (15 repaints: characters in toy style) are open.** Rounds 1–13 are delivered; see `image-requests-history.md`.
+**Status: rounds 15 remain open; delivered rows are in `image-requests-history.md`.**
 
 ## OPEN round 15 — repaint every character in the toy style (12 pictures, 3 signs)
 
@@ -31,22 +31,6 @@ pairing is fine.
 | `signs/ski_jump.png` | 1024 × 256 | the skier on the right of SKI JUMP: coral skin, red ski jacket and helmet, goggles |
 | `signs/wobblecorp.png` | 1024 × 256 | the round mascot face on the left of WOBBLECORP: a toy-style Wobbler head (teal skin, printed smile, pink cheeks) instead of the yellow blob |
 
-## OPEN round 14 — factory and farm signs (4 signs)
-
-The west of Wobbly Island gets a toy factory (Wobble Works: a big saw-tooth-roofed hall,
-conveyor belts, forklifts, stacked shipping containers, smokestacks) and a farm (Pooh Berry Farm:
-a red barn, silos, golden wheat fields, giant tractors and a combine harvester) with a corn
-maze. The signs are `signMesh` boards in the game, framed like the existing ones.
-
-- `signs/wobble_works.png` (1024 × 256) — **WOBBLE WORKS**: the toy factory's big gate sign:
-  industrial steel-grey board with yellow-and-black hazard stripes along the edges, chunky
-  bright orange letters, a small cog-wheel icon.
-- `signs/loading_bay.png` (1024 × 256) — **LOADING BAY**: over the factory's truck dock: dark
-  navy board, white stencil-style rounded letters, a small forklift icon.
-- `signs/pooh_berry_farm.png` (1024 × 256) — **POOH BERRY FARM**: the farm's entrance arch sign: warm
-  wooden board, barn-red letters with a cream outline, a small smiling sunflower icon.
-- `signs/corn_maze.png` (1024 × 256) — **CORN MAZE**: at the maze entrance: straw-yellow board,
-  deep green letters, a small corn-cob icon.
 
 ## How delivery works
 

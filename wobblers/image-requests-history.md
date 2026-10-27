@@ -4,6 +4,21 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 14 — factory and farm signs
+
+Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
+in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
+browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
+- `signs/wobble_works.png` (1024 × 256) — **WOBBLE WORKS**: the toy factory's big gate sign:
+  industrial steel-grey board with yellow-and-black hazard stripes along the edges, chunky
+  bright orange letters, a small cog-wheel icon.
+- `signs/loading_bay.png` (1024 × 256) — **LOADING BAY**: over the factory's truck dock: dark
+  navy board, white stencil-style rounded letters, a small forklift icon.
+- `signs/pooh_berry_farm.png` (1024 × 256) — **POOH BERRY FARM**: the farm's entrance arch sign: warm
+  wooden board, barn-red letters with a cream outline, a small smiling sunflower icon.
+- `signs/corn_maze.png` (1024 × 256) — **CORN MAZE**: at the maze entrance: straw-yellow board,
+  deep green letters, a small corn-cob icon.
+
 ## Delivered round 13 — painted blink frames
 
 Delivered in batches with built-in imagegen on 2026-10-26. Exact prompts, source
