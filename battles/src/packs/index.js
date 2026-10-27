@@ -14,6 +14,7 @@ import './evil.js';
 import './secret.js';
 import './classic.js'; // more Tribal, Farmer and Legacy units
 import './galactic.js';
+import './jjk-shared.js'; // JJK: shared animations, claws and effect markers
 import './jjk-core.js'; // Jujutsu Kaisen: domains, barriers, secrets (characters: jjk-*.js)
 import './jjk-students.js'; // JJK: Yuji, Todo, Nobara, Nanami, Maki, Panda, Inumaki, Yuta (+ Rika)
 import './jjk-strongest.js'; // JJK: Gojo, Sukuna, Megumi (+ shikigami), Mahoraga
