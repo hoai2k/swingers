@@ -4,6 +4,7 @@
 // doors, bar, stools, tables, a playable piano) and the general store; on the
 // south side a climbable water tower, a corral with horses, false-front shops and
 // a windmill. Exports helpers the other desert builders reuse (barrel, crate...).
+import { dressFront, LIT_GLASS } from '../../interiors.js';
 import * as THREE from 'three';
 import { RAPIER } from '../../../physics.js';
 import { Builder, matVC } from '../../../mesh.js';
@@ -33,7 +34,7 @@ function building(game, L, o) {
   L.wall(-hw, fz, hw, fz, h, T, wall, [{ at: o.door.lx + hw, w: o.door.w + 0.1, h: o.door.h + 0.05 }]);
   L.wall(-hw, bz, hw, bz, h, T, wall);
   for (const s of [-1, 1]) L.wall(s * sx, -hd + T, s * sx, hd - T, h, T, wall, (o.sideHoles || {})[s] || []);
-  for (const win of o.windows || []) L.window(-hw, fz, hw, fz, win + hw, 2.0, 1.4, 1.3, T, 0x9fd8ff, CREAM);
+  for (const win of o.windows || []) L.window(-hw, fz, hw, fz, win + hw, 2.0, 1.4, 1.3, T, o.business ? LIT_GLASS : 0x9fd8ff, CREAM);
   L.box(0, -0.13, 0, w, 0.36, d, o.floor ?? 0xb98a5a); // floor slab (the plot is 0.3 lower)
   for (let i = 0; i < Math.floor(d); i += 2) L.deco(0, 0.065, -hd + 0.6 + i, w - 2 * T, 0.005, 0.04, DARKWOOD); // floorboards
   L.box(0, h - 0.1, 0, w + 0.3, 0.2, d + 0.3, o.roof ?? 0x6b4a2a);
@@ -50,13 +51,15 @@ function building(game, L, o) {
     const p = L.v3(lx, h - 0.2, 0);
     game.interiorLights.add(p.x, p.y, p.z, { color: 0xffd08a, fixture: 'pendant' });
   }
+  // open for business: lit windows, the insides painted on them, lamp, light on the boardwalk
+  if (o.business) dressFront(game, L, { ...o, windows: (o.windows || []).map((at) => ({ side: 'f', at, y: 2.0, w: 1.4, h: 1.3 })), pots: false });
 }
 
 // ---- saloon ---------------------------------------------------------------------------------
 function saloon(game, kit, R) {
   const L = new R.Local(kit, -970, ST - 8 - 7, 0, Y + 0.3);
   const w = 16, d = 14, h = 5.2, dw = 2.0;
-  building(game, L, { w, d, h, wall: 0xb07a48, facade: 3.6, facadeColor: 0xb07a48, door: { lx: 0, w: dw + 0.6, h: 3.0 }, windows: [-5, 5], lights: [-4.5, 0, 4.5], floor: 0x9a6a3a });
+  building(game, L, { w, d, h, wall: 0xb07a48, facade: 3.6, facadeColor: 0xb07a48, door: { lx: 0, w: dw + 0.6, h: 3.0 }, windows: [-5, 5], lights: [-4.5, 0, 4.5], floor: 0x9a6a3a, business: 'diner' });
   R.sign('SALOON', L.v3(0, h + 1.6, d / 2 + 0.16).x, L.y0 + h + 1.6, L.v3(0, 0, d / 2 + 0.16).z, 0, 7, '#8a5a32', '#ffe8b0');
   // batwing doors: two short half-doors hinged at the jambs, swinging both ways
   const [hx0, hz0] = L.w(-dw / 2, d / 2 - T / 2), [hx1, hz1] = L.w(dw / 2, d / 2 - T / 2);
@@ -138,7 +141,7 @@ function barDoor(game, hx, y0, hz, yawW, width, height) {
 function sheriff(game, kit, R) {
   const L = new R.Local(kit, -1001, ST - 8 - 5, 0, Y + 0.3);
   const w = 11, d = 10, h = 4.4;
-  building(game, L, { w, d, h, wall: 0x9a7a5a, facadeColor: 0x8a6a4a, door: { lx: -2.5, w: 1.4, h: 2.4 }, windows: [1.5], lights: [-2.5, 2.5] });
+  building(game, L, { w, d, h, wall: 0x9a7a5a, facadeColor: 0x8a6a4a, door: { lx: -2.5, w: 1.4, h: 2.4 }, windows: [1.5], lights: [-2.5, 2.5], business: 'office', open: false, posters: false });
   R.sign('SHERIFF', L.v3(0, 0, d / 2 + 0.16).x, L.y0 + h + 1.2, L.v3(0, 0, d / 2 + 0.16).z, 0, 6, '#6b4a2a', '#ffe8b0');
   const [dx, dz] = L.w(-2.5 - 0.7, d / 2 - T / 2);
   R.common.addDoor(game, dx, L.y0 + 0.04, dz, L.yaw, 1.4, 2.4, 0x6b4a2a);
@@ -178,7 +181,7 @@ function sheriff(game, kit, R) {
 function store(game, kit, R) {
   const L = new R.Local(kit, -942, ST - 8 - 6, 0, Y + 0.3);
   const w = 12, d = 12, h = 4.6;
-  building(game, L, { w, d, h, wall: 0xc8504a, facadeColor: 0xb8443e, door: { lx: 0, w: 1.6, h: 2.5 }, windows: [-3.5, 3.5], lights: [-3, 3], floor: 0xb98a5a });
+  building(game, L, { w, d, h, wall: 0xc8504a, facadeColor: 0xb8443e, door: { lx: 0, w: 1.6, h: 2.5 }, windows: [-3.5, 3.5], lights: [-3, 3], floor: 0xb98a5a, business: 'market' });
   R.sign('GENERAL STORE', L.v3(0, 0, d / 2 + 0.16).x, L.y0 + h + 1.2, L.v3(0, 0, d / 2 + 0.16).z, 0, 7.5, '#9a3a32', '#ffe8b0');
   const [dx, dz] = L.w(-0.8, d / 2 - T / 2);
   R.common.addDoor(game, dx, L.y0 + 0.04, dz, L.yaw, 1.6, 2.5, 0x6b4a2a, { glass: true });

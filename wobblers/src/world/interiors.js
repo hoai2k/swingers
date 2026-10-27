@@ -5,7 +5,7 @@
 import { AWNING_BOUNCE } from '../config.js';
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { Builder, signMesh } from '../mesh.js';
+import { Builder, signMesh, GLOW } from '../mesh.js';
 import { Local, addDoor, useSpot } from './common.js';
 import { lfurn } from './furniture.js';
 import { jukebox, piano, vendingMachine } from './music.js';
@@ -15,12 +15,21 @@ import { homeFixtures } from './estate.js';
 import { buildArcade } from '../arcade/index.js';
 
 const T = 0.25; // wall thickness
+// Business fronts (o.business): warm "lights on" window glass (glows at night), a glazed door,
+// a glowing OPEN sign in the front window, a lamp over the door, posters by the door, flower
+// pots, and pools of light on the pavement in front that come up after dark.
+export const LIT_GLASS = 0xfff0c4;
+GLOW.set(LIT_GLASS, 1);
 
 // Hollow box building: four walls (front door hole + windows), roof slab.
 export function shell(game, L, o) {
   const { w, d, h, wall } = o, hw = w / 2, hd = d / 2;
   const fz = hd - T / 2, bz = -hd + T / 2, sx = hw - T / 2;
   const door = o.door; // { lx, w, h, color }
+  if (o.business) { // shops: lit windows and a door you can see into
+    o.windows = (o.windows || []).map((w2) => ({ glass: LIT_GLASS, ...w2 }));
+    if (door) door.glass = true;
+  }
   L.wall(-hw, fz, hw, fz, h, T, wall, door ? [{ at: door.lx + hw, w: door.w + 0.1, h: door.h + 0.05 }] : []);
   L.wall(-hw, bz, hw, bz, h, T, wall);
   for (const s of [-1, 1]) L.wall(s * sx, -hd + T, s * sx, hd - T, h, T, wall);
@@ -46,6 +55,154 @@ export function shell(game, L, o) {
     addDoor(game, hx, L.y0 + 0.04, hz, L.yaw, door.w, door.h, door.color ?? 0x8a4a2a, { glass: door.glass });
     // threshold step outside
     L.box(door.lx, 0.06, hd + 0.5, door.w + 0.8, 0.12, 1.0, 0xcfcfcf);
+  }
+  if (o.business && door) dressFront(game, L, { ...o, w, d, h });
+}
+
+// ---- inviting shop fronts ------------------------------------------------------------------------
+let _open = null, _spill = null, _show = null;
+// Window displays: what you'd see through a lit shop window, painted once per kind
+// (unlit, so they read as lights on by day and glow at night); one instanced set per kind.
+const SHOW_KINDS = ['shop', 'cafe', 'arcade', 'diner', 'gadgets', 'market'];
+function paintShow(kind) {
+  const W = 512, H = 256, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), rnd = ((s) => () => ((s = (s * 16807) % 2147483647) / 2147483647))(SHOW_KINDS.indexOf(kind) * 97 + 11);
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#fff3cf'); bg.addColorStop(0.55, '#ffe0a0'); bg.addColorStop(1, '#e8b878');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  for (let x = 40; x < W; x += 120) { const lg = g.createRadialGradient(x, 0, 2, x, 0, 90); lg.addColorStop(0, 'rgba(255,255,240,0.9)'); lg.addColorStop(1, 'rgba(255,255,240,0)'); g.fillStyle = lg; g.fillRect(x - 90, 0, 180, 90); }
+  const C = ['#ff5a5a', '#3f8cff', '#55d85a', '#ffc233', '#b46cff', '#ff8ab8', '#3fd0c8', '#ff8a3d'];
+  const pick = () => C[(rnd() * C.length) | 0];
+  if (kind === 'cafe' || kind === 'diner') {
+    g.fillStyle = kind === 'diner' ? '#e8322b' : '#8a5a3a'; g.fillRect(0, H * 0.62, W, H * 0.08); // counter
+    g.fillStyle = kind === 'diner' ? '#f2f2f2' : '#6b4a2a'; g.fillRect(0, H * 0.7, W, H * 0.3);
+    for (let x = 30; x < W; x += 64) { g.fillStyle = kind === 'diner' ? '#e8322b' : '#ff5a5a'; g.beginPath(); g.ellipse(x, H * 0.6, 20, 7, 0, 0, 7); g.fill(); g.fillStyle = '#555'; g.fillRect(x - 3, H * 0.6, 6, 26); }
+    for (let x = 60; x < W; x += 150) { g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(x, H * 0.42, 34, 10, 0, 0, 7); g.fill(); g.fillStyle = pick(); g.beginPath(); g.arc(x - 8, H * 0.37, 9, 0, 7); g.fill(); g.fillStyle = '#c87a3a'; g.fillRect(x + 6, H * 0.33, 12, 14); }
+    g.fillStyle = '#223322'; g.fillRect(W * 0.62, H * 0.08, W * 0.3, H * 0.2); g.fillStyle = '#ffffff';
+    for (let i = 0; i < 3; i++) g.fillRect(W * 0.65, H * 0.12 + i * 14, W * (0.12 + rnd() * 0.1), 5);
+  } else if (kind === 'arcade') {
+    g.fillStyle = '#2a1840'; g.fillRect(0, 0, W, H);
+    for (let x = 20; x < W; x += 90) {
+      g.fillStyle = pick(); g.fillRect(x, H * 0.22, 64, H * 0.78);
+      const sc = g.createLinearGradient(0, H * 0.3, 0, H * 0.55); sc.addColorStop(0, '#6af0ff'); sc.addColorStop(1, '#ff6ad5');
+      g.fillStyle = sc; g.fillRect(x + 8, H * 0.3, 48, H * 0.26);
+      g.fillStyle = '#ffd23f'; g.fillRect(x + 6, H * 0.16, 52, H * 0.08);
+    }
+    g.fillStyle = 'rgba(255,90,200,0.35)'; g.fillRect(0, 0, W, 14);
+  } else { // shelves of colourful goods (shops, market, gadgets)
+    const rows = kind === 'market' ? 3 : 2;
+    for (let r = 0; r < rows; r++) {
+      const y = H * (0.32 + r * (0.55 / rows));
+      g.fillStyle = '#b08a58'; g.fillRect(0, y, W, 8);
+      for (let x = 8; x < W - 20; x += 22 + rnd() * 16) {
+        const hh = 18 + rnd() * 30, ww = 14 + rnd() * 14;
+        g.fillStyle = kind === 'market' ? ['#ff5a3a', '#ffc233', '#6ad06a', '#ff8a3d'][(rnd() * 4) | 0] : pick();
+        if (kind === 'market') { g.beginPath(); g.arc(x + ww / 2, y - 9, 10, 0, 7); g.fill(); } else g.fillRect(x, y - hh, ww, hh);
+      }
+    }
+    if (kind === 'gadgets') { g.fillStyle = 'rgba(80,220,210,0.25)'; g.fillRect(0, 0, W, H); }
+    for (let x = 70; x < W; x += 180) { g.fillStyle = pick(); g.beginPath(); g.ellipse(x, H * 0.92, 26, 30, 0, 0, 7); g.fill(); } // a shopper or two (soft toy blobs)
+  }
+  // glass: a frame of reflections over the scene
+  g.fillStyle = 'rgba(255,255,255,0.22)';
+  for (const x0 of [W * 0.12, W * 0.58]) { g.beginPath(); g.moveTo(x0, 0); g.lineTo(x0 + 70, 0); g.lineTo(x0 - 10, H); g.lineTo(x0 - 80, H); g.fill(); }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+function sharedFronts(game) {
+  if (_open && _open.game === game) return;
+  // OPEN signs: one instanced set, a glowing red-and-white neon look (unlit material)
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 112;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#2a1a2a'; g.beginPath(); g.roundRect(4, 4, 248, 104, 26); g.fill();
+  g.strokeStyle = '#ff4d6d'; g.lineWidth = 9; g.shadowColor = '#ff4d6d'; g.shadowBlur = 14; g.beginPath(); g.roundRect(12, 12, 232, 88, 20); g.stroke();
+  g.font = '900 64px Arial Black, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#fff6d8'; g.shadowColor = '#ffd36a'; g.shadowBlur = 18; g.fillText('OPEN', 128, 60);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const open = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.95, 0.42), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide }), 96);
+  open.count = 0; open.userData.noCull = true; open.frustumCulled = false;
+  game.scene.add(open);
+  // light spill on the pavement: soft warm ovals, additive, fading in after dusk
+  const sc = document.createElement('canvas'); sc.width = sc.height = 128;
+  const sg = sc.getContext('2d'), gr = sg.createRadialGradient(64, 64, 4, 64, 64, 62);
+  gr.addColorStop(0, 'rgba(255,214,140,1)'); gr.addColorStop(1, 'rgba(255,214,140,0)');
+  sg.fillStyle = gr; sg.fillRect(0, 0, 128, 128);
+  const smat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
+  const spill = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), smat, 256);
+  spill.count = 0; spill.userData.noCull = true; spill.frustumCulled = false; spill.renderOrder = 2;
+  game.scene.add(spill);
+  game.updaters.push(() => { const k = game.nightLight ?? 0; smat.opacity = k * 0.55; spill.visible = k > 0.02; });
+  _open = { game, mesh: open }; _spill = spill;
+  _show = {};
+  for (const k of SHOW_KINDS) {
+    const m = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: paintShow(k), color: 0xe8e0d0 }), 48);
+    m.count = 0; m.userData.noCull = true; m.frustumCulled = false;
+    m.name = 'show_' + k; game.scene.add(m); _show[k] = m;
+  }
+}
+const _m4 = new THREE.Matrix4(), _q4 = new THREE.Quaternion(), _s4 = new THREE.Vector3(), _p4 = new THREE.Vector3(), _UP = new THREE.Vector3(0, 1, 0);
+function placeInst(mesh, x, y, z, yaw, sx, sz = sx, sy) {
+  if (mesh.count >= mesh.instanceMatrix.count) return;
+  _q4.setFromAxisAngle(_UP, yaw); _s4.set(sx, sy ?? 1, sz); _p4.set(x, y, z);
+  mesh.setMatrixAt(mesh.count++, _m4.compose(_p4, _q4, _s4));
+  mesh.instanceMatrix.needsUpdate = true;
+}
+const FRONT_POSTERS = [
+  { title: 'WELCOME!', sub: 'come on in', bg: '#ff8a3d' }, { title: 'NEW!', sub: 'in store now', bg: '#3f8cff' },
+  { title: 'SALE', sub: 'wobbly prices', bg: '#e8322b' }, { title: 'HELLO!', sub: 'we are open', bg: '#55a84a' },
+  { title: 'FUN!', sub: 'for everyone', bg: '#b46cff' }, { title: 'TODAY', sub: 'special offer', bg: '#ffc233', fg: '#4a2a00' },
+];
+let _posterN = 0;
+// Dress the front (local +z) of an enterable building: o = { w, d, h, door: { lx, w, h },
+// windows: [{ side, at, y, w, h }], business: kind (window painting: shop / cafe / arcade /
+// diner / gadgets / market; anything else paints no display), open (OPEN sign, default true),
+// posters (default true), pots (default true) }. shell() calls it for o.business shells.
+export function dressFront(game, L, o) {
+  const { w, d } = o;
+  sharedFronts(game);
+  const hd = d / 2, door = o.door;
+  // OPEN sign hung inside the front window nearest the door (or beside the door)
+  const fw = (o.windows || []).filter((w2) => w2.side === 'f').sort((a, b) => Math.abs(a.at - door.lx) - Math.abs(b.at - door.lx))[0];
+  const ox = fw ? fw.at + Math.sign(door.lx - fw.at || 1) * Math.max(0, fw.w / 2 - 0.65) : door.lx - door.w / 2 - 0.8;
+  const oy = fw ? Math.min(fw.y + fw.h / 2 - 0.4, 2.6) : 2.2;
+  const op = L.v3(ox, oy, hd + 0.1);
+  if (o.open !== false) placeInst(_open.mesh, op.x, op.y, op.z, L.yaw, 1);
+  // the shop's insides painted on its windows (front and sides)
+  const kind = typeof o.business === 'string' ? o.business : 'shop', show = _show[kind], hw = w / 2;
+  if (show) for (const w2 of o.windows || []) {
+    const side = { f: [0, hd, 0], b: [0, -hd, Math.PI], l: [-hw, 0, -Math.PI / 2], r: [hw, 0, Math.PI / 2] }[w2.side];
+    if (!side) continue;
+    const [bx, bz, ly] = side, out = 0.075;
+    const lx = w2.side === 'f' || w2.side === 'b' ? w2.at * (w2.side === 'b' ? 1 : 1) : bx + Math.sin(ly) * out;
+    const lz = w2.side === 'f' || w2.side === 'b' ? bz + Math.cos(ly) * out : w2.at;
+    const p = L.v3(lx, w2.y, lz);
+    placeInst(show, p.x, p.y, p.z, L.yaw + ly, w2.w, 1, w2.h);
+  }
+  // lamp over the door
+  L.deco(door.lx, door.h + 0.45, hd + 0.18, 0.12, 0.12, 0.3, 0x333333);
+  L.sphere(door.lx, door.h + 0.35, hd + 0.34, 0.16, 0xfff4c2);
+  // pools of light on the pavement in front of the door and each front window
+  const sp = L.v3(door.lx, 0.07, hd + 1.5); placeInst(_spill, sp.x, sp.y, sp.z, L.yaw, door.w + 2.2, 3.2);
+  for (const w2 of o.windows || []) if (w2.side === 'f') { const q = L.v3(w2.at, 0.07, hd + 1.4); placeInst(_spill, q.x, q.y, q.z, L.yaw, w2.w + 1.6, 2.8); }
+  // posters on the front wall either side of the door, where there is room
+  const taken = [[door.lx - door.w / 2 - 0.3, door.lx + door.w / 2 + 0.3], ...(o.windows || []).filter((w2) => w2.side === 'f').map((w2) => [w2.at - w2.w / 2 - 0.2, w2.at + w2.w / 2 + 0.2])];
+  const free = (a, b) => a > -w / 2 + 0.3 && b < w / 2 - 0.3 && !taken.some(([t0, t1]) => b > t0 && a < t1);
+  let placed = 0;
+  for (const cx of [door.lx + door.w / 2 + 0.95, door.lx - door.w / 2 - 0.95, w / 2 - 1.1, -w / 2 + 1.1]) {
+    if (o.posters === false) break;
+    if (placed >= 2 || !free(cx - 0.55, cx + 0.55)) continue;
+    taken.push([cx - 0.6, cx + 0.6]);
+    const P = FRONT_POSTERS[_posterN++ % FRONT_POSTERS.length];
+    poster(game, L, 'front_' + P.title.toLowerCase().replace(/[^a-z]/g, ''), cx, 1.75, hd + 0.06, 0, 1.05, 1.45, { bg: P.bg, title: P.title, sub: P.sub, fg: P.fg, frame: 0xffffff });
+    placed++;
+  }
+  // flower pots either side of the door
+  for (const s of [-1, 1]) {
+    if (o.pots === false) break;
+    const px = door.lx + s * (door.w / 2 + 0.45);
+    if (!free(px - 0.3, px + 0.3) && Math.abs(px - door.lx) < door.w / 2 + 0.3) continue;
+    L.cyl(px, 0.3, hd + 0.45, 0.28, 0.6, 0xc8643a, { seg: 10, rTop: 0.32 });
+    L.sphere(px, 0.78, hd + 0.45, 0.36, [0xff5a8a, 0xffc233, 0x6ad06a][(_posterN + (s > 0 ? 1 : 0)) % 3]);
   }
 }
 
@@ -86,7 +243,7 @@ export function interiorShop(game, kit, x, z, yaw, name, color, wall, o = {}) {
 const SHOPS = {
   CAFE(game, L, w, d, h, wall, color, name) {
     shell(game, L, {
-      w, d, h, wall, floor: 0xe8d2b0, roofColor: 0xc9c3b8,
+      w, d, h, wall, floor: 0xe8d2b0, roofColor: 0xc9c3b8, business: 'cafe',
       door: { lx: w * 0.25, w: 1.6, h: 2.4, color: 0x5a3a2a, glass: true },
       windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0 }, { side: 'l', at: 0, y: 1.9, w: 3, h: 1.5 }, { side: 'b', at: -3, y: 2.6, w: 2, h: 1.2 }],
     });
@@ -142,7 +299,7 @@ const SHOPS = {
   },
 
   MARKET(game, L, w, d, h, wall, color, name) {
-    shell(game, L, {
+    shell(game, L, { business: 'market',
       w, d, h, wall, floor: 0xeeeeee,
       door: { lx: w * 0.25, w: 1.8, h: 2.4, color: 0x2a8a5a, glass: true },
       windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0 }, { side: 'r', at: 0, y: 2.4, w: 3, h: 1.2 }],
@@ -186,7 +343,7 @@ const SHOPS = {
   },
 
   ARCADE(game, L, w, d, h, wall, color, name) {
-    shell(game, L, {
+    shell(game, L, { business: 'arcade',
       w, d, h, wall: 0x7a62b8, floor: 0x4a3f7a, roofColor: 0x5a4a8a,
       lights: [
         [-w / 4, 0.5, { color: 0xff3a9a, intensity: 6, fixture: 'neon' }],

@@ -164,7 +164,7 @@ export function lifeShop(game, kit, x, z, yaw, name, color, wall, o = {}) {
   const L = new Local(kit, x, z, yaw);
   const id = LIFE_SHOPS.find((s) => s[0] === name)?.[2];
   shell(game, L, {
-    w, d, h, wall, floor: id === 'cars' ? 0xdadde4 : 0xf2ead8, roofColor: 0xd8d2c8,
+    w, d, h, wall, floor: id === 'cars' ? 0xdadde4 : 0xf2ead8, roofColor: 0xd8d2c8, business: true,
     door: { lx: w * 0.25, w: 1.7, h: 2.4, color: new THREE.Color(color).multiplyScalar(0.8).getHex(), glass: true },
     windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0 }, { side: 'l', at: 0, y: 2.0, w: 3, h: 1.4 }],
   });

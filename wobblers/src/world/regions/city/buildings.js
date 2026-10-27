@@ -1,6 +1,7 @@
 // Bigtown building kit: glass towers, mid-rise blocks, brick row houses and
 // shops. All static, through the kit (merged per chunk); windows are a few
 // big glass panels per floor in GLOW colours so towers light up at night.
+import { tag, graffitiRnd } from './graffiti.js';
 import { AWNING_BOUNCE } from '../../../config.js';
 import * as THREE from 'three';
 import { GLOW, signMesh } from '../../../mesh.js';
@@ -142,6 +143,10 @@ export function midrise(game, kit, x, z, yaw, w, d, floors, opts = {}) {
       }
     }
   }
+  for (const [fx, fz, fy, len] of faces.slice(1)) {
+    const c = Math.cos(fy), s = Math.sin(fy), o = (graffitiRnd() - 0.5) * len * 0.5;
+    tag(L, fx + o * c, 0.48, fz - o * s, fy, 2.1, 0.4);
+  }
   if (opts.shopName) {
     L.deco(0, 1.5, d / 2 + 0.06, w * 0.7, 2.2, 0.1, glass);
     L.deco(w * 0.38, 1.2, d / 2 + 0.07, 1.6, 2.4, 0.1, 0x4a3a2a);
@@ -195,6 +200,10 @@ export function shopBox(game, kit, x, z, yaw, name, color, o = {}) {
   L.deco(-w * 0.18, 1.6, d / 2 + 0.05, w * 0.5, 2.2, 0.1, WARM);
   L.deco(w * 0.3, 1.2, d / 2 + 0.05, 1.8, 2.4, 0.1, 0x5a3a2a);
   awning(kit, L, w, d, color);
+  // graffiti on its blank sides and back (you can't go into this one)
+  tag(L, w / 2, 1.5, (graffitiRnd() - 0.5) * 2, Math.PI / 2, Math.min(d - 2, 4.2));
+  tag(L, -w / 2, 1.5, (graffitiRnd() - 0.5) * 2, -Math.PI / 2, Math.min(d - 2, 4.2));
+  tag(L, (graffitiRnd() - 0.5) * 3, 1.6, -d / 2, Math.PI, Math.min(w - 3, 4.6), 0.6);
   if (o.upper) for (let f = 0; f < o.upper; f++) for (const k of [-1, 0, 1]) qwall(L, k * w * 0.3, h + 1.8 + f * 3.1, d / 2 + 0.03, 0, 1.3, 1.5, WARM);
   if (o.upper) { L.box(0, h + o.upper * 1.55 + 0.5, 0, w, o.upper * 3.1, d, wall); }
   if (name) {
@@ -210,7 +219,7 @@ export function shopShell(game, kit, x, z, yaw, name, color, o = {}) {
   const w = o.w ?? 12, d = o.d ?? 10, h = o.h ?? 5;
   const L = new Local(kit, x, z, yaw, o.y0 ?? SW);
   shell(game, L, {
-    w, d, h, wall: o.wall ?? PASTEL[1], floor: o.floor ?? 0xe8dcc8, roofColor: 0xc9c3b8,
+    w, d, h, wall: o.wall ?? PASTEL[1], floor: o.floor ?? 0xe8dcc8, roofColor: 0xc9c3b8, business: true,
     door: { lx: w * 0.28, w: 1.6, h: 2.4, color: o.door ?? 0x3a5a8a, glass: true },
     windows: [{ side: 'f', at: -w * 0.18, y: 1.8, w: w * 0.42, h: 2.0, glass: WARM }],
   });

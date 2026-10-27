@@ -2,6 +2,7 @@
 // elevator to a rooftop deck with a helipad and a jump-off plank), a tower
 // with a revolving door, the bank, hotels, offices, cinema, diner, police
 // station, bus depot and the bridge landing.
+import { dressFront } from '../../interiors.js';
 import * as THREE from 'three';
 import { RAPIER, yawQuat } from '../../../physics.js';
 import { VEH_GROUPS } from '../../../config.js';
@@ -39,6 +40,7 @@ export function lobbyTower(game, kit, R, x, z, yaw, w, d, h, opts = {}) {
     addDoor(game, hx, SW + 0.03, hz, L.yaw, 1.6, 2.45, 0x3a5a8a, { glass: true });
   }
   revolvingDoor(game, kit, L, 0, hd - T / 2);
+  dressFront(game, L, { w, d, h: LH, door: { lx: 0, w: 3.6, h: 3.1 }, windows: [], business: 'lobby', open: false, posters: false }); // lamp, plants, light out front
   // lobby furnishings: reception desk, sofas, plants, a vending machine, lights
   L.box(0, 0.55, -hd + 5, 8, 1.1, 1.2, 0x6b4a2a);
   L.deco(0, 1.13, -hd + 5, 8.2, 0.06, 1.4, 0xf2e4c8);

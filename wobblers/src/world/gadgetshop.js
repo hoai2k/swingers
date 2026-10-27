@@ -44,7 +44,7 @@ export function buildGadgetShop(game, kit) {
   const { x, z, yaw, w, d, h } = GADGET_SHOP;
   const L = new Local(kit, x, z, yaw);
   shell(game, L, {
-    w, d, h, wall: 0xd9f7f2, floor: 0xdadde4, roofColor: 0xd8d2c8,
+    w, d, h, wall: 0xd9f7f2, floor: 0xdadde4, roofColor: 0xd8d2c8, business: 'gadgets',
     door: { lx: w * 0.25, w: 1.7, h: 2.4, color: 0x168a80, glass: true },
     windows: [{ side: 'f', at: -w * 0.2, y: 1.8, w: w * 0.4, h: 2.0 }, { side: 'l', at: 0, y: 2.0, w: 3, h: 1.4 }],
   });
