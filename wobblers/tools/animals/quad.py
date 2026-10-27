@@ -31,7 +31,7 @@ from build import View, sdf2, surface_nets, trilin, write, PART, dbg
 QUADS = {
     'tiger':    dict(sheet='tiger.png', L=2.4, res=110),
     'leopard':  dict(sheet='leopard.png', L=2.1, res=110, belly=0.42, cuts=[(0.5, 0.3, 0.5, 1.0)]),
-    'monkey':   dict(sheet='monkey.png', L=1.0, res=100, ears='side', hock=0.8, head=(0.1, 0.3)),
+    'monkey':   dict(sheet='monkey.png', L=1.0, res=100, ears='side', hock=0.8, head=(0.1, 0.3), head_w=0.6, torso_end=-0.45),
     'hog':      dict(sheet='river_hog.png', L=1.3, res=96, belly=0.33, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.5),
     'capybara': dict(sheet='capybara.png', L=1.1, res=96, belly=0.24, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.6),
     'tapir':    dict(sheet='tapir.png', L=1.9, res=96, hock=0.5),
@@ -232,16 +232,16 @@ def build(name):
     Lh = float(np.clip(z_tip - z_neck, C.get('head', (0.14, 0.4))[0] * L, C.get('head', (0.14, 0.4))[1] * L)); z_neck = z_tip - Lh
     zsk = z_neck + 0.33 * Lh
     ysk, ayk, axk = at(zsk)
-    ry = 0.95 * ayk; rx = min(axk, 1.3 * ry); rz = min(0.38 * Lh, 1.25 * ry)
+    ry = 0.95 * ayk; rx = min(axk, 1.3 * ry) * C.get('head_w', 1.0); rz = min(0.38 * Lh, 1.25 * ry)
     neck_base = np.array([z_neck - 0.3 * Lh, at(z_neck - 0.3 * Lh)[0], 0.0])
     yn, ayn, axn = at(z_neck)
     head_parts = []
-    head_parts.append(('neck', cone([neck_base, [z_neck, yn, 0], [zsk, ysk, 0]], [0.8 * min(ayn, axn) / max(0.6, min(1.0, axn / ayn)), 0.82 * ayn, 0.75 * ry], xs=float(np.clip(axn / ayn, 0.7, 1.3)))))
+    head_parts.append(('neck', cone([neck_base, [z_neck, yn, 0], [zsk, ysk, 0]], [0.8 * min(ayn, axn) / max(0.6, min(1.0, axn / ayn)), 0.82 * ayn, 0.75 * ry], xs=float(np.clip(axn / ayn, 0.7, 1.3)) * C.get('head_w', 1.0))))
     head_parts.append(('skull', ell((zsk, ysk, 0), (rz, ry, rx))))
     zm0 = zsk + 0.35 * rz; zm1 = z_tip - 0.06 * Lh
     ym0, aym0, axm0 = at(zm0); ym1, aym1, axm1 = at(zm1)
     r0 = 0.85 * aym0; r1 = 0.85 * aym1
-    xsm = float(np.clip((axm0 + axm1) / max(1e-6, aym0 + aym1), 0.6, 2.2))
+    xsm = float(np.clip((axm0 + axm1) / max(1e-6, aym0 + aym1), 0.6, 2.2)) * C.get('head_w', 1.0)
     if C.get('jaw'):
         # a snapping jaw: the muzzle split into an upper snout and a lower jaw hinged under the skull
         head_parts.append(('snout', cone([[zm0, ym0 + 0.3 * r0, 0], [z_tip - r1 * 0.6, ym1 + 0.3 * r1, 0]], [r0 * 0.75, r1 * 0.7], xs=xsm, ysc=0.75)))
@@ -275,7 +275,7 @@ def build(name):
     zt0 = zc[0]
     if C.get('body_tail'):
         zt0 = z_hip - 1.4 * at(z_hip)[1]
-    zt1 = z_neck + 0.05 * Lh
+    zt1 = z_neck + C.get('torso_end', 0.05) * Lh
     def torso_sdf():
         zq = np.clip(gz, zt0, zt1)
         Yc, Ay, Ax = (np.interp(zq, zc, v) for v in (YC, AY, AX))
