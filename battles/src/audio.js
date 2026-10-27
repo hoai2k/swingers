@@ -153,6 +153,7 @@ const TRACKS = {
   battle_avatar: { url: 'assets/music/world-avatar.mp3', loop: 116.4, synth: 'battle' },
 };
 // the themes a battle with no clear faction theme may pick ('battle' first; `own` themes stay with their faction)
+export const HAS_TRACK = (k) => !!TRACKS[k]; // (a theme a map names may not be delivered yet)
 export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle') && !TRACKS[k].own);
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };

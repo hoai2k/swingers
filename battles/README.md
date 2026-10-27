@@ -103,7 +103,9 @@ Audio: the title, planning and battle songs and the victory / defeat / battle-st
 stingers are recorded files in `assets/music/` (see `music-requests.md`), as are eight
 world / faction battle themes (Tribal, Medieval, Pirate, Wild West, Viking, Dynasty, JJK,
 Avatar). Each battle picks its song
-(`battleTheme` in `src/game.js`): a campaign world's theme, else the theme of the factions
+(`battleTheme` in `src/game.js`): the battleground's own theme (`music` on the map, once
+delivered: Castle → Medieval, Pirate Cove → Pirate, Volcano Jungle → Tribal, Canyon Ruins →
+Wild West), else a campaign world's theme, else the theme of the factions
 holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
 Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avatar), else the
 main battle theme or, half the time, one of the world themes (not JJK's electric one,
