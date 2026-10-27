@@ -84,6 +84,7 @@ export class Builder {
   sphere(r, color, pos, scale, seg = 12) { return this.add(new THREE.SphereGeometry(r, seg, Math.max(6, seg * 0.75 | 0)), color, pos, null, scale); }
   cone(r, h, color, pos, rot, seg = 10) { return this.add(new THREE.ConeGeometry(r, h, seg), color, pos, rot); }
   torus(r, t, color, pos, rot, seg = 16) { return this.add(new THREE.TorusGeometry(r, t, 6, seg), color, pos, rot); }
+  arc(r, t, color, pos, rot, seg = 12, angle = Math.PI) { return this.add(new THREE.TorusGeometry(r, t, 6, seg, angle), color, pos, rot); }
   capsule(r, len, color, pos, rot) { return this.add(new THREE.CapsuleGeometry(r, len, 4, 10), color, pos, rot); }
   geometry() {
     if (!this.parts.length) return null;

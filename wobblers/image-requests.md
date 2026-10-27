@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 is open (two reference sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 is open (animal model turnarounds).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -61,30 +61,51 @@ push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
 
-## OPEN round 16 — wildlife reference sheets (for modelling, never loaded by the game)
+## OPEN round 16 — animal model turnarounds (for modelling, never loaded by the game)
 
-Sea creatures and jungle animals are being added as simple 3D models built from rounded
-primitives. These sheets guide their shapes and colours; the game already has stand-in models,
-so these only refine them. Same overall toy style as the game: chunky, rounded, soft, candy
-colours, cute faces with glossy dot eyes, never realistic or scary.
+The game now has sea creatures and jungle animals (`src/world/sealife.js`,
+`src/world/regions/jungle/animals.js`) modelled in code. These renders are what the models are
+rebuilt to match, so they need to show clear, simple 3D shapes from known angles.
 
-1. `assets/reference/ref_sea_creatures.png` (1920 × 1080): a turnaround-style sheet (side view
-   plus a three-quarter view each, on a plain pale-blue background, labelled) of toy-like
-   sea creatures: a shark, a school of tropical fish (clownfish, blue tang, yellow tang,
-   angelfish), a sea star, a jellyfish, an octopus, a dolphin, a humpback whale, a manta ray,
-   a sea turtle, a seahorse, a crab, a pufferfish and a friendly long-necked plesiosaur.
-   Prompt: "Character reference sheet of cute toy-like sea creatures for a bright cartoon
-   game, chunky rounded soft-vinyl shapes, candy colours, glossy dot eyes, simple shapes
-   readable from a distance, side and three-quarter views, labelled, plain pale blue
-   background: shark, clownfish, blue tang, yellow tang, angelfish, sea star, jellyfish,
-   octopus, dolphin, humpback whale, manta ray, sea turtle, seahorse, crab, pufferfish,
-   friendly plesiosaur."
-2. `assets/reference/ref_jungle_animals.png` (1920 × 1080): the same kind of sheet for jungle
-   animals: a monkey, a tiger, a leopard, a red river hog, a capybara, a tapir, a snake
-   (python), a crocodile, a toucan and a parrot.
-   Prompt: "Character reference sheet of cute toy-like jungle animals for a bright cartoon
-   game, chunky rounded soft-vinyl shapes, candy colours, glossy dot eyes, simple shapes
-   readable from a distance, side and three-quarter views, labelled, plain pale green
-   background: monkey, tiger, leopard, red river hog, capybara, tapir, python snake,
-   crocodile, toucan, macaw parrot."
+**Style for every image:** a stylized 3D render of a cute toy animal made of one smooth soft
+rubber / vinyl material, like our Wobblers characters (see `assets/reference/ref_character_sheet.png`):
+rounded chunky shapes that flow smoothly into each other (no visible joints, seams, boxes or
+sharp facets), bold simple candy colours with patterns painted on (stripes, spots, bands),
+glossy black dot eyes with a white highlight, a small friendly smile, soft studio lighting,
+plain light grey background, no text, no ground clutter. Not realistic, not scary.
+
+**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the
+same scale: left = exact side view (facing right), middle = exact top view (head toward the
+right), right = three-quarter front view. Whole animal in frame in every view.
+
+Files (all in `assets/reference/animals/`), with the animal to draw:
+
+| file | animal |
+|---|---|
+| `shark.png` | a chubby friendly shark |
+| `dolphin.png` | a bottlenose dolphin |
+| `whale.png` | a humpback whale with long white flippers |
+| `reef_fish.png` | four small fish in one image: clownfish, blue tang, yellow tang, angelfish (each in the 3 views, one row per fish) |
+| `pufferfish.png` | a pufferfish, puffed up |
+| `jellyfish.png` | a jellyfish with a soft bell and wavy tentacles |
+| `octopus.png` | an octopus with 8 curling tentacles |
+| `sea_turtle.png` | a sea turtle |
+| `manta_ray.png` | a manta ray |
+| `sea_star_crab_seahorse.png` | a sea star, a crab and a seahorse (one row each) |
+| `plesiosaur.png` | a friendly long-necked plesiosaur |
+| `monkey.png` | a monkey walking on all fours, long curly tail |
+| `tiger.png` | a tiger walking |
+| `leopard.png` | a leopard walking |
+| `river_hog.png` | a red river hog (orange-red, black face, white ear tufts) |
+| `capybara.png` | a capybara |
+| `tapir.png` | a Malayan tapir (black with a white saddle) |
+| `snake.png` | a python, gently wavy, yellow and green |
+| `crocodile.png` | a crocodile, mouth slightly open |
+| `parrot_toucan.png` | a scarlet macaw and a toucan, wings spread (one row each) |
+
+Prompt template: "Stylized 3D render of a cute toy {animal} made of one smooth soft rubber
+material, rounded chunky shapes flowing smoothly together, no joints or seams, bold candy
+colours with painted-on markings, glossy black dot eyes, friendly smile, soft studio lighting,
+plain light grey background. Three views side by side at the same scale: exact side view facing
+right, exact top view, three-quarter front view. No text."
 

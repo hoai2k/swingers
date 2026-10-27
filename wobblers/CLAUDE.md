@@ -307,6 +307,48 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   only near a player, and draw only where they can be seen (sea life only for a camera under
   water, except the few that surface).
 
+## Wildlife (`world/critters.js`, `animalmodels.js`, `sculpt.js`, `sealife.js`, `regions/jungle/animals.js`)
+
+- Every species is one `Species` (critters.js): an InstancedMesh, one draw call however many are
+  about, with no physics (scenery; you walk through it). The vertex shader swings legs
+  (FL/FR/BL/BR), sways the tail, bobs the head, flaps wings / fins, opens a jaw and waves
+  tentacles (part ids in `rigparts.js`), plus whole-body modes (`swim`, `swimv`, `slither`,
+  `pulse`). Per frame an animal is `put(x, y, z, yaw, pitch, roll, scale, phase, amount)` between
+  `begin()` / `end()`.
+- Models must look like the Wobblers: one smooth, rounded rubber-toy surface, never boxes or
+  primitives stuck together. They are **sculpted** (`animalmodels.js`): smooth-unioned shapes
+  (`ball`, `egg`, tapered `limb`, `chain` tubes, rounded `slab`) with colour functions for
+  markings, meshed by `sculpt.js` (signed distance field + surface nets, normals from the field);
+  where a moving part meets the body the vertices get a blended weight (`aW`) so limbs bend out
+  of the body like rubber. Eyes / teeth / smiles are small Builder `extras`. Meshing runs in a
+  worker (`animalworker.js`, via `animalgeo.js modelGeometry(name, ...args)`): the world build
+  doesn't wait, and a species is invisible until its geometry arrives (~3 s after load).
+  `animalmodels.js`, `sculpt.js` and `rigparts.js` must import nothing that needs a page (no
+  three.js) because the worker loads them. Detail: `res` (cells along the longest side) or
+  `cell` (m); keep many-instance creatures small (reef fish ~1.8k triangles, cats ~12k). Check a
+  model with a turnaround render (a probe that hides everything but one species' mesh, after
+  waiting for every `critters_*` mesh to have its `aAnim` attribute);
+  `assets/reference/animals/*.png` (image round 16) are the look to match once delivered.
+- Poses are functions of time (loops, circles, drifts; `travelled()` = walk, rest, walk on), so
+  nothing is stored or stepped while nobody is near, and animals are where they "would be" when
+  you arrive.
+- Sea life under water only exists for cameras under water: 20 m cells within 52 m of such a
+  camera are filled in from a hash of the cell (depth and latitude pick what lives there: warm
+  south z > 300, cold north z < -560), and the meshes are drawn only in under-water views
+  (`cameraUnder`, a view hook). Dolphin pods and whales cruise loops found at load in open sea
+  (no region within reach), posed only while a camera is within 420 m; dolphins leap, whales
+  blow and every third cycle breach (`spray` particles, `splash` / `whale` / `dolphin` sounds).
+  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`).
+- Jungle animals walk loops through clear ground (no village, temple, river, trail, steep or
+  volcanic ground) densified with ground heights at load (no terrain queries per frame); only
+  those within 170 m of a camera are posed. Crocodiles drift along the river (or bask on the
+  banks, snapping when you come close), capybaras also swim, monkeys hang from the vines of the
+  `jtree2` trees (`game.jungleTrees`, recorded by Flora), birds circle over the canopy. Each
+  makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; synthesised in
+  audio.js, recordable via `dev/sfx/sfx.json`) when a player comes within its `hear` range.
+  Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
+- New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
+
 ## Stratford Fall Fair (`src/world/fair/`)
 
 The fairground on the home island in the flat strip south of the ring road, either side of the

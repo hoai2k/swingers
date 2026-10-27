@@ -401,6 +401,32 @@ export class Audio {
         }
         break;
       }
+      // ---- wildlife (world/sealife.js, regions/jungle/animals.js)
+      case 'dolphin': for (let i = 0; i < 5; i++) { const f = 2600 + r() * 1800; this.tone('sine', f, f * (1.3 + r() * 0.5), 0.06 + r() * 0.05, 0.05 * v, i * 0.09 + r() * 0.04, out); } break;
+      case 'whale': {
+        const c = this.ctx, t = c.currentTime, o = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(), f0 = 110 + r() * 60;
+        o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * 2.4, t + 1.1); o.frequency.linearRampToValueAtTime(f0 * 1.3, t + 2.6);
+        lfo.frequency.value = 5; lg.gain.value = 6; lfo.connect(lg); lg.connect(o.frequency);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22 * v, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+        o.connect(g); g.connect(out); o.start(t); lfo.start(t); o.stop(t + 2.9); lfo.stop(t + 2.9);
+        break;
+      }
+      case 'growl': { // tiger / leopard
+        const c = this.ctx, t = c.currentTime, o = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(70, t); o.frequency.linearRampToValueAtTime(95, t + 0.4); o.frequency.linearRampToValueAtTime(55, t + 1.1);
+        lfo.frequency.value = 23; lg.gain.value = 18; lfo.connect(lg); lg.connect(o.frequency);
+        lp.type = 'lowpass'; lp.frequency.value = 600;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3 * v, t + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+        o.connect(lp); lp.connect(g); g.connect(out); o.start(t); lfo.start(t); o.stop(t + 1.25); lfo.stop(t + 1.25);
+        this.burst(1.0, 0.08 * v, 400, 1, 'lowpass', 0.05, out);
+        break;
+      }
+      case 'monkey': { const f = 520 + r() * 120; for (let i = 0; i < 4; i++) this.voice(f * (i < 2 ? 1 : 1.5), f * (i < 2 ? 1.25 : 1.9), 0.12, 0.12 * v, out, i < 2 ? 'o' : 'a', i * 0.16); break; }
+      case 'hiss': this.burst(0.9, 0.16 * v, 5200, 1.5, 'bandpass', 0, out, 3800); break; // snake / crocodile
+      case 'snap': this.burst(0.05, 0.4 * v, 1200, 1, 'lowpass', 0, out); this.tone('square', 220, 120, 0.06, 0.12 * v, 0, out); break; // crocodile jaws
+      case 'grunt': for (let i = 0; i < 3; i++) { this.tone('square', 90 + r() * 30, 70, 0.09, 0.08 * v, i * 0.14, out); this.burst(0.08, 0.06 * v, 500, 1, 'lowpass', i * 0.14, out); } break; // river hog / tapir
+      case 'squeak': this.tone('sine', 1500 + r() * 400, 2100, 0.07, 0.07 * v, 0, out); this.tone('sine', 1700, 1300, 0.08, 0.06 * v, 0.1, out); break; // capybara
+      case 'squawk': { const f = 900 + r() * 300; this.tone('sawtooth', f, f * 1.6, 0.12, 0.07 * v, 0, out); this.tone('sawtooth', f * 1.4, f * 0.9, 0.16, 0.07 * v, 0.14, out); break; } // parrot / toucan
       case 'clunk': this.burst(0.06, 0.2 * v, 900, 2, 'bandpass', 0, out); this.tone('triangle', 420, 380, 0.05, 0.08 * v, 0, out); break;
       case 'wheee': { const f = this.voicePitch(pos); this.voice(f * 1.1, f * 1.9, 0.7, 0.16 * v, out, 'i'); break; }
       case 'creak': {

@@ -66,6 +66,7 @@ export function buildWild(game, kit, R) {
   for (const [x, z, s] of [[-440, 720], [-436, 800, 1.1], [-392, 728, 1.2], [-382, 806, 1.1], [-432, 732, 0.95], [-386, 722, 1]]) F.add('palm', x, R.groundAt(x, z) - 0.1, z, s || 1, rnd() * 6, 1);
   F.finish();
   game.jungleFlora = F.count;
+  game.jungleTrees = F.trees;
 
   // ---- Mushroom Grove: bounce up the giant caps to the top -------------------------------
   const caps = [[-505, 888, 3.0, 2.6], [-498, 877, 5.0, 2.9], [-488, 870, 7.2, 3.0], [-478, 878, 9.4, 3.2], [-482, 891, 11.6, 3.0], [-494, 897, 14, 3.4]];

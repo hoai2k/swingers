@@ -39,6 +39,7 @@ export function poster(game, L, name, lx, y, lz, ly, w, h, o = {}) {
   const p = L.v3(lx, y, lz);
   m.position.set(p.x, p.y, p.z);
   m.rotation.y = L.yaw + ly;
+  m.name = 'poster_' + name;
   m.userData.noCull = true;
   game.scene.add(m);
   (game.posters ||= []).push(m);

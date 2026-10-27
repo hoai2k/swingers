@@ -210,6 +210,69 @@
    "loop": true,
    "level": 0.35,
    "prompt": "Retro video arcade room: many old arcade machines beeping and blooping, chiptune jingles, buttons clicking, kids cheering, muffled"
+  },
+  {
+   "name": "dolphin",
+   "n": 3,
+   "dur": 1.0,
+   "level": 0.6,
+   "prompt": "Cute dolphin clicks and squeaky whistles, playful cartoon"
+  },
+  {
+   "name": "whale",
+   "n": 2,
+   "dur": 3.0,
+   "level": 0.7,
+   "prompt": "Deep gentle humpback whale song moan, soft and friendly, short"
+  },
+  {
+   "name": "growl",
+   "n": 3,
+   "dur": 1.2,
+   "level": 0.7,
+   "prompt": "Cartoon tiger growl, low and rumbly but friendly, not scary"
+  },
+  {
+   "name": "monkey",
+   "n": 3,
+   "dur": 1.0,
+   "level": 0.6,
+   "prompt": "Cheeky cartoon monkey chatter, ooh ooh aah aah"
+  },
+  {
+   "name": "hiss",
+   "n": 2,
+   "dur": 0.9,
+   "level": 0.5,
+   "prompt": "Snake hiss, soft cartoon sssss"
+  },
+  {
+   "name": "snap",
+   "n": 2,
+   "dur": 0.4,
+   "level": 0.7,
+   "prompt": "Cartoon crocodile jaws snapping shut, wooden chomp"
+  },
+  {
+   "name": "grunt",
+   "n": 3,
+   "dur": 0.6,
+   "level": 0.6,
+   "prompt": "Little cartoon pig grunts, oink snort"
+  },
+  {
+   "name": "squeak",
+   "n": 2,
+   "dur": 0.5,
+   "level": 0.5,
+   "prompt": "Tiny cute capybara squeak and chirp"
+  },
+  {
+   "name": "squawk",
+   "n": 3,
+   "dur": 0.6,
+   "level": 0.5,
+   "prompt": "Colourful parrot squawk, cartoony and bright"
   }
  ]
 }

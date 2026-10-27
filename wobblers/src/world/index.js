@@ -33,6 +33,7 @@ import { buildFair } from './fair/index.js';
 import { buildBooths } from './booths.js';
 import { placeBouncyBalls } from './bouncy.js'; // also registers the bouncy ball vehicle
 import { addGrabHandles } from './ridegrab.js';
+import { buildSeaLife } from './sealife.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -70,6 +71,7 @@ export function buildWorld(game) {
   T('booths', () => { buildBooths(game, kit); placeBouncyBalls(game); }); // phone booths (garage) + parked bouncy balls
   T('folk', () => buildFolk(game));            // home island NPCs
   T('traffic', () => buildHomeTraffic(game)); // self-driving cars on the ring road
+  T('sealife', () => buildSeaLife(game));     // sea creatures (drawn only under water) + dolphin pods and whales
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too
   T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)

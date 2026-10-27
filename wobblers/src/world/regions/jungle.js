@@ -20,6 +20,7 @@ import { buildRiver } from './jungle/river.js';
 import { buildVillage } from './jungle/village.js';
 import { buildTemple } from './jungle/temple.js';
 import { buildWild } from './jungle/wild.js';
+import { buildAnimals } from './jungle/animals.js';
 
 const BLOBS = [[-640, 850, 280, 250], [-470, 765, 120, 90], [-770, 690, 120, 100]];
 export const VOLCANO = { x: -690, z: 900, r: 165, h: 92, rim: 22 };
@@ -137,6 +138,7 @@ export function build(game, kit, R) {
   T('volcano', () => buildVolcano(game, kit, R));
   T('temple', () => buildTemple(game, kit, R));
   T('wild', () => buildWild(game, kit, R));
+  T('animals', () => buildAnimals(game, R)); // after wild: monkeys hang from its trees' vines
   (game.buildTimes ||= {}).jungleParts = t;
   R.label('Waterfall', CLIFF.x1, CLIFF.z0 - 8);
   R.label('Temple Ruins', TEMPLE.x, TEMPLE.z - 26);

@@ -102,6 +102,7 @@ export class Flora {
     this.game = game; this.cell = cell;
     this.cells = new Map(); // key -> { list: [[tpl, m(16), tint]], n }
     this.count = 0;
+    this.trees = []; // [kind, x, y, z, scale, cos, sin] of the big trees
   }
   // a plant at (x, y, z), uniform scale s, turned by yaw, colour multiplier tint
   add(kind, x, y, z, s = 1, yaw = 0, tint = 1, collide = true) {
@@ -110,6 +111,7 @@ export class Flora {
     let c = this.cells.get(key);
     if (!c) { c = { list: [], n: 0, ni: 0, shadow: t.shadow }; this.cells.set(key, c); }
     c.list.push([t, x, y, z, s, Math.cos(yaw), Math.sin(yaw), tint]);
+    if (kind === 'jtree' || kind === 'jtree2') this.trees.push([kind, x, y, z, s, Math.cos(yaw), Math.sin(yaw)]); // animals.js: monkeys on the vines
     c.n += t.n; c.ni += t.idx.length;
     this.count++;
     if (collide && t.trunk) this.game.physics.cylinder(x, y + t.trunk[1] * s / 2, z, t.trunk[0] * s, t.trunk[1] * s, {});
