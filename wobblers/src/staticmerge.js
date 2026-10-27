@@ -18,6 +18,10 @@
 //   shapesIn(x0, z0, x1, z1)  the merged shape records there
 //   unmerge(x0, z0, x1, z1) put the shapes there back as separate colliders
 //                           (to move them as they are, then merge() again)
+//   insideAt(p, margin)     the merged box / cylinder a point is inside (deeper than
+//                           margin), or null: a triangle mesh is hollow, so a limb pushed
+//                           through one face stays stuck inside; the player pulls it out
+//                           (player.unstickArms) with exitToward(rec, p, from)
 //
 // Kept as they are:
 //  - big solid blocks (every side >= SOLID m): a triangle mesh is hollow, and
@@ -33,7 +37,8 @@ const AREA = 96;    // metres: merged meshes per area (keeps each mesh's bounds 
 const SOLID = 1.2;  // a box with every full side at least this long stays a box
 const SEG = 16;     // cylinder sides
 
-const q = new THREE.Quaternion(), v = new THREE.Vector3(), p = new THREE.Vector3();
+const q = new THREE.Quaternion(), v = new THREE.Vector3(), p = new THREE.Vector3(), p2 = new THREE.Vector3();
+const CELL = 8;     // metres: insideAt's lookup grid
 
 export function mergeStatics(game) {
   const m = game.staticMerge ||= new StaticMerge(game);
@@ -150,7 +155,60 @@ class StaticMerge {
       if (m.slip) ph.slippery.add(g.collider.handle);
     }
     ph.staticShapes = [...this.groups.values()].flatMap((g) => g.recs);
+    this.index();
     W.updateSceneQueries?.();
+  }
+
+  // An 8 m grid of the merged shapes (by bounding radius) for insideAt.
+  index() {
+    const cells = this.cells = new Map();
+    for (const r of this.ph.staticShapes) {
+      const rad = r.type === 'box' ? Math.hypot(r.he.x, r.he.y, r.he.z) : Math.hypot(r.r, r.hh);
+      r.q ||= new THREE.Quaternion(r.rot.x, r.rot.y, r.rot.z, r.rot.w);
+      r.qi ||= r.q.clone().invert();
+      for (let i = Math.floor((r.x - rad) / CELL); i <= Math.floor((r.x + rad) / CELL); i++) {
+        for (let j = Math.floor((r.z - rad) / CELL); j <= Math.floor((r.z + rad) / CELL); j++) {
+          const k = i * 4096 + j;
+          let l = cells.get(k); if (!l) cells.set(k, l = []);
+          l.push(r);
+        }
+      }
+    }
+  }
+
+  insideAt(p, margin = 0.02) {
+    const l = this.cells?.get(Math.floor(p.x / CELL) * 4096 + Math.floor(p.z / CELL));
+    if (!l) return null;
+    for (const r of l) {
+      v.set(p.x - r.x, p.y - r.y, p.z - r.z).applyQuaternion(r.qi);
+      if (r.type === 'box') {
+        if (Math.abs(v.x) < r.he.x - margin && Math.abs(v.y) < r.he.y - margin && Math.abs(v.z) < r.he.z - margin) return r;
+      } else if (Math.abs(v.y) < r.hh - margin && Math.hypot(v.x, v.z) < r.r - margin) return r;
+    }
+    return null;
+  }
+
+  // Where to put a point inside `rec` so it is just outside: along the line toward `from`
+  // (a point outside, e.g. the chest), at the face that line leaves through (+ 6 cm).
+  exitToward(rec, p, from, out) {
+    const a = v.set(p.x - rec.x, p.y - rec.y, p.z - rec.z).applyQuaternion(rec.qi).clone();
+    const d = p2.set(from.x - p.x, from.y - p.y, from.z - p.z).applyQuaternion(rec.qi);
+    const len = d.length() || 1; d.multiplyScalar(1 / len);
+    let tExit = Infinity;
+    if (rec.type === 'box') {
+      for (const ax of ['x', 'y', 'z']) {
+        if (Math.abs(d[ax]) < 1e-6) continue;
+        const t = ((d[ax] > 0 ? rec.he[ax] : -rec.he[ax]) - a[ax]) / d[ax];
+        if (t >= 0) tExit = Math.min(tExit, t);
+      }
+    } else {
+      if (Math.abs(d.y) > 1e-6) tExit = ((d.y > 0 ? rec.hh : -rec.hh) - a.y) / d.y;
+      const A = d.x * d.x + d.z * d.z, B = 2 * (a.x * d.x + a.z * d.z), Cc = a.x * a.x + a.z * a.z - rec.r * rec.r;
+      if (A > 1e-9) tExit = Math.min(tExit, (-B + Math.sqrt(Math.max(0, B * B - 4 * A * Cc))) / (2 * A));
+    }
+    if (!Number.isFinite(tExit)) tExit = 0;
+    a.addScaledVector(d, tExit + 0.06).applyQuaternion(rec.q);
+    return out.set(a.x + rec.x, a.y + rec.y, a.z + rec.z);
   }
 }
 

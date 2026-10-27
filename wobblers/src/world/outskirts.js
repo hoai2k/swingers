@@ -1,5 +1,6 @@
 // Everything outside the ring road: kart track, beach and pier, lake camp,
 // farm, mountain lookout, lighthouse, forests and clouds.
+import { inFarmClear } from './farmland.js';
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
 import { FLAT, LAKE, MOUNTAIN, fbm, homeMeshHeightOriginal, inHomeExtraFlat } from '../terrain.js';
@@ -247,7 +248,7 @@ function forests(game, kit) {
     if (fbm(x / 40, z / 40) < 0.42) continue;
     const kind = h > 14 || rnd() < 0.35 ? 1 : 0;
     const sc = 0.8 + rnd() * 0.6;
-    if (!onRoad(x, z)) kit.tree(x, z, heightAt(x, z) - 0.1, kind, sc);
+    if (!onRoad(x, z) && !inFarmClear(x, z, 3)) kit.tree(x, z, heightAt(x, z) - 0.1, kind, sc); // (skipped after the draws, so the layout elsewhere is unchanged)
     placed++;
   }
   for (let i = 0; i < 80; i++) {
@@ -256,7 +257,7 @@ function forests(game, kit) {
     const h = H0(x, z);
     if (h < 0) continue;
     const rock = rnd() < 0.5, sc = rock ? 0.6 + rnd() * 1.6 : 0.8 + rnd() * 0.6;
-    if (onRoad(x, z)) continue;
+    if (onRoad(x, z) || inFarmClear(x, z, 2)) continue;
     if (rock) kit.rock(x, z, heightAt(x, z), sc); else kit.bush(x, z, heightAt(x, z), sc);
   }
 }
