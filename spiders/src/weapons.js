@@ -73,7 +73,7 @@ export class Weapon {
     this.angle = 0;
     this.av = 0;              // angular velocity (rad/s), for swings
     this.turnRate = 26;       // rad/s the weapon can turn toward the aim
-    this.holdDist = 6;        // grip distance beyond the body surface
+    this.holdDist = 24;       // grip distance beyond the body surface: held out on a leg, like an arm
     this.x = 0; this.y = 0;
     this.cool = 0;
     this.kick = 0;            // visual recoil offset (px), decays

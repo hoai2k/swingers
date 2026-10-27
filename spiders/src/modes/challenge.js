@@ -156,6 +156,8 @@ export class ChallengeMode extends SurvivalMode {
   }
 
   // ---- flow ------------------------------------------------------------------------
+  afterWave() { this.nextWave(); }   // trials: no power-up cards
+
   afterStage() {
     // the trial's 3 waves are done: record it
     const d = loadTrials();

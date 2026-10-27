@@ -724,30 +724,62 @@
     {
       "id": "blocky",
       "file": "assets/ui/map-blocky.jpg",
-      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Blocky Plains, Minecraft voxel landscape made entirely of crisp cubes. Grass blocks with dirt sides, blocky oak and birch trees, small cobblestone/plank village hut on each side mirrored. Little lava pool and stone outcrop paired across both halves. Square obsidian portal frame with swirling purple in center. Square clouds, square sun, bright blue sky, blocky distant hills. No creatures or players. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-fdadcb47-d9a1-4577-b788-1fdf74ed9162.png",
-      "round": 9,
+      "round": 10,
+      "prompt": "Use case: precise-object-edit. Edit attached existing Wobbly Battles map-preview to match the built map. Keep Minecraft voxel style, camera, colours and balanced empty battlefield. Replace the CENTER portal with ONE small SQUARE glowing orange LAVA POOL rimmed by grey cobblestone. There must be NO portal in middle. Add EXACTLY TWO obsidian nether portals total, one on each half on dark pads, mirrored through center, each BESIDE one small cobblestone/plank hut. Remove the old side lava pools: central pool is only lava pool. Dot both halves with cobblestone, mossy stone and coal/iron/gold/diamond-flecked ore outcrops plus grass-topped dirt mounds. Cube oak, birch and spruce trees at edges, stepped terraced hills and cube mountains beyond, square sun/clouds. A few tiny blocky sheep and cows OUTSIDE playable field only. All other atmosphere/style unchanged. Landscape16:9 full-size original for640x360 JPG. All key landmarks readable at320px wide. EMPTY battlefield, no soldiers, people, text, readable signage, labels, UI, border or watermark. Preserve playful clean flat colours and soft shading. Whole arena in frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3051fa20-0826-4f53-ad41-a79c4d2b16e3.png",
       "size": [
         640,
         360
       ],
-      "original": "assets/originals/ui/map-blocky.png",
+      "transparent": false,
       "mode": "built-in",
-      "transparent": false
+      "original": "assets/originals/ui/map-blocky.png",
+      "previousGenerations": [
+        {
+          "id": "blocky",
+          "file": "assets/ui/map-blocky.jpg",
+          "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Blocky Plains, Minecraft voxel landscape made entirely of crisp cubes. Grass blocks with dirt sides, blocky oak and birch trees, small cobblestone/plank village hut on each side mirrored. Little lava pool and stone outcrop paired across both halves. Square obsidian portal frame with swirling purple in center. Square clouds, square sun, bright blue sky, blocky distant hills. No creatures or players. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-fdadcb47-d9a1-4577-b788-1fdf74ed9162.png",
+          "round": 9,
+          "size": [
+            640,
+            360
+          ],
+          "original": "assets/originals/ui/map-blocky.png",
+          "mode": "built-in",
+          "transparent": false
+        }
+      ]
     },
     {
       "id": "basingse",
       "file": "assets/ui/map-basingse.jpg",
-      "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Ba Sing Se Walls from Avatar: green-and-tan Earth Kingdom outer wall towering beyond field with great gate. Earthbent rock pillars and slabs jutting from ground symmetrically on both halves, small stone pavilion with curved green roof in center. Bamboo and pine trees, paved road across middle. Earthy greens, ochre stone, warm afternoon light. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4b6842b5-9777-430a-a870-e34effb1196f.png",
-      "round": 9,
+      "round": 10,
+      "prompt": "Use case: precise-object-edit. Edit attached existing Wobbly Battles map-preview to match the built map. Keep Avatar Earth Kingdom style, colours, raised three-quarter camera and balanced empty battlefield. The GREAT WALL must be ONLY along FAR/TOP edge: make it MUCH TALLER, dominating/filling top of frame, ochre stone with green tile caps, giant arched gate with green doors and Earth Kingdom emblem, three-tier gatehouse and pagoda watchtowers. REMOVE ALL near-edge and side enclosure walls. Near and side edges open to green hills with terraced farms and little farmhouses. In battlefield, road across middle and small central stone pavilion with RED COLUMNS and TWO-TIER curved green roof. Keep angled earthbent pillars/slabs, low ochre cover walls with green caps (short isolated obstacles, not boundary walls), bamboo and pines on both halves. Warm afternoon light. No giant walls anywhere except FAR edge. Landscape16:9 full-size original for640x360 JPG. All key landmarks readable at320px wide. EMPTY battlefield, no soldiers, people, text, readable signage, labels, UI, border or watermark. Preserve playful clean flat colours and soft shading. Whole arena in frame.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5b0a3b9a-6a72-420d-8498-810a3da7c1b3.png",
       "size": [
         640,
         360
       ],
-      "original": "assets/originals/ui/map-basingse.png",
+      "transparent": false,
       "mode": "built-in",
-      "transparent": false
+      "original": "assets/originals/ui/map-basingse.png",
+      "previousGenerations": [
+        {
+          "id": "basingse",
+          "file": "assets/ui/map-basingse.jpg",
+          "prompt": "Use case: stylized-concept. Wobbly Battles game map-preview card, landscape16:9 full-size original for640x360 JPG. Ba Sing Se Walls from Avatar: green-and-tan Earth Kingdom outer wall towering beyond field with great gate. Earthbent rock pillars and slabs jutting from ground symmetrically on both halves, small stone pavilion with curved green roof in center. Bamboo and pine trees, paved road across middle. Earthy greens, ochre stone, warm afternoon light. EMPTY battlefield from raised three-quarter view, entire playable arena readable, balanced point-symmetric field: two halves mirror through center, matched cover positions and feature sizes, central landmark. Bright toy-like game art, chunky simple forms, clean flat colours with soft shading; match attached existing map card's overall illustration/render style and camera. No people, soldiers, characters, text, readable signage, labels, UI, border or watermark. Main feature must read at320px wide. Opaque full-frame.",
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4b6842b5-9777-430a-a870-e34effb1196f.png",
+          "round": 9,
+          "size": [
+            640,
+            360
+          ],
+          "original": "assets/originals/ui/map-basingse.png",
+          "mode": "built-in",
+          "transparent": false
+        }
+      ]
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental); trailing silence trimmed with a 0.5 s fade"

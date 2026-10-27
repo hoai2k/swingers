@@ -157,7 +157,7 @@ export class Mines extends Weapon {
   constructor(game) {
     super(game);
     this.length = 20;
-    this.holdDist = 2;
+    this.holdDist = 18;
   }
 
   update(dt, ctl) {

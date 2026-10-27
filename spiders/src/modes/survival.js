@@ -10,7 +10,7 @@
 //
 // Flow: 'break' (STAGE s · WAVE n/3 banner, weapons restocked) -> 'wave'
 // (insects enter from board.enemySpawns after a warning marker at the edge)
-// -> 'clear' (wave or stage cleared) -> [stage end: 'perk'] -> next 'break'.
+// -> 'clear' (wave or stage cleared) -> 'perk' (power-up cards, every wave) -> next 'break'.
 // The last wave of every 2nd stage is a boss wave (Brood Tyrant + escorts).
 // Everyone down for good: 'lost' (slow motion) -> 'over' (results; A = lobby).
 //
@@ -38,6 +38,8 @@ import { text, drawBanner, drawPlayerTags, drawPanel, drawPortrait, drawCountdow
 import { Stinglet, Gnatling, Buzzgunner, Bladewing, Shellback, Dropmoth, Hexfly } from '../enemies/insects.js';
 import { BroodTyrant } from '../enemies/boss.js';
 import { applyRoundMods, applySpiderMods, tickMods, drawMods } from '../modifiers.js';
+import { PERKS, PerkPicker, offersFor } from '../perks.js';
+export { PERKS };
 
 // cost: wave budget points per spawn; from: first wave it appears; group: insects per spawn
 export const ROSTER = [
@@ -54,28 +56,6 @@ const BOSS_STAGES = 2;           // the last wave of every 2nd stage is a boss w
 const START_LIVES = 3;
 const LIFE_CAP = 5;
 const RESPAWN_T = 3;             // seconds before a fallen spider drops back in
-
-// a spider field's value before perks touched it (modifiers may have set it)
-function base(sp, k) { sp.perkBase = sp.perkBase || {}; if (!(k in sp.perkBase)) sp.perkBase[k] = sp[k] || 1; return sp.perkBase[k]; }
-
-// Perks: stackable up to max. apply(sp, n) sets spider fields on every spawn;
-// take(p, n, mode) runs once when picked.
-export const PERKS = [
-  { id: 'shell',  name: 'Hard Shell',   desc: '+1 shield charge, refilled every wave', max: 3, color: '#7fe8ff', apply: (sp, n) => { sp.shield = Math.max(sp.shield, n); } },
-  { id: 'legs',   name: 'Quick Legs',   desc: 'Walk 20% faster',                 max: 3, color: '#4fdc6a', apply: (sp, n) => { sp.speedMul = base(sp, 'speedMul') * (1 + 0.2 * n); } },
-  { id: 'spring', name: 'Spring Legs',  desc: 'Jump 15% higher',                 max: 3, color: '#ffd23f', apply: (sp, n) => { sp.jumpMul = base(sp, 'jumpMul') * (1 + 0.15 * n); } },
-  { id: 'silk',   name: 'Long Silk',    desc: 'Webs reach 35% farther',          max: 2, color: '#f4f7ff', apply: (sp, n) => { sp.webMul = base(sp, 'webMul') * (1 + 0.35 * n); } },
-  { id: 'venom',  name: 'Venom Fangs',  desc: 'Deal double damage to insects',   max: 2, color: '#b46bff', apply: (sp, n) => { sp.dmgMul = 1 + n; } },
-  { id: 'saber',  name: 'Born Duelist', desc: 'Start every wave holding a saber', max: 1, color: '#4dd2ff', excl: 'armory' },
-  { id: 'armory', name: 'Armory',       desc: 'Start every wave with a random gun', max: 1, color: '#ff5a5a', excl: 'saber' },
-  { id: 'boom',   name: 'Last Laugh',   desc: 'Explode when you die',            max: 1, color: '#ff9a3c' },
-  { id: 'wind',   name: 'Second Wind',  desc: 'Once per stage, a death costs no life', max: 1, color: '#ff7ad9' },
-  { id: 'heart',  name: 'Spare Heart',  desc: '+1 max life, and a life right now', max: 2, color: '#ff4f6d', take: (p, n, mode) => { p.lives = Math.min(mode.maxLives(p), (p.lives || 0) + 1); } },
-  { id: 'aegis',  name: 'Last Stand',   desc: 'Shielded whenever you are on your last life', max: 1, color: '#9fd0ff', apply: (sp) => { if (sp.player && sp.player.lives <= 1) sp.shield = Math.max(sp.shield, 1 + ((sp.player.perks || {}).shell || 0)); } },
-  { id: 'focus',  name: 'Blade Focus',  desc: 'Blade kills slow time for a heartbeat', max: 1, color: '#6ae0ff' },
-  { id: 'blast',  name: 'Big Bang',     desc: 'Your explosions are 40% bigger',  max: 2, color: '#ffb347', apply: (sp, n) => { sp.blastMul = 1 + 0.4 * n; } },
-  { id: 'lull',   name: 'Lullaby Silk', desc: 'Team-wide: insects arrive 25% slower', max: 2, color: '#9effc8' },
-];
 
 const BEST_KEY = 'spiders.survival.best';             // most waves cleared
 const BEST_STAGE_KEY = 'spiders.survival.bestStage';   // most stages cleared
@@ -217,61 +197,33 @@ export class SurvivalMode {
 
   teamPerk(id) { let n = 0; for (const p of this.game.players) n += (p.perks && p.perks[id]) || 0; return n; }
 
-  offersFor(p) {
-    const perks = p.perks || {};
-    const pool = PERKS.filter((P) => (perks[P.id] || 0) < P.max && !(P.excl && perks[P.excl]));
-    const out = [];
-    while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-    return out;
-  }
-
+  // Power-ups in survival are a TEAM pick: one set of cards, anyone can
+  // browse and take one, and it applies to every spider.
   startPerks() {
     this.state = 'perk'; this.t = 0;
-    this.perkPick = {
-      rows: this.game.players.map((p) => ({ p, offers: this.offersFor(p), sel: 1, done: false, lx: 0 })),
-    };
-    for (const r of this.perkPick.rows) { r.sel = Math.min(1, r.offers.length - 1); if (!r.offers.length) r.done = true; }
+    const lead = this.game.players[0];
+    const offers = offersFor((lead && lead.perks) || {}, PERKS);
+    this.perkPick = new PerkPicker(this.game, [{ shared: true, offers }], {
+      onChoose: (r, P) => this.teamTakes(P),
+    });
     sfx.perk();
   }
 
   updatePerks(dt) {
-    const game = this.game;
-    for (const sp of game.spiders) if (sp.alive) sp.stun = Math.max(sp.stun, 0.05);
-    const pk = this.perkPick;
-    for (const r of pk.rows) {
-      if (r.done) continue;
-      const s = game.input.get(r.p.inputId);
-      if (!s) continue;
-      let dir = 0;
-      const x = s.l.x;
-      if (Math.abs(x) > 0.5 && Math.abs(r.lx) <= 0.5) dir = Math.sign(x);
-      r.lx = x;
-      if (s.pressed.dl) dir = -1;
-      if (s.pressed.dr) dir = 1;
-      if (dir) { r.sel = clamp(r.sel + dir, 0, r.offers.length - 1); sfx.ui(); }
-      if (this.t > 0.6 && (s.pressed.a || s.pressed.rt)) this.choosePerk(r);
-    }
-    // nobody waits forever
-    if (this.t > 25) for (const r of pk.rows) if (!r.done) this.choosePerk(r);
-    if (pk.rows.every((r) => r.done) && (pk.doneT = (pk.doneT || 0) + dt) > 0.8) {
-      this.perkPick = null;
-      this.nextWave();
-    }
+    for (const sp of this.game.spiders) if (sp.alive) sp.stun = Math.max(sp.stun, 0.05);
+    if (this.perkPick.update(dt, this.t)) { this.perkPick = null; this.nextWave(); }
   }
 
-  choosePerk(r) {
-    const P = r.offers[r.sel];
-    r.done = true;
-    if (!P) return;
-    const p = r.p;
-    p.perks = p.perks || {};
-    p.perks[P.id] = (p.perks[P.id] || 0) + 1;
-    if (P.take) P.take(p, p.perks[P.id], this);
-    sfx.uiOk();
-    if (p.spider && p.spider.alive) {
-      this.applyPerks(p.spider);
-      this.game.fx.text(p.spider.x, p.spider.y - 40, P.name, P.color, 24, 1.2);
-      this.game.fx.ring(p.spider.x, p.spider.y, 50, P.color, 0.4, 4);
+  teamTakes(P) {
+    for (const p of this.game.players) {
+      p.perks = p.perks || {};
+      p.perks[P.id] = (p.perks[P.id] || 0) + 1;
+      if (P.take) P.take(p, p.perks[P.id], this);
+      if (p.spider && p.spider.alive) {
+        this.applyPerks(p.spider);
+        this.game.fx.text(p.spider.x, p.spider.y - 40, P.name, P.color, 24, 1.2);
+        this.game.fx.ring(p.spider.x, p.spider.y, 50, P.color, 0.4, 4);
+      }
     }
   }
 
@@ -546,6 +498,8 @@ export class SurvivalMode {
 
   // after the stage-clear banner
   afterStage() { this.startPerks(); }
+  // between waves too: pick a power-up card (Trials skip them)
+  afterWave() { this.startPerks(); }
 
   // ---- update -----------------------------------------------------------------
   update(dt, realDt) {
@@ -582,7 +536,7 @@ export class SurvivalMode {
         this.drops.update(dt);
         if (this.t >= (this.stageEnd ? 3 : 2)) {
           if (this.stageEnd) this.afterStage();
-          else this.nextWave();
+          else this.afterWave();
         }
         break;
       case 'perk':
@@ -709,36 +663,7 @@ export class SurvivalMode {
   }
 
   drawPerks(ctx) {
-    const pk = this.perkPick;
-    if (!pk) return;
-    ctx.fillStyle = 'rgba(4,3,14,0.6)';
-    ctx.fillRect(0, 0, W, H);
-    text(ctx, `Stage ${this.stagesCleared} cleared · pick a perk`, W / 2, 150, { size: 60, color: '#ffd23f', sw: 10 });
-    text(ctx, 'stick / D-pad to choose · A to take it', W / 2, 192, { size: 24, color: '#cfd6ff', stroke: null });
-    const rows = pk.rows;
-    const rowH = Math.min(118, 800 / rows.length);
-    const cardW = 380, gap = 18;
-    const y0 = 230;
-    rows.forEach((r, i) => {
-      const y = y0 + i * rowH;
-      const cx0 = W / 2 - (cardW * 3 + gap * 2) / 2 + 60;
-      drawPortrait(ctx, cx0 - 70, y + rowH / 2 - 6, Math.min(34, rowH * 0.3), r.p, {});
-      r.offers.forEach((P, j) => {
-        const x = cx0 + j * (cardW + gap);
-        const sel = j === r.sel;
-        const h = rowH - 14;
-        ctx.save();
-        ctx.globalAlpha = r.done && !sel ? 0.35 : 1;
-        drawPanel(ctx, x, y, cardW, h, { r: 16, fill: sel ? rgba(P.color, 0.22) : 'rgba(10,8,26,0.85)', accent: sel ? P.color : null, stroke: sel ? null : 'rgba(255,255,255,0.12)', lw: sel ? 4 : 2 });
-        const have = (r.p.perks && r.p.perks[P.id]) || 0;
-        text(ctx, P.name + (have ? `  ${'+'.repeat(have + 1)}` : ''), x + 20, y + Math.min(40, h * 0.42), { size: Math.min(30, h * 0.3), color: P.color, align: 'left', sw: 5 });
-        text(ctx, P.desc, x + 20, y + Math.min(76, h * 0.78), { size: Math.min(20, h * 0.2), color: '#e4e8ff', align: 'left', stroke: null, maxWidth: cardW - 40 });
-        if (r.done && sel) text(ctx, '✓', x + cardW - 30, y + 40, { size: 36, color: '#4fdc6a', sw: 5 });
-        ctx.restore();
-      });
-    });
-    const left = Math.max(0, Math.ceil(25 - this.t));
-    text(ctx, `${left}s`, W - 80, 150, { size: 30, color: '#9aa0c8', stroke: null });
+    if (this.perkPick) this.perkPick.draw(ctx, this.stageEnd ? `Stage ${this.stagesCleared} cleared · the team picks a power-up` : `Wave ${this.wave} cleared · the team picks a power-up`);
   }
 
   drawPlayerTable(ctx, y0, title = 'insects squashed') {
@@ -809,3 +734,4 @@ export class SurvivalMode {
     return `${this.remaining} insects incoming`;
   }
 }
+

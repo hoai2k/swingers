@@ -29,7 +29,7 @@ export class Glaive extends Saber {
   constructor(game) {
     super(game);
     this.turnRate = 13;
-    this.holdDist = 10;
+    this.holdDist = 16;
     this.length = 112;
     this.ext = 0;
     this.lungeT = 0;
