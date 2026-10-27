@@ -11,6 +11,9 @@
 3. wobblers/assets/sfx/index.json lists the variants per sound for src/audio.js
    (and `_levels` from each sound's `level`). Loops get a crossfaded seam instead of trims.
 
+`hold: true` on a sound keeps it out of the game (no processed file, not in the index) until
+the owner has listened to it: ambient loops always start held.
+
 The key is only read from the environment; never write it into a file.
 """
 import json, os, subprocess, sys, tempfile, time
@@ -109,13 +112,17 @@ def main():
         for i in range(1, s['n'] + 1):
             src = os.path.join(ORIG, f"{s['name']}-{i}.mp3")
             dst = os.path.join(OUT, f"{s['name']}-{i}.mp3")
+            if s.get('hold'):  # generated, but waiting for the owner to approve it: not in the game
+                if os.path.exists(dst):
+                    os.remove(dst)
+                continue
             if not os.path.exists(src):
                 continue
             proc = process_loop if s.get('loop') else process
             if (only and s['name'] not in only and os.path.exists(dst)) or proc(src, dst):
                 index.setdefault(s['name'], []).append(f"assets/sfx/{s['name']}-{i}.mp3")
     index['_levels'] = {s['name']: s.get('level', 1) for s in cfg['sounds']}
-    index['_loops'] = [s['name'] for s in cfg['sounds'] if s.get('loop')]
+    index['_loops'] = [s['name'] for s in cfg['sounds'] if s.get('loop') and not s.get('hold')]
     json.dump(index, open(os.path.join(OUT, 'index.json'), 'w'), indent=1)
     print('index:', {k: len(v) for k, v in index.items()})
 

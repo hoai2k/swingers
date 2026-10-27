@@ -249,7 +249,7 @@
   {
    "name": "snap",
    "n": 2,
-   "dur": 0.4,
+   "dur": 0.5,
    "level": 0.7,
    "prompt": "Cartoon crocodile jaws snapping shut, wooden chomp"
   },
@@ -273,6 +273,15 @@
    "dur": 0.6,
    "level": 0.5,
    "prompt": "Colourful parrot squawk, cartoony and bright"
+  },
+  {
+   "name": "jungle_ambience",
+   "n": 1,
+   "dur": 22,
+   "loop": true,
+   "level": 0.4,
+   "prompt": "Lush tropical jungle ambience loop: buzzing insects, distant colourful bird calls, a far-off monkey hoot, gentle leaves rustling, cheerful and calm",
+   "hold": true
   }
  ]
 }
