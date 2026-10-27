@@ -23,4 +23,8 @@ import './minecraft.js';
 import './avatar-core.js'; // Avatar: the faction, elemental effects (fire, water, ice, air, earth, lightning)
 import './avatar-fire.js'; // Avatar: the Fire Nation
 import './avatar-benders.js'; // Avatar: Team Avatar, Earth Kingdom, Kyoshi Warriors
+import './maps-starbase.js'; // battleground: Starbase Hangar (Galactic)
+import './maps-shibuya.js'; // battleground: Shibuya Crossing (JJK)
+import './maps-blocky.js'; // battleground: Blocky Plains (Minecraft)
+import './maps-basingse.js'; // battleground: Ba Sing Se Walls (Avatar)
 import './custom.js'; // Unit Creator: the Custom faction (keep last: reads the other packs)

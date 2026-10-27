@@ -2,6 +2,7 @@
 // bridges and each feature map's set dressing outside the field. Helpers come from
 // world.js (H) so this module has no import cycle with it.
 import { THREE, clamp, rand } from './util.js';
+import { EXT } from './ext.js';
 
 const hash1 = (n) => { const s = Math.sin(n * 91.345 + 47.853) * 43758.5453; return s - Math.floor(s); };
 const BOX = (w, h, d) => new THREE.BoxGeometry(w, h, d);
@@ -143,7 +144,10 @@ function obstacleParts(o, map, H) {
       break;
     }
     default:
-      box(o.shape === 'box' ? o.hw * 2 : o.r * 2, o.h, o.shape === 'box' ? o.hd * 2 : o.r * 2, st, 0, o.h / 2, 0);
+      // a pack's obstacle kind (EXT.obstacles[kind](o, map, H, box, p, dn): push [geometry,
+      // colour, local matrix] parts into p), else a plain block
+      if (EXT.obstacles[o.kind]) EXT.obstacles[o.kind](o, map, H, box, p, dn);
+      else box(o.shape === 'box' ? o.hw * 2 : o.r * 2, o.h, o.shape === 'box' ? o.hd * 2 : o.r * 2, st, 0, o.h / 2, 0);
   }
   return p;
 }
@@ -344,6 +348,7 @@ function outerScenery(group, map, terrain, H) {
   const st = map.stone || '#a9a597';
   const addMerged = (parts) => { if (!parts.length) return; const m = new THREE.Mesh(merged(parts), pmat); m.castShadow = m.receiveShadow = true; group.add(m); };
   const at = (x, z) => terrain.height(x, z);
+  EXT.scenery[map.props]?.(group, map, terrain, H, { addMerged, pmat, at, BOX, CYL, shade, hash1 }); // a pack map's set dressing
   if (map.props === 'castle') {
     // an outer curtain wall with towers around the whole field
     const parts = [];

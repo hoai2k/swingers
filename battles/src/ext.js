@@ -43,10 +43,16 @@
 //   fx: { name: fn(fx, x, y, z, a, b, c, T) }, // particle effects for battle.emit(name, ...)
 //                                           //   (src/fx.js: fx.bb/chunk/ring/dust/flash,
 //                                           //   fx.gs = glowing, fx.ss = soft; T = atlas tiles)
+//   obstacles: { kind: fn(o, map, H, box, parts, dn) }, // meshes for a map obstacle kind
+//                                           //   (src/mapscene.js obstacleParts)
+//   scenery: { props: fn(group, map, terrain, H, kit) }, // set dressing outside the field
+//                                           //   for maps whose `props` is this key
+//   (maps themselves: push the map def into MAPS from src/world.js; MAP_H has the
+//   scenery helpers, TREES and PROPS)
 // }
 export const EXT = {
   factions: [], units: [], items: {}, kinds: {}, proj: {},
-  buildItem: [], buildHat: [], decorate: [], buildProj: [], battleStep: [], fx: {},
+  buildItem: [], buildHat: [], decorate: [], buildProj: [], battleStep: [], fx: {}, obstacles: {}, scenery: {},
 };
 
 export function register(pack) {
@@ -56,6 +62,8 @@ export function register(pack) {
   if (pack.kinds) Object.assign(EXT.kinds, pack.kinds);
   if (pack.proj) Object.assign(EXT.proj, pack.proj);
   if (pack.fx) Object.assign(EXT.fx, pack.fx);
+  if (pack.obstacles) Object.assign(EXT.obstacles, pack.obstacles);
+  if (pack.scenery) Object.assign(EXT.scenery, pack.scenery);
   for (const k of ['buildItem', 'buildHat', 'decorate', 'buildProj', 'battleStep']) if (pack[k]) EXT[k].push(pack[k]);
 }
 
