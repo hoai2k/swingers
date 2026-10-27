@@ -32,17 +32,21 @@ export const SP = {
   jumpSpeed: 860,
   maxSpeed: 2200,
   coyote: 0.1,
-  webSpeed: 4400,
+  webSpeed: 7000,
   webMax: 900,
   webMin: 30,
   webReel: 520,          // left stick along the rope reels in / pays out
-  webReelAuto: 600,      // a held web keeps shortening its rest length (the pull)
-  webRest: 0.15,          // the elastic web's rest length, as a fraction of the hit distance
-  webK: 34,              // spring: u/s^2 of pull per unit of stretch...
-  webMaxPull: 9000,      // ...capped
-  webDamp: 3.5,          // damping on the stretch (keeps it bouncy, not jittery)
-  webSlack: 0.45,        // max stretch beyond rest (x hit distance) before it goes taut
-  webPump: 1500,
+  webReelAuto: 340,      // a held web keeps shortening its rest length (the pull)
+  webRest: 0.32,          // the elastic web's rest length, as a fraction of the hit distance
+  webK: 16,              // spring: u/s^2 of pull per unit of stretch...
+  webMaxPull: 6500,      // ...capped
+  webDamp: 1.1,          // damping on the stretch (keeps it bouncy, not jittery)
+  webSlack: 0.12,        // max stretch beyond rest (x hit distance) before it goes taut
+  webPump: 1350,
+  webApproach: 1600,     // the pull eases off as you close on the anchor at this speed
+  webRamp: 0.12,         // s for a fresh web's tension to build (no instant yank)
+  webCatch: 5200,        // u/s^2 the taut web brakes you moving away
+  softSpeed: 1500,       // above this, air drag grows (no hard speed clamp)
   webMinHold: 0.25,
   grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
@@ -197,6 +201,14 @@ export class Spider {
     const na = ua + angDiff(ua, ta) * Math.min(1, dt * 12);
     this.up.x = Math.cos(na); this.up.y = Math.sin(na);
 
+    // swinging: the body leans into the web (it hangs from the thread), and
+    // eases back upright when you let go
+    let lean = 0;
+    if (this.web && this.web.state !== 'fly' && !this.ground) {
+      const d = this.webDir();
+      lean = clamp(Math.atan2(d.x, -d.y), -0.75, 0.75) * 0.7;
+    }
+    this.lean = lerp(this.lean || 0, lean, Math.min(1, dt * 9));
     this.updateLegs(dt);
 
     // weapon
@@ -222,6 +234,11 @@ export class Spider {
   step(h, move) {
     const world = this.game.world;
     const speed = Math.hypot(this.vx, this.vy);
+    if (speed > SP.softSpeed) {
+      // air drag that grows past softSpeed: fast, but smooth to a limit
+      const k = Math.max(0, 1 - h * 2.2 * (speed - SP.softSpeed) / speed);
+      this.vx *= k; this.vy *= k;
+    }
     if (speed > SP.maxSpeed) { this.vx *= SP.maxSpeed / speed; this.vy *= SP.maxSpeed / speed; }
 
     if (this.ground) {
@@ -425,7 +442,7 @@ export class Spider {
         if (ent.body) {
           w.state = 'stuck'; w.target = ent.body;
           const d = Math.hypot(ent.body.x - this.x, ent.body.y - this.y);
-          w.attach = d;
+          w.attach = d; w.st = 0; w.maxLen = d + 12;
           w.len = Math.max(SP.webMin, d * SP.webRest);
           sfx.webStick();
           return;
@@ -437,7 +454,7 @@ export class Spider {
         const l = hit.solid.inv({ x: hit.x, y: hit.y });
         w.lx = l.x; w.ly = l.y;
         const d = Math.hypot(hit.x - this.x, hit.y - this.y);
-        w.attach = d;
+        w.attach = d; w.st = 0; w.maxLen = d + 12;
         w.len = Math.max(SP.webMin, d * SP.webRest);
         w.x = hit.x; w.y = hit.y;
         sfx.webStick();
@@ -454,6 +471,7 @@ export class Spider {
         w.state = 'air'; w.t = 0;
         w.attach = Math.hypot(w.x - this.x, w.y - this.y);
         w.len = w.attach;            // thin air: a brake, not a slingshot
+        w.st = 0; w.maxLen = w.attach + 12;
         this.game.fx.burst(w.x, w.y, { n: 4, speed: 80, color: '#ffffff', size: 1.2, life: 0.2 });
       }
       return;
@@ -489,25 +507,39 @@ export class Spider {
   // (spring + damping), which flings you at the anchor and lets swings
   // build up; past rest + slack it goes taut like a rope. Momentum is never
   // thrown away except the outward part when taut.
+  // The web: an elastic pull toward the anchor plus a rope limit that only
+  // ever shortens smoothly. Everything acts through velocity (no position
+  // snaps), the sideways part of your velocity is never touched, so swings
+  // keep their momentum and speed up naturally as the web reels you in.
   constrainWeb(h) {
     const w = this.web;
     const a = this.webAnchor();
     let dx = a.x - this.x, dy = a.y - this.y;
     const d = Math.hypot(dx, dy) || 1;
     dx /= d; dy /= d;
+    w.st = (w.st || 0) + h;
+    // rest length follows you in, so slack never stores up into a snap
+    if (w.len > d) w.len = Math.max(SP.webMin, d);
+    // rope limit: starts where it stuck, reels in at a steady rate, and
+    // never sits closer than the rest length plus some give
+    const give = (w.attach || d) * SP.webSlack + 16;
+    w.maxLen = Math.max(w.len + give, Math.min(w.maxLen ?? d + 12, d + 12) - SP.webReelAuto * 1.4 * h);
     const stretch = d - w.len;
-    w.taut = stretch > 2;
+    w.taut = d >= w.maxLen - 2;
+    const vr = this.vx * dx + this.vy * dy;               // speed toward the anchor
     if (stretch > 0) {
-      const vr = this.vx * dx + this.vy * dy;            // speed toward the anchor
-      let acc = Math.min(SP.webMaxPull, SP.webK * stretch) - SP.webDamp * Math.max(-600, Math.min(600, vr));
-      if (acc < 0) acc = 0;
+      const ramp = Math.min(1, w.st / SP.webRamp);
+      let acc = Math.min(SP.webMaxPull, SP.webK * stretch) * ramp;
+      acc *= clamp(1 - vr / SP.webApproach, 0, 1);       // eases off as you close in
+      acc -= SP.webDamp * Math.min(0, vr);                 // damp the flying-away part
       this.vx += dx * acc * h; this.vy += dy * acc * h;
-      const max = w.len + (w.attach || d) * SP.webSlack + 30;
-      if (d > max) {
-        this.x += dx * (d - max); this.y += dy * (d - max);
-        const out = -(this.vx * dx + this.vy * dy);
-        if (out > 0) { this.vx += dx * out; this.vy += dy * out; }
-      }
+    }
+    if (d > w.maxLen) {
+      // taut: a firm but finite brake on moving further away
+      const out = -(this.vx * dx + this.vy * dy);
+      if (out > 0) { const take = Math.min(out, SP.webCatch * h); this.vx += dx * take; this.vy += dy * take; }
+      const fix = Math.min(2, d - w.maxLen);
+      this.x += dx * fix; this.y += dy * fix;
     }
   }
 
@@ -806,7 +838,7 @@ export class Spider {
     ctx.beginPath(); ctx.arc(this.x, this.y, r + 2.5, 0, TAU); ctx.stroke();
     ctx.globalAlpha = 1;
     if (this.weapon && this.weapon.drawBehind) this.weapon.drawBehind(ctx);
-    const tilt = clamp(Math.atan2(this.up.x, -this.up.y), -0.45, 0.45) + (this.ground ? Math.sin(this.time * 14) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 0.06 : clamp(this.vx * 0.0004, -0.3, 0.3));
+    const tilt = (this.lean || 0) + clamp(Math.atan2(this.up.x, -this.up.y), -0.45, 0.45) + (this.ground ? Math.sin(this.time * 14) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 0.06 : clamp(this.vx * 0.0004, -0.3, 0.3));
     const blink = this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0;
     const bob = this.ground ? Math.abs(Math.sin(this.time * 16)) * Math.min(1, Math.hypot(this.vx, this.vy) / 300) * 2.5 : 0;
     drawBody(ctx, this.x + this.up.x * bob, this.y + this.up.y * bob, r * 1.0, this.castIndex, { tilt, facing: this.facing, squash: this.squash, alpha: blink ? 0.45 : 1, flash: this.flash });
