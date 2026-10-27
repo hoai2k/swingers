@@ -562,6 +562,9 @@ def write(name, C, P, N, F, part, weight, pivots, S, T, m, paint=None):
                 proj=boxes, length=C['L'])
     if paint is not None:
         meta['paint'] = dict(lo=plo.tolist(), hi=phi.tolist())
+    for key, flag in (('wing_top', 'wingTop'), ('side_only', 'sideOnly')):  # paint options (critters.js)
+        if C.get(key):
+            meta[flag] = True
     with open(os.path.join(OUT, name + '.json'), 'w') as f:
         json.dump(meta, f)
 

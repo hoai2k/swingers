@@ -87,10 +87,13 @@ export class Species {
       Object.assign(sh.uniforms, PU);
       if (mat.defines?.USE_PROJ) {
         // (USE_PAINT: limbs posed away from where the sheet draws them carry their sheet position)
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN;\n#ifdef USE_PAINT\nattribute vec3 aPaint;\n#endif')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_PAINT\nvObjP = aPaint;\n#else\nvObjP = position;\n#endif\nvObjN = normal;');
+        // (WING_TOP: wings and flippers (WING_L / WING_R) take the top view all over: seen from below
+        // or edge-on too, it is the only picture of them; SIDE_ONLY: the side view alone, for
+        // animals the sheet draws in another orientation than the model's)
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN; varying float vWing;\n#ifdef USE_PAINT\nattribute vec3 aPaint;\n#endif')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_PAINT\nvObjP = aPaint;\n#else\nvObjP = position;\n#endif\nvObjN = normal; vWing = (aRig.x > 6.5 && aRig.x < 8.5) ? 1. : 0.;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vObjP; varying vec3 vObjN;
+varying vec3 vObjP; varying vec3 vObjN; varying float vWing;
 uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform vec4 uTopBox;`)
           .replace('#include <color_fragment>', `#include <color_fragment>
 {
@@ -98,6 +101,12 @@ uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform 
   vec2 tu = vec2((vObjP.z - uTopBox.x) / (uTopBox.y - uTopBox.x), (vObjP.x - uTopBox.w) / (uTopBox.z - uTopBox.w));
   vec3 n = normalize(vObjN);
   float wt = smoothstep(0.3, 0.8, n.y);
+#ifdef WING_TOP
+  wt = mix(wt, 1., vWing);
+#endif
+#ifdef SIDE_ONLY
+  wt = 0.;
+#endif
   vec3 c = mix(texture2D(uSide, su).rgb, texture2D(uTop, tu).rgb, wt);
   diffuseColor.rgb *= c * 1.05;
 }`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * 0.22; // the paint already has its own shading: lift the shadow side');
@@ -110,7 +119,7 @@ if (aRig.x > 9.5) { float d = length(position - aRig.yzw); float i = aRig.x - 10
   transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y) * aW; }
 ${mode}`);
     };
-    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '') + (mat.defines?.USE_PAINT ? ':paint' : '');
+    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '') + (mat.defines?.USE_PAINT ? ':paint' : '') + (mat.defines?.WING_TOP ? ':wt' : '') + (mat.defines?.SIDE_ONLY ? ':so' : '');
     const mesh = this.mesh = new THREE.InstancedMesh(g, mat, max);
     mesh.name = 'critters_' + (opts.name || 'x');
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -127,7 +136,7 @@ ${mode}`);
     const U = this.projU;
     U.uSide.value = p.side; U.uTop.value = p.top;
     U.uSideBox.value.set(...p.sideBox); U.uTopBox.value.set(...p.topBox);
-    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1, ...(p.paint ? { USE_PAINT: 1 } : {}) };
+    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1, ...(p.paint ? { USE_PAINT: 1 } : {}), ...(p.wingTop ? { WING_TOP: 1 } : {}), ...(p.sideOnly ? { SIDE_ONLY: 1 } : {}) };
     this.mesh.material.needsUpdate = true;
   }
   begin() { this.n = 0; }

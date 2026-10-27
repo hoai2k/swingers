@@ -28,7 +28,7 @@ function pump() { // main-thread fallback
 
 // Models built from the reference sheets (tools/animals/build.py -> assets/animals/): a mesh
 // and two paint images projected onto it (critters.js Species `proj`).
-export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc']);
+export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc', 'snake', 'parrot', 'toucan']);
 const texLoader = new THREE.TextureLoader();
 async function sheetGeometry(name) {
   const base = 'assets/animals/' + name;
@@ -67,7 +67,7 @@ async function sheetGeometry(name) {
   g.computeBoundingSphere();
   const tex = (f) => new Promise((res) => texLoader.load(f, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
   const [side, top] = await Promise.all([tex(base + '_side.jpg'), tex(base + '_top.jpg')]);
-  g.userData.proj = { side, top, sideBox: meta.proj.side, topBox: meta.proj.top, paint: !!paint };
+  g.userData.proj = { side, top, sideBox: meta.proj.side, topBox: meta.proj.top, paint: !!paint, wingTop: !!meta.wingTop, sideOnly: !!meta.sideOnly };
   return g;
 }
 

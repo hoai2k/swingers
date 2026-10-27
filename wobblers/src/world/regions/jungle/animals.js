@@ -70,8 +70,8 @@ export function buildAnimals(game, R) {
   mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });
   mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 4.5, WAVEA: 0.16 } });
   mk('croc', modelGeometry('croc'), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
-  mk('parrot', modelGeometry('bird', 'parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
-  mk('toucan', modelGeometry('bird', 'toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
+  mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
+  mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
   (game.buildTimes ||= {}).sculptJungle = Math.round(performance.now() - t0);
 
