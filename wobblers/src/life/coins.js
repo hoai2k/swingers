@@ -4,7 +4,7 @@
 // and big 10-coin pieces at the hardest spots. Walk (or drive) through one to
 // collect it; it comes back after a while. One instanced mesh draws them all.
 import * as THREE from 'three';
-import { SEA_LEVEL } from '../config.js';
+import { SEA_LEVEL, FUN_DX, FUN_DZ } from '../config.js';
 
 // [x, z, ray start (null: just above the terrain), shape, count, size, opts]
 //   shape 'ring' (radius size), 'line' (length size along opts.yaw, default +x),
@@ -41,10 +41,10 @@ const CLUSTERS = [
   [113.8, 104, 7, 'one', 1, 0, { big: true, lift: 0.4 }], // high dive
   [95.3, 85, 9, 'one', 1, 0, { big: true }],      // water slide top
   // fun park
-  [-242, -10, 2, 'ring', 10, 8],
-  [-252.6, -64.2, 2, 'line', 4, 4],
-  [-245, 98.2, 3, 'line', 4, 4],
-  [-205, -78, 3, 'ring', 4, 1.6],                 // bouncy castle
+  [-242 + FUN_DX, -10 + FUN_DZ, 2, 'ring', 10, 8],
+  [-252.6 + FUN_DX, -64.2 + FUN_DZ, 2, 'line', 4, 4],
+  [-250 + FUN_DX, 98.2 + FUN_DZ, 3, 'line', 4, 4],
+  [-205 + FUN_DX, -78 + FUN_DZ, 3, 'ring', 4, 1.6],                 // bouncy castle
   // stunt park: coins in the air over the big jump, a line on the fun box, the half-pipe deck
   [-110, 79, null, 'line', 7, 9, { y: 5.0 }],
   [-105, 79, null, 'one', 1, 0, { big: true, y: 6.2 }],

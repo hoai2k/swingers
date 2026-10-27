@@ -178,7 +178,9 @@ The phone's **X** opens the jobs list (all jobs with their best medal; **A** set
   monkey bars, trampolines, spring riders, sandbox.
 - **Swimming pool** (SE) — shallow and deep ends, springy diving board, 5 m high-dive,
   twisting water slide, pool toys and a giant rubber duck.
-- **Fun Park** (west) — ferris wheel, carousel, roller coaster, swing ride, drop tower,
+- **Fun Park** (on its own grassy shelf at Bigtown's west shore, just north of the bridge;
+  a ramp road runs up from its gate to Brick Row) — ferris wheel, carousel, roller coaster
+  (catch hold of a car's side handles and hang on for the ride), swing ride, drop tower,
   bumper cars, bouncy castle, food stalls, a can-toss stall (win a teddy) and a bowling lane.
   The striped **MAGIC TENT** (west side, between the ferris wheel and the drop tower) has a
   crystal ball: press **Y** at it to turn into a **goat** (X: charging headbutt), a

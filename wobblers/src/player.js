@@ -62,7 +62,7 @@ const RIDE_MAXREL = 12;       // m/s: no limb flies off faster than this relativ
 const RIDE_MAXSPIN = 14;      // rad/s
 const RIDE_ARMDAMP = 0.5;     // share of the arm's spin (relative to the chest) removed per step
 const RIDE_LEAD = 0.8;         // steps of ride travel the grip joint is aimed ahead (measured lag)
-const RIDE_DRAIN = 0.4;       // grip drains slower hanging off a ride (~20 s from full)
+const RIDE_DRAIN = 0.25;      // grip drains slower hanging off a ride (~32 s from full: a whole coaster lap)
 
 // ---- look -----------------------------------------------------------------
 const SKIN = 0xffd9b8;

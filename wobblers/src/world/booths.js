@@ -13,7 +13,7 @@ import { PhonePanel, CALLABLE } from '../phone.js';
 // by a clearance probe: flat ground, nothing in the box, room for a car ahead.
 export const BOOTHS = [
   ['Town', -36, -52, Math.PI],
-  ['Fun Park', -180, 10, Math.PI],
+  ['Fun Park', 668, -32, Math.PI], // on the plate by the ramp up from the Fun Park gate
   ['South pier', -134, 316, -Math.PI / 2],
   ['North pier', -99, -324, -Math.PI / 2],
   ['Bigtown', 900, -8, 0],

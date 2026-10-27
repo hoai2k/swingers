@@ -218,8 +218,11 @@ export function pathRide(game, opts) {
     const riders = seats.filter((s) => s.occupant);
     let dirSign = 1;
     if (st.mode === 'wait') {
-      if (riders.length) { st.t -= dt; if (st.t <= 0) { st.mode = 'go'; st.v = 0; opts.onStart?.(); } }
-      else st.t = 0;
+      // the ride runs on its own timetable: it leaves `cycle` s after it docks, riders or not
+      // (someone boarding late in the wait still gets `wait` s to settle)
+      st.idle = (st.idle || 0) + dt;
+      if (riders.length) st.t -= dt;
+      if (st.idle >= (opts.cycle ?? 10) && st.t <= 0) { st.mode = 'go'; st.v = 0; st.idle = 0; st.t = 0; opts.onStart?.(); }
     } else if (st.mode === 'go') {
       const target = opts.speed ? opts.speed(st.s) : 4;
       st.v += Math.max(-2 * dt, Math.min(1.5 * dt, target - st.v));
@@ -234,7 +237,7 @@ export function pathRide(game, opts) {
       dirSign = -1;
       st.t -= dt;
       if (st.t <= 0) { st.s -= (opts.back ?? 7) * dt; if (riders.length && st.s > 6) { /* hitch-hikers ride back */ } }
-      if (st.s <= 0) { st.s = 0; st.mode = 'wait'; st.t = 0; }
+      if (st.s <= 0) { st.s = 0; st.mode = 'wait'; st.t = 0; st.idle = 0; }
     }
     at(st.s, p);
     at(st.s + (dirSign > 0 ? 2 : -2), ahead);

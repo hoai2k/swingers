@@ -26,7 +26,7 @@
 // ({ kind, t, ... }) or undefined.
 import * as THREE from 'three';
 import { RAPIER } from './physics.js';
-import { DT, PLAYER_CSS } from './config.js';
+import { DT, PLAYER_CSS, FUN_DX, FUN_DZ } from './config.js';
 import { Builder, signMesh } from './mesh.js';
 import { injectCSS } from './map.js';
 import { promptRow, deviceKind } from './glyphs.js';
@@ -34,7 +34,7 @@ import { Local, useSpot } from './world/common.js';
 import { meshHeight } from './terrain.js';
 
 export const FORM_TIME = 60, WARN_TIME = 5, SCARE_R = 10;
-export const TENT = { x: -277, z: -33, yaw: Math.PI / 2 }; // door faces east (+x), toward the park's west path
+export const TENT = { x: -277 + FUN_DX, z: -33 + FUN_DZ, yaw: Math.PI / 2 }; // door faces east (+x), toward the park's west path
 
 const FORM_MAT = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 24, specular: 0x2a2a2a });
 const UP = new THREE.Vector3(0, 1, 0);

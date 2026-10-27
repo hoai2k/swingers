@@ -6,6 +6,7 @@ import { Builder } from '../mesh.js';
 import { PRESENTS, TOTAL, isFound, findPresent, addPresent } from '../unlocks.js';
 import { rewardName } from '../cosmetics.js';
 import { chime, groundAt } from './common.js';
+import { FUN_DX, FUN_DZ } from '../config.js';
 
 // id -> [x, z, ray start height, note]. The present sits on whatever static
 // surface a downward ray from (x, start, z) hits first (game.groundHeight), so
@@ -29,9 +30,9 @@ const SPOTS = {
   'high-dive': [113.8, 104, 7, 'end of the high-dive platform'],
   'slide-tower': [103, -131, 4, 'top of the playground slide'],
   'sandbox': [83, -83, 1, 'in the playground sandbox'],
-  'ferris-wheel': [-252.6, -64.2, 2, 'ferris wheel boarding platform'],
-  'bouncy-castle': [-205, -78, 3, 'in the bouncy castle'],
-  'coaster': [-245, 98.2, 3, 'roller coaster station'],
+  'ferris-wheel': [-252.6 + FUN_DX, -64.2 + FUN_DZ, 2, 'ferris wheel boarding platform'],
+  'bouncy-castle': [-205 + FUN_DX, -78 + FUN_DZ, 3, 'in the bouncy castle'],
+  'coaster': [-250 + FUN_DX, 98.2 + FUN_DZ, 3, 'roller coaster station'],
   'stunt-jump': [-118.5, 79, 5, 'top of the big stunt-park jump'],
   'half-pipe': [-115, 143, 6, 'on the half-pipe deck'],
   'football-goal': [-134, -103, 2.2, 'in the football goal'],

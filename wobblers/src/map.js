@@ -29,8 +29,6 @@ export const AREAS = [
   { name: 'Town', x: -36, z: -40, big: true },
   { name: 'Playground', x: 105, z: -105 },
   { name: 'Swimming Pool', x: 100, z: 124 },
-  { name: 'Fun Park', x: -242, z: -10, big: true },
-  { name: 'Magic Tent', x: -277, z: -38 },
   { name: 'Stunt Park', x: -105, z: 105 },
   { name: 'Sports Field', x: -105, z: -103 },
   { name: 'Kart Track', x: 242.5, z: 0 },
@@ -172,10 +170,6 @@ function paintZones(ctx) {
   ctx.save();
   // town blocks
   zone(ctx, -72, -72, 72, 72, 'rgba(246,234,214,.55)', 'rgba(170,140,100,.5)', 10);
-  // fun park
-  zone(ctx, -300, -105, -188, 105, 'rgba(255,190,215,.45)', 'rgba(220,90,140,.6)', 8);
-  ctx.fillStyle = '#e9d6a8';
-  for (const [x, z, w, d] of [[-242, 0, 108, 8], [-215, 0, 8, 150], [-262, 0, 8, 150]]) ctx.fillRect(P(x - w / 2), P(z - d / 2), w * K, d * K);
   // playground: rubber ground with coloured pads
   const pg = [105, -105];
   zone(ctx, pg[0] - 36, pg[1] - 36, pg[0] + 36, pg[1] + 36, '#a5e392', 'rgba(60,140,60,.5)', 6);

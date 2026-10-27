@@ -675,24 +675,36 @@ export class UI {
         c.yaw = p.yaw + Math.PI + 0.35; c.pitch = 0.1;
         if ('dist' in c) c.dist = 3.0;
       }
-      // tags for every other player visible in this view
+      // every other player: a tag over their head when they're on screen (with the distance once
+      // they're past 25 m), otherwise a badge at the edge of the view pointing toward them, so
+      // players can always find each other
       const cam = p.camera.cam;
       for (const q of ps) {
         if (q === p) continue;
         q.viewPos(hd, 'head');
-        v3.set(hd.x, hd.y + 0.5, hd.z).project(cam);
-        if (v3.z > 1 || v3.x < -1 || v3.x > 1 || v3.y < -1 || v3.y > 1) continue;
         const dist = cam.position.distanceTo(hd);
-        if (dist > 80) continue;
+        v3.set(hd.x, hd.y + 0.5, hd.z).project(cam);
+        const label = 'P' + (q.index + 1), far = dist > 25 ? ` · ${dist > 1000 ? (dist / 1000).toFixed(1) + ' km' : Math.round(dist) + ' m'}` : '';
         const t = this.tag(ti++);
         t.style.display = 'block';
-        const label = 'P' + (q.index + 1);
-        if (t.textContent !== label) t.textContent = label;
         t.style.background = PLAYER_CSS(q.color);
         t.style.color = textCol(q.color);
-        t.style.left = x + (v3.x * 0.5 + 0.5) * w + 'px';
-        t.style.top = y + (-v3.y * 0.5 + 0.5) * h + 'px';
-        t.style.opacity = dist > 50 ? String(1 - (dist - 50) / 30) : '1';
+        t.style.setProperty('--pc', PLAYER_CSS(q.color));
+        const onScreen = v3.z <= 1 && Math.abs(v3.x) <= 0.97 && Math.abs(v3.y) <= 0.97;
+        let sx = v3.x, sy = v3.y;
+        if (!onScreen) {
+          if (v3.z > 1) { sx = -sx; sy = -sy; } // behind: mirror
+          const m = 0.86, k = m / Math.max(Math.abs(sx), Math.abs(sy), 1e-6);
+          if (k < 1 || v3.z > 1) { sx *= k; sy *= k; }
+          if (v3.z > 1 && Math.abs(sy) < m && Math.abs(sx) < m) sy = -m; // straight behind: bottom edge
+          sy = Math.max(sy, -0.78); // clear of the prompt at the bottom
+        }
+        t.classList.toggle('edge', !onScreen);
+        const html = onScreen ? label + far : `<i style="transform: rotate(${Math.atan2(sx, sy)}rad)"></i>${label}<small>${far.slice(3) || Math.round(dist) + ' m'}</small>`;
+        if (t._html !== html) { t.innerHTML = html; t._html = html; }
+        t.style.left = x + (sx * 0.5 + 0.5) * w + 'px';
+        t.style.top = y + (-sy * 0.5 + 0.5) * h + 'px';
+        t.style.opacity = '1';
       }
     });
     for (let i = ti; i < this.pool.length; i++) this.pool[i].style.display = 'none';

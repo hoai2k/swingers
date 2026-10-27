@@ -3,12 +3,19 @@
 // every physics step; players board them through seats (Y).
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { VEH_GROUPS } from '../config.js';
+import { VEH_GROUPS, FUN_DX, FUN_DZ } from '../config.js';
+export { FUN_DX, FUN_DZ };
 import { Builder, signMesh, matVC } from '../mesh.js';
 import { addSeat } from './playground.js';
 import { Vehicle } from '../vehicles.js';
 
 const _q = new THREE.Quaternion(), _m = new THREE.Matrix4();
+// Where the Fun Park is: it was laid out on the home island west of town (x -300..-188,
+// z -105..105, gate on the east side) and now stands on its own ground at Bigtown's west
+// shore (regions/city.js FUN_LAND), shifted by FUN_DX / FUN_DZ; the ground there is at
+// y = 0 too, so heights are as laid out. Things placed with these coordinates elsewhere (fun.js
+// stalls, presents, coins, the Magic Tent, sounds) add the same shift (config.js).
+const X = (x) => x + FUN_DX, Z = (z) => z + FUN_DZ;
 const UP = new THREE.Vector3(0, 1, 0);
 
 // Kinematic body with optional colliders and a mesh that follows it (added to
@@ -28,42 +35,42 @@ export const setPose = (body, p, q) => {
 
 export function buildPark(game, kit) {
   // ground paths
-  kit.deco(-242, 0.03, 0, 108, 0.06, 8, 0xe9d6a8);
-  kit.deco(-215, 0.03, 0, 8, 0.06, 150, 0xe9d6a8);
-  kit.deco(-262, 0.03, 0, 8, 0.06, 150, 0xe9d6a8);
+  kit.deco(X(-242), 0.03, Z(0), 108, 0.06, 8, 0xe9d6a8);
+  kit.deco(X(-215), 0.03, Z(0), 8, 0.06, 150, 0xe9d6a8);
+  kit.deco(X(-262), 0.03, Z(0), 8, 0.06, 150, 0xe9d6a8);
   gate(game, kit);
-  ferrisWheel(game, kit, -250, -62);
-  carousel(game, kit, -228, -28);
-  swingRide(game, kit, -228, 32);
-  dropTower(game, kit, -282, 0);
-  bumperCars(game, kit, -252, 42);
-  bouncyCastle(game, kit, -205, -78);
+  ferrisWheel(game, kit, X(-250), Z(-62));
+  carousel(game, kit, X(-228), Z(-28));
+  swingRide(game, kit, X(-228), Z(32));
+  dropTower(game, kit, X(-282), Z(0));
+  bumperCars(game, kit, X(-252), Z(42));
+  bouncyCastle(game, kit, X(-205), Z(-78));
   coaster(game, kit);
   stalls(game, kit);
 }
 
 function gate(game, kit) {
-  const x = -188;
-  for (const z of [-6.5, 6.5]) {
+  const x = X(-188);
+  for (const z of [Z(-6.5), Z(6.5)]) {
     kit.cyl(x, 4, z, 0.7, 8, 0xff5a8a, { seg: 10 });
     kit.sphere(x, 8.6, z, 1.0, 0xffd23f);
   }
-  kit.deco(x, 7.4, 0, 1.2, 1.6, 14, 0xffffff);
+  kit.deco(x, 7.4, Z(0), 1.2, 1.6, 14, 0xffffff);
   const s = signMesh('FUN PARK', 11, '#ff5a8a');
-  s.position.set(x + 0.65, 7.4, 0); s.rotation.y = Math.PI / 2;
+  s.position.set(x + 0.65, 7.4, Z(0)); s.rotation.y = Math.PI / 2;
   game.scene.add(s);
   // perimeter fence
-  kit.fence(-188, -105, -188, -9, 0xffffff, 1.4);
-  kit.fence(-188, 9, -188, 105, 0xffffff, 1.4);
-  kit.fence(-188, 105, -300, 105, 0xffffff, 1.4);
-  kit.fence(-188, -105, -300, -105, 0xffffff, 1.4);
-  kit.fence(-300, -105, -300, 105, 0xffffff, 1.4);
+  kit.fence(X(-188), Z(-105), X(-188), Z(-9), 0xffffff, 1.4);
+  kit.fence(X(-188), Z(9), X(-188), Z(105), 0xffffff, 1.4);
+  kit.fence(X(-188), Z(105), X(-300), Z(105), 0xffffff, 1.4);
+  kit.fence(X(-188), Z(-105), X(-300), Z(-105), 0xffffff, 1.4);
+  kit.fence(X(-300), Z(-105), X(-300), Z(105), 0xffffff, 1.4);
   // bunting flags along the main path
   for (let i = 0; i < 9; i++) {
-    const px = -196 - i * 10;
-    kit.cyl(px, 2.5, -5, 0.08, 5, 0x777777); kit.cyl(px, 2.5, 5, 0.08, 5, 0x777777);
-    const b = kit.b(px, 0);
-    for (let k = 0; k < 7; k++) b.cone(0.35, 0.6, [0xff5a5a, 0xffd23f, 0x3f8cff, 0x55d85a][k % 4], [px, 4.65 - Math.sin(k / 6 * Math.PI) * 0.4, -4 + k * 1.33], [Math.PI, 0, 0], 3);
+    const px = X(-196 - i * 10);
+    kit.cyl(px, 2.5, Z(-5), 0.08, 5, 0x777777); kit.cyl(px, 2.5, Z(5), 0.08, 5, 0x777777);
+    const b = kit.b(px, Z(0));
+    for (let k = 0; k < 7; k++) b.cone(0.35, 0.6, [0xff5a5a, 0xffd23f, 0x3f8cff, 0x55d85a][k % 4], [px, 4.65 - Math.sin(k / 6 * Math.PI) * 0.4, Z(-4 + k * 1.33)], [Math.PI, 0, 0], 3);
   }
 }
 
@@ -318,25 +325,25 @@ function bouncyCastle(game, kit, cx, cz) {
 
 function stalls(game, kit) {
   const list = [[-200, -14, 'HOT DOGS', '#ff5a3c'], [-208, 14, 'CANDY', '#ff7fc8'], [-240, -12, 'DRINKS', '#3f8cff'], [-270, 14, 'PRIZES', '#b46cff'], [-205, 92, 'TICKETS', '#55a84a']];
-  for (const [x, z, name, col] of list) {
-    const yaw = z < 0 ? 0 : Math.PI;
+  for (const [x0, z0, name, col] of list) {
+    const x = X(x0), z = Z(z0), yaw = z0 < 0 ? 0 : Math.PI;
     kit.box(x, 1.1, z, 4, 2.2, 3, 0xffffff, { yaw });
     const c = new THREE.Color(col).getHex();
-    for (let i = 0; i < 5; i++) kit.deco(x - 1.6 + i * 0.8, 2.9, z + (z < 0 ? 1.9 : -1.9), 0.8, 0.1, 1.6, i % 2 ? 0xffffff : c, { euler: [z < 0 ? 0.3 : -0.3, 0, 0] });
+    for (let i = 0; i < 5; i++) kit.deco(x - 1.6 + i * 0.8, 2.9, z + (z0 < 0 ? 1.9 : -1.9), 0.8, 0.1, 1.6, i % 2 ? 0xffffff : c, { euler: [z0 < 0 ? 0.3 : -0.3, 0, 0] });
     kit.deco(x, 3.3, z, 4.2, 0.2, 3.2, c);
     const s = signMesh(name, 3.8, col);
-    s.position.set(x, 3.0, z + (z < 0 ? 1.6 : -1.6)); s.rotation.y = yaw;
+    s.position.set(x, 3.0, z + (z0 < 0 ? 1.6 : -1.6)); s.rotation.y = yaw;
     game.scene.add(s);
   }
   // balloons tied around
   for (let i = 0; i < 14; i++) {
-    const x = -195 - (i * 7.3) % 90, z = (i % 2 ? 1 : -1) * (7 + (i * 3.7) % 5);
+    const x = X(-195 - (i * 7.3) % 90), z = Z((i % 2 ? 1 : -1) * (7 + (i * 3.7) % 5));
     const b = kit.b(x, z);
     b.cyl(0.01, 0.01, 2.2, 0xdddddd, [x, 1.1, z], null, 3);
     b.sphere(0.35, [0xff5a5a, 0xffd23f, 0x3f8cff, 0x55d85a, 0xff7fc8][i % 5], [x, 2.4, z], [1, 1.2, 1]);
   }
-  for (let i = 0; i < 6; i++) kit.bench(-200 - i * 14, i % 2 ? 9 : -9, i % 2 ? Math.PI : 0);
-  for (let i = 0; i < 10; i++) kit.tree(-192 - i * 11, (i % 2 ? 1 : -1) * 101, 0, 0, 0.8);
+  for (let i = 0; i < 6; i++) kit.bench(X(-200 - i * 14), Z(i % 2 ? 9 : -9), i % 2 ? Math.PI : 0);
+  for (let i = 0; i < 10; i++) kit.tree(X(-192 - i * 11), Z((i % 2 ? 1 : -1) * 101), 0, 0, 0.8);
 }
 
 // ---- roller coaster ------------------------------------------------------
@@ -346,7 +353,7 @@ function coaster(game, kit) {
     [-195, 12, 24], [-195, 13.5, 0], [-195, 5, -26], [-196, 10, -52], [-200, 3.5, -82], [-214, 5, -97],
     [-244, 14, -97], [-272, 4, -97], [-291, 6, -84], [-295, 11, -52], [-293, 4, -18], [-294, 9, 22],
     [-293, 3, 56], [-287, 2, 86], [-275, 1.6, 95],
-  ].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+  ].map(([x, y, z]) => new THREE.Vector3(X(x), y, Z(z)));
   const curve = new THREE.CatmullRomCurve3(P, true, 'centripetal');
   const L = curve.getLength();
   const N = 1600;
@@ -395,12 +402,14 @@ function coaster(game, kit) {
   const trackMesh = tb.mesh(matVC);
   game.scene.add(trackMesh);
   // station
-  kit.box(-253, 0.6, 98.2, 22, 1.2, 3.2, 0xb46cff);
-  for (let i = 0; i < 4; i++) kit.cyl(-262 + i * 6, 2.8, 99.6, 0.12, 3.2, 0xffffff, { collide: false });
-  kit.deco(-253, 4.5, 98.5, 23, 0.3, 4.6, 0xff5a8a);
-  kit.box(-253, 0.3, 101.0, 4, 0.6, 1.2, 0xb46cff);
+  // the platform's edge comes right up to the cars (a hand's reach from the side rails),
+  // so players can hop in or catch hold of a car as it leaves
+  kit.box(X(-253), 0.6, Z(97.38), 22, 1.2, 3.2, 0xb46cff);
+  for (let i = 0; i < 4; i++) kit.cyl(X(-262 + i * 6), 2.8, Z(99.6), 0.12, 3.2, 0xffffff, { collide: false });
+  kit.deco(X(-253), 4.5, Z(98.3), 23, 0.3, 4.6, 0xff5a8a);
+  kit.box(X(-253), 0.3, Z(99.7), 4, 0.6, 1.2, 0xb46cff);
   const st = signMesh('LOOPY COASTER', 9, '#b46cff');
-  st.position.set(-253, 5.3, 100.8); st.rotation.y = Math.PI;
+  st.position.set(X(-253), 5.3, Z(100.8)); st.rotation.y = Math.PI;
   game.scene.add(st);
 
   // train
@@ -412,6 +421,10 @@ function coaster(game, kit) {
     b.rbox(1.3, 0.55, 0.2, 0.08, c, [0, 0.6, -0.85]);
     if (i === 0) b.rbox(1.3, 0.5, 0.5, 0.2, c, [0, 0.35, 1.05]);
     b.rbox(1.2, 0.08, 0.1, 0.03, 0xffffff, [0, 0.8, 0.2]);
+    for (const sx of [-1, 1]) { // grab handles along both top edges, standing a little proud of the sides
+      b.cyl(0.04, 0.04, 1.6, 0xffffff, [sx * 0.8, 0.5, 0], [Math.PI / 2, 0, 0], 6);
+      for (const hz of [-0.75, 0.75]) b.box(0.12, 0.05, 0.05, 0xffffff, [sx * 0.74, 0.5, hz]);
+    }
     // floor plus sides, seat back, lap bar and nose: things to catch hold of
     // from the platform or the ground (riders in seats don't collide with them)
     const body = kinematic(game, { x: P[0].x, y: P[0].y, z: P[0].z }, [
@@ -420,6 +433,8 @@ function coaster(game, kit) {
       RAPIER.ColliderDesc.cuboid(0.06, 0.2, 0.95).setTranslation(-0.64, 0.35, 0),
       RAPIER.ColliderDesc.cuboid(0.62, 0.27, 0.08).setTranslation(0, 0.6, -0.85),
       RAPIER.ColliderDesc.cuboid(0.6, 0.04, 0.05).setTranslation(0, 0.8, 0.2),
+      RAPIER.ColliderDesc.cuboid(0.04, 0.04, 0.8).setTranslation(0.8, 0.5, 0),  // side grab handles
+      RAPIER.ColliderDesc.cuboid(0.04, 0.04, 0.8).setTranslation(-0.8, 0.5, 0),
       ...(i === 0 ? [RAPIER.ColliderDesc.cuboid(0.62, 0.22, 0.22).setTranslation(0, 0.35, 1.05)] : []),
     ], b.mesh());
     cars.push(body);

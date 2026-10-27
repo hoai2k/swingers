@@ -206,6 +206,13 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `game.gadgets.hint(p, kind)`. A new gadget: an entry in `GADGETS`, geometry in `gearGeo`, a
   step fn in `STEPS`. Probe with `setGadget(player, id)` (needs no purchase).
 
+- Fun Park (`world/park.js`, the amusement park: ferris wheel, carousel, coaster, swing ride, drop
+  tower, bumper cars, bouncy castle, stalls; `fun.js` can toss + bowling): laid out on the home
+  island's west field and moved to Bigtown's west shore by `FUN_DX` / `FUN_DZ` (`config.js`),
+  onto `FUN_LAND` (`regions/city.js`: a grass shelf at y = 0 joined to the plate by a bank and a
+  ramp road along z = FUN_DZ). Anything placed at the Fun Park adds that shift to its old
+  coordinates (presents, coins, the Magic Tent, sounds, bouncy ball, booth). Coaster cars have
+  side grab handles and the station platform reaches to within a hand of them.
 - Shape-shifting (`src/forms.js`, the Magic Tent at `TENT` in the Fun Park; built by
   `buildMagicTent` in `world/index.js`'s home step): `game.forms.transform(p, kind)` /
   `revert(p)` / `of(p)`; `p.form` is the live record. Forms keep the same ragdoll: the human part
@@ -376,3 +383,14 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   fling it. A ride part needs colliders to be grabbed: `world/ridegrab.js` adds seat blocks to
   kinematic seat bodies that have none; give new rides real colliders (rails, chains, poles).
   Held vehicles never get put to sleep (game.step), so grabbing a parked car works.
+- Rides run on their own timetable: nothing waits for a rider to board (the jungle raft,
+  `pathRide`, leaves `cycle` s after docking, riders or not). Only personal rides you steer or
+  launch (zip lines, the surfboard, vines) start when you get on.
+- Follow camera (`src/camera.js`): the camera aims at a point that lags the target by
+  d(lag)/dt = v - k lag, solved exactly per frame from the target's interpolated motion, and the
+  auto swing behind a car lags its interpolated heading the same way. Keep any new smoothing
+  frame-time independent like this (`1 - exp(-k dt)` at least): a per-frame `min(1, dt * k)`
+  trail made the car / player jiggle on screen whenever frame times varied.
+- Finding each other (`ui.js` update): another player on screen gets a "P2" tag over the head
+  (with the distance past 25 m); off screen or behind, a badge in their colour sits on the view's
+  edge with an arrow pointing toward them and the distance (`.tag.edge`).

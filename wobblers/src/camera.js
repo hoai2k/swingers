@@ -17,6 +17,7 @@ void CAMERA_QUERY;
 const FOV = 62;
 const FOOT_DIST = 5.2, RIDE_DIST = 7.5;
 const PROBE_R = 0.25;          // sphere swept toward the camera for wall pull-in
+const _qi = new THREE.Quaternion(), _fw = new THREE.Vector3();
 const _back = new THREE.Vector3(), _tgt = new THREE.Vector3(), _pos = new THREE.Vector3();
 let _probe = null; // made on first use (Rapier's WASM isn't ready at import)
 const _rot = { x: 0, y: 0, z: 0, w: 1 };
@@ -71,18 +72,25 @@ export class FollowCam {
       const spd = Math.hypot(v.x, v.z);
       // look a little ahead of where the car is going
       const leadK = Math.min(1, 2.5 / Math.max(1, spd * 0.12));
-      this.lead.lerp(_pos.set(v.x * 0.12 * leadK, 0, v.z * 0.12 * leadK), Math.min(1, dt * 3));
+      this.lead.lerp(_pos.set(v.x * 0.12 * leadK, 0, v.z * 0.12 * leadK), 1 - Math.exp(-dt * 3));
       tgt.add(this.lead);
       wantDist = veh.def.camDist + Math.min(3, spd * 0.06);
       wantFov = FOV + Math.min(12, spd * 0.35);
       kH = 12; kV = 8;
       // swing behind the car when the player isn't steering the camera
       if (this.idle > 1.2 && Math.abs(veh.speed) > 2) {
-        const want = veh.yaw() + (veh.speed < -1 ? Math.PI : 0);
+        // the angle behind the car lags it by (turn rate) / k, solved exactly over the frame
+        // like the trail below, so turning doesn't wobble the view when frame times vary
+        const rec = veh.rec, ph = this.game.physics;
+        _qi.slerpQuaternions(rec.q0, rec.q1, ph.alpha); _fw.set(0, 0, 1).applyQuaternion(_qi); // interpolated heading
+        const want = Math.atan2(_fw.x, _fw.z) + (veh.speed < -1 ? Math.PI : 0), k = 2.2;
+        const w = this.prevWant == null || dt <= 0 ? 0 : Math.atan2(Math.sin(want - this.prevWant), Math.cos(want - this.prevWant)) / dt;
         let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
-        this.yaw += d * Math.min(1, dt * 2.2);
-        this.pitch += (0.25 - this.pitch) * Math.min(1, dt * 1.5);
-      }
+        const a = Math.exp(-k * dt);
+        this.yaw = want - (d * a + w / k * (1 - a));
+        this.pitch += (0.25 - this.pitch) * (1 - Math.exp(-dt * 1.5));
+        this.prevWant = want;
+      } else this.prevWant = null;
     } else {
       p.viewPos(tgt);
       tgt.y += 0.55;
@@ -100,7 +108,7 @@ export class FollowCam {
       if (!inp.mouse && !ride && this.idle > 1.0 && spd > 2 && p.state === 'normal') {
         const want = Math.atan2(v.x, v.z);
         let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
-        if (Math.abs(d) < 2.0) this.yaw += d * Math.min(1, dt * 0.7 * Math.min(1, spd / 6));
+        if (Math.abs(d) < 2.0) this.yaw += d * (1 - Math.exp(-dt * 0.7 * Math.min(1, spd / 6)));
       }
     }
     // inside an enclosed ride (game.camEnclosures: the Gravitron, Starship 2000): stay well
@@ -113,23 +121,32 @@ export class FollowCam {
       pitch = Math.max(pitch, ride ? 0.35 : 0.62);
       if (ride) { const dx = enc.x - tgt.x, dz = enc.z - tgt.z; if (Math.hypot(dx, dz) > 1) this.yaw = Math.atan2(-dx, -dz); }
     }
-    if (this.first) { this.target.copy(tgt); this.first = false; }
-    // trail: snappy sideways, softer up and down (but never lose a fast fall)
-    const t = this.target;
-    t.x += (tgt.x - t.x) * Math.min(1, dt * kH);
-    t.z += (tgt.z - t.z) * Math.min(1, dt * kH);
-    const dy = tgt.y - t.y;
-    t.y += dy * Math.min(1, dt * (Math.abs(dy) > 1.2 ? kV * 2.5 : kV));
-    if (t.distanceTo(tgt) > 25) t.copy(tgt);
-    this.dist += (wantDist - this.dist) * Math.min(1, dt * 3);
-    this.fov += (wantFov - this.fov) * Math.min(1, dt * 2);
+    // trail: snappy sideways, softer up and down (but never lose a fast fall). The camera aims
+    // at a point `lag` behind the target, and the lag follows d(lag)/dt = v - k lag, solved
+    // exactly over the frame (v = the target's own speed this frame). So the steady trailing
+    // distance is v / k whatever the frame time: the old per-frame "move dt * k of the gap"
+    // trailed less on a long frame, so the car / player jiggled to and fro on screen whenever
+    // frame times varied (worse the faster you go).
+    const t = this.target, lag = this.lag ||= new THREE.Vector3();
+    if (this.first || !this.prevTgt) { lag.set(0, 0, 0); this.prevTgt = tgt.clone(); this.first = false; }
+    if (dt > 0) {
+      const vx = (tgt.x - this.prevTgt.x) / dt, vy = (tgt.y - this.prevTgt.y) / dt, vz = (tgt.z - this.prevTgt.z) / dt;
+      const follow = (l, v, k) => { const a = Math.exp(-k * dt); return l * a + v / k * (1 - a); };
+      lag.x = follow(lag.x, vx, kH); lag.z = follow(lag.z, vz, kH);
+      lag.y = follow(lag.y, vy, Math.abs(lag.y) > 1.2 ? kV * 2.5 : kV);
+    }
+    this.prevTgt.copy(tgt);
+    if (lag.length() > 25) lag.set(0, 0, 0); // teleported / respawned: jump there
+    t.copy(tgt).sub(lag);
+    this.dist += (wantDist - this.dist) * (1 - Math.exp(-dt * 3));
+    this.fov += (wantFov - this.fov) * (1 - Math.exp(-dt * 2));
 
     const cp = Math.cos(pitch);
     const back = _back.set(-Math.sin(this.yaw) * cp, Math.sin(pitch), -Math.cos(this.yaw) * cp);
     // pull in in front of walls: in fast, out slowly
     const free = this.clearance({ x: t.x, y: t.y, z: t.z }, { x: back.x, y: back.y, z: back.z }, this.dist + 0.2);
     const d = Math.max(0.6, Math.min(this.dist, free - 0.1));
-    this.curDist = d < this.curDist ? d : this.curDist + (d - this.curDist) * Math.min(1, dt * 3);
+    this.curDist = d < this.curDist ? d : this.curDist + (d - this.curDist) * (1 - Math.exp(-dt * 3));
     const pos = _pos.copy(t).addScaledVector(back, this.curDist);
     if (enc && pos.y > enc.top) pos.y = enc.top; // under the ride's roof
     const gh = this.game.groundHeight(pos.x, pos.z, pos.y + 1);

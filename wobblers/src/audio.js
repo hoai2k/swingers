@@ -6,8 +6,9 @@
 import { Music } from './music.js';
 import { settings } from './settings.js';
 import { heightAt } from './terrain.js';
+import { FUN_DX, FUN_DZ } from './config.js';
 
-const PARK = { x: -242, z: 0 }, CAROUSEL = { x: -228, z: -28 }, FOUNTAIN = { x: 0, z: 0 };
+const PARK = { x: -242 + FUN_DX, z: FUN_DZ }, CAROUSEL = { x: -228 + FUN_DX, z: -28 + FUN_DZ }, FOUNTAIN = { x: 0, z: 0 };
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const pick = (arr) => arr[(Math.random() * arr.length) | 0];
@@ -52,7 +53,7 @@ export class Audio {
     this.organ = { i: 0, t: 0, bar: 0 };
     // recorded ambient beds (only heard once dev/sfx/generate.py has made them)
     this.ambientSpot('park_crowd', PARK.x, PARK.z, 140);
-    this.ambientSpot('ride_screams', -195, 50, 70); this.ambientSpot('ride_screams', -205, -85, 70); // coaster drops
+    this.ambientSpot('ride_screams', -195 + FUN_DX, 50 + FUN_DZ, 70); this.ambientSpot('ride_screams', -205 + FUN_DX, -85 + FUN_DZ, 70); // coaster drops
     this.ambientSpot('plaza_chatter', FOUNTAIN.x, FOUNTAIN.z, 45);
     this.ambientSpot('arcade_room', -19, 49, 14);
     this.ambientSpot('city_street', 875, 0, 260);

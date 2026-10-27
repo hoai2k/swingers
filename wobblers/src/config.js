@@ -2,6 +2,9 @@
 import { EXTRA_HATS } from './hats.js';
 
 export const DT = 1 / 60;
+// The Fun Park (world/park.js) was laid out on the home island west of town and now stands at
+// Bigtown's west shore: every Fun Park coordinate is its old one plus this shift.
+export const FUN_DX = 820, FUN_DZ = -20;
 export const GRAVITY = -9.81;
 export const MAX_PLAYERS = 8;
 

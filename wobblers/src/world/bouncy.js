@@ -13,7 +13,7 @@
 // placeBouncyBalls(game) parks a few on the islands (world/index.js).
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
-import { DT, G_STATIC, G_VEH, G_PROP, groups } from '../config.js';
+import { DT, G_STATIC, G_VEH, G_PROP, groups, FUN_DX, FUN_DZ } from '../config.js';
 import { registerVehicle, registerHandling, Vehicle } from '../vehicles.js';
 import { registerCallable } from '../phone.js';
 import { matVC } from '../mesh.js';
@@ -183,7 +183,7 @@ export function makeBuoyant(game, v) {
 }
 // A few balls to find: by the playground, at the fun park and one on each island.
 const SPOTS = [
-  [96, -86, 0xff5a8a], [101, -86, 0x3f8cff], [-176, 18, 0xffc233], [-30, -46, 0x55d85a],
+  [96, -86, 0xff5a8a], [101, -86, 0x3f8cff], [-196 + FUN_DX, 18 + FUN_DZ, 0xffc233], [-30, -46, 0x55d85a],
   [905, -4, 0xff8a3d], [4, -797, 0xb46cff], [-955, -26, 0xff5a5a], [-404, 768, 0x3fe0d0], [474, 623, 0xff7fc8],
 ];
 export function placeBouncyBalls(game) {

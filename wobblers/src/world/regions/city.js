@@ -15,6 +15,7 @@
 //   people.js     city NPC roles, city vehicles (taxi, limo, trucks, city bus), placement
 import { fbm, smooth, rrectDist, coastBlend, waterTint, BIOME_COLORS as B } from '../../terrain.js';
 import * as THREE from 'three';
+import { FUN_DX, FUN_DZ } from '../../config.js';
 import { Y, BLOCKS, PARK, POND, onRoad } from './city/layout.js';
 import { buildStreets } from './city/streets.js';
 import { buildDowntown, BIG } from './city/downtown.js';
@@ -30,14 +31,26 @@ const CX = 895, CZ = 0, HX = 245, HZ = 262;      // land: x 650..1140, z -262..2
 export const CITY_Y = Y;                          // ground height of the city plate
 const BUS_STOPS = [[778.5, -12, -Math.PI / 2], [875, -66.5, Math.PI], [860, 51, 0], [972.5, 150, Math.PI / 2]];
 const HILL = { x: 1055, z: -175, r: 55, h: 15 };  // Bigtown Hill (in City Park)
+// The Fun Park's ground (world/park.js, shifted by FUN_DX / FUN_DZ): a grassy shelf at y = 0 off
+// the west shore, x 500..660, z -140..100, joined to the plate by a grass bank and a ramp road
+// up from the park gate (x 632) to Brick Row avenue (x 700) along z = FUN_DZ.
+export const FUN_LAND = { x: 580, z: -20, hx: 80, hz: 120, y: 0, bank: [634, 660] };
+const FUN_ROAD = { x0: 628, x1: 700, z: FUN_DZ, hw: 5 };
+const funDist = (x, z) => rrectDist(x, z, FUN_LAND.x, FUN_LAND.z, FUN_LAND.hx, FUN_LAND.hz, 30);
+const onFunRoad = (x, z) => x > FUN_ROAD.x0 && x < FUN_ROAD.x1 && Math.abs(z - FUN_ROAD.z) < FUN_ROAD.hw;
 
 const beachMask = (x, z) => smooth(1054, 1068, x) * smooth(118, 132, z);
 const parkMask = (x, z) => smooth(PARK.x0 - 2, PARK.x0 + 2, x) * smooth(PARK.z1 + 2, PARK.z1 - 2, z)
   + smooth(984, 990, x) * smooth(184, 190, z) * smooth(1060, 1054, x);   // Harbour Green (lawn by the beach)
 
 function height(x, z) {
+  const fd = funDist(x, z), rd0 = rrectDist(x, z, CX, CZ, HX, HZ, 45);
+  if (fd < rd0) { // the Fun Park shelf, rising to the plate along the bank
+    const land = FUN_LAND.y + (CITY_Y - FUN_LAND.y) * smooth(FUN_LAND.bank[0], FUN_LAND.bank[1], x);
+    return coastBlend(land, fd, 9);
+  }
   const beach = beachMask(x, z);
-  const rd = rrectDist(x, z, CX, CZ, HX, HZ, 45);
+  const rd = rd0;
   const d = rd + (fbm(x / 50, z / 50) - 0.5) * 6 * beach;
   const hd = Math.hypot(x - HILL.x, z - HILL.z);
   let land = CITY_Y + HILL.h * Math.exp(-(hd * hd) / (HILL.r * HILL.r)) * (0.85 + 0.3 * fbm(x / 20, z / 20));
@@ -48,7 +61,12 @@ function height(x, z) {
 const ASPHALT = new THREE.Color(0x5a5d66), ASPHALT2 = new THREE.Color(0x50535b);
 function color(x, z, h, slope, out) {
   out.copy(B.concrete).lerp(B.concrete2, smooth(0.35, 0.7, fbm(x / 30, z / 30)) * 0.6);
-  if (onRoad(x, z)) out.copy(ASPHALT).lerp(ASPHALT2, fbm(x / 9, z / 9));
+  if (onRoad(x, z) || onFunRoad(x, z)) out.copy(ASPHALT).lerp(ASPHALT2, fbm(x / 9, z / 9));
+  else if (funDist(x, z) < rrectDist(x, z, CX, CZ, HX, HZ, 45) && x < 662) { // Fun Park lawns and the bank
+    out.copy(B.park).lerp(B.park2, smooth(0.4, 0.7, fbm(x / 12, z / 12)) * 0.6);
+    if (h < FUN_LAND.y - 0.1) out.lerp(B.sand, 0.7);
+    return waterTint(h, out);
+  }
   else if (x > 736 && x < 764 && z > 66 && z < 112) out.copy(ASPHALT);             // taxi rank / bridge landing
   const park = Math.min(1, parkMask(x, z));
   if (park > 0) out.lerp(B.park, park).lerp(B.park2, park * smooth(0.4, 0.7, fbm(x / 12, z / 12)) * 0.6);
@@ -64,7 +82,7 @@ function color(x, z, h, slope, out) {
 export const region = {
   id: 'city', name: 'Bigtown', biome: 'city', signText: 'BIGTOWN',
   centre: [CX, CZ],
-  bounds: [600, 1200, -321, 321], step: 3,
+  bounds: [460, 1200, -321, 321], step: 3,
   height, color,
   sand: (x, z, h) => beachMask(x, z) > 0.2 && h < CITY_Y + 0.1,
   flats: [], roads: [], pits: [],
@@ -83,6 +101,8 @@ export const region = {
     { name: 'Bus Depot', x: 1015, z: 112 },
     { name: 'Harbour', x: 1105, z: 262 },
     { name: 'City Beach', x: 1100, z: 150 },
+    { name: 'Fun Park', x: 578, z: -30, big: true },
+    { name: 'Magic Tent', x: -277 + FUN_DX, z: -38 + FUN_DZ },
   ],
   docks: [],
 };

@@ -4,7 +4,7 @@
 // mountain lookout down to the lake.
 import * as THREE from 'three';
 import { RAPIER, yawQuat } from '../physics.js';
-import { DT, SEA_LEVEL, groups, G_VEH, G_STATIC, ALL } from '../config.js';
+import { DT, SEA_LEVEL, groups, G_VEH, G_STATIC, ALL, FUN_DX, FUN_DZ } from '../config.js';
 import { Builder, signMesh } from '../mesh.js';
 import { LAKE, MOUNTAIN } from '../terrain.js';
 import { addSeat } from './playground.js';
@@ -20,7 +20,7 @@ export function buildFun(game, kit) {
   const W0 = new Local(kit, 0, 0, 0);
   // vending machines around the island
   vendingMachine(game, W0, 90, 71.2, 0, 0x3f8cff);           // pool lawn
-  vendingMachine(game, W0, -246, -11.6, 0, 0x55d85a);        // fun park, by DRINKS
+  vendingMachine(game, W0, -246 + FUN_DX, -11.6 + FUN_DZ, 0, 0x55d85a); // fun park, by DRINKS
   vendingMachine(game, W0, -22.6, 297, Math.PI / 2, 0xff8a3d); // beach car park
   // trolleys in the sports-field car park and outside the market
   for (let i = 0; i < 3; i++) trolley(game, -100 + i * 0.8, -131.5, Math.PI);
@@ -117,7 +117,7 @@ function beachBalls(game) {
 
 // ---- carnival can toss -----------------------------------------------------------
 function canToss(game, kit) {
-  const L = new Local(kit, -220, 14.5, Math.PI); // front (local +Z) faces the main path (-z)
+  const L = new Local(kit, -220 + FUN_DX, 14.5 + FUN_DZ, Math.PI); // front (local +Z) faces the main path (-z)
   const shelfY = 1.0, counterZ = 1.7;
   // booth
   L.box(0, 1.6, -1.9, 4.4, 3.2, 0.2, 0xffffff);
@@ -210,7 +210,7 @@ function canToss(game, kit) {
 
 // ---- bowling lane ------------------------------------------------------------------
 function bowling(game, kit) {
-  const L = new Local(kit, -223, 70, -Math.PI / 2); // local +Z runs down the lane (world -x), between the park paths
+  const L = new Local(kit, -223 + FUN_DX, 70 + FUN_DZ, -Math.PI / 2); // local +Z runs down the lane (world -x), between the park paths
   const LEN = 19, LW = 1.6, pinZ = 17.6;
   // approach + lane + bumpers + pin deck + back cushion
   L.deco(0, 0.03, -2.5, 4.5, 0.06, 5, 0xd9b07a);
