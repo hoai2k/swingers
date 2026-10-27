@@ -106,6 +106,19 @@ recordings in `assets/sfx/` (several variants each, loudness matched to the synt
 `dev/sfx/generate.py` and `calibrate.cjs` remake them). Voices and the other music are
 synthesised, and every recorded sound falls back to its synth if its file is missing.
 
+JJK voice lines and signature sounds come from the owner's **jjkbrawler** game
+(`assets/sfx/` there; same files, same preferred takes as its `config_audio.js`), in
+`assets/sfx/jjk/` with their own `index.json` (names and levels; separate from
+`assets/sfx/index.json`, which the generator rewrites). They load only for a battle with
+JJK units in it. Spoken lines (`vo_*`): every Domain Expansion call-out (Gojo, Sukuna,
+Megumi, Mahito, Jogo, Dagon, Hakari, Yuta: played from `openDomain` by domain name) and
+Inumaki's cursed speech ("Don't move", "Blast away", and "Get crushed" / the "twist and
+blast away" ultimate for his "Die"); never pitch-shifted, heard across the field, and
+played even with Sound effects: Synthesised (there's no synth for words). Effects
+(`jk_*`, recorded only, layered over the synth sounds and skipped when Synthesised): each
+domain's stinger, the barrier going up and collapsing, Black Flash, Todo's Boogie Woogie
+clap, Mahito reshaping a soul, Nanami's 7:3 seam crack.
+
 Watching the battle: **A** follows the unit in the crosshair (its stats card shows
 health, kills and damage), **X** takes control of it (TABS's *Take control*: left
 stick walks relative to the camera, right stick looks, **RT** attacks, **LT** blocks (ranged units: aims)
