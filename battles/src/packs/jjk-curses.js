@@ -1044,7 +1044,7 @@ const units = [
     desc: 'Lives for the gamble. When the jackpot hits, nothing can put him down.',
   },
   {
-    id: 'jk_flyhead', name: 'Fly Head', faction: FAC, cost: 26, hp: 58, speed: 5.9,
+    id: 'jk_flyhead', name: 'Fly Head', faction: FAC, cost: 22, hp: 58, speed: 5.9,
     build: { scale: 0.7, girth: 1.0, head: 1.9, legs: 0.85, arms: 0.85 },
     weapon: { line: 'Swarm · a low-grade curse, comes in clouds', kind: 'melee', style: 'none', anim: 'punch', item: 'jj_claw', damage: 17, reach: 0.8, cooldown: 0.7, force: 140 },
     look: { skin: '#3a3836', hat: 'jk_flyhead', top: 'jk_fly', legs: '#2a2a30', accent: '#1a1a1a' },
