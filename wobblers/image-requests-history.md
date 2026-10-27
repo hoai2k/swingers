@@ -41,6 +41,11 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 | `tiger.png` | a tiger walking |
 | `leopard.png` | a leopard walking |
 | `river_hog.png` | a red river hog (orange-red, black face, white ear tufts) |
+| `jellyfish.png` | a jellyfish with a soft bell and wavy tentacles |
+| `octopus.png` | an octopus with 8 curling tentacles |
+| `sea_turtle.png` | a sea turtle |
+| `manta_ray.png` | a manta ray |
+| `sea_star_crab_seahorse.png` | a sea star, a crab and a seahorse (one row each) |
 
 ## Delivered round 15 — toy-style character repaints
 

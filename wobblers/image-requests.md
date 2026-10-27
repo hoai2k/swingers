@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 remains open (10 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 remains open (5 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -84,11 +84,6 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 
 | file | animal |
 |---|---|
-| `jellyfish.png` | a jellyfish with a soft bell and wavy tentacles |
-| `octopus.png` | an octopus with 8 curling tentacles |
-| `sea_turtle.png` | a sea turtle |
-| `manta_ray.png` | a manta ray |
-| `sea_star_crab_seahorse.png` | a sea star, a crab and a seahorse (one row each) |
 | `capybara.png` | a capybara |
 | `tapir.png` | a Malayan tapir (black with a white saddle) |
 | `snake.png` | a python, gently wavy, yellow and green |
