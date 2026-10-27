@@ -41,7 +41,7 @@ export class Stinglet extends Enemy {
     super(game, x, y, o);
     this.state = 'approach';
     this.st = 0;
-    this.cool = rand(1, 2);
+    this.cool = rand(2.4, 3.4);       // looks you over before the first dash
     this.orbit = rand(0, TAU);
     this.dash = { x: 0, y: 0 };
   }
@@ -57,7 +57,7 @@ export class Stinglet extends Enemy {
         this.steer(t.x + Math.cos(this.orbit) * rad, t.y - 60 + Math.sin(this.orbit) * rad * 0.6, Stinglet.speed * this.agg, dt, 4);
         this.facing = t.x >= this.x ? 1 : -1;
         const d = Math.hypot(t.x - this.x, t.y - this.y);
-        if (this.cool <= 0 && d < 300 && this.entered && this.los(t)) { this.state = 'windup'; this.st = 0; }
+        if (this.cool <= 0 && d < 260 && this.entered && this.los(t)) { this.state = 'windup'; this.st = 0; }
       } else this.drag(dt);
       this.move(dt);
     } else if (this.state === 'windup') {
@@ -70,19 +70,19 @@ export class Stinglet extends Enemy {
         this.vx -= a.x * 200 * dt; this.vy -= a.y * 200 * dt;
       }
       this.move(dt);
-      if (this.st > 0.55 / Math.sqrt(this.agg)) { this.state = 'dash'; this.st = 0; sfx.throwIt(); }
+      if (this.st > 0.85 / Math.sqrt(this.agg)) { this.state = 'dash'; this.st = 0; sfx.throwIt(); }
     } else if (this.state === 'dash') {
-      const sp = 920 * Math.min(1.25, this.agg);
+      const sp = 520 * Math.min(1.15, this.agg);   // a swoop you can dodge
       this.vx = this.dash.x * sp; this.vy = this.dash.y * sp;
       this.move(dt, { avoid: false, bounce: 0.2 });
       this.touchSpiders();
       if (Math.random() < dt * 40) this.game.fx.add({ kind: 'smoke', x: this.x, y: this.y, vx: 0, vy: 0, color: 'rgba(255,220,90,0.3)', size: 8, life: 0.25 });
       if (this.contacts && this.contacts.length) { this.stagger = 0.4; this.game.fx.burst(this.x, this.y, { n: 6, speed: 200, color: '#fff', life: 0.2 }); this.state = 'recover'; this.st = 0; }
-      if (this.st > 0.36) { this.state = 'recover'; this.st = 0; }
+      if (this.st > 0.5) { this.state = 'recover'; this.st = 0; }
     } else {
       this.drag(dt, 4);
       this.move(dt);
-      if (this.st > 0.7) { this.state = 'approach'; this.cool = rand(1.6, 2.6); }
+      if (this.st > 0.9) { this.state = 'approach'; this.cool = rand(2.6, 3.6); }
     }
   }
 
@@ -118,7 +118,7 @@ export class Gnatling extends Enemy {
     super(game, x, y, o);
     this.state = 'orbit';
     this.st = 0;
-    this.cool = rand(1.8, 3.5);
+    this.cool = rand(3, 5);
     this.orbit = rand(0, TAU);
     this.rad = rand(90, 150);
     this.dir = Math.random() < 0.5 ? -1 : 1;
@@ -140,14 +140,14 @@ export class Gnatling extends Enemy {
     } else if (this.state === 'blink') {
       this.drag(dt, 8);
       this.move(dt);
-      if (this.st > 0.42) {
+      if (this.st > 0.65) {
         this.state = 'dive'; this.st = 0;
-        if (t) { const a = this.aimAt(t, 620, { lead: 0.3, spread: 0.1 }); this.vx = a.x * 620; this.vy = a.y * 620; this.facing = a.x >= 0 ? 1 : -1; }
+        if (t) { const a = this.aimAt(t, 400, { lead: 0.2, spread: 0.12 }); this.vx = a.x * 400; this.vy = a.y * 400; this.facing = a.x >= 0 ? 1 : -1; }
       }
     } else if (this.state === 'dive') {
       this.move(dt, { avoid: false, bounce: 0.3 });
       this.touchSpiders({}, -2);
-      if (this.st > 0.5 || (this.contacts && this.contacts.length)) { this.state = 'orbit'; this.cool = rand(2.2, 4); this.st = 0; }
+      if (this.st > 0.6 || (this.contacts && this.contacts.length)) { this.state = 'orbit'; this.cool = rand(3.2, 5); this.st = 0; }
     }
   }
 
@@ -344,9 +344,9 @@ export class Bladewing extends Enemy {
       const want = toT - this.swingDir * 2.2;
       b.angle += clamp(angDiff(b.angle, want), -8 * dt, 8 * dt);
       this.move(dt);
-      if (this.st > 0.45 / Math.sqrt(this.agg)) {
+      if (this.st > 0.75 / Math.sqrt(this.agg)) {
         this.state = 'slash'; this.st = 0; this.swingFrom = b.angle;
-        if (t) { const a = this.aimAt(t, 700, { lead: 0.4, spread: 0.05 }); this.vx = a.x * 560; this.vy = a.y * 560; }
+        if (t) { const a = this.aimAt(t, 600, { lead: 0.25, spread: 0.08 }); this.vx = a.x * 380; this.vy = a.y * 380; }
         sfx.swoosh(1.4);
       }
     } else if (this.state === 'slash') {
@@ -358,7 +358,7 @@ export class Bladewing extends Enemy {
       this.move(dt);
       this.drag(dt, 3);
       b.angle += Math.sin(this.st * 30) * 0.05;
-      if (this.st > 0.55) { this.state = 'stalk'; this.cool = rand(0.8, 1.4); }
+      if (this.st > 0.7) { this.state = 'stalk'; this.cool = rand(1.8, 2.6); }
     } else {
       this.drag(dt, 4);
       this.move(dt);
@@ -515,9 +515,9 @@ export class Shellback extends Enemy {
       this.drag(dt, 6);
       this.move(dt);
       if (t) { const a = this.aimAt(t, 600, { lead: 0.3, spread: 0.05 }); this.ram.x = a.x; this.ram.y = a.y; }
-      if (this.st > 0.65 / Math.sqrt(this.agg)) { this.state = 'ram'; this.st = 0; this.shieldA = Math.atan2(this.ram.y, this.ram.x); }
+      if (this.st > 0.95 / Math.sqrt(this.agg)) { this.state = 'ram'; this.st = 0; this.shieldA = Math.atan2(this.ram.y, this.ram.x); }
     } else if (this.state === 'ram') {
-      this.vx = this.ram.x * 560; this.vy = this.ram.y * 560;
+      this.vx = this.ram.x * 380; this.vy = this.ram.y * 380;
       this.move(dt, { avoid: false, bounce: 0.3 });
       this.touchSpiders();
       if ((this.contacts && this.contacts.length) || this.st > 0.5) {

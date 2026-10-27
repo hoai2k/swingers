@@ -151,7 +151,7 @@ export class Mines extends Weapon {
   static label = 'Stick Mines';
   static kind = 'throwable';
   static ammo = 3;
-  static weight = 0.9;
+  static weight = 0.41;   // guns are rarer than blades
   static color = '#ff4a6a';
 
   constructor(game) {

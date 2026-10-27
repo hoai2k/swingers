@@ -17,7 +17,7 @@ export class Saber extends Weapon {
   static label = 'Plasma Saber';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 1.3;
+  static weight = 3.4;
   static color = '#4dd2ff';
   static blades = [{ from: 4, to: 92 }];    // along the axis from the grip
   static throwSpeed = 1500;

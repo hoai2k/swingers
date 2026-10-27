@@ -9,7 +9,7 @@ export class Pistol extends Weapon {
   static label = 'Laser Pistol';
   static kind = 'gun';
   static ammo = 12;
-  static weight = 1.2;
+  static weight = 0.54;   // guns are rarer than blades
   static color = '#ff5a5a';
 
   constructor(game) {

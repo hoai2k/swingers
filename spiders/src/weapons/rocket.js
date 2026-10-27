@@ -108,7 +108,7 @@ export class RocketLauncher extends Weapon {
   static label = 'Rocket Tube';
   static kind = 'gun';
   static ammo = 3;
-  static weight = 0.9;
+  static weight = 0.41;   // guns are rarer than blades
   static color = '#ff7a2a';
 
   constructor(game) {

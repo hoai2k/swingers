@@ -108,7 +108,7 @@ export class SwarmLauncher extends Weapon {
   static label = 'Hive Pod';
   static kind = 'gun';
   static ammo = 3;
-  static weight = 0.8;
+  static weight = 0.36;   // guns are rarer than blades
   static color = '#ffb35a';
 
   constructor(game) {

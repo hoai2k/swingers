@@ -18,7 +18,7 @@ export class TwinSaber extends Saber {
   static label = 'Twin Saber';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 0.9;
+  static weight = 1.8;
   static color = '#ff5ad1';
   static blades = [{ from: 10, to: 68 }, { from: -10, to: -68 }];
   static throwSpeed = 1250;

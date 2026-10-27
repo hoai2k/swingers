@@ -27,7 +27,7 @@ export class Tesla extends Weapon {
   static label = 'Arc Coil';
   static kind = 'gun';
   static ammo = 7;
-  static weight = 1;
+  static weight = 0.45;   // guns are rarer than blades
   static color = '#7ab8ff';
 
   constructor(game) {
