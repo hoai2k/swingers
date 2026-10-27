@@ -2,8 +2,8 @@
 // (archer that falls to bits), Creeper (walks up, hisses, blows up), Witch (splash
 // potions: harming, poison, slowness), Steve (diamond sword), Enderman (teleports up to
 // its target and away from arrows) and Iron Golem (punches enemies into the sky).
-// Everyone is drawn out of boxes, with pixel faces made of little blocks; with the
-// Googly eyes option on, the pixel eyes are swapped for googly ones.
+// Everyone is drawn out of boxes, with pixel faces made of little blocks (always pixel
+// eyes: the Googly eyes option leaves this faction alone).
 import { register } from '../ext.js';
 import { THREE, rand, clamp, PART, EXPR, meleeThink, blast, addStatus, tcol, tdark } from './common.js';
 import { STANCE, setArmKey } from './ges-core.js';
@@ -226,16 +226,16 @@ const units = [
 
 // ------------------------------------------------------------------ visuals
 // Faces: 8×8 pixel grids, top row first. '.' is the head's own colour; letters look up
-// a colour. Eye pixels (in `eyes`) give way to googly eyes, centred at `at` (column, row).
+// a colour.
 const FACES = {
-  mc_villager: { rows: ['........', '........', '.bbbbbb.', '.WG..GW.', '........', '........', '........', '........'], pal: { b: '#4a3020', W: '#f2f2f2', G: '#3c8a3c' }, eyes: 'WG', at: [[1.5, 3], [5.5, 3]] },
-  mc_zombie: { rows: ['........', '........', '........', '.EE..EE.', '........', '...dd...', '..dddd..', '........'], pal: { E: '#1e2a1a', d: '#3e6a30' }, eyes: 'E', at: [[1.5, 3], [5.5, 3]] },
-  mc_skeleton: { rows: ['........', '........', '.EE..EE.', '.EE..EE.', '...dd...', '........', '.d.dd.d.', '.dddddd.'], pal: { E: '#3a3a3a', d: '#5a5a5a' }, eyes: 'E', at: [[1.5, 2.5], [5.5, 2.5]] },
-  mc_creeper: { rows: ['........', '........', '.EE..EE.', '.EE..EE.', '...EE...', '..EEEE..', '..EEEE..', '..E..E..'], pal: { E: '#121212' }, eyes: '', at: [[1.5, 2.5], [5.5, 2.5]], noEyes: [[1, 2], [2, 2], [5, 2], [6, 2], [1, 3], [2, 3], [5, 3], [6, 3]] },
-  mc_witch: { rows: ['........', '........', '.bbbbbb.', '.WP..PW.', '........', '........', '..mmmm..', '........'], pal: { b: '#2a1a10', W: '#f2f2f2', P: '#7a3aa0', m: '#6a3a2a' }, eyes: 'WP', at: [[1.5, 3], [5.5, 3]] },
-  mc_steve: { rows: ['hhhhhhhh', 'hhhhhhhh', 'h......h', '........', '.WB..BW.', '...nn...', '..mmmm..', '........'], pal: { h: '#3b2a1a', W: '#f2f2f2', B: '#4a4ab8', n: '#9a6a50', m: '#6a3a2a' }, eyes: 'WB', at: [[1.5, 4], [5.5, 4]] },
-  mc_enderman: { rows: ['........', '........', '........', '........', 'pPp..pPp', '........', '........', '........'], pal: { p: '#cc44ff', P: '#f0b0ff' }, eyes: 'pP', at: [[1, 4], [6, 4]], glow: true },
-  mc_golem: { rows: ['........', '........', '.gggggg.', '..R..R..', '........', '........', '........', '........'], pal: { g: '#9a968e', R: '#8a2a20' }, eyes: 'R', at: [[2, 3], [5, 3]] },
+  mc_villager: { rows: ['........', '........', '.bbbbbb.', '.WG..GW.', '........', '........', '........', '........'], pal: { b: '#4a3020', W: '#f2f2f2', G: '#3c8a3c' } },
+  mc_zombie: { rows: ['........', '........', '........', '.EE..EE.', '........', '...dd...', '..dddd..', '........'], pal: { E: '#1e2a1a', d: '#3e6a30' } },
+  mc_skeleton: { rows: ['........', '........', '.EE..EE.', '.EE..EE.', '...dd...', '........', '.d.dd.d.', '.dddddd.'], pal: { E: '#3a3a3a', d: '#5a5a5a' } },
+  mc_creeper: { rows: ['........', '........', '.EE..EE.', '.EE..EE.', '...EE...', '..EEEE..', '..EEEE..', '..E..E..'], pal: { E: '#121212' } },
+  mc_witch: { rows: ['........', '........', '.bbbbbb.', '.WP..PW.', '........', '........', '..mmmm..', '........'], pal: { b: '#2a1a10', W: '#f2f2f2', P: '#7a3aa0', m: '#6a3a2a' } },
+  mc_steve: { rows: ['hhhhhhhh', 'hhhhhhhh', 'h......h', '........', '.WB..BW.', '...nn...', '..mmmm..', '........'], pal: { h: '#3b2a1a', W: '#f2f2f2', B: '#4a4ab8', n: '#9a6a50', m: '#6a3a2a' } },
+  mc_enderman: { rows: ['........', '........', '........', '........', 'pPp..pPp', '........', '........', '........'], pal: { p: '#cc44ff', P: '#f0b0ff' }, glow: true },
+  mc_golem: { rows: ['........', '........', '.gggggg.', '..R..R..', '........', '........', '........', '........'], pal: { g: '#9a968e', R: '#8a2a20' } },
 };
 
 // team colour bits: a belt, and bands round the upper arms
@@ -246,34 +246,14 @@ function teamBits(H, vis, team, W, D, armK) {
 }
 
 // pixel blocks over the front of a cube head of side S
-function pixels(H, g, S, f, googly) {
+function pixels(H, g, S, f) {
   const px = S / 8, z = S / 2 + S * 0.012;
-  const skip = new Set(googly ? (f.noEyes || []).map(([c, r]) => c + ',' + r) : []);
   f.rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '.' || (googly && f.eyes.includes(ch)) || skip.has(c + ',' + r)) return;
+    if (ch === '.') return;
     const m = f.glow ? H.glow(f.pal[ch]) : H.mat(f.pal[ch], { spec: 0.05 });
     H.mesh(H.box(px * 1.002, px * 1.002, S * 0.025), m, (c - 3.5) * px, (3.5 - r) * px, z, g);
   }));
 }
-// googly eyes on the front of the cube (the same rattling pupils as visual.js's)
-function googlies(H, g, S, f) {
-  const px = S / 8, re = px * 1.25, pupils = [];
-  const white = H.mat('#fbfbf6', { spec: 0.6 }), ink = H.mat('#141014', { spec: 0.9 });
-  for (const [c, r] of f.at) {
-    const e = new THREE.Group();
-    e.position.set((c - 3.5) * px, (3.5 - r) * px, S / 2 + re * 0.35);
-    g.add(e);
-    H.mesh(H.sphere(re, 16, 12), white, 0, 0, 0, e).scale.set(1, 1, 0.6);
-    const a = Math.random() * Math.PI * 2, d = re * (0.15 + Math.random() * 0.3);
-    const pu = H.mesh(H.sphere(re * 0.52, 12, 8), ink, Math.cos(a) * d, Math.sin(a) * d, re * 0.55, e);
-    pu.scale.set(1, 1, 0.45);
-    pu.castShadow = false;
-    pu.userData.gog = { x: pu.position.x, y: pu.position.y, vx: 0, vy: 0, R: re * 0.4 };
-    pupils.push(pu);
-  }
-  return pupils;
-}
-
 // a seeded scatter of lighter/darker pixels over a box face (creeper and zombie mottling)
 function mottle(H, g, w, h, z, cols, n, seed, px) {
   let s = seed * 0x9e3779b1;
@@ -320,10 +300,9 @@ function decorate(def, team, vis, H) {
   Hd.position.y = lift;
   parts[PART.head].add(Hd);
   mesh(box(S, S, S), m(cHead), 0, 0, 0, Hd);
-  const googly = H.googly();
-  pixels(H, Hd, S, f, googly);
+  pixels(H, Hd, S, f);
   parts[PART.head].userData.face = null;
-  parts[PART.head].userData.pupils = googly ? googlies(H, Hd, S, f) : null;
+  parts[PART.head].userData.pupils = null;
   // ---- torso
   const W = r * 2.05 * (thin ? 0.85 : 1), D = r * (thin ? 0.75 : 1.05);
   const y0 = -hh - r * 0.6, y1 = hh + r * 0.8;

@@ -140,7 +140,14 @@ const TRACKS = {
   title: { url: 'assets/music/title.mp3', loop: 115.0 },
   setup: { url: 'assets/music/setup-1.mp3', loop: 116.0 },
   battle: { url: 'assets/music/battle-1.mp3', loop: 145.6 },
+  // world / faction battle themes (owner-made songs; the game picks one per battle:
+  // battleTheme() in game.js); synth: the synthesised song to fall back on
+  battle_tribal: { url: 'assets/music/world-tribal.mp3', loop: 117.4, synth: 'battle' },
+  battle_medieval: { url: 'assets/music/world-medieval.mp3', loop: 118.4, synth: 'battle' },
+  battle_pirate: { url: 'assets/music/world-pirate.mp3', loop: 117.8, synth: 'battle' },
+  battle_wildwest: { url: 'assets/music/world-wildwest.mp3', loop: 117.6, synth: 'battle' },
 };
+export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle'));
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
 // Faction sample sets, fetched only once a battle has that faction in it (wantSamples).
@@ -1186,12 +1193,12 @@ export class Audio {
     this.trackFadeOut(now);
     if (mode && TRACKS[mode] && !this.trackFailed?.[mode]) {
       this.trackStart(mode);
-    } else if (mode && SONGS[mode]) {
+    } else if (mode && (SONGS[mode] || SONGS[TRACKS[mode]?.synth])) {
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
+      gain.gain.linearRampToValueAtTime(1, now + (mode.startsWith('battle') ? 0.4 : 1.2));
       gain.connect(this.musicBus);
-      const song = SONGS[mode];
+      const song = SONGS[mode] || SONGS[TRACKS[mode].synth];
       const m = { gain, mode, song, step: 0, next: now + 0.08, stepDur: 60 / song.bpm / 2, dying: false, endAt: Infinity };
       this.musics.push(m);
       this.music = m;
@@ -1225,7 +1232,7 @@ export class Audio {
     const p = deck.players[deck.cur];
     p.g.gain.cancelScheduledValues(now);
     p.g.gain.setValueAtTime(p.g.gain.value, now);
-    p.g.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
+    p.g.gain.linearRampToValueAtTime(1, now + (mode.startsWith('battle') ? 0.4 : 1.2));
     if (p.el.paused) { p.el.currentTime = 0; if (!this.hidden) p.el.play().catch(() => {}); }
     this.track = deck;
   }
@@ -1298,7 +1305,7 @@ export class Audio {
     const tones = Q[q].map((x) => root + x);
     const o = m.gain;
     const mel = song.mel[bar].filter((n) => n[0] === i);
-    const swing = m.mode === 'battle' ? 0 : (i % 2) * S8 * 0.08; // a touch of lilt
+    const swing = m.mode.startsWith('battle') ? 0 : (i % 2) * S8 * 0.08; // a touch of lilt
     t += swing;
     if (m.mode === 'title') {
       // oom-pah: tuba on 1 and 3, pizz chord on the off beats
