@@ -86,8 +86,9 @@ export class Species {
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, PU);
       if (mat.defines?.USE_PROJ) {
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvObjP = position; vObjN = normal;');
+        // (USE_PAINT: limbs posed away from where the sheet draws them carry their sheet position)
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN;\n#ifdef USE_PAINT\nattribute vec3 aPaint;\n#endif')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_PAINT\nvObjP = aPaint;\n#else\nvObjP = position;\n#endif\nvObjN = normal;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
 varying vec3 vObjP; varying vec3 vObjN;
 uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform vec4 uTopBox;`)
@@ -109,7 +110,7 @@ if (aRig.x > 9.5) { float d = length(position - aRig.yzw); float i = aRig.x - 10
   transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y) * aW; }
 ${mode}`);
     };
-    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '');
+    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '') + (mat.defines?.USE_PAINT ? ':paint' : '');
     const mesh = this.mesh = new THREE.InstancedMesh(g, mat, max);
     mesh.name = 'critters_' + (opts.name || 'x');
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -126,7 +127,7 @@ ${mode}`);
     const U = this.projU;
     U.uSide.value = p.side; U.uTop.value = p.top;
     U.uSideBox.value.set(...p.sideBox); U.uTopBox.value.set(...p.topBox);
-    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1 };
+    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1, ...(p.paint ? { USE_PAINT: 1 } : {}) };
     this.mesh.material.needsUpdate = true;
   }
   begin() { this.n = 0; }

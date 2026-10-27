@@ -92,9 +92,27 @@ def bilin(img, u, v):
 
 
 def fill_bg(rgb, m):
-    """every background pixel takes the colour of the nearest animal pixel (no grey halo when projected)"""
-    _, (iy, ix) = ndi.distance_transform_edt(~m, return_indices=True)
-    return rgb[iy, ix]
+    """every background pixel takes a smooth blend of the animal's colours nearby (blurs at growing
+    radii from a slightly shrunk mask: edge pixels are half background and would streak pale)"""
+    # enclosed background pockets (between legs, under a belly) are inside the mask: not paint
+    bgc = np.median(np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]]), axis=0)
+    m = m & ~ndi.binary_opening(np.abs(rgb - bgc).max(axis=2) < 0.09, iterations=2)
+    core = ndi.binary_erosion(m, iterations=4)
+    if core.sum() > 0.5 * m.sum():
+        m = core
+    out = rgb.copy(); w = m.astype(np.float32); done = m.copy()
+    for sg in (2, 4, 8, 16, 32, 64, 128):
+        den = ndi.gaussian_filter(w, sg)
+        ok = (den > 0.02) & ~done
+        if ok.any():
+            for k in range(3):
+                num = ndi.gaussian_filter(rgb[..., k] * w, sg)
+                out[..., k][ok] = num[ok] / den[ok]
+            done |= ok
+    if (~done).any():
+        _, (iy, ix) = ndi.distance_transform_edt(~m, return_indices=True)
+        out[~done] = rgb[iy, ix][~done]
+    return out
 
 
 # ---- view: a panel's silhouette in metres -----------------------------------------------------
@@ -510,7 +528,7 @@ def surface_nets(D):
     return verts, np.concatenate(faces)
 
 
-def write(name, C, P, N, F, part, weight, pivots, S, T, m):
+def write(name, C, P, N, F, part, weight, pivots, S, T, m, paint=None):
     os.makedirs(OUT, exist_ok=True)
     # mesh: z, y, x -> x, y, z
     pos = P[:, [2, 1, 0]].astype(np.float32)
@@ -522,6 +540,10 @@ def write(name, C, P, N, F, part, weight, pivots, S, T, m):
     with open(os.path.join(OUT, name + '.bin'), 'wb') as f:
         f.write(q.tobytes()); f.write(nq.tobytes()); f.write(part.astype(np.uint8).tobytes())
         f.write(np.round(weight * 255).astype(np.uint8).tobytes()); f.write(idx.tobytes())
+        if paint is not None:  # (z, y, x) like P: where each vertex takes its paint from
+            pp = paint[:, [2, 1, 0]].astype(np.float32)
+            plo, phi = pp.min(axis=0), np.maximum(pp.max(axis=0), pp.min(axis=0) + 1e-6)
+            f.write(np.round((pp - plo) / (phi - plo) * 65535).astype(np.uint16).tobytes())
     # paint: the two views, background filled, cropped to the silhouette (+ a margin)
     boxes = {}
     for key, V, k0, kk in (('side', S, m['S0'], m['ks']), ('top', T, m['T0'], m['kt'])):
@@ -538,6 +560,8 @@ def write(name, C, P, N, F, part, weight, pivots, S, T, m):
             boxes[key] = [k0[0] + c0 * kk, k0[0] + c1 * kk, k0[1] + r0 * kk, k0[1] + r1 * kk]   # z0, z1, x at the image top row, x at the bottom
     meta = dict(n=len(pos), tris=len(F), lo=lo.tolist(), hi=hi.tolist(), index32=len(pos) > 65535, pivots={k: [v[2], v[1], v[0]] for k, v in pivots.items()},  # (z, y, x) -> (x, y, z)
                 proj=boxes, length=C['L'])
+    if paint is not None:
+        meta['paint'] = dict(lo=plo.tolist(), hi=phi.tolist())
     with open(os.path.join(OUT, name + '.json'), 'w') as f:
         json.dump(meta, f)
 
