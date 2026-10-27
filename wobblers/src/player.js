@@ -46,10 +46,11 @@ const COYOTE = 0.14;          // a jump still works this long after stepping off
 const JUMP_BUFFER = 0.14;     // a jump pressed this long before landing still happens
 const FOOT_RAYS = [[0.16, 0], [-0.16, 0], [0, 0.16], [0, -0.16]]; // extra ground probes (x S) round the hips
 const GETUP_T = 0.95;         // seconds to stand back up after going limp
-// Climbing stamina (player.grip, 0..1): hanging off the world tires the arms, so
-// you can hang ~8 s, hop up a bar or two and pull yourself over a ledge, but not
-// wall-run up a building. Standing or swimming rests the arms.
-const GRIP_DRAIN = 0.12;      // per second hanging off something solid
+// Climbing stamina (player.grip, 0..1): hanging on is free (hold on to a ledge, a bar, a ride
+// or a flying helicopter for as long as you like); only climbing moves spend it, so you can
+// pull up over a few ledges and hop up a few bars in a row, but not climb a building without
+// a rest. Standing or swimming rests the arms. With too little left, those moves just don't
+// happen: you keep hanging.
 const GRIP_REST = 0.6;        // per second back on the ground
 const GRIP_HOP = 0.16;        // a jump off a bar / rope while hanging
 const GRIP_MANTLE = 0.2;      // pulling up over a ledge
@@ -62,7 +63,6 @@ const RIDE_MAXREL = 12;       // m/s: no limb flies off faster than this relativ
 const RIDE_MAXSPIN = 14;      // rad/s
 const RIDE_ARMDAMP = 0.5;     // share of the arm's spin (relative to the chest) removed per step
 const RIDE_LEAD = 0.8;         // steps of ride travel the grip joint is aimed ahead (measured lag)
-const RIDE_DRAIN = 0.25;      // grip drains slower hanging off a ride (~32 s from full: a whole coaster lap)
 
 // ---- look -----------------------------------------------------------------
 const SKIN = 0xffd9b8;
@@ -301,6 +301,7 @@ const _col = new THREE.Color(), _jq = new THREE.Quaternion(), _jp = new THREE.Ve
 // scratch
 const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qc = new THREE.Quaternion(), _qd = new THREE.Quaternion();
 const _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
+const _vU = new THREE.Vector3(), _vV = new THREE.Vector3(); // unstickArms
 const _e = new THREE.Euler();
 // leg ranges in radians, relative to the parent part (XYZ euler; x = forward / back bend)
 const LEG_PARTS = ['uLegL', 'uLegR', 'lLegL', 'lLegR'];
@@ -995,23 +996,12 @@ export class Player {
     }
     this.landDip = Math.max(0, this.landDip - DT * 3.2);
 
-    // --- grip stamina: tires while hanging off the world, rests on the ground
+    // --- climbing stamina (spent by pull-ups and bar hops only) rests on the ground
     if (this.grounded || this.swimming || seated) this.grip = Math.min(1, this.grip + DT * GRIP_REST);
-    else if (!this.mantle && (this.anchorHand('L') || this.anchorHand('R'))) {
-      // hanging off a vehicle (a flying helicopter, a car's door frame) costs no grip: you can
-      // hold on for as long as it goes, like a handle
-      const onVehicle = ['L', 'R'].some((h) => this.hands[h].joint && this.hands[h].owner?.def && this.hands[h].owner?.seats);
-      if (!onVehicle) this.grip -= DT * GRIP_DRAIN * (this.onRide ? RIDE_DRAIN : 1);
-      if (this.grip <= 0) { // arms give out: drop
-        this.grip = 0;
-        this.releaseAll();
-        this.hands.L.cool = this.hands.R.cool = 0.6;
-        this.sqV -= 1;
-      }
-    }
 
     // --- grabbing
     if (!seated && !limp) { this.updateHands(inp); this.carryAssist(); }
+    if (!seated) this.unstickArms();
     this.onRide = false;
     const ride = !seated && !limp ? this.rideCarry() : null; // hanging off a moving ride
     // while hanging off it, the body passes through ride parts (like a seated
@@ -1262,9 +1252,10 @@ export class Player {
           this.impactGrace = Math.max(this.impactGrace, 0.15);
           this.sqV -= 3;
           this.game.audio?.play('jump', cp);
-        } else if (hanging && pressed.jump && this.jumpCool <= 0) {
+        } else if (hanging && pressed.jump && this.jumpCool <= 0 && !((this.anchorHand('L') || this.anchorHand('R')) && (this.grip < GRIP_HOP || this.ceilingOver()) && !this.wallAhead())) {
           // let go and fling yourself up and forward (monkey bars, ropes); off a
-          // flat wall (or with tired arms) you only push off it: no wall-running
+          // flat wall you only push off it: no wall-running. Too tired for a hop off a
+          // bar: nothing happens, you keep hanging.
           const anchored = this.anchorHand('L') || this.anchorHand('R');
           const hop = !anchored || (this.grip >= GRIP_HOP && !this.wallAhead());
           this.releaseAll();
@@ -1383,7 +1374,44 @@ export class Player {
         if (top > gp.y - 0.3 && top < gp.y + 0.55) { best = Math.max(best ?? -1e9, top); break; }
       }
     }
+    // under an overhang (the ledge is a roof edge right above us): nothing to pull up past,
+    // so no climb; pulling up there only drove the arms into the roof
+    if (best != null) {
+      const c = this.chest.translation();
+      const up = this.world.castRay(new RAPIER.Ray({ x: c.x, y: c.y, z: c.z }, { x: 0, y: 1, z: 0 }), best - c.y + 0.05, true,
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
+      if (up) return null;
+    }
     return best;
+  }
+
+  // Merged static scenery is hollow (staticmerge.js triangle meshes), so an arm pushed through
+  // a roof or slab (pulling up under an overhang) would stay stuck inside it: a free arm found
+  // inside one is moved straight back out toward the chest, at the chest's speed.
+  unstickArms() {
+    const sm = this.game.staticMerge;
+    if (!sm?.insideAt) return;
+    const c = this.chest.translation();
+    for (const h of ['L', 'R']) {
+      if (this.hands[h].joint) continue;
+      for (const nm of ['lArm' + h, 'uArm' + h]) {
+        const b = this.parts[nm].body;
+        const pt = nm[0] === 'l' ? this.handPos(h, _vU) : _vU.copy(b.translation());
+        const rec = sm.insideAt(pt);
+        if (!rec) continue;
+        sm.exitToward(rec, pt, c, _vV);
+        const t = b.translation();
+        b.setTranslation({ x: t.x + _vV.x - pt.x, y: t.y + _vV.y - pt.y, z: t.z + _vV.z - pt.z }, true);
+        b.setLinvel(this.chest.linvel(), true); b.setAngvel(this.chest.angvel(), true);
+      }
+    }
+  }
+
+  // Something solid just over our head (hanging under a roof edge): no hop up from there.
+  ceilingOver() {
+    const c = this.chest.translation();
+    return !!this.world.castRay(new RAPIER.Ray({ x: c.x, y: c.y, z: c.z }, { x: 0, y: 1, z: 0 }), 1.0, true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS | RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, this.queryGroups);
   }
 
   // A hand holding on to the world (static, kinematic or a heavy body), i.e. hanging.
@@ -1687,8 +1715,6 @@ export class Player {
         if (found) {
           const tb = found.parent();
           if (!tb) continue;
-          // tired arms can't catch hold of the world again until we've rested
-          if (this.grip < 0.15 && !this.grounded && !this.swimming && (!tb.isDynamic() || tb.mass() >= 150)) continue;
           // pull the grab point onto the surface
           const proj = found.projectPoint({ x: hp.x, y: hp.y, z: hp.z }, false);
           const gp = proj ? proj.point : hp;

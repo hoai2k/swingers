@@ -30,8 +30,13 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   ragdoll and first pulls any leg behind a surface back out. Players duck under low ceilings
   (`headroom`) and pushing the stick for 1.5 s without moving (nothing `blockedAhead`) hops
   them free (`stuckT`). Wall jumps (`wallNear`): a jump in the air next to a wall kicks off
-  it; chaining between walls works, the same wall again needs a landing first. Climbing: `player.grip` (GRIP_* constants) drains while
-  hanging off the world and refills on the ground; mantling needs a ledge top within reach
+  it; chaining between walls works, the same wall again needs a landing first. Climbing: hanging on costs nothing (ledges, bars, rides,
+  vehicles: hold on as long as you like); `player.grip` is a climbing stamina only pull-ups
+  (`GRIP_MANTLE`) and hops off bars (`GRIP_HOP`) spend, refilled on the ground; too little and
+  the move just doesn't happen (you keep hanging). Under an overhang (`ceilingOver`, or a ceiling
+  below the ledge top in `findLedge`) there is no pull-up or hop. Merged static scenery is
+  hollow (staticmerge.js), so a free arm found inside a merged box / pole is moved back out toward
+  the chest each step (`unstickArms`, `staticMerge.insideAt` / `exitToward`). Mantling needs a ledge top within reach
   of the hands (`findLedge`), and a jump while hanging only hops up off bars / ropes, never
   off a flat wall (`wallAhead`). Punch-throwing any held loose body is `throwHeld` in
   `world/common.js` (speed from `throwSpeed(mass)`).
@@ -376,8 +381,7 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   player stops colliding with rides while hanging (`rideGroups`, like seated riders: a ragdoll
   squeezed between kinematic cars jitters), the grip joint's anchor is led by 0.8 step of
   travel (Rapier solves it against the ride's start-of-step pose), it tears if a hand is
-  dragged 0.75 m off its grip, and dragging along the ground at > 7 m/s knocks you off; grip
-  drains at `RIDE_DRAIN` x the climbing rate. NB: Rapier reports tens of m/s of `linvel` on a
+  dragged 0.75 m off its grip, and dragging along the ground at > 7 m/s knocks you off. NB: Rapier reports tens of m/s of `linvel` on a
   forearm pinned to a fast ride that is really keeping pace (measure limb speed by position
   differences); `releaseHand` resets the arm to the chest's velocity so letting go doesn't
   fling it. A ride part needs colliders to be grabbed: `world/ridegrab.js` adds seat blocks to
@@ -396,5 +400,5 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   edge with an arrow pointing toward them and the distance (`.tag.edge`). The pause menu has a
   "Teleport to P<n>" item per other player (`game.teleportTo(p, q)`: a free seat in their
   vehicle, else 1.6 m behind them on the surface below).
-- Hanging off a vehicle (a hand whose `owner` is a Vehicle: a flying helicopter, a car) costs no
-  grip, and the vehicle you hold never counts as running you over (`game.contactSound`).
+- The vehicle you're hanging off (a hand whose `owner` is a Vehicle: a flying helicopter, a car)
+  never counts as running you over (`game.contactSound`).
