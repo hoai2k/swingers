@@ -182,6 +182,7 @@ export function blackFlash(b, u, v, dmg, force) {
   b.sound('punch', _p, 1.6, 0.55);
   b.sound('crash', _p, 0.8, 1.5);
   b.sound('clang', _p, 0.6, 0.5);
+  b.sound('jk_black_flash', _p, 1.2, 1);
   u.expr = EXPR.happy;
   announce(b, 'Black Flash!', _p, 'jk_bf');
 }
@@ -267,6 +268,7 @@ function doClap(u, plan) {
   markAt(b, 'jk_clap', _p.set(c.x + fx * 0.45 * u.s, c.y + 0.1 * u.s, c.z + fz * 0.45 * u.s), 0.35, u.heading);
   b.sound('punch', c, 1.3, 1.9);
   b.sound('click', c, 1.0, 0.6);
+  b.sound('jk_boogie', c, 1.1, 1);
   if (!plan) return;
   const { k, a, e } = plan;
   if (!a.alive) return;
@@ -411,6 +413,7 @@ function ratioHit(b, u, v, mul) {
   m.lq.setFromAxisAngle(UPY, Math.atan2(u.pos.x - c.x, u.pos.z - c.z) - Math.atan2(Math.sin(v.heading), Math.cos(v.heading)));
   b.emit('spark', c.x, c.y, c.z, 6);
   b.sound('clang', c, 0.8, 0.7);
+  b.sound('jk_seam', c, 1.0, 1);
   announce(b, 'Ratio Technique: 7:3', c, 'jk_ratio');
 }
 const nanami = {
@@ -542,7 +545,10 @@ function speak(u, word, o = {}) {
   const h = u.heading, fx = Math.sin(h), fz = Math.cos(h);
   const p = u.chestPos, R = o.range ?? w.range, cone = o.cone ?? w.cone;
   u.released = true;
-  b.voice(u, 'cry', true);
+  // Inumaki says the word itself (his recorded line, from jjkbrawler); Yuta's copy
+  // through Rika keeps the gibberish cry - it isn't Inumaki's voice
+  if (isA(u, 'jk_inumaki')) b.sound('vo_inumaki_' + word, p, 1.0, 1);
+  else b.voice(u, 'cry', true);
   b.sound('boom', p, word === 'die' ? 1.2 : 0.7, word === 'die' ? 0.3 : 0.45);
   b.sound('gong', p, 0.5, word === 'stop' ? 0.5 : 0.35);
   let n = 0;

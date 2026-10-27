@@ -100,11 +100,28 @@ the current screen. Leaving the title with a controller (or key) press goes full
 as in the other games.
 
 Audio: the title, planning and battle songs and the victory / defeat / battle-start
-stingers are recorded files in `assets/music/` (see `music-requests.md`). Songs stream
-and loop with a crossfade before their ending. The sound effects are ElevenLabs
+stingers are recorded files in `assets/music/` (see `music-requests.md`), as are four
+world battle themes (Tribal, Medieval, Pirate, Wild West). Each battle picks its song
+(`battleTheme` in `src/game.js`): a campaign world's theme, else the theme of the factions
+holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
+Legacy / Renaissance → Medieval; Pirate; Wild West), else the main battle theme or, half
+the time, one of the world themes. Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
 recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
 `dev/sfx/generate.py` and `calibrate.cjs` remake them). Voices and the other music are
 synthesised, and every recorded sound falls back to its synth if its file is missing.
+
+JJK voice lines and signature sounds come from the owner's **jjkbrawler** game
+(`assets/sfx/` there; same files, same preferred takes as its `config_audio.js`), in
+`assets/sfx/jjk/` with their own `index.json` (names and levels; separate from
+`assets/sfx/index.json`, which the generator rewrites). They load only for a battle with
+JJK units in it. Spoken lines (`vo_*`): every Domain Expansion call-out (Gojo, Sukuna,
+Megumi, Mahito, Jogo, Dagon, Hakari, Yuta: played from `openDomain` by domain name) and
+Inumaki's cursed speech ("Don't move", "Blast away", and "Get crushed" / the "twist and
+blast away" ultimate for his "Die"); never pitch-shifted, heard across the field, and
+played even with Sound effects: Synthesised (there's no synth for words). Effects
+(`jk_*`, recorded only, layered over the synth sounds and skipped when Synthesised): each
+domain's stinger, the barrier going up and collapsing, Black Flash, Todo's Boogie Woogie
+clap, Mahito reshaping a soul, Nanami's 7:3 seam crack.
 
 Watching the battle: **A** follows the unit in the crosshair (its stats card shows
 health, kills and damage), **X** takes control of it (TABS's *Take control*: left
@@ -207,6 +224,29 @@ when delivered; without one the tab shows just the name in the faction colour.
   Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
   Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
   Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
+- `src/packs/jjk-shared.js` the JJK packs' shared hand-sign/shout animations, Gojo's and Sukuna's
+  stances, the curses' claws and the effect markers (Infinity ripple, cuts, shadow pools, Black Flash).
+- `src/packs/minecraft.js` the **Minecraft** faction (`minecraft`): Villager (cheap, panics),
+  Zombie (arms out, tough), Skeleton (archer that falls to bits), Creeper (walks up, hisses, explodes,
+  and still goes off if killed mid-hiss), Witch (splash potions: harming, poison or slowness), Steve
+  (diamond sword), Enderman (teleports up to its target and to whoever shoots it) and Iron Golem
+  (punches enemies into the sky; the landing hurts). Everyone is built out of boxes in `decorate`,
+  with 8×8 pixel faces made of little blocks; with Options → Googly eyes on, the pixel eyes become
+  googly ones. Its tab shows a pixel Creeper icon until the emblem (request 56) arrives.
+- `src/packs/avatar-*.js` the **Avatar** faction (`avatar`, *Avatar: The Last Airbender*). `avatar-core.js`
+  registers the faction and its elemental effects (fire and blue fire, water, ice, air, earth,
+  lightning, steam, the Avatar State glow) as pack effects (`EXT.fx`, drawn by `src/fx.js` and
+  recorded in replays). `avatar-fire.js`, the Fire Nation: **Fire Nation Soldier** (spear and short
+  fire jabs), **Zuko** (twin flaming dao, fire daggers, a spinning kick that throws a ring of fire),
+  **Azula** (blue fire jets, a blue-fire dash and spin kick, and charged lightning: knock her down
+  to stop it), **Iroh** (fire punches and blasts, fire breath, and lightning redirection: lightning
+  that hits him is led through his stomach and sent back) and **Combustion Man** (an explosive
+  third-eye beam). Fireballs fizzle into steam against water and ice. `avatar-benders.js`: **Aang**
+  (air blasts that throw groups up, an air scooter, his glider staff, and once when badly hurt the
+  **Avatar State**: he hovers glowing while fire, water, earth and air pulse out round him),
+  **Katara** (water whip, slowing ice spikes, healing water), **Sokka** (a boomerang that comes back,
+  then his space sword), **Toph** (rock pillars that launch enemies, thrown boulders, earth armour),
+  the **Earthbender** (hurled rock discs) and the **Kyoshi Warrior** (twin war fans; turns blows aside).
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 

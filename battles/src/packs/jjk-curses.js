@@ -343,6 +343,7 @@ function reshape(u, v) {
   s.stun = 0.6;
   b.emit('blood', at.x, at.y + 0.3, at.z, 8, 0, 0);
   b.sound('crunch', at, 0.9, 0.5);
+  b.sound('jk_soul', at, 1.1, 1);
   b.voice(s, 'cry', true);
 }
 

@@ -2,7 +2,7 @@
 import { THREE, clamp, rand, damp, lerp, ballisticAngle } from './util.js';
 import { initPhysics } from './physics.js';
 import { Input } from './input.js';
-import { Audio } from './audio.js';
+import { Audio, BATTLE_THEMES } from './audio.js';
 import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
@@ -58,6 +58,30 @@ function loadStore() {
 }
 function saveStore(o) {
   try { localStorage.setItem(STORE, JSON.stringify(o)); } catch { /* storage unavailable */ }
+}
+// Battle music: the theme of the faction that holds most of the gold on the field (and
+// a campaign world's own theme); otherwise the main battle theme or, for variety, now
+// and then one of the world themes.
+const FACTION_THEME = {
+  tribal: 'battle_tribal', farmer: 'battle_tribal', prehistoric: 'battle_tribal',
+  medieval: 'battle_medieval', legacy: 'battle_medieval', renaissance: 'battle_medieval',
+  pirate: 'battle_pirate', wildwest: 'battle_wildwest',
+};
+const WORLD_THEME = { tribal: 'battle_tribal', medieval: 'battle_medieval', legacy: 'battle_medieval' };
+function battleTheme(armies, world) {
+  if (WORLD_THEME[world]) return WORLD_THEME[world];
+  const gold = {};
+  let total = 0;
+  for (const a of armies) for (const { type } of a) {
+    const d = UNIT_BY_ID[type];
+    if (!d) continue;
+    total += d.cost;
+    const th = FACTION_THEME[d.faction];
+    if (th) gold[th] = (gold[th] || 0) + d.cost;
+  }
+  const best = Object.keys(gold).sort((x, y) => gold[y] - gold[x])[0];
+  if (best && gold[best] >= total * 0.45) return best;
+  return Math.random() < 0.5 ? 'battle' : BATTLE_THEMES[1 + Math.floor(Math.random() * (BATTLE_THEMES.length - 1))];
 }
 const packArmy = (a) => a.map(({ type, x, z }) => ({ type, x: +x.toFixed(2), z: +z.toFixed(2) }));
 
@@ -302,6 +326,7 @@ export class Game {
 
   addSetupVis(team, a) {
     const def = UNIT_BY_ID[a.type];
+    if (a.type.startsWith('jk_')) this.audio.wantSamples('jjk'); // its voice lines load while you plan
     const vis = buildUnitVisual(def, team, { skel: skelOf(def), share: true });
     vis.entry = a;
     vis.team = team;
@@ -1512,6 +1537,9 @@ export class Game {
     for (const v of this.battleVis) this.resetVis(v);
     const armies = this.armies.map((a) => a.map(({ type, x, z }) => ({ type, x, z })));
     this.battle = new Battle(this.terrain, armies, (e) => this.onEvent(e, true));
+    // the JJK voice lines and signature effects load only for a battle with JJK in it
+    // (from setup already: addSetupVis)
+    if (this.battle.units.some((u) => u.def.id.startsWith('jk_'))) this.audio.wantSamples('jjk');
     // reserves (summons made with the army, dormant until called) get their own visuals
     this.extraVis = [];
     for (let i = this.battleVis.length; i < this.battle.units.length; i++) {
@@ -1535,7 +1563,8 @@ export class Game {
       // split: each player keeps their own setup view; shared: a side-on overview
       if (!this.split) this.overviewCam(this.rigs[0]);
     }
-    this.audio.startMusic('battle');
+    this.musicTheme = battleTheme(this.armies, this.mode === 'campaign' && this.level ? WORLDS[this.level.world]?.id : null);
+    this.audio.startMusic(this.musicTheme);
     if (!this.audio.stinger('start')) this.audio.play('horn', null, 0.8, 1);
     this.syncLive(0);
     this.input.swallow();
@@ -2149,7 +2178,7 @@ export class Game {
       } else P.seek(t0);
       this.projViz.clear();
     } else P.seek(0);
-    this.audio.startMusic('battle');
+    this.audio.startMusic(this.musicTheme || 'battle');
     this.input.swallow();
   }
 

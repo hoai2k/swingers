@@ -1,6 +1,6 @@
 # Wobbly Battles — music requests
 
-**Status: 14 open requests; 6 delivered: #1 battle, #2 setup and #3 title (owner-made songs), and #4 victory, #5 defeat and #11 battle start (ElevenLabs Music stingers). All six are in the game.** They are listed from most to least
+**Status: 10 open requests; 10 delivered: #1 battle, #2 setup and #3 title, the world themes #12 Tribal, #13 Medieval, #16 Pirate and #17 Wild West (owner-made songs), and #4 victory, #5 defeat and #11 battle start (ElevenLabs Music stingers). All ten are in the game.** They are listed from most to least
 important: the first five cover what players hear most of the time.
 
 The title, setup and battle music and three stingers are recorded files; the rest of
@@ -147,7 +147,7 @@ cheeky wink.
 > minor that cuts off cleanly. Loud, punchy and dramatic. Wordless "hey!" shouts from a
 > group of soldiers are allowed. No sung words.
 
-## 12. Tribal Lands battle theme (loop) — `world-tribal.mp3`
+## 12. Tribal Lands battle theme (loop) — `world-tribal.mp3` — ✅ delivered
 
 > Instrumental energetic tribal battle music for the prehistoric-tribal world of a
 > comedic war game, 132 BPM, D minor pentatonic, about 2 minutes, seamless loop with
@@ -157,7 +157,7 @@ cheeky wink.
 > for epic moments. Wordless group "hoo! hah!" shouts are fine. Primal, fun and
 > stompy, never mocking any real culture. No sung words, no electronic sounds.
 
-## 13. Medieval Kingdom battle theme (loop) — `world-medieval.mp3`
+## 13. Medieval Kingdom battle theme (loop) — `world-medieval.mp3` — ✅ delivered
 
 > Instrumental medieval-flavoured battle music for the knights-and-castles world of a
 > comedic war game, 138 BPM, D Dorian, about 2 minutes, seamless loop. A hurdy-gurdy
@@ -187,7 +187,7 @@ cheeky wink.
 > Respectful, heroic and exciting, never a caricature. No vocals, no electronic
 > sounds.
 
-## 16. Pirate world battle theme (loop) — `world-pirate.mp3`
+## 16. Pirate world battle theme (loop) — `world-pirate.mp3` — ✅ delivered
 
 > Instrumental swashbuckling pirate battle music for a comedic war game, 6/8 time at
 > about 150 BPM, D minor, about 2 minutes, seamless loop. A rollicking sea-shanty jig
@@ -197,7 +197,7 @@ cheeky wink.
 > concertina and bassoon before the big return. Rowdy, adventurous and cheeky. Wordless
 > "yo-ho"-style shouts allowed, no sung words.
 
-## 17. Wild West showdown theme (loop) — `world-wildwest.mp3`
+## 17. Wild West showdown theme (loop) — `world-wildwest.mp3` — ✅ delivered
 
 > Instrumental comedic Wild West showdown and battle music for a war game, 120 BPM, A
 > minor, about 2 minutes, seamless loop. A twangy clean electric or acoustic guitar

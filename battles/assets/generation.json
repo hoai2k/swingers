@@ -664,6 +664,34 @@
         128
       ],
       "round": 7
+    },
+    {
+      "file": "assets/ui/faction-minecraft.png",
+      "id": "minecraft",
+      "prompt": "Use case: stylized-concept. Game faction emblem, centered square compact silhouette filling 85% of frame; final128x128, readable at28px. A front-on pixel-art Creeper face: classic green mottled square with black square eyes and frown-shaped mouth over a crossed pixel diamond sword and pickaxe, on a small grass-block square. Crisp hard-edged 16x16 pixel look scaled up; greens #5d9b3a #3d7a26, diamond cyan #4ae0d8, dirt brown #7a5232. Same clean flat sticker style, soft shading and bold dark outline as toy battle-game emblems. No text, letters, watermark. True transparent background.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-854593b0-9ead-4767-966c-3fd6be981941.png",
+      "original": "assets/originals/ui/faction-minecraft.png",
+      "mode": "built-in",
+      "transparent": true,
+      "size": [
+        128,
+        128
+      ],
+      "round": 8
+    },
+    {
+      "file": "assets/ui/faction-avatar.png",
+      "id": "avatar",
+      "prompt": "Use case: stylized-concept. Game faction emblem, centered square compact silhouette filling 85% of frame; final128x128, readable at28px. Avatar The Last Airbender four-nations symbol: a circle split into four element emblems, air swirl orange-yellow, water waves blue, earth square-in-square green, fire flame red, with air-nomad arrow faintly behind. Orange #e8892a, blue #3a8ae0, green #4a9a3a, red #d83a2a. Same clean flat sticker style, soft shading and bold dark outline as toy battle-game emblems. No text, letters, watermark. True transparent background.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bf61f914-5574-4602-833e-f1211799ba70.png",
+      "original": "assets/originals/ui/faction-avatar.png",
+      "mode": "built-in",
+      "transparent": true,
+      "size": [
+        128,
+        128
+      ],
+      "round": 8
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental); trailing silence trimmed with a 0.5 s fade"

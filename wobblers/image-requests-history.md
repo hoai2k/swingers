@@ -4,6 +4,54 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 15 — toy-style character repaints
+
+Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
+in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
+browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
+
+The game's characters now default to the **toy style** (see *Characters* above and the
+re-rendered `assets/reference/ref_character_sheet.png`). These delivered images still show
+older looks: yellow faceless blobs (Wobbly Life style) or the peach-skinned look. Repaint
+**only the characters** in toy style; keep each image's scene, composition, colours, layout
+and **exact words** as they are now (edit the existing file; same path and size; posters stay
+opaque, signs keep their board and a background `clean_signs.py` can key out). Suggested
+skin / shirt pairs are given so the cast varies; any similar soft-skin + contrasting-shirt
+pairing is fine.
+
+| File (`assets/…`) | Size | Characters to repaint |
+|---|---|---|
+| `posters/arcade_racer.png` | 512 × 716 | the kart driver (TURBO WOBBLE KART): soft blue skin, yellow shirt, red helmet in the shirt colour family |
+| `posters/arcade_space.png` | 512 × 716 | the astronaut riding the rocket (SPACE BLOBBERS): mint green skin, white-and-orange space suit, clear bubble helmet |
+| `posters/cafe_cake.png` | 512 × 716 | the four little chefs round the cake (CAKE!): rose pink, soft blue, warm gold and lilac skin; white chef jackets and hats |
+| `posters/cafe_coffee.png` | 512 × 716 | the barista hugging the cup (COFFEE): coral skin, green apron over a cream shirt |
+| `posters/cars_sale.png` | 512 × 716 | the salesperson by the car and the helicopter pilot (BIG DEALS): teal and warm gold skin; red and blue shirts, shades kept |
+| `posters/clothes_fashion.png` | 512 × 716 | the model in the sombrero, poncho and heart shades (NEW LOOKS): lilac skin, the striped poncho as the top layer |
+| `posters/homes_cottage.png` | 768 × 528 | the waving person by the FOR SALE sign: soft blue skin, purple shirt, straw hat |
+| `posters/painting_island.png` | 768 × 528 | everyone on the island painting (the people on the hilltop and in town): varied soft skins, contrasting shirts |
+| `posters/portrait_family.png` | 512 × 666 | the family of three (top hat, bow, child): warm gold, rose pink and soft blue skin; yellow, pink and blue shirts kept |
+| `posters/wanted_kid.png` | 512 × 716 | CACTUS KID hugging the cactus: mint green skin, green shirt, brown cowboy hat |
+| `posters/wanted_pete.png` | 512 × 716 | WOBBLY PETE the outlaw: coral skin, orange shirt, red bandana, black hat |
+| `ui/cover.png` | 1600 × 900 | all five Wobblers on the cover (jumping, bouncy ball, carrying a box, waving from the car): varied soft skins (blue, coral, mint, gold, pink) with contrasting shirts; still no text, calm sky at the top |
+| `signs/jump.png` | 1024 × 256 | the little diving figure on the right of JUMP: soft blue skin, red-and-white swimsuit |
+| `signs/ski_jump.png` | 1024 × 256 | the skier on the right of SKI JUMP: coral skin, red ski jacket and helmet, goggles |
+| `signs/wobblecorp.png` | 1024 × 256 | the round mascot face on the left of WOBBLECORP: a toy-style Wobbler head (teal skin, printed smile, pink cheeks) instead of the yellow blob |
+
+## Delivered round 14 — factory and farm signs
+
+Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
+in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
+browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
+- `signs/wobble_works.png` (1024 × 256) — **WOBBLE WORKS**: the toy factory's big gate sign:
+  industrial steel-grey board with yellow-and-black hazard stripes along the edges, chunky
+  bright orange letters, a small cog-wheel icon.
+- `signs/loading_bay.png` (1024 × 256) — **LOADING BAY**: over the factory's truck dock: dark
+  navy board, white stencil-style rounded letters, a small forklift icon.
+- `signs/pooh_berry_farm.png` (1024 × 256) — **POOH BERRY FARM**: the farm's entrance arch sign: warm
+  wooden board, barn-red letters with a cream outline, a small smiling sunflower icon.
+- `signs/corn_maze.png` (1024 × 256) — **CORN MAZE**: at the maze entrance: straw-yellow board,
+  deep green letters, a small corn-cob icon.
+
 ## Delivered round 13 — painted blink frames
 
 Delivered in batches with built-in imagegen on 2026-10-26. Exact prompts, source

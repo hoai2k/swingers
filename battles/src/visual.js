@@ -1295,7 +1295,7 @@ export function setFar(vis, far) {
 
 // Expressions: see FACE_MATS. Normal and angry faces blink every few seconds.
 // Helpers handed to packs for building meshes.
-export const H = { THREE, mat, mesh, geo, sphere, capsule, cyl, box, cone, octa, metal, gold, wood, darkWood, leather, glow, TEAM_COLORS, TEAM_DARK };
+export const H = { THREE, mat, mesh, geo, sphere, capsule, cyl, box, cone, octa, metal, gold, wood, darkWood, leather, glow, TEAM_COLORS, TEAM_DARK, googly: () => LOOK.googly };
 
 export function setExpression(vis, e) {
   if (!vis.face) { vis.expr = e; return; }

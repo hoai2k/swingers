@@ -140,9 +140,26 @@ const TRACKS = {
   title: { url: 'assets/music/title.mp3', loop: 115.0 },
   setup: { url: 'assets/music/setup-1.mp3', loop: 116.0 },
   battle: { url: 'assets/music/battle-1.mp3', loop: 145.6 },
+  // world / faction battle themes (owner-made songs; the game picks one per battle:
+  // battleTheme() in game.js); synth: the synthesised song to fall back on
+  battle_tribal: { url: 'assets/music/world-tribal.mp3', loop: 117.4, synth: 'battle' },
+  battle_medieval: { url: 'assets/music/world-medieval.mp3', loop: 118.4, synth: 'battle' },
+  battle_pirate: { url: 'assets/music/world-pirate.mp3', loop: 117.8, synth: 'battle' },
+  battle_wildwest: { url: 'assets/music/world-wildwest.mp3', loop: 117.6, synth: 'battle' },
 };
+export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle'));
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
+// Faction sample sets, fetched only once a battle has that faction in it (wantSamples).
+// jjk: voice lines and signature effects from the owner's jjkbrawler game (README).
+const SAMPLE_SETS = { jjk: 'assets/sfx/jjk/index.json' };
+// Spoken lines (vo_*) are recorded only, so they play with Sound effects: Synthesised
+// too; never pitch-shifted (no variation, no slow motion); on the voice bus; heard
+// across the field (a floor under the distance falloff; a lower one for the domain
+// stingers and barrier). Recorded-only effects (jk_*) have no synthesised version:
+// they layer over synth sounds and are skipped without their recording.
+const isLine = (name) => name.startsWith('vo_');
+const recOnly = (name) => name.startsWith('vo_') || name.startsWith('jk_');
 
 export class Audio {
   constructor() {
@@ -187,6 +204,7 @@ export class Audio {
     if (this.musicMode) this.startMusic(this.musicMode, true);
     this.loadStingers();
     this.loadSamples();
+    for (const k of this.wanted || []) this.loadSet(k);
   }
 
   // Recorded sound effects (assets/sfx/index.json, made by dev/sfx/generate.py):
@@ -194,7 +212,24 @@ export class Audio {
   loadSamples() {
     this.samples = {};
     this.sampleLevel = {};
-    fetch('assets/sfx/index.json').then((r) => (r.ok ? r.json() : null)).then((ix) => {
+    this.setsLoaded = new Set();
+    this.loadIndex('assets/sfx/index.json');
+  }
+
+  // a faction's sample set (SAMPLE_SETS), loaded once; remembered until sound is unlocked
+  wantSamples(set) {
+    (this.wanted ||= new Set()).add(set);
+    if (this.ctx && this.samples) this.loadSet(set);
+  }
+
+  loadSet(set) {
+    if (!SAMPLE_SETS[set] || this.setsLoaded.has(set)) return;
+    this.setsLoaded.add(set);
+    this.loadIndex(SAMPLE_SETS[set]);
+  }
+
+  loadIndex(url) {
+    fetch(url).then((r) => (r.ok ? r.json() : null)).then((ix) => {
       if (!ix) return;
       Object.assign(this.sampleLevel, ix._levels || {});
       for (const [name, files] of Object.entries(ix)) {
@@ -213,7 +248,7 @@ export class Audio {
   // returns its duration, or 0 when there's no recording
   sample(name, o, t, p) {
     const bank = this.samples?.[name];
-    if (!bank?.length || this.noSamples) return 0;
+    if (!bank?.length || (this.noSamples && !isLine(name))) return 0;
     let i = (Math.random() * bank.length) | 0;
     if (bank.length > 1 && i === bank.last) i = (i + 1) % bank.length;
     bank.last = i;
@@ -533,13 +568,18 @@ export class Audio {
   // ------------------------------------------------------------------ sfx
   play(name, pos, vol = 1, pitch = 1) {
     if (!this.ctx) return;
-    const { gain, pan, dist } = this.spatial(pos, vol);
+    const line = isLine(name);
+    if (recOnly(name) && (!this.samples?.[name]?.length || (this.noSamples && !line))) return;
+    let { gain, pan, dist } = this.spatial(pos, vol);
+    if (line) { gain = Math.max(gain, vol * 0.45); dist = Math.min(dist, 12); }
+    else if (name.startsWith('jk_dom') || name === 'jk_barrier') { gain = Math.max(gain, vol * 0.25); dist = Math.min(dist, 25); } // domains are big moments
     if (!this.admitSfx(name, gain)) return;
     const c = this.ctx, t = c.currentTime + 0.005;
-    const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : 0.04;
-    const o = this.out(gain, pan, dist, this.sfx, wet);
-    const p = pitch * rand(0.96, 1.04) * this.slowPitch;
+    const wet = name === 'boom' ? 0.35 : name === 'horn' || name === 'fanfare' ? 0.25 : name === 'clang' ? 0.15 : line ? 0.08 : 0.04;
+    const o = this.out(gain, pan, dist, line ? this.voiceBus : this.sfx, wet);
+    const p = line ? 1 : pitch * rand(0.96, 1.04) * this.slowPitch;
     const dur = this.sample(name, o, t, p) || this.synth(name, o, t, p, gain) || 0.3;
+    if (line) this.duckMusic(0.35, dur, false);
     this.sfxList.push({ end: t + dur, gain, out: o });
     this.active = this.sfxList.length + this.voiceList.length;
   }
@@ -1153,12 +1193,12 @@ export class Audio {
     this.trackFadeOut(now);
     if (mode && TRACKS[mode] && !this.trackFailed?.[mode]) {
       this.trackStart(mode);
-    } else if (mode && SONGS[mode]) {
+    } else if (mode && (SONGS[mode] || SONGS[TRACKS[mode]?.synth])) {
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
+      gain.gain.linearRampToValueAtTime(1, now + (mode.startsWith('battle') ? 0.4 : 1.2));
       gain.connect(this.musicBus);
-      const song = SONGS[mode];
+      const song = SONGS[mode] || SONGS[TRACKS[mode].synth];
       const m = { gain, mode, song, step: 0, next: now + 0.08, stepDur: 60 / song.bpm / 2, dying: false, endAt: Infinity };
       this.musics.push(m);
       this.music = m;
@@ -1192,7 +1232,7 @@ export class Audio {
     const p = deck.players[deck.cur];
     p.g.gain.cancelScheduledValues(now);
     p.g.gain.setValueAtTime(p.g.gain.value, now);
-    p.g.gain.linearRampToValueAtTime(1, now + (mode === 'battle' ? 0.4 : 1.2));
+    p.g.gain.linearRampToValueAtTime(1, now + (mode.startsWith('battle') ? 0.4 : 1.2));
     if (p.el.paused) { p.el.currentTime = 0; if (!this.hidden) p.el.play().catch(() => {}); }
     this.track = deck;
   }
@@ -1265,7 +1305,7 @@ export class Audio {
     const tones = Q[q].map((x) => root + x);
     const o = m.gain;
     const mel = song.mel[bar].filter((n) => n[0] === i);
-    const swing = m.mode === 'battle' ? 0 : (i % 2) * S8 * 0.08; // a touch of lilt
+    const swing = m.mode.startsWith('battle') ? 0 : (i % 2) * S8 * 0.08; // a touch of lilt
     t += swing;
     if (m.mode === 'title') {
       // oom-pah: tuba on 1 and 3, pizz chord on the off beats
