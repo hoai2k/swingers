@@ -4,6 +4,35 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 15 — toy-style character repaints
+
+Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
+in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
+browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
+
+| File (`assets/…`) | Size | Characters to repaint |
+|---|---|---|
+| `posters/arcade_racer.png` | 512 × 716 | the kart driver (TURBO WOBBLE KART): soft blue skin, yellow shirt, red helmet in the shirt colour family |
+| `posters/arcade_space.png` | 512 × 716 | the astronaut riding the rocket (SPACE BLOBBERS): mint green skin, white-and-orange space suit, clear bubble helmet |
+| `posters/cafe_cake.png` | 512 × 716 | the four little chefs round the cake (CAKE!): rose pink, soft blue, warm gold and lilac skin; white chef jackets and hats |
+| `posters/cafe_coffee.png` | 512 × 716 | the barista hugging the cup (COFFEE): coral skin, green apron over a cream shirt |
+| `posters/cars_sale.png` | 512 × 716 | the salesperson by the car and the helicopter pilot (BIG DEALS): teal and warm gold skin; red and blue shirts, shades kept |
+
+## Delivered round 14 — factory and farm signs
+
+Generated with built-in imagegen on 2026-10-27. Exact prompts and source paths are
+in `assets/generation.json`. Checked dimensions, alpha, wording, subjects and
+browser loading. Replaced files are preserved in `assets/originals/pre-round15/`.
+- `signs/wobble_works.png` (1024 × 256) — **WOBBLE WORKS**: the toy factory's big gate sign:
+  industrial steel-grey board with yellow-and-black hazard stripes along the edges, chunky
+  bright orange letters, a small cog-wheel icon.
+- `signs/loading_bay.png` (1024 × 256) — **LOADING BAY**: over the factory's truck dock: dark
+  navy board, white stencil-style rounded letters, a small forklift icon.
+- `signs/pooh_berry_farm.png` (1024 × 256) — **POOH BERRY FARM**: the farm's entrance arch sign: warm
+  wooden board, barn-red letters with a cream outline, a small smiling sunflower icon.
+- `signs/corn_maze.png` (1024 × 256) — **CORN MAZE**: at the maze entrance: straw-yellow board,
+  deep green letters, a small corn-cob icon.
+
 ## Delivered round 13 — painted blink frames
 
 Delivered in batches with built-in imagegen on 2026-10-26. Exact prompts, source

@@ -386,44 +386,92 @@
       "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. Shop / attraction signboard. Exact text: \"TICKETS\". Board colour and small icon: green `#55a84a`, a ticket stub. Single 4:1 board filling whole image edge to edge. Big chunky rounded lettering readable from far away. One small fun icon beside text. Opaque background. Front-facing flat artwork, no perspective, no wall or scene around board. Intended output 1024 x 256 pixels. Generate this one asset only."
     },
     {
-      "index": 38,
       "file": "posters/cafe_coffee.png",
       "width": 512,
       "height": 716,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2b4f3f84-cad6-4f68-bc7b-98c837b21291.png",
-      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A retro cafe advert: a giant steaming mug of coffee with a happy face, a wobbly bean person hugging it, the words \"COFFEE\" at the top. Warm browns and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current in-game character design reference. Change ONLY characters to WOBBLERS toy style. Repaint barista hugging cup: coral skin, green apron over cream shirt, darker trousers. Keep cup itself and its face unchanged, and exact COFFEE text. Required proportions from image2: chunky soft toy, round head shoulder-width, slightly flat face with printed cartoon eyes and smiling mouth and blush, rounded body, thick tube arms and legs. Skin on head, exposed arms and mitten hands is same soft muted colour per person; clothing contrasting bright shirt layered on top, short sleeves, darker navy trousers, charcoal shoes with pale soles. Skin-coloured mittens, NOT white gloves. No peach or plain yellow faceless blobs. Preserve original composition, pose, scene, decorations, objects, palette and EXACT words. Do not add objects or text. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1f54d515-49ea-4275-aceb-2306ea7314e6.png",
+      "index": 38,
+      "previousGenerations": [
+        {
+          "index": 38,
+          "file": "posters/cafe_coffee.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2b4f3f84-cad6-4f68-bc7b-98c837b21291.png",
+          "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A retro cafe advert: a giant steaming mug of coffee with a happy face, a wobbly bean person hugging it, the words \"COFFEE\" at the top. Warm browns and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
-      "index": 39,
       "file": "posters/cafe_cake.png",
       "width": 512,
       "height": 716,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4dd48057-e700-4b64-a057-147822620fef.png",
-      "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cheerful bakery poster: a tall pink layer cake with a cherry on top and sprinkles, the word \"CAKE!\" at the top. Pinks and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current in-game character design reference. Change ONLY characters to WOBBLERS toy style. Repaint four tiny chefs surrounding cake with four varied skin colours rose pink, soft blue, warm gold and lilac. White chef jackets and hats over coloured arms/hands, happy printed smiles. Keep cake and CAKE! text. Required proportions from image2: chunky soft toy, round head shoulder-width, slightly flat face with printed cartoon eyes and smiling mouth and blush, rounded body, thick tube arms and legs. Skin on head, exposed arms and mitten hands is same soft muted colour per person; clothing contrasting bright shirt layered on top, short sleeves, darker navy trousers, charcoal shoes with pale soles. Skin-coloured mittens, NOT white gloves. No peach or plain yellow faceless blobs. Preserve original composition, pose, scene, decorations, objects, palette and EXACT words. Do not add objects or text. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-5f0b7642-b304-4f69-9232-efdfd7fe4a76.png",
+      "index": 39,
+      "previousGenerations": [
+        {
+          "index": 39,
+          "file": "posters/cafe_cake.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4dd48057-e700-4b64-a057-147822620fef.png",
+          "prompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. A cheerful bakery poster: a tall pink layer cake with a cherry on top and sprinkles, the word \"CAKE!\" at the top. Pinks and cream. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
-      "index": 40,
       "file": "posters/arcade_space.png",
       "width": 512,
       "height": 716,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-be44019e-4ab1-4b55-8685-d7a9eb870d8e.png",
-      "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"SPACE BLOBBERS\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
-      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-18f0d1c5-a9d1-4f51-a99e-2c051840df49.png",
-      "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An 80s arcade game poster for \"SPACE BLOBBERS\": a bean person in a bubble space helmet flying a tiny rocket past planets, neon pink and cyan on deep purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current in-game character design reference. Change ONLY characters to WOBBLERS toy style. Repaint rocket-riding astronaut: mint-green skin with printed smile and cheeks, white-and-orange spacesuit, clear bubble helmet. Keep exact SPACE BLOBBERS lettering, rocket and space. Required proportions from image2: chunky soft toy, round head shoulder-width, slightly flat face with printed cartoon eyes and smiling mouth and blush, rounded body, thick tube arms and legs. Skin on head, exposed arms and mitten hands is same soft muted colour per person; clothing contrasting bright shirt layered on top, short sleeves, darker navy trousers, charcoal shoes with pale soles. Skin-coloured mittens, NOT white gloves. No peach or plain yellow faceless blobs. Preserve original composition, pose, scene, decorations, objects, palette and EXACT words. Do not add objects or text. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e90d28f5-b39e-4d31-b61a-05967c48f3b6.png",
+      "index": 40,
+      "previousGenerations": [
+        {
+          "index": 40,
+          "file": "posters/arcade_space.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-be44019e-4ab1-4b55-8685-d7a9eb870d8e.png",
+          "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"SPACE BLOBBERS\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
+          "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-18f0d1c5-a9d1-4f51-a99e-2c051840df49.png",
+          "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An 80s arcade game poster for \"SPACE BLOBBERS\": a bean person in a bubble space helmet flying a tiny rocket past planets, neon pink and cyan on deep purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
-      "index": 41,
       "file": "posters/arcade_racer.png",
       "width": 512,
       "height": 716,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d2815090-5540-4c45-805a-7b766a168bb4.png",
-      "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"TURBO WOBBLE KART\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
-      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e11aac59-d1b4-4ea0-984f-86455b7e506b.png",
-      "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An arcade racing poster for \"TURBO WOBBLE KART\": a bean person drifting a go-kart, motion lines, chequered flag, orange and purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current in-game character design reference. Change ONLY characters to WOBBLERS toy style. Repaint kart driver: soft blue skin, yellow shirt over blue arms/hands, dark navy trousers and dark shoes; red helmet. Keep exact TURBO WOBBLE KART lettering, kart, pose and track. Required proportions from image2: chunky soft toy, round head shoulder-width, slightly flat face with printed cartoon eyes and smiling mouth and blush, rounded body, thick tube arms and legs. Skin on head, exposed arms and mitten hands is same soft muted colour per person; clothing contrasting bright shirt layered on top, short sleeves, darker navy trousers, charcoal shoes with pale soles. Skin-coloured mittens, NOT white gloves. No peach or plain yellow faceless blobs. Preserve original composition, pose, scene, decorations, objects, palette and EXACT words. Do not add objects or text. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9376bfb-976b-4f57-a0b2-727789f3cb52.png",
+      "index": 41,
+      "previousGenerations": [
+        {
+          "index": 41,
+          "file": "posters/arcade_racer.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d2815090-5540-4c45-805a-7b766a168bb4.png",
+          "prompt": "Use case: precise-object-edit. Edit this existing arcade poster to add its required game title, spelled exactly \"TURBO WOBBLE KART\", in big chunky readable arcade lettering across the upper portion. Title is mandatory, highest priority. Preserve the bean character, vehicle, action, palette and cheerful toy-like illustration. Adjust the illustration framing only as needed to fit a clearly readable title. Portrait artwork, edge to edge, no frame, no other text or watermark.",
+          "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-e11aac59-d1b4-4ea0-984f-86455b7e506b.png",
+          "initialPrompt": "Use case: stylized-concept. Asset for WOBBLERS game. Overall style: bright, soft, toy-like Wobbly Life look, rounded chunky shapes, saturated candy colours, clean flat shading with a gentle highlight. Cheerful and silly, never realistic. No company logos, real brand names, watermarks or extra text. An arcade racing poster for \"TURBO WOBBLE KART\": a bean person drifting a go-kart, motion lines, chequered flag, orange and purple. Fill whole image edge to edge, no frame. Wobbly bean people have round head and body, stubby limbs and mitten hands. Intended output 512 x 716 pixels. Generate this one asset only."
+        }
+      ]
     },
     {
       "file": "posters/painting_island.png",
@@ -865,14 +913,26 @@
       ]
     },
     {
-      "index": 82,
       "file": "posters/cars_sale.png",
       "width": 512,
       "height": 716,
       "transparent": false,
-      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9a844b4-e5a3-4f80-a18e-db360233cbc3.png",
-      "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Car-dealer poster with exact heading \"BIG DEALS\", a chunky toy sports car and a helicopter. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
-      "round": 5
+      "round": 15,
+      "prompt": "Use case: precise-object-edit. Image1 edit target, Image2 required current in-game character design reference. Change ONLY characters to WOBBLERS toy style. Repaint all people: teal skin salesperson with red shirt, warm-gold skin driver with blue shirt and original sunglasses, soft-blue skin helicopter pilot with contrasting shirt. All have happy printed cartoon faces. Keep BIG DEALS lettering, car, helicopter and scenery. Required proportions from image2: chunky soft toy, round head shoulder-width, slightly flat face with printed cartoon eyes and smiling mouth and blush, rounded body, thick tube arms and legs. Skin on head, exposed arms and mitten hands is same soft muted colour per person; clothing contrasting bright shirt layered on top, short sleeves, darker navy trousers, charcoal shoes with pale soles. Skin-coloured mittens, NOT white gloves. No peach or plain yellow faceless blobs. Preserve original composition, pose, scene, decorations, objects, palette and EXACT words. Do not add objects or text. Opaque full-frame, same aspect ratio for 512x716.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-17db9509-1662-436c-85d2-184865295f9e.png",
+      "index": 82,
+      "previousGenerations": [
+        {
+          "index": 82,
+          "file": "posters/cars_sale.png",
+          "width": 512,
+          "height": 716,
+          "transparent": false,
+          "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b9a844b4-e5a3-4f80-a18e-db360233cbc3.png",
+          "prompt": "Use case: stylized-concept. Wobblers game poster/picture, bright soft toy-like Wobbly Life look, chunky rounded shapes, saturated candy colours, clean shading, cheerful and silly. Car-dealer poster with exact heading \"BIG DEALS\", a chunky toy sports car and a helicopter. Output aspect 512:716. Fill entire opaque image edge to edge; no frame. Required heading/tag text is mandatory, prominent and spelled exactly. Characters have round head, pear-shaped bean body, stubby limbs, mitten hands, simple cartoon eyes. No brand, watermark or extra text.",
+          "round": 5
+        }
+      ]
     },
     {
       "index": 83,
@@ -1927,6 +1987,46 @@
       "transparent": true,
       "reference": "/Volumes/BACKUP/Backup/Games/swingers/wobblers/assets/faces/face_nerd.png",
       "index": 175
+    },
+    {
+      "file": "signs/wobble_works.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Industrial steel-grey board with yellow-and-black hazard stripes along edges, chunky bright orange letters, small cog-wheel icon. Exact text: \"WOBBLE WORKS\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-522fe70d-5932-4c88-ac36-c066efb1dd35.png",
+      "round": 14,
+      "index": 176
+    },
+    {
+      "file": "signs/loading_bay.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Dark navy board, white stencil-style rounded letters, small forklift icon. Exact text: \"LOADING BAY\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-55f8fdd1-a22c-4678-aed2-e20f3faaa877.png",
+      "round": 14,
+      "index": 177
+    },
+    {
+      "file": "signs/pooh_berry_farm.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Warm wooden board, barn-red letters with cream outline, small smiling sunflower icon. Exact text: \"POOH BERRY FARM\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b8a0a817-5e22-4c05-baf4-618858419dee.png",
+      "round": 14,
+      "index": 178
+    },
+    {
+      "file": "signs/corn_maze.png",
+      "width": 1024,
+      "height": 256,
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. WOBBLERS game sign texture, very wide horizontal board,4:1 aspect ratio for1024x256 delivery. Straw-yellow board, deep green letters, small corn-cob icon. Exact text: \"CORN MAZE\" in huge legible chunky rounded letters occupying most of board. Bright soft toy-like style, saturated colours, clean flat shading and gentle highlights, tidy rounded board. One small icon, no characters, no additional words, logos or watermark. Board fully in frame with slim transparent margins; straight-on flat front view. True transparent background outside sign.",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-bee2619a-46e4-468c-9b15-9ac0604b03f5.png",
+      "round": 14,
+      "index": 179
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
