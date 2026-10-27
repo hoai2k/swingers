@@ -48,6 +48,8 @@ export const SP = {
   webCatch: 5200,        // u/s^2 the taut web brakes you moving away
   softSpeed: 1500,       // above this, air drag grows (no hard speed clamp)
   webMinHold: 0.25,
+  ceilingPush: 230,      // u/s a neutral drop from a ceiling pushes you off it
+  gentleDrop: 0.45,      // s of lighter gravity for a stick-up ceiling drop
   wallPush: 240,         // u/s every wall jump pushes you off the wall
   skyCeiling: -40,       // webs fired off the top of the arena catch here
   grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
@@ -298,7 +300,10 @@ export class Spider {
       this.vx = sv.x + tx * vt - nx * 40;
       this.vy = sv.y + ty * vt - ny * 40;
     } else {
-      this.vy += SP.gravity * this.gravMul * h;
+      // a gentle drop floats a moment, for as long as the stick stays up
+      let gk = this.gravMul;
+      if (this.gentleT > 0) { this.gentleT -= h; if (move.mag > 0.3 && move.y < -0.4) gk *= 0.35; else this.gentleT = 0; }
+      this.vy += SP.gravity * gk * h;
       // air control
       const ax = move.x * SP.airAccel * h;
       if ((ax > 0 && this.vx < SP.airMax) || (ax < 0 && this.vx > -SP.airMax)) this.vx += ax;
@@ -375,9 +380,12 @@ export class Spider {
       const m = Math.hypot(jx, jy) || 1;
       vx = (jx / m) * jv; vy = (jy / m) * jv;
     } else if (ny > 0.55) {
-      // ceiling: neutral = just drop; stick = launch along it
-      if (smag > 0.25) { vx = (sx / smag) * jv; vy = (sy / smag) * jv; }
-      else { vx = nx * 60; vy = ny * 60; }
+      // ceiling: stick up (into it) = a gentle let-go that floats for a
+      // moment; neutral = a slight push off; any other way = launch along it
+      const up = move.mag > 0.3 && (move.x * nx + move.y * ny) / move.mag < -0.5;
+      if (up) { vx = nx * 70; vy = ny * 70; this.gentleT = SP.gentleDrop; }
+      else if (smag > 0.25) { vx = (sx / smag) * jv; vy = (sy / smag) * jv; }
+      else { vx = nx * SP.ceilingPush; vy = ny * SP.ceilingPush; }
     } else {
       // wall: a little push off, plus a jump along the stick if pushed
       const push = SP.wallPush;
@@ -389,7 +397,7 @@ export class Spider {
     this.vx = vx + sv.x * 0.6 + this.vx * 0.55;
     this.vy = vy + sv.y * 0.6 + Math.min(0, this.vy) * 0.2;
     const sp = Math.hypot(vx, vy) || 1;
-    this.ground = null; this.coyote = 0; this.jumpLock = 0.16;
+    this.ground = null; this.coyote = 0; this.jumpLock = this.gentleT > 0 ? 0.4 : 0.16;   // a gentle drop mustn't re-grab the ceiling
     const strong = sp > jv * 0.5;
     this.squash = strong ? 0.72 : 0.92;
     this.pushOff = strong ? { t: 0.07, nx: vx / sp, ny: vy / sp } : null;   // legs push on a real jump
