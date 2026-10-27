@@ -397,8 +397,9 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   trail made the car / player jiggle on screen whenever frame times varied.
 - Finding each other (`ui.js` update): another player on screen gets a "P2" tag over the head
   (with the distance past 25 m); off screen or behind, a badge in their colour sits on the view's
-  edge with an arrow pointing toward them and the distance (`.tag.edge`). The pause menu has a
-  "Teleport to P<n>" item per other player (`game.teleportTo(p, q)`: a free seat in their
+  edge with an arrow pointing toward them and the distance (`.tag.edge`). The pause menu has one
+  "Teleport to  ◀ P<n> ▶" item (`PauseMenu.teleportItem`; left / right cycles the other players,
+  A goes there: `game.teleportTo(p, q)`: a free seat in their
   vehicle, else 1.6 m behind them on the surface below).
 - The vehicle you're hanging off (a hand whose `owner` is a Vehicle: a flying helicopter, a car)
   never counts as running you over (`game.contactSound`).

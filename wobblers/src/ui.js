@@ -245,6 +245,16 @@ class PauseMenu extends Panel {
     this.stack = [];
     this.draw();
   }
+  teleportItem(p, g, ui) {
+    const others = g.players.filter((q) => q !== p);
+    if (!others.length) return [];
+    const q = others[((this.tpIdx || 0) % others.length + others.length) % others.length];
+    return [{
+      label: 'Teleport to', color: q.color, value: `P${q.index + 1}`,
+      adj: others.length > 1 ? (d) => { this.tpIdx = (this.tpIdx || 0) + d; } : undefined,
+      act: () => { g.teleportTo(p, q); ui.closePanel(p); },
+    }];
+  }
   items() {
     const p = this.p, ui = this.ui, g = ui.game, pf = devicePrefs(p.deviceId);
     if (this.page === 'settings') {
@@ -278,8 +288,8 @@ class PauseMenu extends Panel {
     return [
       { label: 'Resume', act: () => ui.closePanel(p) },
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
-      // join a friend: one item per other player, in their colour
-      ...g.players.filter((q) => q !== p).map((q) => ({ label: `Teleport to P${q.index + 1}`, color: q.color, act: () => { g.teleportTo(p, q); ui.closePanel(p); } })),
+      // join a friend: one item; with several other players, left / right picks which
+      ...this.teleportItem(p, g, ui),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Info', sub: true, act: () => this.go('info') },
       { label: 'Leave game', danger: true, act: () => ui.leave(p) },
