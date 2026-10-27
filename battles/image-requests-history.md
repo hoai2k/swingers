@@ -1,8 +1,32 @@
 # Wobbly Battles — image request history
 
-Delivered requests (rounds 1–8, 57 images). Kept for the record: the
+Delivered requests (rounds 1–9, 61 images). Kept for the record: the
 briefs, final paths and where each image is used. Open requests live in
 `image-requests.md`.
+
+## Delivered round 9 — four faction battleground previews
+
+Delivered with built-in imagegen. Four 640 × 360 opaque JPG previews were checked
+for empty battlefields, faction landmarks, balanced layouts and browser preload.
+Full-size originals are in `assets/originals/ui/`; prompts and source paths are
+recorded in `assets/generation.json`.
+
+### Round 9 — previews for four faction battlegrounds (4 images)
+
+Same brief as the round 4 map cards (see the history doc): each card shows that map's
+**empty battlefield** from a raised three-quarter view, no soldiers, no text, no UI; the
+key feature must read at 320 px wide; each field is point-symmetric (the two halves mirror
+through the centre), so the art should feel balanced. Deliver a full-size 16:9 original at
+`assets/originals/ui/map-<id>.png`; `tools/build_battles_assets.py` crops it to the
+640×360 JPG (the ids are already in its map list). The game is private behind the invite
+gate, so the franchises' real looks are fine.
+
+| # | File | Size / format | Status | What |
+|---|---|---|---|---|
+| 58 | `assets/ui/map-starbase.jpg` | 640×360 JPG | delivered | "Starbase Hangar" (Galactic, a space-opera faction): a huge sci-fi hangar deck of grey metal floor plates with yellow-and-black hazard stripes and glowing blue landing circles. Low blast barriers and stacks of cargo crates give cover on both halves, a parked fighter ship sits at each end (mirrored), and a raised control platform stands in the centre. Beyond the open hangar mouth: a star field, a big ringed planet and a moon. Cool greys, blue lights, small orange warning lamps. |
+| 59 | `assets/ui/map-shibuya.jpg` | 640×360 JPG | delivered | "Shibuya Crossing" (Jujutsu Kaisen's Halloween night): a wide city scramble crossing at night, dark asphalt with bold white zebra stripes in a big X, abandoned cars and taxis left at angles, traffic lights, lamp posts and a subway entrance kiosk in the middle. Glowing neon signs and giant screens on the tall buildings all round, a deep blue-purple night sky with a faint dome-shaped dark barrier shimmering overhead. Neon pinks, cyans and warm street-light yellows. |
+| 60 | `assets/ui/map-blocky.jpg` | 640×360 JPG | delivered | "Blocky Plains" (Minecraft): a voxel landscape where everything is made of cubes: grass blocks with dirt sides, blocky oak and birch trees, a small cobblestone-and-plank village hut on each side (mirrored), a little lava pool and a stone outcrop, and a square obsidian portal frame with swirling purple in the centre. Square clouds and a square sun in a bright blue sky, blocky hills beyond. |
+| 61 | `assets/ui/map-basingse.jpg` | 640×360 JPG | delivered | "Ba Sing Se Walls" (Avatar: The Last Airbender): the green-and-tan Earth Kingdom outer wall towering beyond the field with a great gate, earthbent rock pillars and slabs jutting from the ground on both halves, a small stone pavilion with a curved green roof in the centre, bamboo and pine trees, a paved road across the middle. Earthy greens, ochre stone, warm afternoon light. |
 
 ## Delivered round 8 — Minecraft and Avatar faction emblems
 
