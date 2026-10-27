@@ -61,7 +61,7 @@ export function buildWorld(game) {
     buildFun(game, kit);
     buildMagicTent(game, kit); // forms.js: the Magic Tent (shape-shifting) in the Fun Park
     buildFactory(game, kit);   // factory.js: Wobble Works in the west meadow
-    buildFarmland(game, kit);  // farmland.js: Happy Acres farm, wheat, sunflowers, the corn maze
+    buildFarmland(game, kit);  // farmland.js: Pooh Berry Farms (farmyard, wheat, sunflowers, the corn maze)
   });
   T('fair', () => buildFair(game, kit));       // the Stratford Fall Fair south of the ring road (world/fair/)
   T('bridge', () => buildBridge(game, kit));

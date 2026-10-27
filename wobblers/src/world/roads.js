@@ -7,7 +7,7 @@ export const ROADS = [
   // avenues
   [0, -150, 0, -18, 10], [0, 18, 0, 150, 10], [0, 150, 0, 298, 10],
   [-195, 0, -18, 0, 10], [18, 0, 195, 0, 10],
-  // farm lane from the ring road to the Happy Acres gate (world/farmland.js)
+  // farm lane from the ring road to the Pooh Berry Farms gate (world/farmland.js)
   [-190, 60, -150, 60, 8],
   // east road to the Bigtown bridge (world/bridge.js)
   [155, 118, 236, 118, 10],
