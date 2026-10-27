@@ -998,7 +998,10 @@ export class Player {
     // --- grip stamina: tires while hanging off the world, rests on the ground
     if (this.grounded || this.swimming || seated) this.grip = Math.min(1, this.grip + DT * GRIP_REST);
     else if (!this.mantle && (this.anchorHand('L') || this.anchorHand('R'))) {
-      this.grip -= DT * GRIP_DRAIN * (this.onRide ? RIDE_DRAIN : 1);
+      // hanging off a vehicle (a flying helicopter, a car's door frame) costs no grip: you can
+      // hold on for as long as it goes, like a handle
+      const onVehicle = ['L', 'R'].some((h) => this.hands[h].joint && this.hands[h].owner?.def && this.hands[h].owner?.seats);
+      if (!onVehicle) this.grip -= DT * GRIP_DRAIN * (this.onRide ? RIDE_DRAIN : 1);
       if (this.grip <= 0) { // arms give out: drop
         this.grip = 0;
         this.releaseAll();

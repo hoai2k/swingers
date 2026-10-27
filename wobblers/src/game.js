@@ -94,6 +94,28 @@ export class Game {
     return hit ? fromY - hit.timeOfImpact : -10;
   }
 
+  // Pause menu "Teleport to P2": join another player. In a vehicle with a free seat, you take
+  // it; otherwise you land 1.6 m behind them on whatever surface is there (the ground below
+  // if they're up in the air).
+  teleportTo(p, q) {
+    if (p.seat) p.leaveSeat();
+    const veh = q.seat?.vehicle || ['L', 'R'].map((h) => q.hands?.[h].owner).find((o) => o?.seats && o.def);
+    const free = veh?.seats.find((s) => !s.occupant && !s.disabled && s.kind !== 'driver');
+    if (free) {
+      const t = veh.body.translation();
+      p.teleport(t.x, t.y + 1.5, t.z, q.yaw);
+      p.sitIn(free);
+    } else {
+      const c = q.chest.translation(), fx = Math.sin(q.yaw), fz = Math.cos(q.yaw);
+      let x = c.x - fx * 1.6, z = c.z - fz * 1.6;
+      if (veh) { const t = veh.body.translation(); x = t.x - fx * 4; z = t.z - fz * 4; } // full vehicle: beside it
+      const y = this.groundHeight(x, z, c.y + 1.5);
+      p.teleport(x, Math.max(y, this.physics.waterLevel?.(x, c.y, z) ?? -1e9) + 1.1, z, q.yaw);
+    }
+    this.pets?.of(p)?.teleportNear();
+    this.audio?.play('pop', p.pos());
+  }
+
   spawnPoint(i) {
     const a = i / MAX_PLAYERS * Math.PI * 2;
     return { x: SPAWN.x + Math.sin(a) * 2.5, y: SPAWN.y, z: SPAWN.z + Math.cos(a) * 2.5, yaw: Math.PI };
@@ -522,7 +544,9 @@ export class Game {
     if (!c1) return;
     const o1 = this.physics.handleOwner.get(h1), o2 = this.physics.handleOwner.get(h2);
     for (const [a, b] of [[o1, o2], [o2, o1]]) {
-      if (a instanceof Player && b instanceof Vehicle && m > 1500 && a.state !== 'seated') {
+      // (not the vehicle you're hanging off: swinging into it as it flies isn't being run over)
+      const holding = a instanceof Player && (a.hands?.L.owner === b || a.hands?.R.owner === b);
+      if (a instanceof Player && b instanceof Vehicle && m > 1500 && a.state !== 'seated' && !holding) {
         // speed before this step: the hit itself may already have slowed the car
         if (Math.abs(b.speed) > 3.5) { a.knockOut(2.5); a.impactGrace = 0.5; }
       }

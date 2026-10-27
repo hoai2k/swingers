@@ -100,7 +100,7 @@ function itemHTML(it, i, sel) {
     val = `<span class="arrows">◀</span><span class="slider">${Array.from({ length: 10 }, (_, j) => `<i class="${j < k ? 'on' : ''}"></i>`).join('')}</span><span class="arrows">▶</span>`;
   } else if (it.value != null) val = it.adj ? `<span class="arrows">◀</span><b>${it.value}</b><span class="arrows">▶</span>` : `<b>${it.value}</b>`;
   else if (it.sub) val = '<span class="chev">›</span>';
-  return `<div class="item ${i === sel ? 'sel' : ''} ${it.danger ? 'danger' : ''}" data-i="${i}"><span>${it.label}</span><span class="val">${val}</span></div>`;
+  return `<div class="item ${i === sel ? 'sel' : ''} ${it.danger ? 'danger' : ''}" data-i="${i}"><span>${it.color != null ? `<i class="pdot" style="background:${PLAYER_CSS(it.color)}"></i>` : ''}${it.label}</span><span class="val">${val}</span></div>`;
 }
 
 // The settings every player shares: used by the pause menu's settings page and
@@ -278,6 +278,8 @@ class PauseMenu extends Panel {
     return [
       { label: 'Resume', act: () => ui.closePanel(p) },
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
+      // join a friend: one item per other player, in their colour
+      ...g.players.filter((q) => q !== p).map((q) => ({ label: `Teleport to P${q.index + 1}`, color: q.color, act: () => { g.teleportTo(p, q); ui.closePanel(p); } })),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Info', sub: true, act: () => this.go('info') },
       { label: 'Leave game', danger: true, act: () => ui.leave(p) },
