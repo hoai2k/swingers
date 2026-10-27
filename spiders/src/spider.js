@@ -48,6 +48,7 @@ export const SP = {
   webCatch: 5200,        // u/s^2 the taut web brakes you moving away
   softSpeed: 1500,       // above this, air drag grows (no hard speed clamp)
   webMinHold: 0.25,
+  skyCeiling: -40,       // webs fired off the top of the arena catch here
   grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
   webCoolStep: 0.08,
@@ -409,6 +410,12 @@ export class Spider {
   // anchor in world coords
   webAnchor() {
     const w = this.web;
+    if (w.pivots && w.pivots.length) return w.pivots[w.pivots.length - 1];
+    return this.webBase();
+  }
+  // where the web is actually stuck (ignoring corners it's wrapped around)
+  webBase() {
+    const w = this.web;
     if (w.target) return { x: w.target.x, y: w.target.y };
     if (w.solid) { const p = w.solid.tx({ x: w.lx, y: w.ly }); return p; }
     return { x: w.x, y: w.y };
@@ -466,6 +473,15 @@ export class Spider {
       w.x = nx; w.y = ny;
       w.dist += step;
       if (hit) { this.web = null; return; }
+      if (w.y < SP.skyCeiling) {
+        // past the top of the arena: catch on the (unseen) ceiling up there
+        w.state = 'stuck'; w.y = SP.skyCeiling; w.sky = true;
+        const d = Math.hypot(w.x - this.x, w.y - this.y);
+        w.attach = d; w.st = 0; w.maxLen = d + 12;
+        w.len = Math.max(SP.webMin, d * SP.webRest);
+        sfx.webStick();
+        return;
+      }
       if (w.dist > SP.webMax * (this.webMul || 1)) {
         // nothing to grab: the web clings to thin air for a moment
         w.state = 'air'; w.t = 0;
@@ -481,7 +497,7 @@ export class Spider {
     if ((w.target && (!w.target.alive || w.target.removed)) || (w.solid && w.solid.broken)) { this.web = null; return; }
     // reel with up/down relative to the rope, pump sideways
     const d = this.webDir();
-    const reel = -(move.x * d.x + move.y * d.y);   // stick toward anchor = shorten
+    const reel = move.x * d.x + move.y * d.y;      // stick toward the anchor = reel in
     // a held web reels in on its own; the stick along the rope speeds it up or pays out
     let rate = w.state === 'air' ? 0 : -SP.webReelAuto;
     if (Math.abs(reel) > 0.3) rate -= reel * SP.webReel;
@@ -497,10 +513,42 @@ export class Spider {
       const k = (d.d - w.len) > 0 ? (d.d - w.len) * 6 : 0;
       w.target.impulse(-d.x * k * dt * 60 * 0.02, -d.y * k * dt * 60 * 0.02, false);
     }
-    // rope blocked by terrain: snap
+    this.wrapWeb();
+  }
+
+  // The line catches on terrain between you and the anchor: it wraps around
+  // that corner (a new pivot) instead of being cut, and unwraps when you
+  // swing back so the line to the previous point is clear again.
+  wrapWeb() {
+    const w = this.web, world = this.game.world;
+    if (w.target) {   // tied to a body: blocked lines just break
+      const a = this.webAnchor(), hit = world.segment(this.x, this.y, a.x, a.y);
+      if (hit && hit.t > 12 && Math.hypot(a.x - hit.x, a.y - hit.y) > 20) this.web = null;
+      return;
+    }
+    w.pivots = w.pivots || [];
+    // unwrap first: is the point before the current pivot visible again?
+    while (w.pivots.length) {
+      const prev = w.pivots.length > 1 ? w.pivots[w.pivots.length - 2] : this.webBase();
+      const cur = w.pivots[w.pivots.length - 1];
+      if (clearLine(world, this.x, this.y, prev.x, prev.y)) {
+        const back = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+        w.pivots.pop();
+        w.len += back; w.maxLen = (w.maxLen ?? w.len) + back;
+      } else break;
+    }
+    // wrap: the line to the current anchor is blocked well short of it
     const a = this.webAnchor();
-    const hit = world.segment(this.x, this.y, a.x - d.x * 3, a.y - d.y * 3);
-    if (hit && hit.t > 12) this.web = null;
+    const dx = a.x - this.x, dy = a.y - this.y, dist = Math.hypot(dx, dy) || 1;
+    const hit = world.segment(this.x, this.y, a.x, a.y);
+    if (!hit || hit.t < 6 || dist - hit.t < 10) return;
+    if (w.pivots.length >= 6) { this.web = null; return; }
+    // pivot just outside the surface it caught on
+    const p = { x: hit.x + hit.nx * 4, y: hit.y + hit.ny * 4 };
+    const seg = Math.hypot(a.x - p.x, a.y - p.y);
+    w.pivots.push(p);
+    w.len = Math.max(SP.webMin, w.len - seg);
+    w.maxLen = Math.max(w.len, (w.maxLen ?? w.len) - seg);
   }
 
   // The web is elastic: past its rest length it pulls like a stretched band
@@ -805,6 +853,19 @@ export class Spider {
     const a = w.state === 'fly' ? { x: w.x, y: w.y } : this.webAnchor();
     ctx.save();
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // the wrapped part: from where it's stuck, around each corner, to the
+    // last pivot (the free part to the spider is drawn below, with sag)
+    if (w.state !== 'fly' && w.pivots && w.pivots.length) {
+      const base = this.webBase();
+      const pts = [base, ...w.pivots];
+      for (const [col, lw] of [[rgba(this.color.main, 0.55), 4], ['#ffffff', 1.6]]) {
+        ctx.strokeStyle = col; ctx.lineWidth = lw;
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+        for (const q of pts.slice(1)) ctx.lineTo(q.x, q.y);
+        ctx.stroke();
+      }
+    }
     ctx.strokeStyle = rgba(this.color.main, 0.55);
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(a.x, a.y); ctx.stroke();
@@ -818,8 +879,9 @@ export class Spider {
     ctx.quadraticCurveTo((this.x + a.x) / 2, (this.y + a.y) / 2 + sag, a.x, a.y);
     ctx.stroke();
     if (w.state === 'stuck') {
+      const st = this.webBase();
       ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(a.x, a.y, 3.5, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(st.x, st.y, 3.5, 0, TAU); ctx.fill();
     }
     ctx.restore();
   }
@@ -868,6 +930,14 @@ export function shade(hex, k) {
   v = `rgb(${r},${g},${b})`;
   shadeCache.set(key, v);
   return v;
+}
+
+// true if nothing solid lies on the line (with a little tolerance at the ends)
+function clearLine(world, ax, ay, bx, by) {
+  const d = Math.hypot(bx - ax, by - ay);
+  if (d < 12) return true;
+  const hit = world.segment(ax, ay, bx, by);
+  return !hit || hit.t > d - 10;
 }
 
 // a filled segment from (x1,y1) width w1 to (x2,y2) width w2, rounded joints
