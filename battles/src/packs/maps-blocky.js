@@ -1,9 +1,9 @@
 // Battleground: Blocky Plains (the Minecraft faction's map). A voxel world: flat grass
 // in the field with pixel-square patches, cobblestone outcrops and dirt / ore cube
-// clusters, a cobblestone-and-plank hut on each side, two little lava pools and an
-// obsidian portal in the middle. Outside: stepped (quantised) hills, cube mountains,
-// cube oaks / birches / spruces, a village, sheep, cows and pigs, square clouds and a
-// square sun.
+// clusters, a cobblestone-and-plank hut and a nether portal on each side, and a little
+// lava pool in the middle that burns whoever wades in (battleStep at the bottom).
+// Outside: stepped (quantised) hills, cube mountains, cube oaks / birches / spruces, a
+// village, sheep, cows and pigs, square clouds and a square sun.
 //
 // Everything is drawn as unit blocks (voxels() below): one plane per visible block face
 // plus a few darker / lighter "pixel" squares, so the blocks read as textured cubes
@@ -12,6 +12,7 @@
 import { THREE } from '../util.js';
 import { register } from '../ext.js';
 import { MAPS, MAP_H } from '../world.js';
+import { PART, rand, addStatus, airborne } from './common.js';
 
 const { merged, T, instanced, vcMat, comp, scatter } = MAP_H;
 const B = 1; // block size (m)
@@ -376,6 +377,26 @@ function blockyScenery(group, map, terrain, H, kit) {
   }
 }
 register({ scenery: { blocky: blockyScenery } });
+
+// ---- the lava burns: anyone standing in it takes damage a few times a second and keeps
+// burning for a while after stepping out (fliers and units in the air are safe)
+const LAVA = { dps: 45, tick: 0.25, burn: 3, burnDps: 8 };
+register({
+  battleStep(b, dt) {
+    const T = b.terrain;
+    if (T.map?.id !== 'blocky' || !T.feat?.anyWater) return;
+    for (const u of b.units) {
+      if (!u.alive || u.dormant || T.waterDepth(u.pos.x, u.pos.z) < 0.05 || airborne(b, u)) { u._lavaT = 0; continue; }
+      if ((u._lavaT = (u._lavaT || 0) - dt) > 0) continue;
+      u._lavaT = LAVA.tick;
+      u.hit(LAVA.dps * LAVA.tick, PART.pelvis, 0, u.M * 0.6, 0, null, 'lava');
+      addStatus(b, u, 'burn', LAVA.burn, LAVA.burnDps);
+      const y = T.height(u.pos.x, u.pos.z) + T.waterDepth(u.pos.x, u.pos.z);
+      for (let i = 0; i < 3; i++) b.emit('trail', u.pos.x + rand(-0.3, 0.3), y + 0.1, u.pos.z + rand(-0.3, 0.3), i % 2);
+      if (Math.random() < 0.35) b.sound('fire', u.pos, 0.6, rand(0.9, 1.2));
+    }
+  },
+});
 
 // ---------------------------------------------------------------- the map
 // a cluster of block piles: rects [dx, dz, w, d, nHigh, mat, top, ore] (whole blocks)
