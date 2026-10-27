@@ -108,7 +108,7 @@ const OBSTACLES = {
 
 // ------------------------------------------------------------------ the map
 const STARBASE = {
-  id: 'starbase', name: 'Starbase Hangar',
+  id: 'starbase', name: 'Starbase Hangar', music: 'battle_galactic', // (the Galactic theme, once delivered)
   ground: ['#7c838e', '#868d98', '#727984'], patch: '#7a818c', dirt: '#5e646e', high: '#7c838e', far: '#646b76', rock: '#3c424c',
   sky: ['#02030a', '#0a1028'], fog: '#0b1124', fogNear: 110, fogFar: 520, sun: '#cfe0ff', sunI: 2.1, hemiGround: '#3a4560', hemiI: 1.3,
   hills: 0, bumps: 0, trees: ['pine'], grass: '#6c737e', grassTip: '#8a919c', tufts: 0,

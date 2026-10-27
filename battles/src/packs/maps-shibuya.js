@@ -112,7 +112,7 @@ const OBSTACLES = {
 
 // ------------------------------------------------------------------ the map
 const SHIBUYA = {
-  id: 'shibuya', name: 'Shibuya Crossing',
+  id: 'shibuya', name: 'Shibuya Crossing', music: 'battle_jjk',
   ground: ['#2d2d35', '#34343c', '#27272e'], patch: '#303038', dirt: '#2a2a31', high: '#2d2d35', far: '#2a2830', rock: '#3a3a44',
   sky: ['#0e0a2c', '#3a2a72'], fog: '#211a46', fogNear: 130, fogFar: 560, sun: '#b4bcff', sunI: 1.9, hemiGround: '#2a2040', hemiI: 1.25,
   hills: 0, bumps: 0, trees: ['pine'], grass: '#3a3a44', grassTip: '#4a4a54', tufts: 0,
