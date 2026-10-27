@@ -1,6 +1,23 @@
 # Wobblers image requests
 
-**Status: all requested images delivered; no open requests.** Rounds 1–13 are delivered; see `image-requests-history.md`.
+**Status: round 14 is open (4 signs).** Rounds 1–13 are delivered; see `image-requests-history.md`.
+
+## OPEN round 14 — factory and farm signs (4 signs)
+
+The west of Wobbly Island gets a toy factory (Wobble Works: a big saw-tooth-roofed hall,
+conveyor belts, forklifts, stacked shipping containers, smokestacks) and a farm (Happy Acres:
+a red barn, silos, golden wheat fields, giant tractors and a combine harvester) with a corn
+maze. The signs are `signMesh` boards in the game, framed like the existing ones.
+
+- `signs/wobble_works.png` (1024 × 256) — **WOBBLE WORKS**: the toy factory's big gate sign:
+  industrial steel-grey board with yellow-and-black hazard stripes along the edges, chunky
+  bright orange letters, a small cog-wheel icon.
+- `signs/loading_bay.png` (1024 × 256) — **LOADING BAY**: over the factory's truck dock: dark
+  navy board, white stencil-style rounded letters, a small forklift icon.
+- `signs/happy_acres.png` (1024 × 256) — **HAPPY ACRES**: the farm's entrance arch sign: warm
+  wooden board, barn-red letters with a cream outline, a small smiling sunflower icon.
+- `signs/corn_maze.png` (1024 × 256) — **CORN MAZE**: at the maze entrance: straw-yellow board,
+  deep green letters, a small corn-cob icon.
 
 ## How delivery works
 
