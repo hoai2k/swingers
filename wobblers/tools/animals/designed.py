@@ -193,6 +193,16 @@ def mask_sdf(sheet, m, view='t'):
     return lambda gz, gy: bilin(s2, sheet.col_s(gz), sheet.yref - gy / sheet.ks) * sheet.ks
 
 
+def decimate(verts, faces, target):
+    """simplify the mesh to about `target` triangles (quadric edge collapse); everything after it
+    (normals, rig weights, paint) is computed from the vertices, so it follows"""
+    if not target or len(faces) <= target:
+        return verts, faces
+    import fast_simplification
+    v2, f2 = fast_simplification.simplify(verts.astype(np.float32), faces.astype(np.int32), target_reduction=1 - target / len(faces))
+    return v2.astype(np.float64), f2.astype(np.int64)
+
+
 def finish(name, C, fields, G, sheet, blend=0.03, length=None):
     """smooth union of the fields, mesh, rig weights (nearest part, blended where parts meet),
     pivots (a field's own `pivot` (z, y, x), else where the part meets the body), paint positions
@@ -206,6 +216,7 @@ def finish(name, C, fields, G, sheet, blend=0.03, length=None):
         D = np.minimum(D, d) - hh * hh * kk * 0.25
     D = ndi.gaussian_filter(D, 0.7)
     verts, faces = surface_nets(D)
+    verts, faces = decimate(verts, faces, C.get('tris'))
     # one piece: drop bits the union left floating
     e = np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]]])
     ncomp, lab = connected_components(coo_matrix((np.ones(len(e)), (e[:, 0], e[:, 1])), shape=(len(verts), len(verts))), directed=False)
@@ -669,21 +680,235 @@ def jellyfish(name, C):
     finish(name, C, fields, G, sh, blend=0.015, length=2 * R)
 
 
+def octopus(name, C):
+    """an octopus: a mantle (a tilted egg, raised behind the head), a round head with the eyes, and
+    eight arms that follow the drawn arms from above (curls included) lying on the ground and rising
+    to the head at their roots, each its own tentacle part"""
+    from build import disk
+    sh = Sheet(C['sheet'], C['L'])
+    S, T = sh.S, sh.T
+    xT, zT = _top_axes(sh)
+    zu = lambda u: float(sh.zs(S.c0 + u * (S.c1 - S.c0)))
+    yv = lambda v: float(sh.ys(S.r0 + v * (S.r1 - S.r0)))
+    vh = yv(0) - yv(1)
+    # mantle + head from above: the top view opened (arms are thinner)
+    core = biggest(ndi.binary_opening(T.m, structure=disk(C.get('core_open', 0.09) * (T.r1 - T.r0))))
+    cz = np.broadcast_to(zT, core.shape)[core]; cx = np.abs(np.broadcast_to(xT, core.shape)[core])
+    hu, hv, hr = C['head']; zh, yh = zu(hu), yv(hv); rh = hr * vh
+    (mu0, mu1), (mv0, mv1) = C['mantle_u'], C['mantle_v']
+    zm0, zm1 = zu(mu0), zu(mu1); ym = (yv(mv0) + yv(mv1)) / 2
+    rmz, rmy = (zm1 - zm0) / 2, (yv(mv0) - yv(mv1)) / 2
+    rmx = float(np.percentile(cx[(cz > zm0) & (cz < zm1)], 95)) if ((cz > zm0) & (cz < zm1)).any() else rmy
+    rmx = min(rmx, 1.3 * rmy)
+    span = float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max())
+    G = Grid((zu(0) - 0.03, -0.02, -span - 0.03), (zu(1) + 0.03, yv(0) + 0.03, span + 0.03), C['res'])
+    gz, gy, gx = G.gz, G.gy, G.gx
+    tilt = np.radians(C.get('tilt', 18)); zc_ = (zm0 + zm1) / 2
+    dz, dy = gz - zc_, gy - ym
+    rz_, ry_ = dz * np.cos(tilt) + dy * np.sin(tilt), -dz * np.sin(tilt) + dy * np.cos(tilt)
+    e = np.sqrt((rz_ / rmz) ** 2 + (ry_ / rmy) ** 2 + (gx / rmx) ** 2)
+    fields = [dict(name='mantle', d=((e - 1) * min(rmz, rmy, rmx)).astype(np.float32), part='body')]
+    hx = min(rh * 1.1, float(np.percentile(cx[np.abs(cz - zh) < rh], 95)) if (np.abs(cz - zh) < rh).any() else rh)
+    fields.append(dict(name='head', d=G.ell((zh, yh, 0), (rh, rh, hx)), part='body'))
+    # the skirt under the head where the arms meet
+    fields.append(dict(name='web', d=G.ell((zh - 0.2 * rh, 0.45 * yh, 0), (1.3 * rh, 0.45 * yh, 1.2 * hx)), part='body'))
+    # arms: the top view outside the mantle / head, traced from where they leave it
+    arms = T.m & ~ndi.binary_dilation(core, iterations=2)
+    lab, n = ndi.label(arms)
+    pieces = sorted([lab == i for i in range(1, n + 1)], key=lambda m: -m.sum())[:C.get('arms', 8)]
+    seedzone = ndi.binary_dilation(core, iterations=6) & ~core
+    k = 0
+    for m in pieces:
+        if m.sum() < 0.004 * T.m.sum():
+            continue
+        tr = trace(m, seedzone)
+        if len(tr) < 4:
+            continue
+        z_ = sh.zt(tr[:, 0]); x_ = sh.xt(tr[:, 1]); r_ = tr[:, 2] * sh.kt
+        # a curled tip reads as a filled blob from above: stop where the arm swells, and curl it
+        r0 = float(np.median(r_[: max(2, len(r_) // 3)]))
+        cut = next((i for i in range(len(r_) // 3, len(r_)) if r_[i] > 1.5 * np.median(r_[max(0, i - 6):i])), len(r_))
+        blob_r = float(r_[cut:].max()) if cut < len(r_) else 0.0
+        z_, x_ = z_[:cut], x_[:cut]
+        if blob_r > 0 and len(z_) > 2:
+            d = np.array([z_[-1] - z_[-2], x_[-1] - x_[-2]]); d /= np.linalg.norm(d) + 1e-9
+            turn = 1.0 if (k % 2) else -1.0
+            rc = 0.75 * blob_r; ang0 = np.arctan2(d[1], d[0]) - turn * np.pi / 2
+            cz, cx2 = z_[-1] - rc * np.cos(ang0), x_[-1] - rc * np.sin(ang0)
+            th = np.linspace(0, 1.6 * np.pi, 14)[1:]
+            rr = rc * (1 - 0.55 * th / th[-1])
+            z_ = np.concatenate([z_, cz + rr * np.cos(ang0 + turn * th)]); x_ = np.concatenate([x_, cx2 + rr * np.sin(ang0 + turn * th)])
+        n_ = len(z_); t = np.linspace(0, 1, n_)
+        r_ = r0 * (1 - 0.8 * t)                                    # tapering to the tip
+        y_ = r_ + (0.5 * yh) * np.clip(1 - t / 0.35, 0, 1) ** 2        # rising to the head at the root
+        root = np.array([zh - 0.2 * rh, 0.55 * yh, 0.3 * np.sign(x_[0]) * hx])
+        pts = np.vstack([root, np.stack([z_, y_, x_], 1)]); rad = np.concatenate([[r_[0] * 1.1], r_])
+        fields.append(dict(name='arm', d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=10 + k, pivot=pts[1]))
+        k += 1
+    print(f'{name}: {k} arms')
+    finish(name, C, fields, G, sh, blend=0.03)
+
+
+def _limbs_from_top(sh, core, n, min_frac=0.004):
+    """the top view's pieces outside core (dilated), biggest first, each traced from where it leaves
+    the core: [(z, x, r), ...] per piece, plus its mask"""
+    T = sh.T
+    rest = T.m & ~ndi.binary_dilation(core, iterations=2)
+    lab, k = ndi.label(rest)
+    pieces = sorted([lab == i for i in range(1, k + 1)], key=lambda m: -m.sum())[:n]
+    seedzone = ndi.binary_dilation(core, iterations=6) & ~core
+    out = []
+    for m in pieces:
+        if m.sum() < min_frac * T.m.sum():
+            continue
+        tr = trace(m, seedzone)
+        if len(tr) >= 3:
+            out.append((sh.zt(tr[:, 0]), sh.xt(tr[:, 1]), tr[:, 2] * sh.kt, m))
+    return out
+
+
+def seastar(name, C):
+    """a sea star: a domed disc and five flattened arms tapering along the drawn ones (from above)"""
+    from build import disk
+    sh = Sheet(C['sheet'], C['L'], row=C['row'], rows=C['rows'])
+    T = sh.T
+    zT_, cxT, hwT = sh.top_profile()
+    core = biggest(ndi.binary_opening(T.m, structure=disk(C.get('core_open', 0.13) * (T.r1 - T.r0))))
+    xT, zT = _top_axes(sh)
+    cz = float(np.mean(np.broadcast_to(zT, core.shape)[core])); cx = float(np.mean(np.broadcast_to(xT, core.shape)[core]))
+    rc = float(np.sqrt(core.sum() / np.pi)) * sh.kt
+    th = C.get('thick', 0.22) * rc
+    span = float(max(np.abs(sh.xt(np.array([T.r0, T.r1]))).max(), np.abs(zT_ - cz).max()))
+    G = Grid((cz - span - 0.02, -0.01, -span - 0.02), (cz + span + 0.02, 2.5 * th, span + 0.02), C['res'])
+    fields = [dict(name='disc', d=G.ell((cz, 0.9 * th, cx), (rc, 1.2 * th, rc)), part='body')]
+    for z_, x_, r_, m in _limbs_from_top(sh, core, 5):
+        r0 = float(np.median(r_[: max(2, len(r_) // 3)]))
+        n_ = len(z_); t = np.linspace(0, 1, n_)
+        rad = np.maximum(r0 * (1 - 0.8 * t), 0.8 * G.h)
+        pts = np.vstack([[cz, 0.9 * th, cx], np.stack([z_, 0.9 * th * (1 - 0.55 * t), x_], 1)])
+        fields.append(dict(name='arm', d=G.cone(pts, np.concatenate([[rad[0]], rad]), ysc=C.get('flat', 0.45)), part='body'))
+    finish(name, C, fields, G, sh, blend=0.03, length=2 * span)
+
+
+def crab(name, C):
+    """a crab: an oval shell over a smaller body, eight walking legs following the drawn ones from
+    above and arched (up from the body to a knee, down to the tip: front pairs FL / FR, back pairs
+    BL / BR), two arms with claws (two fingers each) and two eye stalks. u / v: the side box."""
+    from build import disk
+    sh = Sheet(C['sheet'], C['L'], row=C['row'], rows=C['rows'])
+    S, T = sh.S, sh.T
+    xT, zT = _top_axes(sh)
+    yv = lambda v: float(sh.ys(S.r0 + v * (S.r1 - S.r0)))
+    zu = lambda u: float(sh.zs(S.c0 + u * (S.c1 - S.c0)))
+    core = biggest(ndi.binary_opening(T.m, structure=disk(C.get('core_open', 0.12) * (T.r1 - T.r0))))
+    czs = np.broadcast_to(zT, core.shape)[core]; cxs = np.abs(np.broadcast_to(xT, core.shape)[core])
+    z0, z1 = float(czs.min()), float(czs.max()); rz = (z1 - z0) / 2; zc_ = (z0 + z1) / 2; rx = float(np.percentile(cxs, 98))
+    (v0, v1) = C['shell_v']; ytop, ybot = yv(v0), yv(v1); ry = (ytop - ybot) / 2; yc_ = (ytop + ybot) / 2
+    span = float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max())
+    G = Grid((zu(0) - 0.02, -0.01, -span - 0.02), (zu(1) + 0.02, yv(0) + 0.02, span + 0.02), C['res'])
+    fields = [dict(name='shell', d=G.ell((zc_, yc_, 0), (rz, ry, rx)), part='body'),
+              dict(name='belly', d=G.ell((zc_, ybot, 0), (0.75 * rz, 0.6 * ry, 0.7 * rx)), part='body')]
+    limbs = _limbs_from_top(sh, core, 10)
+    # claws: the two pieces reaching furthest forward; legs: the rest
+    limbs.sort(key=lambda l: -float(l[0].max()))
+    claws, legs = limbs[:2], limbs[2:]
+    hk = yc_ + 0.1 * ry                                            # knee height
+    legs_by_side = {1: [], -1: []}
+    for z_, x_, r_, m in legs:
+        legs_by_side[1 if np.median(x_) > 0 else -1].append((z_, x_, r_))
+    for sgn, ls in legs_by_side.items():
+        ls.sort(key=lambda l: -float(np.median(l[0])))           # front first
+        for i, (z_, x_, r_) in enumerate(ls[:4]):
+            part = ('FL' if sgn > 0 else 'FR') if i < 2 else ('BL' if sgn > 0 else 'BR')
+            r0 = float(np.median(r_[: max(2, len(r_) // 3)]))
+            t = np.linspace(0, 1, len(z_))
+            y_ = (ybot + 0.2 * ry) * (1 - t) + (hk - ybot) * np.sin(np.pi * np.clip(t * 1.25, 0, 1)) * 0.8 + r0 * 0.5 * t
+            y_ = np.maximum(y_, 0.6 * r0 * (1 - 0.7 * t))
+            root = np.array([np.median(z_[:2]), ybot + 0.2 * ry, sgn * 0.6 * rx])
+            pts = np.vstack([root, np.stack([z_, y_, x_], 1)]); rad = np.maximum(r0 * (1 - 0.65 * np.linspace(0, 1, len(pts))), 0.8 * G.h)
+            fields.append(dict(name=f'leg{part}', d=G.cone(pts, rad), part=part, pivot=root))
+    for z_, x_, r_, m in claws:
+        sgn = 1 if np.median(x_) > 0 else -1
+        # the arm: thin to the wrist; the claw: a swollen oval along the arm's end, two fingers
+        cut = int(len(z_) * C.get('wrist', 0.5))
+        ra = float(np.median(r_[:max(2, cut)]))
+        t = np.linspace(0, 1, len(z_))
+        y_ = ybot + 0.1 * ry + 0.25 * ry * np.sin(np.pi * t * 0.6)
+        root = np.array([z1 - 0.2 * rz, ybot + 0.1 * ry, sgn * 0.5 * rx])
+        pts = np.vstack([root, np.stack([z_[:cut], y_[:cut], x_[:cut]], 1)])
+        hand = np.stack([z_[cut:], y_[cut:], x_[cut:]], 1)
+        rc = 1.15 * float(r_[cut:].max()) if len(r_) > cut else 2 * ra
+        ra = max(ra, 0.35 * rc)
+        fields.append(dict(name='arm', d=G.cone(pts, np.full(len(pts), max(ra, 0.8 * G.h))), part='body'))
+        if len(hand) >= 2:
+            j = max(1, int(len(hand) * 0.6))
+            fields.append(dict(name='claw', d=G.cone(hand[[0, j]], [0.8 * rc, rc], ysc=0.75), part='body'))
+            tip = hand[-1]; mid = hand[j]
+            d = tip - mid; d /= np.linalg.norm(d) + 1e-9
+            for off in (0.45, -0.45):
+                fpts = np.array([mid + [0, off * rc, 0], tip + [0, off * rc * 0.4, 0]])
+                fields.append(dict(name='finger', d=G.cone(fpts, [0.45 * rc, 0.15 * rc], ysc=0.8), part='body'))
+    # eye stalks
+    for sgn in (1, -1):
+        base = np.array([z1 - 0.35 * rz, yc_ + 0.4 * ry, sgn * 0.22 * rx]); top = np.array([z1 - 0.1 * rz, max(yv(0.06), ytop + 0.25 * ry), sgn * 0.3 * rx])
+        fields.append(dict(name='stalk', d=G.cone([base, top], [0.12 * ry, 0.08 * ry]), part='body'))
+        fields.append(dict(name='eye', d=G.ell(top, (0.16 * ry, 0.16 * ry, 0.16 * ry)), part='body'))
+    finish(name, C, fields, G, sh, blend=0.02)
+
+
+def seahorse(name, C):
+    """a seahorse, upright: a body flattened sideways along the drawn spine (crown to the curled tail
+    tip, thickness from the drawing), a trumpet snout, the back fin as a thin plate. Side paint only
+    (the sheet's other view is not a top view of an upright seahorse)."""
+    sh = Sheet(C['sheet'], C['L'], row=C['row'], rows=C['rows'])
+    S = sh.S
+    H_, W_ = S.m.shape
+    U = (np.arange(W_)[None, :] - S.c0) / (S.c1 - S.c0); V = (np.arange(H_)[:, None] - S.r0) / (S.r1 - S.r0)
+    zu = lambda u: float(sh.zs(S.c0 + u * (S.c1 - S.c0)))
+    yv = lambda v: float(sh.ys(S.r0 + v * (S.r1 - S.r0)))
+    body = S.m.copy()
+    for (ua, ub, va, vb) in C['cut']:                              # snout, fin: not the spine
+        body &= ~((U >= ua) & (U <= ub) & (V >= va) & (V <= vb))
+    body = biggest(body)
+    seed = body & (V < 0.04)
+    tr = trace(body, seed)
+    pts = np.stack([sh.zs(tr[:, 0]), sh.ys(tr[:, 1]), np.zeros(len(tr))], 1); rad = ndi.gaussian_filter1d(tr[:, 2] * sh.ks, 1.5)
+    vh = yv(0) - yv(1)
+    G = Grid((zu(0) - 0.01, yv(1) - 0.01, -0.12 * vh), (zu(1) + 0.01, yv(0) + 0.01, 0.12 * vh), C['res'])
+    xs = C.get('flat', 0.7)
+    fields = [dict(name='body', d=G.cone(pts, np.maximum(rad, 0.8 * G.h), xs=xs), part='body')]
+    (su0, sv0), (su1, sv1) = C['snout']
+    a, b = np.array([zu(su0), yv(sv0), 0]), np.array([zu(su1), yv(sv1), 0])
+    sr = C.get('snout_r', 0.035) * vh
+    fields.append(dict(name='snout', d=G.cone([a, b - (b - a) * 0.08, b], [sr, 0.8 * sr, 1.3 * sr], xs=0.85), part='HEAD', pivot=a))
+    fu0, fu1, fv0, fv1 = C['fin']
+    fm = S.m & (U >= fu0) & (U <= fu1) & (V >= fv0) & (V <= fv1)
+    sdf = mask_sdf(sh, fm, view='s')
+    fields.append(dict(name='fin', d=np.maximum(sdf(G.gz, G.gy), np.abs(G.gx) - max(0.012 * vh, 1.1 * G.h)).astype(np.float32), part='body', blend=0.01 * sh.L))
+    finish(name, C, fields, G, sh, blend=0.015)
+
+
 DESIGNS = {
     # birds: u along the side view tail tip 0 .. beak tip 1, v top 0 .. bottom 1 (fractions of its box)
-    'parrot': (bird, dict(sheet='parrot_toucan.png', row=0, rows=2, L=0.85, res=130, wing_top=True, body_u=(0.47, 0.86), body_v=(0.62, 0.9),
+    'parrot': (bird, dict(tris=8000, sheet='parrot_toucan.png', row=0, rows=2, L=0.85, res=130, wing_top=True, body_u=(0.47, 0.86), body_v=(0.62, 0.9),
                           body_w=0.075, head=(0.885, 0.615, 0.105), wing_u=(0.47, 0.76), tail_u=0.45, feet=(0.58, 0.9),
                           beak=[(0.925, 0.6, 0.075), (0.965, 0.62, 0.06), (0.99, 0.67, 0.035), (0.982, 0.74, 0.012)],
                           lower=[(0.93, 0.68, 0.04), (0.955, 0.7, 0.025)], beak_xs=0.8)),
-    'toucan': (bird, dict(sheet='parrot_toucan.png', row=1, rows=2, L=0.62, res=130, wing_top=True, body_u=(0.33, 0.73), body_v=(0.6, 0.92),
+    'toucan': (bird, dict(tris=8000, sheet='parrot_toucan.png', row=1, rows=2, L=0.62, res=130, wing_top=True, body_u=(0.33, 0.73), body_v=(0.6, 0.92),
                           body_w=0.085, head=(0.735, 0.6, 0.11), wing_u=(0.36, 0.66), tail_u=0.3, feet=(0.47, 0.9),
                           beak=[(0.77, 0.6, 0.11), (0.86, 0.6, 0.09), (0.94, 0.63, 0.06), (0.99, 0.69, 0.02)], beak_xs=0.62)),
-    'turtle': (turtle, dict(sheet='sea_turtle.png', L=1.0, res=120, wing_top=True)),
-    'plesiosaur': (plesiosaur, dict(sheet='plesiosaur.png', L=6.0, res=150, wing_top=True)),
-    'manta': (manta, dict(sheet='manta_ray.png', L=4.0, res=150, body_u=(0.4, 0.93), body_w=(0.42, 0.95), body_x=0.09,
+    'turtle': (turtle, dict(tris=9000, sheet='sea_turtle.png', L=1.0, res=120, wing_top=True)),
+    'plesiosaur': (plesiosaur, dict(tris=12000, sheet='plesiosaur.png', L=6.0, res=150, wing_top=True)),
+    'manta': (manta, dict(tris=9000, sheet='manta_ray.png', L=4.0, res=150, body_u=(0.4, 0.93), body_w=(0.42, 0.95), body_x=0.09,
                           ceph_u=0.88, tail_u=0.42, belly_w=0.9, lift=6)),
-    'jelly': (jellyfish, dict(sheet='jellyfish.png', L=1.2, R=0.22, D=0.2, tent=0.75, rim_u=0.7, res=150, side_only=True, tentacles=10)),
-    'snake': (snake, dict(sheet='snake.png', L=1.6, length=4.6, radius=0.14, res=300, wave=0.1, wavelength=1.6)),
+    'jelly': (jellyfish, dict(tris=4000, sheet='jellyfish.png', L=1.2, R=0.22, D=0.2, tent=0.75, rim_u=0.7, res=150, side_only=True, tentacles=10)),
+    'octopus': (octopus, dict(tris=9000, sheet='octopus.png', L=0.9, res=125, head=(0.6, 0.33, 0.13), mantle_u=(0.08, 0.56), mantle_v=(0.02, 0.46), tilt=16)),
+    'seaStar': (seastar, dict(tris=1600, sheet='sea_star_crab_seahorse.png', row=0, rows=3, L=0.3, res=110)),
+    'crab': (crab, dict(tris=5000, sheet='sea_star_crab_seahorse.png', row=1, rows=3, L=0.4, res=120, shell_v=(0.12, 0.55))),
+    'seahorse': (seahorse, dict(tris=3000, sheet='sea_star_crab_seahorse.png', row=2, rows=3, L=0.14, res=110, side_only=True,
+                                cut=[(0.62, 1.0, 0.12, 0.34), (0.0, 0.33, 0.33, 0.66)], snout=((0.6, 0.2), (0.98, 0.26)),
+                                fin=(0.0, 0.36, 0.33, 0.66))),
+    'snake': (snake, dict(tris=10000, sheet='snake.png', L=1.6, length=4.6, radius=0.14, res=300, wave=0.1, wavelength=1.6)),
 }
 
 if __name__ == '__main__':

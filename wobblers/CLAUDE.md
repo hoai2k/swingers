@@ -324,19 +324,44 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   `pulse`). Per frame an animal is `put(x, y, z, yaw, pitch, roll, scale, phase, amount)` between
   `begin()` / `end()`.
 - Models must look like the Wobblers: one smooth, rounded rubber-toy surface, never boxes or
-  primitives stuck together. They are **sculpted** (`animalmodels.js`): smooth-unioned shapes
-  (`ball`, `egg`, tapered `limb`, `chain` tubes, rounded `slab`) with colour functions for
-  markings, meshed by `sculpt.js` (signed distance field + surface nets, normals from the field);
-  where a moving part meets the body the vertices get a blended weight (`aW`) so limbs bend out
-  of the body like rubber. Eyes / teeth / smiles are small Builder `extras`. Meshing runs in a
-  worker (`animalworker.js`, via `animalgeo.js modelGeometry(name, ...args)`): the world build
-  doesn't wait, and a species is invisible until its geometry arrives (~3 s after load).
-  `animalmodels.js`, `sculpt.js` and `rigparts.js` must import nothing that needs a page (no
-  three.js) because the worker loads them. Detail: `res` (cells along the longest side) or
-  `cell` (m); keep many-instance creatures small (reef fish ~1.8k triangles, cats ~12k). Check a
-  model with a turnaround render (a probe that hides everything but one species' mesh, after
-  waiting for every `critters_*` mesh to have its `aAnim` attribute);
-  `assets/reference/animals/*.png` (image round 16) are the look to match once delivered.
+  primitives stuck together, and **built from body parts that make sense for the animal** (a torso,
+  a neck and head, legs with real joints, a tail, wings, flippers...), never traced literally from
+  a picture (that gave six-legged cats and lumps where manes were). The reference sheets
+  (`assets/reference/animals/*.png`, image round 16: side view facing right, top view head right,
+  3/4) are only a measuring tape and the paint. Built offline, written to `assets/animals/`
+  (`<name>.bin` mesh, `.json` layout / pivots / paint boxes, `_side.jpg` / `_top.jpg` paint) and
+  loaded by `animalgeo.js sheetGeometry` for every name in `SHEET_MODELS`:
+  - `tools/animals/quad.py`: the four-legged animals (tiger, leopard, monkey, hog, capybara, tapir,
+    croc). Torso = the side view's back and belly lines (ears, crests and leg gaps smoothed away)
+    and the top view's width; neck, skull and muzzle on HEAD (the croc's lower jaw on JAW); legs
+    with shoulder / elbow / wrist and hip / knee / hock joints and oval paws on FL / FR / BL / BR,
+    placed and sized from the drawn near legs (both pairs one thickness, in proportion to the
+    body), stood upright; a tail along the drawn tail (TAIL); ears on the skull. Per-animal knobs in
+    `QUADS` (`hock` bend, `head` length range, `head_w` width, `torso_end`, `ears`, `sprawl`,
+    `body_tail`, `jaw`, `leg_r`).
+  - `tools/animals/designed.py`: everything else, one design function each (python, parrot,
+    toucan, turtle, plesiosaur, manta, jellyfish, octopus, sea star, crab, seahorse) on shared
+    pieces: `Sheet` (views in metres, profiles), `Grid` (ellipsoid, tapered tube `cone`, outline
+    `plate` for wings / flippers / fins / tails), `trace` (a limb's centre line from where it
+    leaves the body) and `finish` (smooth union, surface nets, `decimate` to the `tris` budget,
+    rig weights, pivots, paint, write). Wings and flippers are WING_L / WING_R (flap), back
+    flippers BL / BR, tentacles and arms parts 10+ (the shader waves them).
+  - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
+    straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
+    other two share (`View`, `write`, `fill_bg`, surface nets).
+  - Paint: the side and top views are projected on the model per pixel (critters.js `USE_PROJ`).
+    Parts posed or stretched away from the drawing carry `aPaint`, where the drawing has them
+    (legs stood upright, the python's body repeating the drawn blotches, the upright jellyfish).
+    Model json flags: `wingTop` (wings painted from the top view on both faces) and `sideOnly`.
+    The paint's background is filled from the animal's own colours (`build.py fill_bg`).
+  - Triangle budgets (`tris`): many-instance animals small (sea star 1.6k, jellyfish 4k, crab 5k,
+    reef fish ~2-4k), big ones ~9-12k. Under water all sea life together stays under ~0.8M.
+  - Check a model with a turnaround render (a Playwright probe that hides everything but one
+    species' mesh after every `critters_*` mesh has its `aAnim` attribute, renders side / top /
+    3/4 / front, and once with `aAnim` amount 1 to see it move), next to its sheet.
+  - Fallbacks: `animalmodels.js` + `sculpt.js` (sculpted in a worker, `animalworker.js`) for any
+    model whose files are missing; they must import nothing that needs a page (no three.js).
+    The hanging monkey still uses the sculpted one.
 - Poses are functions of time (loops, circles, drifts; `travelled()` = walk, rest, walk on), so
   nothing is stored or stepped while nobody is near, and animals are where they "would be" when
   you arrive.

@@ -31,9 +31,9 @@ from build import View, sdf2, surface_nets, trilin, write, PART, dbg
 QUADS = {
     'tiger':    dict(sheet='tiger.png', L=2.4, res=110),
     'leopard':  dict(sheet='leopard.png', L=2.1, res=110, belly=0.42, cuts=[(0.5, 0.3, 0.5, 1.0)]),
-    'monkey':   dict(sheet='monkey.png', L=1.0, res=100, ears='side', hock=0.8, head=(0.1, 0.3), head_w=0.6, torso_end=-0.45),
-    'hog':      dict(sheet='river_hog.png', L=1.3, res=96, belly=0.33, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.5),
-    'capybara': dict(sheet='capybara.png', L=1.1, res=96, belly=0.24, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.6),
+    'monkey':   dict(tris=9000, sheet='monkey.png', L=1.0, res=100, ears='side', hock=0.8, head=(0.1, 0.3), head_w=0.6, torso_end=-0.45),
+    'hog':      dict(tris=9000, sheet='river_hog.png', L=1.3, res=96, belly=0.33, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.5),
+    'capybara': dict(tris=8000, sheet='capybara.png', L=1.1, res=96, belly=0.24, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.6),
     'tapir':    dict(sheet='tapir.png', L=1.9, res=96, hock=0.5),
     'croc':     dict(sheet='crocodile.png', L=3.0, res=120, belly=0.3, cuts=[(0.5, 0.3, 0.5, 1.0)], wmax=2.4, leg_r=0.1, leg_r_fixed=True, sprawl=True, body_tail=True, jaw=True, head=(0.14, 0.24)),
 }
@@ -372,6 +372,8 @@ def build(name):
         D = np.minimum(D, d) - hh * hh * k * 0.25
     D = ndi.gaussian_filter(D, 0.7)
     verts, faces = surface_nets(D)
+    from designed import decimate
+    verts, faces = decimate(verts, faces, C.get('tris', 12000))
     # one piece: drop bits the union left floating (a tail tip, a stray claw)
     from scipy.sparse import coo_matrix
     from scipy.sparse.csgraph import connected_components
