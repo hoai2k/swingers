@@ -48,6 +48,7 @@ export const SP = {
   webCatch: 5200,        // u/s^2 the taut web brakes you moving away
   softSpeed: 1500,       // above this, air drag grows (no hard speed clamp)
   webMinHold: 0.25,
+  wallPush: 240,         // u/s every wall jump pushes you off the wall
   skyCeiling: -40,       // webs fired off the top of the arena catch here
   grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
@@ -347,23 +348,55 @@ export class Spider {
     this.wasGround = !!this.ground;
   }
 
+  // Jumping depends on what you're standing on:
+  //  - top of a platform: an upward jump, the stick steering it
+  //  - underside of a platform: with the stick neutral you just let go and
+  //    fall; push the stick to launch that way instead
+  //  - a wall: always a small push off it (so you don't slide down it),
+  //    plus a full jump along the stick if it's pushed
+  // The stick can never push you into the surface. Surface momentum is kept.
   jump(move) {
     const world = this.game.world;
     const n = this.ground || this.lastNormal;
+    const nx = n.nx ?? n.x, ny = n.ny ?? n.y;
     const jv = SP.jumpSpeed * this.jumpMul;
-    let jx = n.nx ?? n.x, jy = n.ny ?? n.y;
-    // nudge by the stick; on a ceiling, a jump is a drop
-    jx += move.x * 0.55; jy += move.y * 0.35;
-    const m = Math.hypot(jx, jy) || 1;
+    // the stick, minus any part pointing into the surface
+    let sx = 0, sy = 0;
+    if (move.mag > 0.3) {
+      sx = move.x / move.mag; sy = move.y / move.mag;
+      const into = sx * nx + sy * ny;
+      if (into < 0) { sx -= into * nx; sy -= into * ny; }
+    }
+    const smag = Math.hypot(sx, sy);
+    let vx, vy;
+    if (ny < -0.55) {
+      // floor: up, steered by the stick
+      let jx = nx + sx * 0.6, jy = ny + sy * 0.4;
+      const m = Math.hypot(jx, jy) || 1;
+      vx = (jx / m) * jv; vy = (jy / m) * jv;
+    } else if (ny > 0.55) {
+      // ceiling: neutral = just drop; stick = launch along it
+      if (smag > 0.25) { vx = (sx / smag) * jv; vy = (sy / smag) * jv; }
+      else { vx = nx * 60; vy = ny * 60; }
+    } else {
+      // wall: a little push off, plus a jump along the stick if pushed
+      const push = SP.wallPush;
+      vx = nx * push; vy = ny * push;
+      if (smag > 0.25) { vx += (sx / smag) * jv * 0.9; vy += (sy / smag) * jv * 0.9; }
+    }
     const sv = this.ground ? this.ground.solid.velAt(this.ground.x, this.ground.y, world.dt) : { x: 0, y: 0 };
     // keep the momentum you had along the surface: running jumps go further
-    this.vx = (jx / m) * jv + sv.x * 0.6 + this.vx * 0.55;
-    this.vy = (jy / m) * jv + sv.y * 0.6 + Math.min(0, this.vy) * 0.2;
+    this.vx = vx + sv.x * 0.6 + this.vx * 0.55;
+    this.vy = vy + sv.y * 0.6 + Math.min(0, this.vy) * 0.2;
+    const sp = Math.hypot(vx, vy) || 1;
     this.ground = null; this.coyote = 0; this.jumpLock = 0.16;
-    this.squash = 0.72;
-    this.pushOff = { t: 0.07, nx: jx / m, ny: jy / m };   // legs stay planted a moment and push
-    sfx.jump();
-    this.game.fx.burst(this.x - jx / m * this.r, this.y - jy / m * this.r, { n: 6, speed: 160, color: 'rgba(255,255,255,0.6)', kind: 'smoke', size: 5, life: 0.35, g: 0 });
+    const strong = sp > jv * 0.5;
+    this.squash = strong ? 0.72 : 0.92;
+    this.pushOff = strong ? { t: 0.07, nx: vx / sp, ny: vy / sp } : null;   // legs push on a real jump
+    if (strong) {
+      sfx.jump();
+      this.game.fx.burst(this.x - nx * this.r, this.y - ny * this.r, { n: 6, speed: 160, color: 'rgba(255,255,255,0.6)', kind: 'smoke', size: 5, life: 0.35, g: 0 });
+    }
   }
 
   // ---------------------------------------------------------------- web
