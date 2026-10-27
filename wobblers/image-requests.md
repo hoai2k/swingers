@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: all requested images delivered; no open requests.** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 is open (two reference sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -60,3 +60,31 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
+
+## OPEN round 16 — wildlife reference sheets (for modelling, never loaded by the game)
+
+Sea creatures and jungle animals are being added as simple 3D models built from rounded
+primitives. These sheets guide their shapes and colours; the game already has stand-in models,
+so these only refine them. Same overall toy style as the game: chunky, rounded, soft, candy
+colours, cute faces with glossy dot eyes, never realistic or scary.
+
+1. `assets/reference/ref_sea_creatures.png` (1920 × 1080): a turnaround-style sheet (side view
+   plus a three-quarter view each, on a plain pale-blue background, labelled) of toy-like
+   sea creatures: a shark, a school of tropical fish (clownfish, blue tang, yellow tang,
+   angelfish), a sea star, a jellyfish, an octopus, a dolphin, a humpback whale, a manta ray,
+   a sea turtle, a seahorse, a crab, a pufferfish and a friendly long-necked plesiosaur.
+   Prompt: "Character reference sheet of cute toy-like sea creatures for a bright cartoon
+   game, chunky rounded soft-vinyl shapes, candy colours, glossy dot eyes, simple shapes
+   readable from a distance, side and three-quarter views, labelled, plain pale blue
+   background: shark, clownfish, blue tang, yellow tang, angelfish, sea star, jellyfish,
+   octopus, dolphin, humpback whale, manta ray, sea turtle, seahorse, crab, pufferfish,
+   friendly plesiosaur."
+2. `assets/reference/ref_jungle_animals.png` (1920 × 1080): the same kind of sheet for jungle
+   animals: a monkey, a tiger, a leopard, a red river hog, a capybara, a tapir, a snake
+   (python), a crocodile, a toucan and a parrot.
+   Prompt: "Character reference sheet of cute toy-like jungle animals for a bright cartoon
+   game, chunky rounded soft-vinyl shapes, candy colours, glossy dot eyes, simple shapes
+   readable from a distance, side and three-quarter views, labelled, plain pale green
+   background: monkey, tiger, leopard, red river hog, capybara, tapir, python snake,
+   crocodile, toucan, macaw parrot."
+
