@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 is open (animal model turnarounds).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: round 16 remains open (15 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -67,12 +67,14 @@ The game now has sea creatures and jungle animals (`src/world/sealife.js`,
 `src/world/regions/jungle/animals.js`) modelled in code. These renders are what the models are
 rebuilt to match, so they need to show clear, simple 3D shapes from known angles.
 
-**Style for every image:** a stylized 3D render of a cute toy animal made of one smooth soft
-rubber / vinyl material, like our Wobblers characters (see `assets/reference/ref_character_sheet.png`):
-rounded chunky shapes that flow smoothly into each other (no visible joints, seams, boxes or
-sharp facets), bold simple candy colours with patterns painted on (stripes, spots, bands),
-glossy black dot eyes with a white highlight, a small friendly smile, soft studio lighting,
-plain light grey background, no text, no ground clutter. Not realistic, not scary.
+**Owner's art direction (2026-10-27):** use a midpoint between baby-toy animals and
+realistic wildlife renders. These are rounded, expressive **stylized game animals** with
+recognisable adult anatomy, longer bodies and modestly enlarged heads/eyes. Keep broad
+painted markings, clean smooth sculpted forms and simplified materials; no realistic fur,
+tiny scales, wrinkles or skin grain. Avoid chibi proportions, blush and human baby-toy grins.
+Sharks, crocodiles and big cats should retain some danger through posture, focused eyes,
+teeth, claws and their species silhouettes. Keep the tone light-hearted rather than gory.
+Plain light grey background, soft studio lighting, no text or ground clutter.
 
 **Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the
 same scale: left = exact side view (facing right), middle = exact top view (head toward the
@@ -82,11 +84,6 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 
 | file | animal |
 |---|---|
-| `shark.png` | a chubby friendly shark |
-| `dolphin.png` | a bottlenose dolphin |
-| `whale.png` | a humpback whale with long white flippers |
-| `reef_fish.png` | four small fish in one image: clownfish, blue tang, yellow tang, angelfish (each in the 3 views, one row per fish) |
-| `pufferfish.png` | a pufferfish, puffed up |
 | `jellyfish.png` | a jellyfish with a soft bell and wavy tentacles |
 | `octopus.png` | an octopus with 8 curling tentacles |
 | `sea_turtle.png` | a sea turtle |
@@ -103,9 +100,11 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 | `crocodile.png` | a crocodile, mouth slightly open |
 | `parrot_toucan.png` | a scarlet macaw and a toucan, wings spread (one row each) |
 
-Prompt template: "Stylized 3D render of a cute toy {animal} made of one smooth soft rubber
-material, rounded chunky shapes flowing smoothly together, no joints or seams, bold candy
-colours with painted-on markings, glossy black dot eyes, friendly smile, soft studio lighting,
-plain light grey background. Three views side by side at the same scale: exact side view facing
-right, exact top view, three-quarter front view. No text."
-
+Prompt template: "Stylized 3D adventure-game {animal}, a midpoint between a nursery toy
+and realistic wildlife: recognisable adult species anatomy, rounded simplified shapes,
+medium-small expressive eyes, broad painted colours and markings, smooth soft sculpted
+material. No realistic microtexture, oversized baby head, blush or human grin. Predators
+keep focused eyes, teeth and a sense of danger. Plain grey studio background. Three equal
+columns, same animal at the same scale in one horizontal row: exact side facing right,
+true overhead top with the entire spine/head/tail on one horizontal left-to-right axis,
+front three-quarter. Whole animal and appendages in frame, no twisted anatomy. No text."

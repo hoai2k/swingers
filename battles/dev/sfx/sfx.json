@@ -1,5 +1,5 @@
 {
-  "_doc": "Sound effects generated with the ElevenLabs sound-generation API (see generate.py). name: the game's sound id (src/audio.js synth names); n: variants; dur: requested seconds.",
+  "_doc": "Sound effects generated with the ElevenLabs sound-generation API (see generate.py). name: the game's sound id (src/audio.js synth names); n: variants; dur: requested seconds. set: a faction sound set (assets/sfx/<set>/, loaded only when that faction fights); like: [synth name, pitch], the synthesised sound it falls back to. floor: the lowest loudness level calibrate.cjs may give it (signature moves whose synth stand-in is quiet).",
   "style": "Clean, punchy, close-miked video game sound effect, no music, no voices, no background noise, single isolated sound.",
   "sounds": [
     {
@@ -139,6 +139,224 @@
       "n": 2,
       "dur": 1.2,
       "prompt": "Single cheerful strum of a medieval lute"
+    },
+    {
+      "name": "av_fire",
+      "set": "avatar",
+      "n": 3,
+      "dur": 0.8,
+      "like": [
+        "fire",
+        1.2
+      ],
+      "prompt": "A fist of fire punched out by a firebender: a sharp roaring whoosh of flame with a crackle",
+      "floor": 0.45
+    },
+    {
+      "name": "av_bolt",
+      "set": "avatar",
+      "n": 3,
+      "dur": 1.0,
+      "like": [
+        "clang",
+        2.5
+      ],
+      "prompt": "A bolt of lightning fired from fingertips: a sharp electric crack and a sizzling zap"
+    },
+    {
+      "name": "av_charge",
+      "set": "avatar",
+      "n": 2,
+      "dur": 1.4,
+      "like": [
+        "fire",
+        2.4
+      ],
+      "prompt": "Electricity charging up between two hands: rising crackling buzz and static sparks building to a peak"
+    },
+    {
+      "name": "av_breath",
+      "set": "avatar",
+      "n": 2,
+      "dur": 1.3,
+      "like": [
+        "fire",
+        0.75
+      ],
+      "prompt": "A long jet of fire breath blasting forward like a flamethrower, deep roaring flames"
+    },
+    {
+      "name": "av_blast",
+      "set": "avatar",
+      "n": 2,
+      "dur": 1.0,
+      "like": [
+        "fire",
+        0.5
+      ],
+      "prompt": "A focused explosive energy beam firing and detonating: a sharp pulse then a fiery boom",
+      "floor": 0.45
+    },
+    {
+      "name": "av_air",
+      "set": "avatar",
+      "n": 3,
+      "dur": 0.8,
+      "like": [
+        "whoosh",
+        0.55
+      ],
+      "prompt": "A powerful gust of airbending wind blasting outward: a deep airy whoomp and rushing wind",
+      "floor": 0.35
+    },
+    {
+      "name": "av_state",
+      "set": "avatar",
+      "n": 2,
+      "dur": 2.0,
+      "like": [
+        "gong",
+        0.7
+      ],
+      "prompt": "A mystical power awakening: a deep resonant boom swelling into a rushing wind and a glowing hum"
+    },
+    {
+      "name": "av_water",
+      "set": "avatar",
+      "n": 3,
+      "dur": 0.8,
+      "like": [
+        "slash",
+        0.7
+      ],
+      "prompt": "A whip of water lashing through the air and slapping a target: a wet swoosh and splash"
+    },
+    {
+      "name": "av_earth",
+      "set": "avatar",
+      "n": 3,
+      "dur": 1.1,
+      "like": [
+        "debris",
+        0.7
+      ],
+      "prompt": "A rock pillar bursting up out of the ground: a deep rumble and a crack of breaking stone",
+      "floor": 0.4
+    },
+    {
+      "name": "av_rock",
+      "set": "avatar",
+      "n": 3,
+      "dur": 0.8,
+      "like": [
+        "crunch",
+        0.8
+      ],
+      "prompt": "A heavy thrown boulder smashing into the ground: a stone thud and crumbling rocks"
+    },
+    {
+      "name": "av_ice",
+      "set": "avatar",
+      "n": 3,
+      "dur": 0.6,
+      "like": [
+        "clang",
+        2.4
+      ],
+      "prompt": "Sharp ice shards flying and shattering: crystalline cracking and tinkling ice"
+    },
+    {
+      "name": "av_heal",
+      "set": "avatar",
+      "n": 2,
+      "dur": 1.2,
+      "like": [
+        "heal",
+        1.1
+      ],
+      "prompt": "Healing water glowing around a wound: a soft magical shimmer and gentle trickling water"
+    },
+    {
+      "name": "av_boomerang",
+      "set": "avatar",
+      "n": 2,
+      "dur": 1.0,
+      "like": [
+        "flyby",
+        1.6
+      ],
+      "prompt": "A wooden boomerang spinning through the air: a fast whirring wobble passing by",
+      "floor": 0.3
+    },
+    {
+      "name": "mc_hiss",
+      "set": "minecraft",
+      "n": 2,
+      "dur": 1.4,
+      "like": [
+        "fire",
+        1.7
+      ],
+      "prompt": "A lit fuse about to explode: a tense rising sizzling hiss",
+      "floor": 0.5
+    },
+    {
+      "name": "mc_warp",
+      "set": "minecraft",
+      "n": 3,
+      "dur": 0.7,
+      "like": [
+        "whoosh",
+        0.5
+      ],
+      "prompt": "A strange creature teleporting: a warped reversed whoosh with a low wobbly vworp and a soft pop",
+      "floor": 0.3
+    },
+    {
+      "name": "ga_blaster",
+      "set": "galactic",
+      "n": 4,
+      "dur": 0.5,
+      "like": [
+        "flyby",
+        1.95
+      ],
+      "prompt": "A sci-fi laser blaster pistol firing one shot: a sharp springy pew with a metallic ring",
+      "floor": 0.3
+    },
+    {
+      "name": "ga_clash",
+      "set": "galactic",
+      "n": 3,
+      "dur": 0.7,
+      "like": [
+        "clang",
+        1.9
+      ],
+      "prompt": "Two glowing energy swords clashing: an electric crackling sizzle and a buzzing impact"
+    },
+    {
+      "name": "ga_hum",
+      "set": "galactic",
+      "n": 2,
+      "dur": 1.5,
+      "like": [
+        "flyby",
+        0.32
+      ],
+      "prompt": "A glowing energy sword idling: a low steady electric hum with a slight wavering buzz"
+    },
+    {
+      "name": "ga_saber",
+      "set": "galactic",
+      "n": 3,
+      "dur": 0.8,
+      "like": [
+        "whoosh",
+        0.62
+      ],
+      "prompt": "A glowing energy sword swung fast: a deep humming electric vwoom as it swings through the air",
+      "floor": 0.3
     }
   ]
 }

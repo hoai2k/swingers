@@ -141,7 +141,7 @@ function airBurst(b, pr) {
   const o = pr.owner, w = o.def.weapon;
   fx(b, 'av_air', pr.pos, w.blastR);
   fx(b, 'av_air', pr.pos, w.blastR * 0.55);
-  b.sound('whoosh', pr.pos, 1.2, 0.55);
+  b.sound('av_air', pr.pos, 1.2, 1);
   b.sound('thump', pr.pos, 0.6, 1.4);
   gust(b, o, pr.pos, w.blastR, pr.damage, w.blastOut, w.blastUp);
 }
@@ -166,7 +166,7 @@ function aangBlast(u) {
   _v.subVectors(_p, h).normalize().multiplyScalar(w.blastSpeed);
   addProjectile(b, 'avb_airball', h, _v, u, { damage: w.blastDmg, life: 2, go: d + 0.3 });
   fx(b, 'av_atrail', h);
-  b.sound('whoosh', h, 1.0, 0.8);
+  b.sound('av_air', h, 1.0, 1.45);
 }
 function startScoot(u) {
   const b = u.battle;
@@ -176,7 +176,7 @@ function startScoot(u) {
   u.avBall = liveMark(b, 'avb_scooter', _p.set(u.pos.x, g + 0.35 * u.s, u.pos.z), 99);
   u.st.style = 'avb_scoot';
   u.rag.impulseAll(0, u.M * 2.5, 0);
-  b.sound('whoosh', u.pos, 1.0, 0.6);
+  b.sound('av_air', u.pos, 1.0, 1.1);
 }
 function endScoot(u) {
   u.avScoot = 0;
@@ -205,7 +205,7 @@ function enterState(u) {
   fx(b, 'av_aura', c, 2);
   fx(b, 'av_air', u.pos, 3);
   b.emit('explode', c.x, c.y, c.z, 2.5, 2);
-  b.sound('gong', c, 1.2, 0.7);
+  b.sound('av_state', c, 1.2, 1);
   b.sound('boom', c, 0.8, 0.6);
   b.voice(u, 'cry', true);
   u.expr = EXPR.angry;
@@ -231,7 +231,7 @@ function statePulse(u) {
   if (kind === 'fire') {
     for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; b.emit('av_fire', at.x + Math.cos(a) * 2.2, g + 0.6, at.z + Math.sin(a) * 2.2, 1.1); }
     for (const v of vs) { const vc = v.chestPos; fx(b, 'av_fire', vc, 1.2); bend(b, v, D, 0, 2, 0, u, 'avb_fire', 0.6); addStatus(b, v, 'burn', 3, 12, u); }
-    b.sound('fire', c, 1.2, 0.8);
+    b.sound('av_fire', c, 1.2, 0.67);
   } else if (kind === 'water') {
     for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; b.emit('av_water', at.x + Math.cos(a) * 2.5, g + 0.4, at.z + Math.sin(a) * 2.5, 1.2); }
     for (const v of vs) {
@@ -239,7 +239,7 @@ function statePulse(u) {
       fx(b, 'av_water', v.chestPos, 1);
       bend(b, v, D, _d.x * 8, 2.5, _d.z * 8, u, 'avb_water', 1.0);
     }
-    b.sound('heal', c, 0.9, 0.5);
+    b.sound('av_water', c, 0.9, 1);
     b.sound('whoosh', c, 1.0, 0.5);
   } else if (kind === 'earth') {
     for (const v of vs) {
@@ -250,13 +250,13 @@ function statePulse(u) {
       if (bend(b, v, D, 0, w.stateLaunch, 0, u, 'avb_earth', 1.3)) trackFall(b, v, u, 11);
     }
     fx(b, 'av_earth', at, 1.5);
-    b.sound('debris', c, 1.1, 0.7);
+    b.sound('av_earth', c, 1.1, 1);
     b.sound('crunch', c, 0.8, 0.6);
   } else {
     fx(b, 'av_air', at, R * 0.7);
     fx(b, 'av_air', at, R * 0.4);
     gust(b, u, at, R, D, 11, 5);
-    b.sound('whoosh', c, 1.4, 0.4);
+    b.sound('av_air', c, 1.4, 0.73);
   }
 }
 function stepOrbs(u) {
@@ -378,7 +378,7 @@ function whipStep(u, dt) {
     W.hit = true;
     const tip = _pts[n];
     fx(b, 'av_water', tip, 0.9);
-    b.sound('slash', tip, 0.9, 0.7);
+    b.sound('av_water', tip, 0.9, 1);
     b.sound('heal', tip, 0.4, 1.8);
     for (const o of enemiesNear(b, u, tip, 1.0)) {
       _d.set(o.pos.x - u.pos.x, 0, o.pos.z - u.pos.z).normalize();
@@ -399,13 +399,13 @@ function iceVolley(u) {
     addProjectile(b, 'avb_icicle', _d.copy(h).addScaledVector(_v, 0.02 * i), _v, u, { damage: w.iceDmg, force: 60, life: 3, snd: true });
   }
   fx(b, 'av_ice', h, 0.5);
-  b.sound('clang', h, 0.5, 2.4);
+  b.sound('av_ice', h, 0.5, 1);
   b.sound('whoosh', h, 0.8, 1.6);
 }
 const ICICLE = arrowProj({
   g: 4, len: 0.55, r: 0.05, life: 3,
   onHit(b, v, pr) { fx(b, 'av_ice', v.chestPos, 0.45); addStatus(b, v, 'slow', pr.owner.def.weapon.iceSlow, 0, pr.owner); },
-  ground(b, pr) { fx(b, 'av_ice', pr.pos, 0.4); b.sound('clang', pr.pos, 0.3, 2.6); return true; },
+  ground(b, pr) { fx(b, 'av_ice', pr.pos, 0.4); b.sound('av_ice', pr.pos, 0.3, 1.08); return true; },
 });
 { // add a frost trail to the arrow step
   const st = ICICLE.step;
@@ -416,7 +416,7 @@ function heal(u) {
   const g = b.terrain.height(p.x, p.z);
   b.emit('healring', p.x, g + 0.1, p.z, w.healR);
   fx(b, 'av_water', _p.set(p.x, g + 0.2, p.z), 0.6);
-  b.sound('heal', p, 0.8, 1.1);
+  b.sound('av_heal', p, 0.8, 1);
   for (const o of b.teams[u.team]) {
     if (!o.alive || o.dormant || flatD(o.pos, p) > w.healR || o.hp >= o.maxHp) continue;
     o.hp = Math.min(o.maxHp, o.hp + w.heal * (o === u ? 0.5 : 1));
@@ -486,7 +486,7 @@ const BOOM = {
   step(b, pr, dt) {
     const o = pr.owner;
     pr.k = (pr.k || 0) + 1;
-    if (pr.k % 9 === 0) b.sound('flyby', pr.pos, 0.35, 1.6);
+    if (pr.k % 9 === 0) b.sound('av_boomerang', pr.pos, 0.35, 1);
     if (pr.k % 3 === 0) b.emit('av_atrail', pr.pos.x, pr.pos.y, pr.pos.z);
     const gy = b.terrain.height(pr.pos.x, pr.pos.z);
     if (pr.drop) { pr.vel.y -= 9.81 * dt; return; }
@@ -570,7 +570,7 @@ function pillar(b, u, x, z, k = 1) {
   const m = liveMark(b, k < 1 ? 'avb_pillar_s' : 'avb_pillar', _p.set(x, g - 0.3, z), 3, rand(0, 6.28));
   list.push({ m, x, z, g, t: 0, h: 1.4 * k });
   b.emit('av_earth', x, g + 0.2, z, 1.2 * k);
-  b.sound('debris', m.pos, 0.9 * k, 1.0);
+  b.sound('av_earth', m.pos, 0.9 * k, 1.43);
 }
 function stepPillars(b, dt) {
   const list = PILLARS.get(b);
@@ -614,7 +614,7 @@ const BOULDER = {
   hit(b, pr, v) {
     _d.copy(pr.vel).normalize();
     fx(b, 'av_earth', pr.pos, 1.0);
-    b.sound('crunch', pr.pos, 1.0, 0.8);
+    b.sound('av_rock', pr.pos, 1.0, 1);
     bend(b, v, pr.damage, _d.x * pr.push, 3, _d.z * pr.push, pr.owner, 'avb_boulder', 1.2);
     for (const o of enemiesNear(b, pr.owner, pr.pos, 1.3)) if (o !== v) bend(b, o, pr.damage * 0.4, _d.x * 4, 2, _d.z * 4, pr.owner, 'avb_boulder', 0.6);
     return true;
@@ -702,7 +702,7 @@ const toph = {
       const b = u.battle;
       u.avArmorM = [mark(b, u, 'avb_rockarmor', PART.chest, w.armorT), mark(b, u, 'avb_rockhelm', PART.head, w.armorT)];
       fx(b, 'av_earth', u.chestPos, 1.2);
-      b.sound('debris', u.chestPos, 1.0, 0.8);
+      b.sound('av_earth', u.chestPos, 1.0, 1.14);
       b.sound('crunch', u.chestPos, 0.7, 0.7);
     }
   },
@@ -717,7 +717,7 @@ const DISC = {
   hit(b, pr, v) {
     _d.copy(pr.vel).normalize();
     fx(b, 'av_earth', pr.pos, 0.5);
-    b.sound('crunch', pr.pos, 0.8, 1.1);
+    b.sound('av_rock', pr.pos, 0.8, 1.37);
     bend(b, v, pr.damage, _d.x * pr.push, 1.5, _d.z * pr.push, pr.owner, 'avb_disc', 0.7);
     return true;
   },

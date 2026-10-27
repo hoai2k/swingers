@@ -1,0 +1,25 @@
+{
+ "_fallback": {
+  "mc_hiss": [
+   "fire",
+   1.7
+  ],
+  "mc_warp": [
+   "whoosh",
+   0.5
+  ]
+ },
+ "mc_hiss": [
+  "assets/sfx/minecraft/mc_hiss-1.mp3",
+  "assets/sfx/minecraft/mc_hiss-2.mp3"
+ ],
+ "mc_warp": [
+  "assets/sfx/minecraft/mc_warp-1.mp3",
+  "assets/sfx/minecraft/mc_warp-2.mp3",
+  "assets/sfx/minecraft/mc_warp-3.mp3"
+ ],
+ "_levels": {
+  "mc_hiss": 0.5,
+  "mc_warp": 0.3
+ }
+}
