@@ -30,7 +30,7 @@ export const AREAS = [
   { name: 'Playground', x: 105, z: -105 },
   { name: 'Swimming Pool', x: 100, z: 124 },
   { name: 'Wobble Works', x: -245, z: -40, big: true },
-  { name: 'Pooh Berry Farms', x: -240, z: 62, big: true },
+  { name: 'Pooh Berry Farm', x: -240, z: 62, big: true },
   { name: 'Corn Maze', x: -244, z: 160 },
   { name: 'Stunt Park', x: -105, z: 105 },
   { name: 'Sports Field', x: -105, z: -103 },

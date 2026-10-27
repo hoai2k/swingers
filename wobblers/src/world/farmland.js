@@ -1,5 +1,5 @@
-// POOH BERRY FARMS: the farm in the west of Wobbly Island, next to the factory (world/factory.js).
-//   - farmyard (meadow south half, x -232..-190, z 22..104, flat): POOH BERRY FARMS arch on the road
+// POOH BERRY FARM: the farm in the west of Wobbly Island, next to the factory (world/factory.js).
+//   - farmyard (meadow south half, x -232..-190, z 22..104, flat): POOH BERRY FARM arch on the road
 //     from the ring road (z = 60), a big red barn with a hayloft, three silos, a machinery shed
 //     where the giant vehicles park, a farmhouse, hay bales, a farmer
 //   - the wheat field (x -296..-238, z 24..102): the combine harvester cuts it as it drives
@@ -45,7 +45,7 @@ function farmyard(game, kit) {
   const ax = -190;
   for (const z of [53, 67]) { kit.cyl(ax, 3, z, 0.35, 6, WOOD, { seg: 8 }); }
   kit.deco(ax, 6.1, 60, 0.4, 0.5, 15, WOOD);
-  const s = signMesh('POOH BERRY FARMS', 12, '#c8402f');
+  const s = signMesh('POOH BERRY FARM', 11.5, '#c8402f');
   s.position.set(ax + 0.3, 5.0, 60); s.rotation.y = Math.PI / 2; game.scene.add(s);
   kit.fence(-190, 22, -190, 52, WHITE, 1.1);
   kit.fence(-190, 68, -190, 106, WHITE, 1.1);

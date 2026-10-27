@@ -228,7 +228,7 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `control`, which also clears the handbrake); `FORK0` puts the forks ~0.08 m off the ground at
   rest, inside a pallet's slot (deck on two runners, 0..0.2 m clear). `def.driveHint(G)` gives a
   vehicle its own control hint (ui.js hintFor).
-- Farm (`world/farmland.js`, Pooh Berry Farms; `FARM_CLEAR` keeps the forest scatter out, skipped after
+- Farm (`world/farmland.js`, Pooh Berry Farm; `FARM_CLEAR` keeps the forest scatter out, skipped after
   the random draws so the layout elsewhere is unchanged): farmyard and wheat field in the
   meadow's south half, sunflowers and the corn maze on the hills to the south-west, a lane from
   the west ring road (`ROADS`). Crops are `world/crops.js` `cropField`s (one InstancedMesh each;
