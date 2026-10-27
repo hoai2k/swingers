@@ -97,6 +97,11 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   ear first** (ElevenLabs loops are often poor): add them with `hold: true`, which generates the
   original but keeps it out of the game; send the owner the original and a preview playing the
   loop twice (seam), and only drop `hold` once they approve. One-shots can go straight in.
+  Loop processing (`process_loop`) cuts 1.5 s off each end of the take (generated takes fade in /
+  out) and joins end to start with a 3 s equal-power crossfade; build seam previews by decoding
+  and tiling the samples (splicing mp3 frames adds a gap that isn't in the game). Beds start on a
+  random take and loop between `loopBounds` (skips any mp3 padding). `ambientSpot(..., { under:
+  true })` plays while any player's camera is under water (the `underwater` bed).
 - Traffic: any vehicle type can self-drive (`autoType(base)` in `regions/city/traffic.js`, a
   route from `makeRoute`, `placeOnRoute`, `addAutoDriver`); routes off the city plate set
   `route.yAt(x, z)`. Bigtown loops are in `city/people.js`, the home ring road in

@@ -284,11 +284,10 @@
   },
   {
    "name": "underwater",
-   "n": 3,
+   "n": 2,
    "dur": 22,
    "loop": true,
    "level": 0.5,
-   "hold": true,
    "prompt": "Underwater ambience loop heard by a diver: soft muffled deep water hum, gentle bubbles rising now and then, faint distant whale and dolphin calls far away, calm and dreamy, cartoon game. No music, no voices, no breathing"
   }
  ]

@@ -165,6 +165,10 @@
  "jungle_ambience": [
   "assets/sfx/jungle_ambience-1.mp3"
  ],
+ "underwater": [
+  "assets/sfx/underwater-1.mp3",
+  "assets/sfx/underwater-2.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -214,6 +218,7 @@
   "city_street",
   "plaza_chatter",
   "arcade_room",
-  "jungle_ambience"
+  "jungle_ambience",
+  "underwater"
  ]
 }

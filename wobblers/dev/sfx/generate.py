@@ -59,8 +59,11 @@ def process_loop(src, dst):
     if not len(a) or np.abs(a).max() < 1e-4:
         print('silent', src)
         return False
+    # generated takes often fade in / out: drop 1.5 s at each end so the seam joins full-level sound
+    cut = 66150 if len(a) > 8 * 44100 else 0
+    a = a[cut:len(a) - cut]
     a /= np.abs(a).max()
-    x = min(len(a) // 4, 44100)  # 1 s equal-power crossfade: the tail fades into the head
+    x = min(len(a) // 4, 3 * 44100)  # 3 s equal-power crossfade: the tail fades into the head
     t = np.linspace(0, np.pi / 2, x)
     head, tail = a[:x].copy(), a[-x:]
     a = a[x:].copy()

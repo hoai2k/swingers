@@ -40,6 +40,22 @@ const ORGAN = [
 ];
 const ORGAN_BASS = [48, 55, 55, 50, 57, 57, 52, 55, 55, 55, 50, 50, 48, 55, 55, 53, 57, 57, 55, 50, 50, 48, 48, 48];
 
+// A recorded loop's playable span in seconds: MP3 adds a few ms of digital silence at each end
+// (encoder delay / padding), which would click or gap at every wrap; generate.py makes loops
+// that are never that quiet, so the first / last sample above it marks the real loop.
+const LOOPB = new WeakMap();
+function loopBounds(buf) {
+  let r = LOOPB.get(buf);
+  if (r) return r;
+  const d = buf.getChannelData(0), n = d.length;
+  let a = 0, b = n - 1;
+  while (a < n - 1 && Math.abs(d[a]) < 1e-4) a++;
+  while (b > a && Math.abs(d[b]) < 1e-4) b--;
+  r = [a / buf.sampleRate, (b + 1) / buf.sampleRate];
+  LOOPB.set(buf, r);
+  return r;
+}
+
 export class Audio {
   constructor(game) {
     this.game = game;
@@ -198,15 +214,17 @@ export class Audio {
     if (!this.spots) return;
     const c = this.ctx, t = c.currentTime;
     for (const s of this.spots) {
-      const buf = this.samples?.[s.name]?.[0];
-      if (!buf) continue;
+      const list = this.samples?.[s.name];
+      if (!list?.length) continue;
       let w = 0;
       if (s.under) w = this.game.players.some((p) => p.camera?.underwater) ? 1 : 0;
       else for (const cam of cams) w = Math.max(w, smooth(s.r, s.r * 0.25, Math.hypot(cam.position.x - s.x, cam.position.z - s.z)));
       if (w > 0.01 && !s.src) {
+        const buf = list[(Math.random() * list.length) | 0]; // a different take each time it starts
         s.g = c.createGain(); s.g.gain.value = 0; s.g.connect(this.ambBus);
         s.src = c.createBufferSource(); s.src.buffer = buf; s.src.loop = true;
-        s.src.connect(s.g); s.src.start(t, Math.random() * buf.duration);
+        const [ls, le] = loopBounds(buf); s.src.loopStart = ls; s.src.loopEnd = le; // skip the mp3's silent padding
+        s.src.connect(s.g); s.src.start(t, ls + Math.random() * (le - ls));
       }
       if (!s.src) continue;
       s.g.gain.setTargetAtTime(w * s.vol * (this.sampleLevel[s.name] ?? 1), t, 0.5);
