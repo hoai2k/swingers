@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 16 remains open (5 animal sheets).** Rounds 1–15 are delivered; see `image-requests-history.md`.
+**Status: all requested images delivered; no open requests.** Rounds 1–16 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -60,41 +60,3 @@ finished), write them here under a new `## OPEN round N` heading and commit and
 push that change right away on its own, so the art can be generated while you
 keep building. Use the formats above, give every file an exact path, size and
 prompt, and keep the procedural stand-in in the game until the art arrives.
-
-## OPEN round 16 — animal model turnarounds (for modelling, never loaded by the game)
-
-The game now has sea creatures and jungle animals (`src/world/sealife.js`,
-`src/world/regions/jungle/animals.js`) modelled in code. These renders are what the models are
-rebuilt to match, so they need to show clear, simple 3D shapes from known angles.
-
-**Owner's art direction (2026-10-27):** use a midpoint between baby-toy animals and
-realistic wildlife renders. These are rounded, expressive **stylized game animals** with
-recognisable adult anatomy, longer bodies and modestly enlarged heads/eyes. Keep broad
-painted markings, clean smooth sculpted forms and simplified materials; no realistic fur,
-tiny scales, wrinkles or skin grain. Avoid chibi proportions, blush and human baby-toy grins.
-Sharks, crocodiles and big cats should retain some danger through posture, focused eyes,
-teeth, claws and their species silhouettes. Keep the tone light-hearted rather than gory.
-Plain light grey background, soft studio lighting, no text or ground clutter.
-
-**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the
-same scale: left = exact side view (facing right), middle = exact top view (head toward the
-right), right = three-quarter front view. Whole animal in frame in every view.
-
-Files (all in `assets/reference/animals/`), with the animal to draw:
-
-| file | animal |
-|---|---|
-| `capybara.png` | a capybara |
-| `tapir.png` | a Malayan tapir (black with a white saddle) |
-| `snake.png` | a python, gently wavy, yellow and green |
-| `crocodile.png` | a crocodile, mouth slightly open |
-| `parrot_toucan.png` | a scarlet macaw and a toucan, wings spread (one row each) |
-
-Prompt template: "Stylized 3D adventure-game {animal}, a midpoint between a nursery toy
-and realistic wildlife: recognisable adult species anatomy, rounded simplified shapes,
-medium-small expressive eyes, broad painted colours and markings, smooth soft sculpted
-material. No realistic microtexture, oversized baby head, blush or human grin. Predators
-keep focused eyes, teeth and a sense of danger. Plain grey studio background. Three equal
-columns, same animal at the same scale in one horizontal row: exact side facing right,
-true overhead top with the entire spine/head/tail on one horizontal left-to-right axis,
-front three-quarter. Whole animal and appendages in frame, no twisted anatomy. No text."

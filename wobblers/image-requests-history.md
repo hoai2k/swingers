@@ -46,6 +46,11 @@ Files (all in `assets/reference/animals/`), with the animal to draw:
 | `sea_turtle.png` | a sea turtle |
 | `manta_ray.png` | a manta ray |
 | `sea_star_crab_seahorse.png` | a sea star, a crab and a seahorse (one row each) |
+| `capybara.png` | a capybara |
+| `tapir.png` | a Malayan tapir (black with a white saddle) |
+| `snake.png` | a python, gently wavy, yellow and green |
+| `crocodile.png` | a crocodile, mouth slightly open |
+| `parrot_toucan.png` | a scarlet macaw and a toucan, wings spread (one row each) |
 
 ## Delivered round 15 — toy-style character repaints
 
