@@ -105,7 +105,7 @@ export class Grenades extends Weapon {
   static label = 'Pop Grenades';
   static kind = 'throwable';
   static ammo = 3;
-  static weight = 1;
+  static weight = 0.45;   // guns are rarer than blades
   static color = '#8fe36a';
 
   constructor(game) {

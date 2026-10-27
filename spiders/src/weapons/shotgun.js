@@ -14,7 +14,7 @@ export class Shotgun extends Weapon {
   static label = 'Scattergun';
   static kind = 'gun';
   static ammo = 4;
-  static weight = 1.1;
+  static weight = 0.5;   // guns are rarer than blades
   static color = '#ff9f40';
 
   constructor(game) {

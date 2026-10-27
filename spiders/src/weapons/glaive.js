@@ -19,7 +19,7 @@ export class Glaive extends Saber {
   static label = 'Plasma Glaive';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 0.9;
+  static weight = 1.6;
   static color = '#ffe066';
   static blades = [{ from: 74, to: 112 }];
   static chargeThrow = false;      // RT is an instant lunge

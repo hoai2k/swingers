@@ -154,11 +154,11 @@ export class BroodTyrant extends Enemy {
         this.drag(dt, 5);
         this.move(dt);
         if (t && this.st < 0.7) { const a = this.aimAt(t, 1100, { lead: 0.25, spread: 0.04 }); this.charge.x = a.x; this.charge.y = a.y; }
-        if (this.st > 1.0 / this.rage) { this.state = 'charge'; this.st = 0; sfx.throwIt(); }
+        if (this.st > 1.35 / this.rage) { this.state = 'charge'; this.st = 0; sfx.throwIt(); }
         return;
       }
       case 'charge': {
-        const sp = 1050 * this.rage;
+        const sp = 640 * this.rage;          // a charge you can get out of the way of
         this.vx = this.charge.x * sp; this.vy = this.charge.y * sp;
         this.move(dt, { avoid: false, bounce: 0.2 });
         this.touchSpiders({ amount: 3 });

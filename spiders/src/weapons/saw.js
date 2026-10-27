@@ -161,7 +161,7 @@ export class SawLauncher extends Weapon {
   static label = 'Ripper';
   static kind = 'gun';
   static ammo = 5;
-  static weight = 1;
+  static weight = 0.45;   // guns are rarer than blades
   static color = '#c8d4e8';
 
   constructor(game) {

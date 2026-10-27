@@ -149,7 +149,7 @@ export class SingularityGun extends Weapon {
   static label = 'Void Lobber';
   static kind = 'special';
   static ammo = 2;
-  static weight = 0.6;
+  static weight = 0.27;   // guns are rarer than blades
   static color = '#9a6bff';
 
   constructor(game) {

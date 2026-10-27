@@ -19,7 +19,7 @@ export class DeathRay extends Weapon {
   static label = 'Sizzle Ray';
   static kind = 'gun';
   static ammo = 1;          // energy, 0..1
-  static weight = 0.8;
+  static weight = 0.36;   // guns are rarer than blades
   static color = '#ff3df0';
 
   constructor(game) {

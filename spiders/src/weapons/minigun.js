@@ -19,7 +19,7 @@ export class Minigun extends Weapon {
   static label = 'Hornet Gatling';
   static kind = 'gun';
   static ammo = 110;
-  static weight = 0.9;
+  static weight = 0.41;   // guns are rarer than blades
   static color = '#ffd23f';
 
   constructor(game) {

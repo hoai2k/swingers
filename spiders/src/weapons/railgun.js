@@ -21,7 +21,7 @@ export class Railgun extends Weapon {
   static label = 'Rail Lance';
   static kind = 'gun';
   static ammo = 3;
-  static weight = 0.8;
+  static weight = 0.36;   // guns are rarer than blades
   static color = '#5affd2';
 
   constructor(game) {
