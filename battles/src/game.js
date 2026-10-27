@@ -66,6 +66,7 @@ const FACTION_THEME = {
   tribal: 'battle_tribal', farmer: 'battle_tribal', prehistoric: 'battle_tribal',
   medieval: 'battle_medieval', legacy: 'battle_medieval', renaissance: 'battle_medieval',
   pirate: 'battle_pirate', wildwest: 'battle_wildwest',
+  viking: 'battle_viking', dynasty: 'battle_dynasty', jjk: 'battle_jjk', avatar: 'battle_avatar',
 };
 const WORLD_THEME = { tribal: 'battle_tribal', medieval: 'battle_medieval', legacy: 'battle_medieval' };
 function battleTheme(armies, world) {

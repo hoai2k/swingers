@@ -141,13 +141,19 @@ const TRACKS = {
   setup: { url: 'assets/music/setup-1.mp3', loop: 116.0 },
   battle: { url: 'assets/music/battle-1.mp3', loop: 145.6 },
   // world / faction battle themes (owner-made songs; the game picks one per battle:
-  // battleTheme() in game.js); synth: the synthesised song to fall back on
+  // battleTheme() in game.js); synth: the synthesised song to fall back on; own: only
+  // for its own faction, never picked at random
   battle_tribal: { url: 'assets/music/world-tribal.mp3', loop: 117.4, synth: 'battle' },
   battle_medieval: { url: 'assets/music/world-medieval.mp3', loop: 118.4, synth: 'battle' },
   battle_pirate: { url: 'assets/music/world-pirate.mp3', loop: 117.8, synth: 'battle' },
   battle_wildwest: { url: 'assets/music/world-wildwest.mp3', loop: 117.6, synth: 'battle' },
+  battle_viking: { url: 'assets/music/world-viking.mp3', loop: 116.6, synth: 'battle' },
+  battle_dynasty: { url: 'assets/music/world-dynasty.mp3', loop: 108.8, synth: 'battle' },
+  battle_jjk: { url: 'assets/music/world-jjk.mp3', loop: 118.0, synth: 'battle', own: true }, // (electric: only for JJK armies)
+  battle_avatar: { url: 'assets/music/world-avatar.mp3', loop: 116.4, synth: 'battle' },
 };
-export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle'));
+// the themes a battle with no clear faction theme may pick ('battle' first; `own` themes stay with their faction)
+export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle') && !TRACKS[k].own);
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
 // Faction sample sets, fetched only once a battle has that faction in it (wantSamples).

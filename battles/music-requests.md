@@ -1,9 +1,9 @@
 # Wobbly Battles — music requests
 
-**Status: 15 open requests, listed most important first; 10 delivered (below, kept for
-the record): the battle, setup and title themes and the Tribal, Medieval, Pirate and Wild
-West world themes (owner-made songs), and the victory, defeat and battle-start stingers
-(ElevenLabs Music). All ten are in the game.**
+**Status: 11 open requests, listed most important first; 14 delivered (below, kept for
+the record): the battle, setup and title themes, the Tribal, Medieval, Pirate, Wild West,
+Viking, Dynasty, JJK and Avatar themes (owner-made songs), and the victory, defeat and
+battle-start stingers (ElevenLabs Music). All fourteen are in the game.**
 
 The world themes are what most battles play (`battleTheme` in `src/game.js` picks the
 theme of the factions on the field, or a campaign world's), so the missing ones come
@@ -52,70 +52,7 @@ cheeky wink.
 > brass, Zeus-sized, launching the big heroic return. Grand, marble-columned and
 > slightly ridiculous in its self-importance. No vocals, no choir, no electronic sounds.
 
-## 2. Viking world battle theme (loop) — `world-viking.mp3`
-
-*New (split from Ancient & Viking). Plays for Viking armies.*
-
-> Instrumental rowdy Viking battle music for the Norse world of a comedic war game
-> (raiders, a jarl, valkyries, headbutting berserkers), 112 BPM, D minor, about 2
-> minutes, seamless loop with no intro and no ending. Nordic folk meets a big
-> orchestra: a droning bowed lyre and a hardanger-style fiddle playing a fierce folk
-> melody, deep lur war horns, stomping feet and hand claps, heavy frame drums and
-> pounding toms like oars hitting the water, and low strings and brass for the raid.
-> A drunken mead-hall break in the middle: the fiddle turns into a lopsided, swaying
-> jig with tankard-like thumps, before the war horns call everyone back for a
-> thundering finale. Wild, hairy, beery and heroic. Wordless group shouts like "hey!"
-> and "hoo!" are welcome; no sung words, no electronic sounds, no electric guitars.
-
-## 3. Dynasty world battle theme (loop) — `world-dynasty.mp3`
-
-*Rewritten: the old prompt came out only vaguely Asian. This one names the instruments, scales and percussion idioms of the two traditions the faction draws on, in separate sections.*
-
-> Instrumental high-energy kung-fu and samurai battle music for the dynasty world of a
-> comedic war game (samurai, ninjas, monks, firework archers, a hwacha rocket cart, a
-> dragon), 144 BPM, about 2 minutes, seamless loop with no intro and no ending. Two
-> clear halves that keep handing over. The Chinese half is a wuxia fight scene in the
-> major pentatonic: a soaring erhu lead, a bright dizi bamboo flute, rapid pipa tremolo
-> and guzheng glissandi, over Peking-opera percussion (the clacking wooden clapper,
-> crashing bo cymbals and the rising "wang" of an opera gong) that speeds up and
-> stops dead before each hit. The Japanese half is a samurai duel in the in (miyako-
-> bushi) scale: a breathy shakuhachi with sharp bends, a plucked koto, a taiko
-> ensemble with shouted "yo!" and "ha!" calls, and sudden silences broken by a single
-> huge drum hit. A modern orchestra's strings and brass only reinforce the big
-> moments. Fast, acrobatic and full of character, like a fight scene where everyone
-> keeps striking poses. Respectful of both traditions, never a caricature. No sung
-> words, no electronic sounds.
-
-## 4. JJK battle theme (loop) — `world-jjk.mp3`
-
-*New: for the JJK faction and its battleground, Shibuya Crossing. Its own sound on purpose: the one request where modern band instruments and electronics are wanted.*
-
-> Instrumental high-octane anime battle music for a comedic war game's sorcerer faction
-> fighting in a neon city at night, 160 BPM, F# minor, about 2 minutes, seamless loop
-> with no intro and no ending. Modern anime-opening energy: fast palm-muted
-> distorted electric guitars and a slapping bass, tight hip-hop and breakbeat drums
-> trading with a big live rock kit, a dark synth arpeggio, and a cinematic string
-> section and brass stabs for the huge moments. A sudden half-time "domain" breakdown:
-> everything drops to a low drone, a ticking hi-hat and an eerie detuned piano, then
-> a riser explodes into a double-time guitar riff and the main hook. Cool, menacing and
-> hype, a little cursed. No vocals, no rap, no sung words.
-
-## 5. Avatar battle theme (loop) — `world-avatar.mp3`
-
-*New: for the Avatar faction and its battleground, Ba Sing Se Walls.*
-
-> Instrumental adventurous four-elements battle music for a comedic war game's Avatar
-> faction, 126 BPM, D minor pentatonic, about 2 minutes, seamless loop with no intro
-> and no ending. A small world-music band leads and an orchestra supports: a bright
-> dizi flute and an erhu trading the heroic main tune, a plucked guzheng and pipa, a
-> warm duduk for a soulful bridge, Indonesian-style gamelan gongs and metallophones,
-> frame drums and big taiko hits, and deep Tibetan-style long horns. Each section leans
-> on one element: airy flutes and wind chimes, flowing harp and strings for water,
-> heavy low drums and stomps for earth, fierce brass and fast percussion for fire, then
-> all four join in a big finale. Heroic, warm and playful, like a kids' adventure show
-> going into a big fight. No vocals, no electronic sounds.
-
-## 6. Galactic battle theme (loop) — `world-galactic.mp3`
+## 2. Galactic battle theme (loop) — `world-galactic.mp3`
 
 *New: for the Galactic faction and its battleground, Starbase Hangar.*
 
@@ -130,7 +67,7 @@ cheeky wink.
 > back for a huge dogfight climax. Epic, heroic and a touch cheesy. No vocals, no
 > choir, no electronic sounds.
 
-## 7. Minecraft battle theme (loop) — `world-blocky.mp3`
+## 3. Minecraft battle theme (loop) — `world-blocky.mp3`
 
 *New: for the Minecraft faction and its battleground, Blocky Plains.*
 
@@ -144,7 +81,7 @@ cheeky wink.
 > blip and a low hiss before a sudden boom. Charming, pixelated and silly, but with
 > a real beat. No vocals, no sung words.
 
-## 8. Final moments / slow-motion replay theme (loop) — `final-moments.mp3`
+## 4. Final moments / slow-motion replay theme (loop) — `final-moments.mp3`
 
 *Rewritten: the old prompt came out too serious. This one keeps the war-film slow motion but lets the joke show.*
 
@@ -159,7 +96,7 @@ cheeky wink.
 > but clearly a parody: sniffly, overblown and funny, never actually sad. No vocals,
 > no choir, no electronic sounds.
 
-## 9. Replay / spectator theme (loop) — `replay.mp3`
+## 5. Replay / spectator theme (loop) — `replay.mp3`
 
 *Rewritten: the old prompt came out too light. This one is a punchy highlight reel.*
 
@@ -173,7 +110,7 @@ cheeky wink.
 > looping. Serious, pumped and grand, but steady enough to play under the action
 > without distracting. No vocals, no choir, no electronic sounds.
 
-## 10. Good & Evil world battle theme (loop) — `world-goodevil.mp3`
+## 6. Good & Evil world battle theme (loop) — `world-goodevil.mp3`
 
 > Instrumental colossal good-versus-evil orchestral battle music for the final world of
 > a comedic war game, 136 BPM, alternating between D minor and D major, about 2 minutes
@@ -183,7 +120,7 @@ cheeky wink.
 > battle back and forth, then combine into a huge, over-the-top finale. Divine, demonic
 > and absurdly epic. No vocals, no choir singing words, no electronic sounds.
 
-## 11. Renaissance & Spooky world theme (loop) — `world-spooky.mp3`
+## 7. Renaissance & Spooky world theme (loop) — `world-spooky.mp3`
 
 > Instrumental spooky, mischievous orchestral battle music for a comedic war game
 > world of skeletons, reapers and renaissance inventors, 132 BPM, C minor, about 2
@@ -193,7 +130,7 @@ cheeky wink.
 > gothic climax. Halloween-party spooky rather than frightening. No vocals, no
 > wordless choir, no electronic sounds.
 
-## 12. Campaign map / level select (loop) — `campaign-map.mp3`
+## 8. Campaign map / level select (loop) — `campaign-map.mp3`
 
 > Instrumental adventurous orchestral map music for choosing the next level of a
 > comedic war campaign, 108 BPM, A major, about 2 minutes, seamless loop. A
@@ -203,7 +140,7 @@ cheeky wink.
 > old map in a tavern, then the full orchestra returns. Curious, optimistic and
 > ready for adventure. No vocals, no electronic sounds.
 
-## 13. Secret Stash bonus theme (loop) — `world-secret.mp3`
+## 9. Secret Stash bonus theme (loop) — `world-secret.mp3`
 
 > Instrumental quirky, mysterious bonus-level music for the secret world of a comedic
 > war game, 118 BPM, F minor with surprising key changes, about 2 minutes, seamless
@@ -213,7 +150,7 @@ cheeky wink.
 > back into the sneaky groove. Weird, secretive, delightful and a little absurd. No
 > vocals, no electronic drums.
 
-## 14. Unit Creator workshop (loop) — `creator.mp3`
+## 10. Unit Creator workshop (loop) — `creator.mp3`
 
 > Instrumental playful, tinkering workshop music for a screen where players design
 > their own silly soldiers, 112 BPM, C major, about 2 minutes, seamless loop.
@@ -223,7 +160,7 @@ cheeky wink.
 > curious and fun, like a mad inventor building a contraption. No vocals, no
 > electronic sounds.
 
-## 15. Second battle theme (loop) — `battle-2.mp3`
+## 11. Second battle theme (loop) — `battle-2.mp3`
 
 *Moved to the bottom: a second main battle theme, only for variety, and battles already rotate in the four delivered world themes.*
 
@@ -240,6 +177,65 @@ cheeky wink.
 ---
 
 ## Delivered
+
+### Viking world battle theme (loop) — `world-viking.mp3` — ✅ delivered
+
+
+> Instrumental rowdy Viking battle music for the Norse world of a comedic war game
+> (raiders, a jarl, valkyries, headbutting berserkers), 112 BPM, D minor, about 2
+> minutes, seamless loop with no intro and no ending. Nordic folk meets a big
+> orchestra: a droning bowed lyre and a hardanger-style fiddle playing a fierce folk
+> melody, deep lur war horns, stomping feet and hand claps, heavy frame drums and
+> pounding toms like oars hitting the water, and low strings and brass for the raid.
+> A drunken mead-hall break in the middle: the fiddle turns into a lopsided, swaying
+> jig with tankard-like thumps, before the war horns call everyone back for a
+> thundering finale. Wild, hairy, beery and heroic. Wordless group shouts like "hey!"
+> and "hoo!" are welcome; no sung words, no electronic sounds, no electric guitars.
+
+### Dynasty world battle theme (loop) — `world-dynasty.mp3` — ✅ delivered
+
+
+> Instrumental high-energy kung-fu and samurai battle music for the dynasty world of a
+> comedic war game (samurai, ninjas, monks, firework archers, a hwacha rocket cart, a
+> dragon), 144 BPM, about 2 minutes, seamless loop with no intro and no ending. Two
+> clear halves that keep handing over. The Chinese half is a wuxia fight scene in the
+> major pentatonic: a soaring erhu lead, a bright dizi bamboo flute, rapid pipa tremolo
+> and guzheng glissandi, over Peking-opera percussion (the clacking wooden clapper,
+> crashing bo cymbals and the rising "wang" of an opera gong) that speeds up and
+> stops dead before each hit. The Japanese half is a samurai duel in the in (miyako-
+> bushi) scale: a breathy shakuhachi with sharp bends, a plucked koto, a taiko
+> ensemble with shouted "yo!" and "ha!" calls, and sudden silences broken by a single
+> huge drum hit. A modern orchestra's strings and brass only reinforce the big
+> moments. Fast, acrobatic and full of character, like a fight scene where everyone
+> keeps striking poses. Respectful of both traditions, never a caricature. No sung
+> words, no electronic sounds.
+
+### JJK battle theme (loop) — `world-jjk.mp3` — ✅ delivered
+
+
+> Instrumental high-octane anime battle music for a comedic war game's sorcerer faction
+> fighting in a neon city at night, 160 BPM, F# minor, about 2 minutes, seamless loop
+> with no intro and no ending. Modern anime-opening energy: fast palm-muted
+> distorted electric guitars and a slapping bass, tight hip-hop and breakbeat drums
+> trading with a big live rock kit, a dark synth arpeggio, and a cinematic string
+> section and brass stabs for the huge moments. A sudden half-time "domain" breakdown:
+> everything drops to a low drone, a ticking hi-hat and an eerie detuned piano, then
+> a riser explodes into a double-time guitar riff and the main hook. Cool, menacing and
+> hype, a little cursed. No vocals, no rap, no sung words.
+
+### Avatar battle theme (loop) — `world-avatar.mp3` — ✅ delivered
+
+
+> Instrumental adventurous four-elements battle music for a comedic war game's Avatar
+> faction, 126 BPM, D minor pentatonic, about 2 minutes, seamless loop with no intro
+> and no ending. A small world-music band leads and an orchestra supports: a bright
+> dizi flute and an erhu trading the heroic main tune, a plucked guzheng and pipa, a
+> warm duduk for a soulful bridge, Indonesian-style gamelan gongs and metallophones,
+> frame drums and big taiko hits, and deep Tibetan-style long horns. Each section leans
+> on one element: airy flutes and wind chimes, flowing harp and strings for water,
+> heavy low drums and stomps for earth, fierce brass and fast percussion for fire, then
+> all four join in a big finale. Heroic, warm and playful, like a kids' adventure show
+> going into a big fight. No vocals, no electronic sounds.
 
 ### Main battle theme (loop) — `battle-1.mp3` — ✅ delivered
 
