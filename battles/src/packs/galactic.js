@@ -43,7 +43,7 @@ function boltFrom(u, from, to, w, heavy = !!w.heavy) {
     addProjectile(b, boltType(u.team, heavy), from, _v, u, { life: (w.range / w.speed) * 1.4, damage: w.damage, force: w.force, blast: w.blast || 0 });
   }
   b.emit('spark', from.x, from.y, from.z, heavy ? 2 : 0.8);
-  b.sound('flyby', from, heavy ? 0.55 : 0.32, heavy ? 1.05 : rand(1.8, 2.1));
+  b.sound('ga_blaster', from, heavy ? 0.55 : 0.32, heavy ? 0.54 : rand(0.92, 1.08));
 }
 
 // A hand-held blaster shot: from the muzzle toward the aimed target (led a little), or
@@ -140,7 +140,7 @@ function ready(u) { return u.alive && (u.gaParryT || 0) <= 0 && u.stun <= 0 && !
 function flashBlade(u, k = 1) {
   const b = u.battle, h = swordTip(u, _a);
   b.emit('spark', h.x, h.y, h.z, 5 * k);
-  b.sound('clang', h, 0.7, 1.9);
+  b.sound('ga_clash', h, 0.7, 1);
   b.sound('whoosh', h, 0.5, 0.7);
   // the sword arm snaps across to make the catch
   const sd = Math.random() < 0.5 ? -1 : 1;
@@ -154,10 +154,10 @@ const saber = {
   step(u, dt) {
     u.gaParryT -= dt;
     // a low hum now and then
-    if ((u.gaHum -= dt) <= 0 && u.alive) { u.gaHum = rand(2.5, 4.5); if (u.battle.started) u.battle.sound('flyby', u.chestPos, 0.12, 0.32); }
+    if ((u.gaHum -= dt) <= 0 && u.alive) { u.gaHum = rand(2.5, 4.5); if (u.battle.started) u.battle.sound('ga_hum', u.chestPos, 0.12, 1); }
   },
   // the swing: a deep "vwoom"
-  event(u, t0, t1) { if (crossed(t0, t1, 0.3)) { const h = swordTip(u, _a); u.battle.sound('whoosh', h, 0.75, 0.62); u.battle.sound('flyby', h, 0.25, 0.45); } },
+  event(u, t0, t1) { if (crossed(t0, t1, 0.3)) { const h = swordTip(u, _a); u.battle.sound('ga_saber', h, 0.75, 1); } },
   // a light bolt from the front: batted back at the shooter (or off to the side)
   deflect(u, pr) {
     const w = u.def.weapon, b = u.battle;

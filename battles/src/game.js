@@ -2,7 +2,7 @@
 import { THREE, clamp, rand, damp, lerp, ballisticAngle } from './util.js';
 import { initPhysics } from './physics.js';
 import { Input } from './input.js';
-import { Audio, BATTLE_THEMES, HAS_TRACK } from './audio.js';
+import { Audio, BATTLE_THEMES, HAS_TRACK, SET_OF } from './audio.js';
 import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
@@ -329,7 +329,8 @@ export class Game {
 
   addSetupVis(team, a) {
     const def = UNIT_BY_ID[a.type];
-    if (a.type.startsWith('jk_')) this.audio.wantSamples('jjk'); // its voice lines load while you plan
+    const set = SET_OF[a.type.slice(0, 3)];
+    if (set) this.audio.wantSamples(set); // a faction's own sounds load while you plan
     const vis = buildUnitVisual(def, team, { skel: skelOf(def), share: true });
     vis.entry = a;
     vis.team = team;
@@ -1540,9 +1541,9 @@ export class Game {
     for (const v of this.battleVis) this.resetVis(v);
     const armies = this.armies.map((a) => a.map(({ type, x, z }) => ({ type, x, z })));
     this.battle = new Battle(this.terrain, armies, (e) => this.onEvent(e, true));
-    // the JJK voice lines and signature effects load only for a battle with JJK in it
+    // a faction's own sounds (JJK voices, Avatar / Minecraft / Galactic effects) load only for a battle with it in
     // (from setup already: addSetupVis)
-    if (this.battle.units.some((u) => u.def.id.startsWith('jk_'))) this.audio.wantSamples('jjk');
+    for (const u of this.battle.units) { const set = SET_OF[u.def.id.slice(0, 3)]; if (set) this.audio.wantSamples(set); }
     // reserves (summons made with the army, dormant until called) get their own visuals
     this.extraVis = [];
     for (let i = this.battleVis.length; i < this.battle.units.length; i++) {

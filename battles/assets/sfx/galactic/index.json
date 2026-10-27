@@ -1,0 +1,46 @@
+{
+ "_fallback": {
+  "ga_blaster": [
+   "flyby",
+   1.95
+  ],
+  "ga_clash": [
+   "clang",
+   1.9
+  ],
+  "ga_hum": [
+   "flyby",
+   0.32
+  ],
+  "ga_saber": [
+   "whoosh",
+   0.62
+  ]
+ },
+ "ga_blaster": [
+  "assets/sfx/galactic/ga_blaster-1.mp3",
+  "assets/sfx/galactic/ga_blaster-2.mp3",
+  "assets/sfx/galactic/ga_blaster-3.mp3",
+  "assets/sfx/galactic/ga_blaster-4.mp3"
+ ],
+ "ga_clash": [
+  "assets/sfx/galactic/ga_clash-1.mp3",
+  "assets/sfx/galactic/ga_clash-2.mp3",
+  "assets/sfx/galactic/ga_clash-3.mp3"
+ ],
+ "ga_hum": [
+  "assets/sfx/galactic/ga_hum-1.mp3",
+  "assets/sfx/galactic/ga_hum-2.mp3"
+ ],
+ "ga_saber": [
+  "assets/sfx/galactic/ga_saber-1.mp3",
+  "assets/sfx/galactic/ga_saber-2.mp3",
+  "assets/sfx/galactic/ga_saber-3.mp3"
+ ],
+ "_levels": {
+  "ga_blaster": 0.3,
+  "ga_clash": 0.819,
+  "ga_hum": 0.103,
+  "ga_saber": 0.3
+ }
+}

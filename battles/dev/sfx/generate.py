@@ -8,7 +8,10 @@
    not deployed). Existing originals are kept, so a run resumes; delete one to remake it.
 2. Every original is processed into battles/assets/sfx/<name>-<i>.mp3: lead-in silence
    trimmed (so hits land on time), tail trimmed with a short fade, mono, peak-normalised.
-3. battles/assets/sfx/index.json lists the variants per sound for src/audio.js.
+3. battles/assets/sfx/index.json lists the variants per sound for src/audio.js. A sound with
+   "set": "<faction>" goes to battles/assets/sfx/<set>/ with its own index.json (loaded only
+   when that faction fights); its "like": [synth name, pitch] is the synthesised sound it
+   falls back to (index `_fallback`) and is matched in loudness against (calibrate.cjs).
 4. Then run `node battles/dev/sfx/calibrate.cjs` (local server on :8131) to set each
    sound's level (`_levels`) so the recordings match the synthesised sounds' loudness.
 
@@ -82,22 +85,30 @@ def main():
             continue
         if key:
             generate(s, cfg['style'], key)
-    os.makedirs(OUT, exist_ok=True)
-    index = {}
+    indexes = {}  # set ('' = the main one) -> index
     for s in cfg['sounds']:
+        st = s.get('set', '')
+        out = os.path.join(OUT, st) if st else OUT
+        rel = f"assets/sfx/{st}/" if st else "assets/sfx/"
+        os.makedirs(out, exist_ok=True)
+        index = indexes.setdefault(st, {})
+        if s.get('like'):
+            index.setdefault('_fallback', {})[s['name']] = s['like']
         for i in range(1, s['n'] + 1):
             src = os.path.join(ORIG, f"{s['name']}-{i}.mp3")
-            dst = os.path.join(OUT, f"{s['name']}-{i}.mp3")
+            dst = os.path.join(out, f"{s['name']}-{i}.mp3")
             if not os.path.exists(src):
                 continue
             if (only and s['name'] not in only and os.path.exists(dst)) or process(src, dst):
-                index.setdefault(s['name'], []).append(f"assets/sfx/{s['name']}-{i}.mp3")
-    try:  # keep the loudness levels from calibrate.cjs
-        index['_levels'] = json.load(open(os.path.join(OUT, 'index.json'))).get('_levels', {})
-    except (OSError, ValueError):
-        pass
-    json.dump(index, open(os.path.join(OUT, 'index.json'), 'w'), indent=1)
-    print('index:', {k: len(v) for k, v in index.items()})
+                index.setdefault(s['name'], []).append(rel + f"{s['name']}-{i}.mp3")
+    for st, index in indexes.items():
+        out = os.path.join(OUT, st) if st else OUT
+        try:  # keep the loudness levels from calibrate.cjs
+            index['_levels'] = json.load(open(os.path.join(out, 'index.json'))).get('_levels', {})
+        except (OSError, ValueError):
+            pass
+        json.dump(index, open(os.path.join(out, 'index.json'), 'w'), indent=1)
+        print(st or 'main', 'index:', {k: len(v) for k, v in index.items()})
 
 
 if __name__ == '__main__':

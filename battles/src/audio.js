@@ -158,15 +158,24 @@ export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('bat
 const XFADE = 1.5;
 const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
 // Faction sample sets, fetched only once a battle has that faction in it (wantSamples).
-// jjk: voice lines and signature effects from the owner's jjkbrawler game (README).
-const SAMPLE_SETS = { jjk: 'assets/sfx/jjk/index.json' };
+// jjk: voice lines and signature effects from the owner's jjkbrawler game (README);
+// avatar / minecraft / galactic: ElevenLabs effects made by dev/sfx/generate.py.
+const SAMPLE_SETS = {
+  jjk: 'assets/sfx/jjk/index.json', avatar: 'assets/sfx/avatar/index.json',
+  minecraft: 'assets/sfx/minecraft/index.json', galactic: 'assets/sfx/galactic/index.json',
+};
+// which set a unit's sounds are in, by its id prefix
+export const SET_OF = { jk_: 'jjk', av_: 'avatar', mc_: 'minecraft', ga_: 'galactic' };
 // Spoken lines (vo_*) are recorded only, so they play with Sound effects: Synthesised
 // too; never pitch-shifted (no variation, no slow motion); on the voice bus; heard
 // across the field (a floor under the distance falloff; a lower one for the domain
 // stingers and barrier). Recorded-only effects (jk_*) have no synthesised version:
-// they layer over synth sounds and are skipped without their recording.
+// they layer over synth sounds and are skipped without their recording. Faction effects
+// (av_*, mc_*, ga_*) are recorded too, but each names the synthesised sound it falls back
+// to (its index's `_fallback`: [synth name, pitch]) when there's no recording or Sound
+// effects is set to Synthesised.
 const isLine = (name) => name.startsWith('vo_');
-const recOnly = (name) => name.startsWith('vo_') || name.startsWith('jk_');
+const recOnly = (name) => /^(vo|jk|av|mc|ga)_/.test(name);
 
 export class Audio {
   constructor() {
@@ -239,6 +248,7 @@ export class Audio {
     fetch(url).then((r) => (r.ok ? r.json() : null)).then((ix) => {
       if (!ix) return;
       Object.assign(this.sampleLevel, ix._levels || {});
+      Object.assign((this.fallback ||= {}), ix._fallback || {});
       for (const [name, files] of Object.entries(ix)) {
         if (name.startsWith('_')) continue;
         for (const f of files) {
@@ -576,7 +586,11 @@ export class Audio {
   play(name, pos, vol = 1, pitch = 1) {
     if (!this.ctx) return;
     const line = isLine(name);
-    if (recOnly(name) && (!this.samples?.[name]?.length || (this.noSamples && !line))) return;
+    if (recOnly(name) && (!this.samples?.[name]?.length || (this.noSamples && !line))) {
+      const fb = this.fallback?.[name];
+      if (!fb) return;
+      name = fb[0]; pitch *= fb[1]; // its synthesised stand-in
+    }
     let { gain, pan, dist } = this.spatial(pos, vol);
     if (line) { gain = Math.max(gain, vol * 0.45); dist = Math.min(dist, 12); }
     else if (name.startsWith('jk_dom') || name === 'jk_barrier') { gain = Math.max(gain, vol * 0.25); dist = Math.min(dist, 25); } // domains are big moments

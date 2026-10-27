@@ -35,7 +35,7 @@ const creeper = {
     u.desired.set(c.dirx * c.spd, 0, c.dirz * c.spd);
     if (c.gap < w.reach && !u.isDown() && u.stun <= 0) {
       u.mcFuse = w.fuse;
-      b.sound('fire', u.chestPos, 0.9, 1.7); // the hiss
+      b.sound('mc_hiss', u.chestPos, 0.9, 1); // the hiss
     }
     return c.t;
   },
@@ -68,13 +68,13 @@ function warp(u, x, z) {
   const b = u.battle, p = u.pos;
   x = clamp(x, -FIELD.x + 1, FIELD.x - 1); z = clamp(z, -FIELD.z + 1, FIELD.z - 1);
   for (let i = 0; i < 6; i++) b.emit('ptrail', p.x + rand(-0.3, 0.3), p.y + rand(-0.6, 0.9), p.z + rand(-0.3, 0.3));
-  b.sound('whoosh', p, 0.8, 0.5);
+  b.sound('mc_warp', p, 0.8, 1);
   const y0 = b.terrain.height(p.x, p.z), y1 = b.terrain.height(x, z);
   moveRag(u, x - p.x, y1 - y0 + 0.05, z - p.z);
   const v = u.rag.vel[PART.pelvis];
   u.rag.impulseAll(-v.x * u.M, -Math.min(0, v.y) * u.M, -v.z * u.M);
   for (let i = 0; i < 6; i++) b.emit('ptrail', x + rand(-0.3, 0.3), y1 + rand(0.2, 2.2), z + rand(-0.3, 0.3));
-  b.sound('whoosh', u.pos, 0.7, 0.7);
+  b.sound('mc_warp', u.pos, 0.7, 1.4);
 }
 // next to v, on the side facing u, ready to hit
 function warpTo(u, v, d) {

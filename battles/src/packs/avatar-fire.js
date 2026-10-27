@@ -143,7 +143,7 @@ function shootFire(u, part, o) {
     blue: o.blue ? 1 : 0, size: o.size ?? 0.7, burnT: o.burnT ?? 2, burnDps: o.burnDps ?? 0,
   });
   fx(b, 'av_fire', from, 0.3, o.blue ? 1 : 0);
-  b.sound('fire', from, 0.55, o.blue ? 1.5 : 1.2);
+  b.sound('av_fire', from, 0.55, o.blue ? 1.25 : 1);
 }
 
 // what puts fire out: water / ice / bubble projectiles of the other side
@@ -169,7 +169,7 @@ function fireHit(b, pr, v) {
   burn(b, v, pr.burnT, pr.burnDps, pr.owner);
   b.emit('av_fire', c.x, c.y, c.z, pr.size, pr.blue);
   if (steamy(v)) fx(b, 'av_steam', c, 1);
-  b.sound('fire', c, 0.6, pr.blue ? 1.5 : 1.15);
+  b.sound('av_fire', c, 0.6, pr.blue ? 1.25 : 0.96);
 }
 const fireballProj = (r, big) => ({
   g: 0, len: 0, r, life: 3,
@@ -194,7 +194,7 @@ function bolt(u, from, v, dmg, force, stun) {
     for (const s of beam.segs) s.t = t;
   }
   boltLine(b, from, to, 1.1);
-  b.sound('clang', to, 1.1, 2.5);
+  b.sound('av_bolt', to, 1.1, 1);
   b.sound('fire', from, 0.7, 2.1);
   b.sound('boom', to, 0.45, 1.9);
   _d.copy(to).sub(from).normalize();
@@ -275,7 +275,7 @@ function fireRing(u, blue = 0) {
     const a = (i / 10) * Math.PI * 2;
     b.emit('av_fire', p.x + Math.sin(a) * R * 0.6, gy + 0.5, p.z + Math.cos(a) * R * 0.6, 0.5, blue);
   }
-  b.sound('fire', p, 1.0, blue ? 1.4 : 0.9);
+  b.sound('av_fire', p, 1.0, blue ? 1.17 : 0.75);
   b.sound('whoosh', p, 0.8, 0.6);
   b.grid.query(p.x, p.z, R + 2, (v) => {
     if (!v.alive || v.team === u.team) return;
@@ -345,7 +345,7 @@ const azJets = (u) => begin(u, 'avf_jab2', u.def.weapon.jabDur, 0.35);
 const azCharge = (u) => {
   begin(u, 'avf_charge', u.def.weapon.boltDur, 0.6);
   u.avBoltCd = u.def.weapon.boltCd;
-  u.battle.sound('fire', u.chestPos, 0.6, 2.4);
+  u.battle.sound('av_charge', u.chestPos, 0.6, 1);
   const lp = new THREE.Vector3(0, -u.skel.handOffset * 1.3, 0);
   u.avOrbs = [PART.farmL, PART.farmR].map((p) => mark(u.battle, u, 'avf_orb', p, u.attackDur * 0.85, lp.clone()));
 };
@@ -390,7 +390,7 @@ const azula = {
         const k = u.M * w.dashSpeed * 0.6;
         u.rag.impulseAll(u.avDash.x * k, u.M * 2.2, u.avDash.z * k);
         fx(b, 'av_fire', u.pos, 0.8, 1);
-        b.sound('fire', u.pos, 0.9, 1.6);
+        b.sound('av_fire', u.pos, 0.9, 1.33);
         b.sound('whoosh', u.pos, 0.8, 1.2);
       }
       if (crossed(t0, t1, 0.85)) { // and a burst of blue fire where she lands
@@ -406,7 +406,7 @@ const azula = {
       const v = pick(u, w.boltRange * 1.15);
       const from = handAt(u, PART.farmR, V3(), 1.4);
       if (v) bolt(u, from, v, w.boltDmg, w.boltForce, w.boltStun);
-      else { boltLine(b, from, _p.copy(from).add(_v.set(Math.sin(u.heading) * 12, 0, Math.cos(u.heading) * 12)), 1); b.sound('clang', from, 0.9, 2.5); }
+      else { boltLine(b, from, _p.copy(from).add(_v.set(Math.sin(u.heading) * 12, 0, Math.cos(u.heading) * 12)), 1); b.sound('av_bolt', from, 0.9, 1); }
     }
   },
   step(u, dt) {
@@ -514,7 +514,7 @@ const iroh = {
         b.emit('avf_jet', mx, my, mz, (fx0 * cx + fz0 * sx) * sp, (fz0 * cx - fx0 * sx) * sp, rand(-0.25, 0.1) * sp);
       }
       if (u.avTk % 2) b.emit('av_ftrail', mx + fx0 * 0.3, my, mz + fz0 * 0.3, 0, 0);
-      if (u.avTk % 20 === 0) b.sound('fire', h, 0.9, 0.75);
+      if (u.avTk % 20 === 0) b.sound('av_breath', h, 0.9, 1);
       u.avTick -= dt;
       if (u.avTick <= 0) {
         u.avTick = 0.15;
@@ -573,7 +573,7 @@ const sparky = {
       const pr = addProjectile(b, 'avf_spark', from, vel, u, { damage: w.beamDmg, force: w.beamForce, blast: w.blast, life: (w.range * 1.4) / w.speed });
       pr.tleft = dist / w.speed + 0.02;
       b.emit('av_fire', from.x, from.y, from.z, 0.5, 0);
-      b.sound('fire', from, 1.0, 0.5);
+      b.sound('av_blast', from, 1.0, 1);
       b.sound('whoosh', from, 0.8, 0.5);
     }
   },

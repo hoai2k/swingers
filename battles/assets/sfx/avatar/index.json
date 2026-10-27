@@ -1,0 +1,130 @@
+{
+ "_fallback": {
+  "av_fire": [
+   "fire",
+   1.2
+  ],
+  "av_bolt": [
+   "clang",
+   2.5
+  ],
+  "av_charge": [
+   "fire",
+   2.4
+  ],
+  "av_breath": [
+   "fire",
+   0.75
+  ],
+  "av_blast": [
+   "fire",
+   0.5
+  ],
+  "av_air": [
+   "whoosh",
+   0.55
+  ],
+  "av_state": [
+   "gong",
+   0.7
+  ],
+  "av_water": [
+   "slash",
+   0.7
+  ],
+  "av_earth": [
+   "debris",
+   0.7
+  ],
+  "av_rock": [
+   "crunch",
+   0.8
+  ],
+  "av_ice": [
+   "clang",
+   2.4
+  ],
+  "av_heal": [
+   "heal",
+   1.1
+  ],
+  "av_boomerang": [
+   "flyby",
+   1.6
+  ]
+ },
+ "av_fire": [
+  "assets/sfx/avatar/av_fire-1.mp3",
+  "assets/sfx/avatar/av_fire-2.mp3",
+  "assets/sfx/avatar/av_fire-3.mp3"
+ ],
+ "av_bolt": [
+  "assets/sfx/avatar/av_bolt-1.mp3",
+  "assets/sfx/avatar/av_bolt-2.mp3",
+  "assets/sfx/avatar/av_bolt-3.mp3"
+ ],
+ "av_charge": [
+  "assets/sfx/avatar/av_charge-1.mp3",
+  "assets/sfx/avatar/av_charge-2.mp3"
+ ],
+ "av_breath": [
+  "assets/sfx/avatar/av_breath-1.mp3",
+  "assets/sfx/avatar/av_breath-2.mp3"
+ ],
+ "av_blast": [
+  "assets/sfx/avatar/av_blast-1.mp3",
+  "assets/sfx/avatar/av_blast-2.mp3"
+ ],
+ "av_air": [
+  "assets/sfx/avatar/av_air-1.mp3",
+  "assets/sfx/avatar/av_air-2.mp3",
+  "assets/sfx/avatar/av_air-3.mp3"
+ ],
+ "av_state": [
+  "assets/sfx/avatar/av_state-1.mp3",
+  "assets/sfx/avatar/av_state-2.mp3"
+ ],
+ "av_water": [
+  "assets/sfx/avatar/av_water-1.mp3",
+  "assets/sfx/avatar/av_water-2.mp3",
+  "assets/sfx/avatar/av_water-3.mp3"
+ ],
+ "av_earth": [
+  "assets/sfx/avatar/av_earth-1.mp3",
+  "assets/sfx/avatar/av_earth-2.mp3",
+  "assets/sfx/avatar/av_earth-3.mp3"
+ ],
+ "av_rock": [
+  "assets/sfx/avatar/av_rock-1.mp3",
+  "assets/sfx/avatar/av_rock-2.mp3",
+  "assets/sfx/avatar/av_rock-3.mp3"
+ ],
+ "av_ice": [
+  "assets/sfx/avatar/av_ice-1.mp3",
+  "assets/sfx/avatar/av_ice-2.mp3",
+  "assets/sfx/avatar/av_ice-3.mp3"
+ ],
+ "av_heal": [
+  "assets/sfx/avatar/av_heal-1.mp3",
+  "assets/sfx/avatar/av_heal-2.mp3"
+ ],
+ "av_boomerang": [
+  "assets/sfx/avatar/av_boomerang-1.mp3",
+  "assets/sfx/avatar/av_boomerang-2.mp3"
+ ],
+ "_levels": {
+  "av_fire": 0.45,
+  "av_bolt": 0.917,
+  "av_charge": 1.306,
+  "av_breath": 0.502,
+  "av_blast": 0.45,
+  "av_air": 0.35,
+  "av_state": 0.558,
+  "av_water": 0.406,
+  "av_earth": 0.4,
+  "av_rock": 1.057,
+  "av_ice": 1.5,
+  "av_heal": 0.678,
+  "av_boomerang": 0.3
+ }
+}
