@@ -58,6 +58,7 @@ export class Audio {
     this.ambientSpot('arcade_room', -19, 49, 14);
     this.ambientSpot('city_street', 875, 0, 260);
     this.ambientSpot('fair_crowd', 0, 226, 150); // Stratford Fall Fair (world/fair)
+    this.ambientSpot('underwater', 0, 0, 0, 1, { under: true }); // world/sealife.js: anywhere under the sea
     this.ambientSpot('jungle_ambience', -560, 850, 330, 0.8); // Tiki Jungle: birds, frogs, monkeys far off
     this.ambientSpot('ride_screams', -60, 200, 70); this.ambientSpot('ride_screams', 65, 255, 70);
     const resume = () => this.start();
@@ -191,7 +192,8 @@ export class Audio {
 
   // A looping ambient bed (a recorded `_loops` sound) heard within r metres of
   // (x, z), loudest within r / 4. Safe to call before audio starts.
-  ambientSpot(name, x, z, r = 60, vol = 1) { (this.spots ||= []).push({ name, x, z, r, vol, src: null, g: null }); }
+  // opts.under: plays (instead of by distance) while any player's camera is under water
+  ambientSpot(name, x, z, r = 60, vol = 1, opts = {}) { (this.spots ||= []).push({ name, x, z, r, vol, under: !!opts.under, src: null, g: null }); }
   updateSpots(cams) {
     if (!this.spots) return;
     const c = this.ctx, t = c.currentTime;
@@ -199,7 +201,8 @@ export class Audio {
       const buf = this.samples?.[s.name]?.[0];
       if (!buf) continue;
       let w = 0;
-      for (const cam of cams) w = Math.max(w, smooth(s.r, s.r * 0.25, Math.hypot(cam.position.x - s.x, cam.position.z - s.z)));
+      if (s.under) w = this.game.players.some((p) => p.camera?.underwater) ? 1 : 0;
+      else for (const cam of cams) w = Math.max(w, smooth(s.r, s.r * 0.25, Math.hypot(cam.position.x - s.x, cam.position.z - s.z)));
       if (w > 0.01 && !s.src) {
         s.g = c.createGain(); s.g.gain.value = 0; s.g.connect(this.ambBus);
         s.src = c.createBufferSource(); s.src.buffer = buf; s.src.loop = true;

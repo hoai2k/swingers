@@ -204,7 +204,8 @@
   "grunt": 0.6,
   "squeak": 0.5,
   "squawk": 0.5,
-  "jungle_ambience": 0.4
+  "jungle_ambience": 0.4,
+  "underwater": 0.5
  },
  "_loops": [
   "ride_screams",

@@ -281,6 +281,15 @@
    "loop": true,
    "level": 0.4,
    "prompt": "Tropical rainforest ambience loop with only birds, frogs and monkeys: colourful tropical bird calls and songs near and far, a chorus of tree frogs chirping and croaking, playful monkey hoots and chatter in the distant trees now and then, a little water dripping. No insects, no crickets, no buzzing, no wind, no music"
+  },
+  {
+   "name": "underwater",
+   "n": 3,
+   "dur": 22,
+   "loop": true,
+   "level": 0.5,
+   "hold": true,
+   "prompt": "Underwater ambience loop heard by a diver: soft muffled deep water hum, gentle bubbles rising now and then, faint distant whale and dolphin calls far away, calm and dreamy, cartoon game. No music, no voices, no breathing"
   }
  ]
 }
