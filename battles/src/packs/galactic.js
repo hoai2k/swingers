@@ -24,6 +24,7 @@ import {
   S, hurtBig, shoveBig, closestOnSeg,
 } from './bc-core.js';
 import { setArm } from './sm-core.js';
+import { FIELD } from '../world.js';
 
 const PI = Math.PI;
 const _o = new V3(), _p = new V3(), _v = new V3(), _d = new V3(), _a = new V3(), _b = new V3();
@@ -504,13 +505,85 @@ function walkerThink(u, dt, ctx) {
   const t = nearestEnemy(b, u.team, p) || ctx.t;
   // the cannons want something out beyond the legs; the feet deal with the rest
   m.tgt = nearestEnemy(b, u.team, p, (o) => (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 > 30) || t;
+  walkerSight(b, m, dt);
   u.expr = EXPR.angry;
-  const dx = t.pos.x - p.x, dz = t.pos.z - p.z, d = Math.hypot(dx, dz);
+  // with no clear shot: walk to a spot that has one, else close in on the cannon target
+  const go = m.noLos ? (m.detour ? { pos: m.detour } : m.tgt?.alive ? m.tgt : t) : t;
+  const dx = go.pos.x - p.x, dz = go.pos.z - p.z, d = Math.hypot(dx, dz);
   m.goalYaw = inField(p, Math.atan2(dx, dz));
   const bear = Math.abs(angleDiff(yawOf(m.torso.quat), m.goalYaw));
   // stride up to range, stand and shoot; trample through anything that gets close
-  m.goalSpeed = bear > 0.9 ? 0.4 : d > w.range * 0.8 ? WALKER.speed : d < 9 ? WALKER.speed * 0.75 : 0;
+  m.goalSpeed = bear > 0.9 ? 0.4 : m.noLos || d > w.range * 0.8 ? WALKER.speed : d < 9 ? WALKER.speed * 0.75 : 0;
   return t;
+}
+// Line of sight from the cannons (checked a few times a second): a target behind a wall,
+// a mesa or a kiosk is swapped for the nearest enemy in range the cannons can see. With
+// none, m.detour is the nearest spot it can walk to in a straight line (through a gateway,
+// round the end of a wall) with a clear shot at the target: m.noLos holds fire while
+// walkerThink walks there. With no such spot it fires anyway (the blast splashes over
+// low cover).
+function walkerSight(b, m, dt) {
+  if (m.detour && Math.hypot(m.detour.x - m.torso.pos.x, m.detour.z - m.torso.pos.z) < 2.5) m.detour = null;
+  if ((m.losT = (m.losT ?? 0) - dt) > 0) return;
+  m.losT = rand(0.35, 0.5);
+  const T = b.terrain, t = m.tgt;
+  // how long its shots have done nothing to this target (stuck firing into cover)
+  m.noDmgT = t && t === m.lastTgt && t.hp >= m.lastTgtHp - 1 ? (m.noDmgT || 0) + 0.42 : 0;
+  m.lastTgt = t; m.lastTgtHp = t?.hp;
+  m.noLos = false;
+  if (!T.losBlocked || !t?.alive) { m.detour = null; return; }
+  const head = partPoint(m, HEAD, 0, -0.3, 1.95, new V3());
+  if (!T.losBlocked(b, head, t.chestPos)) { m.detour = null; return; }
+  const range = m.u.def.weapon.range, p = m.torso.pos;
+  const near = b.teams[1 - m.u.team].filter((o) => o.alive && o !== t && !o.dormant)
+    .map((o) => [o, (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2])
+    .filter(([, d2]) => d2 > 30 && d2 < range * range).sort((x, y) => x[1] - y[1]).slice(0, 6);
+  for (const [o] of near) if (!T.losBlocked(b, head, o.chestPos)) { m.tgt = o; m.detour = null; return; }
+  if (m.detour && (m.detourT = (m.detourT || 0) - 0.4) > 0) { m.noLos = true; return; } // keep heading for it a while
+  // spots on rings round the target that see it and that the walker can walk to in a
+  // straight line (through a gateway, round the end of a wall): the shortest walk wins
+  const up = head.y - T.height(p.x, p.z), at = new V3(), seen = [];
+  let best = null, bd = Infinity;
+  for (const R of [9, 14, 20, 27]) for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2, x = t.pos.x + Math.cos(a) * R, z = t.pos.z + Math.sin(a) * R;
+    if (Math.abs(x) > FIELD.x - 3 || Math.abs(z) > FIELD.z - 3 || T.blocked?.(x, z, 2.5)) continue;
+    at.set(x, T.height(x, z) + up, z);
+    if (T.losBlocked(b, at, t.chestPos)) continue;
+    const walk = Math.hypot(x - p.x, z - p.z);
+    seen.push({ x, z, walk });
+    if (walk < bd && walkable(T, p.x, p.z, x, z)) { best = { x, z }; bd = walk; }
+  }
+  // none in one straight walk: go via a waypoint near the walker (out through its own
+  // gateway first), then look again from there
+  if (!best && seen.length) {
+    seen.sort((u, v) => u.walk - v.walk);
+    let wb = Infinity;
+    for (const R of [6, 10, 14, 18, 23]) for (let i = 0; i < 20; i++) {
+      const a = (i / 20) * Math.PI * 2, x = p.x + Math.cos(a) * R, z = p.z + Math.sin(a) * R;
+      if (Math.abs(x) > FIELD.x - 3 || Math.abs(z) > FIELD.z - 3 || !walkable(T, p.x, p.z, x, z)) continue;
+      for (const c of seen.slice(0, 12)) {
+        const tot = R + Math.hypot(c.x - x, c.z - z);
+        if (tot < wb && walkable(T, x, z, c.x, c.z)) { wb = tot; best = { x, z }; }
+      }
+    }
+  }
+  // still nothing, and its shots have been hitting cover for a while: wander to a random
+  // spot it can reach for a new view, then look again
+  if (!best && m.noDmgT > 8) {
+    for (let k = 0; k < 24 && !best; k++) {
+      const a = rand(0, Math.PI * 2), R = rand(8, 20), x = p.x + Math.cos(a) * R, z = p.z + Math.sin(a) * R;
+      if (Math.abs(x) < FIELD.x - 3 && Math.abs(z) < FIELD.z - 3 && walkable(T, p.x, p.z, x, z)) best = { x, z };
+    }
+    if (best) m.noDmgT = 0;
+  }
+  m.detour = best;
+  if (best) { m.detourT = 6; m.noLos = true; }
+}
+// can the walker stride straight from (x0, z0) to (x1, z1) without meeting an obstacle?
+function walkable(T, x0, z0, x1, z1) {
+  const L = Math.hypot(x1 - x0, z1 - z0), n = Math.ceil(L / 1.5);
+  for (let k = 2; k <= n; k++) if (T.blocked?.(x0 + ((x1 - x0) * k) / n, z0 + ((z1 - z0) * k) / n, 1.6)) return false;
+  return true;
 }
 function walkerFire(b, m) {
   const u = m.u, w = u.def.weapon;
@@ -551,7 +624,7 @@ function walkerAct(b, m, dt) {
   m.headYaw = (m.headYaw || 0) + clamp(want - (m.headYaw || 0), -1.4 * dt, 1.4 * dt);
   const dh = Math.hypot(c.x - head.x, c.z - head.z);
   m.headPitch = clamp(-Math.atan2(c.y - head.y, dh) * 0.8, -0.35, 0.6);
-  if (m.fireCd <= 0 && Math.abs(rel - m.headYaw) < 0.2 && dh < w.range && dh > 3) walkerFire(b, m);
+  if (m.fireCd <= 0 && !m.noLos && Math.abs(rel - m.headYaw) < 0.2 && dh < w.range && dh > 3) walkerFire(b, m);
 }
 // Anything in among the legs gets a foot: the leg nearest to it lifts and slams down.
 function walkerStomp(b, m, dt) {

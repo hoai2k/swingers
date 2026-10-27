@@ -251,6 +251,14 @@ when delivered; without one the tab shows just the name in the faction colour.
   **Katara** (water whip, slowing ice spikes, healing water), **Sokka** (a boomerang that comes back,
   then his space sword), **Toph** (rock pillars that launch enemies, thrown boulders, earth armour),
   the **Earthbender** (hurled rock discs) and the **Kyoshi Warrior** (twin war fans; turns blows aside).
+- `src/packs/maps-*.js` battlegrounds added by packs (they push into `MAPS` and draw through
+  `MAP_H`, `register({ obstacles, scenery })`): **Starbase Hangar** (`maps-starbase.js`, Galactic: a
+  sci-fi hangar deck with hazard stripes and glowing landing circles, blast barriers, cargo containers
+  and crates, a control platform in the middle, a parked fighter at each end, hangar mouths onto stars,
+  a ringed planet and a moon) and **Shibuya Crossing** (`maps-shibuya.js`, JJK: the scramble crossing on
+  Halloween night, zebra stripes, abandoned cars and taxis, traffic lights and a subway entrance among
+  neon-lit buildings and big screens, under the dark shimmering curtain). A map's `music` names its
+  battle theme.
 - `src/ext.js` the pack API (factions, units, items, weapon-kind hooks, projectiles, meshes) · `src/packs/index.js` lists the packs; big creatures and vehicles share `bc-core.js` (Walker, T-Rex, raptors) or the mount code in `sm-*.js`
 - `src/camera.js` free/follow/possess/cinematic rigs (unit occlusion, terrain collision) · `src/input.js` pad slots, hot-plug, rumble + keyboard · `src/ui.js` HUD · `src/game.js` state machine · `src/perf.js` frame-rate watchdog (sim time budget, heavy-load banner, auto resolution)
 

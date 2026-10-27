@@ -274,6 +274,11 @@ export const TerrainFeatures = {
     }
     return false;
   },
+  // is the straight line a -> c (points in the world) blocked by the ground or a standing
+  // obstacle taller than knee height? (for pack AI that aims shots itself)
+  losBlocked(b, a, c) {
+    return !!this.feat && this.feat.obs !== undefined && losBlocked(this, this.feat, STATE.get(b.world), a, c);
+  },
   // Per-unit AI hook (Unit.think, after its desired velocity is set): wading slows
   // units down; obstacles ahead turn the desired velocity along their side.
   steer(u) {
