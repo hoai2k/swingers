@@ -19,8 +19,8 @@ python3 -m http.server 8123      # then open http://localhost:8123
 
 The game opens on a **title screen**. PRESS START (any controller button, a
 key, or a click) starts the music, goes fullscreen, and opens the lobby. A
-controller that pressed **A**/**START** is already joined. Title art requests
-are in `image-requests.md`.
+controller that pressed **A**/**START** is already joined. The title art's
+requests are in `image-requests-history.md`.
 
 Connect controllers and press **A** to join — you spawn straight into the
 lobby **playground** (a live practice arena with a bar, rope, balloon and
@@ -161,7 +161,8 @@ a cheap hop onto the goal.
 ## Customizing
 
 **Art** — backdrops, platform tiles, hazards, heads, logo and icons are
-generated images (prompts in `image-requests.md` / `assets/generation.json`).
+generated images (prompts in `image-requests-history.md` / `assets/generation.json`; new
+requests go in `image-requests.md`).
 Originals live in `assets/{bg,heads,tiles,ui}`; the game loads web-ready
 copies from `assets/web/`, rebuilt with `python3 tools/build_assets.py`
 (needs Pillow). `src/art.js` loads them and every draw call falls back to

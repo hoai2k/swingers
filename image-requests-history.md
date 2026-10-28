@@ -1,0 +1,216 @@
+# Image request history
+
+Delivered image requests for Swingers (the root game), newest first, kept for the
+record: what was asked for, where it went and the prompts. Open requests, how to
+deliver and the style guide are in `image-requests.md`. Exact prompts are also in
+`assets/generation.json`.
+
+## Delivered round 4: Level objects (5 images)
+
+After the art review, these are the last frequently seen objects that are
+still flat procedural shapes next to the painted backdrops and textured
+platforms. The game already has a hook for each one: drop the file in, run
+`python3 tools/build_assets.py`, and it replaces the procedural drawing.
+I tested every hook with placeholder images.
+
+Style: the same glossy, bold-outlined cartoon finish as the power-up icons
+and the Rounders art. Transparent background, no text, no characters. The
+subject should fill the frame edge to edge, because the game stretches
+each one to fit the object's size.
+
+| File | Size | How the game uses it | Prompt | Status |
+| --- | --- | --- | --- | --- |
+| `assets/ui/obj_goal.png` | 512 × 512 | The finish line on every board, drawn about 130 px across and gently pulsing. A "GOAL" label is drawn above it. | A round finish portal seen face-on: a glowing golden ring made of twisted rope and brass fittings, a swirling bright sky-blue vortex inside, a small checkered pennant flag sticking up from the top of the ring, sparkles around it. | Delivered |
+| `assets/ui/obj_checkpoint.png` | 256 × 512 (tall) | A checkpoint flag on long boards, about 74 px tall. The game tints the cloth to the color of whoever touched it last, so the cloth must be **plain white**. | A short climbing-flag pole: dark iron pole with a carabiner clipped near the top and a coil of rope at the base, and a plain **white** triangular pennant flying to the right. Only the cloth is white; everything else is dark metal. | Delivered |
+| `assets/ui/obj_bounce.png` | 512 × 192 (wide) | A trampoline pad, stretched to each pad's width (120–150 px) and squashed when someone bounces. The bottom edge sits on the floor. | A side-view trampoline: a thick bouncy pink-and-white striped mat on top, two big coiled steel springs underneath, and a chunky dark base. Fill the full width. | Delivered |
+| `assets/ui/obj_vent.png` | 512 × 160 (wide) | The vent at the bottom of an updraft column, sitting on the floor (about 180 px wide on Updraft). | A side-view industrial floor vent: a chunky metal grate box with angled slats, a dark interior with a faint cyan glow, and wisps of wind curling up out of the top. | Delivered |
+| `assets/ui/obj_spinner.png` | 1024 × 96 (very wide) | The spinning bars robots ride (Spin Cycle, Clock Tower, Windmill Pass...), stretched along a 280–300 px bar about 48 px thick. | A long horizontal windmill or clock-hand bar: a riveted brass-and-wood beam with rounded, glowing teal caps on both ends and a heavy round iron hub in the exact center. Fill the full width. | Delivered |
+
+## Delivered round 3: Power-ups and blasters (10 images)
+
+Two new features shipped with procedural stand-ins:
+
+- **Power-ups** appear at random on every board. Each one shows as an icon
+  inside a glowing ring; the game draws the ring, so the icon is just the
+  symbol. A small version of the icon also floats over the robot carrying
+  it.
+- **Blasters**, the new tab of gun boards. The guns themselves are the
+  Rounders weapons, so they need no art. The board cards just need a
+  mechanic icon.
+
+Style: the same glossy, bold-outlined cartoon look as the Rounders art and
+the board icons you made last round. Centered, filling about 80% of the
+frame, transparent background, no text.
+
+| File | Size | Prompt | Status |
+| --- | --- | --- | --- |
+| `assets/ui/power_super.png` | 256 × 256 | A big golden boxing glove punching forward, with motion lines and a small star burst at the knuckles. | Delivered |
+| `assets/ui/power_feather.png` | 256 × 256 | A single soft white-and-pale-cyan feather drifting at an angle, with two little wind swirls. | Delivered |
+| `assets/ui/power_shield.png` | 256 × 256 | A shimmering soap-bubble shield sphere, iridescent cyan rim, glossy highlight, a faint hexagon pattern. | Delivered |
+| `assets/ui/power_sticky.png` | 256 × 256 | A bright green cartoon glove dripping thick green goo, with sticky strands between the fingers. | Delivered |
+| `assets/ui/power_rubber.png` | 256 × 256 | A glossy pink rubber bouncy ball squashing on impact, with a white stripe and bounce lines. | Delivered |
+| `assets/ui/power_turbo.png` | 256 × 256 | A flexed orange robot arm crackling with an orange lightning bolt and sparks. | Delivered |
+| `assets/ui/icon_gun.png` | 128 × 128 | White line icon of a chunky toy blaster with a soft drop shadow, matching the other `icon_*.png` board icons. | Delivered |
+| `assets/ui/fx_feather.png` | 128 × 128 | One small white feather on its own, pointing up and to the right, clean silhouette. Drawn several times falling around a robot with Feather. | Delivered |
+| `assets/ui/fx_goo.png` | 128 × 128 | A round blob of glossy green goo with a couple of drips. Drawn on the hands of a robot with Sticky Gloves. | Delivered |
+| `assets/ui/fx_spark.png` | 128 × 128 | A small orange-yellow electric spark burst. Drawn flickering on the arms of a robot with Turbo Arms. | Delivered |
+
+The Bubble Shield uses the Rounders `shield-bubble` effect (already
+imported), so it needs no new art. After adding these, run
+`python3 tools/build_assets.py` and they replace the stand-ins
+automatically.
+
+## Delivered round 2: Title screen (2 images)
+
+The game now boots on a Rounders-style title screen: dark vignette, a big
+arched logo that slowly "looms", a small line above it, a tagline and a
+pulsing PRESS START. It works today with a stand-in look (the meadow
+backdrop and the current flat logo). Rounders characters swing on ropes in
+from the top corners, so keep the far left and right edges simple.
+
+Use the Rounders title art as an explicit style reference. Copies are in
+`assets/reference/`:
+`rounders-logo-arch.png` (the arched logo) and `rounders-menu-bg.jpg` (the
+title backdrop). Swingers is the climbing spinoff, so keep the same finish
+and energy, but swap the guns and blades for **climbing gear and
+environments**.
+
+| File | Size | Prompt |
+| --- | --- | --- |
+| `assets/ui/logo-arch.png` | 1680 × 900, transparent | Game logo wordmark reading **"SWINGERS"**, matching the style of the reference `rounders-logo-arch.png`. Heavy beveled letters with a thick dark outline and bright rim-lit edges, set on a gentle upward arch, with a big burst of objects fanning out behind the word. In the burst, instead of guns and blades, put climbing and adventure gear: coiled ropes, grappling hooks, carabiners, a monkey-bar ladder, a spinning bar, jungle vines with leaves, ice-crystal shards, a glowing lava-rock chunk, a balloon, a trampoline spring, and small mountain peaks with a goal flag on top. Let one letter hang from a rope, or loop a rope through the "G". Rim-light palette: sunrise gold `#ffd94d`, sky blue `#4da3ff` and leaf green `#5fe08b`, with deep purple shadows. No characters. Transparent background. |
+| `assets/ui/title-bg.png` | 1920 × 1080, opaque | Title-screen backdrop matching the style of the reference `rounders-menu-bg.jpg` (floating worlds at dusk, dreamy depth of field), but built as a **vertical climbing world**. A cluster of tall floating rock spires and sky islands rises into the clouds, each one a Swingers theme: a lava volcano spire, a frozen peak dripping icicles, a jungle tower wrapped in vines, a candy cliff with frosting, a clockwork tower of gears, and a desert ruin arch. Hanging ropes, rope bridges, monkey bars and spinning bars link them, a few balloons drift upward, and a tiny goal flag waves on the highest peak. Warm sunrise glow on the horizon, deep indigo sky at the top. Keep the center 60% soft and darker, because the logo sits there; put the detail at the edges and the bottom. No characters, no text. |
+
+After adding them, run `python3 tools/build_assets.py`. The title screen
+picks them up automatically, and the stand-ins stay as fallbacks.
+
+## Delivered round 1: the original art pass (45 images)
+
+Art that would lift SWINGERS from "flat prototype" to "finished party game".
+Everything below is optional. The game draws everything procedurally today,
+so each image is a drop-in upgrade, not a blocker.
+
+Items are grouped by **priority**. P1 makes the biggest difference for the
+least work. Save files at the paths given; I'll wire them in.
+
+### P1: Theme backdrops (12 images)
+
+This is the biggest single visual upgrade. Today every board is a two-color
+gradient with dots. One painted backdrop per theme gives each board a sense
+of place.
+
+- **Path:** `assets/bg/<theme>.png` (e.g. `assets/bg/volcano.png`)
+- **Size:** 2400 × 1350 (16:9), opaque
+- **Composition:** a horizon/silhouette band across the lower third and
+  detail at the edges. The center stays an open, quiet sky.
+
+| File | Prompt |
+| --- | --- |
+| `meadow.png` | Twilight meadow at dusk: rolling blue hills in three receding layers, a few round trees in silhouette at the edges, soft first stars, a warm yellow glow low on the horizon. Calm, minimal, flat-shaded 2D game background, open sky in the middle. |
+| `cave.png` | Inside a vast crystal cave: dark violet rock walls framing the left and right edges, glowing pink crystals clustered along the bottom, faint stalactites at the top edge, soft haze in the middle. Flat-shaded 2D game background. |
+| `sunset.png` | Sunset over a desert canyon: layered mesa silhouettes in plum and magenta, a big hazy orange sun low on the right, wispy clouds. Flat-shaded 2D game background, quiet center. |
+| `jungle.png` | Dense jungle at night: hanging vines and giant leaves framing the top and sides, misty layered tree silhouettes in deep greens, a few fireflies in lime green. Flat-shaded 2D game background, open middle. |
+| `factory.png` | Inside a huge robot factory: big dim gears and pipes in teal-grey silhouette at the edges, conveyor gantries in the far background, cyan indicator lights, light haze. Flat-shaded 2D game background, uncluttered center. |
+| `sky.png` | Bright daytime sky high above the clouds: fluffy cloud banks at the bottom and edges, a few distant floating islands, pastel blue fading lighter toward the horizon, tiny pink kites far away. Flat-shaded 2D game background. |
+| `volcano.png` | Inside an erupting volcano: jagged dark-red rock silhouettes, rivers of glowing orange lava far in the background, embers drifting up, a hot glow from below. Flat-shaded 2D game background, dark quiet center. |
+| `night.png` | A clock-tower city skyline at midnight: tall spires and a giant clock face in deep navy silhouette, a big pale moon, scattered stars, mint-green window lights. Flat-shaded 2D game background, open sky in the middle. |
+| `candy.png` | Candy land at dusk: lollipop trees, gumdrop hills and swirly cotton-candy clouds in purples and pinks, sparkles. Playful, soft, flat-shaded 2D game background, quiet center. |
+| `frost.png` | Frozen arctic bay at night: icebergs and snowy cliffs in layered blue silhouettes, a soft aurora in pale cyan across the top, a calm icy sea at the bottom. Flat-shaded 2D game background. |
+| `desert.png` | Ancient desert ruins at golden hour: crumbling sandstone arches and broken pillars at the edges, dunes in the distance, warm dust in the air. Flat-shaded 2D game background, open center. |
+| `storm.png` | A windy storm front over mountains: dark slate clouds swirling in layers, distant lightning, rain streaks blowing sideways at the edges, cool blue-grey light. Flat-shaded 2D game background, quiet center. |
+
+### P1: Robot head sprites (6–8 images)
+
+The engine already supports sprite heads. Drop PNGs in `assets/heads/` and
+they show up in the lobby face picker. Heads spin with the body, so they
+should look good at any rotation (a face on a round head, not a full body).
+
+- **Path:** `assets/heads/<name>.png`
+- **Size:** 512 × 512, transparent, the head fills the circle edge to edge
+- **Shared prompt:** "A round robot head for a 2D party game, perfect
+  circle silhouette filling the frame, front view, bold dark outline, flat
+  cel shading with one highlight, big expressive face, white/neutral base
+  color (the game tints it per player), transparent background, no body."
+
+| File | Personality |
+| --- | --- |
+| `happy.png` | Wide grin, round LED eyes |
+| `visor.png` | Sleek visor band with two glowing eye dots |
+| `grump.png` | Furrowed metal brows, flat mouth |
+| `wink.png` | One eye winking, cheeky smile |
+| `shades.png` | Cool sunglasses, smirk |
+| `screen.png` | CRT screen face showing pixel eyes `^ ^` |
+| `antenna.png` | Little antenna on top, surprised "o" mouth |
+| `cyclops.png` | One big camera-lens eye |
+
+> Tip: if tinting looks wrong, make four color variants per head
+> (red `#ff5d6c`, blue `#4da3ff`, gold `#ffd94d`, green `#5fe08b`) and name
+> them `happy_red.png` and so on.
+
+### P2: Hazard textures (3 images)
+
+Right now lava, icy water and spikes all look the same (red teeth). Themed
+hazards make danger read instantly.
+
+| File | Size | Prompt |
+| --- | --- | --- |
+| `assets/tiles/lava.png` | 1024 × 256, seamless-x, opaque | Molten lava surface seen from the side: a bright yellow-orange glowing crust at the top edge fading to deep red and black below, cracked cooling plates, a few bubbles. 2D game texture, flat-shaded. |
+| `assets/tiles/icewater.png` | 1024 × 256, seamless-x, opaque | Freezing arctic water seen from the side: a pale-cyan foamy surface line at the top, floating ice chips, dark blue depths below. 2D game texture, flat-shaded. |
+| `assets/tiles/spikes.png` | 512 × 128, seamless-x, transparent | A row of chunky metal spikes pointing up, bold dark outline, red-tipped, cartoon style, transparent background. |
+
+### P2: Platform material tiles (one per theme, 12 images)
+
+Platforms are flat rounded rectangles in one color. A material per theme
+(mossy stone, riveted metal, candy, ice) is the second-biggest "place" cue
+after backdrops.
+
+- **Path:** `assets/tiles/plat_<theme>.png`
+- **Size:** 512 × 128, **seamless-x**, opaque. The top 20 px is the
+  "walkable" rim (grass, snow, frosting), the rest is the body material.
+- **Prompt template:** "Seamless horizontal 2D game platform texture,
+  side view, `<material>`, a distinct `<rim>` along the top edge, flat
+  shading, bold readable shapes, colors around `<platform hex>`."
+
+| Theme | Material | Rim |
+| --- | --- | --- |
+| meadow | blue-grey stone blocks | short grass |
+| cave | violet rock | small pink crystals |
+| sunset | plum sandstone | smooth worn edge |
+| jungle | mossy stone | moss and tiny leaves |
+| factory | riveted steel plates | yellow-black hazard stripe |
+| sky | white cloud-marble | fluffy cloud puff |
+| volcano | dark basalt with glowing cracks | charred crust |
+| night | navy brick | stone coping |
+| candy | wafer biscuit | pink frosting drip |
+| frost | packed snow over blue ice | snow cap with icicles hanging below |
+| desert | cracked sandstone brick | sand dusting |
+| storm | wet slate | dark rain-soaked edge |
+
+### P2: Title logo (1 image)
+
+- **Path:** `assets/ui/logo.png`
+- **Size:** 1600 × 500, transparent
+- **Prompt:** "Game logo wordmark reading 'SWINGERS', chunky rounded
+  bubble letters in warm yellow `#ffd94d` with a thick dark-purple outline
+  and a drop shadow, one letter hanging from a robot claw-hand as if being
+  swung, playful party-game style, transparent background."
+
+### P3: Gimmick icons for the board picker (8 images)
+
+For the card-style level select mockup: a small icon per mechanic.
+
+- **Path:** `assets/ui/icon_<name>.png`
+- **Size:** 128 × 128, transparent, white line icon with a soft drop shadow
+- Names and subjects: `rope` (a hanging rope), `wheel` (a spinning bar
+  with motion arcs), `balloon`, `lift` (a platform with up/down arrows),
+  `bounce` (a spring pad with an up chevron), `ice` (a snowflake),
+  `crumble` (a cracked brick), `wind` (three swoosh lines)
+
+### P3: Lobby / board-select key art (1 image)
+
+- **Path:** `assets/ui/keyart.png`
+- **Size:** 2400 × 1350, opaque
+- **Prompt:** "Key art for a 2D physics party game: four round robots
+  (red, blue, gold, green) with long noodly segmented arms grabbing each
+  other, swinging from ropes and spinning bars over a spike pit, one being
+  flung through the air, joyful chaos, bright flat-shaded style, dark navy
+  background with a warm spotlight, room for a title in the top third."
