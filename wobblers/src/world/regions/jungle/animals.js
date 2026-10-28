@@ -34,7 +34,7 @@ export function buildAnimals(game, R) {
   mk('hog', modelGeometry('hog'), 12, { k: { LEG: 0.7 } });
   mk('capybara', modelGeometry('capybara'), 14, { k: { LEG: 0.6 } });
   mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });
-  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 3.9, WAVEA: 0.14 } });
+  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 3.9, WAVEA: 0.22 } }); // (windier than before: 0.14)
   mk('croc', modelGeometry('croc'), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
   mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
   mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });

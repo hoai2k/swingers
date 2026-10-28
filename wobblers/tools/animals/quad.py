@@ -36,6 +36,11 @@ QUADS = {
     'capybara': dict(tris=8000, sheet='capybara.png', L=1.1, res=96, belly=0.24, cuts=[(0.5, 0.3, 0.5, 1.0)], hock=0.6),
     'tapir':    dict(sheet='tapir.png', L=1.9, res=96, hock=0.5),
     'croc':     dict(sheet='crocodile.png', L=3.0, res=120, belly=0.3, cuts=[(0.5, 0.3, 0.5, 1.0)], wmax=2.4, leg_r=0.1, leg_r_fixed=True, sprawl=True, body_tail=True, jaw=True, head=(0.14, 0.24)),
+    # round 18
+    'camel':    dict(sheet='camel.png', L=2.9, res=110, head=(0.2, 0.45), belly_y=0.38, leg_r=0.07, leg_r_fixed=True),
+    'fennec':   dict(tris=7000, sheet='fennec_fox.png', L=0.7, res=100),
+    'arcticFox': dict(tris=7000, sheet='arctic_fox.png', L=0.95, res=100),
+    'iguana':   dict(tris=8000, sheet='iguana.png', L=1.5, res=120, belly=0.3, cuts=[(0.5, 0.3, 0.5, 1.0)], wmax=2.4, leg_r=0.035, leg_r_fixed=True, sprawl=True, body_tail=True, head=(0.1, 0.2)),
 }
 
 
@@ -123,6 +128,9 @@ def build(name):
     bel = np.maximum(bel, bot)
     torso = cols < cA + 0.72 * (cB - cA)                          # (not under the head: jaws hang low)
     bel[torso] = ndi.grey_closing(bel, size=px(0.12), mode='nearest')[torso]   # narrow drips left (a lifted far leg's thigh)
+    if C.get('belly_y'):   # long walking legs spread under the whole body: the belly height is given (fraction of the side view's height)
+        tt = np.linspace(0, 1, int(torso.sum()))
+        bel[torso] = np.minimum(bel[torso], ys(S.r1 - C['belly_y'] * Hs) - 0.05 * Hs * ks * np.sin(np.pi * tt) ** 0.7)   # (a rounded belly, not a flat cut)
     bel = np.minimum(bel, top_o - 0.12 * Hs * ks)
     top_s = ndi.gaussian_filter1d(top_o, px(0.012)); bel_s = ndi.gaussian_filter1d(bel, px(0.015))
     # width from above (paws and ears opened away), over the animal's own extent
@@ -219,6 +227,16 @@ def build(name):
             m['r_mid'] = rm_; m['r_bot'] = 0.78 * rm_
             m['rf'] = 0.8 * m['r_bot']; m['fl'] = float(np.clip(m['fl'], 2.4 * m['r_bot'], 3.4 * m['r_bot']))
     z_sh = meas[True]['zr'] if True in meas else zc[0] + 0.7 * (zc[-1] - zc[0])
+    if os.environ.get('QDBG'):   # QDBG=1: what was measured, over the side view (scratch image)
+        from PIL import Image as _I, ImageDraw as _D
+        im = _I.fromarray((np.clip(sp, 0, 1) * 255).astype(np.uint8) if sp.dtype != np.uint8 else sp).convert('RGB'); dr = _D.Draw(im)
+        rw = lambda y: S.r1 - y / ks
+        dr.line([(float(c), float(rw(v))) for c, v in zip(cols, top_s)], fill=(255, 0, 0), width=3)
+        dr.line([(float(c), float(rw(v))) for c, v in zip(cols, bel_s)], fill=(0, 0, 255), width=3)
+        for fr, m in meas.items():
+            c = col_s(m['zr']); dr.line([(c, S.r0), (c, S.r1)], fill=(0, 200, 0) if fr else (200, 0, 200), width=2)
+        dr.line([(cA, S.r1), (cB, S.r1)], fill=(0, 0, 0), width=2)
+        im.save(os.environ.get('QDBG_OUT', '/tmp') + f'/qdbg_{name}.png')
     z_hip = meas[False]['zr'] if False in meas else zc[0] + 0.2 * (zc[-1] - zc[0])
 
     # ---- head: neck where the profile is thinnest ahead of the shoulders (or a share of the way) -----

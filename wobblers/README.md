@@ -51,6 +51,7 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
 | Dive (while swimming) | hold LB, or dash (B) looking steeply down | hold Shift, or V looking down | hold Numpad . |
+| Sneak (crouch) | walk slowly for a second | | |
 | Leap out of the water | dash (B) looking up while under | V looking up while under | |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
 | Quick emotes | D-pad up wave, right dance | 2 wave, 3 cheer, 4 dance | |

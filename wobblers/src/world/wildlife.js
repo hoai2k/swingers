@@ -110,7 +110,7 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         for (let g = 0; g < (opts.group || 1); g++) {
           const a = { kind, path, v, walk, rest, off: rnd() * 100, back: g * (opts.gap || 1.4), side: g ? (rnd() - 0.5) * 0.8 : 0,
             x: path.pts[0], z: path.pts[2], s: (opts.size || 1) * (g && opts.young ? 0.75 : 1) * (0.92 + rnd() * 0.16), sound: opts.sound, hear: opts.hear || 8,
-            stride: opts.stride || 0.8, flee: opts.flee, fleeV: opts.fleeV || 5, look: opts.look, roll: opts.roll, grp };
+            stride: opts.stride || 0.8, flee: opts.flee, fleeV: opts.fleeV || 5, look: opts.look, rear: opts.rear, roll: opts.roll, grp };
           grp.members.push(a); animals.push(a);
         }
         made++;
@@ -259,7 +259,7 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         if (a.look && (!g || g.st === 'free')) { near = noticed(a, a.x, a.z, a.pose?.[1] ?? 0, a.pose?.[3], a.look); if (near) a.tAdj = (a.tAdj || 0) + dt; }
         let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / a.stride + a.off;
         if (a.side) { const cs = Math.cos(yaw), sn = Math.sin(yaw); o.x += cs * a.side; o.z -= sn * a.side; }
-        if (near) { yaw = Math.atan2(near.x - o.x, near.z - o.z); amp = 0; pitch = 0; }
+        if (near) { yaw = Math.atan2(near.x - o.x, near.z - o.z); amp = 0; pitch = 0; if (a.rear) { pitch = 0.3; ph = t * 30 + a.off; amp = 0.12; } } // (rear: a snake rears up and rattles)
         else if (!tr.moving) { yaw += Math.sin(t * 0.6 + a.off) * 0.3; ph = t * 1.2 + a.off; amp = 0.15; }
         if (g?.st === 'return' && a.grp?.timid) {       // let go: a timid one runs off and is gone
           const st = a.fl?.st === 'gone' ? a.fl : (a.fl = { st: 'gone', x: g.x, z: g.z });
