@@ -139,6 +139,10 @@ export function buildSlopes(game, kit, R) {
 
 // ---- skiing / skating feel ----------------------------------------------------------------
 const VMAX = { piste: 13, jump: 17, ice: 7.5, air: 18 };
+// wearing skis (snow/skis.js): much faster, quicker carving, a harder snow plough, little
+// friction on groomed snow; 'powder' is the open mountain (only on skis)
+const VMAX_SKI = { piste: 25, jump: 27, ice: 12, air: 30, powder: 15 };
+const FRICTION_SKI = { piste: 0.1, jump: 0.1, powder: 0.9 };
 function installSkiing(game) {
   const imp = (p, x, z) => {
     const m = p.totalMass || 60;
@@ -157,6 +161,8 @@ function installSkiing(game) {
       // on (or hovering just over) a snow surface: the ragdoll's ground ray
       // flickers on slopes, so don't insist on p.grounded
       let kind = p.groundCollider && p.groundDist <= 1.0 ? snowSurfaces.get(p.groundCollider.handle) : null;
+      const sk = p.skis;
+      if (!kind && sk?.slick && p.grounded) kind = 'powder';
       if (kind) p._snowAir = kind !== 'ice';
       else if (p.grounded || p.swimming) p._snowAir = false;
       if (!kind) { if (!p._snowAir) continue; kind = 'air'; } // flying off a jump: keep the momentum
@@ -167,11 +173,17 @@ function installSkiing(game) {
       if (kind === 'ice') {
         if (mag > 0.2 && s < VMAX.ice) { dvx += fx * 3.2 * mag * DT; dvz += fz * 3.2 * mag * DT; } // skating push
         if (mag < 0.2 && s > 0.05) { const k = Math.min(s, 0.35 * DT); dvx -= v.x / s * k; dvz -= v.z / s * k; }
+      } else if (sk && kind !== 'air') {
+        if (sk.ploughing) { const k = Math.min(s, 8 * DT * mag); dvx -= v.x / s * k; dvz -= v.z / s * k; } // snow plough (pull back)
+        else if (p.grounded && mag > 0.2 && s < 7) { // skating / poling to get going
+          const cy = p.camera ? p.camera.yaw : p.yaw, wx = Math.sin(cy) * (st.moveY || 0) - Math.cos(cy) * (st.moveX || 0), wz = Math.cos(cy) * (st.moveY || 0) + Math.sin(cy) * (st.moveX || 0);
+          if ((wx * fx + wz * fz) / mag > 0.3) { dvx += fx * 3.5 * mag * DT; dvz += fz * 3.5 * mag * DT; }
+        }
       } else if (kind !== 'air' && s > 1.5 && mag > 0.2) {
         const dot = (v.x * fx + v.z * fz) / s;
         if (dot < -0.35) { const k = Math.min(s, 4 * DT * mag); dvx -= v.x / s * k; dvz -= v.z / s * k; } // snow plough
       }
-      if (kind !== 'ice' && s > 3.2) {
+      if (kind !== 'ice' && s > (sk ? 2 : 3.2)) {
         // faster than walking: undo the walk controller's pull back toward walking
         // pace (1 m/s² on slippery ground, 6 m/s² in the air), the carve steers instead
         const cy = p.camera ? p.camera.yaw : p.yaw, cfx = Math.sin(cy), cfz = Math.cos(cy);
@@ -185,20 +197,20 @@ function installSkiing(game) {
         dvx += n.x * n.y * 9.81 * DT; dvz += n.z * n.y * 9.81 * DT;
       }
       // carve: turn the velocity toward where the player faces, keeping its speed
-      if (kind !== 'air' && mag > 0.2 && s > 1.5) {
+      if (kind !== 'air' && mag > 0.2 && s > 1.5 && !sk?.ploughing) {
         const cur = Math.atan2(v.x, v.z);
         let want = p.yaw, d = want - cur;
         d = Math.atan2(Math.sin(d), Math.cos(d));
         if (Math.abs(d) < 2.2) {
-          const rate = (kind === 'ice' ? 2.4 : 1.8) * mag * DT, nd = Math.max(-rate, Math.min(rate, d));
+          const rate = (kind === 'ice' ? 2.4 : sk ? (kind === 'powder' ? 2.2 : 2.8) : 1.8) * mag * DT, nd = Math.max(-rate, Math.min(rate, d));
           const na = cur + nd;
           dvx += Math.sin(na) * s - v.x; dvz += Math.cos(na) * s - v.z;
         }
       }
       // speed limit (air drag), and a little snow friction everywhere
-      const vm = VMAX[kind];
+      const vm = (sk ? VMAX_SKI : VMAX)[kind];
       if (s > vm) { const k = Math.min(s - vm, (s - vm) * 2.5 * DT + 0.02); dvx -= v.x / s * k; dvz -= v.z / s * k; }
-      if (kind !== 'ice' && kind !== 'air' && s > 0.05) { const k = Math.min(s, 0.25 * DT); dvx -= v.x / s * k; dvz -= v.z / s * k; }
+      if (kind !== 'ice' && kind !== 'air' && s > 0.05) { const k = Math.min(s, (sk ? FRICTION_SKI[kind] : 0.25) * DT); dvx -= v.x / s * k; dvz -= v.z / s * k; }
       if (dvx || dvz) imp(p, dvx, dvz);
     }
   });

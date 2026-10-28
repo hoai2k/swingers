@@ -18,6 +18,7 @@ import { buildLift } from './snow/lift.js';
 import { buildSlopes, snowSurfaces } from './snow/slopes.js';
 import { buildPeak } from './snow/peak.js';
 import { buildFun } from './snow/fun.js';
+import { buildSkis } from './snow/skis.js';
 import { buildForest, forestMask } from './snow/forest.js';
 import { spawnFolk } from './snow/npcs.js';
 import { buildSnowAnimals } from './snow/animals.js';
@@ -142,6 +143,7 @@ export function build(game, kit, R) {
   T('hamlet', () => buildHamlet(game, kit, R));
   T('peak', () => buildPeak(game, kit, R));
   T('fun', () => buildFun(game, kit, R));
+  T('skis', () => buildSkis(game, kit, R));
   T('forest', () => buildForest(game, kit, R));
   T('folk', () => spawnFolk(game, R));
   T('animals', () => buildSnowAnimals(game, R));

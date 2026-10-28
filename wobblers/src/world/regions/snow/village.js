@@ -171,11 +171,7 @@ export function buildVillage(game, kit, R) {
   for (const [x, z] of [[60, -760], [40, -772], [16, -781], [-14, -790], [-40, -805], [-46, -824], [10, -800], [28, -805], [-22, -770], [36, -815]]) kit.lamp(x, z, y);
   for (const [x, z, yaw] of [[12, -778, 0], [-4, -778, 0], [44, -770, -0.6], [-18, -800, Math.PI / 2]]) kit.bench(x, z, yaw, y);
   kit.fence(-80, -846, -58, -846, 0x7a5032, 1.0, y); kit.fence(-40, -846, -10, -846, 0x7a5032, 1.0, y); kit.fence(40, -846, 78, -846, 0x7a5032, 1.0, y);
-  // ski racks and a trail map board
-  for (const [x, z] of [[-14, -808], [20, -846]]) {
-    kit.box(x, y + 0.6, z, 3, 0.08, 0.3, WOOD2, { collide: false });
-    for (let i = 0; i < 6; i++) kit.box(x - 1.25 + i * 0.5, y + 0.85, z, 0.09, 1.7, 0.03, [0xff3a3a, 0x3f8cff, 0xffd23f][i % 3], { collide: false, euler: [0.15, 0, 0] });
-  }
+  // trail map board (the ski racks at (-14, -808) and (20, -846) are snow/skis.js: Y takes a pair)
   kit.box(-40, y + 1.8, -828, 3, 2, 0.15, 0x2a62c9, { yaw: 0.3 });
   kit.box(-40.05 + Math.sin(0.3) * 0.09, y + 1.8, -827.9 + Math.cos(0.3) * 0.09, 2.7, 1.7, 0.02, SNOW, { yaw: 0.3, collide: false });
   kit.box(-40.05 + Math.sin(0.3) * 0.1, y + 1.8, -827.9 + Math.cos(0.3) * 0.1, 0.12, 1.5, 0.02, 0x2a62c9, { yaw: 0.3 + 0.0, collide: false, euler: [0, 0.3, 0.6] });

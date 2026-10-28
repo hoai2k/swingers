@@ -478,6 +478,28 @@ smoke, additive fire; point size from the viewport height in `onBeforeRender`), 
 within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fallbacks.
 `game.carDamage`: `repair(v)`, `explode(v)` (probes), `smoke`, `fire`.
 
+## Frostpeak chairlift and skis (`src/world/regions/snow/lift.js`, `slopes.js`, `skis.js`)
+
+- The chairlift (`lift.js`): chairs run at `V_FAST` 7.6 m/s on the line and slow to `V_SLOW` 1.2 m/s
+  through the stations (Y boards a passing chair; riders are set down on the far platform). A ride
+  up is ~52 s. `game.snowLift` (`chairs`, `at(s)`, `exitTop` / `exitBottom`) for probes.
+- Everyone slides on the snow overlays (`snowSurfaces`: 'piste', 'jump', 'ice'; `installSkiing` in
+  `slopes.js`: carve toward the stick, snow plough, `VMAX` caps). **Skis** (`skis.js`): ski racks
+  (`skiRack`, kit scenery + a `useSpot`, Y takes / returns a pair, `labelFor`) at the top station and
+  two in the village. Wearing them is `player.skis` (+ `player.skiMesh`, a ski mesh on each shin
+  group); player.js hooks are all `this.skis?.…`: `step` after the pose (what you stand on:
+  piste / jump / ice, 'powder' = Frostpeak terrain above the beach, 'deck' = the lift platforms,
+  'hard' = anything else; a knees-bent stance that tucks at speed; the skis can't face backwards
+  while moving, pulling back = `ploughing`), `dip` (lower hover height), `slick` (powder counts as
+  slippery unless stepping slowly uphill), `sync` (skis lie flat on the ground, toes in when
+  ploughing), `off` in `knockOut` / `respawn` / `destroy`. `slopes.js` uses `VMAX_SKI` (piste 25 m/s,
+  powder 15, air 30), a faster carve, poling under 7 m/s, an 8 m/s² plough and less friction
+  (`FRICTION_SKI`). They come off (`offSkis(p, why)`): a knock-out ('crash') or ~1 s of walking on
+  'hard' ground / swimming ('walk') drop them as two loose props (kind 'skis', gone after 25 s, at most
+  8 pairs) with a toast; in a vehicle seat, outside Frostpeak (`regionAt`), on respawn or at a rack
+  they are put away. Probe: `game.skis.equip(p)` / `off(p, why)`, `racks`, `loose`; down the piste on
+  skis ~15 s at ~25 m/s (without ~29 s at ~13.5).
+
 ## Waypoint stars (`src/world/waypoints.js`)
 
 `WAYPOINTS` ([id, name, x, z]) puts a spinning gold star (glow sprite + two crossed additive beam
