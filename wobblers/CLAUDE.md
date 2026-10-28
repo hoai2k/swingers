@@ -338,7 +338,9 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     placed and sized from the drawn near legs (both pairs one thickness, in proportion to the
     body), stood upright; a tail along the drawn tail (TAIL); ears on the skull. Per-animal knobs in
     `QUADS` (`hock` bend, `head` length range, `head_w` width, `torso_end`, `ears`, `sprawl`,
-    `body_tail`, `jaw`, `leg_r`).
+    `body_tail`, `jaw`, `leg_r`, `leg_r_fixed`, `belly_y` = a rounded belly line this far below the
+    back when diagonal legs fool the belly band, as on the camel). `QDBG=1` (`QDBG_OUT=<png>`) draws
+    the back / belly lines and legs it read over the sheet: check it first when a build looks off.
   - `tools/animals/designed.py`: everything else, one design function each (python, parrot,
     toucan, turtle, plesiosaur, manta, jellyfish, octopus, sea star, crab, seahorse) on shared
     pieces: `Sheet` (views in metres, profiles), `Grid` (ellipsoid, tapered tube `cone`, outline
@@ -348,6 +350,13 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     flippers BL / BR, tentacles and arms parts 10+ (the shader sways them; with the species
     constant `TENTW: 1` they wiggle instead: waves running out along each arm, growing toward
     the tip, plus a lift and curl, `TENTA` / `TENTK` / `TENTS` — the octopus).
+    Hand-placed designs for sheets `quad.py` misreads (round 18): `quadd` (four-legged: fennec,
+    arctic fox, iguana) and `perchd` (standing birds: roadrunner, flamingo, snowy owl) place parts
+    on the side view's box: u from tail end (0) to nose (1), v from top (0) to ground (1), radii in
+    box heights, widths as `xs`; read coordinates off `grid.py`-style u/v grids of the sheet.
+    Flying birds are separate models from the spread-wing top view (`bird`, e.g. `owlFly`).
+    `snake` takes `prof_top` (thickness from the top view) and `rattle=(n, r)` beads on TAIL;
+    snakes are built longer than drawn (`length`) so they wind more.
   - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
     straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
     other two share (`View`, `write`, `fill_bg`, surface nets).
@@ -432,7 +441,8 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   vehicle. The jungle (own loop) also has a per-session layout and per-path comings and goings
   (`key.away`, 35% away per 240 s cycle while out of sight).
   - Dusty Dunes (`regions/desert/animals.js`): camel caravans (grabbable, 450 kg), fennec foxes and
-    roadrunners that flee, rattlesnakes coiled by the canyon rims and mesas, scorpions, tortoises,
+    roadrunners that flee, rattlesnakes that slither between the canyon rims and mesas (`rear`: when one notices you it
+    rears and shakes its rattle), scorpions, tortoises,
     vultures circling the canyon and mesas.
   - Frostpeak (`regions/snow/animals.js`): mountain goats above 50 m (stare at you), arctic foxes
     (flee), snowy owls that take off and circle.
@@ -442,9 +452,12 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     by `kit.tree`) that scamper up the trunk when you come close and come down after you leave;
     crows on lawns and roofs; stray cats (look, flee) and house cats sitting out; Bigtown rats by
     bins placed on the side pavements: out some of the time, they dart into the bin (hidden 20 s).
-  - Their models are round-18 sculpted stand-ins in `animalmodels.js` (`quadruped`, `flier` and
-    one-offs) until the reference sheets (`image-requests.md` round 18) arrive; then build each with
-    `quad.py` / `designed.py` and add it to `SHEET_MODELS`. Sounds: `yip`, `rattle`, `hoot`,
+  - Built from their round-18 sheets (`SHEET_MODELS`): camel, fennec, arctic fox, iguana,
+    rattlesnake, roadrunner, flamingo, snowy owl (`snowyOwl`, flying `owlFly`). Still sculpted
+    stand-ins in `animalmodels.js` until built: scorpion, vulture, tortoise, goat (sheets in), and
+    rat, squirrel, crow (needs folded + flying models), cat (`image-requests.md` round 18).
+    Snakes slither with phase = distance x WAVEK (rattlesnake `WAVEK` 11, `WAVEA` 0.1; python
+    `WAVEA` 0.22) and their `stride` must be 2pi / WAVEK. Sounds: `yip`, `rattle`, `hoot`,
     `honk`, `caw`, `chitter` (recorded), plus existing ones.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
@@ -472,6 +485,11 @@ or a dive straight back under if the camera looks down (pitch > 0.45). The pad's
 flop is D-pad left (`input.js` sets `ragdoll` and `dLeft`: menus, the arcade and the forklift
 read a ragdoll press that comes with `dLeft` as 'left', not 'back'; the D-pad cheer emote gave
 way, the keyboards' 3 still cheers).
+
+Sneaking crouch (`player.js` `sneak` / `sneakT`): walking slowly (0.25-2.2 m/s with the stick
+held, on foot and grounded) for 1 s eases into a crouch: hips lower by 0.2 x size, the body
+leans forward and the legs stay bent. It holds through short pauses and ends above 2.6 m/s.
+Animals notice a sneaking player 30% less far away (`wildlife.js` `noticed`).
 
 ## Car damage (`src/world/cardamage.js`, Settings > Car damage, `settings.carDamage`, default on)
 

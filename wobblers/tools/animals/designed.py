@@ -276,6 +276,104 @@ def finish(name, C, fields, G, sheet, blend=0.03, length=None):
 # designs
 # ================================================================================================
 
+def perchd(name, C):
+    """a bird standing on its legs (wings folded), designed part by part like quadd on the side
+    view's box: a body through `body` sections [(u, v_top, v_bottom)], `neck` [(u, v, r)], `head`
+    (u, v, r, stretch), `beak` [(u, v, r)], optional `crest` feathers [[(u, v, r), ...], ...],
+    folded `wing` (u, v, rz, ry, rx) on WING_L / WING_R, a flat `tail` [(u, v, r)] (`tail_xs`,
+    `tail_ys`), two legs `leg` [(u, v, r)] hip to foot on FL / FR (`spread` apart) with three toes
+    forward and one back (`toe` length). Rig: HEAD, WING_L / WING_R, TAIL, FL / FR."""
+    sh = Sheet(C['sheet'], C['L'], land=True)
+    S = sh.S
+    vh = (S.r1 - S.r0) * sh.ks
+    P = lambda u, v, x=0.0: np.array([float(sh.zs(S.c0 + u * (S.c1 - S.c0))), float(sh.ys(S.r0 + v * (S.r1 - S.r0))), x * vh])
+    w = max(float(sh.zs(S.c1)) - float(sh.zs(S.c0)), vh)
+    G = Grid((float(sh.zs(S.c0)) - 0.05 * w, -0.05 * vh, -0.45 * w), (float(sh.zs(S.c1)) + 0.05 * w, float(sh.ys(S.r0)) + 0.05 * vh, 0.45 * w), C['res'])
+    xs = C.get('xs', 0.8)
+    bd = C['body']
+    fields = [dict(name='body', d=G.cone([P(u, (a_ + b_) / 2) for u, a_, b_ in bd], [(b_ - a_) / 2 * vh for u, a_, b_ in bd], xs=xs), part='body')]
+    neck = np.array([P(u, v) for u, v, r in C['neck']]); piv = neck[0]
+    fields.append(dict(name='neck', d=G.cone(neck, [r * vh for u, v, r in C['neck']], xs=C.get('neck_xs', 0.9)), part='HEAD', pivot=piv))
+    hu, hv, hr, hs = C['head']
+    fields.append(dict(name='head', d=G.ell(P(hu, hv), (hr * vh * hs, hr * vh, hr * vh * C.get('head_xs', 0.95))), part='HEAD', pivot=piv))
+    bk = np.array([P(u, v) for u, v, r in C['beak']])
+    fields.append(dict(name='beak', d=G.cone(bk, [r * vh for u, v, r in C['beak']], xs=C.get('beak_xs', 0.75)), part='HEAD', pivot=piv, blend=0.004 * sh.L))
+    for fe in C.get('crest', []):
+        fields.append(dict(name='crest', d=G.cone(np.array([P(u, v) for u, v, r in fe]), [r * vh for u, v, r in fe], xs=0.5), part='HEAD', pivot=piv, blend=0.004 * sh.L))
+    wu, wv, rz, ry, rx = C['wing']
+    bw = C.get('wing_x', 0.1)
+    for sgn, part in ((1, 'WING_L'), (-1, 'WING_R')):
+        fields.append(dict(name=part, d=G.ell(P(wu, wv, sgn * bw), (rz * vh, ry * vh, rx * vh)), part=part, pivot=P(wu + rz * 0.6 * vh / (S.c1 - S.c0) / sh.ks, wv, sgn * bw), blend=0.01 * sh.L))
+    tl = np.array([P(u, v) for u, v, r in C['tail']])
+    fields.append(dict(name='tail', d=G.cone(tl, [r * vh for u, v, r in C['tail']], xs=C.get('tail_xs', 1.8), ysc=C.get('tail_ys', 0.35)), part='TAIL', pivot=tl[0], blend=0.01 * sh.L))
+    sp = C.get('spread', 0.05); tlen = C.get('toe', 0.08) * vh
+    for sgn, part in ((1, 'FL'), (-1, 'FR')):
+        lp = np.array([P(u, v, sgn * sp) for u, v, r in C['leg']]); lr = [r * vh for u, v, r in C['leg']]
+        fields.append(dict(name='leg' + part, d=G.cone(lp, lr), part=part, pivot=lp[0], blend=0.006 * sh.L))
+        f = lp[-1].copy(); f[1] = lr[-1]
+        for ang in (-0.5, 0.0, 0.5, np.pi):
+            L_ = tlen * (0.55 if ang == np.pi else 1.0)
+            tip = f + np.array([np.cos(ang) * L_, -lr[-1] * 0.4, np.sin(ang) * L_ * sgn])
+            fields.append(dict(name='toe', d=G.cone([f, tip], [lr[-1] * 0.8, lr[-1] * 0.45]), part=part, pivot=lp[0], blend=0.004 * sh.L))
+    finish(name, C, fields, G, sh, blend=C.get('blend', 0.02))
+
+
+def quadd(name, C):
+    """a four-legged animal designed part by part where quad.py's automatic measuring can't read the
+    sheet (giant ears, a bushy tail held level, sprawled legs): every part is placed on the side
+    view's box (u: tail end 0 .. nose 1, v: top 0 .. ground 1; radii in box heights), widths from
+    the top view as ratios (xs). Parts: a torso through `torso` sections [(u, v_top, v_bottom)],
+    `neck` [(u, v, r)], `head` (u, v, r, stretch), `muzzle` [(u, v, r)], `ears` [(u, v, r, x)] stacks
+    (thin, mirrored), legs `front` / `hind` [(u, v, r)] from the hip down to the paw (+ `paw`
+    (length, height) in box heights), `spread` (paws' x, in box heights), `tail` [(u, v, r)] with
+    `tail_xs`. Rig: HEAD (neck, head, muzzle, ears), FL / FR / BL / BR, TAIL."""
+    sh = Sheet(C['sheet'], C['L'], land=True)
+    S, T = sh.S, sh.T
+    vh = (S.r1 - S.r0) * sh.ks
+    P = lambda u, v, x=0.0: np.array([float(sh.zs(S.c0 + u * (S.c1 - S.c0))), float(sh.ys(S.r0 + v * (S.r1 - S.r0))), x * vh])
+    lo = (float(sh.zs(S.c0)) - 0.05 * vh, -0.05 * vh, -0.6 * vh)
+    hi = (float(sh.zs(S.c1)) + 0.05 * vh, float(sh.ys(S.r0)) + 0.05 * vh, 0.6 * vh)
+    G = Grid(lo, hi, C['res'])
+    fields = []
+    xs = C.get('xs', 0.8)
+    tor = C['torso']
+    cen = [P(u, (a_ + b_) / 2) for u, a_, b_ in tor]; rad = [(b_ - a_) / 2 * vh for u, a_, b_ in tor]
+    fields.append(dict(name='body', d=G.cone(cen, rad, xs=xs), part='body'))
+    neck = np.array([P(u, v) for u, v, r in C['neck']]); nr = [r * vh for u, v, r in C['neck']]
+    hu, hv, hr, hs = C['head']; hc = P(hu, hv); piv = neck[0]
+    fields.append(dict(name='neck', d=G.cone(neck, nr, xs=C.get('neck_xs', xs)), part='HEAD', pivot=piv))
+    fields.append(dict(name='head', d=G.ell(hc, (hr * vh * hs, hr * vh, hr * vh * C.get('head_xs', 0.9))), part='HEAD', pivot=piv))
+    mz = np.array([P(u, v) for u, v, r in C['muzzle']]); mr = [r * vh for u, v, r in C['muzzle']]
+    fields.append(dict(name='muzzle', d=G.cone(mz, mr, xs=C.get('muzzle_xs', 0.85)), part='HEAD', pivot=piv, blend=0.01 * sh.L))
+    for sgn in (1, -1):
+        for u, v, r, x in C.get('ears', []):           # thin leaves (flat front to back), mirrored
+            fields.append(dict(name='ear', d=G.ell(P(u, v, sgn * x), (r * vh, r * vh * C.get('ear_h', 1.6), r * vh * C.get('ear_t', 0.3))), part='HEAD', pivot=piv, blend=0.008 * sh.L))   # (broad seen from the side, thin across)
+    sp = C['spread']
+    for front, (pl, pr_) in ((True, ('FL', 'FR')), (False, ('BL', 'BR'))):
+        chain = C['front' if front else 'hind']
+        for sgn, part in ((1, pl), (-1, pr_)):
+            # (u, v, r) points spread from 0.75 to 1 x `spread`; (u, v, r, x) points sit out at x (sprawled legs)
+            pts = np.array([P(q[0], q[1], sgn * (q[3] if len(q) > 3 else sp * 0.75 + (sp * 0.25) * i / (len(chain) - 1))) for i, q in enumerate(chain)])
+            rr = [q[2] * vh for q in chain]
+            fields.append(dict(name='leg' + part, d=G.cone(pts, rr), part=part, pivot=pts[0], blend=0.012 * sh.L))
+            pl_, ph_ = C.get('paw', (0.12, 0.05))
+            foot = pts[-1].copy(); foot[1] = ph_ * vh * 0.6
+            fields.append(dict(name='paw' + part, d=G.ell(foot + [pl_ * vh * 0.3, 0, 0], (pl_ * vh * 0.6, ph_ * vh * 0.6, rr[-1] * 1.3)), part=part, pivot=pts[0], blend=0.008 * sh.L))
+    for u, v, rz, ry, rx, part in C.get('blobs', []):   # extra rounded volumes (a dewlap, a hump)
+        fields.append(dict(name='blob', d=G.ell(P(u, v), (rz * vh, ry * vh, rx * vh)), part=part, pivot=piv if part == 'HEAD' else None, blend=0.012 * sh.L))
+    if C.get('crest'):                                   # a row of spikes along the back (u0, u1, n, height)
+        u0, u1, n, hgt = C['crest']
+        tops = [(u, a_) for u, a_, b_ in tor] + [(C['head'][0], C['head'][1] - C['head'][2])]
+        for i in range(n):
+            u = u0 + (u1 - u0) * i / max(1, n - 1); v = float(np.interp(u, [q[0] for q in tops], [q[1] for q in tops]))
+            hh = hgt * (1 - abs(i / max(1, n - 1) - 0.6) * 1.2)
+            fields.append(dict(name='spike', d=G.cone([P(u, v + 0.03), P(u - 0.015, v - hh)], [0.04 * vh, 0.006 * vh]), part='HEAD' if u > C['neck'][0][0] else 'body', pivot=piv if u > C['neck'][0][0] else None, blend=0.004 * sh.L))
+    if C.get('tail'):
+        tp = np.array([P(u, v) for u, v, r in C['tail']]); tr = [r * vh for u, v, r in C['tail']]
+        fields.append(dict(name='tail', d=G.cone(tp, tr, xs=C.get('tail_xs', 1.0)), part='TAIL', pivot=tp[0], blend=0.02 * sh.L))
+    finish(name, C, fields, G, sh, blend=C.get('blend', 0.025))
+
+
 def snake(name, C):
     """a long python: one tapering tube winding gently along z (the game's slither wave adds the
     rest), thickness profile and paint from the sheet stretched along it, a flat wedge head"""
@@ -291,7 +389,12 @@ def snake(name, C):
     # our snake: t along z, radius profile from the side view's thickness (max -> R)
     tt = np.linspace(0, 1, 160)
     hy_t = np.interp(tt, ts(zS), hyS); hx_t = np.interp(tt, ts(zT), hwT)
+    if C.get('prof_top'):    # a sheet with a raised neck / rattle: the top view's width is the reliable thickness
+        hy_t = hx_t.copy()
     prof = hy_t / hy_t[int(0.3 * len(tt)):int(0.85 * len(tt))].max()
+    if C.get('rattle'):      # the tail tapers into the rattle (beads added below), not into the drawn rattle's bulk
+        rz = C['rattle'][1]
+        prof = np.minimum(prof, np.clip(0.25 + (tt - rz) / 0.2, 0.25, 1.0))
     prof = np.clip(ndi.gaussian_filter1d(prof, 4), 0.08, 1.0)
     head0 = 1 - C.get('head', 0.07)                             # where the head starts (fraction)
     prof = prof * (1 - 0.22 * np.exp(-((tt - (head0 - 0.01)) / 0.02) ** 2))   # a neck behind the head
@@ -309,6 +412,11 @@ def snake(name, C):
     rh = rn * C.get('head_r', 1.5)
     fields.append(dict(name='skull', d=G.ell((zh0 + 0.35 * hl, rh * 0.8, 0), (0.45 * hl, rh * 0.75, rh * 1.15)), part='HEAD', pivot=(zh0 - 0.3 * hl, rn, 0)))
     fields.append(dict(name='snout', d=G.cone([[zh0 + 0.5 * hl, rh * 0.7, 0], [Ls / 2 - 0.35 * rh, rh * 0.5, 0]], [rh * 0.75, rh * 0.42], xs=1.25), part='HEAD', pivot=(zh0 - 0.3 * hl, rn, 0)))
+    if C.get('rattle'):      # rattle: a stack of rounded beads at the tail tip, shrinking to a button
+        n, rz = C['rattle']
+        for i in range(n):
+            z = -Ls / 2 + rz * Ls * (i + 0.5) / n; rb = R * (0.32 + 0.18 * i / max(1, n - 1))
+            fields.append(dict(name='rattle', d=G.ell((z, R * 0.4, 0), (rz * Ls / n * 0.65, rb, rb * 1.1)), part='TAIL', pivot=(-Ls / 2 + rz * Ls * 1.5, R * 0.4, 0), blend=0.002 * Ls))
     # paint: each point of our snake takes the colour of a place along the drawn one: the tail tip
     # and the head as drawn, the long body in between going back and forth over the drawn body
     # (mirrored repeats, no seams) so the blotches keep their shape instead of stretching
@@ -926,6 +1034,45 @@ def seahorse(name, C):
 
 
 DESIGNS = {
+    # round 18 birds: standing (perchd) and the snowy owl in flight (bird, from the spread-wing top view)
+    'roadrunner': (perchd, dict(tris=6000, sheet='roadrunner.png', L=0.55, res=150, xs=0.75, spread=0.05, toe=0.09,
+        body=[(0.4, 0.46, 0.6), (0.5, 0.44, 0.74), (0.61, 0.44, 0.74), (0.71, 0.46, 0.62)],
+        neck=[(0.7, 0.5, 0.07), (0.76, 0.36, 0.05), (0.8, 0.25, 0.05)], head=(0.84, 0.21, 0.08, 1.1), beak=[(0.9, 0.24, 0.03), (0.99, 0.255, 0.008)],
+        crest=[[(0.82, 0.14, 0.025), (0.76, 0.02, 0.008)], [(0.8, 0.15, 0.025), (0.72, 0.06, 0.007)], [(0.84, 0.14, 0.02), (0.8, 0.03, 0.007)]],
+        wing=(0.56, 0.52, 0.17, 0.08, 0.04), wing_x=0.1, tail=[(0.4, 0.5, 0.09), (0.22, 0.37, 0.09), (0.02, 0.26, 0.07)], tail_xs=1.5, tail_ys=0.5,
+        leg=[(0.56, 0.62, 0.045), (0.58, 0.8, 0.028), (0.57, 0.97, 0.02)])),
+    'flamingo': (perchd, dict(tris=6000, sheet='flamingo.png', L=0.8, res=170, xs=0.8, spread=0.03, toe=0.07,
+        body=[(0.08, 0.42, 0.45), (0.28, 0.34, 0.54), (0.5, 0.32, 0.54), (0.64, 0.35, 0.46)],
+        neck=[(0.66, 0.36, 0.065), (0.84, 0.33, 0.05), (0.89, 0.24, 0.045), (0.81, 0.13, 0.042), (0.75, 0.05, 0.042), (0.8, 0.02, 0.045)],
+        head=(0.83, 0.04, 0.04, 1.2), beak=[(0.87, 0.05, 0.028), (0.95, 0.1, 0.024), (0.955, 0.17, 0.012)],
+        wing=(0.33, 0.37, 0.28, 0.1, 0.05), wing_x=0.06, tail=[(0.12, 0.46, 0.04), (0.0, 0.52, 0.02)], tail_xs=1.2, tail_ys=0.5,
+        leg=[(0.44, 0.52, 0.028), (0.4, 0.69, 0.018), (0.42, 0.98, 0.014)])),
+    'snowyOwl': (perchd, dict(tris=6000, sheet='snowy_owl.png', L=0.6, res=150, xs=0.9, spread=0.12, toe=0.07,
+        body=[(0.1, 0.55, 0.75), (0.35, 0.38, 0.82), (0.6, 0.3, 0.9), (0.78, 0.3, 0.85)],
+        neck=[(0.76, 0.38, 0.2), (0.84, 0.26, 0.19)], head=(0.87, 0.2, 0.2, 0.95), beak=[(0.96, 0.21, 0.04), (0.99, 0.27, 0.015)],
+        wing=(0.45, 0.5, 0.42, 0.2, 0.08), wing_x=0.22, tail=[(0.15, 0.63, 0.08), (0.0, 0.67, 0.05)],
+        leg=[(0.6, 0.8, 0.07), (0.61, 0.97, 0.05)])),
+    'owlFly': (bird, dict(tris=6000, sheet='snowy_owl.png', row=0, rows=1, L=0.6, res=150, wing_top=True, body_u=(0.25, 0.8), body_v=(0.3, 0.85),
+        body_w=0.07, head=(0.87, 0.2, 0.2), beak=[(0.96, 0.21, 0.04), (0.99, 0.27, 0.015)], wing_u=(0.3, 0.75), tail_u=0.2, feet=(0.6, 0.85))),
+    # round 18 (quadd: designed four-legged animals, parts placed on the side view's box)
+    'iguana': (quadd, dict(tris=8000, sheet='iguana.png', L=1.5, res=150, xs=1.15, spread=0.3,
+        torso=[(0.38, 0.55, 0.78), (0.5, 0.42, 0.78), (0.65, 0.36, 0.76), (0.76, 0.36, 0.72)],
+        neck=[(0.76, 0.45, 0.17), (0.82, 0.33, 0.15)], head=(0.87, 0.22, 0.13, 1.3), head_xs=0.85, muzzle=[(0.9, 0.22, 0.1), (0.975, 0.24, 0.06)],
+        blobs=[(0.82, 0.48, 0.07, 0.15, 0.05, 'HEAD')], crest=(0.3, 0.86, 16, 0.22),
+        front=[(0.7, 0.58, 0.07, 0.14), (0.72, 0.62, 0.06, 0.38), (0.75, 0.9, 0.05, 0.42)], hind=[(0.43, 0.6, 0.085, 0.14), (0.4, 0.63, 0.07, 0.4), (0.44, 0.92, 0.05, 0.46)], paw=(0.18, 0.05),
+        tail=[(0.38, 0.63, 0.11), (0.25, 0.66, 0.07), (0.12, 0.69, 0.04), (0.0, 0.71, 0.012)])),
+    'arcticFox': (quadd, dict(tris=7000, sheet='arctic_fox.png', L=0.95, res=130, xs=0.85, spread=0.12,
+        torso=[(0.40, 0.34, 0.70), (0.55, 0.28, 0.69), (0.70, 0.27, 0.66), (0.76, 0.27, 0.6)],
+        neck=[(0.76, 0.36, 0.14), (0.82, 0.26, 0.12)], head=(0.86, 0.22, 0.12, 1.05), muzzle=[(0.9, 0.27, 0.07), (0.98, 0.31, 0.03)],
+        ears=[(0.835, 0.07, 0.06, 0.1)], ear_t=0.45, ear_h=1.1,
+        front=[(0.74, 0.58, 0.07), (0.755, 0.8, 0.05), (0.77, 0.95, 0.045)], hind=[(0.45, 0.56, 0.09), (0.4, 0.8, 0.05), (0.43, 0.95, 0.045)], paw=(0.13, 0.06),
+        tail=[(0.40, 0.45, 0.08), (0.29, 0.46, 0.17), (0.15, 0.55, 0.18), (0.04, 0.66, 0.07)], tail_xs=0.9)),
+    'fennec': (quadd, dict(tris=7000, sheet='fennec_fox.png', L=0.75, res=130, xs=0.75, spread=0.07,
+        torso=[(0.37, 0.48, 0.70), (0.47, 0.45, 0.72), (0.6, 0.46, 0.72), (0.70, 0.5, 0.72)],
+        neck=[(0.7, 0.58, 0.1), (0.78, 0.55, 0.085)], head=(0.85, 0.54, 0.09, 1.1), muzzle=[(0.88, 0.57, 0.06), (0.97, 0.59, 0.025)],
+        ears=[(0.8, 0.36, 0.13, 0.07), (0.79, 0.24, 0.1, 0.1), (0.785, 0.12, 0.06, 0.12)], ear_t=0.25, ear_h=1.2,
+        front=[(0.66, 0.62, 0.04), (0.665, 0.8, 0.032), (0.67, 0.95, 0.027)], hind=[(0.42, 0.6, 0.055), (0.38, 0.8, 0.033), (0.4, 0.95, 0.027)], paw=(0.1, 0.05),
+        tail=[(0.37, 0.52, 0.05), (0.25, 0.58, 0.1), (0.13, 0.66, 0.11), (0.03, 0.75, 0.05)], tail_xs=0.9)),
     # birds: u along the side view tail tip 0 .. beak tip 1, v top 0 .. bottom 1 (fractions of its box)
     'parrot': (bird, dict(tris=8000, sheet='parrot_toucan.png', row=0, rows=2, L=0.85, res=130, wing_top=True, body_u=(0.47, 0.86), body_v=(0.62, 0.9),
                           body_w=0.075, head=(0.885, 0.615, 0.105), wing_u=(0.47, 0.76), tail_u=0.45, feet=(0.58, 0.9),
@@ -946,6 +1093,7 @@ DESIGNS = {
     'seahorse': (seahorse, dict(tris=3000, sheet='sea_star_crab_seahorse.png', row=2, rows=3, L=0.14, res=110, side_only=True,
                                 cut=[(0.62, 1.0, 0.12, 0.34), (0.0, 0.33, 0.33, 0.66)], snout=((0.6, 0.2), (0.98, 0.26)),
                                 fin=(0.0, 0.36, 0.33, 0.66))),
+    'rattlesnake': (snake, dict(tris=7000, sheet='rattlesnake.png', L=0.9, length=1.7, radius=0.06, res=300, wave=0.05, wavelength=0.6, head=0.06, head_r=1.6, prof_top=True, rattle=(5, 0.045), sheet_head=0.16)),
     'snake': (snake, dict(tris=10000, sheet='snake.png', L=1.6, length=4.6, radius=0.14, res=300, wave=0.1, wavelength=1.6)),
 }
 
