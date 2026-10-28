@@ -424,8 +424,14 @@ export class Game {
     this.render();
   }
 
-  // advance the simulation (also the headless test hook)
+  // advance the simulation (also the headless test hook); the button presses
+  // polled so far are used up by this step
   step(dt) {
+    this.stepSim(dt);
+    this.input.consume();
+  }
+
+  stepSim(dt) {
     this.updateCamera(dt);
     const sdt = dt * this.timeScale;
     if (this.overlay) this.overlay.update(dt);   // pause menu / DOM menus / pad notices (pause.js)

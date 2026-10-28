@@ -34,6 +34,8 @@ export const SP = {
   jumpSpeed: 860,
   maxSpeed: 2200,
   coyote: 0.1,
+  jwBuffer: 0.15,        // a jump / web press that can't act yet (web cooldown, mid-air
+                         // just before landing) is kept this long and acts as soon as it can
   webSpeed: 7000,
   webMax: 900,
   webMin: 30,
@@ -57,6 +59,7 @@ export const SP = {
   grabRange: 900,        // RB pulls a loose weapon from this far      // a web stays on at least this long
   webCool: 0.12,         // cooldown after a web; +webCoolStep per web since landing
   webCoolStep: 0.08,
+  webCoolMax: 0.3,       // ...but never longer than this, so long swing chains stay responsive
   airAnchor: 0.3,        // a web into empty air clings to nothing this long
   webAssist: [0, 0.1, -0.1, 0.2, -0.2, 0.3, -0.3],   // aim-assist fan (rad)
   coxa: 12,               // leg segments: short base, thigh (rises to the knee), shin (tapers to a point)
@@ -187,9 +190,14 @@ export class Spider {
     // LB is the original's jump / web button; A and LT do the same
     const jwHeld = !!inp && (inp.held.lb || inp.held.a || inp.held.lt);
     const jwPressed = !!inp && (inp.pressed.lb || inp.pressed.a || inp.pressed.lt);
-    if (jwPressed) {
-      if (this.ground || this.coyote > 0) this.jump(move);
-      else if (!this.web) this.shootWeb(move, inp);
+    this.jwBuf = jwPressed ? SP.jwBuffer : Math.max(0, (this.jwBuf || 0) - dt);
+    if (this.web && !jwHeld) this.web.letGo = true;
+    if (this.jwBuf > 0) {
+      // a fresh press while a tapped web still has its minimum hold: let that
+      // web go and shoot the new one
+      if (jwPressed && this.web && this.web.letGo && !this.ground) this.releaseWeb(true);
+      if (this.ground || this.coyote > 0) { this.jump(move); this.jwBuf = 0; }
+      else if (!this.web && !this.noWeb && this.webCooldown <= 0) { this.shootWeb(move, inp); this.jwBuf = 0; }
     }
     if (this.web && !jwHeld && this.web.t >= SP.webMinHold) this.releaseWeb(true);
     if (this.web) this.updateWeb(dt, move);
@@ -439,7 +447,7 @@ export class Spider {
     this.web = { state: 'fly', x: this.x, y: this.y, dx, dy, len: 0, dist: 0, solid: null, lx: 0, ly: 0, taut: false, target: null, t: 0 };
     // webs in a row without landing cool down longer
     this.airWebs = (this.airWebs || 0) + (this.ground ? 0 : 1);
-    this.webCooldown = SP.webCool + SP.webCoolStep * Math.max(0, this.airWebs - 1);
+    this.webCooldown = Math.min(SP.webCoolMax, SP.webCool + SP.webCoolStep * Math.max(0, this.airWebs - 1));
     sfx.webShoot();
   }
 

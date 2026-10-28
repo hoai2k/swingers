@@ -24,6 +24,7 @@ export class Input {
     this.keys = new Set();
     this.mouse = { x: 0, y: 0, l: false, r: false, seen: false };
     this.prev = new Map();
+    this.pending = new Map();    // id -> edges not yet seen by a simulation step
     this.states = [];
     this.keyboardSeen = false;
     this.anyActivity = false;
@@ -123,19 +124,34 @@ export class Input {
         lt: s.lt > 0.45, rt: s.rt > 0.45, lb: !!s.lb, rb: !!s.rb, ls: !!s.ls, rs: !!s.rs,
       };
       const prev = this.prev.get(s.id) || {};
+      // edges seen on a refresh that ran no simulation step (displays above
+      // 60 Hz, hit-stop) are kept until a step has used them, or the press
+      // would be lost: see consume()
+      const pend = this.pending.get(s.id);
       s.pressed = {};
       s.released = {};
       s.held = raw;
       for (const key of EDGE_KEYS) {
-        s.pressed[key] = !!raw[key] && !prev[key];
-        s.released[key] = !raw[key] && !!prev[key];
+        s.pressed[key] = (!!raw[key] && !prev[key]) || !!(pend && pend.pressed[key]);
+        s.released[key] = (!raw[key] && !!prev[key]) || !!(pend && pend.released[key]);
       }
+      this.pending.set(s.id, { pressed: s.pressed, released: s.released });
       s.anyPressed = EDGE_KEYS.some((key) => s.pressed[key]);
       this.prev.set(s.id, raw);
       if (s.anyPressed) this.anyActivity = true;
     }
     this.states = out;
     return out;
+  }
+
+  // called after every simulation step: the edges it saw are used up
+  consume() {
+    this.pending.clear();
+    for (const s of this.states) {
+      s.pressed = { ...NOEDGE };
+      s.released = { ...NOEDGE };
+      s.anyPressed = false;
+    }
   }
 
   get(id) {
