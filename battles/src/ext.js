@@ -35,6 +35,8 @@
 //                                           //   = it handled the attack button itself
 //     aim: true } },                        //   a ranged pack kind: possession aims it at
 //                                           //   the crosshair (control.aimPt, aimPitch)
+//   (kind.basic / kind.skills: a possessed unit's techniques on X / LB / RB with their
+//    cooldowns - see src/skills.js)
 //   proj: { type: {g, len, r, stick, roll, explode, fuse, life,
 //                  hit(battle, pr, victim, part) -> bool handled,
 //                  ground(battle, pr) -> bool handled, step(battle, pr, dt)} },

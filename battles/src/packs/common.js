@@ -323,7 +323,7 @@ export const airborne = (b, o) => o.pos.y - b.terrain.height(o.pos.x, o.pos.z) >
 // the nearest enemy of u standing on the ground within range (null if none)
 export function groundEnemy(b, u, range) {
   let best = null, bd = range * range;
-  for (const o of b.teams[1 - u.team]) {
+  for (const o of b.foes(u.team)) {
     if (!o.alive || airborne(b, o)) continue;
     const d = (o.pos.x - u.pos.x) ** 2 + (o.pos.z - u.pos.z) ** 2;
     if (d < bd) { bd = d; best = o; }

@@ -8,8 +8,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { sprite, drawSprite, preloadSprites } from '../sprites.js';
 import { rand } from '../util.js';
 import { safeMuzzle, shove } from './kit.js';
+
+preloadSprites(['proj_rocket.png']);
 
 const ARM = 0.09;
 
@@ -88,10 +91,13 @@ export class Rocket {
     ctx.fillStyle = '#ffb347';
     ctx.globalAlpha = 0.85;
     const fl = 10 + Math.random() * 8;
-    ctx.beginPath(); ctx.moveTo(-8, -3.5); ctx.lineTo(-8 - fl, 0); ctx.lineTo(-8, 3.5); ctx.fill();
+    const art = sprite('proj_rocket.png');
+    const tail = art ? -13 : -8;
+    ctx.beginPath(); ctx.moveTo(tail, -3.5); ctx.lineTo(tail - fl, 0); ctx.lineTo(tail, 3.5); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
-    // body
+    // body: the delivered sprite (never upside down), else drawn
+    if (art) { drawSprite(ctx, 'proj_rocket.png', 0, 0, 28, { fit: 'w', flipY: Math.cos(a) < 0 }); ctx.restore(); return; }
     ctx.fillStyle = '#d9dde6';
     ctx.beginPath(); ctx.roundRect(-9, -4, 15, 8, 2); ctx.fill();
     ctx.fillStyle = '#ff5a3a';
@@ -110,6 +116,7 @@ export class RocketLauncher extends Weapon {
   static ammo = 3;
   static weight = 0.41;   // guns are rarer than blades
   static color = '#ff7a2a';
+  static art = { hx: 55, hy: 44, s: 0.25 };   // wpn_rocket.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);

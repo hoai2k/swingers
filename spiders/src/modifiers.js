@@ -16,6 +16,7 @@
 import { settings } from './settings.js';
 import { closestOnSeg, segSegDist, TAU, rgba, pick } from './util.js';
 import { text } from './hud.js';
+import { preloadSprites, drawSprite } from './sprites.js';
 import './pool.js';
 
 export const MODIFIERS = [
@@ -34,6 +35,8 @@ export const MODIFIERS = [
   { id: 'vacuum', name: 'Magnet Mode', desc: 'Weapons drift toward the nearest spider', color: '#6ab0ff', round: (m) => { m.vacuum = true; } },
 ];
 export const MOD_BY_ID = new Map(MODIFIERS.map((m) => [m.id, m]));
+// full-colour card art (assets/web/mod_<id>.png); drawModIcon() stays the fallback
+preloadSprites(MODIFIERS.map((m) => `mod_${m.id}.png`));
 
 export function activeMods() {
   const on = settings.mods || {};
@@ -159,7 +162,7 @@ export function drawModCards(ctx, mods, cx, y, { alpha = 1, w = 150, h = 112, ex
     ctx.strokeStyle = rgba(c.color, 0.85); ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = rgba(c.color, 0.16);
     ctx.beginPath(); ctx.roundRect(x, yy, w, 64, [16, 16, 0, 0]); ctx.fill();
-    drawModIcon(ctx, c.id, x + w / 2, yy + 34, 22, c.color);
+    if (!(MOD_BY_ID.has(c.id) && drawSprite(ctx, `mod_${c.id}.png`, x + w / 2, yy + 34, 56))) drawModIcon(ctx, c.id, x + w / 2, yy + 34, 22, c.color);
     text(ctx, c.name, x + w / 2, yy + 92, { size: 19, color: '#fff', sw: 4, maxWidth: w - 12 });
   });
   ctx.restore();

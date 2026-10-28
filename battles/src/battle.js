@@ -56,14 +56,17 @@ export function park(u) {
 }
 
 export class Battle {
-  // armies: [[{type, x, z}], [{...}]]
+  // armies: [[{type, x, z}], [{...}], ...]: two armies (Blue, Red) or up to four (Yellow,
+  // Green): every army fights every other, the last one standing wins
   constructor(terrain, armies, sink) {
     this.terrain = terrain;
     this.world = createWorld();
     terrain.addCollider(this.world);
     this.sink = sink; // (event) => void
     this.units = [];
-    this.teams = [[], []];
+    const nt = Math.max(2, armies.length);
+    this.teams = Array.from({ length: nt }, () => []);
+    this.foeCache = [];
     this.grid = new Grid(3);
     this.projectiles = [];
     this.stuck = [];
@@ -74,12 +77,13 @@ export class Battle {
     this.overT = 0;
     this.voiceBudget = 0;
     this.delayed = [];
-    this.front = [null, null];
-    for (let t = 0; t < 2; t++) {
-      for (const a of armies[t]) {
+    this.front = this.teams.map(() => null);
+    for (let t = 0; t < nt; t++) {
+      for (const a of armies[t] || []) {
         const def = UNIT_BY_ID[a.type];
         if (!def) continue;
-        const yaw = t === 0 ? Math.PI / 2 : -Math.PI / 2;
+        // two armies face each other across the field; more face its middle
+        const yaw = nt === 2 ? (t === 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-a.x, -a.z);
         const u = new Unit(this, def, t, a.x, a.z, yaw + rand(-0.05, 0.05));
         u.kind?.init?.(u);
         this.units.push(u);
@@ -102,8 +106,8 @@ export class Battle {
         }
       }
     }
-    this.startCounts = [this.teams[0].length, this.teams[1].length];
-    this.startValue = [0, 1].map((t) => this.teams[t].reduce((s, u) => s + u.def.cost, 0));
+    this.startCounts = this.teams.map((a) => a.length);
+    this.startValue = this.teams.map((a) => a.reduce((s, u) => s + u.def.cost, 0));
     // opening battle cries
     for (const u of this.units) if (Math.random() < 0.5) this.delayed.push([rand(0, 0.9), () => this.voice(u, 'cry', true)]);
   }
@@ -125,10 +129,17 @@ export class Battle {
 
   alive(team) { return this.teams[team].filter((u) => u.alive); }
 
+  // every unit of every other army (two armies: just the other one). With more armies
+  // the list is built once per step (a unit summoned mid-step joins it the next step).
+  foes(team) {
+    if (this.teams.length === 2) return this.teams[1 - team];
+    return this.foeCache[team] || (this.foeCache[team] = this.teams.flatMap((a, t) => (t === team ? [] : a)));
+  }
+
   nearestEnemy(u) {
     const p = u.pos;
     let best = null, bd = Infinity;
-    for (const o of this.teams[1 - u.team]) {
+    for (const o of this.foes(u.team)) {
       if (!o.alive) continue;
       // nearest, but spread out: enemies already mobbed by several of our
       // units look further away (so a blob splits over the enemy line)
@@ -139,7 +150,7 @@ export class Battle {
     // nobody left on foot: something still fighting for a fallen unit (kind.standIn,
     // e.g. the War Elephant's second archer) is the target
     if (!best) {
-      for (const o of this.teams[1 - u.team]) {
+      for (const o of this.foes(u.team)) {
         const s = !o.alive && o.kind?.standIn?.(o);
         if (!s || !s.alive) continue;
         const d = (s.pos.x - p.x) ** 2 + (s.pos.z - p.z) ** 2;
@@ -179,14 +190,16 @@ export class Battle {
 
   // Each team's centre and the direction to the enemy centre (for keeping a line).
   updateFront() {
-    const c = [[0, 0, 0], [0, 0, 0]];
+    const nt = this.teams.length;
+    const c = this.teams.map(() => [0, 0, 0]);
     for (const u of this.units) {
       if (!u.alive) continue;
       const a = c[u.team];
       a[0] += u.pos.x; a[1] += u.pos.z; a[2]++;
     }
-    for (let t = 0; t < 2; t++) {
-      const a = c[t], e = c[1 - t];
+    for (let t = 0; t < nt; t++) {
+      // (the enemy centre: every other army's units together)
+      const a = c[t], e = nt === 2 ? c[1 - t] : c.reduce((s, o, i) => (i === t ? s : [s[0] + o[0], s[1] + o[1], s[2] + o[2]]), [0, 0, 0]);
       if (!a[2] || !e[2]) { this.front[t] = null; continue; }
       const x = a[0] / a[2], z = a[1] / a[2];
       const dx = e[0] / e[2] - x, dz = e[1] / e[2] - z;
@@ -207,6 +220,7 @@ export class Battle {
       if (d[0] <= 0) { this.delayed.splice(i, 1); d[1](); }
     }
     this.grid.clear();
+    this.foeCache.length = 0;
     for (const u of this.units) { u.mobbed = 0; if (u.alive) this.grid.insert(u); }
     for (const u of this.units) if (u.alive && u.target && u.def.weapon.kind === 'melee') u.target.mobbed++;
     this.updateFront();
@@ -222,10 +236,11 @@ export class Battle {
     }
     for (const f of EXT.battleStep) f(this, dt);
     if (!this.over) {
-      const a0 = this.teams[0].some((u) => this.fighting(u)), a1 = this.teams[1].some((u) => this.fighting(u));
-      if (!a0 || !a1) {
+      const left = [];
+      for (let t = 0; t < this.teams.length; t++) if (this.teams[t].some((u) => this.fighting(u))) left.push(t);
+      if (left.length <= 1) {
         this.over = true;
-        this.winner = a0 ? 0 : a1 ? 1 : -1;
+        this.winner = left.length ? left[0] : -1;
         this.overT = 0;
         this.emit('over', 0, 0, 0, this.winner);
         for (const u of this.units) if (u.alive && Math.random() < 0.7) this.delayed.push([rand(0.2, 1.5), () => this.voice(u, 'cheer', true)]);
@@ -617,8 +632,8 @@ export class Battle {
   }
 
   stats() {
-    return [0, 1].map((t) => {
-      const alive = this.teams[t].filter((u) => this.fighting(u));
+    return this.teams.map((army, t) => {
+      const alive = army.filter((u) => this.fighting(u));
       return {
         alive: alive.length, total: this.teams[t].length,
         value: alive.reduce((s, u) => s + u.def.cost, 0), startValue: this.startValue[t],

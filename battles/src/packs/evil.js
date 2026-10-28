@@ -378,7 +378,7 @@ const BACKLINE = new Set(['ranged', 'heal', 'bard', 'gd_cleric', 'gd_flag', 'gd_
 function preyFor(u) {
   const b = u.battle, w = u.def.weapon, p = u.pos;
   let best = null, bv = 0;
-  for (const o of b.teams[1 - u.team]) {
+  for (const o of b.foes(u.team)) {
     if (!o.alive || o.bc || o.sm || o.s > 1.7) continue;
     const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
     if (d > w.blink || d < 5) continue;

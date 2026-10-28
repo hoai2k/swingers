@@ -187,7 +187,7 @@ export class UI {
     this.setText(v.detail, `<div class="lvd-top" style="--wc:${S.color}"><span class="lvd-name">${S.name}</span><small class="smwhen">${S.when}</small></div>
       <div class="lvd-tip">${S.desc}</div>
       ${S.mapImg ? `<img class="lvd-map" src="${S.mapImg}" alt="">` : ''}<div class="lvd-row"><span>🗺 ${S.map}</span>${S.random ? '<span>🎲 new armies every time</span>' : ''}</div>
-      ${side(S.sides[0], 0)}${side(S.sides[1], 1)}`);
+      ${S.sides.map((s, t) => side(s, t)).join('')}`);
     this.setText(v.players, `Army size: ${d.sizes.map((s, i) => `<span class="${i === d.size ? 'on' : ''}">${s}</span>`).join('')}
       &nbsp; Start: <span class="${d.watch ? 'on' : ''}">▶ watch now</span><span class="${d.watch ? '' : 'on'}">✎ edit armies first</span>`);
   }
@@ -285,7 +285,8 @@ export class UI {
     s.gv.classList.toggle('over', d.used > d.budget);
     this.setText(s.cnt, `${d.count}<small> / ${fmt(d.cap)} units</small>`);
     const e = d.enemy;
-    this.setText(s.foe, `<span style="color:${tc(1 - t)}">${e.name}</span> ${e.hidden ? '<b class="hid">🙈 hidden</b>' : `<small>${e.count} units · ${fmt(e.value)}</small>`} ${e.state || ''}`);
+    const ot = e.team ?? 1 - t;
+    this.setText(s.foe, `<span style="color:${tc(ot)}">${e.name}</span> ${e.hidden ? '<b class="hid">🙈 hidden</b>' : `<small>${e.count} units · ${fmt(e.value)}</small>`} ${e.state || ''}`);
     this.setText(s.hints, d.hints.map((h) => `<div>${h}</div>`).join(''));
     s.ready.style.display = d.ready ? '' : 'none';
     this.setText(s.status, d.status || '');
@@ -296,7 +297,8 @@ export class UI {
     this.setText(s.info, this.infoHtml(def, t));
     // overview: my army by unit type (count and gold); building alone, the other army too
     let ro = d.roster.length ? this.rosterHtml(d.roster, t) : '<span class="empty">No units yet</span>';
-    if (e.roster) ro = `<div class="rrow">${ro}</div><div class="rrow other" style="--oc:${tc(1 - t)}"><b>${TEAM_NAMES[1 - t]}</b>${e.roster.length ? this.rosterHtml(e.roster, 1 - t) : '<span class="empty">empty</span>'}</div>`;
+    // (every other army, one row each)
+    if (e.rosters) ro = `<div class="rrow">${ro}</div>` + e.rosters.map((o) => `<div class="rrow other" style="--oc:${tc(o.team)}"><b>${TEAM_NAMES[o.team]}</b>${o.roster.length ? this.rosterHtml(o.roster, o.team) : '<span class="empty">empty</span>'}</div>`).join('');
     this.setText(s.roster, ro);
     const facs = d.factions || FACTIONS;
     const fkey = facs.map((f) => f.id).join() + ':' + d.faction + ':' + rosterVersion; // (custom units change at runtime)
@@ -356,6 +358,8 @@ export class UI {
     this.viewLabels.forEach((v) => L.appendChild(v));
     this.reticles = [el('div', 'reticle small v0'), el('div', 'reticle small v1')];
     this.reticles.forEach((v) => L.appendChild(v));
+    this.skillbars = [el('div', 'skillbar v0'), el('div', 'skillbar v1')];
+    this.skillbars.forEach((v) => L.appendChild(v));
     this.bhints = [el('div', 'bhints v0'), el('div', 'bhints v1')];
     this.bhints.forEach((v) => L.appendChild(v));
     this.bdivider = el('div', 'divider');
@@ -364,7 +368,9 @@ export class UI {
 
   updateBattle(d) {
     const [a, b] = d.counts;
-    this.setText(this.counts, `<span class="cb" style="--tc:${tc(0)}">${a}</span>
+    if (d.counts.length > 2) { // more armies: a count and a little bar each
+      this.setText(this.counts, d.counts.map((n, t) => `<span class="cb${n ? '' : ' out'}" style="--tc:${tc(t)}">${n}<span class="cbar"><i style="width:${(n / Math.max(1, d.start[t])) * 100}%"></i></span></span>`).join(''));
+    } else this.setText(this.counts, `<span class="cb" style="--tc:${tc(0)}">${a}</span>
       <span class="bar"><i style="width:${(a / Math.max(1, d.start[0])) * 50}%;background:${tc(0)}"></i><em style="width:${(b / Math.max(1, d.start[1])) * 50}%;background:${tc(1)}"></em></span>
       <span class="cb" style="--tc:${tc(1)}">${b}</span>`);
     this.setText(this.tscale, d.scaleText || '');
@@ -382,12 +388,25 @@ export class UI {
       }
       this.cards[i].style.display = v && v.card ? '' : 'none';
       if (v && v.card) this.setText(this.cards[i], this.unitCardHtml(v.card));
+      this.skillbars[i].style.display = v && v.skills ? '' : 'none';
+      if (v && v.skills) this.setText(this.skillbars[i], this.skillBarHtml(v.skills));
     }
     for (let i = 0; i < 2; i++) {
       const v = d.views[i];
       this.bhints[i].style.display = d.hints && v ? '' : 'none';
       if (v) this.setText(this.bhints[i], v.hint || '');
     }
+  }
+
+  // a possessed unit's techniques: button, name, cooldown sweep (src/skills.js)
+  skillBarHtml(list) {
+    const key = { rt: 'RT', x: 'X', lb: 'LB', rb: 'RB' };
+    return list.map((s) => {
+      const f = s.ready ? 0 : Math.min(1, s.left / s.max);
+      const note = s.denied || (s.why ? s.why : s.left > 0 ? (s.left >= 10 ? Math.ceil(s.left) : s.left.toFixed(1)) + ' s' : 'ready');
+      return `<div class="sk ${s.ready ? 'on' : ''} ${s.flash ? 'flash' : ''} ${s.denied ? 'denied' : ''}"><i style="height:${(f * 100).toFixed(0)}%"></i>
+        <span class="sk-btn">${btn(key[s.key])}</span><span class="sk-name">${s.icon ? s.icon + ' ' : ''}${s.name}</span><small>${note}</small></div>`;
+    }).join('');
   }
 
   // stats of the followed / possessed unit (like TABS's unit info)
@@ -430,7 +449,7 @@ export class UI {
       ? `assets/ui/victory-${d.winner ? 'red' : 'blue'}.png` : '';
     L.innerHTML = `<div class="victory ${ban ? 'banner' : ''}" style="--tc:${col}${ban ? `;--ban:url(${ban});--fit:${Math.min(1, 13 / title.length).toFixed(2)}` : ''}"><span>${title}</span></div>
       <div class="rsub">${d.duration ? `Battle lasted ${ftime(d.duration)}` : ''}</div>${extra}
-      <div class="rstats">${[0, 1].map((t) => `<div class="rs" style="--tc:${tc(t)}"><b>${names[t]}</b>
+      <div class="rstats">${d.stats.map((_, t) => `<div class="rs" style="--tc:${tc(t)}"><b>${names[t]}</b>
         <div>${d.stats[t].alive} / ${d.stats[t].total} survived</div><div>${fmt(d.stats[t].startValue - d.stats[t].value)} gold lost</div></div>`).join('')}</div>
       <div class="rmenu menu"></div>
       <div class="rhint">${btn('dpad')} choose &nbsp; ${btn('A')} select &nbsp;·&nbsp; the battlefield stays live: fly with ${btn('LS')} ${btn('RS')}, ${btn('B')} cinematic camera</div>`;

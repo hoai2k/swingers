@@ -10,6 +10,7 @@ import { clamp, rgba, TAU } from './util.js';
 import { W, H } from './board.js';
 import { sfx } from './audio.js';
 import { text, drawPanel, drawPortrait } from './hud.js';
+import { preloadSprites, drawSprite, sprite } from './sprites.js';
 
 // a spider field's value before perks touched it (modifiers may have set it)
 export function base(sp, k) { sp.perkBase = sp.perkBase || {}; if (!(k in sp.perkBase)) sp.perkBase[k] = sp[k] || 1; return sp.perkBase[k]; }
@@ -36,6 +37,9 @@ export const PERKS = [
   { id: 'pull',   name: 'Steel Silk',   desc: 'Webs pull you 25% harder',        max: 2, color: '#e8e8ff', apply: (sp, n) => { sp.pullMul = base(sp, 'pullMul') * (1 + 0.25 * n); } , vs: true },
 ];
 
+// full-colour card art (assets/web/perk_<id>.png); perkIcon() stays the fallback
+preloadSprites(PERKS.map((P) => `perk_${P.id}.png`));
+const perkArt = (ctx, id, x, y, size) => drawSprite(ctx, `perk_${id}.png`, x, y, size);
 
 // up to 3 random perks a holder can still take (pool: a PERKS subset)
 export function offersFor(perks, pool) {
@@ -121,13 +125,20 @@ export class PerkPicker {
         ctx.shadowBlur = 0;
         if (tall) {
           // icon medallion, name, description, stack pips
-          const ic = Math.min(h * 0.2, 62);
-          const icy = cy + 22 + ic;
-          ctx.fillStyle = rgba(P.color, 0.18);
-          ctx.beginPath(); ctx.arc(x + cardW / 2, icy, ic, 0, TAU); ctx.fill();
-          ctx.strokeStyle = P.color; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(x + cardW / 2, icy, ic, 0, TAU); ctx.stroke();
-          perkIcon(ctx, P.id, x + cardW / 2, icy, ic * 0.62, P.color);
+          const art = !!sprite(`perk_${P.id}.png`);
+          const ic = art ? Math.min(h * 0.26, 90) : Math.min(h * 0.2, 62);
+          const icy = cy + (art ? 30 : 22) + ic;
+          const glow = ctx.createRadialGradient(x + cardW / 2, icy, ic * 0.2, x + cardW / 2, icy, ic * 1.25);
+          glow.addColorStop(0, rgba(P.color, sel ? 0.45 : 0.28)); glow.addColorStop(1, rgba(P.color, 0));
+          ctx.fillStyle = glow;
+          ctx.beginPath(); ctx.arc(x + cardW / 2, icy, ic * 1.25, 0, TAU); ctx.fill();
+          if (!perkArt(ctx, P.id, x + cardW / 2, icy + (sel && !r.done ? Math.sin(this.t * 5 + 1) * 2 : 0), ic * 2.15)) {
+            ctx.fillStyle = rgba(P.color, 0.18);
+            ctx.beginPath(); ctx.arc(x + cardW / 2, icy, ic, 0, TAU); ctx.fill();
+            ctx.strokeStyle = P.color; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(x + cardW / 2, icy, ic, 0, TAU); ctx.stroke();
+            perkIcon(ctx, P.id, x + cardW / 2, icy, ic * 0.62, P.color);
+          }
           const ny = icy + ic + 44;
           text(ctx, P.name, x + cardW / 2, ny, { size: 30, color: P.color, sw: 5, maxWidth: cardW - 24 });
           wrapText(ctx, P.desc, x + cardW / 2, ny + 34, cardW - 40, 24, { size: 20, color: '#e4e8ff' });
@@ -136,7 +147,7 @@ export class PerkPicker {
             ctx.beginPath(); ctx.arc(x + cardW - 22 - (P.max - 1 - k) * 18, cy + 22, k === have ? 7 : 5, 0, TAU); ctx.fill();
           }
         } else {
-          perkIcon(ctx, P.id, x + 34, cy + h / 2, Math.min(18, h * 0.22), P.color);
+          if (!perkArt(ctx, P.id, x + 34, cy + h / 2, Math.min(52, h * 0.66))) perkIcon(ctx, P.id, x + 34, cy + h / 2, Math.min(18, h * 0.22), P.color);
           text(ctx, P.name + (have ? `  ${'+'.repeat(have + 1)}` : ''), x + 64, cy + Math.min(40, h * 0.42), { size: Math.min(30, h * 0.3), color: P.color, align: 'left', sw: 5 });
           text(ctx, P.desc, x + 64, cy + Math.min(76, h * 0.78), { size: Math.min(20, h * 0.2), color: '#e4e8ff', align: 'left', stroke: null, maxWidth: cardW - 80 });
         }

@@ -93,7 +93,7 @@ function pickTarget(b, u, c, w) {
   // nearest enemy to the engine that is not too close to shoot at
   const p = c.cart.pos;
   let best = null, bd = Infinity, near = null, nd = Infinity;
-  for (const o of b.teams[1 - u.team]) {
+  for (const o of b.foes(u.team)) {
     if (!o.alive) continue;
     const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
     if (d < nd) { nd = d; near = o; }

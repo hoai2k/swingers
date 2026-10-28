@@ -75,7 +75,7 @@ function jousterThink(u, dt, ctx) {
   if (!u.jFoe || !u.jFoe.alive || u.jPick <= 0) {
     u.jPick = 2.5;
     let best = null, bv = -1;
-    for (const o of b.teams[1 - u.team]) {
+    for (const o of b.foes(u.team)) {
       if (!o.alive) continue;
       const d = Math.hypot(o.pos.x - p.x, o.pos.z - p.z);
       const v = (o.def.cost * (0.4 + 0.6 * o.hp / o.maxHp)) / (1 + d / 25);
@@ -384,7 +384,7 @@ function stepTank(b, k, dt) {
   updateBig(k.big);
 }
 function enemyNear(b, u, p, R) {
-  for (const o of b.teams[1 - u.team]) if (o.alive && (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 < R * R) return true;
+  for (const o of b.foes(u.team)) if (o.alive && (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 < R * R) return true;
   return false;
 }
 function fireBarrel(b, k, i) {
@@ -395,7 +395,7 @@ function fireBarrel(b, k, i) {
   _a.y = 0; _a.normalize();
   // each gun lays itself on the nearest enemy in its arc (or just fires flat)
   let yaw = Math.atan2(_a.x, _a.z), ang = 0.07, best = null, bd = w.range;
-  for (const o of b.teams[1 - u.team]) {
+  for (const o of b.foes(u.team)) {
     if (!o.alive) continue;
     const dx = o.pos.x - from.x, dz = o.pos.z - from.z, d = Math.hypot(dx, dz);
     if (d < bd && Math.abs(angleDiff(yaw, Math.atan2(dx, dz))) < 0.6) { bd = d; best = o; }

@@ -8,6 +8,31 @@ import { buildFeatureScene } from './mapscene.js';
 
 export const FIELD = { x: 42, z: 32 }; // half extents of the battle area
 export const ZONE_GAP = 3; // no man's land half width around x = 0
+export const MAX_ARMIES = 4; // Blue, Red, Yellow, Green (more than two: sandbox and simulations)
+
+// Deployment zones. Two armies split the field (Blue x < 0, Red x > 0); three or four take
+// a quadrant each, Blue and Red still facing each other across the middle (Blue -x -z,
+// Red +x +z, Yellow +x -z, Green -x +z).
+const QUAD = [[-1, -1], [1, 1], [1, -1], [-1, 1]];
+export function zoneRect(t, n) {
+  if (n <= 2) return t === 0 ? { x0: -FIELD.x, x1: -ZONE_GAP, z0: -FIELD.z, z1: FIELD.z } : { x0: ZONE_GAP, x1: FIELD.x, z0: -FIELD.z, z1: FIELD.z };
+  const [sx, sz] = QUAD[t];
+  return { x0: sx < 0 ? -FIELD.x : ZONE_GAP, x1: sx < 0 ? -ZONE_GAP : FIELD.x, z0: sz < 0 ? -FIELD.z : ZONE_GAP, z1: sz < 0 ? -ZONE_GAP : FIELD.z };
+}
+export function inZoneOf(t, n, x, z) {
+  const r = zoneRect(t, n);
+  return x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
+}
+// half the width of a zone across its army's front (two armies: the field's depth)
+export const zoneHalfWidth = (n) => (n <= 2 ? FIELD.z : (FIELD.z - ZONE_GAP) / 2);
+// A point of an army's formation given as d (distance from the middle line, growing away
+// from the enemy, 3..42) and z (across its front, ±zoneHalfWidth): two armies as Blue
+// x = -d / Red x = +d; in a quadrant the front runs along z, centred in the quadrant.
+export function zonePoint(t, n, d, z) {
+  if (n <= 2) return { x: (t === 0 ? -1 : 1) * d, z };
+  const [sx, sz] = QUAD[t], hw = zoneHalfWidth(n);
+  return { x: sx * d, z: sz * (ZONE_GAP + hw) + clamp(z, -hw, hw) };
+}
 
 // ground: [base, light, dark] grass, patch: meadow patches, dirt: slopes/paths,
 // high: tint of the hill tops, rock/far: cliffs and the distance.

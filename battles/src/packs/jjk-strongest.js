@@ -28,6 +28,7 @@
 // Everything drawn is a unit part, an extra body (the wheel), a projectile or a marker,
 // so setup previews, battles and replays all show it.
 import { register } from '../ext.js';
+import { aimTarget } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import { RAPIER } from '../physics.js';
 import { makeSkeleton } from '../body.js';
@@ -96,7 +97,7 @@ function enemiesIn(b, u, p, R) {
 }
 function nearestEnemyTo(b, u, p, R) {
   let best = null, bd = R;
-  for (const v of b.teams[1 - u.team]) { if (!v.alive) continue; const d = flat(v.pos, p); if (d < bd) { bd = d; best = v; } }
+  for (const v of b.foes(u.team)) { if (!v.alive) continue; const d = flat(v.pos, p); if (d < bd) { bd = d; best = v; } }
   return best;
 }
 function markSpin(b, type, pos, t) {
@@ -158,14 +159,20 @@ const gojo = {
     if (u.st.attack) u.desired.multiplyScalar(0.15);
     return t;
   },
+  // possessed: RT Red; Blue, Purple and the Void on their own buttons (src/skills.js)
   control(u, dt, c) {
-    if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) {
-      const tech = u.purpleCD <= 0 ? 'purple' : u.blueCD <= 0 && c.block ? 'blue' : 'red';
-      gojoCast(u, tech);
-      u.aimAt = null;
-    }
+    if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) { gojoCast(u, 'red'); u.aimAt = null; }
     return true;
   },
+  basic: 'Red',
+  skills: [
+    { key: 'x', name: 'Blue', icon: '🔵', cd: (u) => u.blueCD, max: (u) => u.def.weapon.blueCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { gojoCast(u, 'blue'); u.aimAt = null; return true; } },
+    { key: 'lb', name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { gojoCast(u, 'purple'); u.aimAt = null; return true; } },
+    { key: 'rb', name: 'Unlimited Void', icon: '♾', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { u.domCD = u.def.weapon.domCD; openVoid(u.battle, u); return true; } },
+  ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle, tech = u.jkTech;
     if (tech === 'purple' && crossed(t0, t1, 0.08)) {
@@ -248,8 +255,8 @@ const gojo = {
       const v = nearestEnemyTo(b, u, u.pos, w.blinkR + u.skel.radius);
       if (v && v.def.weapon.range === undefined && (v.jkPierce || !u.jkInfinity)) blink(b, u, v);
     }
-    // Unlimited Void
-    if (u.domCD <= 0 && !sl && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
+    // Unlimited Void (possessed: the player opens it)
+    if (u.domCD <= 0 && !u.control && !sl && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
       if (!domainWorth(b, u, w.domR * 0.9, w.domMin)) u.domCD = 0.3;
       else { u.domCD = w.domCD; openVoid(b, u); }
     }
@@ -337,7 +344,7 @@ function lineCount(u, t) {
   const b = u.battle, w = u.def.weapon, p = u.pos;
   const dx = t.pos.x - p.x, dz = t.pos.z - p.z, L = Math.hypot(dx, dz) || 1, fx = dx / L, fz = dz / L;
   let n = 0;
-  for (const v of b.teams[1 - u.team]) {
+  for (const v of b.foes(u.team)) {
     if (!v.alive) continue;
     const rx = v.pos.x - p.x, rz = v.pos.z - p.z, along = rx * fx + rz * fz;
     if (along < 0 || along > w.range + 6) continue;
@@ -434,9 +441,27 @@ function skCast(u, tech, t) {
   if (tech === 'fuga') u.fugaCD = SKW.fugaCD;
 }
 function skControl(u, dt, c) {
-  if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u)) skCast(u, u.fugaCD <= 0 && c.block ? 'fuga' : 'cut', null);
+  if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u)) skCast(u, 'cut', null);
   return true;
 }
+// possessed (src/skills.js): RT Dismantle; Fuga, Cleave and the Shrine on their buttons
+// (Megumi uses these too once Sukuna has his body)
+const CLEAVE_CD = 5;
+const SK_SKILLS = [
+  { key: 'x', name: 'Fuga', icon: '🔥', cd: (u) => u.fugaCD, max: () => SKW.fugaCD,
+    use(u) { skCast(u, 'fuga', null); u.aimAt = null; return true; } },
+  { key: 'lb', name: 'Cleave', icon: '🗡', cd: (u) => u.cleaveCD || 0, max: () => CLEAVE_CD,
+    ready: (u) => !!aimTarget(u, SKW.range + 1) || 'no one in reach',
+    use(u) {
+      const v = aimTarget(u, SKW.range + 1);
+      if (!v) return false;
+      skCast(u, 'cut', v);
+      u.jkCleaveNext = v; u.cleaveCD = CLEAVE_CD;
+      return true;
+    } },
+  { key: 'rb', name: 'Malevolent Shrine', icon: '⛩', cd: (u) => u.skDomCD, max: () => SKW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+    use(u) { u.skDomCD = SKW.domCD; openShrine(u.battle, u); return true; } },
+];
 function skEvent(u, t0, t1) {
   const b = u.battle, w = SKW;
   if (u.jkTech === 'fuga') {
@@ -467,17 +492,21 @@ function dismantle(u, n) {
     if (d < R) list.push([d + rand(0, 1.5), v, d]);
   });
   list.sort((a, c) => a[0] - c[0]);
+  // (a Cleave the player aimed: that target first)
+  const cv = u.jkCleaveNext;
+  u.jkCleaveNext = null;
+  if (cv) { const k = list.findIndex((e) => e[1] === cv); if (k > 0) list.unshift(...list.splice(k, 1)); }
   for (let i = 0; i < Math.min(n, list.length); i++) {
     const [, v, d] = list[i];
     // Cleave: up close, a cut that adjusts to how tough the target is
-    if (d < 1.6 && i === 0) cut(b, v, Math.min(w.cleaveMax, (w.cleaveDmg + v.maxHp * w.cleaveK) * u.jkPow), w.force * 1.4, u, 'jk_cleave');
+    if ((d < 1.6 || v === cv) && i === 0) cut(b, v, Math.min(w.cleaveMax, (w.cleaveDmg + v.maxHp * w.cleaveK) * u.jkPow), w.force * 1.4, u, 'jk_cleave');
     else cut(b, v, w.damage * u.jkPow, w.force, u, 'jk_dismantle');
   }
   b.sound('whoosh', u.chestPos, 0.9, 1.6);
 }
 function skStep(u, dt) {
   const b = u.battle, w = SKW;
-  u.fugaCD -= dt; u.skDomCD -= dt;
+  u.fugaCD -= dt; u.skDomCD -= dt; u.cleaveCD = (u.cleaveCD || 0) - dt;
   // fingers: one more for every two kills (twenty in all)
   const f = Math.min(20, 15 + Math.floor(u.kills / 4));
   if (f > u.jkFingers) {
@@ -490,7 +519,7 @@ function skStep(u, dt) {
       b.voice(u, 'cry', true);
     }
   }
-  if (u.skDomCD <= 0 && !sealed(u) && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
+  if (u.skDomCD <= 0 && !u.control && !sealed(u) && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
     if (!domainWorth(b, u, w.domR * 0.8, w.domMin)) u.skDomCD = 0.3;
     else { u.skDomCD = w.domCD; openShrine(b, u); }
   }
@@ -522,6 +551,7 @@ const sukuna = {
   aim: true,
   init(u) { skInit(u); },
   think: skThink, control: skControl, event: skEvent,
+  basic: 'Dismantle', skills: SK_SKILLS,
   step: skStep,
 };
 
@@ -545,6 +575,8 @@ const megumi = {
     return r;
   },
   control(u, dt, c) { return u.jkMeguna ? skControl(u, dt, c) : false; },
+  basic: 'Shadow blade',
+  skills: (u) => (u.jkMeguna ? SK_SKILLS : MG_SKILLS),
   event(u, t0, t1) {
     if (u.st.attack === 'jj_sign') { if (crossed(t0, t1, 0.55)) mgSummon(u, u.jkSign); return; }
     if (u.jkMeguna) skEvent(u, t0, t1);
@@ -566,7 +598,8 @@ const megumi = {
       u.jkRitual = true;
       if (Math.random() < TUNE.ritualChance) { ritual(u); return; }
     }
-    // Chimera Shadow Garden
+    // Chimera Shadow Garden (possessed: the player's call, like the shikigami)
+    if (u.control) return;
     if (u.domCD <= 0 && !burntOut(u) && u.stun <= 0.3 && !u.st.attack) {
       const n = enemiesIn(b, u, u.pos, w.domR * 0.85).length;
       if (n >= w.domMin && (u.hp < u.maxHp * 0.8 || n >= w.domMin + 2)) { u.domCD = w.domCD; openGarden(b, u); }
@@ -585,6 +618,18 @@ const megumi = {
     for (const s of b.units) if (s.reserveOf === u && s.alive && !s.dormant && s.def.id !== 'jk_mahoraga') { shadowPool(b, s.pos, 1.2); dismiss(b, s); }
   },
 };
+// possessed (src/skills.js): the shikigami and the domain on their buttons
+const MG_SKILLS = [
+  { key: 'x', name: 'Divine Dogs / Nue', icon: '🐺', cd: (u) => (dogsReady(u) ? 0 : u.nueCD), max: () => MGW.nueCD,
+    ready: (u) => (!burntOut(u) ? (dogsReady(u) || readyOf(u.battle, u, 'jk_nue') ? true : 'all out') : 'burnt out'),
+    use(u) { sign(u, dogsReady(u) ? 'dogs' : 'jk_nue'); return true; } },
+  { key: 'lb', name: 'Max Elephant', icon: '🐘', cd: (u) => u.eleCD, max: () => MGW.eleCD,
+    ready: (u) => (burntOut(u) ? 'burnt out' : readyOf(u.battle, u, 'jk_elephant') ? true : readyOf(u.battle, u, 'jk_toad') ? true : 'all out'),
+    use(u) { sign(u, readyOf(u.battle, u, 'jk_elephant') ? 'jk_elephant' : 'jk_toad'); return true; } },
+  { key: 'rb', name: 'Chimera Shadow Garden', icon: '🌑', cd: (u) => u.domCD, max: () => MGW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+    use(u) { u.domCD = MGW.domCD; openGarden(u.battle, u); return true; } },
+];
+const dogsReady = (u) => !!(readyOf(u.battle, u, 'jk_dog_white') || readyOf(u.battle, u, 'jk_dog_black'));
 function sign(u, type) {
   u.jkTech = 'sign'; u.jkSign = type;
   u.attackDur = 0.7;
@@ -644,7 +689,7 @@ function ritual(u) {
   const b = u.battle;
   // an enemy Sukuna close by may take his body instead
   let sk = null;
-  for (const v of b.teams[1 - u.team]) if (isA(v, 'jk_sukuna') && !sealed(v) && flat(v.pos, u.pos) < 16) { sk = v; break; }
+  for (const v of b.foes(u.team)) if (isA(v, 'jk_sukuna') && !sealed(v) && flat(v.pos, u.pos) < 16) { sk = v; break; }
   if (sk && Math.random() < TUNE.megunaChance) { meguna(b, sk, u); return; }
   sign(u, 'none');
   announce(b, 'With this treasure, I summon...', u.headPos);
@@ -710,7 +755,7 @@ function megunaStep(u, dt) {
   const b = u.battle;
   // Sukuna calls Mahoraga against the Strongest (or when the vessel is failing)
   if (!u.jkMahoraga && readyOf(b, u, 'jk_mahoraga')) {
-    const g = b.teams[1 - u.team].find((v) => isA(v, 'jk_gojo') && flat(v.pos, u.pos) < 24);
+    const g = b.foes(u.team).find((v) => isA(v, 'jk_gojo') && flat(v.pos, u.pos) < 24);
     if (g || u.hp < u.maxHp * 0.35) {
       u.jkMahoraga = true;
       const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
@@ -864,7 +909,7 @@ const toad = {
     if (u.cooldown <= 0 && u.stun <= 0 && !u.isDown()) {
       // prefer a shooter at the back
       let v = t;
-      for (const o of b.teams[1 - u.team]) if (o.alive && o.def.weapon.kind !== 'melee' && flat(o.pos, u.pos) < w.range && !o.bc && o.s < 1.6) { v = o; break; }
+      for (const o of b.foes(u.team)) if (o.alive && o.def.weapon.kind !== 'melee' && flat(o.pos, u.pos) < w.range && !o.bc && o.s < 1.6) { v = o; break; }
       if (flat(v.pos, u.pos) < w.range && !v.bc) {
         u.cooldown = w.cooldown * rand(0.85, 1.15);
         u.tongue = { v, t: 0, beam: {} };
@@ -1675,7 +1720,7 @@ onSecret((b, dt) => {
     if (!u.alive) continue;
     // "Nah, I'd win."
     if (isA(u, 'jk_gojo') && !jk(b).secrets.has('nah')) {
-      for (const v of b.teams[1 - u.team]) if (sukunaLike(v) && flat(v.pos, u.pos) < 16) { announce(b, 'SECRET: "Nah, I\'d win." - Gojo', u.headPos, 'nah'); break; }
+      for (const v of b.foes(u.team)) if (sukunaLike(v) && flat(v.pos, u.pos) < 16) { announce(b, 'SECRET: "Nah, I\'d win." - Gojo', u.headPos, 'nah'); break; }
     }
     // a Sukuna who saw Mahoraga adapt to Infinity learns the World-Cutting Slash
     if (sukunaLike(u) && !u.jkPierce) {

@@ -69,6 +69,14 @@ The game is built not to freeze, however big the battle (`src/perf.js`):
   where you build both armies (tap **View** to switch side, **Y** starts the battle).
   *Players: 2* is split screen, each player builds one army and the battle starts when
   both are ready — like Versus without rounds, timer or blind setup.
+  *Armies: 2 / 3 / 4* adds **Yellow** and **Green**: with more than two, every army fights
+  every other (free-for-all, last army standing wins) and the zones become the four corners
+  of the field (Blue and Red still face each other across the middle). **View** (or the
+  menu's *Build the … army*) cycles through the armies you can build; in a 2-player sandbox
+  each player can build any army but the other player's. The battle HUD shows a count for
+  each army. Simulations can have 3-4 sides too (*3-4 armies* row). In code: `Battle` takes
+  any number of armies and `battle.foes(team)` lists every enemy unit (use it, not
+  `teams[1 - team]`); zones are `zoneRect` / `zonePoint` in `src/world.js`.
 - **Simulation** (`src/sims.js`): ready-made battles to watch, picked from a screen laid
   out like the level select, one row per category: **Real battles** (Thermopylae, Cannae,
   Hastings, Stamford Bridge, Agincourt, Sekigahara, Nassau, Waterloo, Little Bighorn),
@@ -150,7 +158,15 @@ health, kills and damage), **X** takes control of it (TABS's *Take control*: lef
 stick walks relative to the camera, right stick looks, **RT** attacks, **LT** blocks (ranged units: aims)
 (zoom), **A** jumps; shooters and casters fire at the crosshair, riders steer their mount
 with the stick, flyers dive on the crosshair, and a siege crew at its engine lays it on the
-crosshair and fires it), **B** on the free camera hands over to the cinematic camera,
+crosshair and fires it; a character with techniques fires each on its own button, **X**,
+**LB** and **RB** (keyboard F / Q / E), each with its own cooldown on the skill bar at the
+bottom right: e.g. Gojo RT Red, X Blue, LB Hollow Purple, RB Unlimited Void; Sukuna RT
+Dismantle, X Fuga, LB Cleave, RB Malevolent Shrine. Every JJK character with a technique,
+the Avatar heroes and the Galactic Dark Lord and Jetpack Hunter have them; targeted ones go
+for the enemy under the crosshair, domains open where you stand. A press during a swing
+fires when it ends; the tile says why not when it can't (cooldown, burnt out, no target).
+While possessed a unit never fires these by itself; reflexes and last stands stay
+automatic (Infinity, Iroh's redirection, Mahoraga's wheel)), **B** on the free camera hands over to the cinematic camera,
 **Y** eases into slow motion, **R3** cycles tips / HUD off (photo mode). In shared
 screen either pad does all of this; in split screen each pad drives its own view.
 

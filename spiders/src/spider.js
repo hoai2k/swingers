@@ -17,6 +17,7 @@ import { clamp, lerp, TAU, angDiff, rand, rgba } from './util.js';
 import { castAt, drawBody } from './cast.js';
 import { settings } from './settings.js';
 import { sfx } from './audio.js';
+import { drawWebSplat } from './fx.js';
 
 export const SP = {
   r: 15,                 // body radius at size 1 (see base)
@@ -927,8 +928,12 @@ export class Spider {
     ctx.stroke();
     if (w.state === 'stuck') {
       const st = this.webBase();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(st.x, st.y, 3.5, 0, TAU); ctx.fill();
+      // the silk splat where it sticks (a fixed random twist per web)
+      if (w.splatRot === undefined) w.splatRot = rand(0, TAU);
+      if (!drawWebSplat(ctx, st.x, st.y, w.target ? 18 : 26, w.splatRot)) {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(st.x, st.y, 3.5, 0, TAU); ctx.fill();
+      }
     }
     ctx.restore();
   }

@@ -8,8 +8,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { sprite, drawSprite, preloadSprites } from '../sprites.js';
 import { rand, angDiff } from '../util.js';
 import { safeMuzzle, nearestFoe } from './kit.js';
+
+preloadSprites(['proj_missile.png']);
 
 const FAN = [-0.42, -0.14, 0.14, 0.42];
 
@@ -92,9 +95,13 @@ export class Hornet {
     ctx.fillStyle = '#ffb35a';
     ctx.globalAlpha = 0.9;
     const fl = 6 + Math.random() * 6;
-    ctx.beginPath(); ctx.moveTo(-5, -2); ctx.lineTo(-5 - fl, 0); ctx.lineTo(-5, 2); ctx.fill();
+    const art = sprite('proj_missile.png');
+    const tail = art ? -8 : -5;
+    ctx.beginPath(); ctx.moveTo(tail, -2); ctx.lineTo(tail - fl, 0); ctx.lineTo(tail, 2); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
+    // the bee missile sprite (never upside down), else drawn
+    if (art) { drawSprite(ctx, 'proj_missile.png', 0, 0, 18, { fit: 'w', flipY: Math.cos(this.a) < 0 }); ctx.restore(); return; }
     ctx.fillStyle = '#e8ecf4';
     ctx.fillRect(-6, -2.5, 9, 5);
     ctx.fillStyle = this.owner && this.owner.color ? this.owner.color.main : '#ffb35a';
@@ -110,6 +117,7 @@ export class SwarmLauncher extends Weapon {
   static ammo = 3;
   static weight = 0.36;   // guns are rarer than blades
   static color = '#ffb35a';
+  static art = { hx: 30, hy: 55, s: 0.22 };   // wpn_swarm.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);

@@ -7,8 +7,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { drawSprite, preloadSprites } from '../sprites.js';
 import { TAU, rand } from '../util.js';
 import { safeMuzzle } from './kit.js';
+
+preloadSprites(['proj_grenade.png']);
 
 const FUSE = 1.6;
 
@@ -74,6 +77,7 @@ export class GrenadeShell {
 }
 
 function drawGrenade(ctx, x, y, rot, fuse) {
+  if (drawSprite(ctx, 'proj_grenade.png', x, y, 19, { rot })) { drawFuseLight(ctx, x, y, fuse); return; }
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rot);
@@ -84,7 +88,11 @@ function drawGrenade(ctx, x, y, rot, fuse) {
   ctx.fillStyle = '#9aa4b8';
   ctx.fillRect(-2.5, -10, 5, 4);
   ctx.restore();
-  // blinking light, faster as the fuse runs down
+  drawFuseLight(ctx, x, y, fuse);
+}
+
+// blinking light, faster as the fuse runs down
+function drawFuseLight(ctx, x, y, fuse) {
   if (fuse < Infinity) {
     const on = Math.sin(fuse * (fuse < 0.6 ? 60 : 22)) > 0;
     if (on) {
@@ -107,6 +115,7 @@ export class Grenades extends Weapon {
   static ammo = 3;
   static weight = 0.45;   // guns are rarer than blades
   static color = '#8fe36a';
+  static art = { hx: 4, hy: 48, s: 0.25 };   // wpn_grenade.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -166,6 +175,19 @@ export class Grenades extends Weapon {
     this.kick = 8;
     sfx.throwIt();
     if (--this.ammo <= 0) this.empty();
+  }
+
+  // over the sprite: the cooking blink, spare grenades on the strap
+  drawArtOver(ctx) {
+    if (this.cook >= 0 && Math.sin(this.cook * 30) > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = '#ff4a3a';
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.arc(9, 1, 7, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+    for (let i = 1; i < Math.min(3, this.ammo); i++) drawSprite(ctx, 'wpn_grenade.png', -4 - i * 8, 5, 10);
   }
 
   drawShape(ctx) {

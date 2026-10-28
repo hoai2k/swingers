@@ -12,12 +12,14 @@
 // Unit ids that don't exist are skipped, so a scenario survives a removed unit.
 import { UNIT_BY_ID, UNITS, FACTIONS, unitsOfFaction } from './units.js';
 import { EXT } from './ext.js';
+import { zonePoint, zoneHalfWidth, inZoneOf } from './world.js';
 
 export const SIM_CATS = [
   { id: 'history', name: 'Real battles', color: '#c98a4b' },
   { id: 'jjk', name: 'Jujutsu Kaisen', color: '#5b5fc7' },
   { id: 'avatar', name: 'Avatar', color: '#e0703a' },
   { id: 'other', name: 'Sci-fi & games', color: '#3fae8f' },
+  { id: 'multi', name: '3-4 armies', color: '#e8b820' },
   { id: 'cross', name: 'Crossovers', color: '#c66bd1' },
 ];
 export const SIM_SIZES = [{ name: 'Small', k: 0.5 }, { name: 'Normal', k: 1 }, { name: 'Epic', k: 2 }];
@@ -209,6 +211,16 @@ export const SCENARIOS = [
     ],
   },
   {
+    id: 'sendai_four', cat: 'jjk', name: 'Sendai: Four-Way', when: 'four armies · Yuta, Ryu, Uro, Kurourushi', map: 'grass',
+    desc: 'The Sendai Colony as it really was: everyone against everyone. Yuta Okkotsu, Ryu Ishigori, Takako Uro and Kurourushi, each in a corner, and only one walks out.',
+    sides: [
+      { name: 'Yuta Okkotsu', army: one('jk_yuta', 8) },
+      { name: 'Ryu Ishigori', army: one('jk_ryu', 8) },
+      { name: 'Takako Uro', army: one('jk_uro', 8) },
+      { name: 'Kurourushi', army: army(one('jk_kurourushi', 8), line('jk_grasshopper', 2, 11, 0, 3)) },
+    ],
+  },
+  {
     id: 'sendai_ffa', cat: 'jjk', name: 'Sendai Deadlock', when: 'Ryu & Uro vs Kurourushi\'s swarm', map: 'grass',
     desc: 'Before Yuta came: the reincarnated sorcerers Ryu and Uro against the cockroach curse Kurourushi and its endless swarm.',
     sides: [
@@ -354,6 +366,47 @@ export const SCENARIOS = [
       { name: 'Undead', army: army(block('sp_skeleton', 12, 4, 5, 0, 1.8), line('sp_swordcaster', 3, 16, 0, 5), line('sp_skel_archer', 8, 12, 0, 2.5), line('sp_ghost', 4, 9, 0, 4), line('sp_vampire', 3, 14, 0, 4), one('sp_reaper', 20)) },
     ],
   },
+  // ---------------------------------------------------------------- more than two armies
+  {
+    id: 'red_cliffs', cat: 'multi', name: 'Three Kingdoms', when: '208 · the Battle of Red Cliffs', map: 'river',
+    desc: 'Wei, Shu and Wu: three kingdoms, three armies, one river. In history Shu and Wu joined against Wei; here every army is on its own.',
+    sides: [
+      { name: 'Wei (Cao Cao)', army: army(block('dy_samurai', 6, 2, 7), line('dy_monk', 8, 4.5, 0, 1.8), line('dy_hwacha', 1, 14)) },
+      { name: 'Shu (Liu Bei)', army: army(line('dy_samurai', 6, 7, 0, 2), line('dy_ninja', 8, 10, 0, 1.8), line('dy_firework', 2, 14, 0, 4)) },
+      { name: 'Wu (Sun Quan)', army: army(line('dy_samurai', 5, 7, 0, 2), block('dy_monk', 6, 2, 4.5, 0, 1.8), line('dy_firework', 3, 13, 0, 3)) },
+    ],
+  },
+  {
+    id: 'four_nations', cat: 'multi', name: 'The Four Nations', when: 'Water, Earth, Fire, Air', map: 'basingse',
+    desc: 'Long ago, the four nations lived together in harmony... not today. Every nation for itself, and the Avatar on his own.',
+    sides: [
+      { name: 'Water Tribe', army: army(one('av_katara', 8), line('av_sokka', 3, 6, 0, 2.5)) },
+      { name: 'Fire Nation', army: army(one('av_zuko', 9), block('av_fn_soldier', 7, 2, 6, 0, 2)) },
+      { name: 'Earth Kingdom', army: army(one('av_toph', 9), line('av_earthbender', 4, 6, 0, 2.5)) },
+      { name: 'Air Nomads (Aang)', army: one('av_aang', 8) },
+    ],
+  },
+  {
+    id: 'jjk_four', cat: 'multi', name: 'Jujutsu Free-for-All', when: 'four factions of Jujutsu Kaisen', map: 'shibuya',
+    desc: 'Tokyo Jujutsu High, Kyoto and the Zen\'in, the Disaster Curses and the Culling Game players, all at once, every one for itself.',
+    sides: [
+      { name: 'Tokyo Jujutsu High', army: heroes(['jk_yuji', 'jk_megumi', 'jk_nobara', 'jk_maki', 'jk_panda'], 7, 0, 3) },
+      { name: 'Disaster Curses', army: heroes(['jk_jogo', 'jk_hanami', 'jk_mahito'], 8, 0, 4) },
+      { name: 'Kyoto & Zen\'in', army: heroes(['jk_todo', 'jk_kamo', 'jk_mechamaru', 'jk_naoya'], 7, 0, 3) },
+      { name: 'Culling Game players', army: heroes(['jk_kashimo', 'jk_higuruma', 'jk_kurourushi'], 8, 0, 4) },
+    ],
+  },
+  {
+    id: 'royale', cat: 'multi', name: 'Random Royale', when: 'four random factions, the same gold', map: 'grass',
+    desc: 'Four factions picked at random, the same gold each, one in every corner. Last army standing wins.',
+    random: true,
+    sides: [
+      { name: 'Random', army: randomSide(0) },
+      { name: 'Random', army: randomSide(1) },
+      { name: 'Random', army: randomSide(2) },
+      { name: 'Random', army: randomSide(3) },
+    ],
+  },
   // ---------------------------------------------------------------- crossovers
   {
     id: 'jjk_avatar', cat: 'cross', name: 'Sorcerers vs Benders', when: 'Jujutsu Kaisen × Avatar', map: 'basingse',
@@ -392,12 +445,12 @@ export const SCENARIOS = [
 
 // the two armies of a scenario as setup entries ({type, x, z}; Blue at -x) and the
 // side names (a random war names its factions)
-export function simArmies(sc, k = 1, seed = [Math.random(), Math.random()]) {
-  const names = sc.sides.map((s) => s.name);
+export function simArmies(sc, k = 1, seed = [Math.random(), Math.random(), Math.random(), Math.random()]) {
+  const names = sc.sides.map((s) => s.name), n = sc.sides.length, zl = zoneHalfWidth(n) - 2;
   const armies = sc.sides.map((s, t) => {
     const list = s.army(k, seed);
     if (list.facName) names[t] = list.facName;
-    return spread(list.filter((a) => UNIT_BY_ID[a.type])).map((a) => ({ type: a.type, x: (t === 0 ? -1 : 1) * a.d, z: a.z }));
+    return spread(list.filter((a) => UNIT_BY_ID[a.type]), zl).map((a) => ({ type: a.type, ...zonePoint(t, n, a.d, a.z) }));
   });
   return { armies, names };
 }
@@ -406,28 +459,28 @@ const BIG = /^(bb_|sm_|pr_trex|pr_triceratops|ga_walker|mc_golem|ev_tree_giant|g
 const footprint = (d) => (BIG.test(d.id) ? 2.2 : 0.8 * Math.max(1, d.build?.scale || 1));
 // formations can overlap (an Epic army's longer blocks run into the next rank): walk
 // each unit back from the enemy until it has room, then sideways if the field ends
-function spread(list) {
+function spread(list, zl = 30) {
   const placed = [];
   const free = (d, z, r) => placed.every((p) => Math.hypot(p.d - d, p.z - z) >= p.r + r);
   for (const a of [...list].sort((p, q) => p.d - q.d)) {
     const r = footprint(UNIT_BY_ID[a.type]);
-    let d = Math.max(3.5 + r, a.d), z = Math.max(-30, Math.min(30, a.z));
+    let d = Math.max(3.5 + r, a.d), z = Math.max(-zl, Math.min(zl, a.z));
     for (let i = 0; i < 80 && !free(d, z, r); i++) {
       d += 0.6;
-      if (d > 41) { d = Math.max(3.5 + r, a.d); z += (i % 2 ? -1 : 1) * 1.2 * (1 + (i >> 1)); z = Math.max(-30, Math.min(30, z)); }
+      if (d > 41) { d = Math.max(3.5 + r, a.d); z += (i % 2 ? -1 : 1) * 1.2 * (1 + (i >> 1)); z = Math.max(-zl, Math.min(zl, z)); }
     }
     placed.push({ type: a.type, d, z, r });
   }
   return placed;
 }
 // step a unit off a wall or out of the water (maps with features): the nearest free spot
-// in its own half (t: 0 Blue, 1 Red), searched in a widening spiral; false if none
-export function fitToMap(terrain, t, a, gap = 3, field = { x: 42, z: 32 }) {
+// in its own zone (army t of n), searched in a widening spiral; false if none
+export function fitToMap(terrain, t, a, n = 2) {
   if (!terrain.blocked(a.x, a.z, 0)) return true;
   for (let i = 1; i < 400; i++) {
     const ang = i * 2.4, r = 0.7 * Math.sqrt(i);
     const x = a.x + Math.cos(ang) * r, z = a.z + Math.sin(ang) * r;
-    if ((t === 0 ? x > -gap || x < -field.x : x < gap || x > field.x) || Math.abs(z) > field.z) continue;
+    if (!inZoneOf(t, n, x, z)) continue;
     if (!terrain.blocked(x, z, 0)) { a.x = x; a.z = z; return true; }
   }
   return false;

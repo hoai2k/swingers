@@ -270,7 +270,7 @@ export class FX {
           const t = (i / 9) * 6.28;
           this.bb(this.ss, x, y, z, Math.cos(t) * 1.4, rand(0.3, 1.2), Math.sin(t) * 1.4, rand(0.3, 0.45), rand(0.5, 0.8), '#f4f4f4', { tile: T_SMOKE, grow: 1.4, alpha: 0.85, drag: 3.5, vr: rand(-1, 1) });
         }
-        const tc = a ? '#ff8a7a' : '#8ab4ff';
+        const tc = ['#8ab4ff', '#ff8a7a', '#ffe48a', '#9ae8a8'][a | 0] || '#ffffff';
         for (let i = 0; i < 3; i++) this.bb(this.gs, x, y + 0.2, z, rand(-0.5, 0.5), rand(1.5, 2.5), rand(-0.5, 0.5), rand(0.16, 0.24), rand(0.6, 0.9), tc, { tile: T_STAR, drag: 1.5, vr: rand(-4, 4), shrink: true });
         this.dust(x, this.terrain.height(x, z), z, 4, 0.45, 0.4, 0.6);
         break;
