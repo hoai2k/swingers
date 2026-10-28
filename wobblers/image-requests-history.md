@@ -4,6 +4,25 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 17 — hanging monkey turnaround
+
+Delivered 2026-10-27 with built-in imagegen, matching the existing walking monkey.
+Verified opaque 1920 × 1080, side/front/three-quarter views, hanging pose, consistent
+raised-hand height and browser decoding. The reference stays out of the runtime
+manifest. Exact prompt and source path are in `assets/generation.json`.
+
+### Round 17 — hanging monkey turnaround
+
+The jungle monkeys also hang from vines (`regions/jungle/animals.js`, `monkeyHang`); that pose is
+still the old sculpted model because round 16 only showed the monkey walking. Same art direction
+and layout as round 16 (see the history doc): stylized game animal, smooth sculpted forms, broad
+painted markings, plain light grey background, soft studio light, no text, no vine or branch
+drawn (the game has its own vines).
+
+| file | animal |
+|---|---|
+| `assets/reference/animals/monkey_hanging.png` (1920 × 1080) | the **same monkey as `monkey.png`** (brown with a cream face, chest and hands, long curly tail) hanging at rest from an unseen vine above it: one arm raised straight up gripping, the other arm relaxed down at its side, legs dangling and slightly bent, tail curled up beside the raised arm as if also holding on. Three views side by side at the same scale: left = exact side view (facing right), middle = exact **front** view (looking at its face; not a top view), right = three-quarter front view. Whole monkey in frame in every view, the raised hand at the same height in all three. |
+
 ## Delivered round 16 — animal model turnarounds
 
 Delivered in batches with built-in imagegen. All sheets are opaque 1920 × 1080,

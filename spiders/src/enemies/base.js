@@ -15,6 +15,7 @@ import { clamp, rand, TAU } from '../util.js';
 import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
 import { randomWeaponId } from '../weapons.js';
+import { drawSil } from './art.js';
 
 // Insects are a good deal bigger than the spiders: easy to read and to hit.
 export const ENEMY_SCALE = 1.45;
@@ -270,8 +271,12 @@ export class Enemy {
   draw(ctx) {
     ctx.save();
     if (this.spawnFade !== undefined && this.spawnFade < 1) ctx.globalAlpha = this.spawnFade;
+    this._spr = null;              // set by drawBug when a sprite frame was drawn
     this.drawBody(ctx);
-    if (this.flash > 0) {
+    if (this.flash > 0 && this._spr) {
+      // hit flash: a white copy of the painted frame
+      drawSil(ctx, this, '#ffffff', this.flash * 0.75);
+    } else if (this.flash > 0) {
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = this.flash * 0.6;
       ctx.fillStyle = '#ffffff';

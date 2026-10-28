@@ -38,15 +38,15 @@ over it, and it is darkened slightly behind the action.
 
 | File | Board | Prompt |
 | --- | --- | --- |
-| `tile_spider_jungle.png` | Canopy | Seamless tileable texture of mossy jungle tree bark: deep brown furrowed bark with soft green moss patches, a few tiny leaves and lichen spots; painterly cartoon style; even lighting. |
-| `tile_spider_cave.png` | Stalactite Hollow | Seamless tileable texture of wet violet cave rock: smooth purple-grey stone with soft darker cracks, faint glints of tiny embedded cyan crystals and damp sheen; painterly cartoon style; even lighting. |
-| `tile_spider_volcano.png` | Caldera | Seamless tileable texture of black basalt rock with thin glowing orange-red cracks running between the stones and a few warm ember specks; painterly cartoon style; even lighting. |
-| `tile_spider_factory.png` | Gearworks | Seamless tileable texture of dark riveted steel plates: blue-grey metal panels with rows of round rivets, light scuffs and soft rust spots at the seams; painterly cartoon style; even lighting. |
-| `tile_spider_sky.png` | Skyway | Seamless tileable texture of a dense puffy cloud surface: soft white and pale lavender cloud puffs packed together with gentle blue shadows; painterly cartoon style; even lighting. |
-| `tile_spider_night.png` | Moon Conservatory | Seamless tileable texture of old moonlit garden stonework: worn blue-grey flagstones with soft moss in the joints and faint ivy tendrils; painterly cartoon style; even lighting. |
-| `tile_spider_candy.png` | Gumdrop Grove | Seamless tileable texture of candy terrain: soft milk-chocolate with swirls of pink frosting and scattered rainbow sprinkles; painterly cartoon style; even lighting. |
-| `tile_spider_storm.png` | Eye of the Storm | Seamless tileable texture of wet dark slate rock: layered blue-grey stone with rain-slick highlights and a few pale streaks; painterly cartoon style; even lighting. |
-| `tile_spider_desert.png` | Sunken Ruins | Seamless tileable texture of carved sandstone blocks: warm amber and ochre bricks with worn edges, faint carved glyph patterns and wind-blown sand in the joints; painterly cartoon style; even lighting. |
+| `tile_spider_jungle.jpg` | Canopy | Seamless tileable texture of mossy jungle tree bark: deep brown furrowed bark with soft green moss patches, a few tiny leaves and lichen spots; painterly cartoon style; even lighting. |
+| `tile_spider_cave.jpg` | Stalactite Hollow | Seamless tileable texture of wet violet cave rock: smooth purple-grey stone with soft darker cracks, faint glints of tiny embedded cyan crystals and damp sheen; painterly cartoon style; even lighting. |
+| `tile_spider_volcano.jpg` | Caldera | Seamless tileable texture of black basalt rock with thin glowing orange-red cracks running between the stones and a few warm ember specks; painterly cartoon style; even lighting. |
+| `tile_spider_factory.jpg` | Gearworks | Seamless tileable texture of dark riveted steel plates: blue-grey metal panels with rows of round rivets, light scuffs and soft rust spots at the seams; painterly cartoon style; even lighting. |
+| `tile_spider_sky.jpg` | Skyway | Seamless tileable texture of a dense puffy cloud surface: soft white and pale lavender cloud puffs packed together with gentle blue shadows; painterly cartoon style; even lighting. |
+| `tile_spider_night.jpg` | Moon Conservatory | Seamless tileable texture of old moonlit garden stonework: worn blue-grey flagstones with soft moss in the joints and faint ivy tendrils; painterly cartoon style; even lighting. |
+| `tile_spider_candy.jpg` | Gumdrop Grove | Seamless tileable texture of candy terrain: soft milk-chocolate with swirls of pink frosting and scattered rainbow sprinkles; painterly cartoon style; even lighting. |
+| `tile_spider_storm.jpg` | Eye of the Storm | Seamless tileable texture of wet dark slate rock: layered blue-grey stone with rain-slick highlights and a few pale streaks; painterly cartoon style; even lighting. |
+| `tile_spider_desert.jpg` | Sunken Ruins | Seamless tileable texture of carved sandstone blocks: warm amber and ochre bricks with worn edges, faint carved glyph patterns and wind-blown sand in the joints; painterly cartoon style; even lighting. |
 
 ### B. Weapons — held sprites (15 images)
 
