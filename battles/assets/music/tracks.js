@@ -24,7 +24,11 @@ export const TRACKS = {
   battle_jjk: { file: 'jjk-neon-night-arena.mp3', loop: 118.0, synth: 'battle', own: true }, // (electric: only for JJK armies)
   battle_avatar: { file: 'avatar-adventure.mp3', loop: 116.4, synth: 'battle' },
 
-  // setup_tribal: { file: '<delivered name>.mp3', loop: <s>, synth: 'setup' },
+  setup_wildwest: { file: 'wild-west-dusty-standoff.mp3', loop: 116.2, synth: 'setup' },
+  setup_viking: { file: 'viking-oars.mp3', loop: 112.4, synth: 'setup' },
+  setup_jjk: { file: 'jjk-scheming-motif.mp3', loop: 114.0, synth: 'setup' },
+  setup_avatar: { file: 'avatar-battle-plan.mp3', loop: 115.6, synth: 'setup' },
+  setup_dynasty: { file: 'avatar-battle-plan.mp3', loop: 115.6, synth: 'setup' }, // (Avatar's until its own arrives)
 };
 
 // One-shot stingers: role: file
