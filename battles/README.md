@@ -135,7 +135,10 @@ Wild West), else a campaign world's theme, else the theme of the factions
 holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
 Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avatar), else the
 main battle theme or, half the time, one of the world themes (not JJK's electric one,
-which stays with JJK armies). Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
+which stays with JJK armies). Setup and the result screen play the planning version of the battle
+song that's coming (`setupTheme`: the battleground's, a campaign world's, or the factions
+holding most of the gold already placed), once that planning song is delivered (requests
+1-8 in `music-requests.md`); until then, and otherwise, the main setup theme. Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
 recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
 `dev/sfx/generate.py` and `calibrate.cjs` remake them). Voices and the other music are
 synthesised, and every recorded sound falls back to its synth if its file is missing.
@@ -189,8 +192,8 @@ screen either pad does all of this; in split screen each pad drives its own view
 | B | remove (hold) | free cam: cinematic camera · else free camera / let go | free camera, then exit |
 | X | undo (hold to repeat) | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
 | Y | ready / not ready | slow motion · possess: a special technique | slow-mo final moments |
-| LT / RT | previous / next unit | LT hold: slow smooth cam · possess: LT block / aim, RT ranged attack | scrub back / forward |
-| D-pad | ←→ unit, ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
+| LT / RT | previous / next unit in the tab (wraps round) | LT hold: slow smooth cam · possess: LT block / aim, RT ranged attack | scrub back / forward |
+| D-pad | ←→ unit (on into the next faction), ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
 | R3 | reset camera | tips / HUD off (photo mode) · possess: slow motion | same |
 | View | clear army (asks) | split / shared screen | split / shared |
 | Start (Menu) | menu: ready, map, budget, blind, performance, quit | pause: performance, cinematic camera, screen, HUD, time, restart, edit, quit | menu |

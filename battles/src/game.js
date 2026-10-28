@@ -88,6 +88,33 @@ function battleTheme(armies, world, map) {
   if (best && gold[best] >= total * 0.45) return best;
   return Math.random() < 0.5 ? 'battle' : BATTLE_THEMES[1 + Math.floor(Math.random() * (BATTLE_THEMES.length - 1))];
 }
+// Setup / planning music: the planning version of the battle theme above (the
+// battleground's, a campaign world's, or the theme of the factions holding most of the
+// gold already placed), once that song is in TRACKS (src/audio.js; requests in
+// music-requests.md); else the main setup theme. (No random pick: the planning song
+// shouldn't change under you.)
+const SETUP_OF = {
+  battle_tribal: 'setup_tribal', battle_medieval: 'setup_medieval', battle_pirate: 'setup_pirate', battle_wildwest: 'setup_wildwest',
+  battle_viking: 'setup_viking', battle_dynasty: 'setup_dynasty', battle_jjk: 'setup_jjk', battle_avatar: 'setup_avatar',
+};
+function setupTheme(armies, world, map) {
+  let th = map?.music || WORLD_THEME[world] || null;
+  if (!th) {
+    const gold = {};
+    let total = 0;
+    for (const a of armies) for (const { type } of a) {
+      const d = UNIT_BY_ID[type];
+      if (!d) continue;
+      total += d.cost;
+      const f = FACTION_THEME[d.faction];
+      if (f) gold[f] = (gold[f] || 0) + d.cost;
+    }
+    const best = Object.keys(gold).sort((x, y) => gold[y] - gold[x])[0];
+    if (best && gold[best] >= total * 0.45) th = best;
+  }
+  const s = SETUP_OF[th];
+  return s && HAS_TRACK(s) ? s : 'setup';
+}
 const packArmy = (a) => a.map(({ type, x, z }) => ({ type, x: +x.toFixed(2), z: +z.toFixed(2) }));
 
 const SKEL_CACHE = new Map();
@@ -213,6 +240,10 @@ export class Game {
     if (!need || this.portraits23) return;
     this.portraits23 = true;
     Object.assign(this.ui.portraits, renderPortraits(UNITS, 112, [2, 3]));
+  }
+  // the planning song for this map / world / these armies (setupTheme)
+  setupMusic() {
+    this.audio.startMusic(setupTheme(this.activeArmies(), this.mode === 'campaign' && this.level ? WORLDS[this.level.world]?.id : null, this.map));
   }
   padArmies() { while (this.armies.length < MAX_ARMIES) this.armies.push([]); }
   activeArmies() { return this.armies.slice(0, this.nArmies); }
@@ -1111,7 +1142,7 @@ export class Game {
     this.setupCam(1);
     for (const a of this.setupVis) for (const v of a) this.resetVis(v);
     this.ui.setSetupLayout(this.solo);
-    this.audio.startMusic('setup');
+    this.setupMusic();
     this.audio.setVolumes(0.8, this.settings.music ? 0.45 : 0);
     if (this.mode === 'versus' && this.match && this.match.bestOf > 1) {
       const m = this.match;
@@ -1521,11 +1552,15 @@ export class Game {
       rig.update(s, dt, this.terrain, { speed: 13, minHeight: 1.5, planar: true, stickHeight: true, ...this.lookOpts });
       if (I.pressed(p, 'r3')) this.setupCam(p);
       // unit selection: LB/RB faction tabs (as in the Unit Creator and the level
-      // select), LT/RT or D-pad left/right step through units, D-pad up/down the brush
+      // select), LT/RT step through the units of the tab (wrapping round), D-pad
+      // left/right through every unit (on into the next tab), D-pad up/down the brush
       const nf = fl.length;
       const nIn = (f) => unitsOfFaction(fl[f].id).length;
-      if (I.repeat(p, 'right') || I.repeat(p, 'rt')) { ps.unit++; if (ps.unit >= nIn(ps.faction)) { ps.unit = 0; ps.faction = (ps.faction + 1) % nf; } this.audio.play('click', null, 0.5, 1.2); }
-      if (I.repeat(p, 'left') || I.repeat(p, 'lt')) { ps.unit--; if (ps.unit < 0) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = nIn(ps.faction) - 1; } this.audio.play('click', null, 0.5, 1.2); }
+      // d-pad ←→ runs on into the next faction; LT / RT wrap round within this one
+      if (I.repeat(p, 'right')) { ps.unit++; if (ps.unit >= nIn(ps.faction)) { ps.unit = 0; ps.faction = (ps.faction + 1) % nf; } this.audio.play('click', null, 0.5, 1.2); }
+      if (I.repeat(p, 'left')) { ps.unit--; if (ps.unit < 0) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = nIn(ps.faction) - 1; } this.audio.play('click', null, 0.5, 1.2); }
+      if (I.repeat(p, 'rt')) { ps.unit = (ps.unit + 1) % nIn(ps.faction); this.audio.play('click', null, 0.5, 1.2); }
+      if (I.repeat(p, 'lt')) { const n = nIn(ps.faction); ps.unit = (ps.unit + n - 1) % n; this.audio.play('click', null, 0.5, 1.2); }
       if (I.repeat(p, 'rb')) { ps.faction = (ps.faction + 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
       if (I.repeat(p, 'lb')) { ps.faction = (ps.faction + nf - 1) % nf; ps.unit = 0; this.audio.play('click', null, 0.5, 1); }
       if (I.pressed(p, 'down')) { ps.brush = (ps.brush + 1) % BRUSHES.length; this.audio.play('click', null, 0.5, 1.4); }
@@ -2201,7 +2236,7 @@ export class Game {
     const names = this.sim ? [...this.sim.names] : this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && (this.solo || this.nArmies > 2) ? TEAM_NAMES.slice(0, this.nArmies) : null;
     this.ui.showResult({ winNames: this.sim ? this.sim.names : null, winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
-    this.audio.startMusic('setup');
+    this.setupMusic();
     // the recorded stingers: defeat when the campaign player loses, or nobody wins
     const lost = b.winner < 0 || (this.mode === 'campaign' && b.winner !== 0);
     if (!this.audio.stinger(lost ? 'defeat' : 'victory')) this.audio.play('fanfare', null, 0.9, 1);
@@ -2401,7 +2436,7 @@ export class Game {
     this.fx.clear();
     this.projViz.clear();
     this.syncLive(0);
-    this.audio.startMusic('setup');
+    this.setupMusic();
     this.input.swallow();
   }
 
