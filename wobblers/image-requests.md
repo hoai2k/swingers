@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: all requested images delivered; no open requests.** Rounds 1–17 are delivered; see `image-requests-history.md`.
+**Status: round 18 is OPEN** (animal turnarounds for the desert, snow, tropical islands, city and suburbs). Rounds 1–17 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -51,6 +51,43 @@ to the top of `image-requests-history.md`.
 - **Reference sheets** (`assets/reference/`): any 16:9 around 1920 × 1080.
 
 
+## OPEN round 18 — more animal turnarounds (desert, snow, islands, city, suburbs)
+
+New wildlife for the other islands (`src/world/regions/*/animals.js`, `src/world/townlife.js`). The
+code runs on simple stand-in shapes until these arrive; then each model is built from its sheet the
+same way as round 16 (`tools/animals/quad.py` / `designed.py`). **Same art direction and layout as
+round 16** (see `image-requests-history.md`): a midpoint between baby-toy animals and realistic
+wildlife, rounded expressive stylized game animals with recognisable adult anatomy, broad painted
+markings, smooth sculpted forms, no fur / scale / wrinkle detail, no chibi proportions or human
+grins; plain light grey background, soft studio light, no text, no ground clutter.
+
+**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the same
+scale: left = exact side view (facing right), middle = exact top view (head toward the right),
+right = three-quarter front view. Whole animal in frame in every view, standing in a neutral
+walking pose with all legs visible. **Birds that fly** (vulture, crow, owl): side view standing
+with wings folded; top view with the wings spread wide as in flight (head right); three-quarter
+view flying with wings spread.
+
+Files (all `assets/reference/animals/<file>`, 1920 × 1080):
+
+| file | animal |
+|---|---|
+| `camel.png` | a one-humped dromedary camel, sandy tan, long legs and neck, droopy friendly eyelids |
+| `fennec_fox.png` | a fennec fox: small cream-sand fox with huge ears, black-tipped bushy tail |
+| `roadrunner.png` | a roadrunner: speckled brown-and-cream ground bird, long straight tail, crest, long legs, running pose |
+| `rattlesnake.png` | a desert rattlesnake: tan with bold brown diamond pattern down the back, rattle on the tail tip; body laid out in a gentle S like `snake.png`, head raised slightly |
+| `scorpion.png` | a desert scorpion: amber-orange, two big pincers held forward, eight legs, tail curled up over the back with the stinger |
+| `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
+| `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
+| `mountain_goat.png` | a mountain goat: shaggy white coat (shaped as smooth rounded volumes, no fur strands), short black horns, small beard |
+| `arctic_fox.png` | an arctic fox in winter white, small rounded ears, very bushy tail |
+| `snowy_owl.png` | a snowy owl: white with dark speckles, big yellow eyes (see the birds note) |
+| `flamingo.png` | a pink flamingo standing on its long legs, S-curved neck, bent black-tipped bill |
+| `iguana.png` | a green iguana: long tail, spiky crest down the back, dewlap under the chin, sprawling legs |
+| `rat.png` | a city rat: grey-brown, pink ears, hands, feet and long thin pink tail, a bit cheeky rather than gross |
+| `squirrel.png` | a grey squirrel with a big fluffy S-curved tail and a pale belly |
+| `crow.png` | a glossy black crow with a slight blue-purple sheen and a strong black beak (see the birds note) |
+| `cat.png` | an orange tabby house cat with broad darker stripes, white chest and paws, tail up |
 
 ## For agents adding requests
 
