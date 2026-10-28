@@ -371,8 +371,12 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     (legs stood upright, the python's body repeating the drawn blotches, the upright jellyfish).
     Model json flags: `wingTop` (wings painted from the top view on both faces) and `sideOnly`.
     The paint's background is filled from the animal's own colours (`build.py fill_bg`).
-  - Triangle budgets (`tris`): many-instance animals small (sea star 1.6k, jellyfish 4k, crab 5k,
-    reef fish ~2-4k), big ones ~9-12k. Under water all sea life together stays under ~0.8M.
+  - Triangle budgets (`tris`): small or many-instance animals small (rat, crow 3k; squirrel,
+    scorpion, flamingo, roadrunner 4k; cat, fennec, arctic fox, iguana, tortoise, capybara,
+    parrot, toucan 5k; sea star 1.6k, jellyfish 4k, crab 5k, reef fish ~2-4k), big ones ~8-12k.
+    There is no distance LOD: every instance draws its full mesh, so a 0.45 m rat at 12k
+    triangles cost as much as a tiger (measured: animals added 220-420k triangles near the town /
+    in the jungle before these budgets). Under water all sea life together stays under ~0.8M.
   - Check a model with a turnaround render (a Playwright probe that hides everything but one
     species' mesh after every `critters_*` mesh has its `aAnim` attribute, renders side / top /
     3/4 / front, and once with `aAnim` amount 1 to see it move), next to its sheet.
@@ -409,7 +413,13 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   troop's first one rides on the player's head for a few seconds; back to their round after 30 s
   or when the player leaves, 45 s cooldown: `monkeyPlay`, state in `a.mk`); tigers, leopards and
   tapirs stop and turn to watch a player who comes close (`WATCH` radii; their walk is paused,
-  not skipped: `a.tAdj`).
+  not skipped: `a.tAdj`). Crocodiles bite (`crocBite`): a player's lower leg (its body, not the mesh)
+  within 1.3 m of a croc's snout gets caught (`chomp`); the croc holds on 7-10 s, posed trailing
+  behind that leg, thrashing (jaw kept shut via its phase), while a stepper slows the player to a
+  crawl and yanks them back toward it every ~1 s; each punch (detected by `punch.t` jumping up)
+  takes 0.5 s off, never below 3.5 s. Then it slides back to its spot or river path over 3 s
+  (`a.ret`); 25 s before that croc bites again. `player.bitten` = the croc. Basking crocs keep
+  their spot in `a.home`. No animal ever knocks a player out or kills them.
   Grabbing (`src/world/animalgrab.js`): animals have no physics, so the nearest few to a player
   (pool of 8, within 7 m) borrow a kinematic capsule that follows the posed animal (`a.pose`), in
   a group players walk through but hands still find (`handleOwner` kind `'animal'`; player.js
@@ -437,9 +447,14 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   Never the same twice: the layout seed is random per session, and each group (`a.grp`: a herd,
   a pair, one animal) re-rolls every 150-300 s while no camera can see it whether it is about
   (`presence`, default 0.65) and, for walkers, which loop of its kind's pool (3x the groups) it is
-  on; `a.hidden` = away. Timid groups (`timid` chance 0.6, re-rolled too) that get scared (fleeing,
-  a flushed perched bird flies off over the horizon, let go after a grab) run on until 40 m from
-  every player and are gone until the next roll (`runOff`); the others calm down and carry on.
+  on; `a.hidden` = away. Timid groups (`timid` chance 0.4, re-rolled too) that get scared (fleeing,
+  a flushed perched bird flies off over the horizon, let go after a grab) run on until they are 40 m
+  (birds 70 m) from every player **and out of every camera's view** (`W.seen(x, y, z)`: within 55 m,
+  or within 160 m inside a cone round the camera's forward direction), so nothing vanishes in plain
+  sight, then are gone until the next roll (`runOff`, which veers along the shore rather than run
+  into the sea); the others calm down and carry on. Animals are posed within `SEE` 150 m of a
+  camera; big or high ones carry their own range (`see`: camels 400, vultures 500, goats 350,
+  flamingos 300, flying owls 250) so they don't pop in at 150 m across open ground.
   Noticing (`W.noticed(a, x, z, y, yaw, r)`, used by flee / look / perch and the custom squirrel,
   rat and flamingo poses): within r scaled by the player's speed (0.25 + 0.75 x (speed - 0.8) / 3.5,
   so creeping at ~1.5 m/s gets ~3 m from a fennec that bolts at 8 m from a walker), x 0.55 from
@@ -448,7 +463,9 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   (`key.away`, 35% away per 240 s cycle while out of sight).
   - Dusty Dunes (`regions/desert/animals.js`): camel caravans (grabbable, 450 kg), fennec foxes and
     roadrunners that flee, rattlesnakes that slither between the canyon rims and mesas (`rear`: when one notices you it
-    rears and shakes its rattle), scorpions, tortoises,
+    rears and shakes its rattle; it strikes only when bothered, `strike()`: you keep coming within 1.3 m after
+    0.8 s of warning, or tread on it within 0.7 m; the bite poisons for 14 s (`poison.js`), then that snake
+    stays calm for 20 s), scorpions, tortoises,
     vultures circling the canyon and mesas.
   - Frostpeak (`regions/snow/animals.js`): mountain goats above 50 m (stare at you), arctic foxes
     (flee), snowy owls that take off and circle.
@@ -466,6 +483,20 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     `WAVEA` 0.22) and their `stride` must be 2pi / WAVEK. Sounds: `yip`, `rattle`, `hoot`,
     `honk`, `caw`, `chitter` (recorded), plus existing ones.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
+
+## Poisoned (`src/poison.js`)
+
+A status effect any hazard can give a character (so far the rattlesnake): `game.poison.apply(p,
+secs)` (a fresh dose tops it up), `clear(p)` (respawn cures), `of(p)` (strength 0..1: full for two
+thirds of the time, fading over the last third). While poisoned (`player.poisoned`): the skin goes
+sick green (`player.skinTint` { color, k }: `paintSkin` mixes it into the skin / hands, repainted
+only as the strength steps by 0.06; the head's per-object skin-tone hook mixes it into the face
+background, every look style); green bubbles rise and swirl round the head (one InstancedMesh,
+pool of 120); walking staggers: `filter` (from `player.step`, after gadgets / forms) makes the
+stick's direction wander up to ~70 deg and blocks sprinting, a stepper lurches them sideways
+(`stumble` + a push) every 2-4 s, and a lurch while walking may trip them (a 1.1 s knock-out, at
+most every 8 s). Sound `queasy` (recorded; synth fallback). A sick sprint covers about half the
+ground of a well one.
 
 ## Fences (`src/world/fences.js`)
 

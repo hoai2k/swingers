@@ -352,6 +352,13 @@
    "dur": 0.8,
    "level": 0.6,
    "prompt": "A squirrel chattering and chittering quickly, cute and cartoony"
+  },
+  {
+   "name": "queasy",
+   "n": 2,
+   "dur": 1.2,
+   "level": 0.6,
+   "prompt": "A cartoon character feeling sick and queasy: a wobbly woozy groan 'ooohhh' with a gurgling tummy, comedic, no words"
   }
  ]
 }

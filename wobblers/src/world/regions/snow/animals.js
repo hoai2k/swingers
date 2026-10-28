@@ -24,12 +24,12 @@ export function buildSnowAnimals(game, R) {
   W.mk('arcticFox', 'arcticFox', 5, { k: { LEG: 0.8, TAILA: 0.4 } });
   W.mk('owl', 'snowyOwl', 4, { k: { FLAP: 0, LEG: 0.2 } });
   W.mk('owlFly', 'owlFly', 4, { k: { FLAP: 0.8 }, shadow: false });
-  W.place('goat', 3, 12, 0.7, 12, 12, { group: 2, gap: 2, young: true, near: (x, z) => R.groundAt(x, z) > 50, look: 9, sound: 'bleat', hear: 10, stride: 1.0 });
+  W.place('goat', 3, 12, 0.7, 12, 12, { group: 2, gap: 2, young: true, near: (x, z) => R.groundAt(x, z) > 50, look: 9, sound: 'bleat', hear: 10, stride: 1.0, see: 350 });
   W.place('arcticFox', 4, 10, 1.3, 10, 8, { flee: 9, fleeV: 7, sound: 'yip', hear: 8, stride: 0.6 });
   for (let n = 0, tries = 0; n < 4 && tries < 300; tries++) {
     const x = R.bounds[0] + 60 + W.rnd() * (R.bounds[1] - R.bounds[0] - 120), z = R.bounds[2] + 60 + W.rnd() * (R.bounds[3] - R.bounds[2] - 120);
     if (!ok(x, z)) continue;
-    W.add({ kind: 'owl', flyKind: 'owlFly', perch: true, px: x, py: R.groundAt(x, z), pz: z, x, z, yaw: W.rnd() * 6.283, shy: 8, alt: 12, circle: 14, sound: 'hoot', hear: 12 });
+    W.add({ kind: 'owl', flyKind: 'owlFly', perch: true, px: x, py: R.groundAt(x, z), pz: z, x, z, yaw: W.rnd() * 6.283, shy: 8, alt: 12, circle: 14, sound: 'hoot', hear: 12, see: 250 });
     n++;
   }
   W.start('snowAnimals', {

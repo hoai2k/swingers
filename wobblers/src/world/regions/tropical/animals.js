@@ -30,7 +30,7 @@ export function buildTropicalAnimals(game, R) {
     if (pts.length < 4) continue;
     flocks.push({ x, z, pts: pts.map(([px, pz]) => [px, R.groundAt(px, pz), pz]) });
   }
-  flocks.forEach((f, fi) => { for (let i = 0; i < 5; i++) W.add({ kind: 'flamingo', custom: wade, flock: f, i: fi * 5 + i, x: f.x, z: f.z, s: 0.9 + W.rnd() * 0.2, sound: 'honk', hear: 9 }); });
+  flocks.forEach((f, fi) => { for (let i = 0; i < 5; i++) W.add({ kind: 'flamingo', custom: wade, flock: f, i: fi * 5 + i, x: f.x, z: f.z, s: 0.9 + W.rnd() * 0.2, sound: 'honk', hear: 9, see: 300 }); });
   function wade(a, t, dt, S, Wl) {
     const P = a.flock.pts, st = a.st ||= { k: a.i % P.length, x: P[a.i % P.length][0] + (a.i % 3) * 0.7, z: P[a.i % P.length][2], ph: 0, until: 0 };
     const n = Wl.noticed(a, st.x, st.z, R.groundAt(st.x, st.z), st.yaw, 6);

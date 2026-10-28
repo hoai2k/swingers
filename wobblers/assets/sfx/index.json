@@ -206,6 +206,10 @@
   "assets/sfx/chitter-1.mp3",
   "assets/sfx/chitter-2.mp3"
  ],
+ "queasy": [
+  "assets/sfx/queasy-1.mp3",
+  "assets/sfx/queasy-2.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -255,7 +259,8 @@
   "hoot": 0.7,
   "honk": 0.7,
   "caw": 0.7,
-  "chitter": 0.6
+  "chitter": 0.6,
+  "queasy": 0.6
  },
  "_loops": [
   "ride_screams",

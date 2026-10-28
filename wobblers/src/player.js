@@ -469,7 +469,13 @@ export class Player {
       m.position.y = -STYLE.drop * S;
       m.castShadow = true;
       if (STYLE.outline) { const o = new THREE.Mesh(m.geometry, HEAD_OUTLINE); o.scale.setScalar(1.05); m.add(o); }
-      if (STYLE.skinColored) m.onBeforeRender = (r, s, c, geo, mat) => { const u = mat.userData.skinU; if (u) { u.value.set(skinTone(this.skinBase())); mat.uniformsNeedUpdate = true; } };
+      // the face's background skin colour, per character (the toy style's skin tone; a tint such as poison.js's green on top)
+      m.onBeforeRender = (r, s, c, geo, mat) => {
+        const u = mat.userData.skinU; if (!u) return;
+        u.value.set(STYLE.skinColored ? skinTone(this.skinBase()) : 0xffd9b8);
+        if (this.skinTint) u.value.lerp(this.skinTint.color, this.skinTint.k);
+        mat.uniformsNeedUpdate = true;
+      };
       this.headMesh = m;
       g.add(m);
       this.hatMesh = new THREE.Group();
@@ -509,6 +515,7 @@ export class Player {
         this.skinOutline = o;
       }
     }
+    if (this.skinTint) for (const k of ['skin', 'mitten', 'cuff']) if (k !== 'mitten' || STYLE.skinColored) cols[k] = _col.set(cols[k]).lerp(this.skinTint.color, this.skinTint.k).getHex(); // poison.js: sick green
     const g = this.skin.geometry, key = g.attributes.ckey.array, c = g.attributes.color, a = c.array;
     const rgb = CK.map((k) => _col.set(cols[k]).toArray());
     for (let i = 0; i < key.length; i++) { const v = rgb[key[i]]; a[i * 3] = v[0]; a[i * 3 + 1] = v[1]; a[i * 3 + 2] = v[2]; }
@@ -935,6 +942,7 @@ export class Player {
   step(inp, pressed) {
     if (this.gear?.filter) inp = this.gear.filter(inp); // gadgets: a hand holding a tool can't grab
     if (this.form) inp = this.form.input(inp); // forms.js: animals can't grab
+    if (this.poisoned) inp = this.game.poison.filter(this, inp); // poison.js: a staggering walk
     const parts = this.parts;
     const chest = parts.chest.body, hips = parts.hips.body;
     this.t += DT;
@@ -1954,6 +1962,7 @@ export class Player {
   respawn() {
     this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
     this.skis?.off(this, 'quiet'); // snow/skis.js
+    this.game.poison?.clear(this); // poison.js: respawn cured
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;

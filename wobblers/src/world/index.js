@@ -38,6 +38,7 @@ import { placeBouncyBalls } from './bouncy.js'; // also registers the bouncy bal
 import { placeAircraft } from './aircraft.js'; // also registers the plane + glider vehicles
 import { addGrabHandles } from './ridegrab.js';
 import { buildSeaLife } from './sealife.js';
+import { installPoison } from '../poison.js';
 
 export function buildWorld(game) {
   const kit = new Kit(game);
@@ -79,6 +80,7 @@ export function buildWorld(game) {
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('waypoints', () => buildWaypoints(game));  // waypoint stars: also need the statics (open-sky spot search)
   T('townLife', () => buildTownLife(game));   // squirrels, crows, cats round the town; rats by Bigtown's bins
+  T('poison', () => { game.poison = installPoison(game); }); // the poisoned status (rattlesnake bites): green, staggering, bubbles
   T('carDamage', () => buildCarDamage(game)); // vehicle damage, fire and explosions (Settings > Car damage)
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too
   T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)

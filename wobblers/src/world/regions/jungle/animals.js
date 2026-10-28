@@ -11,6 +11,7 @@
 // near: only animals within SEE m of a camera are posed, and they make their noise (growl,
 // chatter, grunt, hiss, snap, squawk) when a player comes close. They are scenery: no
 // physics, you walk through them.
+import * as THREE from 'three';
 import { SEA_LEVEL } from '../../../config.js';
 import { Species, hash } from '../../critters.js';
 import { VILLAGE, LAGOON, TEMPLE, RIVER, CLIFF, POOL, TRAIL, TRACK, VOLCANO, polyDist } from '../jungle.js';
@@ -102,7 +103,7 @@ export function buildAnimals(game, R) {
   for (const s of [95, 185, 262]) {
     const [x, , z] = riverAt(s, 0), [x2, , z2] = riverAt(s + 1, 0), nx = -(z2 - z), nz = x2 - x, l = Math.hypot(nx, nz) || 1, side = s % 2 ? 1 : -1;
     const bx = x + nx / l * 9 * side, bz = z + nz / l * 9 * side;
-    animals.push({ kind: 'croc', bask: true, x: bx, z: bz, y: R.groundAt(bx, bz), yaw: Math.atan2(-nx * side, -nz * side), off: rnd() * 30, s: 1.2, sound: 'snap', hear: 6 });
+    animals.push({ kind: 'croc', bask: true, x: bx, z: bz, home: [bx, bz], y: R.groundAt(bx, bz), yaw: Math.atan2(-nx * side, -nz * side), off: rnd() * 30, s: 1.2, sound: 'snap', hear: 6 });
   }
   function riverAt(s, lane = -2.5) { // point on the river centre line at arc length s (+ a lane offset), y at the water
     let acc = 0;
@@ -233,6 +234,84 @@ export function buildAnimals(game, R) {
     return true;
   }
 
+  // Crocodiles bite: a player (on foot or swimming) whose legs come within ~1.3 m of a croc's snout
+  // gets a leg caught. It holds on 7-10 s, thrashing, dragged along behind (the player walks at a
+  // crawl, yanked back toward it every second or so); each punch thrown shortens its grip by 0.5 s
+  // (it holds on 3.5 s at the least).
+  // Then it lets go and slides back to its spot; 25 s before that croc bites again.
+  let crocFront = 0;
+  const _f = new THREE.Vector3();
+  function crocBite(a, t, sp) {
+    if (!crocFront) { const g = sp.mesh.geometry; if (!sp.ready) return false; g.computeBoundingBox(); crocFront = g.boundingBox.max.z * 0.92; }
+    const front = crocFront * a.s;
+    let B = a.bite;
+    if (!B) {
+      if (a.ret) {                                             // let go: sliding back to its spot
+        const u = Math.min(1, (t - a.ret.t0) / 3);
+        if (u >= 1) { a.ret = null; return false; }
+        const q = a.ret, home = q.home(t), k = u * u * (3 - 2 * u);
+        const x = q.x + (home[0] - q.x) * k, z = q.z + (home[1] - q.z) * k, y = q.y + (home[2] - q.y) * k;
+        sp.put(x, y, z, Math.atan2(home[0] - q.x, home[1] - q.z), 0, 0, a.s, t * 9, 0.8);
+        a.x = x; a.z = z; return true;
+      }
+      if (t < (a.biteCool || 0) || !a.pose) return false;
+      const [x, , z, yaw] = a.pose, sx = x + Math.sin(yaw) * front, sz = z + Math.cos(yaw) * front;
+      for (const p of game.players) {
+        if (p.seat || p.bitten || p.state === 'limp') continue;
+        for (const leg of [p.parts.lLegL, p.parts.lLegR]) {
+          const lp = leg.body.translation(); _f.set(lp.x, lp.y, lp.z);
+          if ((_f.x - sx) ** 2 + (_f.z - sz) ** 2 < 1.3 * 1.3 && Math.abs(_f.y - a.pose[1]) < 1.2) {
+            const dx = x - _f.x, dz = z - _f.z, l = Math.hypot(dx, dz) || 1;
+            B = a.bite = { p, leg, t0: t, until: t + 7 + Math.random() * 3, dx: dx / l, dz: dz / l, y: a.pose[1], swim: !!a.swim, pt: p.punch?.t || 0, yank: t + 0.9 };
+            p.bitten = a;
+            game.audio?.play('chomp', { x: sx, y: _f.y, z: sz });
+            game.audio?.play('growl', { x: sx, y: _f.y, z: sz }, 0.6);
+            p.stumble = Math.max(p.stumble || 0, 0.6);
+            break;
+          }
+        }
+        if (B) break;
+      }
+      if (!B) return false;
+    }
+    const p = B.p, lp = B.leg.body.translation();
+    _f.set(lp.x, lp.y, lp.z);
+    const cx = _f.x + B.dx * front, cz = _f.z + B.dz * front;
+    // the croc trails behind the leg it holds (its body swings round as the player moves)
+    const ndx = cx - _f.x, ndz = cz - _f.z, nl = Math.hypot(ndx, ndz) || 1; B.dx = ndx / nl; B.dz = ndz / nl;
+    const gy = R.groundAt(cx, cz), y = B.swim || gy < SEA_LEVEL - 0.2 ? SEA_LEVEL - 0.36 * a.s : gy;
+    const roll = Math.sin(t * 7 + a.off) * 0.35 + (Math.sin(t * 1.3) > 0.7 ? Math.sin(t * 14) * 0.5 : 0);   // thrashing, a death-roll shake now and then
+    sp.put(cx, y, cz, Math.atan2(-B.dx, -B.dz), 0.05, roll, a.s, 12.7 + Math.sin(t * 8) * 3, 0.7);           // (phase kept where the jaw is shut)
+    a.x = cx; a.z = cz;
+    const gone = !game.players.includes(p) || p.seat || Math.hypot(_f.x - cx, _f.z - cz) > front * 2.5;
+    if (t > B.until || gone) {                                 // lets go
+      p.bitten = null; a.bite = null; a.biteCool = t + 25;
+      const home = a.bask ? () => [a.home[0], a.home[1], a.y]
+        : (tt) => { const tr = travelled(tt - (a.tAdj || 0), a.v, a.walk, a.rest, a.off), o = along(a.path, tr.s - a.back); return [o.x, o.z, SEA_LEVEL - 0.36 * a.s]; };
+      a.ret = { t0: t, x: cx, z: cz, y, home };
+      game.audio?.play('hiss', { x: cx, y, z: cz }, 0.7);
+    }
+    return true;
+  }
+  // a bitten player crawls, yanked back toward the croc now and then; punching shakes it off sooner
+  game.steppers.push(() => {
+    for (const p of game.players) {
+      const a = p.bitten, B = a?.bite;
+      if (!B) { if (p.bitten) p.bitten = null; continue; }
+      const v = p.chest.linvel(), k = Math.exp(-3.5 / 60);
+      p.chest.setLinvel({ x: v.x * k, y: v.y, z: v.z * k }, true);
+      const t = game.time;
+      if (t > B.yank) {
+        B.yank = t + 0.8 + Math.random() * 0.7;
+        const m = p.chest.mass() + p.parts.hips.body.mass();
+        p.chest.applyImpulse({ x: B.dx * m * 1.1, y: 0, z: B.dz * m * 1.1 }, true);
+        p.stumble = Math.max(p.stumble || 0, 0.35);
+      }
+      const pt = p.punch?.t || 0;                              // a new punch restarts its timer (mashing never lets it reach 0)
+      if (pt > B.pt + 0.01) B.until = Math.max(B.t0 + 3.5, B.until - 0.5);   // never shaken off in under 3.5 s
+      B.pt = pt;
+    }
+  });
   function pose(a, t) {
     const sp = S[a.kind];
     if (a.fly) { // birds: circles over the canopy, flapping, gliding now and then
@@ -247,8 +326,10 @@ export function buildAnimals(game, R) {
       sp.put(a.x, a.y, a.z, a.yaw, 0, sw, a.s, t * 3 + a.off, 0.6 + 0.4 * kick);
       return;
     }
+    if (a.kind === 'croc' && crocBite(a, t, sp)) return;
     if (a.bask) { // crocodile on the bank, jaws slowly opening (snaps when startled)
       const st = a.startle && t - a.startle < 1.2;
+      a.x = a.home[0]; a.z = a.home[1];
       sp.put(a.x, a.y, a.z, a.yaw, 0, 0, a.s, st ? (t - a.startle) * 30 : t * 0.4 + a.off, 0);
       return;
     }

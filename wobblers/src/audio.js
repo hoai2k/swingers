@@ -457,6 +457,7 @@ export class Audio {
       }
       case 'monkey': { const f = 520 + r() * 120; for (let i = 0; i < 4; i++) this.voice(f * (i < 2 ? 1 : 1.5), f * (i < 2 ? 1.25 : 1.9), 0.12, 0.12 * v, out, i < 2 ? 'o' : 'a', i * 0.16); break; }
       case 'hiss': this.burst(0.9, 0.16 * v, 5200, 1.5, 'bandpass', 0, out, 3800); break; // snake / crocodile
+      case 'queasy': this.tone('sine', 340, 170, 0.55, 0.14 * v, 0, out); this.tone('triangle', 260, 140, 0.6, 0.08 * v, 0.15, out); break; // poisoned: a sick groan (poison.js)
       case 'snap': this.burst(0.05, 0.4 * v, 1200, 1, 'lowpass', 0, out); this.tone('square', 220, 120, 0.06, 0.12 * v, 0, out); break; // crocodile jaws
       case 'grunt': for (let i = 0; i < 3; i++) { this.tone('square', 90 + r() * 30, 70, 0.09, 0.08 * v, i * 0.14, out); this.burst(0.08, 0.06 * v, 500, 1, 'lowpass', i * 0.14, out); } break; // river hog / tapir
       case 'squeak': this.tone('sine', 1500 + r() * 400, 2100, 0.07, 0.07 * v, 0, out); this.tone('sine', 1700, 1300, 0.08, 0.06 * v, 0.1, out); break; // capybara

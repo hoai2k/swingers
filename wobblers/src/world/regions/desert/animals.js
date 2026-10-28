@@ -28,7 +28,7 @@ export function buildDesertAnimals(game, R) {
   W.mk('tortoise', 'tortoise', 5, { k: { LEG: 0.4 } });
   W.mk('vulture', 'vulture', 8, { k: { FLAP: 0.5 }, shadow: false });
   const dunes = (x, z) => x < -1150 || z > 60;
-  W.place('camel', 2, 30, 0.9, 30, 14, { group: 3, gap: 3.2, young: true, near: dunes, sound: 'grunt', hear: 10, stride: 2.2 });
+  W.place('camel', 2, 30, 0.9, 30, 14, { group: 3, gap: 3.2, young: true, near: dunes, sound: 'grunt', hear: 10, stride: 2.2, see: 400 });
   W.place('fennec', 5, 8, 1.2, 8, 8, { flee: 8, fleeV: 6.5, sound: 'yip', hear: 7, stride: 0.45 });
   W.place('roadrunner', 4, 16, 2.6, 6, 4, { flee: 9, fleeV: 9, sound: 'chirp', hear: 9, stride: 0.55 });
   W.place('scorpion', 8, 3, 0.35, 5, 7, { size: 1.6, flee: 2.5, fleeV: 1.6, stride: 0.15 });
@@ -40,7 +40,7 @@ export function buildDesertAnimals(game, R) {
   // vultures circling over the canyon and the mesas
   for (let i = 0; i < 6; i++) {
     const [x, z] = i < 3 ? [-1250 + i * 110, canyonZ(-1250 + i * 110)] : [MESAS[i % 2][0], MESAS[i % 2][1]];
-    W.add({ kind: 'vulture', fly: true, x0: x, z0: z, x, z, y: R.groundAt(x, z), alt: 26 + W.rnd() * 14, r: 18 + W.rnd() * 14, w: (W.rnd() < 0.5 ? -1 : 1) * (0.18 + W.rnd() * 0.1), s: 1.2 });
+    W.add({ kind: 'vulture', fly: true, x0: x, z0: z, x, z, y: R.groundAt(x, z), alt: 26 + W.rnd() * 14, r: 18 + W.rnd() * 14, w: (W.rnd() < 0.5 ? -1 : 1) * (0.18 + W.rnd() * 0.1), s: 1.2, see: 500 });
   }
   W.start('desertAnimals', {
     grab: {
