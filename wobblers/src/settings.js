@@ -5,7 +5,7 @@
 
 const KEY = 'wobblers.settings.v1';
 
-const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 0, showFps: false, toyStyle: true, devices: {}, presents: [], waypoints: [], life: {}, missions: {}, arcade: {} });
+const DEFAULTS = () => ({ sound: true, music: 0.55, sfx: 0.8, shadows: true, res: 0, showFps: false, toyStyle: true, carDamage: true, devices: {}, presents: [], waypoints: [], life: {}, missions: {}, arcade: {} });
 
 function load() {
   const s = DEFAULTS();
@@ -18,6 +18,7 @@ function load() {
         if (typeof o.shadows === 'boolean') s.shadows = o.shadows;
         if (typeof o.sound === 'boolean') s.sound = o.sound; // corner sound on/off button
         if (typeof o.showFps === 'boolean') s.showFps = o.showFps;
+        if (typeof o.carDamage === 'boolean') s.carDamage = o.carDamage; // world/cardamage.js
         // character look (charstyle.js): toy style is the default; a saved Off counts only if the
         // player picked it in Settings (older saves stored the old Off default)
         if (typeof o.toyStyle === 'boolean' && o.toyStyleChosen) { s.toyStyle = o.toyStyle; s.toyStyleChosen = true; }

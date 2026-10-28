@@ -173,6 +173,14 @@
   "assets/sfx/star-1.mp3",
   "assets/sfx/star-2.mp3"
  ],
+ "explode": [
+  "assets/sfx/explode-1.mp3",
+  "assets/sfx/explode-2.mp3"
+ ],
+ "fire": [
+  "assets/sfx/fire-1.mp3",
+  "assets/sfx/fire-2.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -214,7 +222,9 @@
   "squawk": 0.5,
   "jungle_ambience": 0.4,
   "underwater": 0.5,
-  "star": 0.8
+  "star": 0.8,
+  "explode": 0.9,
+  "fire": 0.6
  },
  "_loops": [
   "ride_screams",

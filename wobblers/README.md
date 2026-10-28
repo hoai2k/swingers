@@ -29,7 +29,11 @@ opens the controls overlay.
 **Start** / **Esc** opens that player's own menu (resume, customise, respawn, settings,
 controls, reset vehicles, leave). With one player it pauses the game; in split screen it
 only covers that player's view. Settings (music and sound volume, shadows, resolution, and
-per-player invert-Y and camera sensitivity) are saved in `localStorage`. The buttons in the top-right
+per-player invert-Y and camera sensitivity, car damage) are saved in `localStorage`.
+**Car damage** (on by default): serious crashes damage your vehicle bit by bit. It smokes (grey,
+then black), starts to wobble, catches fire and, a few seconds later, explodes, throwing out
+anyone still inside (and anyone standing close). The charred wreck smokes for a while, then a
+phone-called vehicle is gone (call another) and a parked one is back home as new. The buttons in the top-right
 corner (they fade out while the mouse is idle in play) toggle fullscreen and sound and open the
 shared settings with the mouse; leaving the title (the first join) goes fullscreen by itself. Menus work with the
 stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or the mouse.
@@ -314,6 +318,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
 | `src/world/waypoints.js` | waypoint stars (`WAYPOINTS`): collect to unlock fast travel (map / pause menu), saved in `settings.waypoints` |
+| `src/world/cardamage.js` | car damage: impacts from velocity jumps, smoke / wobble / fire / explosion, charred wrecks, smoke and fire particles |
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/world/booths.js` | phone booths (`BOOTHS`): the phone panel as a garage list spawning outside the booth, map icons |

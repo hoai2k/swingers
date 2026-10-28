@@ -21,6 +21,7 @@ import { buildFun } from './fun.js';
 import { InteriorLights } from './lights.js';
 import { buildPresents } from './presents.js';
 import { buildWaypoints } from './waypoints.js';
+import { buildCarDamage } from './cardamage.js';
 import { buildBridge } from './bridge.js';
 import { buildFerries } from './ferries.js';
 import { buildFolk } from './folk.js';
@@ -75,6 +76,7 @@ export function buildWorld(game) {
   T('sealife', () => buildSeaLife(game));     // sea creatures (drawn only under water) + dolphin pods and whales
   T('presents', () => buildPresents(game));    // after everything static (it rays down onto it) and the rafts
   T('waypoints', () => buildWaypoints(game));  // waypoint stars: also need the statics (open-sky spot search)
+  T('carDamage', () => buildCarDamage(game)); // vehicle damage, fire and explosions (Settings > Car damage)
   T('life', () => buildLife(game));          // money, shops, homes, pets (src/life/); coins ray down onto the static world too
   T('missions', () => buildMissions(game));  // jobs (src/missions/): givers, JOBS boards, the job HUD; before kitFinish (boards are kit scenery)
   T('grabHandles', () => { game.grabHandles = addGrabHandles(game); }); // ride seats with no colliders get something to hang from

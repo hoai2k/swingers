@@ -374,6 +374,18 @@ export class Audio {
         for (let i = 0; i < 4; i++) this.tone('sine', 2200 + i * 330, 2600 + i * 330, 0.12, 0.05 * v, 0.6 + i * 0.12, out);
         break;
       }
+      // car damage (world/cardamage.js): synth fallbacks for the recorded explosion / fire crackle
+      case 'explode': {
+        this.burst(1.6, Math.min(0.9, 0.7 * v), 1800, 0.7, 'lowpass', 0, out, 120);
+        this.tone('sine', 90, 28, 1.1, 0.55 * v, 0, out, 0.004);
+        this.burst(0.25, 0.4 * v, 3000, 0.8, 'bandpass', 0, out, 800);
+        break;
+      }
+      case 'fire': {
+        for (let i = 0; i < 6; i++) this.burst(0.04 + r() * 0.05, 0.1 * v, 1500 + r() * 2500, 2, 'bandpass', r() * 0.6, out);
+        this.burst(0.8, 0.06 * v, 400, 0.7, 'lowpass', 0, out, 250);
+        break;
+      }
       case 'thud': {
         const k = clamp(strength, 0, 1.5);
         this.burst(0.1 + 0.08 * r(), Math.min(0.45, 0.3 * v), 260 + r() * 260, 1, 'lowpass', 0, out);

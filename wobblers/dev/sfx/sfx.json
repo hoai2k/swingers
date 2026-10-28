@@ -296,6 +296,20 @@
    "dur": 2.0,
    "level": 0.8,
    "prompt": "Magical reward fanfare for collecting a glowing golden star in a cartoon video game: bright rising sparkly chime arpeggio with a shimmering twinkle tail, joyful and triumphant"
+  },
+  {
+   "name": "explode",
+   "n": 2,
+   "dur": 2.0,
+   "level": 0.9,
+   "prompt": "Cartoon car explosion in a silly video game: a big punchy boom with a whoosh of fire and a few metal clangs and rattling debris, comedic not gory"
+  },
+  {
+   "name": "fire",
+   "n": 2,
+   "dur": 1.0,
+   "level": 0.6,
+   "prompt": "Short burst of a burning car engine fire, crackling flames and a little hiss, cartoony"
   }
  ]
 }

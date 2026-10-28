@@ -436,6 +436,23 @@ flop is D-pad left (`input.js` sets `ragdoll` and `dLeft`: menus, the arcade and
 read a ragdoll press that comes with `dLeft` as 'left', not 'back'; the D-pad cheer emote gave
 way, the keyboards' 3 still cheers).
 
+## Car damage (`src/world/cardamage.js`, Settings > Car damage, `settings.carDamage`, default on)
+
+A stepper compares each damageable vehicle's velocity with the step before (gravity removed): a
+change over `DV0` 5 m/s is a serious hit and adds (dv - 5) x `K` 2.6, at most `HIT_MAX` 40 (one
+collision spreads over a few steps: within 0.3 s only its peak counts), to `v.dmg.hp`. A 20 m/s
+head-on wall crash is ~40, so about three set a car alight. Smoke from 35 (black from 60), a
+wobble while driven from 60 (angular velocity nudges), fire at 100 for `FIRE_T` 5 s, then
+`explode`: flash sprite, fireball, sparks, smoke, the body thrown up and spun, riders
+`leaveSeat` + flung + `knockOut`, players within 9 m flung. The wreck (materials swapped for
+dark copies, seats disabled) smokes `WRECK_T` 12 s, then a phone-called vehicle is destroyed
+(and dropped from `game.calledVehicles`), any other `respawn()`s, which repairs it
+(`Vehicle.prototype.respawn` is wrapped). Never damaged: self-driving traffic (unless a player
+drives it), bumper cars, the bouncy ball. Particles are two pooled `THREE.Points` (normal-blended
+smoke, additive fire; point size from the viewport height in `onBeforeRender`), emitted only
+within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fallbacks.
+`game.carDamage`: `repair(v)`, `explode(v)` (probes), `smoke`, `fire`.
+
 ## Waypoint stars (`src/world/waypoints.js`)
 
 `WAYPOINTS` ([id, name, x, z]) puts a spinning gold star (glow sprite + two crossed additive beam

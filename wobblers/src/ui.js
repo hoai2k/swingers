@@ -119,6 +119,8 @@ function sharedSettingItems(ui) {
     } },
     // character look: our chunky Wobblers, or the toy style (coloured skin, Wobbly Life proportions, clothes on top)
     { label: 'Toy style characters', value: settings.toyStyle ? 'On' : 'Off', adj: () => { settings.toyStyle = !settings.toyStyle; settings.toyStyleChosen = true; saveSettings(); g.setCharStyle(settings.toyStyle ? TOY_STYLE : 'chunky'); } },
+    // vehicles smoke, wobble, catch fire and explode after serious crashes (world/cardamage.js); off repairs them all
+    { label: 'Car damage', value: settings.carDamage !== false ? 'On' : 'Off', adj: () => { settings.carDamage = settings.carDamage === false; saveSettings(); } },
     { label: 'Show FPS', value: settings.showFps ? 'On' : 'Off', adj: () => { settings.showFps = !settings.showFps; saveSettings(); ui.perfOverlay?.(null); } },
     ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
   ];
