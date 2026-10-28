@@ -409,6 +409,31 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   props); the rest only turn about y. `held` -> `loose` (runs on 1.2-2.5 s, then plants its feet)
   -> `return` (walks home, animals.js) -> `free`. GRAB specs (capsule, kg, run, mu) in
   `jungle/animals.js`.
+- Other islands and the town (`world/wildlife.js`): the engine the rest share (the jungle uses its
+  `loop` / `along` / `travelled`). `wildlife(game, R, { seed, ok, bounds })` -> `mk` (a species from
+  a model name), `place` (walking loops through `ok` ground; opts `flee` radius / `fleeV` for
+  skittish ones that run off and walk back, `look` to stop and stare, `group`), `add` (records:
+  `fly` circling birds, `perch` birds that sit / peck (`hop`) and take off into a circle when a player
+  comes within `shy` m, then glide back (ground and flying birds are two species of one bird:
+  `crow` / `crowFly`, `owl` / `owlFly`, since wings flap whatever the amount), `coil` (rears up and
+  rattles), `still`, or `custom: fn(a, t, dt, S, W)` with `W.nearest(x, z, r)`), then
+  `start(statsName, { grab })` (grab specs as in the jungle). Stats: `game.desertAnimals`,
+  `snowAnimals`, `tropicalAnimals`, `townAnimals`, `cityRats`.
+  - Dusty Dunes (`regions/desert/animals.js`): camel caravans (grabbable, 450 kg), fennec foxes and
+    roadrunners that flee, rattlesnakes coiled by the canyon rims and mesas, scorpions, tortoises,
+    vultures circling the canyon and mesas.
+  - Frostpeak (`regions/snow/animals.js`): mountain goats above 50 m (stare at you), arctic foxes
+    (flee), snowy owls that take off and circle.
+  - Coconut Cove (`regions/tropical/animals.js`): flamingo flocks wading between shallow points
+    picked at load (the knee-deep band is too thin for loops; they wade off from players), iguanas.
+  - Town (`world/townlife.js`): squirrels under the suburb street trees (`game.treeSpots`, recorded
+    by `kit.tree`) that scamper up the trunk when you come close and come down after you leave;
+    crows on lawns and roofs; stray cats (look, flee) and house cats sitting out; Bigtown rats by
+    bins placed on the side pavements: out some of the time, they dart into the bin (hidden 20 s).
+  - Their models are round-18 sculpted stand-ins in `animalmodels.js` (`quadruped`, `flier` and
+    one-offs) until the reference sheets (`image-requests.md` round 18) arrive; then build each with
+    `quad.py` / `designed.py` and add it to `SHEET_MODELS`. Sounds: `yip`, `rattle`, `hoot`,
+    `honk`, `caw`, `chitter` (recorded), plus existing ones.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
 ## Fences (`src/world/fences.js`)

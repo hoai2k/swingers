@@ -310,6 +310,48 @@
    "dur": 1.0,
    "level": 0.6,
    "prompt": "Short burst of a burning car engine fire, crackling flames and a little hiss, cartoony"
+  },
+  {
+   "name": "yip",
+   "n": 2,
+   "dur": 0.6,
+   "level": 0.7,
+   "prompt": "A small fox giving a quick high yip bark, cartoony and cute"
+  },
+  {
+   "name": "rattle",
+   "n": 2,
+   "dur": 1.2,
+   "level": 0.7,
+   "prompt": "A rattlesnake's warning rattle, dry fast buzzing shake, cartoony"
+  },
+  {
+   "name": "hoot",
+   "n": 2,
+   "dur": 1.2,
+   "level": 0.7,
+   "prompt": "A snowy owl hooting softly twice, hoo hoo, gentle and cartoony"
+  },
+  {
+   "name": "honk",
+   "n": 2,
+   "dur": 0.8,
+   "level": 0.7,
+   "prompt": "A flamingo's goose-like nasal honk, short and silly"
+  },
+  {
+   "name": "caw",
+   "n": 3,
+   "dur": 0.8,
+   "level": 0.7,
+   "prompt": "A crow cawing twice, caw caw, cartoony"
+  },
+  {
+   "name": "chitter",
+   "n": 2,
+   "dur": 0.8,
+   "level": 0.6,
+   "prompt": "A squirrel chattering and chittering quickly, cute and cartoony"
   }
  ]
 }

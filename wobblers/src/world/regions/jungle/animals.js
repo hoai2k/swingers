@@ -17,45 +17,10 @@ import { VILLAGE, LAGOON, TEMPLE, RIVER, CLIFF, POOL, TRAIL, TRACK, VOLCANO, pol
 import { GROVE } from './wild.js';
 import { modelGeometry } from '../../animalgeo.js';
 import { animalGrab } from '../../animalgrab.js';
+import { loop, along, travelled } from '../../wildlife.js';
 
 const SEE = 170;
-// ---- paths ---------------------------------------------------------------------------------------
-// A closed loop round (hx, hz) of about radius r through clear ground, densified every ~1 m with
-// the ground height: { pts: Float32Array [x, y, z]*, len } or null if no clear loop fits there.
-function loop(R, rnd, hx, hz, r, ok, n = 9) {
-  const wp = [];
-  for (let i = 0; i < n; i++) {
-    const a = i / n * Math.PI * 2, rr = r * (0.6 + rnd() * 0.5), x = hx + Math.cos(a) * rr, z = hz + Math.sin(a) * rr;
-    if (!ok(x, z)) return null;
-    wp.push([x, z]);
-  }
-  const pts = [];
-  let prevY = null;
-  for (let i = 0; i < n; i++) {
-    const [ax, az] = wp[i], [bx, bz] = wp[(i + 1) % n], L = Math.hypot(bx - ax, bz - az), k = Math.max(1, Math.round(L));
-    for (let j = 0; j < k; j++) {
-      const x = ax + (bx - ax) * j / k, z = az + (bz - az) * j / k, y = R.groundAt(x, z);
-      if (prevY !== null && Math.abs(y - prevY) > 1.2) return null; // a cliff edge
-      if (!ok(x, z, true)) return null;
-      pts.push(x, y, z); prevY = y;
-    }
-  }
-  return { pts: new Float32Array(pts), n: pts.length / 3 };
-}
-const _o = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
-function along(path, s) { // position + heading at distance s (1 m spacing)
-  const n = path.n, f = ((s % n) + n) % n, i = Math.floor(f), j = (i + 1) % n, k = f - i, P = path.pts;
-  const ax = P[i * 3], ay = P[i * 3 + 1], az = P[i * 3 + 2], bx = P[j * 3], by = P[j * 3 + 1], bz = P[j * 3 + 2];
-  _o.x = ax + (bx - ax) * k; _o.y = ay + (by - ay) * k; _o.z = az + (bz - az) * k;
-  const dx = bx - ax, dz = bz - az;
-  _o.yaw = Math.atan2(dx, dz); _o.pitch = Math.atan2(by - ay, Math.hypot(dx, dz) || 1);
-  return _o;
-}
-// distance travelled by time t: walk for `walk` s, rest for `rest` s, at v m/s (phase-shifted)
-function travelled(t, v, walk, rest, off) {
-  const P = walk + rest, tt = t + off, c = Math.floor(tt / P), u = tt - c * P;
-  return { s: v * (c * walk + Math.min(u, walk)), moving: u < walk, rest: u - walk };
-}
+// paths (loop, along, travelled) are shared with the other islands' wildlife: world/wildlife.js
 
 // ---- build ---------------------------------------------------------------------------------------
 export function buildAnimals(game, R) {

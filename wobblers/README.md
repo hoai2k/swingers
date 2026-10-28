@@ -318,6 +318,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
 | `src/world/waypoints.js` | waypoint stars (`WAYPOINTS`): collect to unlock fast travel (map / pause menu), saved in `settings.waypoints` |
+| `src/world/wildlife.js`, `src/world/townlife.js` | wildlife engine for the islands (desert, snow, tropical `regions/*/animals.js`) and the town's squirrels, crows, cats and Bigtown rats |
 | `src/world/cardamage.js` | car damage: impacts from velocity jumps, smoke / wobble / fire / explosion, charred wrecks, smoke and fire particles |
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |

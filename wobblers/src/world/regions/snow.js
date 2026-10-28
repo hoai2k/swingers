@@ -20,6 +20,7 @@ import { buildPeak } from './snow/peak.js';
 import { buildFun } from './snow/fun.js';
 import { buildForest, forestMask } from './snow/forest.js';
 import { spawnFolk } from './snow/npcs.js';
+import { buildSnowAnimals } from './snow/animals.js';
 
 export { VILLAGE };
 
@@ -143,5 +144,6 @@ export function build(game, kit, R) {
   T('fun', () => buildFun(game, kit, R));
   T('forest', () => buildForest(game, kit, R));
   T('folk', () => spawnFolk(game, R));
+  T('animals', () => buildSnowAnimals(game, R));
   game.snow = { times: t, surfaces: snowSurfaces };
 }

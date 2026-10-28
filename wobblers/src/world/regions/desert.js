@@ -21,6 +21,7 @@ import { buildSites } from './desert/sites.js';
 import { buildNature } from './desert/nature.js';
 import { buildPeople } from './desert/people.js';
 import { buildLoot } from './desert/loot.js';
+import { buildDesertAnimals } from './desert/animals.js';
 
 export { TOWN, OASIS };
 
@@ -127,5 +128,6 @@ export function build(game, kit, R) {
   T('nature', () => buildNature(game, kit, R));
   T('people', () => buildPeople(game, kit, R));
   T('loot', () => buildLoot(game, kit, R));
+  T('animals', () => buildDesertAnimals(game, R));
   game.desertTimes = t; // per-part build ms (probes)
 }

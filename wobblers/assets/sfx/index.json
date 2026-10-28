@@ -181,6 +181,31 @@
   "assets/sfx/fire-1.mp3",
   "assets/sfx/fire-2.mp3"
  ],
+ "yip": [
+  "assets/sfx/yip-1.mp3",
+  "assets/sfx/yip-2.mp3"
+ ],
+ "rattle": [
+  "assets/sfx/rattle-1.mp3",
+  "assets/sfx/rattle-2.mp3"
+ ],
+ "hoot": [
+  "assets/sfx/hoot-1.mp3",
+  "assets/sfx/hoot-2.mp3"
+ ],
+ "honk": [
+  "assets/sfx/honk-1.mp3",
+  "assets/sfx/honk-2.mp3"
+ ],
+ "caw": [
+  "assets/sfx/caw-1.mp3",
+  "assets/sfx/caw-2.mp3",
+  "assets/sfx/caw-3.mp3"
+ ],
+ "chitter": [
+  "assets/sfx/chitter-1.mp3",
+  "assets/sfx/chitter-2.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -224,7 +249,13 @@
   "underwater": 0.5,
   "star": 0.8,
   "explode": 0.9,
-  "fire": 0.6
+  "fire": 0.6,
+  "yip": 0.7,
+  "rattle": 0.7,
+  "hoot": 0.7,
+  "honk": 0.7,
+  "caw": 0.7,
+  "chitter": 0.6
  },
  "_loops": [
   "ride_screams",

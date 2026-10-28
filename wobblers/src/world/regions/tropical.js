@@ -19,6 +19,7 @@ import './tropical/vehicles.js';
 import { buildResort } from './tropical/resort.js';
 import { buildHarbour } from './tropical/harbour.js';
 import { buildSea } from './tropical/sea.js';
+import { buildTropicalAnimals } from './tropical/animals.js';
 
 // Example of a new vehicle type registered from a region file: a jet ski (a
 // small, quick boat with its own look), callable from the phone.
@@ -108,6 +109,7 @@ export function build(game, kit, R) {
   T('harbour', () => buildHarbour(game, kit, R));
   T('resort', () => buildResort(game, kit, R));
   T('sea', () => buildSea(game, kit, R));
+  T('animals', () => buildTropicalAnimals(game, R));
   (game.buildTimes ||= {}).tropicalParts = t;
   R.label('Snorkel Reef', REEF.x, REEF.z);
   R.label('Shipwreck', WRECK.x, WRECK.z + 14);
