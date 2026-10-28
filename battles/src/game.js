@@ -16,6 +16,7 @@ import { FX } from './fx.js';
 import { ProjViz } from './projviz.js';
 import { Recorder, Player } from './replay.js';
 import { skillBar, SKILL_KEYS, skillsOf } from './skills.js';
+import { SLOTS, loadSaves, saveSlot, saveLast, describe } from './saves.js';
 import { SCENARIOS, SIM_CATS, SIM_SIZES, simArmies, simValue, fitToMap } from './sims.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
@@ -115,7 +116,9 @@ function setupTheme(armies, world, map) {
   const s = SETUP_OF[th];
   return s && HAS_TRACK(s) ? s : 'setup';
 }
-const packArmy = (a) => a.map(({ type, x, z }) => ({ type, x: +x.toFixed(2), z: +z.toFixed(2) }));
+const TAG_GEO = { cone: new THREE.ConeGeometry(0.45, 0.9, 12), ring: new THREE.TorusGeometry(0.42, 0.1, 6, 20) };
+TAG_GEO.cone.userData.shared = TAG_GEO.ring.userData.shared = true; // (kept across maps)
+const packArmy = (a) => a.map(({ type, x, z, ctl }) => (ctl ? { type, x: +x.toFixed(2), z: +z.toFixed(2), ctl } : { type, x: +x.toFixed(2), z: +z.toFixed(2) }));
 
 const SKEL_CACHE = new Map();
 const skelOf = (def) => {
@@ -175,9 +178,12 @@ export class Game {
       settings: () => this.openSettings(),
     }, () => ({ sound: this.settings.sound !== false, music: this.settings.music, busy: this.state === 'battle' }));
     this.ui = new UI(hud);
-    this.armies = st.armies || [[], []];
+    // a new session starts with an empty field (saved battles: src/saves.js); within a
+    // session, the last versus / sandbox setup comes back when that same game is started
+    // again with the same settings (this.session, startMode)
+    this.armies = [[], []];
     this.padArmies();
-    this.mapArmies = st.maps || {};
+    this.session = null;
     this.rigs = [new CamRig(), new CamRig()];
     this.split = !!this.settings.split;
     this.timeScale = 1;
@@ -271,20 +277,25 @@ export class Game {
     this.ui.toast(n > 2 ? `${n} armies: every army fights every other. ${btn('View')} / menu switches the army you build` : 'Two armies: Blue vs Red', 2.4);
   }
 
+  // the settings (armies aren't kept between sessions: saved battles are, src/saves.js)
   save() {
-    if (this.sim) { // a simulation's armies aren't saved: the parked ones are
-      saveStore({ settings: this.settings, armies: packArmy2(this.stash?.armies || [[], []]), maps: this.mapArmies });
-      return;
-    }
-    if (this.mode === 'campaign' && this.level) {
+    if (this.mode === 'campaign' && this.level && !this.sim) {
       // the player's army for this level lives with the campaign progress
       this.progress.armies[this.level.id] = packArmy(this.armies[0]);
       saveProgress(this.progress);
-      saveStore({ settings: this.settings, armies: packArmy2(this.stash?.armies || [[], []]), maps: this.mapArmies });
-      return;
     }
-    if (this.map) this.mapArmies[this.map.id] = packArmy2(this.armies);
-    saveStore({ settings: this.settings, armies: packArmy2(this.armies), maps: this.mapArmies });
+    saveStore({ settings: this.settings });
+  }
+
+  // "the same game with the same settings": what a remembered setup is matched on
+  setupKey(mode = this.mode) {
+    const s = this.settings, [bk, ck] = this.limKeys(mode === 'sandbox');
+    return JSON.stringify([mode, MAPS[s.map]?.id, s[bk], s[ck], mode === 'sandbox' ? [s.sandboxPlayers, s.armies | 0 || 2] : [s.rounds, s.bonus, s.timer, s.blind]]);
+  }
+  // leaving a versus / sandbox game for the title: remember its setup for this session
+  rememberSetup() {
+    if (this.sim || this.mode === 'campaign' || !['setup', 'battle', 'result', 'paused', 'replay'].includes(this.state)) return;
+    this.session = { key: this.setupKey(), armies: this.armies.map((a) => a.map((u) => ({ ...u }))) };
   }
 
   // gold and unit limits for one army (campaign: the level's; versus: plus the round bonus)
@@ -347,13 +358,8 @@ export class Game {
       this.armies = opts.armies;
       this.padArmies();
       for (const p of this.ps) { p.undo = []; p.stroke = p.rstroke = null; }
-    } else if (this.sim) {
-      // (a simulation takes its armies along to another map)
     } else if (this.map && this.map !== MAPS[i]) {
-      // armies are kept per map: park the current ones, pick up the new map's
-      this.mapArmies[this.map.id] = packArmy2(this.armies);
-      const saved = this.mapArmies[MAPS[i].id];
-      if (saved) { this.armies = saved.map((a) => a.map((u) => ({ ...u }))); this.padArmies(); }
+      // (another battleground from the setup menu: the armies come along, as far as they fit)
       for (const p of this.ps) { p.undo = []; p.stroke = p.rstroke = null; }
     }
     const map = MAPS[i];
@@ -429,6 +435,40 @@ export class Game {
     return vis;
   }
 
+  // ---- takeover tags: X on a placed unit in setup marks it (entry.ctl = player + 1); the
+  // battle starts with that player in control of it
+  toggleTag(p, a) {
+    const on = a.ctl !== p + 1;
+    for (const army of this.armies) for (const e of army) if (e.ctl === p + 1) delete e.ctl;
+    if (on) a.ctl = p + 1;
+    const name = UNIT_BY_ID[a.type].name;
+    this.ui.toast(on ? `🎮 ${this.who(p)} takes control of this ${name} when the battle starts <small>(${btn('X')} again: untag)</small>` : `${name} untagged`, 2, p);
+    if (on && !this.split && this.activePlayers().length > 1) this.ui.toast('Shared screen: only one player can start in control (P1 first). Split screen for both.', 2.4, p);
+    this.audio.play('click', null, 0.8, on ? 1.3 : 0.8);
+  }
+  // a spinning gold marker over each player's tagged unit (setup only; hidden elsewhere)
+  updateTagMarkers(show, dt = 0) {
+    this.tagMks ||= [];
+    for (let p = 0; p < 2; p++) {
+      let a = null;
+      if (show) for (const army of this.activeArmies()) for (const e of army) if (e.ctl === p + 1) a = e;
+      let m = this.tagMks[p];
+      if (!a) { if (m) m.visible = false; continue; }
+      if (!m || m.parent !== this.scene) {
+        m = new THREE.Group();
+        const gold = new THREE.MeshBasicMaterial({ color: '#f2c230' });
+        const cone = new THREE.Mesh(TAG_GEO.cone, gold); cone.rotation.x = Math.PI; m.add(cone);
+        const ring = new THREE.Mesh(TAG_GEO.ring, gold); ring.rotation.x = Math.PI / 2; ring.position.y = 0.62; m.add(ring);
+        this.scene.add(m);
+        this.tagMks[p] = m;
+      }
+      m.visible = true;
+      m.rotation.y += dt * 2.5;
+      const h = skelOf(UNIT_BY_ID[a.type]).height || 2;
+      m.position.set(a.x, this.terrain.height(a.x, a.z) + h + 1.0 + Math.sin(performance.now() / 260) * 0.08, a.z);
+    }
+  }
+
   poseIdle(vis, dt, yaw) {
     const st = vis.st;
     st.t += dt;
@@ -463,6 +503,7 @@ export class Game {
     // go fullscreen like the other games
     if (this.lastState === 'title' && this.state !== 'title' && this.settings.autoFs !== false && !fsElement()) setFullscreen(true);
     this.lastState = this.state;
+    if (this.state !== 'setup' && this.tagMks?.some((m) => m?.visible)) this.updateTagMarkers(false);
     if (!this.prepping) switch (this.state) {
       case 'title': this.updateTitle(dt); break;
       case 'levels': this.updateLevels(dt); break;
@@ -634,6 +675,7 @@ export class Game {
 
   // ---------------------------------------------------------------- title
   goTitle(sel = 0) {
+    this.rememberSetup();
     this.leaveCampaign();
     this.match = null;
     this.disposeBattle();
@@ -718,8 +760,17 @@ export class Game {
         { label: 'Players', value: s.sandboxPlayers === 2 ? '2 — one army each' : '1 — build every army', key: 'sbPlayers' },
         { label: 'Armies', value: armiesText(s.armies), key: 'armies' },
         ...common,
+        { label: 'Load battle…', key: 'loadpage' },
         { label: 'Back', key: 'back' },
       ];
+      case 'load': {
+        const L = this.saveList();
+        return [
+          { label: `Last battle · ${L.label(L.last)}`, key: 'load:last', cls: L.last ? 'mi-s' : 'mi-s off' },
+          ...L.slots.map((r, i) => ({ label: `Slot ${i + 1} · ${L.label(r)}`, key: 'load:' + i, cls: r ? 'mi-s' : 'mi-s off' })),
+          { label: 'Back', key: 'back', cls: 'mi-s' },
+        ];
+      }
     }
     const stars = totalStars(this.progress);
     return [
@@ -837,9 +888,14 @@ export class Game {
     this.ui.toast(`Map: <b>${MAPS[i].name}</b>`);
   }
 
-  // start a mode from the title: 'versus' (new match) or 'sandbox'
+  // start a mode from the title: 'versus' (new match) or 'sandbox'. The field starts
+  // empty, unless this is the game just left with exactly the same settings.
   startMode(mode) {
+    const key = this.setupKey(mode);
+    const armies = this.session && this.session.key === key ? this.session.armies.map((a) => a.map((u) => ({ ...u }))) : [[], []];
     this.mode = mode;
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.loadMap(this.settings.map | 0, { armies });
     if (mode === 'versus') this.newMatch();
     else this.match = null;
     this.goSetup();
@@ -866,6 +922,7 @@ export class Game {
     }
     const back = () => {
       const page = this.titlePage;
+      if (page === 'load') { this.titlePage = 'sandbox'; this.titleSel = Math.max(0, this.titleItems().findIndex((i) => i.key === 'loadpage')); this.audio.play('click'); return; }
       this.titlePage = 'main';
       this.titleSel = Math.max(0, this.titleItems().findIndex((i) => i.key === page));
       this.audio.play('click');
@@ -885,6 +942,14 @@ export class Game {
         if (it.key === 'campaign') { this.goLevels(); return; }
         if (it.key === 'sim') { this.goSims(); return; }
         if (it.key === 'creator') { this.creator.open(); return; }
+        if (it.key === 'loadpage') { this.titlePage = 'load'; this.titleSel = 0; this.audio.play('click'); I.swallow(); return; }
+        if (it.key.startsWith('load:')) {
+          const L = this.saveList(), rec = it.key === 'load:last' ? L.last : L.slots[+it.key.slice(5)];
+          if (rec) { this.loadBattle(rec); return; }
+          this.audio.play('remove', null, 0.4, 0.6);
+          I.swallow();
+          continue;
+        }
         if (it.key === 'versus' || it.key === 'sandbox' || it.key === 'options') { this.titlePage = it.key; this.titleSel = 0; this.audio.play('click'); }
         else if (it.key === 'back') back();
         else if (it.key === 'help') { this.helpOn = true; this.ui.setHelp(true); }
@@ -900,7 +965,7 @@ export class Game {
       }
       items = this.titleItems();
     }
-    const heads = { options: 'OPTIONS', versus: 'VERSUS · 2 PLAYERS', sandbox: `SANDBOX · ${this.settings.sandboxPlayers === 2 ? '2 PLAYERS' : '1 PLAYER'}` };
+    const heads = { load: 'LOAD A BATTLE', options: 'OPTIONS', versus: 'VERSUS · 2 PLAYERS', sandbox: `SANDBOX · ${this.settings.sandboxPlayers === 2 ? '2 PLAYERS' : '1 PLAYER'}` };
     const startHint = this.titlePage === 'main' ? 'quick versus' : this.titlePage === 'options' ? '' : 'start';
     this.ui.updateTitle({
       head: heads[this.titlePage] || '',
@@ -1331,6 +1396,7 @@ export class Game {
     for (const p of this.activePlayers()) { this.updateSetupPlayer(p, dt); if (this.state !== 'setup') return; }
     // a big army animates its distant (stand-in) units every 4th frame, staggered
     const na = this.nArmies;
+    this.updateTagMarkers(true, dt);
     const many = this.setupVis.slice(0, na).reduce((s, a) => s + a.length, 0) >= LOD_MIN;
     for (let t = 0; t < na; t++) {
       this.setupVis[t].forEach((v, i) => {
@@ -1430,6 +1496,8 @@ export class Game {
     ];
     if (this.canSwitch(p)) items.push({ label: `Build the ${TEAM_NAMES[this.nextTeam(p)]} army`, key: 'switch' });
     items.push({ label: 'Random army', key: 'random' });
+    if (this.mode !== 'campaign') items.push({ label: 'Save battle…', key: 'savebattle' });
+    if (this.mode === 'sandbox') items.push({ label: 'Load battle…', key: 'loadbattle' });
     items.push({ label: `Clear ${this.mode === 'campaign' ? 'my' : TEAM_NAMES[ps.team]} army…`, key: 'clear' });
     if (this.mode !== 'campaign') {
       items.push({ label: 'Map', value: MAPS[s.map].name, key: 'map', preview: mapImg(MAPS[s.map].id) });
@@ -1462,6 +1530,14 @@ export class Game {
       return { title: `Clear ${TEAM_NAMES[t]} army?`, text: `Removes all ${n} unit${n === 1 ? '' : 's'} (${this.armyCost(t).toLocaleString('en-US')} gold). ${btn('X')} undo brings them back. <small>Tip: hold ${btn('View')} to clear without asking.</small>`, items: [{ label: 'No, keep them', key: 'no' }, { label: 'Yes, clear', key: 'yes', cls: 'danger' }], sel: m.sel };
     }
     if (m.kind === 'perf') return { title: 'PERFORMANCE', text: this.perfLine(), items: [...this.perfItems(), { label: 'Back', key: 'back' }], sel: m.sel };
+    if (m.kind === 'save' || m.kind === 'load') {
+      const L = this.saveList();
+      const items = [];
+      if (m.kind === 'load') items.push({ label: `Last battle · ${L.label(L.last)}`, key: 'last', cls: L.last ? '' : 'off' });
+      L.slots.forEach((r, i) => items.push({ label: `Slot ${i + 1} · ${L.label(r)}`, key: 'slot' + i, cls: r || m.kind === 'save' ? '' : 'off' }));
+      items.push({ label: 'Back', key: 'back' });
+      return { title: m.kind === 'save' ? 'SAVE THIS BATTLE' : 'LOAD A BATTLE', text: m.kind === 'save' ? 'Saves the battleground, the armies and who takes control of whom. A full slot is overwritten.' : 'Opens it in the sandbox.', items, sel: m.sel };
+    }
     const title = this.mode === 'campaign' ? `${this.level.name.toUpperCase()}${this.solo ? '' : ` · P${p + 1}`}` : `${TEAM_NAMES[t].toUpperCase()} · MENU`;
     return { title, items: this.setupMenuItems(p), sel: m.sel };
   }
@@ -1474,7 +1550,7 @@ export class Game {
     if (I.nav(p, 'up')) { m.sel = (m.sel + items.length - 1) % items.length; this.audio.play('click', null, 0.4); }
     m.sel = clamp(m.sel, 0, items.length - 1);
     const it = items[m.sel];
-    if (I.pressed(p, 'b') && m.kind === 'perf') { ps.modal = { kind: 'menu', sel: m.from || 0 }; I.swallow(); return; }
+    if (I.pressed(p, 'b') && (m.kind === 'perf' || m.kind === 'save' || m.kind === 'load')) { ps.modal = { kind: 'menu', sel: m.from || 0 }; I.swallow(); return; }
     if (I.pressed(p, 'b') || (I.pressed(p, 'start') && m.kind !== 'clear')) { ps.modal = null; I.swallow(); return; }
     let d = 0;
     if (I.nav(p, 'right')) d = 1;
@@ -1487,13 +1563,26 @@ export class Game {
       if (it.key === 'yes') this.clearArmy(p);
       return;
     }
-    if (m.kind === 'perf' && it.key === 'back') { ps.modal = { kind: 'menu', sel: m.from || 0 }; return; }
+    if ((m.kind === 'perf' || m.kind === 'save' || m.kind === 'load') && it.key === 'back') { ps.modal = { kind: 'menu', sel: m.from || 0 }; return; }
+    if (m.kind === 'save' || m.kind === 'load') {
+      const L = this.saveList(), rec = it.key === 'last' ? L.last : L.slots[+it.key.slice(4)];
+      if (m.kind === 'save') {
+        const ok = saveSlot(+it.key.slice(4), this.battleRecord());
+        ps.modal = null;
+        this.ui.toast(ok ? `Saved to slot ${+it.key.slice(4) + 1}` : "Couldn't save (browser storage is full or off)", 1.8, p);
+        this.audio.play('click');
+      } else if (rec) { ps.modal = null; this.loadBattle(rec); }
+      else this.audio.play('remove', null, 0.4, 0.6);
+      return;
+    }
     switch (it.key) {
       case 'perf': ps.modal = { kind: 'perf', sel: 0, from: m.sel }; this.audio.play('click'); break;
       case 'resume': ps.modal = null; break;
       case 'ready': ps.modal = null; this.toggleReady(p); break;
       case 'switch': ps.modal = null; this.switchSide(p); break;
       case 'random': ps.modal = null; if (ps.ready) this.toggleReady(p); this.randomArmy(p); break;
+      case 'savebattle': ps.modal = { kind: 'save', sel: 0, from: m.sel }; this.audio.play('click'); break;
+      case 'loadbattle': ps.modal = { kind: 'load', sel: 0, from: m.sel }; this.audio.play('click'); break;
       case 'clear': this.openClearConfirm(p); break;
       case 'help': ps.modal = null; this.helpOn = true; this.ui.setHelp(true); break;
       case 'levels': this.goLevels(); break;
@@ -1665,7 +1754,11 @@ export class Game {
         this.audio.play('remove', null, 0.6, 1);
         this.save();
       }
-      if (I.repeat(p, 'x', 0.4, 0.12)) this.undo(p);
+      // X: on one of your units, tag it to take control of when the battle starts;
+      // anywhere else, undo (hold to repeat)
+      if (I.pressed(p, 'x') && hover) { this.toggleTag(p, hover); ps.tagX = true; }
+      if (!I.down(p, 'x')) ps.tagX = false;
+      if (!ps.tagX && I.repeat(p, 'x', 0.4, 0.12)) this.undo(p);
       // View: hold to clear this army; a tap switches side when building alone
       if (I.down(p, 'back')) {
         // real time, so a slow frame rate doesn't stretch the hold
@@ -1695,7 +1788,7 @@ export class Game {
     let status = '';
     if (clearing > 0) status = `Clearing ${teamTag(t)} army… <span class="hold"><i style="width:${Math.min(100, clearing * 100)}%"></i></span>`;
     else if (ps.ready) status = waiting.length ? `Waiting for ${waiting.map((q) => this.who(q)).join(', ')}… ${btn('Y')} not ready` : '';
-    else if (ps.hover) status = `${btn('B')} remove ${UNIT_BY_ID[ps.hover.type].name}`;
+    else if (ps.hover) status = `${btn('B')} remove ${UNIT_BY_ID[ps.hover.type].name} &nbsp; ${btn('X')} ${ps.hover.ctl === p + 1 ? 'untag' : 'take control of it in battle'}`;
     else if (hit && !valid && why) status = `<span class="bad">${why}</span>`;
     // roster: unit counts (and gold) in order of first placement
     const roster = (a) => {
@@ -1780,7 +1873,51 @@ export class Game {
     this.audio.startMusic(this.musicTheme);
     if (!this.audio.stinger('start')) this.audio.play('horn', null, 0.8, 1);
     this.syncLive(0);
+    // the setup is saved as "Last battle" (src/saves.js)
+    saveLast(this.battleRecord());
+    // tagged units: their players start in control of them
+    const used = new Set();
+    for (const p of this.activePlayers()) {
+      const i = this.battleVis.findIndex((vis) => vis.entry?.ctl === p + 1);
+      const view = this.split ? p : 0;
+      if (i < 0 || used.has(view)) continue;
+      const u = this.battle.units[i];
+      if (!u || !u.alive) continue;
+      used.add(view);
+      this.possessUnit(view, u);
+    }
     this.input.swallow();
+  }
+
+  // ---- saved battles (src/saves.js): the setup of the battle on the field
+  battleRecord() {
+    return {
+      when: Date.now(), mode: this.mode, map: this.map.id, n: this.nArmies, armies: packArmy2(this.activeArmies()),
+      players: this.settings.sandboxPlayers, sim: this.sim ? this.sim.sc.name : undefined,
+    };
+  }
+  saveList() {
+    const s = loadSaves(), name = (r) => (MAPS.find((m) => m.id === r.map) || MAPS[0]).name;
+    return { last: s.last, slots: s.slots, label: (r) => describe(r, r ? name(r) : '') };
+  }
+  // open a saved battle in the sandbox (from the setup menu or the title)
+  loadBattle(rec) {
+    if (!rec) return;
+    this.stash = null; this.sim = null; this.level = null; this.match = null;
+    this.mode = 'sandbox';
+    const mi = Math.max(0, MAPS.findIndex((m) => m.id === rec.map));
+    const s = this.settings;
+    s.map = mi;
+    s.armies = clamp(rec.n | 0 || 2, 2, MAX_ARMIES);
+    if (rec.players) s.sandboxPlayers = rec.players;
+    if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
+    this.loadMap(mi, { armies: rec.armies.map((a) => a.map((u) => ({ ...u }))) });
+    // (a battle saved without limits shouldn't stop at this sandbox's gold / unit limit)
+    if (this.activeArmies().some((a, t) => this.armyCost(t) > this.budgetOf(t))) s.sbBudget = BUDGETS.indexOf(Infinity);
+    if (this.activeArmies().some((a, t) => a.length > this.capOf(t))) s.sbCap = CAPS.indexOf(Infinity);
+    this.save();
+    this.goSetup();
+    this.ui.toast(`Loaded: ${describe(rec, MAPS[mi].name)}`, 2.2);
   }
 
   // side-on view framing both armies
@@ -2002,14 +2139,7 @@ export class Game {
         if (live && P('x')) {
           const cur = rig.mode === 'follow' && rig.unit?.alive ? rig.unit : null;
           const u = cur && !cur.control ? cur : rig.mode === 'possess' ? null : rig.pickUnit(units, (o) => o.alive && !o.control);
-          if (u && u.alive && !u.control) {
-            u.control = { mx: 0, mz: 0, attack: false, jump: false, aimYaw: u.heading, aimPitch: 0.3, xLock: true };
-            rig.follow(u, 'possess');
-            rig.yaw = u.heading;
-            rig.lastHp = u.hp;
-            this.ui.toast(`Controlling ${teamTag(u.team)} ${u.def.name}`, 1.4);
-            for (const p of this.viewPlayers(v)) this.input.rumble(p, 0.2, 0.5, 120);
-          }
+          if (u && u.alive && !u.control) this.possessUnit(v, u);
         }
         if (P('b') && !bUsed && rig.mode !== 'cine') {
           if (rig.mode === 'possess' && rig.unit) rig.unit.control = null;
@@ -2028,6 +2158,17 @@ export class Game {
       if (rig.mode === 'possess') look.lookSpeed *= 1 - 0.55 * rig.aimZoom;
       rig.update(s, dt, this.terrain, { speed: 12, slow, units: list, ...look });
     }
+  }
+
+  // view v takes control of unit u
+  possessUnit(v, u) {
+    const rig = this.rigs[v];
+    u.control = { mx: 0, mz: 0, attack: false, jump: false, aimYaw: u.heading, aimPitch: 0.3, xLock: true };
+    rig.follow(u, 'possess');
+    rig.yaw = u.heading;
+    rig.lastHp = u.hp;
+    this.ui.toast(`Controlling ${teamTag(u.team)} ${u.def.name}`, 1.4);
+    for (const p of this.viewPlayers(v)) this.input.rumble(p, 0.2, 0.5, 120);
   }
 
   possessControl(v, rig, s, units) {

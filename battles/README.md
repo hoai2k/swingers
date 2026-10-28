@@ -116,7 +116,23 @@ sandbox, the other army's too).
 Pads bind to players in the order they connect and keep their slot until unplugged;
 the title shows which pad is which player, and **View** there swaps sides (the pad
 that rumbles is Blue). Unplugging a pad pauses a battle and un-readies a player in
-setup. Armies are saved per map in `localStorage` (`wobbly-battles.v1`).
+setup. Settings are saved in `localStorage` (`wobbly-battles.v1`); armies aren't kept
+between sessions. A new session starts with an empty field, and so does each game started
+from the menu, unless it's the versus / sandbox game you just left with exactly the same
+settings (mode, battleground, gold and unit limits, players, armies...): then your armies
+come back. Changing the battleground from the setup menu takes the armies along (as far
+as they fit).
+
+**Taking control from the start**: in setup, **X** on one of your placed units (the one the
+red remove ring is on) tags it (a spinning gold marker over it; X again untags; X anywhere
+else is still undo). When the battle starts you're in control of it. Each player can tag
+one unit; in shared screen only one player can start in control (P1 first).
+
+**Saved battles** (`src/saves.js`): the setup menu has *Save battle…* (8 slots: the
+battleground, the armies and the tags) and, in the sandbox, *Load battle…*; the title's
+Sandbox page has *Load battle…* too. Every battle that starts is also saved as **Last
+battle**. A loaded battle opens in the sandbox (with no gold or unit limit if it wouldn't
+fit). A live battle isn't saved: it starts again from its setup.
 
 Options: default battle screen (shared / split), the performance options, look speed,
 invert Y, googly eyes (TABS-style 3D eyes with loose pupils, on by default), blood, sound, music, recorded or synthesised sound effects, and going
@@ -190,7 +206,7 @@ screen either pad does all of this; in split screen each pad drives its own view
 | L3 | fast · hold + right stick ↑↓: camera down / up | fast fly | fast fly |
 | A | place (hold to paint) | follow unit in crosshair · possess: jump | play / pause |
 | B | remove (hold) | free cam: cinematic camera · else free camera / let go | free camera, then exit |
-| X | undo (hold to repeat) | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
+| X | undo (hold to repeat) · on one of your units: tag it to take control of when the battle starts | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
 | Y | ready / not ready | slow motion · possess: a special technique | slow-mo final moments |
 | LT / RT | previous / next unit in the tab (wraps round) | LT hold: slow smooth cam · possess: LT block / aim, RT ranged attack | scrub back / forward |
 | D-pad | ←→ unit (on into the next faction), ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
