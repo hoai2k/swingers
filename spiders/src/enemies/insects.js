@@ -10,6 +10,7 @@
 
 import { Enemy, wings, eyes, antennae, abdomen, legs, drawInsect } from './base.js';
 import { Bolt, Orb, Bomb } from './shots.js';
+import { drawBug, drawSil, drawArt, flap } from './art.js';
 import { sfx } from '../audio.js';
 import { glowLine } from '../fx.js';
 import { W, H } from '../board.js';
@@ -24,6 +25,19 @@ function aimLine(ctx, x, y, dx, dy, len, color, k) {
   ctx.setLineDash([14, 10]);
   ctx.lineDashOffset = -k * 60;
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx * len, y + dy * len); ctx.stroke();
+  ctx.restore();
+}
+
+// soft additive glow (tells drawn over the painted sprites)
+function glowDot(ctx, x, y, rad, color, a) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= Math.min(1, a);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+  g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, rad, 0, TAU); ctx.fill();
   ctx.restore();
 }
 
@@ -90,6 +104,18 @@ export class Stinglet extends Enemy {
     const wind = this.state === 'windup';
     const sx = wind ? rand(-2, 2) : 0;
     const tilt = this.state === 'dash' ? 0.25 : wind ? -0.25 : clamp(this.vx * 0.0008 * this.facing, -0.3, 0.3);
+    // painted wasp: flap, 5 wind-up (shaking, stinger glowing), 6 dash along its line
+    const dash = this.state === 'dash';
+    const frame = wind ? 4 : dash ? 5 : flap(this, 4, 16);
+    const rot = dash ? clamp(Math.atan2(this.dash.y, Math.abs(this.dash.x) || 1e-3), -1.1, 1.1) : wind ? -0.15 : tilt * 0.6;
+    if (drawBug(ctx, this, 'bug_stinglet.png', frame, { x: this.x + sx, rot })) {
+      if (wind) {
+        const k = Math.min(1, this.st / 0.85);
+        glowDot(ctx, this.x + sx - this.facing * this.r * 0.75, this.y + this.r * 0.35, this.r * (0.5 + 0.5 * k), '#ff4a2a', 0.4 + 0.5 * k);
+        glowDot(ctx, this.x + sx + this.facing * this.r * 0.5, this.y - this.r * 0.15, this.r * 0.4, '#ff3b3b', 0.5 * k);
+      }
+      return;
+    }
     ctx.save();
     ctx.translate(sx, 0);
     drawInsect(ctx, this, {
@@ -153,6 +179,11 @@ export class Gnatling extends Enemy {
 
   drawBody(ctx) {
     const blink = this.state === 'blink' && Math.floor(this.st * 16) % 2 === 0;
+    const rot = this.state === 'dive' ? clamp(Math.atan2(this.vy, Math.abs(this.vx) || 1e-3), -1.1, 1.1) : 0;
+    if (drawBug(ctx, this, 'bug_gnatling.png', flap(this, 4, 26), { rot })) {
+      if (blink) drawSil(ctx, this, '#ff3030', 0.7);
+      return;
+    }
     drawInsect(ctx, this, {
       body: blink ? '#ff4040' : '#1f2a14', head: blink ? '#ff6a6a' : '#2a3a18',
       abdomen: { base: '#6fbf3a', stripe: '#1f2a14', stripes: 2, stinger: null, len: 0.8 },
@@ -250,6 +281,12 @@ export class Buzzgunner extends Enemy {
       aimLine(ctx, m.x, m.y, this.shotDir.x, this.shotDir.y, 520, '#ff6a2a', k);
     }
     const r = this.r;
+    // painted hornet: flap, 5 charging (barrel glowing), 6 firing recoil
+    const firing = this.state === 'recover' && this.st < 0.18;
+    if (drawBug(ctx, this, 'bug_buzzgunner.png', charging ? 4 : firing ? 5 : flap(this, 4, 15))) {
+      if (charging) { const m = this.muzzle; glowDot(ctx, m.x, m.y, r * (0.3 + 0.5 * k), '#ff8c3c', 0.5 + 0.5 * k); }
+      return;
+    }
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.scale(this.facing < 0 ? -1 : 1, 1);
@@ -422,6 +459,12 @@ export class Bladewing extends Enemy {
   drawBody(ctx) {
     const r = this.r;
     const raising = this.state === 'raise';
+    // painted mantis: 1-2 idle, 3 forearms raised, 4 slash, 5 recover
+    const st = this.state;
+    const frame = st === 'raise' ? 2 : st === 'slash' ? 3 : st === 'recover' || st === 'recoil' ? 4 : flap(this, 2, 5);
+    if (drawBug(ctx, this, 'bug_bladewing.png', frame)) {
+      if (raising) glowDot(ctx, this.x + this.facing * r * 0.3, this.y - r * 0.55, r * 0.5, '#ff4fd8', 0.35 + 0.4 * Math.min(1, this.st / 0.75));
+    } else {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.scale(this.facing < 0 ? -1 : 1, 1);
@@ -441,6 +484,7 @@ export class Bladewing extends Enemy {
     ctx.strokeStyle = '#4fc24a'; ctx.lineWidth = r * 0.18; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(r * 0.3, 0); ctx.lineTo(r * 0.7, r * 0.45); ctx.lineTo(r * 0.5, r * 0.2); ctx.stroke();
     ctx.restore();
+    }
     // the blade (world space)
     const s = this.bladeSeg();
     const g = this.grip;
@@ -536,6 +580,11 @@ export class Shellback extends Enemy {
     const r = this.r;
     const wind = this.state === 'windup';
     const dazed = this.state === 'recover';
+    // painted beetle: 1-2 walk, 3 lowered (wind-up), 4 ram, 5 dazed (stars painted in)
+    const frame = wind ? 2 : this.state === 'ram' ? 3 : dazed ? 4 : flap(this, 2, 5);
+    const painted = drawBug(ctx, this, 'bug_shellback.png', frame, { x: this.x + (wind ? rand(-1.5, 1.5) : 0) });
+    if (painted && wind) glowDot(ctx, this.x + this.facing * r * 0.75, this.y - r * 0.1, r * 0.45, '#ffef5a', 0.6 * Math.min(1, this.st / 0.95));
+    if (!painted) {
     ctx.save();
     ctx.translate(this.x + (wind ? rand(-1.5, 1.5) : 0), this.y);
     ctx.scale(this.facing < 0 ? -1 : 1, 1);
@@ -564,6 +613,7 @@ export class Shellback extends Enemy {
         ctx.fillStyle = '#fff6a0';
         ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * r * 0.8, this.y - r - 6 + Math.sin(a) * 5, 3, 0, TAU); ctx.fill();
       }
+    }
     }
     // energy shield arc (world space, toward its target)
     if (this.shieldUp > 0.05) {
@@ -627,6 +677,9 @@ export class Dropmoth extends Enemy {
 
   drawBody(ctx) {
     const r = this.r;
+    // painted moth: 1-4 slow flap carrying its bomb, 5-6 flap without
+    const carrying = this.hasBomb > 0.5;
+    if (drawBug(ctx, this, 'bug_dropmoth.png', carrying ? flap(this, 4, 9) : flap(this, 2, 7, 4))) return;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.scale(this.facing < 0 ? -1 : 1, 1);
@@ -766,6 +819,7 @@ export class Hexfly extends Enemy {
       ctx.save();
       ctx.translate(this.blinkTo.x, this.blinkTo.y);
       ctx.rotate(this.t * 2);
+      if (drawArt(ctx, 'bug_hexfly_rune.png', 0, 0, 70 * (0.5 + 0.5 * k), { alpha: 0.35 + 0.65 * k })) { ctx.restore(); super.draw(ctx); return; }
       ctx.strokeStyle = '#c46bff';
       ctx.globalAlpha = 0.3 + 0.6 * k;
       ctx.lineWidth = 3;
@@ -782,6 +836,17 @@ export class Hexfly extends Enemy {
     const r = this.r;
     const casting = this.state === 'cast';
     const k = casting ? Math.min(1, this.st / 0.7) : 0;
+    // painted dragonfly (faces left in the strip): 1-3 hover, 4 cast, 5 fading
+    const fading = this.state === 'vanish' || this.state === 'appear';
+    if (casting) drawArt(ctx, 'bug_hexfly_rune.png', this.x, this.y, r * (1.6 + 1.4 * k), { rot: this.t * 1.5, alpha: 0.3 + 0.6 * k });
+    if (drawBug(ctx, this, 'bug_hexfly.png', casting ? 3 : fading ? 4 : flap(this, 3, 10))) {
+      if (casting) {
+        const gx = this.x + this.facing * r * 1.2, gy = this.y + r * 0.3;
+        glowDot(ctx, gx, gy, 18 * k + 4, '#f6e6ff', 1);
+        glowDot(ctx, gx, gy, 26 * k + 6, 'rgba(196,107,255,0.8)', k);
+      }
+      return;
+    }
     ctx.save();
     ctx.translate(this.x, this.y);
     // orbiting runes

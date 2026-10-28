@@ -9,6 +9,7 @@
 import { TAU, rand, angDiff, clamp } from '../util.js';
 import { sfx } from '../audio.js';
 import { glowLine } from '../fx.js';
+import { drawArt } from './art.js';
 
 // Insect shots fly at this fraction of the speed their shooter asks for:
 // slow enough to see coming, dodge, or bat back with a blade.
@@ -95,6 +96,8 @@ export class Bolt extends Shot {
     const tl = Math.min(this.age * sp, 26);
     const c = this.deflected && this.owner && this.owner.color ? this.owner.color.main : this.color;
     glowLine(ctx, this.x - this.vx / sp * tl, this.y - this.vy / sp * tl, this.x, this.y, c, 5, this.core);
+    // painted stinger needle (points right) along its flight
+    if (drawArt(ctx, 'proj_stinger.png', this.x - this.vx / sp * 6, this.y - this.vy / sp * 6, 30, { rot: Math.atan2(this.vy, this.vx) })) return;
     ctx.fillStyle = this.core;
     ctx.beginPath(); ctx.arc(this.x, this.y, 3.5, 0, TAU); ctx.fill();
   }
@@ -205,6 +208,8 @@ export class Bomb extends Shot {
       ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(0, 0, this.radius * 0.85, 0, TAU); ctx.stroke();
     }
+    // painted bomb: fuse spark small / large (blink)
+    if (drawArt(ctx, 'proj_bomb_strip.png', 0, -this.r * 0.25, this.r * 3.1, { of: 2, frame: blink ? 1 : 0 })) { ctx.restore(); return; }
     ctx.fillStyle = '#4a3a4a'; ctx.strokeStyle = '#d9a8c8'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.ellipse(0, 0, this.r * 1.1, this.r, 0, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#7a5a7a';
