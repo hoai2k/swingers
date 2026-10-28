@@ -152,11 +152,11 @@ delivered: Castle → Medieval, Pirate Cove → Pirate, Volcano Jungle → Triba
 Wild West), else a campaign world's theme, else the theme of the factions
 holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
 Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avatar), else the
-main battle theme or, half the time, one of the world themes (not JJK's electric one,
+main battle theme or the second one (the cavalry charge) or, half the time, one of the world themes (not JJK's electric one,
 which stays with JJK armies). Setup and the result screen play the planning version of the battle
 song that's coming (`setupTheme`: the battleground's, a campaign world's, or the factions
-holding most of the gold already placed), once that planning song is delivered (Medieval, Wild West,
-Viking, JJK and Avatar are, and Dynasty borrows Avatar's; the rest are requests 1-3 in
+holding most of the gold already placed), once that planning song is delivered (Tribal, Medieval,
+Wild West, Viking, JJK and Avatar are, and Dynasty borrows Avatar's; Pirate and Dynasty are requests 1-2 in
 `music-requests.md`); until then, and
 otherwise, the main setup theme. Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
 recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
