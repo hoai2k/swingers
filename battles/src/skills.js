@@ -7,7 +7,7 @@
 //   LT  block (melee) / aim (ranged), as before
 //   LB  a special technique
 //   RB  the domain or an area technique (a unit with neither puts its second special here)
-//   Y   another special technique (slow motion moves to R3 while in control)
+//   Y   another special technique (slow motion: the D-pad's time speed)
 //
 // kind.basic = 'Divergent Fist'             // name of the X attack on the skill bar
 // kind.ranged = 'Red'                       // name of the RT attack when it isn't a skill
