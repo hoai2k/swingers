@@ -21,6 +21,7 @@
 // Yorozu meets her beloved Sukuna on her own side.
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
 import { register } from '../ext.js';
+import { aimTarget, leapSkill } from '../skills.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel, addProjectile,
   strike, handPos, torus, dome, tcol, tdark, chestShell, blast, addStatus, tube, slowBeast,
@@ -121,12 +122,19 @@ const kurourushi = {
   init(u) { u.jkSw = u.def.weapon.swFirst; },
   think: meleeThink,
   event(u, t0, t1) { castEvent(u, t0, t1, { swarm: roachSwarm }); },
+  // possessed (src/skills.js): RT bites; the swarm and a leap on buttons
+  basic: 'Chew',
+  skills: [
+    { key: 'x', name: 'The Swarm', icon: '🪳', cd: (u) => u.jkSw, max: (u) => u.def.weapon.swCD,
+      use(u) { u.jkSw = u.def.weapon.swCD; castPose(u, 'jj_shout', 'swarm'); techBanner(u.battle, 'Kurourushi: the swarm!', u.headPos, 10); return true; } },
+    leapSkill('lb'),
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
     newVictims(u, (v) => { if (u.jkCast) return; addStatus(b, v, 'poison', w.chewT, w.chewDps, u); crawl(b, v, w.chewT); });
     u.jkSw -= dt;
-    if (u.jkSw > 0) return;
+    if (u.jkSw > 0 || u.control) return;
     u.cooldown = Math.max(u.cooldown, 0.2); // (holds the next bite so the swarm gets a window)
     if (busy(u)) return;
     const t = u.target && u.target.alive ? u.target : null;
@@ -167,6 +175,11 @@ const uraume = {
   aim: true,
   init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkFC = w.fcFirst; },
   think: rangedThink,
+  basic: 'Icefall',
+  skills: [
+    { key: 'x', name: 'Frost Calm', icon: '❄', cd: (u) => u.jkFC, max: (u) => u.def.weapon.fcCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { u.jkFC = u.def.weapon.fcCD; castPose(u, 'jk_push', 'frost'); techBanner(u.battle, 'Ice Formation: Frost Calm', u.headPos, 8); return true; } },
+  ],
   event(u, t0, t1) {
     if (castEvent(u, t0, t1, { frost: frostCalm })) return;
     const w = u.def.weapon, b = u.battle;
@@ -184,7 +197,7 @@ const uraume = {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
     u.jkFC -= dt;
-    if (u.jkFC > 0 || busy(u) || burntOut(u)) return;
+    if (u.jkFC > 0 || u.control || busy(u) || burntOut(u)) return;
     const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
     let n = 0;
     for (const v of enemiesNear(u, u.pos, w.fcR)) {
@@ -251,6 +264,17 @@ const eso = {
     }
     return t;
   },
+  basic: 'Rot blood',
+  skills: [
+    { key: 'x', name: 'Wing King', icon: '🪽', cd: (u) => u.jkHop, max: (u) => u.def.weapon.hopCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+      use(u) { // up and back, away from where he's looking
+        const w = u.def.weapon, a = u.control?.aimYaw ?? u.heading;
+        u.jkHop = w.hopCD;
+        leap(u, -Math.sin(a), -Math.cos(a), w.hopV, w.hopUp);
+        u.battle.sound('flyby', u.chestPos, 0.6, 1.4);
+        return true;
+      } },
+  ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle;
     if (u.st.attack !== u.anim || !crossed(t0, t1, w.releaseAt)) return;
@@ -281,6 +305,12 @@ const kechizu = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { spray: rotSpray }); },
+  // possessed (src/skills.js): the rot spray on X (RT is a plain shove)
+  basic: 'Shove',
+  skills: [
+    { key: 'x', name: 'Rot Spray', icon: '🤮', cd: (u) => (u.sprayCD || 0) - u.battle.time, max: (u) => u.def.weapon.cooldown * 1.5,
+      use(u) { u.sprayCD = u.battle.time + u.def.weapon.cooldown * 1.5; castPose(u, 'jj_shout', 'spray'); return true; } },
+  ],
   step(u, dt) { if (!u.st.attack) u.jkCast = null; if (buffed(u)) u.cooldown -= dt * 0.4; },
   die(u) { brotherFalls(u, 'jk_eso', 'SECRET: "Kechizu!" Eso flies into a rage'); },
 };
@@ -345,29 +375,46 @@ const smallpox = {
     }
     if (u.jkCof) { stepCoffin(u, dt); return; }
     u.jkGrave -= dt;
-    if (u.jkGrave > 0 || busy(u) || burntOut(u)) return;
+    if (u.jkGrave > 0 || u.control || busy(u) || burntOut(u)) return;
     // the strongest enemy in reach that has cursed energy
     let best = null;
     for (const v of enemiesNear(u, u.pos, w.graveR)) {
-      if (v.jkNoCE || v.jkInfinity || isA(v, 'jk_gojo') || v.jkSealedT > b.time || v.jkCoffin) continue; // (Infinity keeps the coffin off Gojo)
+      if (!coffinable(b, v)) continue;
       if (!best || v.def.cost > best.def.cost) best = v;
     }
     if (!best) { u.jkGrave = 0.5; return; }
-    u.jkGrave = w.graveCD;
-    castPose(u, 'jk_sign', null);
-    const strong = clamp((best.maxHp - w.breakHp) / 1500, 0, 0.6);
-    u.jkCof = { v: best, t: 0, n: 0, dmg: 0, breaks: Math.random() < strong, mk: markerOn(b, best, 'jk_coffin', PART.pelvis, w.countT + 0.6) };
-    best.jkCoffin = true;
-    techBanner(b, 'Smallpox Deity: the grave!', best.headPos, 4);
-    b.sound('gong', best.chestPos, 0.8, 0.5);
-    b.sound('thump', best.chestPos, 1.0, 0.6);
+    grave(u, best);
   },
+  // possessed (src/skills.js): the coffin for the enemy under the crosshair
+  basic: 'Slam',
+  skills: [
+    { key: 'x', name: 'The Grave', icon: '⚰', cd: (u) => (u.jkCof ? 99 : u.jkGrave), max: (u) => u.def.weapon.graveCD,
+      ready: (u) => (burntOut(u) ? 'burnt out' : graveTarget(u) ? true : 'no one to bury'),
+      use(u) { const v = graveTarget(u); if (!v) return false; grave(u, v); return true; } },
+  ],
   hit(u, amount) {
     if (u.jkCof) u.jkCof.dmg += amount;
     return amount;
   },
   die(u) { releaseCoffin(u, false); },
 };
+// (no cursed energy, Infinity, the Prison Realm or a coffin already: it can't be buried)
+const coffinable = (b, v) => !(v.jkNoCE || v.jkInfinity || isA(v, 'jk_gojo') || v.jkSealedT > b.time || v.jkCoffin);
+function graveTarget(u) {
+  const v = aimTarget(u, u.def.weapon.graveR, 4);
+  return v && coffinable(u.battle, v) ? v : null;
+}
+function grave(u, best) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkGrave = w.graveCD;
+  castPose(u, 'jk_sign', null);
+  const strong = clamp((best.maxHp - w.breakHp) / 1500, 0, 0.6);
+  u.jkCof = { v: best, t: 0, n: 0, dmg: 0, breaks: Math.random() < strong, mk: markerOn(b, best, 'jk_coffin', PART.pelvis, w.countT + 0.6) };
+  best.jkCoffin = true;
+  techBanner(b, 'Smallpox Deity: the grave!', best.headPos, 4);
+  b.sound('gong', best.chestPos, 0.8, 0.5);
+  b.sound('thump', best.chestPos, 1.0, 0.6);
+}
 function stepCoffin(u, dt) {
   const b = u.battle, w = u.def.weapon, cf = u.jkCof, v = cf.v;
   if (!v.alive || !u.alive) { releaseCoffin(u, false); return; }
@@ -419,18 +466,16 @@ const dragon = {
   think(u, dt, c) {
     const w = u.def.weapon;
     const t = meleeThink(u, dt, c);
-    if (u.jkRam <= 0 && c.gap > w.ramMin && c.gap < w.ramMax && !busy(u) && u.airT <= 0) {
-      u.jkRam = w.ramCD * rand(0.85, 1.15);
-      u.jkRamT = w.ramT;
-      u.jkRamDx = c.dirx; u.jkRamDz = c.dirz;
-      u.jkRamHit.clear();
-      leap(u, c.dirx, c.dirz, w.ramV, 1.2);
-      u.battle.voice(u, 'cry', true);
-      u.battle.sound('charge', u.pos, 0.8, 0.6);
-    }
+    if (u.jkRam <= 0 && c.gap > w.ramMin && c.gap < w.ramMax && !busy(u) && u.airT <= 0) ram(u, c.dirx, c.dirz);
     if (u.jkRamT > 0) u.desired.set(u.jkRamDx * c.spd * 1.6, 0, u.jkRamDz * c.spd * 1.6);
     return t;
   },
+  // possessed (src/skills.js): the ram, where it's looking
+  basic: 'Claws & jaws',
+  skills: [
+    { key: 'x', name: 'Ram', icon: '🐉', cd: (u) => u.jkRam, max: (u) => u.def.weapon.ramCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+      use(u) { const a = u.control?.aimYaw ?? u.heading; ram(u, Math.sin(a), Math.cos(a)); return true; } },
+  ],
   // the bite: whatever the claws missed, the jaws find (a target close in front)
   event(u, t0, t1) {
     if (u.st.attack !== u.anim || !crossed(t0, t1, 0.55)) return;
@@ -460,6 +505,17 @@ const dragon = {
   },
 };
 
+function ram(u, dx, dz) {
+  const w = u.def.weapon;
+  u.jkRam = w.ramCD * rand(0.85, 1.15);
+  u.jkRamT = w.ramT;
+  u.jkRamDx = dx; u.jkRamDz = dz;
+  u.jkRamHit.clear();
+  leap(u, dx, dz, w.ramV, 1.2);
+  u.battle.voice(u, 'cry', true);
+  u.battle.sound('charge', u.pos, 0.8, 0.6);
+}
+
 // ------------------------------------------------------------------ Finger Bearer
 // A brute with long arms. Every few seconds a two-handed smash shakes the ground round
 // whoever it hits; badly hurt, it swallows its Sukuna finger once a battle: it heals,
@@ -469,12 +525,18 @@ const fingerBearer = {
   init(u) { u.jkSmash = rand(2, 4); u.jkAte = false; },
   think: meleeThink,
   event(u, t0, t1) { castEvent(u, t0, t1, { smash: groundSmash, finger: eatFinger }); },
+  basic: 'Long arms',
+  skills: [
+    { key: 'x', name: 'Ground Smash', icon: '💢', cd: (u) => u.jkSmash, max: (u) => u.def.weapon.smashCD,
+      use(u) { u.jkSmash = u.def.weapon.smashCD; castPose(u, 'slam', 'smash'); return true; } },
+    { key: 'lb', name: 'Swallow the Finger', icon: '☝', ready: (u) => (u.jkAte ? 'eaten' : true), use(u) { u.jkAte = true; castPose(u, 'cast', 'finger'); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
     bonusBlows(u, buffed(u) ? w.fingerDmg : 0, 'jk_finger');
     u.jkSmash -= dt;
-    if (busy(u)) return;
+    if (busy(u) || u.control) return;
     if (!u.jkAte && u.hp < u.maxHp * w.fingerAt) {
       u.jkAte = true;
       castPose(u, 'cast', 'finger');
@@ -523,20 +585,32 @@ const kuchisake = {
       b.emit('blood', v.chestPos.x, v.chestPos.y, v.chestPos.z, 6, 0, 0);
     });
     u.jkAsk -= dt;
-    if (u.jkAsk > 0 || busy(u)) return;
+    if (u.jkAsk > 0 || u.control || busy(u)) return;
     const t = u.target && u.target.alive ? u.target : null;
     if (!t || flat(t.pos, u.pos) > w.askR || t.jkNoCE) { u.jkAsk = 0.3; return; }
-    u.jkAsk = w.askCD;
-    castPose(u, 'jj_shout', null);
-    techBanner(b, '"Am I beautiful?"', u.headPos, 8);
-    t.stun = Math.max(t.stun, w.askDaze);
-    t.st.attack = null;
-    t.jkDazedT = b.time + w.askDaze + 1.2;
-    const h = t.headPos;
-    markerAt(b, 'jk_question', _o.set(h.x, h.y + 0.7, h.z), w.askDaze + 0.4, 0);
-    b.sound('tick', h, 0.7, 0.6);
+    ask(u, t);
   },
+  basic: 'Scissors',
+  skills: [
+    { key: 'x', name: 'Am I beautiful?', icon: '😷', cd: (u) => u.jkAsk, max: (u) => u.def.weapon.askCD,
+      ready: (u) => (askTarget(u) ? true : 'no one close'),
+      use(u) { const v = askTarget(u); if (!v) return false; ask(u, v); return true; } },
+    leapSkill('lb'),
+  ],
 };
+function askTarget(u) { const v = aimTarget(u, u.def.weapon.askR, 3); return v && !v.jkNoCE ? v : null; }
+function ask(u, t) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkAsk = w.askCD;
+  castPose(u, 'jj_shout', null);
+  techBanner(b, '"Am I beautiful?"', u.headPos, 8);
+  t.stun = Math.max(t.stun, w.askDaze);
+  t.st.attack = null;
+  t.jkDazedT = b.time + w.askDaze + 1.2;
+  const h = t.headPos;
+  markerAt(b, 'jk_question', _o.set(h.x, h.y + 0.7, h.z), w.askDaze + 0.4, 0);
+  b.sound('tick', h, 0.7, 0.6);
+}
 
 // ------------------------------------------------------------------ Grasshopper Curse
 // Cheap and springy: it leaps at anyone a few metres off and lands feet first.
@@ -553,6 +627,20 @@ const grasshopper = {
     }
     return t;
   },
+  // possessed (src/skills.js): the leap kick at the enemy under the crosshair
+  basic: 'Kick',
+  skills: [
+    { key: 'x', name: 'Leap Kick', icon: '🦗', cd: (u) => u.jkLeap, max: (u) => u.def.weapon.leapCD,
+      ready: (u) => (u.airT > 0 ? 'in the air' : aimTarget(u, u.def.weapon.leapMax, 4) ? true : 'no target'),
+      use(u) {
+        const w = u.def.weapon, v = aimTarget(u, w.leapMax, 4);
+        if (!v) return false;
+        const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = Math.hypot(dx, dz) || 1;
+        u.jkLeap = w.leapCD; u.jkFly = 1.1;
+        leap(u, dx / d, dz / d, w.leapV * clamp(d / 6, 0.6, 1.3), w.leapUp);
+        return true;
+      } },
+  ],
   step(u, dt) {
     u.jkLeap -= dt;
     if (u.jkFly <= 0) return;
@@ -589,12 +677,37 @@ const yorozu = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { sphere: trueSphere }); },
+  // possessed (src/skills.js): the armour, a wing leap while it's on, the True Sphere
+  basic: 'Liquid-metal blade',
+  skills: [
+    { key: 'x', name: 'Insect Armour', icon: '🪲', cd: (u) => u.jkArmCD, max: (u) => u.def.weapon.armCD, ready: (u) => (burntOut(u) ? 'burnt out' : true),
+      use(u) { insectArmour(u); return true; } },
+    { key: 'lb', name: 'Wing Leap', icon: '🪽', cd: (u) => u.jkWing, max: (u) => u.def.weapon.wingCD,
+      ready: (u) => (!(u.jkArm > u.battle.time) ? 'needs the armour' : u.airT > 0 ? 'in the air' : aimTarget(u, 14) ? true : 'no target'),
+      use(u) {
+        const v = aimTarget(u, 14);
+        if (!v) return false;
+        const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = Math.hypot(dx, dz) || 1;
+        u.jkWing = u.def.weapon.wingCD;
+        leap(u, dx / d, dz / d, u.def.weapon.wingV, 4.5);
+        u.battle.sound('flyby', u.chestPos, 0.8, 1.2);
+        return true;
+      } },
+    { key: 'rb', name: 'True Sphere', icon: '⚪', ready: (u) => (u.jkSphDone ? 'used' : burntOut(u) ? 'burnt out' : true),
+      use(u) {
+        u.jkSphDone = true;
+        u.aimAt = aimTarget(u, u.def.weapon.sphRange, 5);
+        castPose(u, 'jk_push', 'sphere');
+        announce(u.battle, 'Construction: the True Sphere!', u.headPos);
+        return true;
+      } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
     u.jkWing -= dt; u.jkArmCD -= dt; u.jkSph -= dt;
     if (u.jkArmMk && u.jkArm <= b.time) { u.jkArmMk.t = 0; u.jkArmMk = null; }
-    if (busy(u) || burntOut(u)) return;
+    if (busy(u) || burntOut(u) || u.control) return;
     if (u.jkSph <= 0 && !u.jkSphDone) {
       let best = null;
       for (const v of b.foes(u.team)) {
@@ -609,18 +722,21 @@ const yorozu = {
         return;
       }
     }
-    if (u.jkArmCD <= 0 && u.hp < u.maxHp * w.armAt && u.target) {
-      u.jkArmCD = w.armCD;
-      u.jkArm = b.time + w.armDur;
-      castPose(u, 'jk_sign', null);
-      u.jkArmMk = markerOn(b, u, 'jk_insectarmor', PART.chest, w.armDur);
-      techBanner(b, 'Construction: Insect Armour', u.headPos, 8);
-      b.sound('clang', u.chestPos, 0.8, 0.7);
-    }
+    if (u.jkArmCD <= 0 && u.hp < u.maxHp * w.armAt && u.target) insectArmour(u);
   },
   hit(u, amount) { return u.jkArm > u.battle.time ? amount * (1 - u.def.weapon.armK) : amount; },
   die(u) { if (u.jkArmMk) { u.jkArmMk.t = 0; u.jkArmMk = null; } },
 };
+function insectArmour(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkArmCD = w.armCD;
+  u.jkArm = b.time + w.armDur;
+  castPose(u, 'jk_sign', null);
+  if (u.jkArmMk) u.jkArmMk.t = 0;
+  u.jkArmMk = markerOn(b, u, 'jk_insectarmor', PART.chest, w.armDur);
+  techBanner(b, 'Construction: Insect Armour', u.headPos, 8);
+  b.sound('clang', u.chestPos, 0.8, 0.7);
+}
 function trueSphere(u) {
   const b = u.battle, w = u.def.weapon, c = u.chestPos;
   const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
