@@ -2484,6 +2484,56 @@
       "styleReference": "reference/animals/crocodile.png",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2261b44d-2ff4-4de1-9ca7-0d0437d2a3d2.png",
       "index": 204
+    },
+    {
+      "id": "camel",
+      "file": "reference/animals/camel.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Precise colour correction to this exact turnaround. Remove ALL darker brown spots and blotches from the camel's hump, back and neck in ALL THREE VIEWS. A dromedary camel should have a plain sandy-tan coat with gentle natural shading, NOT giraffe-like spots. Keep all anatomy, pose, style, view angles, scale, layout, background and every other detail identical. No added texture or text.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-26c30d69-256e-47d1-b2f8-a1f3c286a54c.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1521e238-a875-44aa-a9b7-e48cf7cedf5a.png",
+      "initialPrompt": "Use case: stylized-concept. WOBBLERS animal modelling turnaround. Subject: a ONE-HUMPED DROMEDARY CAMEL, sandy tan, recognisable long adult legs and long curved neck, one hump, broad padded feet and droopy gentle eyelids. Match the attached crocodile's MIDPOINT STYLIZED GAME ART level only: recognisable adult animal anatomy, clean rounded smooth sculpted forms, modestly expressive eyes, broad painted markings and smooth soft satin/matte material. Between nursery/baby toys and realistic wildlife. No fur strands, tiny scale/skin detail, wrinkles, chibi proportions, oversized baby heads, blush or human grin. Species-appropriate colours gently brightened. Do NOT copy crocodile anatomy or markings. THREE equal-width columns, SAME animal at SAME scale, one horizontal row. LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP, entire spine/neck/head/tail coherently HORIZONTAL with head RIGHT tail LEFT, paired limbs symmetric above/below, no twisted torso or side-view substitute; RIGHT front THREE-QUARTER. Whole animal and ALL appendages inside each column with clear margins. Neutral walking/running pose as specified, legs visible. Plain LIGHT GREY background, soft studio lighting, no text/labels/props/ground clutter. Landscape16:9 for1920x1080 opaque sheet.",
+      "index": 205
+    },
+    {
+      "id": "fennec_fox",
+      "file": "reference/animals/fennec_fox.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling turnaround. Subject: a FENNEC FOX, cream-sand coat, naturally HUGE upright ears, slender small adult fox body, black-tipped bushy tail, small dark alert eyes. Match the attached crocodile's MIDPOINT STYLIZED GAME ART level only: recognisable adult animal anatomy, clean rounded smooth sculpted forms, modestly expressive eyes, broad painted markings and smooth soft satin/matte material. Between nursery/baby toys and realistic wildlife. No fur strands, tiny scale/skin detail, wrinkles, chibi proportions, oversized baby heads, blush or human grin. Species-appropriate colours gently brightened. Do NOT copy crocodile anatomy or markings. THREE equal-width columns, SAME animal at SAME scale, one horizontal row. LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP, entire spine/neck/head/tail coherently HORIZONTAL with head RIGHT tail LEFT, paired limbs symmetric above/below, no twisted torso or side-view substitute; RIGHT front THREE-QUARTER. Whole animal and ALL appendages inside each column with clear margins. Neutral walking/running pose as specified, legs visible. Plain LIGHT GREY background, soft studio lighting, no text/labels/props/ground clutter. Landscape16:9 for1920x1080 opaque sheet.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-82a4a924-4a51-4a01-aebf-df885d27d926.png",
+      "index": 206
+    },
+    {
+      "id": "roadrunner",
+      "file": "reference/animals/roadrunner.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling turnaround. Subject: a ROADRUNNER in a natural running pose, long legs, long straight tail, small swept crest, brown-and-cream speckling as broad painted shapes, wings FOLDED in all views. Match the attached crocodile's MIDPOINT STYLIZED GAME ART level only: recognisable adult animal anatomy, clean rounded smooth sculpted forms, modestly expressive eyes, broad painted markings and smooth soft satin/matte material. Between nursery/baby toys and realistic wildlife. No fur strands, tiny scale/skin detail, wrinkles, chibi proportions, oversized baby heads, blush or human grin. Species-appropriate colours gently brightened. Do NOT copy crocodile anatomy or markings. THREE equal-width columns, SAME animal at SAME scale, one horizontal row. LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP, entire spine/neck/head/tail coherently HORIZONTAL with head RIGHT tail LEFT, paired limbs symmetric above/below, no twisted torso or side-view substitute; RIGHT front THREE-QUARTER. Whole animal and ALL appendages inside each column with clear margins. Neutral walking/running pose as specified, legs visible. Plain LIGHT GREY background, soft studio lighting, no text/labels/props/ground clutter. Landscape16:9 for1920x1080 opaque sheet.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-8680f0bb-5299-42fb-a6fb-4cac9ddbebc0.png",
+      "index": 207
+    },
+    {
+      "id": "rattlesnake",
+      "file": "reference/animals/rattlesnake.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling turnaround. Subject: a desert RATTLESNAKE, tan body with bold brown diamond pattern, clearly visible segmented RATTLE at tail tip, body extended in gentle S curve, head slightly raised, alert potentially dangerous expression, no human grin. Match the attached crocodile's MIDPOINT STYLIZED GAME ART level only: recognisable adult animal anatomy, clean rounded smooth sculpted forms, modestly expressive eyes, broad painted markings and smooth soft satin/matte material. Between nursery/baby toys and realistic wildlife. No fur strands, tiny scale/skin detail, wrinkles, chibi proportions, oversized baby heads, blush or human grin. Species-appropriate colours gently brightened. Do NOT copy crocodile anatomy or markings. THREE equal-width columns, SAME animal at SAME scale, one horizontal row. LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP, entire spine/neck/head/tail coherently HORIZONTAL with head RIGHT tail LEFT, paired limbs symmetric above/below, no twisted torso or side-view substitute; RIGHT front THREE-QUARTER. Whole animal and ALL appendages inside each column with clear margins. Neutral walking/running pose as specified, legs visible. Plain LIGHT GREY background, soft studio lighting, no text/labels/props/ground clutter. Landscape16:9 for1920x1080 opaque sheet.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4f0e41a4-1d7d-44a3-ad12-a5cb785eb7a9.png",
+      "index": 208
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",

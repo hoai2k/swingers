@@ -34,6 +34,10 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 | `snowy_owl.png` | a snowy owl: white with dark speckles, big yellow eyes (see the birds note) |
 | `flamingo.png` | a pink flamingo standing on its long legs, S-curved neck, bent black-tipped bill |
 | `iguana.png` | a green iguana: long tail, spiky crest down the back, dewlap under the chin, sprawling legs |
+| `camel.png` | a one-humped dromedary camel, sandy tan, long legs and neck, droopy friendly eyelids |
+| `fennec_fox.png` | a fennec fox: small cream-sand fox with huge ears, black-tipped bushy tail |
+| `roadrunner.png` | a roadrunner: speckled brown-and-cream ground bird, long straight tail, crest, long legs, running pose |
+| `rattlesnake.png` | a desert rattlesnake: tan with bold brown diamond pattern down the back, rattle on the tail tip; body laid out in a gentle S like `snake.png`, head raised slightly |
 
 ## Delivered round 17 — hanging monkey turnaround
 

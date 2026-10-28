@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 18 remains open (12 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
+**Status: round 18 remains open (8 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -72,10 +72,6 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 
 | file | animal |
 |---|---|
-| `camel.png` | a one-humped dromedary camel, sandy tan, long legs and neck, droopy friendly eyelids |
-| `fennec_fox.png` | a fennec fox: small cream-sand fox with huge ears, black-tipped bushy tail |
-| `roadrunner.png` | a roadrunner: speckled brown-and-cream ground bird, long straight tail, crest, long legs, running pose |
-| `rattlesnake.png` | a desert rattlesnake: tan with bold brown diamond pattern down the back, rattle on the tail tip; body laid out in a gentle S like `snake.png`, head raised slightly |
 | `scorpion.png` | a desert scorpion: amber-orange, two big pincers held forward, eight legs, tail curled up over the back with the stinger |
 | `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
 | `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
