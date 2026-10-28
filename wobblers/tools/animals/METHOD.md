@@ -225,8 +225,9 @@ python3 review/board.py make squirrel squirrel.png                   # board: sh
   (`prof_top=True`). A rattle is `rattle=(beads, start)`: the tail tapers and beads go on TAIL.
 
 **Triangle budgets**
-- Set `tris` by size and by how many show at once, not by detail. There is no distance LOD in
-  the game, so every instance draws its full mesh. Small animals came out at the 12k default and a
+- Set `tris` by size and by how many show at once, not by detail. The game makes a far version
+  of every model by itself (critters.js `lodGeometry`, ~25% of the triangles beyond ~30 radii),
+  but up close each instance draws the full mesh. Small animals came out at the 12k default and a
   pack of 0.45 m rats cost 72k triangles. Use about 3k for rats and crows, 4–5k for cat-sized
   animals and anything that shows in flocks, and 8–12k only for big animals. Check the result
   in a turnaround: the lower budgets above looked the same.

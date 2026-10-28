@@ -374,9 +374,17 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   - Triangle budgets (`tris`): small or many-instance animals small (rat, crow 3k; squirrel,
     scorpion, flamingo, roadrunner 4k; cat, fennec, arctic fox, iguana, tortoise, capybara,
     parrot, toucan 5k; sea star 1.6k, jellyfish 4k, crab 5k, reef fish ~2-4k), big ones ~8-12k.
-    There is no distance LOD: every instance draws its full mesh, so a 0.45 m rat at 12k
-    triangles cost as much as a tiger (measured: animals added 220-420k triangles near the town /
-    in the jungle before these budgets). Under water all sea life together stays under ~0.8M.
+    Far away every species draws a light copy (below), but near ones draw the full mesh, so keep
+    small animals small (a 0.45 m rat at 12k triangles cost as much as a tiger).
+  - Level of detail (critters.js `lodGeometry`, `Species.makeLod`): when a model loads, a far
+    version with ~25% of its triangles (`LOD_RATIO`) is made by vertex clustering that never joins
+    two rig parts nor surfaces facing opposite ways (thin wings / fins / ears stay two-sided);
+    models under ~1,600 triangles get none. It is a second InstancedMesh with the same material,
+    a child of `mesh` (so anything that shows / hides `mesh` does both); `put` sends an animal to
+    it when every camera is further than max(`LOD_MIN` 18, `LOD_K` 30 x the model's radius x its
+    scale) (a rat ~18 m, a tiger ~40 m, a whale ~140 m). `opts.lod: false` opts a species out.
+    Near and far look alike at that distance (side-by-side renders); measured, it cut the animal
+    triangles drawn from 348k to 86k in the jungle, 235k to 34k in town, 124k to 62k in the desert. Under water all sea life together stays under ~0.8M.
   - Check a model with a turnaround render (a Playwright probe that hides everything but one
     species' mesh after every `critters_*` mesh has its `aAnim` attribute, renders side / top /
     3/4 / front, and once with `aAnim` amount 1 to see it move), next to its sheet.

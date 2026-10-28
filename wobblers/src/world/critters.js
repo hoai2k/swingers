@@ -75,10 +75,14 @@ export class Species {
     this.anim = new Float32Array(max * 2);
     this.animAttr = new THREE.InstancedBufferAttribute(this.anim, 2);
     this.animAttr.setUsage(THREE.DynamicDrawUsage);
+    this.animFar = new Float32Array(max * 2);
+    this.animFarAttr = new THREE.InstancedBufferAttribute(this.animFar, 2);
+    this.animFarAttr.setUsage(THREE.DynamicDrawUsage);
     const attach = (g) => { g.setAttribute('aAnim', this.animAttr); return g; };
     this.ready = !(geo instanceof Promise);
+    this.game = game; this.lodOn = opts.lod !== false;
     const g = this.ready ? attach(geo.clone()) : new THREE.BufferGeometry();
-    if (!this.ready) geo.then((real) => { this.mesh.geometry.dispose(); this.mesh.geometry = attach(real); this.useProj(real.userData.proj); this.ready = true; }).catch((e) => console.warn('animal model', opts.name, e));
+    if (!this.ready) geo.then((real) => { this.mesh.geometry.dispose(); this.mesh.geometry = attach(real); this.useProj(real.userData.proj); this.makeLod(real); this.ready = true; }).catch((e) => console.warn('animal model', opts.name, e));
     const mat = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 28, specular: 0x262626, ...(opts.material || {}) });
     const consts = Object.entries(k).map(([n, v]) => `#define ${n} ${Number(v).toFixed(4)}`).join('\n');
     const mode = BODY_MODES[opts.mode] || '';
@@ -140,7 +144,25 @@ ${mode}`);
     mesh.count = 0;
     if (opts.tint) { mesh.setColorAt(0, new THREE.Color(1, 1, 1)); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage); }
     game.scene.add(mesh);
-    this.max = max; this.n = 0;
+    this.max = max; this.n = 0; this.nFar = 0; this.far = null; this.tint = !!opts.tint;
+    if (this.ready) this.makeLod(geo);
+  }
+  // The far version (see lodGeometry): its own InstancedMesh with the same material, a child of the
+  // near one so whatever shows / hides `mesh` (view hooks, wildlife) does the far one too. An animal
+  // switches to it beyond lodD = max(LOD_MIN, LOD_K x its radius x scale) from the nearest camera.
+  makeLod(src) {
+    if (!this.lodOn || !src.index) return;
+    const lg = lodGeometry(src, LOD_RATIO);
+    if (lg === src) return;
+    lg.setAttribute('aAnim', this.animFarAttr);
+    const m = this.mesh, far = this.far = new THREE.InstancedMesh(lg, m.material, this.max);
+    far.name = m.name + '_far';
+    far.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    far.frustumCulled = false; far.castShadow = m.castShadow; far.receiveShadow = true; far.userData.noCull = true; far.count = 0;
+    if (this.tint) { far.setColorAt(0, new THREE.Color(1, 1, 1)); far.instanceColor.setUsage(THREE.DynamicDrawUsage); }
+    m.add(far);
+    src.computeBoundingSphere();
+    this.lodR = src.boundingSphere.radius;
   }
   useProj(p) {
     if (!p?.side || !p?.top) return;
@@ -150,26 +172,107 @@ ${mode}`);
     this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1, ...(p.paint ? { USE_PAINT: 1 } : {}), ...(p.wingTop ? { WING_TOP: 1 } : {}), ...(p.sideOnly ? { SIDE_ONLY: 1 } : {}) };
     this.mesh.material.needsUpdate = true;
   }
-  begin() { this.n = 0; }
+  begin() {
+    this.n = 0; this.nNear = 0; this.nFar = 0;
+    const c = this.cams ||= [];
+    c.length = 0;
+    if (this.far) { for (const p of this.game.players) if (p.camera?.cam) c.push(p.camera.cam.position); if (!c.length && this.game.idleCam) c.push(this.game.idleCam.position); }
+  }
   // position, yaw (0 faces +z), pitch (nose up > 0), roll, uniform scale, anim phase / amount, colour
   put(x, y, z, yaw, pitch, roll, s, phase, amp, color) {
     if (this.n >= this.max || !this.ready) return;
-    const i = this.n++;
+    this.n++;
+    let m = this.mesh, anim = this.anim, i;
+    if (this.far) {                                            // far from every camera: the light version
+      const d = Math.max(LOD_MIN, LOD_K * this.lodR * s), d2 = d * d;
+      let far = true;
+      for (const c of this.cams) if ((c.x - x) ** 2 + (c.y - y) ** 2 + (c.z - z) ** 2 < d2) { far = false; break; }
+      if (far) { m = this.far; anim = this.animFar; i = this.nFar++; } else i = this.nNear++;
+    } else i = this.nNear++;
     _e.set(-pitch, yaw, roll, 'YXZ');
     _m.compose(_p.set(x, y, z), _q.setFromEuler(_e), _s.set(s, s, s));
-    this.mesh.setMatrixAt(i, _m);
-    this.anim[i * 2] = phase; this.anim[i * 2 + 1] = amp;
-    if (color !== undefined && this.mesh.instanceColor) this.mesh.setColorAt(i, _c.set(color));
+    m.setMatrixAt(i, _m);
+    anim[i * 2] = phase; anim[i * 2 + 1] = amp;
+    if (color !== undefined && m.instanceColor) m.setColorAt(i, _c.set(color));
   }
   end() {
-    const m = this.mesh;
-    m.count = this.n;
-    m.instanceMatrix.needsUpdate = true;
-    this.animAttr.needsUpdate = true;
-    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    for (const [m, n, a] of [[this.mesh, this.nNear ?? this.n, this.animAttr], [this.far, this.nFar, this.animFarAttr]]) {
+      if (!m) continue;
+      m.count = n;
+      if (!n) continue;
+      m.instanceMatrix.needsUpdate = true;
+      a.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
   }
 }
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
+
+// ---- level of detail ------------------------------------------------------------------------------
+// Far away an animal is drawn from a lighter copy of its mesh made here when the model loads:
+// vertex clustering on a grid sized to keep ~LOD_RATIO of the triangles. A cluster never joins
+// two rig parts (legs, tail, wings keep animating apart) nor surfaces facing opposite ways (the
+// normal's dominant axis and sign: thin wings, fins and ears stay two-sided). Each cluster becomes
+// one vertex with its members' averaged attributes; triangles that collapse are dropped.
+const LOD_RATIO = 0.25, LOD_MIN = 18, LOD_K = 30;
+export function lodGeometry(g, ratio = LOD_RATIO, minTris = 400) {
+  const idx = g.index.array, tris = idx.length / 3;
+  if (tris * ratio < minTris) return g;
+  const P = g.attributes.position.array, N = g.attributes.normal.array, rig = g.attributes.aRig?.array, n = P.length / 3;
+  g.computeBoundingBox();
+  const lo = g.boundingBox.min, sz = g.boundingBox.getSize(new THREE.Vector3()), diag = sz.length();
+  const bucket = new Uint8Array(n), part = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = N[i * 3], y = N[i * 3 + 1], z = N[i * 3 + 2], ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+    bucket[i] = ax >= ay && ax >= az ? (x > 0 ? 0 : 1) : ay >= az ? (y > 0 ? 2 : 3) : (z > 0 ? 4 : 5);
+    part[i] = rig ? rig[i * 4] : 0;
+  }
+  const rep = new Int32Array(n);
+  const cluster = (cell) => {
+    const map = new Map(); let k = 0;
+    for (let i = 0; i < n; i++) {
+      const ix = Math.floor((P[i * 3] - lo.x) / cell), iy = Math.floor((P[i * 3 + 1] - lo.y) / cell), iz = Math.floor((P[i * 3 + 2] - lo.z) / cell);
+      const key = ((part[i] * 6 + bucket[i]) * 1024 + ix) * 1048576 + iy * 1024 + iz;
+      let c = map.get(key); if (c === undefined) { c = k++; map.set(key, c); }
+      rep[i] = c;
+    }
+    let t = 0;
+    for (let j = 0; j < tris; j++) { const a = rep[idx[j * 3]], b = rep[idx[j * 3 + 1]], c = rep[idx[j * 3 + 2]]; if (a !== b && b !== c && a !== c) t++; }
+    return [k, t];
+  };
+  // the cell size that keeps ~ratio of the triangles (bisection on a log scale)
+  let a = diag / 600, b = diag / 6, nc = 0, want = tris * ratio;
+  for (let it = 0; it < 14; it++) { const m = Math.sqrt(a * b), [, t] = cluster(m); if (t > want) a = m; else b = m; }
+  [nc] = cluster(b);
+  const out = {}, cnt = new Float32Array(nc);
+  for (const [name, attr] of Object.entries(g.attributes)) {
+    if (attr.isInstancedBufferAttribute) continue;
+    const s = attr.itemSize, src = attr.array, dst = new Float32Array(nc * s);
+    if (name === 'aRig') { for (let i = 0; i < n; i++) dst.set(src.subarray(i * s, i * s + s), rep[i] * s); }   // one part, one pivot per cluster
+    else for (let i = 0; i < n; i++) for (let q = 0; q < s; q++) dst[rep[i] * s + q] += src[i * s + q];
+    out[name] = [dst, s];
+  }
+  for (let i = 0; i < n; i++) cnt[rep[i]]++;
+  for (const [name, [dst, s]] of Object.entries(out)) {
+    if (name === 'aRig') continue;
+    for (let c = 0; c < nc; c++) for (let q = 0; q < s; q++) dst[c * s + q] /= cnt[c];
+    if (name === 'normal') for (let c = 0; c < nc; c++) { const l = Math.hypot(dst[c * 3], dst[c * 3 + 1], dst[c * 3 + 2]) || 1; dst[c * 3] /= l; dst[c * 3 + 1] /= l; dst[c * 3 + 2] /= l; }
+  }
+  const ix = [], seen = new Set();
+  for (let j = 0; j < tris; j++) {
+    const A = rep[idx[j * 3]], B = rep[idx[j * 3 + 1]], C = rep[idx[j * 3 + 2]];
+    if (A === B || B === C || A === C) continue;
+    const s0 = Math.min(A, B, C), s2 = Math.max(A, B, C), key = s0 * 4294967296 + (A + B + C - s0 - s2) * 65536 + s2;
+    if (seen.has(key)) continue;
+    seen.add(key); ix.push(A, B, C);
+  }
+  const lg = new THREE.BufferGeometry();
+  for (const [name, [dst, s]] of Object.entries(out)) lg.setAttribute(name, new THREE.BufferAttribute(dst, s));
+  lg.setIndex(nc > 65535 ? new THREE.Uint32BufferAttribute(ix, 1) : new THREE.Uint16BufferAttribute(ix, 1));
+  lg.computeBoundingSphere();
+  lg.userData = g.userData;
+  return lg;
+}
 
 // Small deterministic hash -> 0..1 (cells and animals keep the same contents every visit)
 export function hash(a, b = 0, c = 0) {
