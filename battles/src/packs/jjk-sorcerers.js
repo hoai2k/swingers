@@ -23,6 +23,7 @@
 //    meets a quick-draw, and sure-hits don't land on him
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
 import { register, EXT } from '../ext.js';
+import { aimTarget, leapSkill } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel, addProjectile,
@@ -167,6 +168,8 @@ function wantDomain(u, dt) {
   const b = u.battle, w = u.def.weapon;
   u.jkDomCD -= dt;
   if (u.jkDomCD > 0 || b.over || burntOut(u) || myDomain(u) || u.stun > 0.3 || u.jkSealedT > b.time || u.st.attack || u.isDown()) return false;
+  // possessed: only when the player opens it (its skill sets jkDomWant)
+  if (u.control) { const go = !!u.jkDomWant; u.jkDomWant = false; return go; }
   for (const d of jk(b).domains) if (d.team !== u.team && flat(u.pos, d.pos) < d.R) return true;
   let n = 0, big = 0, left = 0;
   for (const v of b.foes(u.team)) {
@@ -176,7 +179,7 @@ function wantDomain(u, dt) {
     n++;
     if (v.def.cost >= 900) big++;
   }
-  if (n >= Math.min(w.domMin, left) || big || (u.control && n > 0)) return true;
+  if (n >= Math.min(w.domMin, left) || big) return true;
   u.jkDomCD = 0.4;
   return false;
 }
@@ -192,17 +195,16 @@ const ryu = {
     const w = u.def.weapon;
     if (u.jkChg > 0) { u.desired.set(0, 0, 0); u.aimAt = c.t; return c.t; }
     const t = meleeThink(u, dt, c);
-    if (u.jkGB <= 0 && !busy(u) && c.dist > w.gbMin && c.dist < w.gbRange * 0.9 && !burntOut(u)) {
-      u.jkGB = w.gbCD * rand(0.9, 1.1);
-      u.jkChg = w.gbCharge;
-      u.aimAt = c.t;
-      u.st.style = 'jk_charge';
-      u.jkChgMk = markerOn(u.battle, u, 'jk_gbcharge', PART.chest, w.gbCharge + 0.1, new THREE.Vector3(0, 0.05, u.skel.rChest * 2.6));
-      u.battle.sound('magic', u.chestPos, 0.7, 0.6);
-      techBanner(u.battle, 'Granite Blast!', u.headPos);
-    }
+    if (u.jkGB <= 0 && !busy(u) && c.dist > w.gbMin && c.dist < w.gbRange * 0.9 && !burntOut(u)) chargeGranite(u, c.t);
     return t;
   },
+  // possessed (src/skills.js): RT fists; Granite Blast (fires at the crosshair) and a leap
+  basic: 'Fists',
+  skills: [
+    { key: 'x', name: 'Granite Blast', icon: '💥', cd: (u) => (u.jkChg > 0 ? 99 : u.jkGB), max: (u) => u.def.weapon.gbCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { chargeGranite(u, null); return true; } },
+    leapSkill('lb'),
+  ],
   event(u, t0, t1) { castEvent(u, t0, t1, { granite: graniteBlast }); },
   step(u, dt) {
     const b = u.battle;
@@ -222,6 +224,16 @@ const ryu = {
   },
   die(u) { endBeam(u.jkBeam); endCharge(u); },
 };
+function chargeGranite(u, t) {
+  const w = u.def.weapon;
+  u.jkGB = w.gbCD * rand(0.9, 1.1);
+  u.jkChg = w.gbCharge;
+  u.aimAt = t;
+  u.st.style = 'jk_charge';
+  u.jkChgMk = markerOn(u.battle, u, 'jk_gbcharge', PART.chest, w.gbCharge + 0.1, new THREE.Vector3(0, 0.05, u.skel.rChest * 2.6));
+  u.battle.sound('magic', u.chestPos, 0.7, 0.6);
+  techBanner(u.battle, 'Granite Blast!', u.headPos);
+}
 function endCharge(u) {
   u.st.style = u.def.weapon.style;
   if (u.jkChgMk) { u.jkChgMk.t = 0; u.jkChgMk = null; }
@@ -263,6 +275,14 @@ const uro = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { sky: thinIce }); },
+  // possessed (src/skills.js): Thin Ice Breaker, and bending the sky round her (by hand)
+  basic: 'Kicks',
+  skills: [
+    { key: 'x', name: 'Thin Ice Breaker', icon: '🌊', cd: (u) => u.jkSky, max: (u) => u.def.weapon.skyCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { u.jkSky = u.def.weapon.skyCD; castPose(u, 'jk_push', 'sky'); return true; } },
+    { key: 'lb', name: 'Bend the Sky', icon: '🛡', free: true, cd: (u) => u.jkDefCD, max: (u) => u.def.weapon.defCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { skyWall(u); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
@@ -295,22 +315,27 @@ const uro = {
     } else if (u.jkDefMk) { u.jkDefMk.t = 0; u.jkDefMk = null; }
     // shots on the way in: bend the sky
     u.jkScan -= dt;
-    if (u.jkScan <= 0 && u.jkDefCD <= 0 && !burntOut(u) && u.stun <= 0.5) {
+    if (u.jkScan <= 0 && !u.control && u.jkDefCD <= 0 && !burntOut(u) && u.stun <= 0.5) {
       u.jkScan = 0.1;
       for (const pr of b.projectiles) {
         if (pr.team === u.team || pr.sure) continue;
         _v.copy(c).sub(pr.pos);
         const d = _v.length();
         if (d > 7 || d < 0.1 || pr.vel.dot(_v) < pr.vel.length() * d * 0.6) continue;
-        u.jkDefCD = w.defCD; u.jkDefT = b.time + w.defT;
-        u.jkDefMk = markerOn(b, u, 'jk_skywall', PART.chest, w.defT + 0.1);
-        b.sound('whoosh', c, 0.9, 0.7);
+        skyWall(u);
         break;
       }
     }
   },
   die(u) { if (u.jkDefMk) { u.jkDefMk.t = 0; u.jkDefMk = null; } },
 };
+function skyWall(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkDefCD = w.defCD; u.jkDefT = b.time + w.defT;
+  if (u.jkDefMk) u.jkDefMk.t = 0;
+  u.jkDefMk = markerOn(b, u, 'jk_skywall', PART.chest, w.defT + 0.1);
+  b.sound('whoosh', u.chestPos, 0.9, 0.7);
+}
 function inCone(u, v, k) {
   const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
   const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = Math.hypot(dx, dz) || 1;
@@ -357,6 +382,16 @@ const kashimo = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { bolt: kashimoBolt }); },
+  // possessed (src/skills.js): a bolt at the enemy under the crosshair, a leap, and
+  // Mythical Beast Amber whenever he chooses (his body still burns out after it)
+  basic: 'Nyoi staff',
+  skills: [
+    { key: 'x', name: 'Lightning Bolt', icon: '⚡', cd: (u) => u.jkBolt, max: (u) => u.def.weapon.boltCD,
+      ready: (u) => (aimTarget(u, u.def.weapon.boltRange, 4) ? true : 'no target'),
+      use(u) { const v = aimTarget(u, u.def.weapon.boltRange, 4); if (!v) return false; u.jkBolt = u.def.weapon.boltCD * (amberOn(u) ? 0.5 : 1); u.jkBoltT = v; castPose(u, 'jk_push', 'bolt'); return true; } },
+    leapSkill('lb'),
+    { key: 'rb', name: 'Mythical Beast Amber', icon: '🐉', free: true, ready: (u) => (!u.jkAmberUsed ? true : amberOn(u) ? 'transformed' : 'used'), use(u) { amber(u); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
@@ -378,18 +413,7 @@ const kashimo = {
       }
       if (n) b.sound('clang', c, 0.5, 2.4);
     });
-    if (!u.jkAmberUsed && u.hp < u.maxHp * w.amberAt && !b.over && u.stun < 1) {
-      u.jkAmberUsed = true;
-      u.jkAmber = b.time + w.amberT;
-      u.hp = u.maxHp;
-      u.stun = 0;
-      u.jkAmberMk = markerOn(b, u, 'jk_amber', PART.chest, w.amberT + 0.5);
-      const h = u.headPos;
-      lightning(b, h.x, h.z, u, 0, 0.1, 0);
-      b.sound('boom', h, 1.2, 0.8);
-      b.voice(u, 'cry', true);
-      announce(b, 'Kashimo: Mythical Beast Amber!', h, 'amber' + u.id);
-    }
+    if (!u.jkAmberUsed && u.hp < u.maxHp * w.amberAt && !b.over && u.stun < 1) amber(u);
     if (u.jkAmberUsed && !am && u.alive && u.jkAmberMk) {
       // the transformation is done: his body has burnt out
       u.jkAmberMk.t = 0; u.jkAmberMk = null;
@@ -415,6 +439,19 @@ const kashimo = {
   hit(u, amount) { return amberOn(u) ? amount * u.def.weapon.amberArmor : amount; },
   die(u) { if (u.jkAmberMk) { u.jkAmberMk.t = 0; u.jkAmberMk = null; } },
 };
+function amber(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkAmberUsed = true;
+  u.jkAmber = b.time + w.amberT;
+  u.hp = u.maxHp;
+  u.stun = 0;
+  u.jkAmberMk = markerOn(b, u, 'jk_amber', PART.chest, w.amberT + 0.5);
+  const h = u.headPos;
+  lightning(b, h.x, h.z, u, 0, 0.1, 0);
+  b.sound('boom', h, 1.2, 0.8);
+  b.voice(u, 'cry', true);
+  announce(b, 'Kashimo: Mythical Beast Amber!', h, 'amber' + u.id);
+}
 function kashimoBolt(u) {
   const b = u.battle, w = u.def.weapon, t = u.jkBoltT;
   if (!t || !t.alive) return;
@@ -436,6 +473,13 @@ const higuruma = {
     if (u.jkCourt) { u.desired.set(0, 0, 0); return c.t; }
     return meleeThink(u, dt, c);
   },
+  // possessed (src/skills.js): the gavel, a leap, and the court on RB
+  basic: 'Gavel',
+  skills: [
+    leapSkill('x'),
+    { key: 'rb', name: 'Deadly Sentencing', icon: '⚖', cd: (u) => u.jkDomCD, max: (u) => u.def.weapon.domCD,
+      ready: (u) => (burntOut(u) ? 'burnt out' : u.jkCourt ? 'in session' : true), use(u) { u.jkDomWant = true; return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
@@ -531,6 +575,14 @@ const yuki = {
     }
     return t;
   },
+  // possessed (src/skills.js): Garuda, a leap, and the Black Hole whenever she chooses
+  basic: 'Star Rage',
+  skills: [
+    { key: 'x', name: 'Garuda', icon: '🦅', cd: (u) => u.jkGar, max: (u) => u.def.weapon.garCD,
+      use(u) { u.jkGar = u.def.weapon.garCD; u.aimAt = aimTarget(u, u.def.weapon.garRange, 4); castPose(u, 'throw', 'garuda'); return true; } },
+    leapSkill('lb'),
+    { key: 'rb', name: 'Black Hole', icon: '🕳', free: true, ready: (u) => (u.jkBHused ? 'used' : true), use(u) { blackHoleStart(u, null); return true; } },
+  ],
   event(u, t0, t1) {
     if (castEvent(u, t0, t1, { garuda: throwGaruda })) return;
     // a blow with that much mass behind it doesn't miss what is right in front of her
@@ -560,23 +612,24 @@ const yuki = {
   },
   hit(u, amount, part, attacker) {
     if (u.jkBH) return 0;
-    if (!u.jkBHused && u.hp - amount < u.maxHp * u.def.weapon.bhAt && !u.battle.over) {
-      u.jkBHused = true;
-      const b = u.battle, w = u.def.weapon;
-      u.hp = 1;
-      u.jkBH = { t: w.bhT, at: u.chestPos.clone(), killer: attacker || null };
-      u.jkBH.at.y += 0.6;
-      u.jkBH.mk = markerAt(b, 'jk_bhole', u.jkBH.at, w.bhT + 0.2);
-      u.st.attack = null;
-      announce(b, 'Yuki Tsukumo: Black Hole!', u.headPos);
-      b.sound('boom', u.jkBH.at, 1.3, 0.3);
-      b.voice(u, 'cry', true);
-      return 0;
-    }
+    if (!u.jkBHused && u.hp - amount < u.maxHp * u.def.weapon.bhAt && !u.battle.over) { blackHoleStart(u, attacker); return 0; }
     return amount;
   },
   die(u) { if (u.jkBH && u.jkBH.mk) u.jkBH.mk.t = 0; },
 };
+// her last stand: she becomes a black hole (and does not come back from it)
+function blackHoleStart(u, attacker) {
+  u.jkBHused = true;
+  const b = u.battle, w = u.def.weapon;
+  u.hp = 1;
+  u.jkBH = { t: w.bhT, at: u.chestPos.clone(), killer: attacker || null };
+  u.jkBH.at.y += 0.6;
+  u.jkBH.mk = markerAt(b, 'jk_bhole', u.jkBH.at, w.bhT + 0.2);
+  u.st.attack = null;
+  announce(b, 'Yuki Tsukumo: Black Hole!', u.headPos);
+  b.sound('boom', u.jkBH.at, 1.3, 0.3);
+  b.voice(u, 'cry', true);
+}
 function blackHole(u, dt) {
   const b = u.battle, w = u.def.weapon, H = u.jkBH, at = H.at;
   H.t -= dt;
@@ -632,6 +685,14 @@ const meimei = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { crows: (x) => crows(x, false), kami: (x) => crows(x, true) }); },
+  // possessed (src/skills.js): the crows and Bird Strike at the crosshair
+  basic: 'Great axe',
+  skills: [
+    { key: 'x', name: 'Crows', icon: '🐦', cd: (u) => u.jkCrow, max: (u) => u.def.weapon.crowCD,
+      use(u) { u.jkCrow = u.def.weapon.crowCD; u.aimAt = aimTarget(u, u.def.weapon.crowRange, 4); castPose(u, 'cast', 'crows'); return true; } },
+    { key: 'lb', name: 'Bird Strike', icon: '🐦‍⬛', cd: (u) => u.jkKami, max: (u) => u.def.weapon.kamiCD,
+      use(u) { u.jkKami = u.def.weapon.kamiCD; u.aimAt = aimTarget(u, u.def.weapon.crowRange, 4); castPose(u, 'jk_push', 'kami'); return true; } },
+  ],
   step(u, dt) { if (!u.st.attack) u.jkCast = null; u.jkCrow -= dt; u.jkKami -= dt; },
 };
 function crows(u, kami) {
@@ -660,6 +721,11 @@ const kamo = {
   aim: true,
   init(u) { u.attackDur = u.def.weapon.windup; u.jkScale = 0; u.jkScaleUsed = false; },
   think(u, dt, c) { return rangedThink(u, dt, scaleOn(u) ? { ...c, spd: c.spd * 1.3 } : c); },
+  // possessed (src/skills.js): Flowing Red Scale when he chooses (once)
+  basic: 'Blood arrows',
+  skills: [
+    { key: 'x', name: 'Flowing Red Scale', icon: '🩸', free: true, ready: (u) => (u.jkScaleUsed ? (scaleOn(u) ? 'flowing' : 'used') : true), use(u) { redScale(u); return true; } },
+  ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle;
     if (u.st.attack !== u.anim || !crossed(t0, t1, w.releaseAt)) return;
@@ -677,14 +743,7 @@ const kamo = {
   },
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
-    if (!u.jkScaleUsed && u.hp < u.maxHp * w.scaleAt) {
-      u.jkScaleUsed = true;
-      u.jkScale = b.time + w.scaleT;
-      u.attackDur = w.windup * 0.65;
-      markerOn(b, u, 'jk_redscale', PART.chest, w.scaleT);
-      announce(b, 'Kamo: Flowing Red Scale!', u.headPos, 'scale' + u.id);
-      b.sound('magic', u.chestPos, 0.6, 1.4);
-    }
+    if (!u.jkScaleUsed && u.hp < u.maxHp * w.scaleAt) redScale(u);
     if (u.jkScaleUsed && !scaleOn(u) && u.attackDur !== w.windup) u.attackDur = w.windup;
     if (scaleOn(u)) u.buff = Math.max(u.buff, 0.1);
   },
@@ -695,9 +754,25 @@ const kamo = {
 // almost instant dash to the next enemy (afterimages along the way). Anyone he touches
 // who can't keep up with the frames freezes in a pane for a moment, and a blow on a
 // frozen victim lands hard.
+function redScale(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkScaleUsed = true;
+  u.jkScale = b.time + w.scaleT;
+  u.attackDur = w.windup * 0.65;
+  markerOn(b, u, 'jk_redscale', PART.chest, w.scaleT);
+  announce(b, 'Kamo: Flowing Red Scale!', u.headPos, 'scale' + u.id);
+  b.sound('magic', u.chestPos, 0.6, 1.4);
+}
 const naoya = {
   melee: true,
   init(u) { u.jkDash = rand(0.3, 1); },
+  // possessed (src/skills.js): the 24-frame blink at the enemy under the crosshair
+  basic: 'Strikes',
+  skills: [
+    { key: 'x', name: 'Projection Sorcery', icon: '🎞', cd: (u) => u.jkDash, max: (u) => u.def.weapon.dashCD,
+      ready: (u) => (burntOut(u) ? 'burnt out' : aimTarget(u, u.def.weapon.dashMax, 4) ? true : 'no target'),
+      use(u) { const v = aimTarget(u, u.def.weapon.dashMax, 4); if (!v) return false; u.jkDash = u.def.weapon.dashCD; projDash(u, v); return true; } },
+  ],
   think(u, dt, c) {
     const w = u.def.weapon, b = u.battle;
     const t = meleeThink(u, dt, c);
@@ -786,6 +861,22 @@ const mecha = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { cannon: ultraCannon }); },
+  // possessed (src/skills.js): Ultra Cannon, the thrusters, Absolute Mode
+  basic: 'Blade arm',
+  skills: [
+    { key: 'x', name: 'Ultra Cannon', icon: '🔫', cd: (u) => u.jkCan, max: (u) => u.def.weapon.canCD,
+      use(u) { u.jkCan = u.def.weapon.canCD; u.aimAt = null; castPose(u, 'jk_push', 'cannon'); return true; } },
+    { key: 'lb', name: 'Thrusters', icon: '🚀', cd: (u) => u.jkThr, max: (u) => u.def.weapon.thrCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+      use(u) {
+        const w = u.def.weapon, b = u.battle, k = u.M * w.thrV, a = u.control?.aimYaw ?? u.heading;
+        u.jkThr = w.thrCD;
+        u.rag.impulseAll(Math.sin(a) * k, u.M * 2.2, Math.cos(a) * k);
+        markerOn(b, u, 'jk_thrust', PART.chest, 0.5, new THREE.Vector3(0, -0.1, -u.skel.rChest * 1.3));
+        b.sound('fire', u.pos, 0.8, 0.6);
+        return true;
+      } },
+    { key: 'rb', name: 'Absolute Mode', icon: '🤖', free: true, ready: (u) => (u.jkAbsUsed ? (absOn(u) ? 'flying' : 'used') : true), use(u) { absolute(u); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
@@ -795,14 +886,7 @@ const mecha = {
       if (u.jkBeamT <= 0 || !u.alive) endBeam(u.jkBeam);
       else refreshBeam(b, u.jkBeam, u, u.jkBA, u.jkBB, 'jk_mcseg', 1.0);
     }
-    if (!u.jkAbsUsed && u.hp < u.maxHp * w.absAt && !b.over) {
-      u.jkAbsUsed = true;
-      u.jkAbs = b.time + w.absT;
-      u.st.attack = null;
-      u.jkAbsMk = markerOn(b, u, 'jk_thrust', PART.chest, w.absT, new THREE.Vector3(0, -0.1, -u.skel.rChest * 1.3));
-      announce(b, 'Mechamaru: Absolute Mode!', u.headPos, 'abs' + u.id);
-      b.sound('fire', u.chestPos, 1.2, 0.5);
-    }
+    if (!u.jkAbsUsed && u.hp < u.maxHp * w.absAt && !b.over) absolute(u);
     if (absOn(u)) {
       u.st.gsFly = true;
       hover(u, dt, w.absAlt);
@@ -824,6 +908,15 @@ const mecha = {
   },
   die(u) { endBeam(u.jkBeam); u.st.gsFly = false; if (u.jkAbsMk) { u.jkAbsMk.t = 0; u.jkAbsMk = null; } },
 };
+function absolute(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkAbsUsed = true;
+  u.jkAbs = b.time + w.absT;
+  u.st.attack = null;
+  u.jkAbsMk = markerOn(b, u, 'jk_thrust', PART.chest, w.absT, new THREE.Vector3(0, -0.1, -u.skel.rChest * 1.3));
+  announce(b, 'Mechamaru: Absolute Mode!', u.headPos, 'abs' + u.id);
+  b.sound('fire', u.chestPos, 1.2, 0.5);
+}
 function ultraCannon(u) {
   const b = u.battle, w = u.def.weapon;
   const A = handPos(u, new THREE.Vector3());
@@ -844,6 +937,15 @@ function ultraCannon(u) {
 // into it meets a quick-draw (Batto Sword Drawing). While it is up, a domain's sure-hit
 // finds nothing to land on.
 const sdOn = (u) => !!u.jkSD && u.jkSD.t > 0;
+function simpleDomain(u) {
+  const b = u.battle, w = u.def.weapon;
+  u.jkSDCD = w.sdCD;
+  const at = u.pos.clone(); at.y = b.terrain.height(at.x, at.z) + 0.03;
+  u.jkSD = { t: w.sdT, at, cut: 0, mk: markerAt(b, 'jk_simpledom', at, w.sdT) };
+  u.st.attack = null;
+  techBanner(b, 'Simple Domain: Batto Sword Drawing', u.headPos, 12);
+  b.sound('click', u.pos, 0.8, 0.8);
+}
 const kusakabe = {
   melee: true,
   init(u) { u.jkSDCD = rand(0.5, 1.5); u.jkSD = null; },
@@ -853,17 +955,17 @@ const kusakabe = {
     const t = meleeThink(u, dt, c);
     if (u.jkSDCD <= 0 && u.stun <= 0.2 && !u.isDown() && u.airT <= 0) {
       const inDom = jk(b).domains.some((d) => d.team !== u.team && flat(u.pos, d.pos) < d.R);
-      if (inDom || enemiesNear(u, u.pos, w.sdR + 1.2).length) {
-        u.jkSDCD = w.sdCD;
-        const at = u.pos.clone(); at.y = b.terrain.height(at.x, at.z) + 0.03;
-        u.jkSD = { t: w.sdT, at, cut: 0, mk: markerAt(b, 'jk_simpledom', at, w.sdT) };
-        u.st.attack = null;
-        techBanner(b, 'Simple Domain: Batto Sword Drawing', u.headPos, 12);
-        b.sound('click', u.pos, 0.8, 0.8);
-      }
+      if (inDom || enemiesNear(u, u.pos, w.sdR + 1.2).length) simpleDomain(u);
     }
     return t;
   },
+  // possessed (src/skills.js): the Simple Domain where he stands, and a leap
+  basic: 'Katana',
+  skills: [
+    { key: 'x', name: 'Simple Domain', icon: '⭕', cd: (u) => (sdOn(u) ? 99 : u.jkSDCD), max: (u) => u.def.weapon.sdCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+      use(u) { simpleDomain(u); return true; } },
+    leapSkill('lb'),
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     u.jkSDCD -= dt;
