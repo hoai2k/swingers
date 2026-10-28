@@ -72,7 +72,7 @@
       "source": "/Users/hoai/.codex/generated_images/01a16deb-f912-7ba2-a19c-72878ed8cec1/exec-c4e5caa1-60c7-4c80-afde-000ab20a3089.png"
     },
     {
-      "file": "tile_spider_jungle.png",
+      "file": "tile_spider_jungle.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -89,7 +89,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_cave.png",
+      "file": "tile_spider_cave.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -106,7 +106,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_volcano.png",
+      "file": "tile_spider_volcano.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -123,7 +123,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_factory.png",
+      "file": "tile_spider_factory.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -140,7 +140,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_sky.png",
+      "file": "tile_spider_sky.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -157,7 +157,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_night.png",
+      "file": "tile_spider_night.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -174,7 +174,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_candy.png",
+      "file": "tile_spider_candy.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -191,7 +191,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_storm.png",
+      "file": "tile_spider_storm.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
@@ -208,7 +208,7 @@
       "processing": "Resized to requested dimensions; transparent sprites fitted with a two-pixel minimum margin."
     },
     {
-      "file": "tile_spider_desert.png",
+      "file": "tile_spider_desert.jpg",
       "section": "A",
       "width": 512,
       "height": 512,
