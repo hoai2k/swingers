@@ -314,10 +314,10 @@ const hunter = {
     return blaster.think(u, dt, c);
   },
   event: blaster.event,
-  // possessed (src/skills.js): RT the pistol; the wrist rocket and the jetpack on buttons
-  basic: 'Blaster pistol',
+  // possessed (src/skills.js): RT the pistol, X a shove, LB the wrist rocket, RB the jetpack
+  basic: 'Shove', ranged: 'Blaster pistol',
   skills: [
-    { key: 'x', name: 'Wrist Rocket', icon: '🚀', cd: (u) => u.ga.rocketCd, max: (u) => u.def.weapon.rocketCd,
+    { key: 'lb', name: 'Wrist Rocket', icon: '🚀', cd: (u) => u.ga.rocketCd, max: (u) => u.def.weapon.rocketCd,
       use(u) {
         const b = u.battle, w = u.def.weapon, g = u.ga, v = aimTarget(u, w.rocketRange, 4);
         const at = v ? v.chestPos : u.control?.aimPt;
@@ -329,7 +329,7 @@ const hunter = {
         b.emit('spark', hand.x, hand.y, hand.z, 1.5);
         return true;
       } },
-    { key: 'lb', name: 'Jetpack', icon: '🔥', cd: (u) => (u.ga.jet > 0 || u.ga.land ? 99 : u.ga.jetCd), max: (u) => u.def.weapon.jetCd, ready: (u) => (u.airT > 0 && !(u.ga.jet > 0) ? 'in the air' : true),
+    { key: 'rb', name: 'Jetpack', icon: '🔥', cd: (u) => (u.ga.jet > 0 || u.ga.land ? 99 : u.ga.jetCd), max: (u) => u.def.weapon.jetCd, ready: (u) => (u.airT > 0 && !(u.ga.jet > 0) ? 'in the air' : true),
       use(u) { startJet(u); return true; } },
   ],
   step(u, dt) {
@@ -455,10 +455,10 @@ const lord = {
     return f;
   },
   event: saber.event,
-  // possessed (src/skills.js): RT the red blade; Force Push and Force Choke on buttons
+  // possessed (src/skills.js): X the red blade, LB Force Choke, RB Force Push (a cone)
   basic: 'Red energy sword',
   skills: [
-    { key: 'x', name: 'Force Push', icon: '🫸', cd: (u) => u.ga.pushCd, max: (u) => u.def.weapon.push.cd, use(u) { forcePush(u); return true; } },
+    { key: 'rb', name: 'Force Push', icon: '🫸', cd: (u) => u.ga.pushCd, max: (u) => u.def.weapon.push.cd, use(u) { forcePush(u); return true; } },
     { key: 'lb', name: 'Force Choke', icon: '✊', cd: (u) => (u.ga.choke ? 99 : u.ga.chokeCd), max: (u) => u.def.weapon.choke.cd,
       ready: (u) => (chokeAim(u) ? true : 'no one to choke'),
       use(u) { const v = chokeAim(u); if (!v) return false; startChoke(u, v); return true; } },

@@ -173,7 +173,7 @@ const toji = {
   // possessed (src/skills.js): RT the spear; the Playful Cloud and his leap on buttons
   basic: 'Inverted Spear',
   skills: [
-    { key: 'x', name: 'Playful Cloud', icon: '🪄', cd: (u) => (u.jkFl > 0 ? 99 : u.jkPC), max: (u) => u.def.weapon.pcCD, use(u) { playfulCloud(u); return true; } },
+    { key: 'rb', name: 'Playful Cloud', icon: '🪄', cd: (u) => (u.jkFl > 0 ? 99 : u.jkPC), max: (u) => u.def.weapon.pcCD, use(u) { playfulCloud(u); return true; } },
     { key: 'lb', name: 'Leap', icon: '💨', cd: (u) => u.jkDash, max: (u) => u.def.weapon.dashCD,
       ready: (u) => (aimTarget(u, 12) ? true : 'no target'),
       use(u) {
@@ -257,9 +257,9 @@ const dagon = {
   aim: true,
   init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkDomCD = w.domFirst; u.swarmCD = 3; },
   think: rangedThink,
-  basic: 'Fish',
+  basic: 'Shove', ranged: 'Fish',
   skills: [
-    { key: 'x', name: 'Death Swarm', icon: '🐟', cd: (u) => u.swarmCD, max: () => SWARM_CD,
+    { key: 'lb', name: 'Death Swarm', icon: '🐟', cd: (u) => u.swarmCD, max: () => SWARM_CD,
       use(u) { u.swarmCD = SWARM_CD; u.jkBig = true; u.startAttack(); u.aimAt = null; return true; } },
     domainSkill('Horizon of the Captivating Skandha', '🏖'),
   ],
@@ -331,7 +331,7 @@ const mahito = {
   think: meleeThink,
   basic: 'Idle Transfiguration',
   skills: [
-    { key: 'x', name: 'Polymorphic Soul Isomer', icon: '🫥', cd: (u) => u.isoCD, max: () => ISOMER_CD,
+    { key: 'lb', name: 'Polymorphic Soul Isomer', icon: '🫥', cd: (u) => u.isoCD, max: () => ISOMER_CD,
       ready: (u) => (u.battle.units.some((s) => s.reserveOf === u && s.dormant && s.def.id === 'jk_transfig') ? true : 'no souls stored'),
       use(u) {
         const b = u.battle, fx = Math.sin(u.heading), fz = Math.cos(u.heading);
@@ -347,7 +347,6 @@ const mahito = {
         b.sound('jk_soul', u.chestPos, 1.0, 1);
         return true;
       } },
-    leapSkill('lb'),
     domainSkill('Self-Embodiment of Perfection', '🖐'),
   ],
   step(u, dt) {
@@ -418,9 +417,9 @@ const jogo = {
   aim: true,
   init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkMet = w.metFirst; u.jkDomCD = w.domFirst; u.burstCD = 2; },
   think: rangedThink,
-  basic: 'Ember Insects',
+  basic: 'Shove', ranged: 'Ember Insects',
   skills: [
-    { key: 'x', name: 'Maximum: Meteor', icon: '☄', cd: (u) => u.jkMet, max: (u) => u.def.weapon.metCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'rt', hold: 0.6, name: 'Maximum: Meteor', icon: '☄', cd: (u) => u.jkMet, max: (u) => u.def.weapon.metCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) {
         const w = u.def.weapon, v = aimTarget(u, w.metRange, 6);
         const at = v ? v.pos.clone() : u.control?.aimPt ? u.control.aimPt.clone() : null;
@@ -534,7 +533,7 @@ const hanami = {
   init(u) { const w = u.def.weapon; u.jkSeed = rand(0.5, 1.5); u.jkRoot = rand(2, 4); u.jkField = w.fieldFirst; },
   basic: 'Wooden fists',
   skills: [
-    { key: 'x', name: 'Wooden Ball', icon: '🌰', cd: (u) => u.jkSeed, max: (u) => u.def.weapon.seedCD,
+    { key: 'rt', name: 'Wooden Ball', icon: '🌰', cd: (u) => u.jkSeed, max: (u) => u.def.weapon.seedCD,
       use(u) { u.jkSeed = u.def.weapon.seedCD; u.aimAt = aimTarget(u, u.def.weapon.seedRange, 4); castPose(u, 'throw', 'seed'); return true; } },
     { key: 'lb', name: 'Roots', icon: '🌱', cd: (u) => u.jkRoot, max: (u) => u.def.weapon.rootCD,
       ready: (u) => (aimTarget(u, u.def.weapon.rootRange, 4) ? true : 'no target'),
@@ -637,10 +636,10 @@ const geto = {
   init(u) { const w = u.def.weapon; u.jkSum = rand(0.2, 0.6); u.jkUzu = w.uzuFirst; },
   basic: 'Punch',
   skills: [
-    { key: 'x', name: 'Release Curses', icon: '👻', cd: (u) => u.jkSum, max: (u) => u.def.weapon.sumCD,
+    { key: 'lb', name: 'Release Curses', icon: '👻', cd: (u) => u.jkSum, max: (u) => u.def.weapon.sumCD,
       ready: (u) => (curses(u).length >= u.def.weapon.sumMax ? 'curses out' : u.battle.units.some((s) => s.reserveOf === u && s.dormant && s.def.id === 'jk_gcurse') ? true : 'none left'),
       use(u) { u.jkSum = u.def.weapon.sumCD; castPose(u, 'jk_sign', 'summon'); return true; } },
-    { key: 'lb', name: 'Maximum: Uzumaki', icon: '🌀', cd: (u) => u.jkUzu, max: (u) => u.def.weapon.uzuCD,
+    { key: 'rb', name: 'Maximum: Uzumaki', icon: '🌀', cd: (u) => u.jkUzu, max: (u) => u.def.weapon.uzuCD,
       ready: (u) => (burntOut(u) ? 'burnt out' : curses(u).length ? true : 'release curses first'),
       use(u) { u.jkUzu = u.def.weapon.uzuCD; u.aimAt = aimTarget(u, u.def.weapon.uzuRange, 4); castPose(u, 'jk_push', 'uzumaki'); for (const s of curses(u)) markerAt(u.battle, 'jk_vortex', s.chestPos, 0.6, rand(0, 6)); techBanner(u.battle, 'Maximum: Uzumaki!', u.headPos); return true; } },
   ],
@@ -734,9 +733,9 @@ const choso = {
   aim: true,
   init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkNova = rand(1, 3); u.jkBeam = {}; u.jkBeamT = 0; },
   think: rangedThink,
-  basic: 'Piercing Blood',
+  basic: 'Shove', ranged: 'Piercing Blood',
   skills: [
-    { key: 'x', name: 'Supernova', icon: '🩸', cd: (u) => u.jkNova, max: (u) => u.def.weapon.novaCD,
+    { key: 'rb', name: 'Supernova', icon: '🩸', cd: (u) => u.jkNova, max: (u) => u.def.weapon.novaCD,
       use(u) {
         const b = u.battle, c = u.chestPos;
         u.jkNova = u.def.weapon.novaCD;
@@ -833,7 +832,7 @@ const hakari = {
   init(u) { u.jkDomCD = u.def.weapon.domFirst; u.jkJack = 0; u.jkAura = null; },
   basic: 'Fists',
   skills: [
-    leapSkill('x'),
+    leapSkill('lb'),
     { ...domainSkill('Idle Death Gamble', '🎰'), ready: (u) => (jackpotOn(u) ? 'JACKPOT!' : burntOut(u) ? 'burnt out' : myDomain(u) ? 'open' : true) },
   ],
   think(u, dt, c) { return meleeThink(u, dt, jackpotOn(u) ? { ...c, spd: c.spd * u.def.weapon.jackSpeed } : c); },

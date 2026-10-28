@@ -6,7 +6,7 @@ import { Ragdoll } from './ragdoll.js';
 import { ITEMS, gripDir, heldLayout, shieldDef, itemMass, itemSpan } from './items.js';
 import { FIELD } from './world.js';
 import { EXT } from './ext.js';
-import { runSkills } from './skills.js';
+import { runSkills, preSkills, mainAttack, rangedBasic, shoveEvent, skillsOf } from './skills.js';
 import { RAPIER, GROUPS, itemGroups } from './physics.js';
 
 const _v = new THREE.Vector3();
@@ -280,14 +280,18 @@ export class Unit {
     this.faceYaw = c.aimYaw;
     this.expr = EXPR.angry;
     this.st.mode = 'normal';
-    // pack kinds can take over (steer a mount, crew an engine, dive...); true means
-    // the attack button was handled there
+    // X the main attack, RT the ranged one, LB / RB techniques (src/skills.js).
+    // Pack kinds can take over (steer a mount, crew an engine, dive...): true means
+    // they handled the attack buttons, 'shoot' that they handled RT
+    preSkills(this, c, dt);
     const own = this.kind?.control ? this.kind.control(this, dt, c) : false;
-    // special techniques on their own buttons (src/skills.js)
     runSkills(this, c, dt);
-    if (!own && c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
-      this.startAttack();
-      this.aimAt = null;
+    if (own !== true && !this.blocking && !this.st.attack && this.cooldown <= 0) {
+      const rtSkill = skillsOf(this)?.some((s) => s.key === 'rt' && !s.hold);
+      if (c.melee) mainAttack(this);
+      else if (c.shoot && own !== 'shoot' && !rtSkill) {
+        if (rangedBasic(this)) { this.startAttack(); this.aimAt = null; } else mainAttack(this); // (no ranged attack: RT attacks like X)
+      }
     }
     if (c.jump && !this.isDown() && this.groundGap() < 0.3) {
       this.rag.impulseAll(0, this.M * 5.5, 0);
@@ -666,6 +670,7 @@ export class Unit {
   }
 
   attackEvents(t0, t1) {
+    if (this.st.attack === 'shove') return shoveEvent(this, t0, t1); // (X on a ranged-only unit, possessed)
     if (this.kind?.event) return this.kind.event(this, t0, t1);
     const w = this.def.weapon;
     if (w.kind === 'ranged') {

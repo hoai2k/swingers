@@ -159,16 +159,17 @@ const gojo = {
     if (u.st.attack) u.desired.multiplyScalar(0.15);
     return t;
   },
-  // possessed: RT Red; Blue, Purple and the Void on their own buttons (src/skills.js)
+  // possessed (src/skills.js): X a shove, RT Red (hold RT: Hollow Purple), LB Blue,
+  // RB Unlimited Void
   control(u, dt, c) {
-    if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) { gojoCast(u, 'red'); u.aimAt = null; }
-    return true;
+    if (c.shoot && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) { gojoCast(u, 'red'); u.aimAt = null; }
+    return 'shoot';
   },
-  basic: 'Red',
+  basic: 'Shove', ranged: 'Red',
   skills: [
-    { key: 'x', name: 'Blue', icon: '🔵', cd: (u) => u.blueCD, max: (u) => u.def.weapon.blueCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'lb', name: 'Blue', icon: '🔵', cd: (u) => u.blueCD, max: (u) => u.def.weapon.blueCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { gojoCast(u, 'blue'); u.aimAt = null; return true; } },
-    { key: 'lb', name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'rt', hold: 0.6, name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { gojoCast(u, 'purple'); u.aimAt = null; return true; } },
     { key: 'rb', name: 'Unlimited Void', icon: '♾', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { u.domCD = u.def.weapon.domCD; openVoid(u.battle, u); return true; } },
@@ -440,15 +441,14 @@ function skCast(u, tech, t) {
   u.aimAt = t;
   if (tech === 'fuga') u.fugaCD = SKW.fugaCD;
 }
-function skControl(u, dt, c) {
-  if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u)) skCast(u, 'cut', null);
-  return true;
-}
-// possessed (src/skills.js): RT Dismantle; Fuga, Cleave and the Shrine on their buttons
+// possessed (src/skills.js): X Dismantle (skMain), RT Fuga and the rest are skills
+function skControl() { return 'shoot'; }
+function skMain(u) { if (!sealed(u)) skCast(u, 'cut', null); }
+// possessed (src/skills.js): X Dismantle; Fuga on RT, Cleave on LB, the Shrine on RB
 // (Megumi uses these too once Sukuna has his body)
 const CLEAVE_CD = 5;
 const SK_SKILLS = [
-  { key: 'x', name: 'Fuga', icon: '🔥', cd: (u) => u.fugaCD, max: () => SKW.fugaCD,
+  { key: 'rt', name: 'Fuga', icon: '🔥', cd: (u) => u.fugaCD, max: () => SKW.fugaCD,
     use(u) { skCast(u, 'fuga', null); u.aimAt = null; return true; } },
   { key: 'lb', name: 'Cleave', icon: '🗡', cd: (u) => u.cleaveCD || 0, max: () => CLEAVE_CD,
     ready: (u) => !!aimTarget(u, SKW.range + 1) || 'no one in reach',
@@ -550,7 +550,7 @@ function openShrine(b, u) {
 const sukuna = {
   aim: true,
   init(u) { skInit(u); },
-  think: skThink, control: skControl, event: skEvent,
+  think: skThink, control: skControl, event: skEvent, main: skMain,
   basic: 'Dismantle', skills: SK_SKILLS,
   step: skStep,
 };
@@ -575,6 +575,7 @@ const megumi = {
     return r;
   },
   control(u, dt, c) { return u.jkMeguna ? skControl(u, dt, c) : false; },
+  main(u) { if (u.jkMeguna) skMain(u); else { u.startAttack(); u.aimAt = null; } },
   basic: 'Shadow blade',
   skills: (u) => (u.jkMeguna ? SK_SKILLS : MG_SKILLS),
   event(u, t0, t1) {
@@ -619,13 +620,22 @@ const megumi = {
   },
 };
 // possessed (src/skills.js): the shikigami and the domain on their buttons
+// (LB: the next shikigami that's ready - the Divine Dogs, Nue, Toad, Max Elephant)
+const nextShiki = (u) => {
+  const b = u.battle;
+  if (dogsReady(u)) return 'dogs';
+  if (u.nueCD <= 0 && readyOf(b, u, 'jk_nue')) return 'jk_nue';
+  if (u.toadCD <= 0 && readyOf(b, u, 'jk_toad')) return 'jk_toad';
+  if (u.eleCD <= 0 && readyOf(b, u, 'jk_elephant')) return 'jk_elephant';
+  return null;
+};
+const SHIKI_NAME = { dogs: 'Divine Dogs', jk_nue: 'Nue', jk_toad: 'Toad', jk_elephant: 'Max Elephant' };
 const MG_SKILLS = [
-  { key: 'x', name: 'Divine Dogs / Nue', icon: '🐺', cd: (u) => (dogsReady(u) ? 0 : u.nueCD), max: () => MGW.nueCD,
-    ready: (u) => (!burntOut(u) ? (dogsReady(u) || readyOf(u.battle, u, 'jk_nue') ? true : 'all out') : 'burnt out'),
-    use(u) { sign(u, dogsReady(u) ? 'dogs' : 'jk_nue'); return true; } },
-  { key: 'lb', name: 'Max Elephant', icon: '🐘', cd: (u) => u.eleCD, max: () => MGW.eleCD,
-    ready: (u) => (burntOut(u) ? 'burnt out' : readyOf(u.battle, u, 'jk_elephant') ? true : readyOf(u.battle, u, 'jk_toad') ? true : 'all out'),
-    use(u) { sign(u, readyOf(u.battle, u, 'jk_elephant') ? 'jk_elephant' : 'jk_toad'); return true; } },
+  { key: 'lb', name: 'Ten Shadows', icon: '🐺',
+    cd: (u) => (nextShiki(u) ? 0 : Math.max(0.1, Math.min(...['jk_nue', 'jk_toad', 'jk_elephant'].filter((t) => readyOf(u.battle, u, t)).map((t) => (t === 'jk_nue' ? u.nueCD : t === 'jk_toad' ? u.toadCD : u.eleCD)), 99))),
+    max: () => MGW.nueCD,
+    ready: (u) => (burntOut(u) ? 'burnt out' : nextShiki(u) || SHIKI.some((t) => readyOf(u.battle, u, t)) ? true : 'all out'),
+    use(u) { const s = nextShiki(u); if (!s) return false; sign(u, s); announce(u.battle, SHIKI_NAME[s] + '!', u.headPos); return true; } },
   { key: 'rb', name: 'Chimera Shadow Garden', icon: '🌑', cd: (u) => u.domCD, max: () => MGW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
     use(u) { u.domCD = MGW.domCD; openGarden(u.battle, u); return true; } },
 ];

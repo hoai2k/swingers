@@ -313,7 +313,7 @@ const aang = {
   // possessed (src/skills.js): the staff on RT; air blast, air scooter, Avatar State
   basic: 'Glider staff',
   skills: [
-    { key: 'x', name: 'Air Blast', icon: '🌬', cd: (u) => u.avBlastCd, max: (u) => u.def.weapon.blastCd,
+    { key: 'rt', name: 'Air Blast', icon: '🌬', cd: (u) => u.avBlastCd, max: (u) => u.def.weapon.blastCd,
       use(u) { const w = u.def.weapon; u.avBlastCd = w.blastCd; u.aimAt = aimTarget(u, w.blastRange, 4); act(u, 'avb_push', 0.55, 'blast', 0.4); return true; } },
     { key: 'lb', name: 'Air Scooter', icon: '🌀', cd: (u) => (u.avScoot > 0 ? 99 : u.avScootCd), max: (u) => u.def.weapon.scootCd, ready: (u) => (u.avState > 0 ? 'Avatar State' : true),
       use(u) { startScoot(u); return true; } },
@@ -486,17 +486,15 @@ const katara = {
     u.avIceCd -= dt; u.avHealCd -= dt;
     if (u.avWhip) whipStep(u, dt);
   },
-  // possessed (src/skills.js): RT the water whip; ice and healing on buttons
-  control(u, dt, c) {
-    if (c.attack && !u.st.attack && !u.avWhip && u.cooldown <= 0) {
-      u.aimAt = aimTarget(u, u.def.weapon.whipRange, 3);
-      act(u, 'avb_whip', 0.6, 'whip', u.def.weapon.cooldown);
-    }
-    return true;
+  // possessed (src/skills.js): X the water whip, RT ice spikes, LB healing water
+  main(u) {
+    if (u.avWhip) return;
+    u.aimAt = aimTarget(u, u.def.weapon.whipRange, 3);
+    act(u, 'avb_whip', 0.6, 'whip', u.def.weapon.cooldown);
   },
   basic: 'Water Whip',
   skills: [
-    { key: 'x', name: 'Ice Spikes', icon: '🧊', cd: (u) => u.avIceCd, max: (u) => u.def.weapon.iceCd,
+    { key: 'rt', name: 'Ice Spikes', icon: '🧊', cd: (u) => u.avIceCd, max: (u) => u.def.weapon.iceCd,
       use(u) { u.avIceCd = u.def.weapon.iceCd; u.aimAt = aimTarget(u, u.def.weapon.iceRange, 4); act(u, 'cast', 0.7, 'ice'); return true; } },
     { key: 'lb', name: 'Healing Water', icon: '💧', cd: (u) => u.avHealCd, max: (u) => u.def.weapon.healCd,
       use(u) { u.avHealCd = u.def.weapon.healCd; act(u, 'heal', 0.8, 'heal'); return true; } },
@@ -583,10 +581,10 @@ const sokka = {
     endAct(u, t1);
   },
   step(u, dt) { u.avBoomCd -= dt; },
-  // possessed (src/skills.js): the sword on RT, Boomerang on X
+  // possessed (src/skills.js): X the sword, RT the boomerang
   basic: 'Space sword',
   skills: [
-    { key: 'x', name: 'Boomerang', icon: '🪃', cd: (u) => u.avBoomCd, max: (u) => u.def.weapon.boomCd, ready: (u) => (u.avBoomOut ? 'boomerang out' : true),
+    { key: 'rt', name: 'Boomerang', icon: '🪃', cd: (u) => u.avBoomCd, max: (u) => u.def.weapon.boomCd, ready: (u) => (u.avBoomOut ? 'boomerang out' : true),
       use(u) { u.avBoomCd = u.def.weapon.boomCd; u.aimAt = aimTarget(u, u.def.weapon.boomRange, 4); act(u, 'avb_throwL', 0.6, 'boom', 0.3); return true; } },
   ],
 };
@@ -732,9 +730,9 @@ const toph = {
   // possessed (src/skills.js): pillar and boulder at the crosshair, the earth armour
   basic: 'Earth fists',
   skills: [
-    { key: 'x', name: 'Rock Pillar', icon: '🪨', cd: (u) => u.avPillarCd, max: (u) => u.def.weapon.pillarCd,
+    { key: 'lb', name: 'Rock Pillar', icon: '🪨', cd: (u) => u.avPillarCd, max: (u) => u.def.weapon.pillarCd,
       use(u) { u.avPillarCd = u.def.weapon.pillarCd; const v = aimTarget(u, u.def.weapon.pillarRange, 3); u.aimAt = v; u.avPillarV = v; act(u, 'avb_stomp', 0.6, 'pillar', 0.3); return true; } },
-    { key: 'lb', name: 'Boulder', icon: '🪨', cd: (u) => u.avRockCd, max: (u) => u.def.weapon.rockCd,
+    { key: 'rt', name: 'Boulder', icon: '🪨', cd: (u) => u.avRockCd, max: (u) => u.def.weapon.rockCd,
       use(u) { u.avRockCd = u.def.weapon.rockCd; u.aimAt = aimTarget(u, u.def.weapon.rockRange, 4); act(u, 'avb_heave', 0.8, 'rock', 0.3); return true; } },
     { key: 'rb', name: 'Earth Armour', icon: '🛡', free: true, ready: (u) => (u.avArmorDone ? (u.avArmor > 0 ? 'on' : 'used') : true), use(u) { rockArmor(u); return true; } },
   ],

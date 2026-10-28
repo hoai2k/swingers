@@ -201,7 +201,7 @@ const ryu = {
   // possessed (src/skills.js): RT fists; Granite Blast (fires at the crosshair) and a leap
   basic: 'Fists',
   skills: [
-    { key: 'x', name: 'Granite Blast', icon: '💥', cd: (u) => (u.jkChg > 0 ? 99 : u.jkGB), max: (u) => u.def.weapon.gbCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'rt', name: 'Granite Blast', icon: '💥', cd: (u) => (u.jkChg > 0 ? 99 : u.jkGB), max: (u) => u.def.weapon.gbCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { chargeGranite(u, null); return true; } },
     leapSkill('lb'),
   ],
@@ -278,7 +278,7 @@ const uro = {
   // possessed (src/skills.js): Thin Ice Breaker, and bending the sky round her (by hand)
   basic: 'Kicks',
   skills: [
-    { key: 'x', name: 'Thin Ice Breaker', icon: '🌊', cd: (u) => u.jkSky, max: (u) => u.def.weapon.skyCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'rb', name: 'Thin Ice Breaker', icon: '🌊', cd: (u) => u.jkSky, max: (u) => u.def.weapon.skyCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { u.jkSky = u.def.weapon.skyCD; castPose(u, 'jk_push', 'sky'); return true; } },
     { key: 'lb', name: 'Bend the Sky', icon: '🛡', free: true, cd: (u) => u.jkDefCD, max: (u) => u.def.weapon.defCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { skyWall(u); return true; } },
@@ -386,7 +386,7 @@ const kashimo = {
   // Mythical Beast Amber whenever he chooses (his body still burns out after it)
   basic: 'Nyoi staff',
   skills: [
-    { key: 'x', name: 'Lightning Bolt', icon: '⚡', cd: (u) => u.jkBolt, max: (u) => u.def.weapon.boltCD,
+    { key: 'rt', name: 'Lightning Bolt', icon: '⚡', cd: (u) => u.jkBolt, max: (u) => u.def.weapon.boltCD,
       ready: (u) => (aimTarget(u, u.def.weapon.boltRange, 4) ? true : 'no target'),
       use(u) { const v = aimTarget(u, u.def.weapon.boltRange, 4); if (!v) return false; u.jkBolt = u.def.weapon.boltCD * (amberOn(u) ? 0.5 : 1); u.jkBoltT = v; castPose(u, 'jk_push', 'bolt'); return true; } },
     leapSkill('lb'),
@@ -476,7 +476,7 @@ const higuruma = {
   // possessed (src/skills.js): the gavel, a leap, and the court on RB
   basic: 'Gavel',
   skills: [
-    leapSkill('x'),
+    leapSkill('lb'),
     { key: 'rb', name: 'Deadly Sentencing', icon: '⚖', cd: (u) => u.jkDomCD, max: (u) => u.def.weapon.domCD,
       ready: (u) => (burntOut(u) ? 'burnt out' : u.jkCourt ? 'in session' : true), use(u) { u.jkDomWant = true; return true; } },
   ],
@@ -578,7 +578,7 @@ const yuki = {
   // possessed (src/skills.js): Garuda, a leap, and the Black Hole whenever she chooses
   basic: 'Star Rage',
   skills: [
-    { key: 'x', name: 'Garuda', icon: '🦅', cd: (u) => u.jkGar, max: (u) => u.def.weapon.garCD,
+    { key: 'rt', name: 'Garuda', icon: '🦅', cd: (u) => u.jkGar, max: (u) => u.def.weapon.garCD,
       use(u) { u.jkGar = u.def.weapon.garCD; u.aimAt = aimTarget(u, u.def.weapon.garRange, 4); castPose(u, 'throw', 'garuda'); return true; } },
     leapSkill('lb'),
     { key: 'rb', name: 'Black Hole', icon: '🕳', free: true, ready: (u) => (u.jkBHused ? 'used' : true), use(u) { blackHoleStart(u, null); return true; } },
@@ -688,7 +688,7 @@ const meimei = {
   // possessed (src/skills.js): the crows and Bird Strike at the crosshair
   basic: 'Great axe',
   skills: [
-    { key: 'x', name: 'Crows', icon: '🐦', cd: (u) => u.jkCrow, max: (u) => u.def.weapon.crowCD,
+    { key: 'rt', name: 'Crows', icon: '🐦', cd: (u) => u.jkCrow, max: (u) => u.def.weapon.crowCD,
       use(u) { u.jkCrow = u.def.weapon.crowCD; u.aimAt = aimTarget(u, u.def.weapon.crowRange, 4); castPose(u, 'cast', 'crows'); return true; } },
     { key: 'lb', name: 'Bird Strike', icon: '🐦‍⬛', cd: (u) => u.jkKami, max: (u) => u.def.weapon.kamiCD,
       use(u) { u.jkKami = u.def.weapon.kamiCD; u.aimAt = aimTarget(u, u.def.weapon.crowRange, 4); castPose(u, 'jk_push', 'kami'); return true; } },
@@ -722,9 +722,9 @@ const kamo = {
   init(u) { u.attackDur = u.def.weapon.windup; u.jkScale = 0; u.jkScaleUsed = false; },
   think(u, dt, c) { return rangedThink(u, dt, scaleOn(u) ? { ...c, spd: c.spd * 1.3 } : c); },
   // possessed (src/skills.js): Flowing Red Scale when he chooses (once)
-  basic: 'Blood arrows',
+  basic: 'Shove', ranged: 'Blood arrows',
   skills: [
-    { key: 'x', name: 'Flowing Red Scale', icon: '🩸', free: true, ready: (u) => (u.jkScaleUsed ? (scaleOn(u) ? 'flowing' : 'used') : true), use(u) { redScale(u); return true; } },
+    { key: 'lb', name: 'Flowing Red Scale', icon: '🩸', free: true, ready: (u) => (u.jkScaleUsed ? (scaleOn(u) ? 'flowing' : 'used') : true), use(u) { redScale(u); return true; } },
   ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle;
@@ -769,7 +769,7 @@ const naoya = {
   // possessed (src/skills.js): the 24-frame blink at the enemy under the crosshair
   basic: 'Strikes',
   skills: [
-    { key: 'x', name: 'Projection Sorcery', icon: '🎞', cd: (u) => u.jkDash, max: (u) => u.def.weapon.dashCD,
+    { key: 'lb', name: 'Projection Sorcery', icon: '🎞', cd: (u) => u.jkDash, max: (u) => u.def.weapon.dashCD,
       ready: (u) => (burntOut(u) ? 'burnt out' : aimTarget(u, u.def.weapon.dashMax, 4) ? true : 'no target'),
       use(u) { const v = aimTarget(u, u.def.weapon.dashMax, 4); if (!v) return false; u.jkDash = u.def.weapon.dashCD; projDash(u, v); return true; } },
   ],
@@ -864,7 +864,7 @@ const mecha = {
   // possessed (src/skills.js): Ultra Cannon, the thrusters, Absolute Mode
   basic: 'Blade arm',
   skills: [
-    { key: 'x', name: 'Ultra Cannon', icon: '🔫', cd: (u) => u.jkCan, max: (u) => u.def.weapon.canCD,
+    { key: 'rt', name: 'Ultra Cannon', icon: '🔫', cd: (u) => u.jkCan, max: (u) => u.def.weapon.canCD,
       use(u) { u.jkCan = u.def.weapon.canCD; u.aimAt = null; castPose(u, 'jk_push', 'cannon'); return true; } },
     { key: 'lb', name: 'Thrusters', icon: '🚀', cd: (u) => u.jkThr, max: (u) => u.def.weapon.thrCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
       use(u) {
@@ -962,7 +962,7 @@ const kusakabe = {
   // possessed (src/skills.js): the Simple Domain where he stands, and a leap
   basic: 'Katana',
   skills: [
-    { key: 'x', name: 'Simple Domain', icon: '⭕', cd: (u) => (sdOn(u) ? 99 : u.jkSDCD), max: (u) => u.def.weapon.sdCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+    { key: 'rb', name: 'Simple Domain', icon: '⭕', cd: (u) => (sdOn(u) ? 99 : u.jkSDCD), max: (u) => u.def.weapon.sdCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
       use(u) { simpleDomain(u); return true; } },
     leapSkill('lb'),
   ],
