@@ -38,6 +38,7 @@ const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (f
 const RAY_LEN = 1.05 * S;
 
 const WALK = 5.3, RUN = 9.4, SWIM = 2.6, JUMP_V = 6.6;
+const DASH_V = 15, DASH_SWIM = 7, DASH_T = 0.22; // dash (B / V)
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const AIR_ACCEL = 16;          // m/s^2 of steering in the air, across and along the jump
 const AIR_BRAKE = 6;           // m/s^2 at most against the jump's take-off direction: pulling back bends a jump...
@@ -375,6 +376,7 @@ export class Player {
     this.getUp = -1;       // >=0: seconds into standing back up
     this.getUpH = 0;       // hips height above ground when the get-up started
     this.stumble = 0;      // >0: wobbly after a bump
+    this.dashT = 0; this.dashCool = 0; this.airDashed = false; // dash (B)
     this.mantle = null;    // climbing over a ledge
     this.hangPush = 0;     // time the stick has been held forward while hanging
     this.grip = 1;         // climbing stamina (GRIP_*)
@@ -942,11 +944,12 @@ export class Player {
     this.hands.L.cool -= DT; this.hands.R.cool -= DT;
     if (this.punch.t > 0) this.punch.t -= DT;
     if (this.stumble > 0) this.stumble -= DT;
+    this.dashT -= DT; this.dashCool -= DT;
 
     // --- state transitions
     if (this.state === 'limp') {
       if (this.limpTimer > 0) { this.limpTimer -= DT; if (this.limpTimer <= 0) this.wake(); }
-      else if (pressed.ragdoll || pressed.jump) this.wake();
+      else if (pressed.ragdoll || pressed.jump || pressed.dash) this.wake();
     } else if (this.state === 'normal' && pressed.ragdoll) {
       this.state = 'limp'; this.limpTimer = 0; this.releaseAll(); this.mantle = null;
     }
@@ -1163,6 +1166,34 @@ export class Player {
         if (mag < 0.05) { dvx = 0; dvz = 0; }
       }
       if (this.punch.t > 0.12 && mag < 0.05) { dvx = 0; dvz = 0; } // don't brake the lunge
+      // dash (B): a burst the way the stick points (else the way we face); once in the air
+      // until we land again; the drive doesn't brake it for DASH_T
+      if (this.grounded || this.swimming || hanging) this.airDashed = false;
+      if (pressed.dash && this.dashCool <= 0 && !hanging && this.state === 'normal' && !this.airDashed) {
+        const dx = mag > 0.1 ? mvx / mag : Math.sin(this.yaw), dz = mag > 0.1 ? mvz / mag : Math.cos(this.yaw);
+        const ds = (this.swimming ? DASH_SWIM : DASH_V * Math.min(1.3, this.gear?.speed || 1)) * (this.form?.speed ?? 1);
+        const lift = this.swimming ? 0 : this.grounded ? 1.2 : 2;
+        for (const b of this.bodies) {
+          const bv = b.linvel(), m = b.mass();
+          b.applyImpulse({ x: (gv.x + dx * ds - bv.x) * m, y: Math.max(0, lift - bv.y) * m, z: (gv.z + dz * ds - bv.z) * m }, true);
+        }
+        this.yaw = Math.atan2(dx, dz);
+        this.airDashed = !this.grounded && !this.swimming;
+        this.dashT = DASH_T; this.dashCool = 0.65;
+        this.impactGrace = Math.max(this.impactGrace, 0.12);
+        this.sqV -= 2;
+        this.game.audio?.play('swish', cp, 1.4);
+      }
+      if (this.dashT > 0) { dvx = 0; dvz = 0; this.dashing = true; }
+      else if (this.dashing) {
+        // dash over: in the air nothing brakes, so come back down to a run's speed
+        this.dashing = false;
+        if (!this.grounded && !this.swimming && !hanging && hspeed > RUN) {
+          const k = RUN / hspeed;
+          for (const b of this.bodies) { const bv = b.linvel(); b.setLinvel({ x: gv.x + (bv.x - gv.x) * k, y: bv.y, z: gv.z + (bv.z - gv.z) * k }, true); }
+          if (this.jumpAxis) this.jumpAxis.s = Math.min(this.jumpAxis.s, RUN);
+        }
+      }
       const airborne = !this.grounded && !this.swimming && !hanging;
       // the jump's direction and speed as it left the ground (pulling back is measured against it)
       if (!airborne) this.jumpAxis = hspeed > 0.5 ? { x: hv.x / hspeed, z: hv.z / hspeed, s: hspeed } : null;

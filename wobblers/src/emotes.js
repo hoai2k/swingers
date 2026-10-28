@@ -243,7 +243,7 @@ export function emoteStep(p, inp, pressed, mag, limp, seated) {
   const e = p.emote, def = e.def;
   e.t += DT;
   const grab = (inp.grabL || 0) > 0.3 || (inp.grabR || 0) > 0.3;
-  const cancel = (def.dur && e.t > def.dur) || mag > 0.3 || pressed.jump || pressed.punch || pressed.ragdoll || grab
+  const cancel = (def.dur && e.t > def.dur) || mag > 0.3 || pressed.jump || pressed.punch || pressed.ragdoll || pressed.dash || grab
     || limp || p.swimming || p.mantle || p.stumble > 0
     || (seated ? (p.seat?.kind === 'driver' || !def.seat) : p.airTime > 0.8);
   if (cancel) { stopEmote(p); return; }
