@@ -1848,10 +1848,20 @@ export class Game {
   globalCamKeys() {
     const I = this.input;
     if (I.anyPressed('back')) this.toggleSplit();
-    if (I.anyPressed('r3')) {
+    for (let p = 0; p < 2; p++) {
+      if (!I.pressed(p, 'r3')) continue;
+      // in control of a unit Y is a technique, so R3 is slow motion; else R3 cycles the HUD
+      if (this.possessing(p)) { this.toggleSlowmo(); continue; }
       this.hudMode = (this.hudMode + 1) % 3;
       if (this.hudMode !== 2) this.ui.toast(['HUD on', 'Tips hidden', ''][this.hudMode], 1);
     }
+  }
+  // player p is in control of a unit (their view's camera is possessing)
+  possessing(p) { return this.state === 'battle' && this.rigs[this.split ? p : 0].mode === 'possess'; }
+  toggleSlowmo() {
+    if (this.state !== 'battle') return;
+    this.speedIdx = this.speedIdx === NORMAL ? SLOWMO : NORMAL;
+    this.ui.toast(this.speedIdx === NORMAL ? 'Normal speed' : 'Slow motion', 1);
   }
 
   updateBattle(dt) {
@@ -1861,10 +1871,7 @@ export class Game {
 
     // time controls (also while the result is up: the field stays live)
     for (let p = 0; p < 2; p++) {
-      if (I.pressed(p, 'y') && this.state === 'battle') {
-        this.speedIdx = this.speedIdx === NORMAL ? SLOWMO : NORMAL;
-        this.ui.toast(this.speedIdx === NORMAL ? 'Normal speed' : 'Slow motion', 1);
-      }
+      if (I.pressed(p, 'y') && this.state === 'battle' && !this.possessing(p)) this.toggleSlowmo(); // (in control, Y is a technique)
       if (this.state === 'battle') {
         if (I.repeat(p, 'up')) this.speedIdx = Math.min(SPEEDS.length - 1, this.speedIdx + 1);
         if (I.repeat(p, 'down')) this.speedIdx = Math.max(0, this.speedIdx - 1);
@@ -2045,8 +2052,8 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        if (rig.unit && skillsOf(rig.unit)?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ranged &nbsp; ${btn('LB')}${btn('RB')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
-        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ${aims(rig.unit) ? 'shoot' : 'attack'} &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
+        if (rig.unit && skillsOf(rig.unit)?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ranged &nbsp; ${btn('LB')}${btn('RB')}${btn('Y')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('R3')} slow-mo &nbsp; ${btn('B')} let go`;
+        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ${aims(rig.unit) ? 'shoot' : 'attack'} &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('R3')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
       case 'cine':

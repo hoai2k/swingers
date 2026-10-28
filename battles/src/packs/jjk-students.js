@@ -838,8 +838,8 @@ function amlHit(b, dom, v) {
 }
 const yuta = {
   melee: true,
-  // possessed (src/skills.js): LB Copy, RB the domain; Rika comes out by herself, as she
-  // does for the AI (when he's hurt or mobbed)
+  // possessed (src/skills.js): LB Copy, RB the domain, Y Rika (out / back again; her full
+  // manifestation when he's badly hurt stays automatic)
   basic: 'Katana',
   skills: [
     { key: 'lb', name: 'Copy', icon: '💍', cd: (u) => u.copyCD, max: (u) => u.def.weapon.copyCD,
@@ -848,6 +848,13 @@ const yuta = {
         u.target = aimTarget(u, 20) || u.target;
         const order = [...u.jkCopies].sort(() => Math.random() - 0.5);
         for (const c of order) if (useCopy(u, c.k)) { u.copyCD = u.def.weapon.copyCD; announce(u.battle, `Copy: ${c.name}`, u.chestPos); return true; }
+        return false;
+      } },
+    { key: 'y', name: 'Rika', icon: '👹', cd: (u) => (rikaOut(u) ? 0 : u.rikaCD), max: (u) => u.def.weapon.rikaCD,
+      ready: (u) => (u.jkFull ? 'fully manifested' : !rikaOut(u) && u.rika && !u.rika.dormant ? 'Rika is gone' : true),
+      use(u) {
+        if (rikaOut(u)) { sendRika(u); u.rikaCD = u.def.weapon.rikaCD * 0.5; return true; } // (a second press sends her back)
+        if (callRika(u, false)) { u.rikaCD = u.def.weapon.rikaCD; return true; }
         return false;
       } },
     { key: 'rb', name: 'Authentic Mutual Love', icon: '⚔', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
@@ -894,7 +901,7 @@ const yuta = {
         mark(b, u, 'jk_ring', PART.farmR, 9999, new THREE.Vector3(0, -u.skel.handOffset * 1.05, 0));
         announce(b, 'Yuta: "Rika!" — Full manifestation', u.chestPos, 'jk_rika');
       }
-    } else if (!rikaOut(u) && u.rikaCD <= 0 && !u.jkFull && (u.hp < u.maxHp * w.rikaAt || countEnemies(u, u.pos, 6) >= 3)) {
+    } else if (!u.control && !rikaOut(u) && u.rikaCD <= 0 && !u.jkFull && (u.hp < u.maxHp * w.rikaAt || countEnemies(u, u.pos, 6) >= 3)) {
       if (callRika(u, false)) u.rikaCD = w.rikaCD;
       else u.rikaCD = 99;
     }

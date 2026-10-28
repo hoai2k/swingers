@@ -7,6 +7,7 @@
 //   LT  block (melee) / aim (ranged), as before
 //   LB  a special technique
 //   RB  the domain or an area technique (a unit with neither puts its second special here)
+//   Y   another special technique (slow motion moves to R3 while in control)
 //
 // kind.basic = 'Divergent Fist'             // name of the X attack on the skill bar
 // kind.ranged = 'Red'                       // name of the RT attack when it isn't a skill
@@ -15,9 +16,7 @@
 //                                           //  'shoot': it handled RT, X stays the core's)
 // kind.skills = [{                          // (or a function (u) -> list: skills that change,
 //                                           //  e.g. Megumi once Sukuna has taken his body)
-//   key: 'rt' | 'lb' | 'rb',                // its button (keyboard: C / Q / E)
-//   hold: 0.6,                              // 'rt' only: fires after RT is held this long
-//                                           //  (tap RT = the normal shot, hold = this)
+//   key: 'rt' | 'lb' | 'rb' | 'y',          // its button (keyboard: C / Q / E / Y)
 //   name: 'Hollow Purple', icon: '🟣',
 //   cd(u) -> seconds left (<= 0: ready),    // read from the kind's own timer
 //   max(u) -> its full cooldown,            // for the bar's sweep
@@ -34,10 +33,9 @@ import { ATTACKS } from './pose.js';
 import { PART } from './body.js';
 
 const QUEUE = 0.35;
-export const SKILL_KEYS = ['lb', 'rb']; // (pressed; RT is held, see runSkills)
+export const SKILL_KEYS = ['lb', 'rb', 'y']; // (pressed; RT is held, see runSkills)
 export const skillsOf = (u) => { const s = u.kind?.skills; return typeof s === 'function' ? s(u) : s; };
-const rtSkill = (list) => list?.find((s) => s.key === 'rt' && !s.hold);
-const holdSkill = (list) => list?.find((s) => s.key === 'rt' && s.hold);
+const rtSkill = (list) => list?.find((s) => s.key === 'rt');
 
 // does the unit's own weapon shoot (RT fires it)?
 export function rangedBasic(u) {
@@ -122,14 +120,8 @@ export function skillState(u, s) {
   return { left, max, ready: left <= 0 && !why, why };
 }
 
-// Before the kind's control() hook: how long RT has been held, and whether a held-RT
-// skill takes over from the normal shot (then c.shoot is off for this step).
-export function preSkills(u, c, dt) {
-  c.rtT = c.shoot ? (c.rtT || 0) + dt : 0;
-  const h = holdSkill(skillsOf(u));
-  c.holding = !!h && c.shoot;
-  if (h && c.rtT >= h.hold && skillState(u, h).ready) c.shoot = false;
-}
+// before the kind's control() hook: how long RT has been held
+export function preSkills(u, c, dt) { c.rtT = c.shoot ? (c.rtT || 0) + dt : 0; }
 
 // called from Unit.possessed every step: presses (c.press = {key: true}) and RT held
 export function runSkills(u, c, dt) {
@@ -144,7 +136,7 @@ export function runSkills(u, c, dt) {
   for (const s of sk) {
     let q = c.queue[s.key];
     if (s.key === 'rt') { // RT is a trigger: held, it keeps trying
-      const on = s.hold ? c.holding && c.rtT >= s.hold : (c.shoot || c.holding) && !(rtHeldFor(sk, c));
+      const on = c.shoot;
       q = on ? QUEUE : 0;
       if (!on) continue;
     } else if (!(q > 0)) continue;
@@ -152,29 +144,26 @@ export function runSkills(u, c, dt) {
     const st = skillState(u, s);
     if (!st.ready) {
       if (s.key !== 'rt' && st.left <= 0 && st.why) c.queue[s.key] = 0; // (a reason, not a wait: drop it)
-      const fresh = s.key === 'rt' ? c.rtT <= dt * 1.5 || (s.hold && c.rtT - s.hold < dt * 1.5) : q === QUEUE;
-      if (fresh) c.denied = { key: s.hold ? 'rth' : s.key, t: b.time, why: st.why || `${st.left.toFixed(1)} s` };
+      const fresh = s.key === 'rt' ? c.rtT <= dt * 1.5 : q === QUEUE;
+      if (fresh) c.denied = { key: s.key, t: b.time, why: st.why || `${st.left.toFixed(1)} s` };
       continue;
     }
     if (!s.free && (u.st.attack || u.stun > 0.25 || u.isDown())) continue;
-    if (s.use(u, c)) { if (s.key !== 'rt') c.queue[s.key] = 0; c.used = { key: s.hold ? 'rth' : s.key, t: b.time }; }
+    if (s.use(u, c)) { if (s.key !== 'rt') c.queue[s.key] = 0; c.used = { key: s.key, t: b.time }; }
   }
 }
-// (a held RT on its way to a hold skill doesn't also fire the tap skill once past the hold)
-const rtHeldFor = (sk, c) => { const h = holdSkill(sk); return !!h && c.rtT >= h.hold; };
 
-// the skill bar for the HUD: X, RT (and RT held), LB, RB
+// the skill bar for the HUD: X, RT, LB, RB, Y
 export function skillBar(u) {
   const k = u.kind, w = u.def.weapon, list = skillsOf(u) || [];
   if (!list.length && !k?.basic) return null;
   const cool = Math.max(0, u.cooldown || 0), cmax = Math.max(0.1, w.cooldown || 1);
   const out = [{ key: 'x', name: k.basic || 'Attack', icon: '', left: cool, max: cmax, ready: !(cool > 0) }];
   const tile = (key, s) => { const st = skillState(u, s); return { key, name: s.name, icon: s.icon || '', left: st.left, max: st.max, ready: st.ready, why: st.why }; };
-  const rs = rtSkill(list), hs = holdSkill(list);
+  const rs = rtSkill(list);
   if (rs) out.push(tile('rt', rs));
   else if (rangedBasic(u)) out.push({ key: 'rt', name: k.ranged || 'Shoot', icon: '', left: cool, max: cmax, ready: !(cool > 0) });
-  if (hs) out.push(tile('rth', hs));
-  for (const key of ['lb', 'rb']) { const s = list.find((x) => x.key === key); if (s) out.push(tile(key, s)); }
+  for (const key of ['lb', 'rb', 'y']) { const s = list.find((x) => x.key === key); if (s) out.push(tile(key, s)); }
   const c = u.control, t = u.battle.time;
   if (c?.denied && t - c.denied.t < 0.8) { const d = out.find((x) => x.key === c.denied.key); if (d) d.denied = c.denied.why; }
   if (c?.used && t - c.used.t < 0.4) { const d = out.find((x) => x.key === c.used.key); if (d) d.flash = true; }

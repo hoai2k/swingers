@@ -348,6 +348,7 @@ const mahito = {
         return true;
       } },
     domainSkill('Self-Embodiment of Perfection', '🖐'),
+    leapSkill('y'),
   ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
@@ -419,7 +420,7 @@ const jogo = {
   think: rangedThink,
   basic: 'Shove', ranged: 'Ember Insects',
   skills: [
-    { key: 'rt', hold: 0.6, name: 'Maximum: Meteor', icon: '☄', cd: (u) => u.jkMet, max: (u) => u.def.weapon.metCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'y', name: 'Maximum: Meteor', icon: '☄', cd: (u) => u.jkMet, max: (u) => u.def.weapon.metCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) {
         const w = u.def.weapon, v = aimTarget(u, w.metRange, 6);
         const at = v ? v.pos.clone() : u.control?.aimPt ? u.control.aimPt.clone() : null;

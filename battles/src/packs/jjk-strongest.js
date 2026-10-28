@@ -159,8 +159,8 @@ const gojo = {
     if (u.st.attack) u.desired.multiplyScalar(0.15);
     return t;
   },
-  // possessed (src/skills.js): X a shove, RT Red (hold RT: Hollow Purple), LB Blue,
-  // RB Unlimited Void
+  // possessed (src/skills.js): X a shove, RT Red, LB Blue, RB Unlimited Void,
+  // Y Hollow Purple
   control(u, dt, c) {
     if (c.shoot && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) { gojoCast(u, 'red'); u.aimAt = null; }
     return 'shoot';
@@ -169,7 +169,7 @@ const gojo = {
   skills: [
     { key: 'lb', name: 'Blue', icon: '🔵', cd: (u) => u.blueCD, max: (u) => u.def.weapon.blueCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { gojoCast(u, 'blue'); u.aimAt = null; return true; } },
-    { key: 'rt', hold: 0.6, name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'y', name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { gojoCast(u, 'purple'); u.aimAt = null; return true; } },
     { key: 'rb', name: 'Unlimited Void', icon: '♾', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { u.domCD = u.def.weapon.domCD; openVoid(u.battle, u); return true; } },
@@ -620,22 +620,24 @@ const megumi = {
   },
 };
 // possessed (src/skills.js): the shikigami and the domain on their buttons
-// (LB: the next shikigami that's ready - the Divine Dogs, Nue, Toad, Max Elephant)
+// (LB: the next shikigami that's ready - the Divine Dogs, Nue, Toad; Max Elephant on Y)
 const nextShiki = (u) => {
   const b = u.battle;
   if (dogsReady(u)) return 'dogs';
   if (u.nueCD <= 0 && readyOf(b, u, 'jk_nue')) return 'jk_nue';
   if (u.toadCD <= 0 && readyOf(b, u, 'jk_toad')) return 'jk_toad';
-  if (u.eleCD <= 0 && readyOf(b, u, 'jk_elephant')) return 'jk_elephant';
   return null;
 };
 const SHIKI_NAME = { dogs: 'Divine Dogs', jk_nue: 'Nue', jk_toad: 'Toad', jk_elephant: 'Max Elephant' };
 const MG_SKILLS = [
   { key: 'lb', name: 'Ten Shadows', icon: '🐺',
-    cd: (u) => (nextShiki(u) ? 0 : Math.max(0.1, Math.min(...['jk_nue', 'jk_toad', 'jk_elephant'].filter((t) => readyOf(u.battle, u, t)).map((t) => (t === 'jk_nue' ? u.nueCD : t === 'jk_toad' ? u.toadCD : u.eleCD)), 99))),
+    cd: (u) => (nextShiki(u) ? 0 : Math.max(0.1, Math.min(...['jk_nue', 'jk_toad'].filter((t) => readyOf(u.battle, u, t)).map((t) => (t === 'jk_nue' ? u.nueCD : u.toadCD)), 99))),
     max: () => MGW.nueCD,
-    ready: (u) => (burntOut(u) ? 'burnt out' : nextShiki(u) || SHIKI.some((t) => readyOf(u.battle, u, t)) ? true : 'all out'),
+    ready: (u) => (burntOut(u) ? 'burnt out' : nextShiki(u) || ['jk_dog_white', 'jk_dog_black', 'jk_nue', 'jk_toad'].some((t) => readyOf(u.battle, u, t)) ? true : 'all out'),
     use(u) { const s = nextShiki(u); if (!s) return false; sign(u, s); announce(u.battle, SHIKI_NAME[s] + '!', u.headPos); return true; } },
+  { key: 'y', name: 'Max Elephant', icon: '🐘', cd: (u) => u.eleCD, max: () => MGW.eleCD,
+    ready: (u) => (burntOut(u) ? 'burnt out' : readyOf(u.battle, u, 'jk_elephant') ? true : 'out'),
+    use(u) { sign(u, 'jk_elephant'); announce(u.battle, 'Max Elephant!', u.headPos); return true; } },
   { key: 'rb', name: 'Chimera Shadow Garden', icon: '🌑', cd: (u) => u.domCD, max: () => MGW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
     use(u) { u.domCD = MGW.domCD; openGarden(u.battle, u); return true; } },
 ];
