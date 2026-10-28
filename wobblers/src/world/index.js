@@ -35,6 +35,7 @@ import { buildFarmland } from './farmland.js';
 import { buildFair } from './fair/index.js';
 import { buildBooths } from './booths.js';
 import { placeBouncyBalls } from './bouncy.js'; // also registers the bouncy ball vehicle
+import { placeAircraft } from './aircraft.js'; // also registers the plane + glider vehicles
 import { addGrabHandles } from './ridegrab.js';
 import { buildSeaLife } from './sealife.js';
 
@@ -71,7 +72,7 @@ export function buildWorld(game) {
   T('bridge', () => buildBridge(game, kit));
   T('regions', () => buildRegions(game, kit)); // per region: game.buildTimes[region id]
   T('ferries', () => buildFerries(game, kit)); // docks from every region's `docks`, then the ferry lines
-  T('booths', () => { buildBooths(game, kit); placeBouncyBalls(game); }); // phone booths (garage) + parked bouncy balls
+  T('booths', () => { buildBooths(game, kit); placeBouncyBalls(game); placeAircraft(game); }); // phone booths (garage) + parked bouncy balls + gliders
   T('folk', () => buildFolk(game));            // home island NPCs
   T('traffic', () => buildHomeTraffic(game)); // self-driving cars on the ring road
   T('sealife', () => buildSeaLife(game));     // sea creatures (drawn only under water) + dolphin pods and whales

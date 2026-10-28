@@ -60,6 +60,7 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Gadget: jetpack / glider (hold in the air) · laser / grappling hook (fire) | A · X | Space · G | Numpad 0 · Numpad 2 |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
+| Fly (plane / glider) | RT throttle (glider: launch), LT brake / air brake, LS pitch (push = dive) + bank | Space throttle / launch, Shift brake, W/S pitch, A/D bank | Numpad 0, Numpad ., Arrows |
 
 **Map** opens the island map in your own view (pan with the stick, zoom with the triggers,
 **A** to find yourself). **Waypoint stars**: a glowing gold star with a beam of light stands at
@@ -67,12 +68,21 @@ key places on every island (the beach, the lighthouse, Bigtown's plaza, the volc
 Touch one to collect it and the place becomes a waypoint: on the map, **LB / RB** picks a
 discovered star (or click it) and **Y** travels there (or click it again), or use **Fast
 travel** in the pause menu. Town is a waypoint from the start. The **phone** calls any vehicle to you: it pops in on a clear spot
-beside you, facing your way. Boats need water nearby and helicopters need open space. Each
+beside you, facing your way. Boats need water nearby; helicopters, planes and gliders need open space. Each
 player has one called vehicle; calling another sends the old one away unless someone is in it.
 Red **phone booths** (in town, at the Fun Park, by the ferry piers and in every island's
 village or harbour; shown on the map) are a garage: **Y** at a booth lists every vehicle you
 have (locked car-dealer ones aren't offered) and the one you pick pops in right outside the
 booth (it counts as your called vehicle).
+
+**Planes and gliders** (on the phone). The toy **plane** (pilot + a passenger) taxis like a car
+(stick steers, RT gas, LT brakes and backs up); past ~14 m/s pull back on the stick and it flies
+off. In the air the stick pitches and banks (banking turns it), it climbs as long as it has the
+speed, and if it gets too slow it drops its nose until it picks up speed again; let go and it
+levels itself. Land by easing the throttle and nosing gently down onto a road or a field. The
+**glider** has no engine: **RT** on the ground gives it a launch push, then it glides, sinking about
+1 m/s, so start from somewhere high: one waits at the home mountain lookout (a hands-off glide
+goes ~700 m) and one on the Frostpeak summit. **LT** opens the air brakes to come down sooner.
 
 The **bouncy ball** (on the phone, and parked by the playground, the Fun Park and on each
 island) is a big space hopper: sit on it with **Y** and it hops by itself; the stick leans
@@ -323,6 +333,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/world/booths.js` | phone booths (`BOOTHS`): the phone panel as a garage list spawning outside the booth, map icons |
+| `src/world/aircraft.js` | the plane and glider (`plane` / `glider`: the 'flight' handling — lift by speed, velocity follows the nose, rate-controlled pitch / bank with auto-level, taxiing on frictionless gear balls; glider launch), phone entries and the parked gliders |
 | `src/world/bouncy.js` | the bouncy ball vehicle (`hopper`: ball collider with locked tilt, hop handling, rolling look) and its parked spots |
 | `src/world/ridegrab.js` | grab blocks on ride seats whose kinematic body has no colliders (every ride can be hung from) |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |
