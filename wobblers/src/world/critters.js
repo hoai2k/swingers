@@ -58,7 +58,7 @@ mat3 rigRot() {
 const BODY_MODES = {
   swim: 'transformed.x += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA * pow(clamp((TAILZ * 0.5 - transformed.z) / TAILZ, 0., 1.), 2.);',
   swimv: 'transformed.y += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA * pow(clamp((TAILZ * 0.5 - transformed.z) / TAILZ, 0., 1.), 2.);',
-  slither: 'transformed.x += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA;',
+  slither: 'transformed.x += sin(aAnim.x + transformed.z * WAVEK) * aAnim.y * WAVEA;', // waves run head to tail (phase = distance x WAVEK: still on the ground)
   pulse: 'if (aRig.x < 0.5) { float k = sin(aAnim.x); transformed.xz *= 1. + k * 0.14 * aAnim.y; transformed.y *= 1. - k * 0.1 * aAnim.y; }',
 };
 
