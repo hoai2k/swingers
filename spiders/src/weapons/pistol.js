@@ -11,6 +11,7 @@ export class Pistol extends Weapon {
   static ammo = 12;
   static weight = 0.54;   // guns are rarer than blades
   static color = '#ff5a5a';
+  static art = { hx: 40, hy: 42, s: 0.25 };   // wpn_pistol.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);

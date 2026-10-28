@@ -3,9 +3,14 @@
 //
 // Particle kinds: 'spark' (additive streak), 'smoke', 'blob' (filled
 // circle), 'shard' (spinning quad), 'ring' (expanding shockwave), 'text',
-// 'line' (fading segment, e.g. bullet tracers / beams), 'glow'.
+// 'line' (fading segment, e.g. bullet tracers / beams), 'glow', 'sprite'
+// (a delivered image or animation strip: explosion, hit spark).
 
 import { rand, TAU } from './util.js';
+import { sprite, drawSprite, preloadSprites, tinted } from './sprites.js';
+
+// image-requests-history.md round 2, D
+preloadSprites(['fx_explosion_strip.png', 'fx_hit_spark.png', 'fx_slash.png', 'fx_web_splat.png']);
 
 export class FX {
   constructor() {
@@ -66,13 +71,24 @@ export class FX {
   }
 
   explosion(x, y, r = 120, color = '#ffb347') {
+    const art = !!sprite('fx_explosion_strip.png');
     this.glow(x, y, r * 1.6, color, 0.25);
     this.ring(x, y, r * 1.1, '#fff4c2', 0.28, 10);
     this.burst(x, y, { n: 30, speed: r * 7, color: '#ffd27a', life: 0.5, size: 3.5 });
-    this.burst(x, y, { n: 14, speed: r * 4, color: '#ff6a2a', life: 0.7, size: 6, kind: 'blob', g: 300 });
-    this.smoke(x, y, { n: 14, size: r * 0.35, speed: r * 2.5, life: 1.3, color: 'rgba(60,55,60,0.55)' });
+    // the delivered fireball strip (flash -> fireball -> smoke) does most of
+    // the work; the drawn blobs and smoke thin out around it
+    if (art) this.add({ kind: 'sprite', name: 'fx_explosion_strip.png', of: 6, x, y, size: r * 2.1, rot: rand(-0.4, 0.4), flip: Math.random() < 0.5, life: 0.6, anim: true });
+    this.burst(x, y, { n: art ? 6 : 14, speed: r * 4, color: '#ff6a2a', life: 0.7, size: 6, kind: 'blob', g: 300 });
+    this.smoke(x, y, { n: art ? 5 : 14, size: r * 0.35, speed: r * 2.5, life: 1.3, color: 'rgba(60,55,60,0.55)' });
     this.shake(r / 7);
     this.flash('#fff2cc', 0.25);
+  }
+
+  // a star-burst impact spark (fx_hit_spark.png; nothing without it: callers
+  // keep their spark bursts)
+  hitSpark(x, y, size = 30, color = null, life = 0.14) {
+    if (!sprite('fx_hit_spark.png')) return null;
+    return this.add({ kind: 'sprite', name: 'fx_hit_spark.png', tint: color, x, y, size, rot: rand(0, TAU), life, pop: true });
   }
 
   splat(x, y, color, n = 24, speed = 500) {
@@ -132,6 +148,9 @@ export class FX {
           ctx.fillRect(-p.size, -p.size * 0.4, p.size * 2, p.size * 0.8);
           ctx.restore();
           break;
+        case 'sprite':
+          if (!p.add) drawSpritePart(ctx, p, k);
+          break;
         case 'text':
           ctx.globalAlpha = Math.min(1, k * 3);
           ctx.fillStyle = p.color;
@@ -179,6 +198,9 @@ export class FX {
           ctx.lineWidth = p.width * (0.4 + 0.6 * k);
           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x2, p.y2); ctx.stroke();
           break;
+        case 'sprite':
+          if (p.add) drawSpritePart(ctx, p, k);
+          break;
         case 'glow': {
           ctx.globalAlpha = k;
           const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
@@ -193,6 +215,24 @@ export class FX {
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
   }
+}
+
+function drawSpritePart(ctx, p, k) {
+  const u = 1 - k;                    // 0 -> 1 over its life
+  let alpha = 1, size = p.size, frame = 0;
+  if (p.anim) { frame = Math.min(p.of - 1, Math.floor(u * p.of)); alpha = u > 0.8 ? (1 - u) / 0.2 : 1; size *= 0.85 + 0.25 * u; }
+  else if (p.pop) { size *= 0.55 + 0.6 * Math.min(1, u * 3); alpha = k; }
+  else alpha = Math.min(1, k * 1.6);
+  ctx.globalAlpha = alpha;
+  const canvas = p.tint ? tinted(p.name, p.tint) : null;
+  drawSprite(ctx, p.name, p.x, p.y, size, { frame, of: p.of || 1, rot: p.rot, flip: p.flip, flipY: p.flipY, canvas });
+  ctx.globalAlpha = 1;
+}
+
+// where a web strand sticks: the silk splat (fx_web_splat.png). false
+// without the image (the caller draws its dot)
+export function drawWebSplat(ctx, x, y, size = 18, rot = 0, alpha = 1) {
+  return drawSprite(ctx, 'fx_web_splat.png', x, y, size, { rot, alpha });
 }
 
 // helper: draw a glowing line (sabers, beams, lasers)

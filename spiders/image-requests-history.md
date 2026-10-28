@@ -5,12 +5,28 @@ open requests. Every file below is in `assets/web/`, listed in
 `assets/web/manifest.json` and delivered. Newly delivered rounds may await loader hooks and in-game review. Exact generation prompts are in
 `assets/generation.json`.
 
-## Round 2 — delivered (128 images; integration review pending)
+## Round 2 — delivered and integrated (128 images)
 
-All files are saved in `assets/web/`, registered in the manifest, and recorded
+All files are in `assets/web/`, registered in the manifest, and recorded
 with prompts, dimensions and frame counts in `assets/generation.json`.
-Loader hooks and in-game selection remain the integration pass described in
-the original request. No existing art was replaced.
+The 9 new terrain tiles were re-saved as JPG (no transparency; 4.0 → 0.9 MB).
+Every image is in use and was checked in game; each keeps its drawn fallback.
+
+- **A. Tiles** fill plain rock on their theme's board, darkened per theme
+  (`THEME_TILES` in `src/board.js`); frost rock keeps its old texture.
+- **B/C/D. Weapons**: held sprites with the grip on the leg tip (`static art`
+  per weapon), pickup icons for loose weapons, a new falling-drop marker
+  (`icon_drop`), sprite projectiles, explosion strip, saber slash, hit
+  sparks and the web splat.
+- **E. Insects and boss** (`src/enemies/art.js`): every strip frame is mapped
+  to a state; `bug_hexfly.png` faces left and is flagged.
+- **F. Icons**: lobby signs, corner buttons (plus a new pause button for
+  touch), HUD, Trials tiers, lock and star. No open-lock art: the unlocked
+  padlock is still drawn.
+- **G. Cards**: perk and modifier cards. Squeeze and weapon-pool cards have
+  no art and keep their drawn icons.
+- **H. Props** on matching boards (`props` in `src/boards.js`); the lobby
+  islands and all mode signs use `lobby_island` / `lobby_signboard`.
 
 ### Shared style
 

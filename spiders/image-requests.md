@@ -1,8 +1,7 @@
 # Spider Swingers — image requests
 
-**Status: Round 2 delivered — all 128 requested images are saved and registered.
-No open image requests.** Loader hooks and in-game review for this round are
-the next integration pass. Delivered rounds are in `image-requests-history.md`.
+**Status: no open image requests.** Rounds 1 and 2 are delivered and
+integrated; see `image-requests-history.md`.
 
 ## How to deliver
 

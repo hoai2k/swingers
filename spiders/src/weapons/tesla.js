@@ -29,6 +29,7 @@ export class Tesla extends Weapon {
   static ammo = 7;
   static weight = 0.45;   // guns are rarer than blades
   static color = '#7ab8ff';
+  static art = { hx: 30, hy: 52, s: 0.25 };   // wpn_tesla.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -83,6 +84,16 @@ export class Tesla extends Weapon {
     sfx.crackle();
     sfx.zap();
     if (--this.ammo <= 0) this.empty();
+  }
+
+  // over the sprite: the bulb crackles
+  drawArtOver(ctx) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = '#9fd8ff';
+    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(this.time * 30);
+    ctx.beginPath(); ctx.arc(24.5, -2.5, 4 + Math.sin(this.time * 47) * 0.8, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
 
   drawShape(ctx) {

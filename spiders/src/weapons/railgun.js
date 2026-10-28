@@ -23,6 +23,7 @@ export class Railgun extends Weapon {
   static ammo = 3;
   static weight = 0.36;   // guns are rarer than blades
   static color = '#5affd2';
+  static art = { hx: 60, hy: 40, s: 0.27 };   // wpn_railgun.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -123,6 +124,12 @@ export class Railgun extends Weapon {
       ctx.restore();
     }
     super.draw(ctx);
+  }
+
+  // over the sprite: the coils glow up as it charges
+  drawArtOver(ctx) {
+    const k = clamp(this.charge, 0, 1);
+    if (k > 0) glowLine(ctx, 20, -2.2, 40, -2.2, '#5affd2', 1 + k * 2);
   }
 
   drawShape(ctx) {

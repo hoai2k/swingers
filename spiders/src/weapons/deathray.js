@@ -21,6 +21,7 @@ export class DeathRay extends Weapon {
   static ammo = 1;          // energy, 0..1
   static weight = 0.36;   // guns are rarer than blades
   static color = '#ff3df0';
+  static art = { hx: 40, hy: 45, s: 0.25 };   // wpn_deathray.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -91,6 +92,16 @@ export class DeathRay extends Weapon {
       ctx.restore();
     }
     super.draw(ctx);
+  }
+
+  // over the sprite: the dish glows as it warms (the charge left shows in the HUD pips)
+  drawArtOver(ctx) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = '#ff3df0';
+    ctx.globalAlpha = 0.35 + 0.5 * this.warm;
+    ctx.beginPath(); ctx.arc(31, -3, 2.5 + this.warm * 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
 
   drawShape(ctx) {

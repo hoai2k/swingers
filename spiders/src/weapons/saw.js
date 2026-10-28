@@ -7,8 +7,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { drawSprite, preloadSprites } from '../sprites.js';
 import { TAU, rand } from '../util.js';
 import { safeMuzzle, cutWebs } from './kit.js';
+
+preloadSprites(['proj_saw.png']);
 
 export class SawDisc {
   constructor(game, { x, y, vx, vy, owner }) {
@@ -131,7 +134,7 @@ export class SawDisc {
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 1;
     }
-    drawDisc(ctx, this.x, this.y, this.r, this.rot);
+    if (!drawSprite(ctx, 'proj_saw.png', this.x, this.y, this.r * 2.3, { rot: this.rot })) drawDisc(ctx, this.x, this.y, this.r, this.rot);
     ctx.restore();
   }
 }
@@ -163,6 +166,7 @@ export class SawLauncher extends Weapon {
   static ammo = 5;
   static weight = 0.45;   // guns are rarer than blades
   static color = '#c8d4e8';
+  static art = { hx: 35, hy: 57, s: 0.25 };   // wpn_saw.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
