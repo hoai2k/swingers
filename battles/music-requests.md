@@ -8,18 +8,22 @@ battle-start stingers (ElevenLabs Music). All fourteen are in the game.**
 The world themes are what most battles play (`battleTheme` in `src/game.js` picks the
 theme of the factions on the field, or a campaign world's), so the missing ones come
 first. Delivered songs don't need to loop seamlessly: the game crossfades from just
-before the song's ending back to the start (`TRACKS[mode].loop` in `src/audio.js`); the
+before the song's ending back to the start (its `loop` in `assets/music/tracks.js`); the
 synthesised music stays as the fallback for any track that hasn't arrived. Wiring the
 files in is done when they are delivered.
 
 ## How to deliver
 
-- Put each file at `battles/assets/music/<file name>` (the name is given with each
-  prompt). Use MP3 at 192 kbps or better, 44.1 kHz stereo.
+- Put each file in `battles/assets/music/` under its own name (the title it was
+  generated or saved with), normalized: lower case, words joined by `-`
+  (`Tribal Stomp.mp3` → `tribal-stomp.mp3`). Files are never renamed to their role: the
+  role is mapped to the file in `battles/assets/music/tracks.js` (the role is given
+  with each prompt), so a song can move to another role, or be swapped, without a
+  rename. Use MP3 at 192 kbps or better, 44.1 kHz stereo.
 - **Loops** must loop seamlessly. They need no fade-in, no fade-out and no reverb tail
   cut off at the end, and the last bar must lead straight back into the first. If the
-  generator adds an intro or an ending, trim it, or deliver it separately as
-  `<name>-intro.mp3`.
+  generator adds an intro or an ending, trim it, or deliver it separately (with
+  `-intro` on the end of its name).
 - **Stingers** are one-shots with a natural ending. They may have a reverb tail.
 - Everything is instrumental: no vocals, lyrics, choirs singing words or spoken
   words. Wordless "hey!" shouts are fine where a prompt asks for them.
@@ -48,10 +52,10 @@ quiet, scheming "before" of its battle song: the same key and the same signature
 instruments, so the switch to the battle feels like the same piece of music erupting,
 but slower, softer and sneakier, like `setup-1.mp3` (tip-toeing, plotting, never loud
 enough to distract while placing units). Already wired in (`setupTheme` in
-`src/game.js`): when a file is delivered, add its line to `TRACKS` in `src/audio.js` as
-`setup_<world>: { url, loop, synth: 'setup' }`.*
+`src/game.js`): when a file is delivered, map it in `assets/music/tracks.js` as
+`setup_<world>: { file: '<its name>.mp3', loop, synth: 'setup' }`.*
 
-## 1. Tribal planning theme (loop) — `setup-tribal.mp3`
+## 1. Tribal planning theme (loop) — role `setup_tribal`
 
 > Instrumental sneaky, playful tribal planning music for a comedic war game where a
 > chief quietly arranges his warriors before a battle, 100 BPM, D minor pentatonic,
@@ -64,7 +68,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > Thoughtful, cheeky and anticipatory, the calm before the stomp, never mocking any real
 > culture. No vocals, no shouts, no electronic sounds.
 
-## 2. Medieval planning theme (loop) — `setup-medieval.mp3`
+## 2. Medieval planning theme (loop) — role `setup_medieval`
 
 > Instrumental sneaky, playful medieval planning music for a comedic war game where a
 > king and his generals plot over a map of the battlefield, 100 BPM, D Dorian, about 2
@@ -76,7 +80,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > relaxes again. Thoughtful, sly and courtly, the calm before the tournament turns into
 > a brawl. No vocals, no electronic sounds.
 
-## 3. Pirate planning theme (loop) — `setup-pirate.mp3`
+## 3. Pirate planning theme (loop) — role `setup_pirate`
 
 > Instrumental sneaky, playful pirate planning music for a comedic war game where a
 > captain plots a raid in the ship's cabin by lantern light, 6/8 time at about 100 BPM,
@@ -88,7 +92,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > Cheeky, swaying and anticipatory, the calm before the boarding. No vocals, no shouts,
 > no electronic sounds.
 
-## 4. Wild West planning theme (loop) — `setup-wildwest.mp3`
+## 4. Wild West planning theme (loop) — role `setup_wildwest`
 
 > Instrumental sneaky, playful Wild West planning music for a comedic war game where a
 > sheriff and his posse quietly take positions before a showdown, 96 BPM, A minor, about
@@ -100,7 +104,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > Dusty, sly and anticipatory, the long stare before the draw. No vocals, no electronic
 > sounds.
 
-## 5. Viking planning theme (loop) — `setup-viking.mp3`
+## 5. Viking planning theme (loop) — role `setup_viking`
 
 > Instrumental sneaky, playful Viking planning music for a comedic war game where a jarl
 > plots a raid around the longhouse fire, 92 BPM, D minor, about 2 minutes, seamless
@@ -112,7 +116,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > cunning and anticipatory, the calm before the raid. No vocals, no shouts, no electronic
 > sounds, no electric guitars.
 
-## 6. Dynasty planning theme (loop) — `setup-dynasty.mp3`
+## 6. Dynasty planning theme (loop) — role `setup_dynasty`
 
 > Instrumental sneaky, playful kung-fu and samurai planning music for a comedic war game
 > where generals study the battlefield from a hilltop tent, 100 BPM, about 2 minutes,
@@ -125,7 +129,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > anticipatory, like a master waiting to strike. Respectful of both traditions. No
 > vocals, no shouts, no electronic sounds.
 
-## 7. JJK planning theme (loop) — `setup-jjk.mp3`
+## 7. JJK planning theme (loop) — role `setup_jjk`
 
 > Instrumental sneaky, cool anime planning music for a comedic war game where sorcerers
 > and curses take their positions in a neon city at night, 100 BPM (half-time feel),
@@ -137,7 +141,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > before relaxing again. Cool, menacing and anticipatory, a little cursed, the calm
 > before the fight. No vocals, no rap, no sung words.
 
-## 8. Avatar planning theme (loop) — `setup-avatar.mp3`
+## 8. Avatar planning theme (loop) — role `setup_avatar`
 
 > Instrumental sneaky, playful four-elements planning music for a comedic war game where
 > benders and their allies take positions before a battle, 96 BPM, D minor pentatonic,
@@ -149,7 +153,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > drum roll before relaxing again. Warm, clever and anticipatory, like a kids' adventure
 > show plotting its big move. No vocals, no electronic sounds.
 
-## 9. Ancient world battle theme (loop) — `world-ancient.mp3`
+## 9. Ancient world battle theme (loop) — role `battle_ancient`
 
 *New: the old Ancient & Viking request (one song for both) is split in two, since the worlds want very different music. Plays for Ancient armies (and the Ancient & Viking world, with the Viking song).*
 
@@ -165,7 +169,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > brass, Zeus-sized, launching the big heroic return. Grand, marble-columned and
 > slightly ridiculous in its self-importance. No vocals, no choir, no electronic sounds.
 
-## 10. Galactic battle theme (loop) — `world-galactic.mp3`
+## 10. Galactic battle theme (loop) — role `battle_galactic`
 
 *New: for the Galactic faction and its battleground, Starbase Hangar.*
 
@@ -180,7 +184,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > back for a huge dogfight climax. Epic, heroic and a touch cheesy. No vocals, no
 > choir, no electronic sounds.
 
-## 11. Minecraft battle theme (loop) — `world-blocky.mp3`
+## 11. Minecraft battle theme (loop) — role `battle_blocky`
 
 *New: for the Minecraft faction and its battleground, Blocky Plains.*
 
@@ -194,7 +198,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > blip and a low hiss before a sudden boom. Charming, pixelated and silly, but with
 > a real beat. No vocals, no sung words.
 
-## 12. Final moments / slow-motion replay theme (loop) — `final-moments.mp3`
+## 12. Final moments / slow-motion replay theme (loop) — role `final`
 
 *Rewritten: the old prompt came out too serious. This one keeps the war-film slow motion but lets the joke show.*
 
@@ -209,7 +213,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > but clearly a parody: sniffly, overblown and funny, never actually sad. No vocals,
 > no choir, no electronic sounds.
 
-## 13. Replay / spectator theme (loop) — `replay.mp3`
+## 13. Replay / spectator theme (loop) — role `replay`
 
 *Rewritten: the old prompt came out too light. This one is a punchy highlight reel.*
 
@@ -223,7 +227,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > looping. Serious, pumped and grand, but steady enough to play under the action
 > without distracting. No vocals, no choir, no electronic sounds.
 
-## 14. Good & Evil world battle theme (loop) — `world-goodevil.mp3`
+## 14. Good & Evil world battle theme (loop) — role `battle_goodevil`
 
 > Instrumental colossal good-versus-evil orchestral battle music for the final world of
 > a comedic war game, 136 BPM, alternating between D minor and D major, about 2 minutes
@@ -233,7 +237,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > battle back and forth, then combine into a huge, over-the-top finale. Divine, demonic
 > and absurdly epic. No vocals, no choir singing words, no electronic sounds.
 
-## 15. Renaissance & Spooky world theme (loop) — `world-spooky.mp3`
+## 15. Renaissance & Spooky world theme (loop) — role `battle_spooky`
 
 > Instrumental spooky, mischievous orchestral battle music for a comedic war game
 > world of skeletons, reapers and renaissance inventors, 132 BPM, C minor, about 2
@@ -243,7 +247,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > gothic climax. Halloween-party spooky rather than frightening. No vocals, no
 > wordless choir, no electronic sounds.
 
-## 16. Campaign map / level select (loop) — `campaign-map.mp3`
+## 16. Campaign map / level select (loop) — role `campaign`
 
 > Instrumental adventurous orchestral map music for choosing the next level of a
 > comedic war campaign, 108 BPM, A major, about 2 minutes, seamless loop. A
@@ -253,7 +257,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > old map in a tavern, then the full orchestra returns. Curious, optimistic and
 > ready for adventure. No vocals, no electronic sounds.
 
-## 17. Secret Stash bonus theme (loop) — `world-secret.mp3`
+## 17. Secret Stash bonus theme (loop) — role `battle_secret`
 
 > Instrumental quirky, mysterious bonus-level music for the secret world of a comedic
 > war game, 118 BPM, F minor with surprising key changes, about 2 minutes, seamless
@@ -263,7 +267,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > back into the sneaky groove. Weird, secretive, delightful and a little absurd. No
 > vocals, no electronic drums.
 
-## 18. Unit Creator workshop (loop) — `creator.mp3`
+## 18. Unit Creator workshop (loop) — role `creator`
 
 > Instrumental playful, tinkering workshop music for a screen where players design
 > their own silly soldiers, 112 BPM, C major, about 2 minutes, seamless loop.
@@ -273,7 +277,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > curious and fun, like a mad inventor building a contraption. No vocals, no
 > electronic sounds.
 
-## 19. Second battle theme (loop) — `battle-2.mp3`
+## 19. Second battle theme (loop) — role `battle_2`
 
 *Moved to the bottom: a second main battle theme, only for variety, and battles already rotate in the four delivered world themes.*
 
@@ -291,7 +295,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 
 ## Delivered
 
-### Viking world battle theme (loop) — `world-viking.mp3` — ✅ delivered
+### Viking world battle theme (loop) — role `battle_viking`, `fierce-mischievous-vikings.mp3` — ✅ delivered
 
 
 > Instrumental rowdy Viking battle music for the Norse world of a comedic war game
@@ -305,7 +309,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > thundering finale. Wild, hairy, beery and heroic. Wordless group shouts like "hey!"
 > and "hoo!" are welcome; no sung words, no electronic sounds, no electric guitars.
 
-### Dynasty world battle theme (loop) — `world-dynasty.mp3` — ✅ delivered
+### Dynasty world battle theme (loop) — role `battle_dynasty`, `wuxia-dynasty.mp3` — ✅ delivered
 
 
 > Instrumental high-energy kung-fu and samurai battle music for the dynasty world of a
@@ -323,7 +327,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > keeps striking poses. Respectful of both traditions, never a caricature. No sung
 > words, no electronic sounds.
 
-### JJK battle theme (loop) — `world-jjk.mp3` — ✅ delivered
+### JJK battle theme (loop) — role `battle_jjk`, `jjk-neon-night-arena.mp3` — ✅ delivered
 
 
 > Instrumental high-octane anime battle music for a comedic war game's sorcerer faction
@@ -336,7 +340,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > a riser explodes into a double-time guitar riff and the main hook. Cool, menacing and
 > hype, a little cursed. No vocals, no rap, no sung words.
 
-### Avatar battle theme (loop) — `world-avatar.mp3` — ✅ delivered
+### Avatar battle theme (loop) — role `battle_avatar`, `avatar-adventure.mp3` — ✅ delivered
 
 
 > Instrumental adventurous four-elements battle music for a comedic war game's Avatar
@@ -350,7 +354,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > all four join in a big finale. Heroic, warm and playful, like a kids' adventure show
 > going into a big fight. No vocals, no electronic sounds.
 
-### Main battle theme (loop) — `battle-1.mp3` — ✅ delivered
+### Main battle theme (loop) — role `battle`, `battle-1.mp3` — ✅ delivered
 
 > Instrumental epic orchestral battle music for a comedic medieval fantasy war game,
 > 140 BPM, D minor, about 2 minutes 30 seconds, built to loop seamlessly with no intro
@@ -364,7 +368,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > throughout, serious war-film intensity with a playful wink. No vocals, no choir, no
 > electronic sounds.
 
-### Army setup / planning theme (loop) — `setup-1.mp3` — ✅ delivered
+### Army setup / planning theme (loop) — role `setup`, `setup-1.mp3` — ✅ delivered
 
 > Instrumental sneaky, playful orchestral planning music for a comedic strategy war
 > game where two generals secretly place their armies, 100 BPM, D minor, about 2
@@ -377,7 +381,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > plotting a cunning plan, and never loud enough to distract from concentrating. No
 > vocals, no electronic sounds.
 
-### Title / main menu theme (loop) — `title.mp3` — ✅ delivered
+### Title / main menu theme (loop) — role `title`, `title.mp3` — ✅ delivered
 
 > Instrumental jaunty, heroic oom-pah march for the main menu of a comedic medieval
 > battle game, 116 BPM, F major, about 2 minutes, seamless loop with no fade. A brass
@@ -388,7 +392,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > far too seriously, then back to the bouncy march. Welcoming, catchy, confident and
 > funny, the theme tune of the game. No vocals, no electronic sounds.
 
-### Victory stinger — `victory.mp3` — ✅ delivered
+### Victory stinger — role `victory`, `victory.mp3` — ✅ delivered
 
 > Instrumental short triumphant orchestral victory fanfare for a comedic battle game,
 > about 8 seconds, one shot with a natural ending. A bold trumpet and horn fanfare in
@@ -397,7 +401,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > hit. A tiny cheeky trill on the piccolo just before the last chord. Proud, glorious
 > and slightly over the top. No vocals.
 
-### Defeat stinger — `defeat.mp3` — ✅ delivered
+### Defeat stinger — role `defeat`, `defeat.mp3` — ✅ delivered
 
 > Instrumental short comedic defeat sting for a battle game, about 7 seconds, one shot
 > with a natural ending. A sad, deflating "wah-wah-wah-waaah" on a muted trombone
@@ -405,7 +409,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > final soft, wobbly low tuba note that fades out. Funny and sorry for itself rather
 > than truly tragic. No vocals.
 
-### Battle start horn and drums stinger — `battle-start.mp3` — ✅ delivered
+### Battle start horn and drums stinger — role `start`, `battle-start.mp3` — ✅ delivered
 
 > Instrumental short battle-start sting for a comedic war game, about 4 seconds, one
 > shot with a natural ending. A huge, slightly comical war horn blast, two massive
@@ -413,7 +417,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > minor that cuts off cleanly. Loud, punchy and dramatic. Wordless "hey!" shouts from a
 > group of soldiers are allowed. No sung words.
 
-### Tribal Lands battle theme (loop) — `world-tribal.mp3` — ✅ delivered
+### Tribal Lands battle theme (loop) — role `battle_tribal`, `tribal-stomp.mp3` — ✅ delivered
 
 > Instrumental energetic tribal battle music for the prehistoric-tribal world of a
 > comedic war game, 132 BPM, D minor pentatonic, about 2 minutes, seamless loop with
@@ -423,7 +427,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > for epic moments. Wordless group "hoo! hah!" shouts are fine. Primal, fun and
 > stompy, never mocking any real culture. No sung words, no electronic sounds.
 
-### Medieval Kingdom battle theme (loop) — `world-medieval.mp3` — ✅ delivered
+### Medieval Kingdom battle theme (loop) — role `battle_medieval`, `medieval-tournament-brawl.mp3` — ✅ delivered
 
 > Instrumental medieval-flavoured battle music for the knights-and-castles world of a
 > comedic war game, 138 BPM, D Dorian, about 2 minutes, seamless loop. A hurdy-gurdy
@@ -432,7 +436,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > brass fanfares and string runs joining the same tune for a big heroic section.
 > Rowdy, jolly and chivalrous, like a tournament turning into a brawl. No vocals.
 
-### Pirate world battle theme (loop) — `world-pirate.mp3` — ✅ delivered
+### Pirate world battle theme (loop) — role `battle_pirate`, `sea-shanty-pirate-jig.mp3` — ✅ delivered
 
 > Instrumental swashbuckling pirate battle music for a comedic war game, 6/8 time at
 > about 150 BPM, D minor, about 2 minutes, seamless loop. A rollicking sea-shanty jig
@@ -442,7 +446,7 @@ enough to distract while placing units). Already wired in (`setupTheme` in
 > concertina and bassoon before the big return. Rowdy, adventurous and cheeky. Wordless
 > "yo-ho"-style shouts allowed, no sung words.
 
-### Wild West showdown theme (loop) — `world-wildwest.mp3` — ✅ delivered
+### Wild West showdown theme (loop) — role `battle_wildwest`, `dusty-wild-west-showdown.mp3` — ✅ delivered
 
 > Instrumental comedic Wild West showdown and battle music for a war game, 120 BPM, A
 > minor, about 2 minutes, seamless loop. A twangy clean electric or acoustic guitar

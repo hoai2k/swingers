@@ -12,6 +12,7 @@
 // personality and size. Concurrency is capped (voice stealing by priority); battle cries and
 // cheers that overflow the cap are folded into one 'crowd' roar instead of being dropped.
 import { THREE, clamp, rand, pick } from './util.js';
+import { TRACKS as TRACK_CONFIG, STINGERS as STINGER_CONFIG } from '../assets/music/tracks.js';
 
 // formants F1, F2, F3 (Hz, adult-ish; scaled per creature size)
 const VOWELS = {
@@ -132,31 +133,17 @@ const SONGS = {
 };
 for (const s of Object.values(SONGS)) s.steps = s.bars * 8;
 
-// Recorded one-shot music (see music-requests.md). Each loads once sound is
-// unlocked; until it has (or if the file is missing) the synthesised sound plays.
-// Recorded songs per music mode, streamed (not decoded: ~2.5 min each). `loop` is
-// where the song's own ending starts to fade: the next pass crossfades in there.
-const TRACKS = {
-  title: { url: 'assets/music/title.mp3', loop: 115.0 },
-  setup: { url: 'assets/music/setup-1.mp3', loop: 116.0 },
-  battle: { url: 'assets/music/battle-1.mp3', loop: 145.6 },
-  // world / faction battle themes (owner-made songs; the game picks one per battle:
-  // battleTheme() in game.js); synth: the synthesised song to fall back on; own: only
-  // for its own faction, never picked at random
-  battle_tribal: { url: 'assets/music/world-tribal.mp3', loop: 117.4, synth: 'battle' },
-  battle_medieval: { url: 'assets/music/world-medieval.mp3', loop: 118.4, synth: 'battle' },
-  battle_pirate: { url: 'assets/music/world-pirate.mp3', loop: 117.8, synth: 'battle' },
-  battle_wildwest: { url: 'assets/music/world-wildwest.mp3', loop: 117.6, synth: 'battle' },
-  battle_viking: { url: 'assets/music/world-viking.mp3', loop: 116.6, synth: 'battle' },
-  battle_dynasty: { url: 'assets/music/world-dynasty.mp3', loop: 108.8, synth: 'battle' },
-  battle_jjk: { url: 'assets/music/world-jjk.mp3', loop: 118.0, synth: 'battle', own: true }, // (electric: only for JJK armies)
-  battle_avatar: { url: 'assets/music/world-avatar.mp3', loop: 116.4, synth: 'battle' },
-};
+// Recorded music (see music-requests.md): which file plays in which role is set in
+// assets/music/tracks.js; the files keep their delivered names. Songs are streamed (not
+// decoded: ~2.5 min each); stingers load once sound is unlocked. Until a recording has
+// loaded (or if it's missing) the synthesised music plays.
+const MUSIC_DIR = 'assets/music/';
+const TRACKS = Object.fromEntries(Object.entries(TRACK_CONFIG).map(([k, t]) => [k, { ...t, url: MUSIC_DIR + t.file }]));
+const STINGERS = Object.fromEntries(Object.entries(STINGER_CONFIG).map(([k, f]) => [k, MUSIC_DIR + f]));
 // the themes a battle with no clear faction theme may pick ('battle' first; `own` themes stay with their faction)
 export const HAS_TRACK = (k) => !!TRACKS[k]; // (a theme a map names may not be delivered yet)
 export const BATTLE_THEMES = Object.keys(TRACKS).filter((k) => k.startsWith('battle') && !TRACKS[k].own);
 const XFADE = 1.5;
-const STINGERS = { victory: 'assets/music/victory.mp3', defeat: 'assets/music/defeat.mp3', start: 'assets/music/battle-start.mp3' };
 // Faction sample sets, fetched only once a battle has that faction in it (wantSamples).
 // jjk: voice lines and signature effects from the owner's jjkbrawler game (README);
 // avatar / minecraft / galactic: ElevenLabs effects made by dev/sfx/generate.py.
