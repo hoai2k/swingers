@@ -68,7 +68,7 @@ const API = {
   // and coming off on hard ground.
   step(p, inp) {
     const sk = this;
-    sk.slick = false; sk.dip = 0; sk.ploughing = false;
+    sk.slick = false; sk.dip = 0; sk.ploughing = false; sk.stopping = false; sk.lean = 0; sk.camYaw = null;
     if (p.state === 'limp') { offSkis(p, 'flop'); return; } // any ragdoll (a flop, a fall): they come off
     if (p.state !== 'normal' || p.mantle) { sk.walkT = 0; sk.kind = null; sk.air = false; return; }
     const near = p.groundCollider && p.groundDist <= 1.0;
@@ -99,20 +99,51 @@ const API = {
       climbing = mag > 0.2 && nh > 0.06 && (wx * n.x + wz * n.z) / (mag * nh) < -0.3 && s < 4;
       sk.slick = !climbing;
     }
-    // the skis point along the run: no turning round while moving; pulling back snow-ploughs
+    // Technique. The skis point along the run (no turning round while moving). Pulling back brakes:
+    // slow, a snow plough (wedge: tips in, tails out); faster, a hockey stop (the skis swing round
+    // to a sideways stance and skid to a halt). Turns: stem christies at low speed (the outside
+    // ski stems out as each turn starts, then comes parallel), parallel turns as it speeds up,
+    // carving on the edges at speed (skis tipped onto the inside edge, the body leaning in).
+    let edge = 0; // tilt toward the inside of the turn (+ = toward increasing yaw)
     if (snow && s > 1.5) {
       const head = Math.atan2(v.x, v.z);
-      sk.ploughing = mag > 0.2 && (v.x * wx + v.z * wz) / (s * mag) < -0.35;
-      const lim = sk.ploughing ? 0.25 : 1.25;
+      const back = mag > 0.2 && (v.x * wx + v.z * wz) / (s * mag) < -0.35;
+      let ds = mag > 0.2 ? Math.atan2(wx, wz) - head : 0; ds = Math.atan2(Math.sin(ds), Math.cos(ds)); // stick vs travel
+      sk.stopping = back && (s > 6 || !!sk.stopSide); // fast: hockey stop (kept to a standstill once begun)
+      sk.ploughing = back && !sk.stopping;       // slow: snow plough
       let d = p.yaw - head; d = Math.atan2(Math.sin(d), Math.cos(d));
-      if (Math.abs(d) > lim) p.yaw = head + Math.sign(d) * lim;
-    }
+      if (sk.stopping) {
+        if (!sk.stopSide) sk.stopSide = Math.abs(ds) > 2.9 ? (sk.lastTurn || 1) : Math.sign(ds) || 1;
+        const want = head + sk.stopSide * 1.45;  // skis across the travel, turned the way of the stick
+        let e = want - p.yaw; e = Math.atan2(Math.sin(e), Math.cos(e));
+        p.yaw += Math.sign(e) * Math.min(Math.abs(e), 7 * DT);
+        edge = sk.stopSide * 0.55;               // dig the uphill edges in (leaning away from the skid)
+      } else {
+        sk.stopSide = 0;
+        const lim = sk.ploughing ? 0.25 : 1.25;
+        if (Math.abs(d) > lim) { p.yaw = head + Math.sign(d) * lim; d = Math.sign(d) * lim; }
+        // turning: a new turn starts when the stick swings to the other side
+        const tdir = Math.abs(d) > 0.12 ? Math.sign(d) : 0;
+        if (tdir && tdir !== sk.lastTurn) { sk.lastTurn = tdir; sk.turnT = 0; }
+        sk.turnT = (sk.turnT || 0) + DT;
+        const carve = smooth(10, 17, s), christie = 1 - smooth(5, 10, s);
+        edge = Math.max(-0.75, Math.min(0.75, d * (0.35 + 0.75 * carve)));
+        // the stem: outside ski's tail out at the start of a turn, slow turns only
+        sk.stem = christie * Math.min(1, Math.abs(d) * 2.5) * Math.max(0, 1 - sk.turnT / 0.55) * (sk.lastTurn || 0);
+      }
+      sk.camYaw = head;                          // camera.js follows the run, not the body
+    } else { sk.stopSide = 0; if (!snow && sk.air && !p.grounded && s > 3) sk.camYaw = Math.atan2(v.x, v.z); }
+    if (!sk.stopping && !(snow && s > 1.5)) sk.stem = 0;
+    sk.edge += (edge - sk.edge) * Math.min(1, DT * 6);
+    sk.lean = -sk.edge * 0.75;                   // player.js adds it to the body's bank (its turn lean is -yawRate)
     sk.plough += ((sk.ploughing ? 1 : 0) - sk.plough) * Math.min(1, DT * 8);
+    sk.stemK += ((sk.stem || 0) - sk.stemK) * Math.min(1, DT * 10);
+    sk.side += ((sk.stopping ? 1 : 0) - sk.side) * Math.min(1, DT * 6);
 
     // stance: knees bent, lower in a tuck at speed; a tuck in the air
     const flying = !p.grounded && sk.air && !p.swimming;
     if ((snow && !climbing) || flying) {
-      const tuck = flying ? 1 : smooth(9, 20, s) * (1 - sk.plough);
+      const tuck = flying ? 1 : smooth(9, 20, s) * (1 - sk.plough) * (1 - sk.side);
       const ux = -0.5 - 0.32 * tuck, lx = 0.8 + 0.45 * tuck, spread = 0.05 + 0.1 * sk.plough;
       const P = p.parts;
       P.uLegL.target.setFromEuler(_e.set(ux, 0, spread)); P.uLegR.target.setFromEuler(_e.set(ux, 0, -spread));
@@ -136,11 +167,15 @@ const API = {
       if (!m || !m.parent) continue;
       const gq = m.parent.quaternion;
       if (ground) {
-        const toe = sk.plough * 0.32 * (side === 'L' ? -1 : 1), yaw = p.yaw + toe;
+        // wedge: both tips in; stem christie: the outside ski (right in a left turn) tips in
+        const sg = side === 'L' ? -1 : 1, outside = sk.stemK * sg > 0;
+        const toe = sk.plough * 0.32 * sg + (outside ? sk.stemK * 0.3 : 0), yaw = p.yaw + toe;
         _fw.set(Math.sin(yaw), 0, Math.cos(yaw));
         _fw.addScaledVector(_up, -_fw.dot(_up)).normalize();
         _sd.crossVectors(_up, _fw);
         _q.setFromRotationMatrix(_m4.makeBasis(_sd, _up, _fw));
+        // on edge: tipped over about the ski's length (into the turn; the uphill edge in a stop)
+        if (Math.abs(sk.edge) > 0.01) _q.premultiply(_q2.setFromAxisAngle(_fw, -sk.edge)); // (+ about the nose tips the top toward -yaw)
         _q2.copy(gq).invert().multiply(_q); // in the shin's frame
       } else _q2.identity();
       m.quaternion.slerp(_q2, sk.snap ? 1 : 0.45);
@@ -154,7 +189,8 @@ const API = {
 export function equipSkis(p) {
   if (p.skis || p.seat) return false;
   const sk = Object.create(API);
-  Object.assign(sk, { walkT: 0, slick: false, dip: 0, kind: null, air: false, plough: 0, ploughing: false, meshes: {}, snap: true });
+  Object.assign(sk, { walkT: 0, slick: false, dip: 0, kind: null, air: false, plough: 0, ploughing: false, meshes: {}, snap: true,
+    stopping: false, stopSide: 0, side: 0, edge: 0, lean: 0, stem: 0, stemK: 0, lastTurn: 0, turnT: 0, camYaw: null });
   p.skis = sk;
   p.skiMesh = (n, g) => {
     if (n !== 'lLegL' && n !== 'lLegR') return;

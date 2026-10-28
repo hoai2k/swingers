@@ -174,7 +174,8 @@ function installSkiing(game) {
         if (mag > 0.2 && s < VMAX.ice) { dvx += fx * 3.2 * mag * DT; dvz += fz * 3.2 * mag * DT; } // skating push
         if (mag < 0.2 && s > 0.05) { const k = Math.min(s, 0.35 * DT); dvx -= v.x / s * k; dvz -= v.z / s * k; }
       } else if (sk && kind !== 'air') {
-        if (sk.ploughing) { const k = Math.min(s, 8 * DT * mag); dvx -= v.x / s * k; dvz -= v.z / s * k; } // snow plough (pull back)
+        if (sk.stopping) { const k = Math.min(s, 11 * DT * sk.side); dvx -= v.x / s * k; dvz -= v.z / s * k; } // hockey stop: skidding sideways
+        else if (sk.ploughing) { const k = Math.min(s, 8 * DT * mag); dvx -= v.x / s * k; dvz -= v.z / s * k; } // snow plough (pull back)
         else if (p.grounded && mag > 0.2 && s < 7) { // skating / poling to get going
           const cy = p.camera ? p.camera.yaw : p.yaw, wx = Math.sin(cy) * (st.moveY || 0) - Math.cos(cy) * (st.moveX || 0), wz = Math.cos(cy) * (st.moveY || 0) + Math.sin(cy) * (st.moveX || 0);
           if ((wx * fx + wz * fz) / mag > 0.3) { dvx += fx * 3.5 * mag * DT; dvz += fz * 3.5 * mag * DT; }
@@ -197,7 +198,7 @@ function installSkiing(game) {
         dvx += n.x * n.y * 9.81 * DT; dvz += n.z * n.y * 9.81 * DT;
       }
       // carve: turn the velocity toward where the player faces, keeping its speed
-      if (kind !== 'air' && mag > 0.2 && s > 1.5 && !sk?.ploughing) {
+      if (kind !== 'air' && mag > 0.2 && s > 1.5 && !sk?.ploughing && !sk?.stopping) {
         const cur = Math.atan2(v.x, v.z);
         let want = p.yaw, d = want - cur;
         d = Math.atan2(Math.sin(d), Math.cos(d));

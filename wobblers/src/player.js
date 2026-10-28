@@ -1067,7 +1067,7 @@ export class Player {
       if (this.swimming) leanT = mag > 0.1 ? 1.15 : 0.5;
       else if (this.grounded) {
         leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0;
-        rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05));
+        rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05)) + (this.skis?.lean || 0); // skis: lean into a carve
         waddle = Math.sin(this.phase) * 0.1 * Math.max(amp, mag > 0.1 ? 0.3 : 0);
         twist = Math.sin(this.phase) * 0.14 * amp;
       } else if (!hanging) leanT = 0.12;

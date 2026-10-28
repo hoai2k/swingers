@@ -494,7 +494,15 @@ within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fall
   slippery unless stepping slowly uphill), `sync` (skis lie flat on the ground, toes in when
   ploughing), `off` in `knockOut` / `respawn` / `destroy`. `slopes.js` uses `VMAX_SKI` (piste 25 m/s,
   powder 15, air 30), a faster carve, poling under 7 m/s, an 8 m/s² plough and less friction
-  (`FRICTION_SKI`). They come off (`offSkis(p, why)`) whenever the player goes ragdoll: a
+  (`FRICTION_SKI`). Technique (`skis.step`, drawn in `skis.sync`): pulling back
+  brakes: below 6 m/s a snow plough (`plough`, tips in), faster a hockey stop (`stopping`, latched
+  to a standstill: the body and skis swing to head ± 1.45 rad toward the stick's side, uphill edges
+  dug in, slopes.js brakes 11 m/s² and skips the carve). Turns: `edge` (tilt into the turn, d x
+  (0.35 + 0.75 carve) where carve ramps 10-17 m/s; skis rotated about their length, `lean` adds to
+  the body's bank in player.js), and at low speed stem christies (`stem`: the outside ski's tail
+  out for ~0.55 s as each turn starts, fading out 5-10 m/s). `camYaw` = the run's heading while
+  moving: camera.js follows it (not the body), back to the normal camera once stopped.
+  They come off (`offSkis(p, why)`) whenever the player goes ragdoll: a
   knock-out ('crash', flung) or any other limp state, a flop on purpose included ('flop', `skis.step`)
   drops them as a loose pair (kind 'skis', grippy so they stay put, gone after 25 s, at most 8 pairs)
   carrying a 'Put skis on' use spot (`pairUp`: Y next to them wears them again and removes the pair);
