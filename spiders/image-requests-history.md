@@ -5,6 +5,25 @@ open requests. Every file below is in `assets/web/`, listed in
 `assets/web/manifest.json` and delivered. Newly delivered rounds may await loader hooks and in-game review. Exact generation prompts are in
 `assets/generation.json`.
 
+## Round 3 — delivered (6 images; integration pending)
+
+Delivered 2026-10-28 using built-in imagegen. All six transparent PNGs have the
+requested dimensions, are registered in the manifest, and passed browser loading
+through `optionalImage` and the preload tracker. Prompts and source paths are in
+`assets/generation.json`. Loader hooks and in-game integration are left to the
+feature agent, as requested in the delivery brief.
+
+### A. Round 3 — gaps left after round 2 (6 images)
+
+| File | Size | Where | Prompt |
+| --- | --- | --- | --- |
+| `hud_unlock.png` | 256 × 256, white glyph | Unlocked trials (pairs with `hud_lock`) | An open padlock with its shackle swung up and to the side, white glyph with a dark outline and soft inner shade, same style as `hud_lock.png`. |
+| `btn_fullscreen_exit.png` | 256 × 256, white glyph | Corner button while in fullscreen | Four corner arrows pointing inward, white glyph with a dark outline and soft inner shade, same style as `btn_fullscreen.png`. |
+| `mod_squeeze.png` | 256 × 256, full colour | Squeeze (closing death zone) modifier card | Two glowing magenta energy walls closing in from left and right on a small cartoon spider in the middle, glossy bold-outlined cartoon style, transparent background. |
+| `mod_pool.png` | 256 × 256, full colour | Weapon-pool card | A cartoon wooden weapon rack holding a plasma saber, a laser pistol and a rocket tube, glossy bold-outlined cartoon style, transparent background. |
+| `proj_hexorb.png` | 128 × 128 | Hexfly's magic orb shot | A glowing violet magic orb with a tiny rune inside and a few sparkles orbiting it, soft glow, transparent background. |
+| `lobby_anchor.png` | 256 × 256 | The lobby's floating swing-anchor rock (right of the BOARD island) | A small round floating rock with grass on top, roots and a silk thread hanging below, matching `lobby_island.png`, transparent background. |
+
 ## Round 2 — delivered and integrated (128 images)
 
 All files are in `assets/web/`, registered in the manifest, and recorded
