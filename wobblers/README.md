@@ -273,8 +273,9 @@ to do (a banner welcomes you as you arrive; the map zooms out to show them all):
   frozen lake to skate on, an ice cave, an observatory, snowmen and snowball fights, and a
   fishing hamlet by the ferry. Snowmobiles, a snowcat and sleds.
   Ski racks at the top of the lift and in the village (**Y** takes or returns a pair): on skis
-  you zip down the run (and off-piste powder) much faster; pull back to snow-plough. A big crash
-  knocks them off, and so does trying to walk on anything that isn't snow.
+  you zip down the run (and off-piste powder) much faster; pull back to snow-plough. Going ragdoll
+  (a crash, or flopping on purpose) knocks them off: press **Y** next to them to put them back on
+  before they vanish. Trying to walk on anything that isn't snow makes them melt away.
 - **Dusty Dunes** (west) — the wild-west town of Dustville (saloon with swinging doors and a
   piano, sheriff's office with a jail, general store, water tower, windmill), a mine-cart ride
   through the gold mine in Red Rock Canyon, a swaying rope bridge, a pyramid with a hidden

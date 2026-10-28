@@ -494,9 +494,11 @@ within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fall
   slippery unless stepping slowly uphill), `sync` (skis lie flat on the ground, toes in when
   ploughing), `off` in `knockOut` / `respawn` / `destroy`. `slopes.js` uses `VMAX_SKI` (piste 25 m/s,
   powder 15, air 30), a faster carve, poling under 7 m/s, an 8 m/s² plough and less friction
-  (`FRICTION_SKI`). They come off (`offSkis(p, why)`): a knock-out ('crash') or ~1 s of walking on
-  'hard' ground / swimming ('walk') drop them as two loose props (kind 'skis', gone after 25 s, at most
-  8 pairs) with a toast; in a vehicle seat, outside Frostpeak (`regionAt`), on respawn or at a rack
+  (`FRICTION_SKI`). They come off (`offSkis(p, why)`) whenever the player goes ragdoll: a
+  knock-out ('crash', flung) or any other limp state, a flop on purpose included ('flop', `skis.step`)
+  drops them as a loose pair (kind 'skis', grippy so they stay put, gone after 25 s, at most 8 pairs)
+  carrying a 'Put skis on' use spot (`pairUp`: Y next to them wears them again and removes the pair);
+  ~1 s of walking on 'hard' ground / swimming ('walk') dissolves them (shrink + fade, nothing left); in a vehicle seat, outside Frostpeak (`regionAt`), on respawn or at a rack
   they are put away. Probe: `game.skis.equip(p)` / `off(p, why)`, `racks`, `loose`; down the piste on
   skis ~15 s at ~25 m/s (without ~29 s at ~13.5).
 

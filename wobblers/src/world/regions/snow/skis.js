@@ -1,10 +1,11 @@
 // Skis: take a pair from a ski rack (Y at the top lift station or in the
 // village) and the player skis properly on snow (slopes.js reads p.skis for
 // the faster ski feel; powder on the open mountain counts too). They come off
-// in a big crash (Player.knockOut) and after ~1 s of trying to walk on
-// anything that isn't snow, and lie there as two loose props for a while; they
-// are put away quietly on respawn, in a vehicle, outside Frostpeak or when the
-// player leaves.
+// whenever the player goes ragdoll (a crash / knock-out, or flopping on purpose)
+// and lie there as two loose props for LOOSE_T s: Y next to them puts them back
+// on (a use spot riding on the left ski). Trying to walk on anything that isn't
+// snow for ~1 s dissolves them away (shrink and fade). They are put away
+// quietly on respawn, in a vehicle, outside Frostpeak or when the player leaves.
 //
 // Player hooks (player.js, all `this.skis?.…` / `this.skiMesh?.…`): skiMesh in
 // partMesh (the ski meshes hang on the shin groups, so rebuildMeshes keeps
@@ -19,6 +20,7 @@ import { Builder, matVC } from '../../../mesh.js';
 import { meshHeight, regionAt } from '../../../terrain.js';
 import { LIFT, TOP } from './layout.js';
 import { snowSurfaces } from './slopes.js';
+import { addSeat } from '../../playground.js';
 
 const FOOT_Y = -0.125, FOOT_Z = 0.035; // under the shoe, in the shin's frame
 const WALK_OFF = 1.0;                  // s of walking on non-snow before they come off
@@ -67,6 +69,7 @@ const API = {
   step(p, inp) {
     const sk = this;
     sk.slick = false; sk.dip = 0; sk.ploughing = false;
+    if (p.state === 'limp') { offSkis(p, 'flop'); return; } // any ragdoll (a flop, a fall): they come off
     if (p.state !== 'normal' || p.mantle) { sk.walkT = 0; sk.kind = null; sk.air = false; return; }
     const near = p.groundCollider && p.groundDist <= 1.0;
     let kind = near ? snowSurfaces.get(p.groundCollider.handle) || null : null;
@@ -167,28 +170,52 @@ export function equipSkis(p) {
   return true;
 }
 
-// why: 'crash' | 'walk' drop them as loose props (with a toast); 'rack' | 'quiet' | ... put them away.
+// why: 'crash' (knocked out: flung) | 'flop' (any other ragdoll) drop them as a loose pair you can
+// put back on; 'walk' (off the snow) dissolves them; 'rack' | 'quiet' | ... put them away.
 export function offSkis(p, why = 'quiet') {
   const sk = p.skis;
   if (!sk) return;
   p.skis = null; p.skiMesh = null;
-  const drop = why === 'crash' || why === 'walk';
+  const drop = why === 'crash' || why === 'flop', pair = [];
   for (const side of ['L', 'R']) {
     const m = sk.meshes[side];
     if (!m) continue;
-    if (drop && G) { // from the shin's body (the meshes are only posed when a frame is drawn)
+    if ((drop || why === 'walk') && G) { // from the shin's body (the meshes are only posed when a frame is drawn)
       const b = p.parts['lLeg' + side].body, t = b.translation(), r = b.rotation();
       _q.set(r.x, r.y, r.z, r.w).multiply(m.quaternion);
       _v.set(0, FOOT_Y, FOOT_Z).applyQuaternion(_q2.set(r.x, r.y, r.z, r.w)).add(_up.set(t.x, t.y, t.z));
-      looseSki(p, _v, _q, side, why === 'crash');
+      if (drop) pair.push(looseSki(p, _v, _q, side, why === 'crash'));
+      else dissolve(_v, _q);
     }
     m.parent?.remove(m);
   }
   if (!G) return;
+  if (pair.length) pairUp(pair);
   const who = G.players.length > 1 ? `P${p.index + 1}: ` : '';
-  if (why === 'crash') { G.ui?.toast(`${who}Wipeout! Your skis flew off`, p.color); G.audio?.play('thud', p.pos(), 0.8); }
-  else if (why === 'walk') { G.ui?.toast(`${who}Skis off: they only work on snow`, p.color); G.audio?.play('clunk', p.pos(), 0.8); }
+  if (why === 'crash') { G.ui?.toast(`${who}Wipeout! Your skis flew off: Y next to them puts them back on`, p.color); G.audio?.play('thud', p.pos(), 0.8); }
+  else if (why === 'flop') G.ui?.toast(`${who}Skis off: Y next to them puts them back on`, p.color);
+  else if (why === 'walk') { G.ui?.toast(`${who}Your skis melted away: they only work on snow`, p.color); G.audio?.play('puff', p.pos(), 0.8); }
   else if (why === 'region') G.ui?.toast(`${who}You left your skis on Frostpeak`, p.color);
+}
+
+// A dropped pair: Y next to them puts them back on (a use spot riding on one ski, while both last).
+function pairUp(pair) {
+  const seat = addSeat(G, { body: pair[0].body, pos: [0, 0.25, 0], label: 'Put skis on', kind: 'use', use: (p) => {
+    if (p.skis || p.seat) return;
+    for (const o of pair) if (!o.gone) removeLoose(o);
+    equipSkis(p);
+  } });
+  for (const o of pair) { o.pair = pair; o.seat = seat; }
+}
+
+// Walking off the snow: the skis shrink and fade away where they are.
+const fading = [];
+function dissolve(pos, rot) {
+  const mat = matVC.clone(); mat.transparent = true; mat.depthWrite = false;
+  const m = new THREE.Mesh(skiGeometry(), mat);
+  m.position.copy(pos); m.quaternion.copy(rot); m.userData.noCull = true;
+  G.scene.add(m);
+  fading.push({ m, t: 0 });
 }
 
 // A dropped ski: a loose prop (grab it, throw it) that goes after LOOSE_T s.
@@ -201,18 +228,24 @@ function looseSki(p, pos, rot, side, fling) {
   // a little up off the ground so it never starts inside it
   const gy = meshHeight(pos.x, pos.z);
   const y = Math.max(pos.y, gy + 0.08) + 0.06;
-  const desc = RAPIER.ColliderDesc.cuboid(0.05, 0.02, 0.66).setTranslation(0, -0.0125, 0.06).setMass(1.6).setFriction(0.35);
+  const desc = RAPIER.ColliderDesc.cuboid(0.05, 0.02, 0.66).setTranslation(0, -0.0125, 0.06).setMass(1.6).setFriction(1.1); // grippy: they stay about where they fell, to be put back on
   const o = ph.dynamic({ x: pos.x, y, z: pos.z }, desc, mesh, { rot: { x: rot.x, y: rot.y, z: rot.z, w: rot.w }, kind: 'skis', buoy: { r: 0.12, volume: 0.004 } });
   const v = p.hips.linvel(), k = fling ? 0.75 : 0.2, sgn = side === 'L' ? 1 : -1;
   o.body.setLinvel({ x: v.x * k + Math.cos(p.yaw) * sgn * (fling ? 1.5 : 0.4), y: fling ? 3 + Math.random() * 2 : 0.6, z: v.z * k - Math.sin(p.yaw) * sgn * (fling ? 1.5 : 0.4) }, true);
   if (fling) o.body.setAngvel({ x: (Math.random() - 0.5) * 10, y: (Math.random() - 0.5) * 8, z: (Math.random() - 0.5) * 10 }, true);
+  o.body.setLinearDamping(0.8); o.body.setAngularDamping(1.5);
   o.t = steps; o.ski = true;
   loose.push(o);
   while (loose.length > LOOSE_MAX * 2) removeLoose(loose[0]);
+  return o;
 }
 function removeLoose(o) {
+  if (o.gone) return;
+  o.gone = true;
   const ph = G.physics, i = loose.indexOf(o);
   if (i >= 0) loose.splice(i, 1);
+  if (o.seat) { const k = G.seats.indexOf(o.seat); if (k >= 0) G.seats.splice(k, 1); o.seat.disabled = true; } // the pair's 'Put skis on' spot
+  for (const q of o.pair || []) if (q !== o) { q.seat = null; removeLoose(q); }        // a pair goes together
   for (const pl of G.players) for (const h of ['L', 'R']) if (pl.hands?.[h]?.body === o.body) pl.releaseHand?.(h);
   if (o.rec) ph.untrack(o.rec);
   const j = ph.objects.indexOf(o); if (j >= 0) ph.objects.splice(j, 1);
@@ -251,6 +284,17 @@ export function buildSkis(game, kit, R) {
     }
     if (steps % 30 || !loose.length) return;
     for (const o of loose.slice()) if ((steps - o.t) * DT > LOOSE_T && !heldBy(o)) removeLoose(o);
+  });
+  // skis dissolving away off the snow
+  game.updaters.push((dt) => {
+    for (let i = fading.length - 1; i >= 0; i--) {
+      const f = fading[i]; f.t += dt;
+      const k = Math.min(1, f.t / 0.7);
+      f.m.scale.set(1 - k * 0.6, 1 - k * 0.8, 1 - k);
+      f.m.position.y += dt * 0.3;
+      f.m.material.opacity = 1 - k;
+      if (k >= 1) { game.scene.remove(f.m); f.m.material.dispose(); fading.splice(i, 1); }
+    }
   });
   game.skis = { racks, equip: equipSkis, off: offSkis, loose };
 }
