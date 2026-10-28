@@ -32,9 +32,9 @@ import { DropSpawner, WEAPONS } from '../weapons.js';
 import { settings } from '../settings.js';
 import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
-import { rand, TAU, clamp, rgba, pick } from '../util.js';
+import { rand, TAU, clamp, rgba, pick, FONT } from '../util.js';
 import { castAt } from '../cast.js';
-import { text, drawBanner, drawPlayerTags, drawPanel, drawPortrait, drawCountdown } from '../hud.js';
+import { text, drawBanner, drawPlayerTags, drawPanel, drawPortrait, drawCountdown, drawGlyph } from '../hud.js';
 import { Stinglet, Gnatling, Buzzgunner, Bladewing, Shellback, Dropmoth, Hexfly } from '../enemies/insects.js';
 import { BroodTyrant } from '../enemies/boss.js';
 import { applyRoundMods, applySpiderMods, tickMods, drawMods } from '../modifiers.js';
@@ -65,6 +65,8 @@ function saveNum(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {
 
 // a small heart (lives on the HUD)
 export function drawHeart(ctx, x, y, s, fill, stroke = null) {
+  // delivered glyph (hud_heart.png): filled in the colour, an empty slot dim
+  if (fill ? drawGlyph(ctx, 'hud_heart', x, y, s * 2.1, fill) : drawGlyph(ctx, 'hud_heart', x, y, s * 2.1, '#8a90b8', { alpha: 0.45 })) return;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s / 10, s / 10);
@@ -608,7 +610,9 @@ export class SurvivalMode {
     const game = this.game;
     const rem = this.pillSub();
     drawPanel(ctx, W / 2 - 190, 10, 380, 64, { r: 30, fill: 'rgba(8,6,22,0.78)', accent: this.isBossWave ? '#ffb020' : '#5ad1ff' });
-    text(ctx, this.pillLabel(), W / 2, 44, { size: 30, color: this.isBossWave ? '#ffd27a' : '#bfefff', sw: 0, stroke: null, maxWidth: 360 });
+    const pillCol = this.isBossWave ? '#ffd27a' : '#bfefff';
+    if (drawGlyph(ctx, 'hud_wave', W / 2 - 160, 42, 40, pillCol)) text(ctx, this.pillLabel(), W / 2 + 18, 44, { size: 30, color: pillCol, sw: 0, stroke: null, maxWidth: 300 });
+    else text(ctx, this.pillLabel(), W / 2, 44, { size: 30, color: pillCol, sw: 0, stroke: null, maxWidth: 360 });
     if (rem) text(ctx, rem, W / 2, 67, { size: 17, color: '#cfd6ff', stroke: null });
     // per-player cards, top-left: portrait, kills, lives
     const ps = game.players;
@@ -631,8 +635,12 @@ export class SurvivalMode {
         text(ctx, `${Math.ceil(rs.t)}`, x + 27, y + ch / 2 + 9, { size: 24, color: '#fff', sw: 5 });
       }
       const kills = this.statsOf(p).kills;
-      text(ctx, `${kills}`, x + 56, y + 25, { size: 20, color: p.color.main, sw: 4, align: 'left' });
-      text(ctx, 'kills', x + 58 + 12 * String(kills).length, y + 25, { size: 13, color: '#9aa0c8', stroke: null, align: 'left' });
+      if (drawGlyph(ctx, 'hud_skull', x + 64, y + 18, 19, '#e4e8ff')) {
+        text(ctx, `${kills}`, x + 78, y + 25, { size: 20, color: p.color.main, sw: 4, align: 'left' });
+      } else {
+        text(ctx, `${kills}`, x + 56, y + 25, { size: 20, color: p.color.main, sw: 4, align: 'left' });
+        text(ctx, 'kills', x + 58 + 12 * String(kills).length, y + 25, { size: 13, color: '#9aa0c8', stroke: null, align: 'left' });
+      }
       // lives: filled hearts, empty slots up to the cap
       if (out) text(ctx, 'OUT', x + 56, y + 46, { size: 18, color: '#ff5a7a', sw: 4, align: 'left' });
       else {
@@ -645,7 +653,12 @@ export class SurvivalMode {
         }
       }
       // shield pips
-      if (alive && sp.shield > 0) for (let k = 0; k < sp.shield; k++) { ctx.fillStyle = '#7fe8ff'; ctx.beginPath(); ctx.arc(x + cw - 16 - k * 12, y + 17, 4.5, 0, TAU); ctx.fill(); }
+      if (alive && sp.shield > 0) {
+        for (let k = 0; k < sp.shield; k++) {
+          const sx = x + cw - 18 - k * 17, sy = y + 18;
+          if (!drawGlyph(ctx, 'hud_shield', sx, sy, 17, '#7fe8ff')) { ctx.fillStyle = '#7fe8ff'; ctx.beginPath(); ctx.arc(sx + 2, sy - 1, 4.5, 0, TAU); ctx.fill(); }
+        }
+      }
       ctx.restore();
     });
     // boss bar
@@ -681,6 +694,8 @@ export class SurvivalMode {
       const perks = Object.entries(p.perks || {}).map(([id, n]) => { const P = PERKS.find((q) => q.id === id); return P ? P.name + (n > 1 ? ' x' + n : '') : ''; }).filter(Boolean).join(', ');
       if (perks) text(ctx, perks, x0 + 330, y + 7, { size: 16, color: '#9aa0c8', align: 'left', stroke: null, maxWidth: 330 });
       text(ctx, `${st.kills}`, x0 + bw - 40, y + 10, { size: 32, color: '#fff', align: 'right', sw: 5 });
+      ctx.font = `700 32px ${FONT}`;
+      drawGlyph(ctx, 'hud_skull', x0 + bw - 62 - ctx.measureText(`${st.kills}`).width, y, 30, '#e4e8ff');
     });
     return y0 + bh;
   }
