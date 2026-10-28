@@ -335,7 +335,7 @@ export function inField(p, goal) {
 }
 export function nearestEnemy(b, team, p, ok = null) {
   let best = null, bd = Infinity;
-  for (const o of b.teams[1 - team]) {
+  for (const o of b.foes(team)) {
     if (!o.alive || (ok && !ok(o))) continue;
     const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2;
     if (d < bd) { bd = d; best = o; }

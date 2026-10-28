@@ -60,6 +60,8 @@ export class Recorder {
     }
     const us = new Uint8Array(b.units.length);
     const hp = new Uint8Array(b.units.length);
+    // more than two armies: each unit's team now in its own array (bit 5 holds only two)
+    const tm = b.teams.length > 2 ? Uint8Array.from(b.units, (u) => u.team) : null;
     b.units.forEach((u, i) => {
       // bit 5: the unit's team now (a raised zombie changes side), bit 6: a zombie
       us[i] = (u.expr & 7) | (u.alive ? 8 : 0) | (u.itemHidden ? 16 : 0) | (u.team ? 32 : 0) | (u.zombie ? 64 : 0) | (u.dormant ? 128 : 0);
@@ -116,7 +118,7 @@ export class Recorder {
       drops[d++] = Math.round(h.quat.x * 32767); drops[d++] = Math.round(h.quat.y * 32767);
       drops[d++] = Math.round(h.quat.z * 32767); drops[d++] = Math.round(h.quat.w * 32767);
     }
-    this.frames.push({ t: b.time, bodies, us, hp, proj, drops, counts: b.stats().map((s) => s.alive) });
+    this.frames.push({ t: b.time, bodies, us, hp, tm, proj, drops, counts: b.stats().map((s) => s.alive) });
   }
 
   get duration() { return this.frames.length ? this.frames[this.frames.length - 1].t : 0; }

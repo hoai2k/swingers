@@ -131,7 +131,7 @@ function wantDomain(u, dt) {
   if (u.jkDomCD > 0 || b.over || burntOut(u) || myDomain(u) || u.stun > 0.3 || u.jkSealedT > b.time || u.st.attack || u.fleeT > 0 || u.isDown()) return false;
   for (const d of jk(b).domains) if (d.team !== u.team && flat(u.pos, d.pos) < d.R) return true;
   let n = 0, big = 0, left = 0;
-  for (const v of b.teams[1 - u.team]) {
+  for (const v of b.foes(u.team)) {
     if (!v.alive) continue;
     left++;
     if (flat(v.pos, u.pos) > w.domR * 0.7) continue;
@@ -379,7 +379,7 @@ const jogo = {
     if (u.jkMet <= 0 && !u.st.attack && u.stun <= 0 && !burntOut(u) && !b.over) {
       // the densest knot of enemies in range
       let best = null, bn = 0;
-      for (const v of b.teams[1 - u.team]) {
+      for (const v of b.foes(u.team)) {
         if (!v.alive || flat(v.pos, u.pos) > w.metRange) continue;
         let n = v.def.cost >= 600 ? 2 : 0;
         b.grid.query(v.pos.x, v.pos.z, 3.5, (o) => { if (foe(u, o) && flat(o.pos, v.pos) < 3.5) n++; });
@@ -514,7 +514,7 @@ function stepFields(b, dt) {
     const pulse = f.tick <= 0;
     if (pulse) f.tick = 0.5;
     let sapped = 0;
-    for (const v of b.teams[1 - f.team]) {
+    for (const v of b.foes(f.team)) {
       if (!v.alive || flat(v.pos, f.pos) > f.R) continue;
       // a calm, heavy drowsiness: feet drag, arms are slow to swing
       if (!slowBeast(v, 0.55) && v.airT <= 0) {
@@ -785,7 +785,7 @@ onSecret((b, dt) => {
     const id = u.def.id;
     // Prison Realm: Geto (Kenjaku) and an enemy Gojo close by
     if (id === 'jk_geto' && !jk(b).secrets.has('prison') && !burntOut(u) && u.stun <= 0) {
-      for (const v of b.teams[1 - u.team]) {
+      for (const v of b.foes(u.team)) {
         if (!isA(v, 'jk_gojo') || flat(v.pos, u.pos) > u.def.weapon.prisonR) continue;
         announce(b, 'SECRET: Prison Realm!', v.headPos, 'prison');
         seal(b, v, u.def.weapon.prisonT);
@@ -796,12 +796,12 @@ onSecret((b, dt) => {
     }
     // Choso meets his little brother
     if (id === 'jk_choso' && !u.jkBro) {
-      let near = false;
-      for (const v of b.teams[1 - u.team]) if (isA(v, 'jk_yuji') && flat(v.pos, u.pos) < u.def.weapon.broR) { near = true; break; }
+      let near = null;
+      for (const v of b.foes(u.team)) if (isA(v, 'jk_yuji') && flat(v.pos, u.pos) < u.def.weapon.broR) { near = v; break; }
       u.jkBroT = near ? (u.jkBroT || 0) + dt : 0;
-      if (u.jkBroT > u.def.weapon.broT) {
+      if (near && u.jkBroT > u.def.weapon.broT) {
         u.jkBro = true;
-        switchTeam(b, u, 1 - u.team);
+        switchTeam(b, u, near.team); // (to Yuji's side, whichever army that is)
         announce(b, 'SECRET: Big brother!', u.headPos, 'bro' + u.id);
         u.hp = u.maxHp; u.st.attack = null; u.expr = EXPR.happy;
         b.voice(u, 'cheer', true);

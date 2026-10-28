@@ -373,7 +373,7 @@ function looseThink(b, m, dt, yaw) {
   const L = m.loose || (m.loose = { t: 0, flee: rand(3, 5), turnT: rand(1, 3), yaw });
   L.t += dt; L.turnT -= dt;
   let near = null, nd = 6 * 6;
-  for (const o of b.teams[1 - m.u.team]) {
+  for (const o of b.foes(m.u.team)) {
     if (!o.alive) continue;
     const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2;
     if (d < nd) { nd = d; near = o; }
@@ -451,7 +451,7 @@ function inTuskZone(b, m) {
 }
 function nearestTo(b, u, p) {
   let best = null, bd = Infinity;
-  for (const o of b.teams[1 - u.team]) {
+  for (const o of b.foes(u.team)) {
     if (!o.alive) continue;
     const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2;
     if (d < bd) { bd = d; best = o; }

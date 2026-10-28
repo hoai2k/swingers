@@ -535,7 +535,7 @@ function walkerSight(b, m, dt) {
   const head = partPoint(m, HEAD, 0, -0.3, 1.95, new V3());
   if (!T.losBlocked(b, head, t.chestPos)) { m.detour = null; return; }
   const range = m.u.def.weapon.range, p = m.torso.pos;
-  const near = b.teams[1 - m.u.team].filter((o) => o.alive && o !== t && !o.dormant)
+  const near = b.foes(m.u.team).filter((o) => o.alive && o !== t && !o.dormant)
     .map((o) => [o, (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2])
     .filter(([, d2]) => d2 > 30 && d2 < range * range).sort((x, y) => x[1] - y[1]).slice(0, 6);
   for (const [o] of near) if (!T.losBlocked(b, head, o.chestPos)) { m.tgt = o; m.detour = null; return; }
@@ -744,7 +744,7 @@ const units = [
 ];
 
 // ------------------------------------------------------------------ visuals: items
-const BLADE = ['#9ff4ff', '#a8ff9a'], BLADE_RED = '#ff5a4a';
+const BLADE = ['#9ff4ff', '#a8ff9a', '#fff27a', '#7affb0'], BLADE_RED = '#ff5a4a';
 function energyBlade(H, s, g, col, L) {
   const { mesh, cyl, sphere, mat, glow } = H;
   const steel = mat('#b8bec6', { spec: 1 }), grip = mat('#26262a', { spec: 0.4 });

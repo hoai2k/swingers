@@ -169,7 +169,7 @@ function wantDomain(u, dt) {
   if (u.jkDomCD > 0 || b.over || burntOut(u) || myDomain(u) || u.stun > 0.3 || u.jkSealedT > b.time || u.st.attack || u.isDown()) return false;
   for (const d of jk(b).domains) if (d.team !== u.team && flat(u.pos, d.pos) < d.R) return true;
   let n = 0, big = 0, left = 0;
-  for (const v of b.teams[1 - u.team]) {
+  for (const v of b.foes(u.team)) {
     if (!v.alive) continue;
     left++;
     if (flat(v.pos, u.pos) > w.domR * 0.7) continue;

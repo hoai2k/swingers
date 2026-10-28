@@ -57,7 +57,7 @@ function eleInit(u, cfg) {
 
 function nearestFrom(b, team, p, range) {
   let best = null, bd = range * range;
-  for (const o of b.teams[1 - team]) {
+  for (const o of b.foes(team)) {
     if (!o.alive) continue;
     const d = (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2;
     if (d < bd) { bd = d; best = o; }

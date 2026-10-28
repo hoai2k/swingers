@@ -33,8 +33,8 @@ async function fight(G, S, W, job) {
   if (mi < 0) mi = 0;
   if (!TERR.has(mi)) { const t = new W.Terrain(W.MAPS[mi], mi + 1); t.buildMesh(); TERR.set(mi, t); }
   const terrain = TERR.get(mi);
-  const { armies } = S.simArmies(sc, job.size, [Math.random(), Math.random()]);
-  const keep = armies.map((a, t) => a.filter((u) => S.fitToMap(terrain, t, u)));
+  const { armies } = S.simArmies(sc, job.size, [Math.random(), Math.random(), Math.random(), Math.random()]);
+  const keep = armies.map((a, t) => a.filter((u) => S.fitToMap(terrain, t, u, armies.length)));
   const bt = new G.Battle(terrain, keep, null);
   for (let f = 0; f < 60 * job.maxT && !bt.over; f++) bt.step(1 / 60);
   const res = { id: job.id, win: bt.over ? bt.winner : -1, t: +bt.time.toFixed(1), n: keep.map((a) => a.length) };
@@ -78,7 +78,13 @@ if (process.send && process.env.SIMS_WORKER) {
   for (const id of ids) {
     const rs = res.filter((r) => r.id === id && !r.error);
     if (!rs.length) continue;
+    const mean = `${(rs.reduce((s, r) => s + r.t, 0) / rs.length).toFixed(0).padStart(7)}s`;
+    if (rs[0].n.length > 2) { // more armies: wins per army (Blue Red Yellow Green), then draws
+      const w = rs[0].n.map((_, t) => rs.filter((r) => r.win === t).length), d = rs.length - w.reduce((s, x) => s + x, 0);
+      console.log(id.padEnd(16) + ` ${rs[0].n.join('v').padEnd(9)} wins ${w.join('/')} (B/R/Y/G), draws ${d}${mean}`);
+      continue;
+    }
     const b = rs.filter((r) => r.win === 0).length, rd = rs.filter((r) => r.win === 1).length, d = rs.length - b - rd;
-    console.log(id.padEnd(16) + ` ${rs[0].n.join('v').padEnd(9)} ${String(b).padStart(5)}${String(rd).padStart(5)}${String(d).padStart(5)}${(Math.round(((b + d / 2) / rs.length) * 100) + '%').padStart(7)}${(rs.reduce((s, r) => s + r.t, 0) / rs.length).toFixed(0).padStart(7)}s`);
+    console.log(id.padEnd(16) + ` ${rs[0].n.join('v').padEnd(9)} ${String(b).padStart(5)}${String(rd).padStart(5)}${String(d).padStart(5)}${(Math.round(((b + d / 2) / rs.length) * 100) + '%').padStart(7)}${mean}`);
   }
 }

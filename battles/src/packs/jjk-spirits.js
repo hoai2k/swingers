@@ -597,7 +597,7 @@ const yorozu = {
     if (busy(u) || burntOut(u)) return;
     if (u.jkSph <= 0 && !u.jkSphDone) {
       let best = null;
-      for (const v of b.teams[1 - u.team]) {
+      for (const v of b.foes(u.team)) {
         if (!foe(u, v) || flat(v.pos, u.pos) > w.sphRange) continue;
         if (!best || v.def.cost > best.def.cost) best = v;
       }

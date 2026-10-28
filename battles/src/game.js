@@ -7,7 +7,7 @@ import { UI, btn } from './ui.js';
 import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction } from './units.js';
 import { loadRecipes, syncCustomUnits, CUSTOM_FACTION } from './packs/custom.js';
 import { Creator } from './creator.js';
-import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP } from './world.js';
+import { MAPS, Terrain, buildScene, zoneMesh, FIELD, ZONE_GAP, MAX_ARMIES, zoneRect, inZoneOf, zonePoint, zoneHalfWidth } from './world.js';
 import { buildUnitVisual, disposeVisual, poseVisual, setExpression, renderPortraits, placeHeld, TEAM_COLORS, TEAM_NAMES, setFar, setGoogly, jiggleEyes } from './visual.js';
 import { makeSkeleton, PART, NPARTS } from './body.js';
 import { CamRig } from './camera.js';
@@ -108,6 +108,7 @@ function aims(u) {
   return !!k && !k.melee && w.range > 0 && !u.bc;
 }
 const onOff = (b) => (b ? 'On' : 'Off');
+const armiesText = (n) => ['2 — Blue vs Red', '3 — + Yellow (free-for-all)', '4 — + Yellow and Green (free-for-all)'][clamp((n | 0 || 2) - 2, 0, 2)];
 
 export class Game {
   constructor(canvas, hud) {
@@ -116,7 +117,7 @@ export class Game {
     this.settings = Object.assign({
       map: 0, budget: 2, cap: 2, sbBudget: 5, sbCap: 7, blood: true, music: true, sound: true, autoFs: true, googly: true, // sandbox: unlimited gold and units
       quality: 2, blind: false, split: false, look: 2, invertY: false,
-      rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1, simSize: 1, simWatch: true,
+      rounds: 0, bonus: false, timer: 0, sandboxPlayers: 1, simSize: 1, simWatch: true, armies: 2,
       // performance options (see perfItems)
       res: 0, autoRes: true, shadows: true, fxLite: false, corpses: 0, simLoad: 1, showFps: false, lod: true, sfxRec: true,
     }, st.settings || {});
@@ -148,6 +149,7 @@ export class Game {
     }, () => ({ sound: this.settings.sound !== false, music: this.settings.music, busy: this.state === 'battle' }));
     this.ui = new UI(hud);
     this.armies = st.armies || [[], []];
+    this.padArmies();
     this.mapArmies = st.maps || {};
     this.rigs = [new CamRig(), new CamRig()];
     this.split = !!this.settings.split;
@@ -181,6 +183,7 @@ export class Game {
     // custom units (Unit Creator): register the saved ones before anything reads the roster
     try { loadRecipes(); syncCustomUnits(); } catch (e) { console.warn('custom units skipped', e); }
     this.ui.portraits = renderPortraits(UNITS, 112);
+    this.portraits23 = false;
     this.customSig = this.customSigs();
     this.ui.buildTitle();
     this.ui.buildSetup();
@@ -196,6 +199,45 @@ export class Game {
     this.last = performance.now();
     const loop = (t) => { this.frame(t); requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
+  }
+
+  // how many armies fight: two, or up to four in the sandbox (Options: Armies) and in
+  // a simulation with more sides. this.armies always holds MAX_ARMIES lists; the ones
+  // past nArmies are kept (and saved) but hidden and left out of the battle.
+  get nArmies() {
+    if (this.sim) return this.sim.n;
+    return this.mode === 'sandbox' ? clamp(this.settings.armies | 0 || 2, 2, MAX_ARMIES) : 2;
+  }
+  // Yellow and Green portraits are only painted once a battle with them comes up
+  ensurePortraits(need = this.nArmies > 2) {
+    if (!need || this.portraits23) return;
+    this.portraits23 = true;
+    Object.assign(this.ui.portraits, renderPortraits(UNITS, 112, [2, 3]));
+  }
+  padArmies() { while (this.armies.length < MAX_ARMIES) this.armies.push([]); }
+  activeArmies() { return this.armies.slice(0, this.nArmies); }
+  // where a placed unit looks while it waits: across at the enemy, or at the middle
+  idleYaw(t, v) { return this.nArmies <= 2 ? (t === 0 ? Math.PI / 2 : -Math.PI / 2) : Math.atan2(-v.entry.x, -v.entry.z); }
+  // the deployment zones on the ground (rebuilt when the number of armies changes)
+  buildZones() {
+    const n = this.nArmies, vis = this.zones?.[0]?.visible ?? false;
+    if (this.zones && this.zonesN === n && this.zonesMap === this.map) return;
+    for (const z of this.zones || []) { this.scene.remove(z); z.geometry.dispose(); }
+    this.zones = Array.from({ length: n }, (_, t) => { const r = zoneRect(t, n); return zoneMesh(this.terrain, r.x0, r.x1, r.z0, r.z1, TEAM_COLORS[t]); });
+    this.zones.forEach((z) => { z.visible = vis; this.scene.add(z); });
+    this.zonesN = n;
+    this.zonesMap = this.map;
+  }
+  // Options → Armies changed during setup: zones, visible armies, who builds what
+  armiesChanged() {
+    this.buildZones();
+    this.ensurePortraits();
+    this.zones.forEach((z) => (z.visible = true));
+    this.showAllSetupVis();
+    const n = this.nArmies;
+    for (const p of this.ps) { p.ready = false; if (p.team >= n) { p.team = 0; this.setupCam(this.ps.indexOf(p)); } }
+    if (this.ps[1].active && this.ps[1].team === this.ps[0].team) this.ps[1].team = 1;
+    this.ui.toast(n > 2 ? `${n} armies: every army fights every other. ${btn('View')} / menu switches the army you build` : 'Two armies: Blue vs Red', 2.4);
   }
 
   save() {
@@ -272,6 +314,7 @@ export class Game {
     this.disposeBattle();
     if (opts.armies) {
       this.armies = opts.armies;
+      this.padArmies();
       for (const p of this.ps) { p.undo = []; p.stroke = p.rstroke = null; }
     } else if (this.sim) {
       // (a simulation takes its armies along to another map)
@@ -279,14 +322,14 @@ export class Game {
       // armies are kept per map: park the current ones, pick up the new map's
       this.mapArmies[this.map.id] = packArmy2(this.armies);
       const saved = this.mapArmies[MAPS[i].id];
-      if (saved) this.armies = saved.map((a) => a.map((u) => ({ ...u })));
+      if (saved) { this.armies = saved.map((a) => a.map((u) => ({ ...u }))); this.padArmies(); }
       for (const p of this.ps) { p.undo = []; p.stroke = p.rstroke = null; }
     }
     const map = MAPS[i];
     this.map = map;
     if (this.scene) {
       for (const p of this.ps) for (const g of p.ghosts) disposeVisual(g);
-      for (const t of [0, 1]) for (const v of this.setupVis?.[t] || []) disposeVisual(v);
+      for (const a of this.setupVis || []) for (const v of a) disposeVisual(v);
       for (const v of this.titleUnits || []) disposeVisual(v);
       this.scene.traverse((o) => { if (o.geometry && !o.geometry.userData?.shared) o.geometry.dispose?.(); });
     }
@@ -296,11 +339,8 @@ export class Game {
     env.sun.shadow.mapSize.set(QUALITY[this.quality].shadow, QUALITY[this.quality].shadow);
     env.sun.castShadow = this.settings.shadows !== false;
     this.env = env;
-    this.zones = [
-      zoneMesh(this.terrain, -FIELD.x, -ZONE_GAP, -FIELD.z, FIELD.z, TEAM_COLORS[0]),
-      zoneMesh(this.terrain, ZONE_GAP, FIELD.x, -FIELD.z, FIELD.z, TEAM_COLORS[1]),
-    ];
-    this.zones.forEach((z) => this.scene.add(z));
+    this.zones = null;
+    this.buildZones();
     this.fx = new FX(this.scene, this.terrain);
     this.fx.blood = this.settings.blood;
     this.fx.lite = !!this.settings.fxLite;
@@ -329,13 +369,13 @@ export class Game {
       return { cursor: mk(TEAM_COLORS[p], 0.8), remove: mk('#ff3b30', 0.72), show: false, showRemove: false };
     });
     // rebuild placed unit visuals on the new ground
-    this.setupVis = [[], []];
-    for (let t = 0; t < 2; t++) {
+    this.setupVis = this.armies.map(() => []);
+    for (let t = 0; t < this.armies.length; t++) {
       const keep = [];
       for (const a of this.armies[t]) {
         if (!UNIT_BY_ID[a.type]) continue;
         // a simulation's formations ignore the map: step a unit off a wall or out of water
-        if (this.sim) fitToMap(this.terrain, t, a, ZONE_GAP, FIELD);
+        if (this.sim) fitToMap(this.terrain, t, a, this.nArmies);
         if (!this.terrain.blocked(a.x, a.z, 0)) { keep.push(a); this.addSetupVis(t, a); }
       }
       this.armies[t] = keep;
@@ -519,13 +559,13 @@ export class Game {
       rg.remove.visible = p === v && rg.showRemove;
     }
     const blind = this.blindNow();
-    for (let t = 0; t < 2; t++) for (const vis of this.setupVis[t]) vis.root.visible = !blind || t === this.ps[v].team;
+    for (let t = 0; t < this.setupVis.length; t++) for (const vis of this.setupVis[t]) vis.root.visible = t < this.nArmies && (!blind || t === this.ps[v].team);
     return blind;
   }
 
   blindNow() { return this.state === 'setup' && this.mode === 'versus' && this.settings.blind && !(this.countdown > 0); }
 
-  showAllSetupVis() { for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) v.root.visible = true; }
+  showAllSetupVis() { const n = this.nArmies; for (let t = 0; t < this.setupVis.length; t++) for (const v of this.setupVis[t]) v.root.visible = t < n; }
 
   // ---------------------------------------------------------------- custom units
   customSigs() {
@@ -544,10 +584,10 @@ export class Game {
     this.customSig = sig;
     const touched = new Set([...changed, ...gone]);
     if (!touched.size) return;
-    if (changed.length) Object.assign(this.ui.portraits, renderPortraits(changed.map((id) => UNIT_BY_ID[id]), 112));
+    if (changed.length) Object.assign(this.ui.portraits, renderPortraits(changed.map((id) => UNIT_BY_ID[id]), 112, this.portraits23 ? [0, 1, 2, 3] : [0, 1]));
     for (const id of touched) SKEL_CACHE.delete(id);
     for (const p of this.ps) { for (const g of p.ghosts) disposeVisual(g); p.ghosts = []; p.ghostId = null; p.undo = []; }
-    for (let t = 0; t < 2; t++) {
+    for (let t = 0; t < this.armies.length; t++) {
       // deleted units leave the armies; edited ones are rebuilt with their new look
       this.armies[t] = this.armies[t].filter((a) => UNIT_BY_ID[a.type]);
       for (const v of this.setupVis[t].filter((v) => touched.has(v.entry.type))) disposeVisual(v);
@@ -579,7 +619,7 @@ export class Game {
     this.hideGhosts();
     this.closeModals();
     for (const r of this.rigs) { r.release(); r.zoom = 0; }
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.resetVis(v);
+    for (const a of this.setupVis) for (const v of a) this.resetVis(v);
     this.showAllSetupVis();
     this.audio.startMusic('title');
     this.titleT = this.titleT || 0;
@@ -589,7 +629,7 @@ export class Game {
 
   // the current armies stand on the title field, or a demo line-up if both are empty
   showTitleUnits() {
-    if (!this.armies[0].length && !this.armies[1].length && !this.titleUnits) {
+    if (!this.armies.some((a) => a.length) && !this.titleUnits) {
       this.titleUnits = UNITS.map((d, i) => {
         const vis = buildUnitVisual(d, i % 2, { skel: skelOf(d) });
         vis.entry = { type: d.id, x: (i - UNITS.length / 2) * 2.2, z: (i % 2) * 2.5 - 6 };
@@ -608,7 +648,7 @@ export class Game {
     this.rigs[0].lookAtPoint(0, 1.5, -4);
     this.rigs[0].apply();
     for (const v of this.titleUnits || []) this.poseIdle(v, dt, Math.atan2(this.rigs[0].pos.x - v.entry.x, this.rigs[0].pos.z - v.entry.z) * 0.6);
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.poseIdle(v, dt, t === 0 ? Math.PI / 2 : -Math.PI / 2);
+    for (let t = 0; t < this.setupVis.length; t++) for (const v of this.setupVis[t]) this.poseIdle(v, dt, this.idleYaw(t, v));
   }
 
   titleItems() {
@@ -644,7 +684,8 @@ export class Game {
       ];
       case 'sandbox': return [
         { label: 'START SANDBOX', key: 'go' },
-        { label: 'Players', value: s.sandboxPlayers === 2 ? '2 — one army each' : '1 — build both armies', key: 'sbPlayers' },
+        { label: 'Players', value: s.sandboxPlayers === 2 ? '2 — one army each' : '1 — build every army', key: 'sbPlayers' },
+        { label: 'Armies', value: armiesText(s.armies), key: 'armies' },
         ...common,
         { label: 'Back', key: 'back' },
       ];
@@ -665,13 +706,15 @@ export class Game {
   refreshLooks() {
     if (this.state !== 'title') return; // (Options is only on the title: nothing is fighting)
     this.disposeBattle();
-    for (let t = 0; t < 2; t++) {
+    for (let t = 0; t < this.armies.length; t++) {
       for (const v of this.setupVis[t]) disposeVisual(v);
       this.setupVis[t] = [];
       for (const a of this.armies[t]) this.addSetupVis(t, a);
     }
+    this.showAllSetupVis();
     if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
     this.ui.portraits = renderPortraits(UNITS, 112);
+    this.portraits23 = false;
   }
 
   // the corner gear: the settings for where you are
@@ -705,7 +748,7 @@ export class Game {
   }
   // one line on how the game is coping (performance pages)
   perfLine() {
-    const P = this.perf, n = this.battle ? this.battle.units.filter((u) => u.alive).length : this.armies[0].length + this.armies[1].length;
+    const P = this.perf, n = this.battle ? this.battle.units.filter((u) => u.alive).length : this.activeArmies().reduce((s, a) => s + a.length, 0);
     const sim = this.battle && (this.state === 'battle' || this.pauseFrom === 'battle') ? ` · battle at ${Math.round(P.speed * 100)}% speed` : '';
     return `Now: <b>${Math.round(P.fps)} fps</b>${sim} · ${n} unit${n === 1 ? '' : 's'}${this.battle ? ' standing' : ''}. Lower the resolution, shadows or effects for a faster picture; <i>Fallen units</i> and fewer units for a faster battle.`;
   }
@@ -722,6 +765,7 @@ export class Game {
       case 'rounds': s.rounds = cyc(s.rounds | 0, ROUNDS.length); break;
       case 'bonus': s.bonus = !s.bonus; break;
       case 'sbPlayers': s.sandboxPlayers = s.sandboxPlayers === 2 ? 1 : 2; break;
+      case 'armies': s.armies = 2 + (((s.armies | 0 || 2) - 2 + d + 3) % 3); if (this.state === 'setup') this.armiesChanged(); break;
       case 'timer': s.timer = cyc(s.timer | 0, TIMERS.length); break;
       case 'split': s.split = !s.split; this.split = s.split; break;
       case 'quality': this.quality = cyc(this.quality, QUALITY.length); s.quality = this.quality; this.applyQuality(); break;
@@ -851,7 +895,7 @@ export class Game {
     this.hideGhosts();
     this.closeModals();
     for (const r of this.rigs) { r.release(); r.zoom = 0; }
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.resetVis(v);
+    for (const a of this.setupVis) for (const v of a) this.resetVis(v);
     this.showAllSetupVis();
     this.audio.startMusic('title');
     this.titleT = this.titleT || 0;
@@ -946,7 +990,7 @@ export class Game {
     this.hideGhosts();
     this.closeModals();
     for (const r of this.rigs) { r.release(); r.zoom = 0; }
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.resetVis(v);
+    for (const a of this.setupVis) for (const v of a) this.resetVis(v);
     this.showAllSetupVis();
     this.audio.startMusic('title');
     this.titleT = this.titleT || 0;
@@ -977,7 +1021,7 @@ export class Game {
     const sc = SCENARIOS[sel];
     const k = SIM_SIZES[s.simSize | 0]?.k ?? 1;
     // (a random war shows what kind of battle it is, not one draw of it)
-    if (!this.simPreview || this.simPreview.sc !== sc) this.simPreview = { sc, ...simArmies(sc, k) };
+    if (!this.simPreview || this.simPreview.sc !== sc) { this.simPreview = { sc, ...simArmies(sc, k) }; this.ensurePortraits(sc.sides.length > 2); }
     const pv = this.simPreview;
     const sideInfo = (t) => {
       const counts = new Map();
@@ -988,7 +1032,7 @@ export class Game {
     this.ui.updateSims({
       count: SCENARIOS.length,
       cats: cats.map((c) => ({ name: c.name, color: c.color, list: c.list.map((x) => ({ name: x.name, when: x.when, sel: x === sc })) })),
-      sim: { name: sc.name, when: sc.when, desc: sc.desc, color: SIM_CATS.find((c) => c.id === sc.cat)?.color || '#888', map: map.name, mapImg: mapImg(map.id), random: !!sc.random, sides: [sideInfo(0), sideInfo(1)] },
+      sim: { name: sc.name, when: sc.when, desc: sc.desc, color: SIM_CATS.find((c) => c.id === sc.cat)?.color || '#888', map: map.name, mapImg: mapImg(map.id), random: !!sc.random, sides: sc.sides.map((_, t) => sideInfo(t)) },
       sizes: SIM_SIZES.map((z) => z.name), size: s.simSize | 0, watch: s.simWatch !== false,
     });
   }
@@ -1002,12 +1046,12 @@ export class Game {
     this.level = null;
     const k = SIM_SIZES[this.settings.simSize | 0]?.k ?? 1;
     const { armies, names } = simArmies(sc, k);
-    this.sim = { sc, names };
+    this.sim = { sc, names, n: armies.length };
     const mi = Math.max(0, MAPS.findIndex((m) => m.id === sc.map));
     if (this.titleUnits) { for (const v of this.titleUnits) disposeVisual(v); this.titleUnits = null; }
     this.loadMap(mi, { armies });
     this.goSetup();
-    if (this.settings.simWatch !== false && (this.armies[0].length || this.armies[1].length)) this.startBattle();
+    if (this.settings.simWatch !== false && this.activeArmies().some((a) => a.length)) this.startBattle();
     else this.ui.toast(`<b>${sc.name}</b>: change the armies if you like, then ${btn('Y')} to start`, 3);
   }
 
@@ -1039,6 +1083,9 @@ export class Game {
     this.ui.only('setup');
     this.ui.setHelp(false);
     this.helpOn = false;
+    this.buildZones();
+    this.ensurePortraits();
+    this.showAllSetupVis();
     this.zones.forEach((z) => (z.visible = true));
     // who builds which army: versus P1 Blue / P2 Red; campaign Blue (both in co-op);
     // sandbox one player builds both sides (and keeps the side they were on)
@@ -1049,6 +1096,8 @@ export class Game {
     else if (this.settings.sandboxPlayers === 2) { a.team = 0; b.team = 1; b.active = true; } // 2-player sandbox: one army each
     else { a.team = a.team === 1 ? 1 : 0; b.team = 1; b.active = false; }
     a.active = true;
+    for (const p of this.ps) if (p.team >= this.nArmies) p.team = 0;
+    if (b.active && b.team === a.team) b.team = (a.team + 1) % this.nArmies;
     const nf = this.factionList().length;
     for (const p of this.ps) {
       p.ready = false; p.last = null; p.modal = null; p.stroke = p.rstroke = null; p.backT = 0; p.cleared = false;
@@ -1060,7 +1109,7 @@ export class Game {
     for (const r of this.rigs) { if (r.unit && r.unit.control) r.unit.control = null; r.release(); r.zoom = 0; }
     this.setupCam(0);
     this.setupCam(1);
-    for (let t = 0; t < 2; t++) for (const v of this.setupVis[t]) this.resetVis(v);
+    for (const a of this.setupVis) for (const v of a) this.resetVis(v);
     this.ui.setSetupLayout(this.solo);
     this.audio.startMusic('setup');
     this.audio.setVolumes(0.8, this.settings.music ? 0.45 : 0);
@@ -1075,6 +1124,12 @@ export class Game {
   // a comfortable default view over the player's own zone (co-op: one each end of it)
   setupCam(p) {
     const t = this.ps[p].team;
+    if (this.nArmies > 2) { // a quadrant: from its outer corner, looking at the middle
+      const r = zoneRect(t, this.nArmies), cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
+      const ox = cx + Math.sign(cx) * 14, oz = cz + Math.sign(cz) * 10;
+      this.rigs[p].set(ox, this.terrain.height(cx, cz) + 22, oz, Math.atan2(-ox, -oz), -0.7);
+      return;
+    }
     const sx = t === 0 ? -1 : 1;
     const shared = this.ps[0].active && this.ps[1].active && this.ps[0].team === this.ps[1].team;
     const z = shared ? (p === 0 ? -11 : 11) : 0;
@@ -1096,10 +1151,7 @@ export class Game {
 
   armyCost(t) { return this.armies[t].reduce((s, a) => s + (UNIT_BY_ID[a.type]?.cost || 0), 0); }
 
-  inZone(t, x, z) {
-    if (Math.abs(z) > FIELD.z) return false;
-    return t === 0 ? x >= -FIELD.x && x <= -ZONE_GAP : x >= ZONE_GAP && x <= FIELD.x;
-  }
+  inZone(t, x, z) { return inZoneOf(t, this.nArmies, x, z); }
 
   // how a player is named in messages: their army, or P1/P2 when both build one army
   who(p) {
@@ -1174,22 +1226,24 @@ export class Game {
       count++;
     }
     const order = [...n.keys()].sort((a, b) => (a.weapon.kind === 'melee' ? 0 : 1) - (b.weapon.kind === 'melee' ? 0 : 1) || b.hp - a.hp);
-    const sx = t === 0 ? -1 : 1;
+    const na = this.nArmies, hw = zoneHalfWidth(na);
     const added = [];
     let d = 8, prevSp = 0;
     for (const def of order) {
       const sp = skelOf(def).radius * 2.3 + 0.35;
       d += (prevSp + sp) / 2;
       let todo = n.get(def);
-      const perRow = clamp(Math.floor((FIELD.z * 2 - 4) / sp), 1, 12);
+      const perRow = clamp(Math.floor((hw * 2 - 4) / sp), 1, 12);
       while (todo > 0 && d <= FIELD.x - 1) {
         const k = Math.min(todo, perRow);
         // fill the row from the middle out, skipping spots in walls or water
         let placed = 0;
         for (let i = 0; i < perRow && placed < k; i++) {
           const z = (i % 2 ? -1 : 1) * Math.ceil(i / 2) * sp + (k % 2 ? 0 : sp / 2);
-          if (Math.abs(z) > FIELD.z - 1 || this.terrain.blocked(sx * d, z, skelOf(def).radius)) continue;
-          added.push({ type: def.id, x: sx * d, z });
+          if (Math.abs(z) > hw - 1) continue;
+          const q = zonePoint(t, na, d, z);
+          if (!this.inZone(t, q.x, q.z) || this.terrain.blocked(q.x, q.z, skelOf(def).radius)) continue;
+          added.push({ type: def.id, x: q.x, z: q.z });
           placed++;
         }
         todo -= placed;
@@ -1209,10 +1263,17 @@ export class Game {
   }
 
   // solo (sandbox): switch which army you're building
-  canSwitch(p) { return this.solo && !this.locked(1 - this.ps[p].team); }
+  // (with more than two armies in a 2-player sandbox each player can also build the
+  // spare ones: every army but the other player's)
+  canSwitch(p) { return (this.solo || (this.mode === 'sandbox' && this.nArmies > 2)) && this.nextTeam(p) !== this.ps[p].team; }
+  nextTeam(p) {
+    const ps = this.ps[p], n = this.nArmies, other = this.solo ? -1 : this.ps[1 - p].team;
+    for (let k = 1; k <= n; k++) { const t = (ps.team + k) % n; if (t !== other && !this.locked(t)) return t; }
+    return ps.team;
+  }
   switchSide(p) {
     const ps = this.ps[p];
-    ps.team = 1 - ps.team;
+    ps.team = this.nextTeam(p);
     ps.stroke = ps.rstroke = null;
     ps.last = null;
     this.setupCam(p);
@@ -1223,7 +1284,8 @@ export class Game {
   // what stops this player from readying up ('' if nothing)
   readyProblem(p) {
     const ps = this.ps[p];
-    const teams = this.mode === 'sandbox' && this.solo ? [ps.team, 1 - ps.team] : [ps.team];
+    const n = this.nArmies;
+    const teams = this.mode === 'sandbox' && this.solo ? [ps.team, ...Array.from({ length: n }, (_, k) => k).filter((k) => k !== ps.team)] : [ps.team];
     for (const t of teams) {
       const n = this.armies[t].length, used = this.armyCost(t);
       const name = teams.length > 1 ? `${teamTag(t)} army: ` : '';
@@ -1237,11 +1299,12 @@ export class Game {
   updateSetup(dt) {
     for (const p of this.activePlayers()) { this.updateSetupPlayer(p, dt); if (this.state !== 'setup') return; }
     // a big army animates its distant (stand-in) units every 4th frame, staggered
-    const many = this.setupVis[0].length + this.setupVis[1].length >= LOD_MIN;
-    for (let t = 0; t < 2; t++) {
+    const na = this.nArmies;
+    const many = this.setupVis.slice(0, na).reduce((s, a) => s + a.length, 0) >= LOD_MIN;
+    for (let t = 0; t < na; t++) {
       this.setupVis[t].forEach((v, i) => {
         if (many && v.far && (i + this.frameNo) % 4) return;
-        this.poseIdle(v, many && v.far ? dt * 4 : dt, t === 0 ? Math.PI / 2 : -Math.PI / 2);
+        this.poseIdle(v, many && v.far ? dt * 4 : dt, this.idleYaw(t, v));
       });
     }
     // versus setup timer: when it runs out the battle starts with whatever is placed
@@ -1334,7 +1397,7 @@ export class Game {
       { label: 'Resume', key: 'resume' },
       { label: ps.ready ? 'Not ready' : this.solo ? 'Start battle' : 'Ready', key: 'ready' },
     ];
-    if (this.canSwitch(p)) items.push({ label: `Build the ${TEAM_NAMES[1 - ps.team]} army`, key: 'switch' });
+    if (this.canSwitch(p)) items.push({ label: `Build the ${TEAM_NAMES[this.nextTeam(p)]} army`, key: 'switch' });
     items.push({ label: 'Random army', key: 'random' });
     items.push({ label: `Clear ${this.mode === 'campaign' ? 'my' : TEAM_NAMES[ps.team]} army…`, key: 'clear' });
     if (this.mode !== 'campaign') {
@@ -1342,6 +1405,7 @@ export class Game {
       items.push({ label: 'Budget', value: money(BUDGETS[s[this.limKeys()[0]]]), key: 'budget' });
       items.push({ label: 'Unit limit', value: capText(CAPS[s[this.limKeys()[1]]]), key: 'cap' });
       if (this.mode === 'versus') items.push({ label: 'Blind setup', value: onOff(s.blind), key: 'blind' });
+      if (this.mode === 'sandbox' && !this.sim) items.push({ label: 'Armies', value: armiesText(s.armies), key: 'armies' });
     }
     items.push({ label: 'Performance…', key: 'perf' });
     items.push({ label: 'Controls', key: 'help' });
@@ -1604,7 +1668,7 @@ export class Game {
       for (const e of a) m.set(e.type, (m.get(e.type) || 0) + 1);
       return [...m].map(([id, n]) => ({ id, n, gold: n * (UNIT_BY_ID[id]?.cost || 0) }));
     };
-    const ot = 1 - t;
+    const ot = (t + 1) % this.nArmies; // (more armies: the next one round)
     const enemy = this.armies[ot];
     let foeTag = TEAM_NAMES[ot], foeState = '';
     if (this.mode === 'versus' || (this.mode === 'sandbox' && !this.solo)) foeState = this.ps[1 - p].ready ? '<b class="ok">✔ READY</b>' : '<small class="busy">building…</small>';
@@ -1615,7 +1679,12 @@ export class Game {
       def, factions: fl, faction: ps.faction, unit: ps.unit, used, budget, cap, count: army.length,
       ready: ps.ready, valid: valid || !hit, status, brush: BRUSHES[ps.brush].name,
       roster: roster(army),
-      enemy: { name: foeTag, hidden: this.blindNow(), count: enemy.length, value: this.armyCost(ot), state: foeState, roster: this.solo ? roster(enemy) : null },
+      enemy: {
+        name: this.nArmies > 2 ? `${this.nArmies - 1} other armies` : foeTag, team: ot, hidden: this.blindNow(), state: foeState,
+        count: this.nArmies > 2 ? this.activeArmies().reduce((s, a, k) => s + (k === t ? 0 : a.length), 0) : enemy.length,
+        value: this.nArmies > 2 ? this.activeArmies().reduce((s, a, k) => s + (k === t ? 0 : this.armyCost(k)), 0) : this.armyCost(ot),
+        rosters: this.solo ? this.activeArmies().map((a, k) => ({ team: k, roster: roster(a) })).filter((o) => o.team !== t) : null,
+      },
       modal: this.modalView(p), hints: this.setupHints(p),
     });
   }
@@ -1623,7 +1692,7 @@ export class Game {
   // ---------------------------------------------------------------- battle
   startBattle(now) {
     // a huge battle takes a moment to build: say so first, build it once that's drawn
-    const n = this.armies[0].length + this.armies[1].length;
+    const n = this.activeArmies().reduce((s, a) => s + a.length, 0);
     if (!now && n >= 300) {
       if (!this.prepping) {
         this.prepping = `Preparing the battle: ${n} units…`;
@@ -1642,9 +1711,9 @@ export class Game {
     this.fx.clear();
     this.projViz.clear();
     this.showAllSetupVis();
-    this.battleVis = [...this.setupVis[0], ...this.setupVis[1]];
+    this.battleVis = this.setupVis.slice(0, this.nArmies).flat();
     for (const v of this.battleVis) this.resetVis(v);
-    const armies = this.armies.map((a) => a.map(({ type, x, z }) => ({ type, x, z })));
+    const armies = this.activeArmies().map((a) => a.map(({ type, x, z }) => ({ type, x, z })));
     this.battle = new Battle(this.terrain, armies, (e) => this.onEvent(e, true));
     // a faction's own sounds (JJK voices, Avatar / Minecraft / Galactic effects) load only for a battle with it in
     // (from setup already: addSetupVis)
@@ -1672,7 +1741,7 @@ export class Game {
       // split: each player keeps their own setup view; shared: a side-on overview
       if (!this.split) this.overviewCam(this.rigs[0]);
     }
-    this.musicTheme = battleTheme(this.armies, this.mode === 'campaign' && this.level ? WORLDS[this.level.world]?.id : null, this.map);
+    this.musicTheme = battleTheme(this.activeArmies(), this.mode === 'campaign' && this.level ? WORLDS[this.level.world]?.id : null, this.map);
     this.audio.startMusic(this.musicTheme);
     if (!this.audio.stinger('start')) this.audio.play('horn', null, 0.8, 1);
     this.syncLive(0);
@@ -1682,7 +1751,7 @@ export class Game {
   // side-on view framing both armies
   overviewCam(rig) {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-    for (const a of [...this.armies[0], ...this.armies[1]]) { x0 = Math.min(x0, a.x); x1 = Math.max(x1, a.x); z0 = Math.min(z0, a.z); z1 = Math.max(z1, a.z); }
+    for (const a of this.activeArmies().flat()) { x0 = Math.min(x0, a.x); x1 = Math.max(x1, a.x); z0 = Math.min(z0, a.z); z1 = Math.max(z1, a.z); }
     if (x0 > x1) { x0 = -20; x1 = 20; z0 = -10; z1 = 10; }
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
     const span = Math.max(x1 - x0 + 6, (z1 - z0 + 6) * 1.4, 16);
@@ -2025,7 +2094,7 @@ export class Game {
     const scaleText = this.state === 'result' ? '' : sc === 0 ? 'TIME FROZEN <small>✥↑ resume</small>' : sc !== 1 ? `${sc < 1 ? 'SLOW MOTION' : 'FAST'} ${sc}×` : '';
     let banner = '';
     if (this.mode === 'campaign' && this.level) banner = `${this.level.name}`;
-    else if (this.sim) banner = `${this.sim.sc.name} · <b style="color:${TEAM_COLORS[0]}">${this.sim.names[0]}</b> vs <b style="color:${TEAM_COLORS[1]}">${this.sim.names[1]}</b>`;
+    else if (this.sim) banner = `${this.sim.sc.name} · ${this.sim.names.map((s, t) => `<b style="color:${TEAM_COLORS[t]}">${s}</b>`).join(' vs ')}`;
     else if (this.mode === 'versus' && this.match && this.match.bestOf > 1) banner = `Round ${b.scored ? this.match.lastRound : this.match.round} · <b style="color:${TEAM_COLORS[0]}">${this.match.wins[0]}</b> – <b style="color:${TEAM_COLORS[1]}">${this.match.wins[1]}</b> · best of ${this.match.bestOf}`;
     return {
       counts, start: b.startCounts, scaleText, banner,
@@ -2116,7 +2185,7 @@ export class Game {
       else if (this.mode === 'versus') match = this.scoreRound(b.winner);
     }
     this.ui.only('battle', 'result');
-    const names = this.sim ? [...this.sim.names] : this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && this.solo ? [...TEAM_NAMES] : null;
+    const names = this.sim ? [...this.sim.names] : this.mode === 'campaign' ? ['You', 'Enemy'] : this.mode === 'sandbox' && (this.solo || this.nArmies > 2) ? TEAM_NAMES.slice(0, this.nArmies) : null;
     this.ui.showResult({ winNames: this.sim ? this.sim.names : null, winner: b.winner, stats: b.stats(), duration: this.overTime || b.time, match: match && match.bestOf > 1 ? match : null, level, names, coop: this.mode === 'campaign' && !this.solo });
     this.ui.updateResultMenu(this.resultItems(), this.resultSel);
     this.audio.startMusic('setup');
@@ -2368,7 +2437,7 @@ export class Game {
         px.alive = !!(f & 8);
         vis.root.visible = !(f & 128) && (!this.settings.corpses || px.alive || P.fallenFor(i) <= CORPSE_SECONDS);
         // a raised zombie fights for the side that raised it from then on
-        px.team = f & 32 ? 1 : 0;
+        px.team = fr.tm ? fr.tm[i] : f & 32 ? 1 : 0;
         px.def = f & 64 ? px.zdef || (px.zdef = { ...px.def0, name: 'Zombie ' + px.def0.name }) : px.def0;
         px.maxHp = px.def.hp;
         px.hp = (fr.hp[i] / 255) * px.def.hp;

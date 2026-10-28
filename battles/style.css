@@ -408,3 +408,8 @@ span.ficon svg { width: 100%; height: 100%; display: block; }
 .sk.denied small { color: #ff8a7a; opacity: 1; }
 .layer-battle.split .sk { width: 84px; } .layer-battle.split .sk-name { font-size: 10px; }
 @media (max-width: 900px) { .sk { width: 86px; } .sk-name { font-size: 10px; } }
+
+/* more than two armies: one count chip each, with its own bar */
+.counts .cb .cbar { display: block; height: 5px; margin: 1px 0 4px; background: rgba(0,0,0,0.35); border-radius: 3px; overflow: hidden; }
+.counts .cb .cbar i { display: block; height: 100%; background: rgba(255,255,255,0.85); }
+.counts .cb.out { opacity: 0.45; }

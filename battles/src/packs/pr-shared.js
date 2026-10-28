@@ -21,7 +21,7 @@ const _o = new V3(), _p = new V3(), _v = new V3(), _d = new V3(), _w = new V3();
 
 // per-battle state of these packs
 export function PR(b) {
-  return b._pr || (b._pr = { reels: [], painted: [], volley: [-9, -9], balloons: [], tanks: [] });
+  return b._pr || (b._pr = { reels: [], painted: [], volley: [-9, -9, -9, -9], balloons: [], tanks: [] });
 }
 
 // ------------------------------------------------------------------ guns

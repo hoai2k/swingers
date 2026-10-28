@@ -96,7 +96,7 @@ function enemiesIn(b, u, p, R) {
 }
 function nearestEnemyTo(b, u, p, R) {
   let best = null, bd = R;
-  for (const v of b.teams[1 - u.team]) { if (!v.alive) continue; const d = flat(v.pos, p); if (d < bd) { bd = d; best = v; } }
+  for (const v of b.foes(u.team)) { if (!v.alive) continue; const d = flat(v.pos, p); if (d < bd) { bd = d; best = v; } }
   return best;
 }
 function markSpin(b, type, pos, t) {
@@ -343,7 +343,7 @@ function lineCount(u, t) {
   const b = u.battle, w = u.def.weapon, p = u.pos;
   const dx = t.pos.x - p.x, dz = t.pos.z - p.z, L = Math.hypot(dx, dz) || 1, fx = dx / L, fz = dz / L;
   let n = 0;
-  for (const v of b.teams[1 - u.team]) {
+  for (const v of b.foes(u.team)) {
     if (!v.alive) continue;
     const rx = v.pos.x - p.x, rz = v.pos.z - p.z, along = rx * fx + rz * fz;
     if (along < 0 || along > w.range + 6) continue;
@@ -650,7 +650,7 @@ function ritual(u) {
   const b = u.battle;
   // an enemy Sukuna close by may take his body instead
   let sk = null;
-  for (const v of b.teams[1 - u.team]) if (isA(v, 'jk_sukuna') && !sealed(v) && flat(v.pos, u.pos) < 16) { sk = v; break; }
+  for (const v of b.foes(u.team)) if (isA(v, 'jk_sukuna') && !sealed(v) && flat(v.pos, u.pos) < 16) { sk = v; break; }
   if (sk && Math.random() < TUNE.megunaChance) { meguna(b, sk, u); return; }
   sign(u, 'none');
   announce(b, 'With this treasure, I summon...', u.headPos);
@@ -716,7 +716,7 @@ function megunaStep(u, dt) {
   const b = u.battle;
   // Sukuna calls Mahoraga against the Strongest (or when the vessel is failing)
   if (!u.jkMahoraga && readyOf(b, u, 'jk_mahoraga')) {
-    const g = b.teams[1 - u.team].find((v) => isA(v, 'jk_gojo') && flat(v.pos, u.pos) < 24);
+    const g = b.foes(u.team).find((v) => isA(v, 'jk_gojo') && flat(v.pos, u.pos) < 24);
     if (g || u.hp < u.maxHp * 0.35) {
       u.jkMahoraga = true;
       const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
@@ -870,7 +870,7 @@ const toad = {
     if (u.cooldown <= 0 && u.stun <= 0 && !u.isDown()) {
       // prefer a shooter at the back
       let v = t;
-      for (const o of b.teams[1 - u.team]) if (o.alive && o.def.weapon.kind !== 'melee' && flat(o.pos, u.pos) < w.range && !o.bc && o.s < 1.6) { v = o; break; }
+      for (const o of b.foes(u.team)) if (o.alive && o.def.weapon.kind !== 'melee' && flat(o.pos, u.pos) < w.range && !o.bc && o.s < 1.6) { v = o; break; }
       if (flat(v.pos, u.pos) < w.range && !v.bc) {
         u.cooldown = w.cooldown * rand(0.85, 1.15);
         u.tongue = { v, t: 0, beam: {} };
@@ -1681,7 +1681,7 @@ onSecret((b, dt) => {
     if (!u.alive) continue;
     // "Nah, I'd win."
     if (isA(u, 'jk_gojo') && !jk(b).secrets.has('nah')) {
-      for (const v of b.teams[1 - u.team]) if (sukunaLike(v) && flat(v.pos, u.pos) < 16) { announce(b, 'SECRET: "Nah, I\'d win." - Gojo', u.headPos, 'nah'); break; }
+      for (const v of b.foes(u.team)) if (sukunaLike(v) && flat(v.pos, u.pos) < 16) { announce(b, 'SECRET: "Nah, I\'d win." - Gojo', u.headPos, 'nah'); break; }
     }
     // a Sukuna who saw Mahoraga adapt to Infinity learns the World-Cutting Slash
     if (sukunaLike(u) && !u.jkPierce) {

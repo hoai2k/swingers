@@ -8,10 +8,10 @@ import { ITEMS, gripDir, heldLayout } from './items.js';
 import { EXT } from './ext.js';
 import { computePose, newPose } from './pose.js';
 
-export const TEAM_COLORS = ['#3d72e3', '#e2403b'];
-export const TEAM_DARK = ['#294e9e', '#9e2b28'];
-export const TEAM_NAMES = ['Blue', 'Red'];
-const TEAM_LIGHT = ['#8fb4ff', '#ff9a8a'];
+export const TEAM_COLORS = ['#3d72e3', '#e2403b', '#e8b820', '#36a852']; // Blue, Red, Yellow, Green
+export const TEAM_DARK = ['#294e9e', '#9e2b28', '#a67c0e', '#22743a'];
+export const TEAM_NAMES = ['Blue', 'Red', 'Yellow', 'Green'];
+const TEAM_LIGHT = ['#8fb4ff', '#ff9a8a', '#ffe48a', '#9ae8a8'];
 
 // Visuals currently alive (FX reads their motion for footstep / landing dust).
 export const LIVE_VIS = new Set();
@@ -706,7 +706,7 @@ function buildHat(kind, r, team, id) {
   }
   return g;
 }
-const WIZARD = ['#2f4cb3', '#9c2440'];
+const WIZARD = ['#2f4cb3', '#9c2440', '#b88a12', '#1f7a3a'];
 
 // ---------------------------------------------------------------- whole unit
 // Returns { parts: Group[], root: Group, face, items, skel }
@@ -1398,7 +1398,7 @@ function updateBow(vis, h, held) {
 }
 
 // ---------------------------------------------------------------- portraits
-export function renderPortraits(defs, size = 128) {
+export function renderPortraits(defs, size = 128, teams = [0, 1]) {
   const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   r.setSize(size, size);
   r.setPixelRatio(1);
@@ -1411,7 +1411,7 @@ export function renderPortraits(defs, size = 128) {
   const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   const out = {};
   for (const def of defs) {
-    for (const team of [0, 1]) {
+    for (const team of teams) {
       const vis = buildUnitVisual(def, team, { portrait: true });
       const st = { phase: 0, amp: 0, style: def.weapon.style, attack: null, attackT: 0, headPitch: 0, headYaw: 0.2, mode: 'normal', t: 0 };
       poseVisual(vis, 0, 0, 0, 0.5, st);

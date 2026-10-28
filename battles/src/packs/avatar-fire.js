@@ -111,7 +111,7 @@ function pick(u, range) {
   if (u.aimAt && u.aimAt.alive) return u.aimAt;
   let best = null, bd = range * range;
   const fx0 = Math.sin(u.heading), fz0 = Math.cos(u.heading);
-  for (const v of u.battle.teams[1 - u.team]) {
+  for (const v of u.battle.foes(u.team)) {
     if (!v.alive) continue;
     const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = dx * dx + dz * dz;
     if (d < bd && fx0 * dx + fz0 * dz > Math.sqrt(d) * 0.7) { bd = d; best = v; }
@@ -120,7 +120,7 @@ function pick(u, range) {
 }
 function nearestEnemy(u, p, range) {
   let best = null, bd = range * range;
-  for (const v of u.battle.teams[1 - u.team]) {
+  for (const v of u.battle.foes(u.team)) {
     if (!v.alive) continue;
     const d = v.chestPos.distanceToSquared(p);
     if (d < bd) { bd = d; best = v; }

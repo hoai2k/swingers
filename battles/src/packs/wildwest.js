@@ -77,7 +77,7 @@ const quick = {
     if (u.duelT <= 0) {
       u.duelT = 0.5;
       let best = null, bc = 0;
-      for (const o of b.teams[1 - u.team]) {
+      for (const o of b.foes(u.team)) {
         if (!isShooter(o) || (o.pos.x - p.x) ** 2 + (o.pos.z - p.z) ** 2 > w.range * w.range) continue;
         if (o.def.cost > bc) { bc = o.def.cost; best = o; }
       }
