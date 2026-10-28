@@ -393,7 +393,7 @@ function helpHTML(tab, kind) {
   if (tab === 0) {
     body = `<div class="padwrap">
       <div class="callouts left">
-        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Emotes: up wave, left cheer, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
+        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint · swimming: hold to dive')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Emotes: up wave, left cheer, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
       </div>${PAD_SVG}
       <div class="callouts right">
         ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Ragdoll (flop!)')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera')}${row(g('START'), 'Menu')}
@@ -405,7 +405,7 @@ function helpHTML(tab, kind) {
     body = `<div class="kbgrid">
       ${row(G('LS'), 'Move')}${row(G('RS'), 'Camera')}${row(G('A'), 'Jump · get up')}${row(G('B'), 'Ragdoll')}
       ${row(G('X'), 'Punch')}${row(G('Y'), 'Get in / out, sit')}${row(G('LT') + ' ' + G('RT'), 'Grab left / right' + (k === 'kb1' ? ' (or Q / C)' : ''))}
-      ${row(G('LB'), 'Sprint')}${row(G('EMOTE'), 'Emote wheel (hold)')}${row(G('MAP'), 'Map')}${row(G('PHONE'), 'Phone: call a vehicle')}${k === 'kb1' ? row(G('WAVE') + ' ' + G('CHEER') + ' ' + G('DANCE'), 'Wave / cheer / dance') : ''}${row(G('START'), 'Menu')}
+      ${row(G('LB'), 'Sprint · swimming: hold to dive')}${row(G('EMOTE'), 'Emote wheel (hold)')}${row(G('MAP'), 'Map')}${row(G('PHONE'), 'Phone: call a vehicle')}${k === 'kb1' ? row(G('WAVE') + ' ' + G('CHEER') + ' ' + G('DANCE'), 'Wave / cheer / dance') : ''}${row(G('START'), 'Menu')}
       ${row(G('GAS') + ' ' + G('BRAKE'), 'Drive: gas / brake')}${row(G('HORN'), 'Horn')}
       ${row(G('A') + ' hold', 'Gadget: jetpack / glider (in the air)')}${row(G('X'), 'Gadget: fire laser / grappling hook')}
       </div><p class="hnote">${k === 'kb1' ? 'Join with <span class="key">Enter</span> or <span class="key">Space</span>. Click the game to look around with the mouse.' : 'Join with <span class="key">NumEnter</span>. Play alongside Keyboard 1 and controllers.'}</p>`;

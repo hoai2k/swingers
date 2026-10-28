@@ -1,6 +1,7 @@
 // Static scenery kit: adds coloured geometry to spatial chunks (merged into
 // one mesh per chunk for cheap drawing and culling) plus matching colliders.
 import * as THREE from 'three';
+import { Fences } from './fences.js';
 import { Builder, matVC, matVCDouble, matVCDecal } from '../mesh.js';
 import { mergeGeometries } from 'three/addons/BufferGeometryUtils.js';
 import { RAPIER, yawQuat } from '../physics.js';
@@ -14,6 +15,7 @@ export class Kit {
   constructor(game) {
     this.game = game;
     this.phys = game.physics;
+    game.fences ||= new Fences(game);
     this.chunks = new Map();
   }
 
@@ -157,6 +159,8 @@ export class Kit {
   }
 
   fence(x0, z0, x1, z1, color = 0xffffff, h = 1.0, y = 0) {
+    // knock-over-able (fences.js): instanced posts / rails, one merged static box per section
+    if (this.game.fences) { this.game.fences.add(x0, z0, x1, z1, color, h, y); return this; }
     const len = Math.hypot(x1 - x0, z1 - z0), yaw = Math.atan2(x1 - x0, z1 - z0);
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
     const b = this.b(cx, cz);
@@ -200,6 +204,7 @@ export class Kit {
   }
 
   finish() {
+    this.game.fences?.finish();
     if (this.dbl) { const m = this.dbl.mesh(matVCDouble); this.game.scene.add(m); this.dbl = null; }
     const list = this.game.staticChunks ||= [];
     for (const b of this.chunks.values()) {

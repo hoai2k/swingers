@@ -16,6 +16,7 @@ import { Species, hash } from '../../critters.js';
 import { VILLAGE, LAGOON, TEMPLE, RIVER, CLIFF, POOL, TRAIL, TRACK, VOLCANO, polyDist } from '../jungle.js';
 import { GROVE } from './wild.js';
 import { modelGeometry } from '../../animalgeo.js';
+import { animalGrab } from '../../animalgrab.js';
 
 const SEE = 170;
 // ---- paths ---------------------------------------------------------------------------------------
@@ -73,6 +74,24 @@ export function buildAnimals(game, R) {
   mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
   mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
+  // grabbing (animalgrab.js): body capsules (r, half length, centre height, kg); small ones are
+  // picked up, big ones bolt along their way dragging you
+  const GRAB = {
+    monkey: { r: 0.17, len: 0.2, y: 0.38, kg: 8, pick: true }, hog: { r: 0.26, len: 0.3, y: 0.42, kg: 24, pick: true },
+    capybara: { r: 0.26, len: 0.3, y: 0.38, kg: 28, pick: true },
+    tiger: { r: 0.36, len: 0.6, y: 0.78, kg: 180, run: 5 }, leopard: { r: 0.3, len: 0.5, y: 0.58, kg: 70, run: 5.5 },
+    tapir: { r: 0.4, len: 0.55, y: 0.72, kg: 250, run: 3.5 }, croc: { r: 0.3, len: 1.0, y: 0.3, kg: 300, run: 3 },
+    snake: { r: 0.13, len: 1.6, y: 0.13, kg: 60, run: 2 },
+  };
+  let lastPut = null;
+  for (const sp of list) { const put = sp.put.bind(sp); sp.put = (...a) => { lastPut = a; put(...a); }; }
+  const grab = animalGrab(game, GRAB, {
+    onGrab: (a, p, how) => {
+      game.audio?.play(a.sound || 'grunt', { x: a.x, y: p.chest.translation().y, z: a.z });
+      if (a.mk) { a.mk.st = null; a.mk.cool = game.time + 30; if (a.path?.rider === a) a.path.rider = null; }
+    },
+  });
+  const posed = new Set();
   (game.buildTimes ||= {}).sculptJungle = Math.round(performance.now() - t0);
 
   // where land animals may walk
@@ -157,13 +176,17 @@ export function buildAnimals(game, R) {
     if (!cams.length) { if (stats.shown) { for (const s of list) { s.begin(); s.end(); s.mesh.visible = false; } stats.shown = 0; } return; }
     for (const s of list) s.begin();
     let shown = 0;
+    posed.clear();
     for (const a of animals) {
       let vis = false;
       for (const c of cams) if ((c.x - a.x) ** 2 + (c.z - a.z) ** 2 < (SEE + 40) ** 2) { vis = true; break; }
       if (!vis) continue;
+      lastPut = null;
       pose(a, t);
+      if (lastPut) { a.pose = [lastPut[0], lastPut[1], lastPut[2], lastPut[3]]; posed.add(a); }
       shown++;
     }
+    grab.update(posed, t, dt);
     for (const s of list) { s.end(); s.mesh.visible = s.n > 0; }
     stats.shown = shown;
     // noises when a player comes close
@@ -260,11 +283,15 @@ export function buildAnimals(game, R) {
       return;
     }
     const dt = Math.min(0.1, Math.max(0, t - (a.lt ?? t))); a.lt = t;
-    if (a.kind === 'monkey' && monkeyPlay(a, t, dt, sp)) return;
+    if (grab.drive(a, t, dt, sp)) return;                    // held / thrown
+    const g = a.g;
+    if (a.kind === 'monkey' && g?.st !== 'return' && monkeyPlay(a, t, dt, sp)) return;
     // big cats and tapirs stop and watch a player who comes close (their walk resumes after)
-    const near = WATCH[a.kind] && nearestPlayer(a.x, a.z, WATCH[a.kind]);
+    const near = WATCH[a.kind] && (!g || g.st === 'free') && nearestPlayer(a.x, a.z, WATCH[a.kind]);
     if (near) a.tAdj = (a.tAdj || 0) + dt;
     const tr = travelled(t - (a.tAdj || 0), a.v, a.walk, a.rest, a.off);
+    const bolt = g?.st === 'bolt', sB = grab.boltS(a, dt);   // grabbed big animals run on, dragging you
+    tr.s += sB; if (bolt) tr.moving = true;
     const o = along(a.path, tr.s - a.back);
     // legs step with the ground covered (one stride per cycle), the snake's waves stay put on it
     let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / (STRIDE[a.kind] || 1) + a.off, roll = 0, sc = a.s;
@@ -281,6 +308,15 @@ export function buildAnimals(game, R) {
     }
     if (a.kind === 'monkey' && tr.moving) y += Math.abs(Math.sin(ph)) * 0.18; // bounding gait
     if (a.kind === 'croc' && a.startle && t - a.startle < 1) ph = (t - a.startle) * 30; // snap!
+    if (bolt && a.kind !== 'snake') { amp = 1.3; if (a.kind === 'croc' && !a.swim) ph = t * 12; }
+    if (g?.st === 'return') {                                 // put down: walking back to its way
+      const dx = o.x - g.x, dz = o.z - g.z, d = Math.hypot(dx, dz), st = Math.min(d, 3 * dt);
+      if (d > 1e-3) { g.x += dx / d * st; g.z += dz / d * st; }
+      if (d < 0.3) g.st = 'free';
+      sp.put(g.x, R.groundAt(g.x, g.z), g.z, d > 0.05 ? Math.atan2(dx, dz) : yaw, 0, 0, sc, t * 10, 1);
+      a.x = g.x; a.z = g.z;
+      return;
+    }
     sp.put(o.x, y, o.z, yaw, pitch, roll, sc, ph, amp);
     a.x = o.x; a.z = o.z;
   }

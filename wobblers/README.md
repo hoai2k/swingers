@@ -45,6 +45,7 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
+| Dive (while swimming) | hold LB | hold Shift | hold Numpad . |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
 | Quick emotes: wave / cheer / dance | D-pad up / left / right | 2 / 3 / 4 | |
 | Menu | Start | Esc | Numpad Enter |

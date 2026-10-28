@@ -395,7 +395,30 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   or when the player leaves, 45 s cooldown: `monkeyPlay`, state in `a.mk`); tigers, leopards and
   tapirs stop and turn to watch a player who comes close (`WATCH` radii; their walk is paused,
   not skipped: `a.tAdj`).
+  Grabbing (`src/world/animalgrab.js`): animals have no physics, so the nearest few to a player
+  (pool of 8, within 7 m) borrow a kinematic capsule that follows the posed animal (`a.pose`), in
+  a group players walk through but hands still find (`handleOwner` kind `'animal'`; player.js
+  also checks low down at the hand for animals, which stand under hand height). Per-kind `GRAB`
+  specs in `jungle/animals.js`: `pick` ones (monkey, hog, capybara) turn dynamic and are carried
+  and thrown like props (`carried` -> `tossed` -> `return` walks home -> `free`); big ones bolt
+  (`run` m/s added to their loop for 2 s past the grab), dragging whoever hangs on.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
+
+## Fences (`src/world/fences.js`)
+
+`kit.fence()` hands every fence to `game.fences`: 1.5 m sections, each its own static box (merged
+like other static scenery) and instanced posts / rails. A vehicle going over 3 m/s into a section
+(checked a frame ahead, since steppers run before the physics step) or a player flung over 6 m/s
+knocks it over: the box comes out of the merge (`staticMerge.removeIn`), the instances hide, and
+a loose dynamic panel (`kind 'fence'`, grabbable) flies off with the hit. At most 50 loose
+pieces (the oldest unheld goes); broken sections are rebuilt after 120 s when no player is within
+50 m.
+
+## Swimming and diving
+
+Swimmers hover at the surface; holding sprint (Shift / LB) dives (`player.diveD`, 1.8 m/s down,
+to 0.9 m above the bed, at most 25 m; 1.3 m/s back up when let go). The camera stays under the
+surface with a diver (camera.js), so the sea life (drawn only for cameras under water) shows.
 
 ## Stratford Fall Fair (`src/world/fair/`)
 
