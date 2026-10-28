@@ -14,6 +14,7 @@
 //    one rigid hull with kinematic legs and head, the pilot ragdoll hidden inside).
 // Everything drawn is a projectile, a stuck entry or an fx event, so replays show it.
 import { register, EXT } from '../ext.js';
+import { aimTarget } from '../skills.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, inFront, aimPoint, launchVel,
   addProjectile, sweepParts, strike, shieldBlocks, newId, blast, torus, tube, tcol, tdark, chestShell, hoodGeo,
@@ -313,8 +314,27 @@ const hunter = {
     return blaster.think(u, dt, c);
   },
   event: blaster.event,
+  // possessed (src/skills.js): RT the pistol; the wrist rocket and the jetpack on buttons
+  basic: 'Blaster pistol',
+  skills: [
+    { key: 'x', name: 'Wrist Rocket', icon: '🚀', cd: (u) => u.ga.rocketCd, max: (u) => u.def.weapon.rocketCd,
+      use(u) {
+        const b = u.battle, w = u.def.weapon, g = u.ga, v = aimTarget(u, w.rocketRange, 4);
+        const at = v ? v.chestPos : u.control?.aimPt;
+        if (!at) return false;
+        g.rocketCd = w.rocketCd;
+        const hand = handAt(u, PART.farmL, _o, -0.05 * u.s);
+        launchVel(hand, _p.copy(at), 22, 2, false, 0.03, _v);
+        addProjectile(b, 'ga_rocket', hand, _v, u, { life: 3, damage: w.rocket, force: 420, blast: w.rocketBlast });
+        b.emit('spark', hand.x, hand.y, hand.z, 1.5);
+        return true;
+      } },
+    { key: 'lb', name: 'Jetpack', icon: '🔥', cd: (u) => (u.ga.jet > 0 || u.ga.land ? 99 : u.ga.jetCd), max: (u) => u.def.weapon.jetCd, ready: (u) => (u.airT > 0 && !(u.ga.jet > 0) ? 'in the air' : true),
+      use(u) { startJet(u); return true; } },
+  ],
   step(u, dt) {
     const g = u.ga, b = u.battle, rag = u.rag, p = u.pos, v = rag.vel[PART.pelvis], w = u.def.weapon;
+    if (u.control) { g.jetCd -= dt; g.rocketCd -= dt; } // (think counts them down; possessed, think doesn't run)
     if (!(g.jet > 0) && !g.land) return;
     if (!u.alive) { endJet(u); return; }
     u.st.prHang = true;
@@ -392,6 +412,12 @@ function chokeTarget(u, R) {
   });
   return best;
 }
+// the enemy under the crosshair, if it can be choked (on foot, not too big, not too close)
+function chokeAim(u) {
+  const C = u.def.weapon.choke, v = aimTarget(u, C.range, 3);
+  if (!v || v.gaChoked || !small(v, 1.6)) return null;
+  return (v.pos.x - u.pos.x) ** 2 + (v.pos.z - u.pos.z) ** 2 < 4 ? null : v;
+}
 function startChoke(u, v) {
   const b = u.battle, C = u.def.weapon.choke;
   const r = v.skel.rHead;
@@ -429,8 +455,17 @@ const lord = {
     return f;
   },
   event: saber.event,
+  // possessed (src/skills.js): RT the red blade; Force Push and Force Choke on buttons
+  basic: 'Red energy sword',
+  skills: [
+    { key: 'x', name: 'Force Push', icon: '🫸', cd: (u) => u.ga.pushCd, max: (u) => u.def.weapon.push.cd, use(u) { forcePush(u); return true; } },
+    { key: 'lb', name: 'Force Choke', icon: '✊', cd: (u) => (u.ga.choke ? 99 : u.ga.chokeCd), max: (u) => u.def.weapon.choke.cd,
+      ready: (u) => (chokeAim(u) ? true : 'no one to choke'),
+      use(u) { const v = chokeAim(u); if (!v) return false; startChoke(u, v); return true; } },
+  ],
   step(u, dt) {
     saber.step(u, dt);
+    if (u.control) { u.ga.pushCd -= dt; if (!u.ga.choke) u.ga.chokeCd -= dt; }
     u.st.gaReach = Math.max(0, (u.st.gaReach || 0) - dt);
     const k = u.ga.choke;
     if (!k) return;

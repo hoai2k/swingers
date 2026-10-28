@@ -16,6 +16,7 @@
 // Fireballs leave flame trails and burst on impact (and set the victim burning); a
 // fireball that meets water or ice fizzles out in a puff of steam.
 import { register } from '../ext.js';
+import { aimTarget } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, rand, clamp, PART, EXPR, meleeThink, addProjectile, launchVel, aimPoint, strike, blast,
@@ -326,6 +327,7 @@ const zuko = {
     if (a === 'avf_spin' && crossed(t0, t1, 0.5)) fireRing(u);
   },
   step(u, dt) {
+    if (u.control) { u.avFire -= dt; u.avSpinCd -= dt; } // (think counts them down; possessed, think doesn't run)
     fireOnHit(u, false, 2.5, u.def.weapon.burnDps);
     const a = u.st.attack, b = u.battle;
     u.avTk++;
@@ -337,7 +339,14 @@ const zuko = {
     }
     spinStep(u, dt, 0);
   },
-  control: controlWith(zukoDaggers),
+  control: controlWith(null),
+  // possessed (src/skills.js): RT the dao; fire daggers and the spinning kick on buttons
+  basic: 'Twin dao',
+  skills: [
+    { key: 'x', name: 'Fire Daggers', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+      use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); zukoDaggers(u); return true; } },
+    { key: 'lb', name: 'Fire Spin Kick', icon: '🌀', cd: (u) => u.avSpinCd, max: (u) => u.def.weapon.spinCd ?? 6, use(u) { spinMove(u); return true; } },
+  ],
 };
 
 // ------------------------------------------------------------------ Azula
@@ -410,6 +419,7 @@ const azula = {
     }
   },
   step(u, dt) {
+    if (u.control) { u.avFire -= dt; u.avBoltCd -= dt; u.avDashCd -= dt; u.avSpinCd -= dt; }
     fireOnHit(u, true, 2.5, u.def.weapon.burnDps, 0.6);
     const a = u.st.attack, b = u.battle, t = u.st.attackT;
     u.avTk++;
@@ -435,7 +445,17 @@ const azula = {
     if (a === 'dual' && u.avTk % 2 === 0) for (const p of [PART.farmL, PART.farmR]) { handAt(u, p, _o, 1.1); b.emit('av_ftrail', _o.x, _o.y, _o.z, 0, 1); }
   },
   die(u) { dropOrbs(u); },
-  control: controlWith((u) => { if (u.avBoltCd <= 0) azCharge(u); else azJets(u); }),
+  control: controlWith(null),
+  // possessed (src/skills.js): RT blue-fire daggers up close; jets, the dash, lightning
+  basic: 'Blue-fire daggers',
+  skills: [
+    { key: 'x', name: 'Blue Fire Jets', icon: '🔵', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+      use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); azJets(u); return true; } },
+    { key: 'lb', name: 'Blue Fire Dash', icon: '💨', cd: (u) => u.avDashCd, max: (u) => u.def.weapon.dashCd,
+      use(u) { azDash(u, aimTarget(u, u.def.weapon.dashRange, 4)); return true; } },
+    { key: 'rb', name: 'Lightning', icon: '⚡', cd: (u) => u.avBoltCd, max: (u) => u.def.weapon.boltCd,
+      use(u) { u.aimAt = aimTarget(u, u.def.weapon.boltRange, 5); azCharge(u); return true; } },
+  ],
 };
 
 // ------------------------------------------------------------------ Iroh
@@ -489,6 +509,7 @@ const iroh = {
   },
   step(u, dt) {
     const w = u.def.weapon, b = u.battle, a = u.st.attack, t = u.st.attackT;
+    if (u.control) { u.avFire -= dt; u.avBreathCd -= dt; }
     u.avTk++;
     u.avRedirCd -= dt;
     fireOnHit(u, false, 2, w.burnDps);
@@ -530,7 +551,15 @@ const iroh = {
       }
     }
   },
-  control: controlWith((u) => { if (u.avBreathCd <= 0) irohBreath(u); else irohBlast(u); }),
+  control: controlWith(null),
+  // possessed (src/skills.js): RT fists; fire blasts and the dragon's breath on buttons
+  // (lightning redirection stays a reflex)
+  basic: 'Fists',
+  skills: [
+    { key: 'x', name: 'Fire Blast', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+      use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); irohBlast(u); return true; } },
+    { key: 'lb', name: "Dragon's Breath", icon: '🐉', cd: (u) => u.avBreathCd, max: (u) => u.def.weapon.breathCd, use(u) { irohBreath(u); return true; } },
+  ],
 };
 
 // ------------------------------------------------------------------ Combustion Man

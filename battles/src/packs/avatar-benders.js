@@ -18,6 +18,7 @@
 // Everything drawn is a unit part, a projectile or a marker (battle.stuck), and every
 // effect goes through battle.emit, so replays show it all.
 import { register } from '../ext.js';
+import { aimTarget } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import { makeSkeleton } from '../body.js';
 import {
@@ -309,6 +310,15 @@ const aang = {
     if (u.avTag === 'blast' && crossed(t0, t1, 0.55)) aangBlast(u);
     endAct(u, t1);
   },
+  // possessed (src/skills.js): the staff on RT; air blast, air scooter, Avatar State
+  basic: 'Glider staff',
+  skills: [
+    { key: 'x', name: 'Air Blast', icon: '🌬', cd: (u) => u.avBlastCd, max: (u) => u.def.weapon.blastCd,
+      use(u) { const w = u.def.weapon; u.avBlastCd = w.blastCd; u.aimAt = aimTarget(u, w.blastRange, 4); act(u, 'avb_push', 0.55, 'blast', 0.4); return true; } },
+    { key: 'lb', name: 'Air Scooter', icon: '🌀', cd: (u) => (u.avScoot > 0 ? 99 : u.avScootCd), max: (u) => u.def.weapon.scootCd, ready: (u) => (u.avState > 0 ? 'Avatar State' : true),
+      use(u) { startScoot(u); return true; } },
+    { key: 'rb', name: 'Avatar State', icon: '✨', free: true, ready: (u) => (u.avStateDone ? (u.avState > 0 ? 'glowing' : 'used') : true), use(u) { enterState(u); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     u.avBlastCd -= dt; u.avScootCd -= dt;
@@ -476,6 +486,21 @@ const katara = {
     u.avIceCd -= dt; u.avHealCd -= dt;
     if (u.avWhip) whipStep(u, dt);
   },
+  // possessed (src/skills.js): RT the water whip; ice and healing on buttons
+  control(u, dt, c) {
+    if (c.attack && !u.st.attack && !u.avWhip && u.cooldown <= 0) {
+      u.aimAt = aimTarget(u, u.def.weapon.whipRange, 3);
+      act(u, 'avb_whip', 0.6, 'whip', u.def.weapon.cooldown);
+    }
+    return true;
+  },
+  basic: 'Water Whip',
+  skills: [
+    { key: 'x', name: 'Ice Spikes', icon: '🧊', cd: (u) => u.avIceCd, max: (u) => u.def.weapon.iceCd,
+      use(u) { u.avIceCd = u.def.weapon.iceCd; u.aimAt = aimTarget(u, u.def.weapon.iceRange, 4); act(u, 'cast', 0.7, 'ice'); return true; } },
+    { key: 'lb', name: 'Healing Water', icon: '💧', cd: (u) => u.avHealCd, max: (u) => u.def.weapon.healCd,
+      use(u) { u.avHealCd = u.def.weapon.healCd; act(u, 'heal', 0.8, 'heal'); return true; } },
+  ],
   die(u) { if (u.avWhip) { endBeamL(u.avWhip.beam); u.avWhip = null; } },
 };
 
@@ -558,6 +583,12 @@ const sokka = {
     endAct(u, t1);
   },
   step(u, dt) { u.avBoomCd -= dt; },
+  // possessed (src/skills.js): the sword on RT, Boomerang on X
+  basic: 'Space sword',
+  skills: [
+    { key: 'x', name: 'Boomerang', icon: '🪃', cd: (u) => u.avBoomCd, max: (u) => u.def.weapon.boomCd, ready: (u) => (u.avBoomOut ? 'boomerang out' : true),
+      use(u) { u.avBoomCd = u.def.weapon.boomCd; u.aimAt = aimTarget(u, u.def.weapon.boomRange, 4); act(u, 'avb_throwL', 0.6, 'boom', 0.3); return true; } },
+  ],
 };
 
 // ------------------------------------------------------------------ Toph
@@ -696,19 +727,30 @@ const toph = {
     if (u.avArmor > 0) {
       u.avArmor -= dt;
       if (u.avArmor <= 0) { for (const m of u.avArmorM || []) m.t = 0; fx(u.battle, 'av_earth', u.chestPos, 0.8); }
-    } else if (!u.avArmorDone && u.hp < u.maxHp * w.armorAt) {
-      u.avArmorDone = true;
-      u.avArmor = w.armorT;
-      const b = u.battle;
-      u.avArmorM = [mark(b, u, 'avb_rockarmor', PART.chest, w.armorT), mark(b, u, 'avb_rockhelm', PART.head, w.armorT)];
-      fx(b, 'av_earth', u.chestPos, 1.2);
-      b.sound('av_earth', u.chestPos, 1.0, 1.14);
-      b.sound('crunch', u.chestPos, 0.7, 0.7);
-    }
+    } else if (!u.avArmorDone && u.hp < u.maxHp * w.armorAt) rockArmor(u);
   },
+  // possessed (src/skills.js): pillar and boulder at the crosshair, the earth armour
+  basic: 'Earth fists',
+  skills: [
+    { key: 'x', name: 'Rock Pillar', icon: '🪨', cd: (u) => u.avPillarCd, max: (u) => u.def.weapon.pillarCd,
+      use(u) { u.avPillarCd = u.def.weapon.pillarCd; const v = aimTarget(u, u.def.weapon.pillarRange, 3); u.aimAt = v; u.avPillarV = v; act(u, 'avb_stomp', 0.6, 'pillar', 0.3); return true; } },
+    { key: 'lb', name: 'Boulder', icon: '🪨', cd: (u) => u.avRockCd, max: (u) => u.def.weapon.rockCd,
+      use(u) { u.avRockCd = u.def.weapon.rockCd; u.aimAt = aimTarget(u, u.def.weapon.rockRange, 4); act(u, 'avb_heave', 0.8, 'rock', 0.3); return true; } },
+    { key: 'rb', name: 'Earth Armour', icon: '🛡', free: true, ready: (u) => (u.avArmorDone ? (u.avArmor > 0 ? 'on' : 'used') : true), use(u) { rockArmor(u); return true; } },
+  ],
   hit(u, amount) { return u.avArmor > 0 ? amount * u.def.weapon.armorK : amount; },
   die(u) { if (u.avRock) { u.avRock.t = 0; u.avRock = null; } for (const m of u.avArmorM || []) m.t = 0; },
 };
+
+function rockArmor(u) {
+  const w = u.def.weapon, b = u.battle;
+  u.avArmorDone = true;
+  u.avArmor = w.armorT;
+  u.avArmorM = [mark(b, u, 'avb_rockarmor', PART.chest, w.armorT), mark(b, u, 'avb_rockhelm', PART.head, w.armorT)];
+  fx(b, 'av_earth', u.chestPos, 1.2);
+  b.sound('av_earth', u.chestPos, 1.0, 1.14);
+  b.sound('crunch', u.chestPos, 0.7, 0.7);
+}
 
 // ------------------------------------------------------------------ Earthbender
 const DISC = {
