@@ -91,6 +91,7 @@ export class Kit {
 
   // A low-poly tree.
   tree(x, z, y = 0, kind = 0, scale = 1) {
+    (this.game.treeSpots ||= []).push([x, y, z, kind, scale]); // town squirrels (townlife.js) climb these
     const b = this.b(x, z), s = scale;
     if (kind === 1) { // pine
       b.cyl(0.25 * s, 0.32 * s, 2 * s, 0x7a5032, [x, y + 1 * s, z], null, 6);

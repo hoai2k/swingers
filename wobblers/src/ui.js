@@ -73,7 +73,7 @@ class Nav {
       return n;
     }
     n.up = pr.dUp; n.down = pr.dDown; n.left = pr.dLeft; n.right = pr.dRight;
-    n.ok = pr.jump; n.back = pr.ragdoll || pr.back; n.start = pr.start;
+    n.ok = pr.jump; n.back = pr.dash || (pr.ragdoll && !pr.dLeft) || pr.back; // (a pad's ragdoll is D-pad left: menu 'left') n.start = pr.start;
     n.x = pr.punch; n.y = pr.interact; n.lb = pr.sprint; n.rb = pr.rb;
     // stick with auto-repeat
     const sx = st.moveX || 0, sy = st.moveY || 0, now = performance.now();
@@ -119,6 +119,8 @@ function sharedSettingItems(ui) {
     } },
     // character look: our chunky Wobblers, or the toy style (coloured skin, Wobbly Life proportions, clothes on top)
     { label: 'Toy style characters', value: settings.toyStyle ? 'On' : 'Off', adj: () => { settings.toyStyle = !settings.toyStyle; settings.toyStyleChosen = true; saveSettings(); g.setCharStyle(settings.toyStyle ? TOY_STYLE : 'chunky'); } },
+    // vehicles smoke, wobble, catch fire and explode after serious crashes (world/cardamage.js); off repairs them all
+    { label: 'Car damage', value: settings.carDamage !== false ? 'On' : 'Off', adj: () => { settings.carDamage = settings.carDamage === false; saveSettings(); } },
     { label: 'Show FPS', value: settings.showFps ? 'On' : 'Off', adj: () => { settings.showFps = !settings.showFps; saveSettings(); ui.perfOverlay?.(null); } },
     ...(fsEnabled() ? [{ label: 'Fullscreen', value: fsElement() ? 'On' : 'Off', adj: () => toggleFullscreen() }] : []),
   ];
@@ -255,6 +257,17 @@ class PauseMenu extends Panel {
       act: () => { g.teleportTo(p, q); ui.closePanel(p); },
     }];
   }
+  // fast travel to a discovered waypoint star (world/waypoints.js): left / right picks where
+  travelItem(p, g, ui) {
+    const wps = g.waypoints?.discovered() || [];
+    if (!wps.length) return [];
+    const w = wps[((this.wpIdx || 0) % wps.length + wps.length) % wps.length];
+    return [{
+      label: '⭐ Fast travel', value: w.name,
+      adj: wps.length > 1 ? (d) => { this.wpIdx = (this.wpIdx || 0) + d; } : undefined,
+      act: () => { ui.closePanel(p); g.waypoints.travel(p, w); },
+    }];
+  }
   items() {
     const p = this.p, ui = this.ui, g = ui.game, pf = devicePrefs(p.deviceId);
     if (this.page === 'settings') {
@@ -279,6 +292,7 @@ class PauseMenu extends Panel {
       return [
         { label: 'Instructions', sub: true, act: () => ui.openHelp(p.deviceId) },
         { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
+        ...(g.waypoints ? [{ label: '⭐ Waypoints found', value: `${g.waypoints.list.filter((w) => w.found && !w.start).length}/${g.waypoints.list.filter((w) => !w.start).length}` }] : []),
         { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
         ...(g.missions?.menuItems(p, this) || []), // jobs list, cancel job, jobs done (missions/index.js)
         ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
@@ -290,6 +304,7 @@ class PauseMenu extends Panel {
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
       // join a friend: one item; with several other players, left / right picks which
       ...this.teleportItem(p, g, ui),
+      ...this.travelItem(p, g, ui),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Info', sub: true, act: () => this.go('info') },
       { label: 'Leave game', danger: true, act: () => ui.leave(p) },
@@ -393,17 +408,17 @@ function helpHTML(tab, kind) {
   if (tab === 0) {
     body = `<div class="padwrap">
       <div class="callouts left">
-        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint · swimming: hold to dive')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Emotes: up wave, left cheer, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
+        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint · swimming: hold to dive')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Left: ragdoll (flop!) · up wave, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
       </div>${PAD_SVG}
       <div class="callouts right">
-        ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Ragdoll (flop!)')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera')}${row(g('START'), 'Menu')}
+        ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Dash')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera')}${row(g('START'), 'Menu')}
       </div></div>
       <div class="drive"><b>Driving</b> ${g('RT')} gas ${g('LT')} brake / reverse ${g('LS')} steer ${g('A')} handbrake ${g('X')} horn ${g('Y')} get out</div>
       <div class="drive"><b>Gadgets</b> jetpack / glider: hold ${g('A')} in the air · laser gun / grappling hook: ${g('X')} fire · boots: always on</div>`;
   } else if (tab === 1 || tab === 2) {
     const k = tab === 1 ? 'kb1' : 'kb2', G = (b) => glyph(b, k);
     body = `<div class="kbgrid">
-      ${row(G('LS'), 'Move')}${row(G('RS'), 'Camera')}${row(G('A'), 'Jump · get up')}${row(G('B'), 'Ragdoll')}
+      ${row(G('LS'), 'Move')}${row(G('RS'), 'Camera')}${row(G('A'), 'Jump · get up')}${row(G('DASH'), 'Dash')}${row(G('RAGDOLL'), 'Ragdoll')}
       ${row(G('X'), 'Punch')}${row(G('Y'), 'Get in / out, sit')}${row(G('LT') + ' ' + G('RT'), 'Grab left / right' + (k === 'kb1' ? ' (or Q / C)' : ''))}
       ${row(G('LB'), 'Sprint · swimming: hold to dive')}${row(G('EMOTE'), 'Emote wheel (hold)')}${row(G('MAP'), 'Map')}${row(G('PHONE'), 'Phone: call a vehicle')}${k === 'kb1' ? row(G('WAVE') + ' ' + G('CHEER') + ' ' + G('DANCE'), 'Wave / cheer / dance') : ''}${row(G('START'), 'Menu')}
       ${row(G('GAS') + ' ' + G('BRAKE'), 'Drive: gas / brake')}${row(G('HORN'), 'Horn')}
@@ -413,7 +428,8 @@ function helpHTML(tab, kind) {
     body = `<ul class="tips">
       <li>Hold ${g('LT')} / ${g('RT')} to raise an arm. Your hand grabs whatever it touches: props, friends, ledges, bars.</li>
       <li>Grab a ledge with both hands, then press ${g('A')} to pull yourself up. Look up to reach higher.</li>
-      <li>Press ${g('B')} to go floppy. Great for rolling down hills.</li>
+      <li>Press ${g('B')} to dash: a quick burst on the ground, in the air (once per jump) or swimming.</li>
+      <li>Press ${g('DPAD')} left to go floppy. Great for rolling down hills.</li>
       <li>Buy gadgets in the GADGETS shop behind the town's shops and wear one (shop or customiser): jetpack and glider fly while you hold ${g('A')} in the air, the laser gun and grappling hook fire with ${g('X')} (aim the hook with the camera), boots work by themselves.</li>
       <li>Walk up to a car, swing, ride or bench and press ${g('Y')}.</li>
       <li>Up to 8 players: more controllers or the second keyboard join with ${g('A')} any time.</li>
@@ -639,7 +655,7 @@ export class UI {
     const s = g.nearestSeat(p);
     if (s) {
       const veh = s.vehicle;
-      const what = s.kind === 'driver' ? (veh?.def?.heli ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : s.labelFor ? s.labelFor(p) : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
+      const what = s.kind === 'driver' ? (veh?.def?.heli || veh?.def?.aircraft ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : s.labelFor ? s.labelFor(p) : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
       return `${G('Y')} ${what}`;
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);

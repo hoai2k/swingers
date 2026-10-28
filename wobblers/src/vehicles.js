@@ -152,6 +152,10 @@ export const VEHICLES = {
 //   colliders(add, C, def, vehicle)   custom hull: add(RAPIER.ColliderDesc) for each shape (C = ColliderDesc)
 //   voice: engine sound of another type ('car', 'bus', 'boat', 'kart', 'heli'...) or engineVoice: { w1, w2, base, range, ratio, lp, vol, am }
 //   horn: horn of another type ('car', 'sports', 'truck', 'bus', 'boat', 'kart', 'heli', 'bumper')
+//   control(vehicle, inp)  replaces the driver input mapping (gas / brake / steer / moveX / moveY / jump / sprint)
+//   animate(vehicle, dt)   per-frame visual extras (a propeller...), called from sync()
+//   aircraft: true      the driver seat says "Fly", no toy wobble of the shell
+//   spawn: { hx, hz, cz, below, above, slope, space }   phone spawn footprint (phone.js extents) for odd shapes (wings)
 // registerHandling(name, { update(vehicle, driver, vel, fwd, up, side), wheels: bool }):
 //   update runs every physics step (vehicle.throttle / steer / handbrake / lift / fly are set from the
 //   driver's input by control()); wheels: true keeps the ray-cast wheels (def.axles) and their controller.
@@ -210,7 +214,7 @@ export class Vehicle {
     this.seats = def.seats.map((s) => {
       const seat = {
         body: this.body, pos: s.pos, yaw: s.yaw || 0, kind: s.kind || 'passenger', vehicle: this, occupant: null,
-        label: s.kind === 'driver' ? (def.heli ? 'Fly' : 'Drive') : 'Sit',
+        label: s.kind === 'driver' ? (def.heli || def.aircraft ? 'Fly' : 'Drive') : 'Sit',
       };
       // exit spot is picked when leaving, so nobody is dropped into a wall
       Object.defineProperty(seat, 'exit', { get: () => this.exitFor(seat), enumerable: true });
@@ -358,6 +362,7 @@ export class Vehicle {
   // ---- input --------------------------------------------------------------------
   control(inp) {
     const def = this.def;
+    if (def.control) { def.control(this, inp); return; }
     const gas = inp.gas || 0, brake = inp.brake || 0;
     const steerIn = -(inp.steer || 0); // +X is left
     if (def.heli) {
@@ -654,7 +659,7 @@ export class Vehicle {
     const ax = (v.x - pv.x) / DT, az = (v.z - pv.z) / DT;
     pv.set(v.x, v.y, v.z);
     const L = this.lean;
-    if (this.def.heli || this.def.boat) { L.r = L.p = L.vr = L.vp = 0; return; }
+    if (this.def.heli || this.def.boat || this.def.aircraft) { L.r = L.p = L.vr = L.vp = 0; return; }
     // horizontal acceleration only, smoothed over ~0.12 s: per-step bumps from the
     // road surface used to rock the body forward and back while driving
     const k = DT / 0.12;
@@ -720,6 +725,7 @@ export class Vehicle {
     const L = this.lean;
     this.shell.rotation.set(L.p, 0, L.r);
     const time = this.game.time || 0;
+    if (this.def.animate) this.def.animate(this, Math.max(0, time - (this.lastT ?? time)));
     // lights
     if (this.tailMat) {
       const c = this.reversing ? 0xffffff : this.braking && this.driver() ? 0xff1a1a : 0x7a1010;

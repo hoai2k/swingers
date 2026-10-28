@@ -10,7 +10,7 @@ import { Builder, matVC } from '../../../mesh.js';
 import { LIFT, TOP } from './layout.js';
 
 const HANG = 3.8;           // cable height above a chair's seat
-const V_FAST = 5.2, V_SLOW = 1.0, NCHAIRS = 22;
+const V_FAST = 7.6, V_SLOW = 1.2, NCHAIRS = 22; // m/s on the line / through the stations (was 5.2 / 1.0)
 
 export function buildLift(game, kit, R) {
   const { x: X, zb, zt, gap } = LIFT;

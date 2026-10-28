@@ -38,6 +38,7 @@ const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (f
 const RAY_LEN = 1.05 * S;
 
 const WALK = 5.3, RUN = 9.4, SWIM = 2.6, JUMP_V = 6.6;
+const DASH_V = 15, DASH_SWIM = 7, DASH_T = 0.22, DASH_SWIM_T = 0.45, DIVE_DASH = 2.5; // dash (B / V); swimming: a stroke, DIVE_DASH m deeper looking down
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const AIR_ACCEL = 16;          // m/s^2 of steering in the air, across and along the jump
 const AIR_BRAKE = 6;           // m/s^2 at most against the jump's take-off direction: pulling back bends a jump...
@@ -375,11 +376,13 @@ export class Player {
     this.getUp = -1;       // >=0: seconds into standing back up
     this.getUpH = 0;       // hips height above ground when the get-up started
     this.stumble = 0;      // >0: wobbly after a bump
+    this.dashT = 0; this.dashCool = 0; this.dashUpT = 0; this.airDashed = false; // dash (B)
     this.mantle = null;    // climbing over a ledge
     this.hangPush = 0;     // time the stick has been held forward while hanging
     this.grip = 1;         // climbing stamina (GRIP_*)
     this.accFwd = 0;       // forward acceleration commanded last step
     this.reachDown = 0;    // 0..1 bending over to reach the floor
+    this.sneak = 0; this.sneakT = 0; // 0..1 sneaking crouch after moving slowly for a while (wildlife.js notices it less)
     this.reachArm = { L: false, R: false }; // arm is reaching out to grab
     this.cam = null;
     this.lastInput = null;
@@ -478,6 +481,7 @@ export class Player {
     const b = new Builder();
     this.outfit?.(p.n, b); // outfits (src/outfits.js, NPCs: src/npc.js): ties, scarves, backpacks...
     this.gearMesh?.(p.n, b, g); // gadgets (src/gadgets.js): jetpack, boots, laser gun...
+    this.skiMesh?.(p.n, g); // skis on the feet (world/regions/snow/skis.js)
     if (b.parts.length) g.add(b.mesh(PLAYER_MAT));
     return g;
   }
@@ -682,6 +686,7 @@ export class Player {
     if (this.state === 'seated') return;
     this.releaseAll();
     this.mantle = null;
+    this.skis?.off(this, 'crash'); // a big hit knocks the skis off (snow/skis.js)
     this.state = 'limp';
     this.limpTimer = Math.max(this.limpTimer, t);
     this.headMesh.material = headMaterials().ko;
@@ -942,11 +947,12 @@ export class Player {
     this.hands.L.cool -= DT; this.hands.R.cool -= DT;
     if (this.punch.t > 0) this.punch.t -= DT;
     if (this.stumble > 0) this.stumble -= DT;
+    this.dashT -= DT; this.dashCool -= DT; this.dashUpT -= DT;
 
     // --- state transitions
     if (this.state === 'limp') {
       if (this.limpTimer > 0) { this.limpTimer -= DT; if (this.limpTimer <= 0) this.wake(); }
-      else if (pressed.ragdoll || pressed.jump) this.wake();
+      else if (pressed.ragdoll || pressed.jump || pressed.dash) this.wake();
     } else if (this.state === 'normal' && pressed.ragdoll) {
       this.state = 'limp'; this.limpTimer = 0; this.releaseAll(); this.mantle = null;
     }
@@ -985,8 +991,15 @@ export class Player {
     const floorY = this.groundDist < 50 ? this.hips.translation().y - this.groundDist : -1e9;
     const wasSwimming = this.swimming;
     this.swimming = water != null && cp.y < water + 0.05 && water - floorY > 0.85 && !seated;
-    if (!this.swimming) this.diveD = 0;
+    if (!this.swimming) { this.diveD = 0; this.dashUpT = 0; }
     if (this.swimming && !wasSwimming && chest.linvel().y < -2) this.game.audio?.play('splash', cp, Math.min(1.5, -chest.linvel().y / 6));
+    // back down from a dash out of the water (a leap): surface swimming again, unless the camera
+    // looks down into the water: then dive straight back under
+    if (this.swimming && !wasSwimming && this.dashLeap) {
+      this.dashLeap = false;
+      const pitch = this.cam ? this.cam.pitch : 0;
+      if (pitch > 0.45) this.diveD = Math.min(Math.max(0, Math.min(25, water - floorY - 0.9)), DIVE_DASH * Math.min(1, (pitch - 0.45) / 0.4 + 0.4));
+    } else if (this.grounded) this.dashLeap = false;
     this.waterLevel = water;
 
     // --- landings: knees give, the body squashes
@@ -1020,6 +1033,16 @@ export class Player {
     const reachingNow = !limp && !seated && ((inp.grabL || 0) > 0.3 || (inp.grabR || 0) > 0.3);
     const rdT = reachingNow && this.grounded && !this.swimming ? Math.max(0, Math.min(1, (camPitch - 0.45) / 0.75)) : 0;
     this.reachDown += (rdT - this.reachDown) * Math.min(1, DT * 6);
+    // sneaking: creeping along slowly for a second sinks into a crouch (kept through short pauses)
+    {
+      const hs = Math.hypot(v.x, v.z);
+      const can = this.state === 'normal' && this.grounded && !this.swimming && !seated && !this.skis && !this.mantle && !this.form;
+      if (!can || hs > 2.6) this.sneakT = 0;
+      else if (hs > 0.25 && hs < 2.2 && mag > 0.05) this.sneakT = Math.min(3, this.sneakT + DT);
+      else if (hs <= 0.25) this.sneakT = Math.max(0, this.sneakT - DT * 0.5);
+      const want = can && this.sneakT > 1 ? 1 : 0;
+      this.sneak += (want - this.sneak) * Math.min(1, DT * (want ? 4 : 6));
+    }
 
     // --- facing
     if (!limp && !seated && mag > 0.1 && !this.mantle) {
@@ -1054,8 +1077,8 @@ export class Player {
     if (!limp && !seated) {
       if (this.swimming) leanT = mag > 0.1 ? 1.15 : 0.5;
       else if (this.grounded) {
-        leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0;
-        rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05));
+        leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0 + this.sneak * 0.4; // sneaking: hunched forward
+        rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05)) + (this.skis?.lean || 0); // skis: lean into a carve
         waddle = Math.sin(this.phase) * 0.1 * Math.max(amp, mag > 0.1 ? 0.3 : 0);
         twist = Math.sin(this.phase) * 0.14 * amp;
       } else if (!hanging) leanT = 0.12;
@@ -1111,13 +1134,14 @@ export class Player {
         const target = water - 0.12 - this.diveD;
         const err = target - cp.y;
         const cv = chest.linvel();
-        const a = Math.max(-5, Math.min(25, 40 * err - 6 * cv.y + 9.81));
+        // (a stroke up carries on through the surface: no depth spring while it lasts)
+        const a = this.dashUpT > 0 ? 9.81 : Math.max(-5, Math.min(25, 40 * err - 6 * cv.y + 9.81));
         chest.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.75, z: 0 }, true);
         hips.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.25, z: 0 }, true);
       } else if (this.grounded && this.jumpCool <= 0) {
         // bouncy walk: the hips bob up as the legs pass each other
         const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
-        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0);
+        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - this.sneak * 0.2 * S - (this.emoteBody?.dip || 0) - (this.skis?.dip || 0); // skis: knees bent
         // duck under a low ceiling (under the pier, in a crawl space) instead of wedging the head in it
         const room = this.headroom();
         if (room < HEAD_TOP) h = Math.max(STAND_H * 0.55, h - (HEAD_TOP - room));
@@ -1141,7 +1165,7 @@ export class Player {
     // --- locomotion
     this.accFwd = 0;
     if (!limp && !seated && !this.mantle) {
-      const slippery = this.grounded && this.groundCollider && this.physics.slippery.has(this.groundCollider.handle);
+      const slippery = this.grounded && this.groundCollider && (this.physics.slippery.has(this.groundCollider.handle) || !!this.skis?.slick); // skis: powder snow
       const tvx = mvx * speed + gv.x, tvz = mvz * speed + gv.z;
       let dvx = (mag > 0.05 ? tvx : (this.grounded ? gv.x : v.x)) - v.x;
       let dvz = (mag > 0.05 ? tvz : (this.grounded ? gv.z : v.z)) - v.z;
@@ -1163,6 +1187,56 @@ export class Player {
         if (mag < 0.05) { dvx = 0; dvz = 0; }
       }
       if (this.punch.t > 0.12 && mag < 0.05) { dvx = 0; dvz = 0; } // don't brake the lunge
+      // dash (B): a burst the way the stick points (else the way we face); once in the air
+      // until we land again; the drive doesn't brake it for DASH_T
+      if (this.grounded || this.swimming || hanging) this.airDashed = false;
+      if (pressed.dash && this.dashCool <= 0 && !hanging && this.state === 'normal' && !this.airDashed) {
+        let dx = mag > 0.1 ? mvx / mag : Math.sin(this.yaw), dz = mag > 0.1 ? mvz / mag : Math.cos(this.yaw);
+        if (this.swimming) {
+          // a swimming dash: a long stroke the way the camera looks (with the stick forward, or
+          // no stick): looking down dives (sets a deeper dive depth), looking up rises
+          const fwdShare = mag > 0.1 ? Math.max(0, my) / mag : 1;
+          // under water the stroke follows the look up or down (up from below can leap out of the
+          // water: see the re-entry below); at the surface it is a forward stroke, diving only when
+          // the camera looks clearly, steeply down into the water
+          const pitch = cam ? cam.pitch : 0.28, under = (this.diveD || 0) > 0.6;
+          let vert = (under ? Math.max(-1, Math.min(1, (pitch - 0.35) / 0.55)) : Math.max(0, Math.min(1, (pitch - 0.75) / 0.35))) * fwdShare; // + = down
+          if (under && vert < -0.3) { this.dashLeap = true; this.dashUpT = 1.2; } // heading for the surface and out
+          const room = Math.max(0, Math.min(25, water - floorY - 0.9)), h = Math.sqrt(1 - vert * vert);
+          const ds = DASH_SWIM * (this.form?.speed ?? 1);
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (dx * h * ds - bv.x) * m, y: (-vert * ds - bv.y) * m, z: (dz * h * ds - bv.z) * m }, true);
+          }
+          this.diveD = this.dashUpT > 0 ? 0 : Math.max(0, Math.min(room, (this.diveD || 0) + vert * DIVE_DASH));
+          this.dashT = DASH_SWIM_T;
+          this.game.audio?.play(this.diveD > 0.6 || vert > 0.3 ? 'swish' : 'splash', cp, 0.6);
+        } else {
+          const ds = DASH_V * Math.min(1.3, this.gear?.speed || 1) * (this.form?.speed ?? 1);
+          const lift = this.grounded ? 1.2 : 2;
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (gv.x + dx * ds - bv.x) * m, y: Math.max(0, lift - bv.y) * m, z: (gv.z + dz * ds - bv.z) * m }, true);
+          }
+          this.dashT = DASH_T;
+          this.game.audio?.play('swish', cp, 1.4);
+        }
+        this.yaw = Math.atan2(dx, dz);
+        this.airDashed = !this.grounded && !this.swimming;
+        this.dashCool = 0.65;
+        this.impactGrace = Math.max(this.impactGrace, 0.12);
+        this.sqV -= 2;
+      }
+      if (this.dashT > 0) { dvx = 0; dvz = 0; this.dashing = true; }
+      else if (this.dashing) {
+        // dash over: in the air nothing brakes, so come back down to a run's speed
+        this.dashing = false;
+        if (!this.grounded && !this.swimming && !hanging && hspeed > RUN) {
+          const k = RUN / hspeed;
+          for (const b of this.bodies) { const bv = b.linvel(); b.setLinvel({ x: gv.x + (bv.x - gv.x) * k, y: bv.y, z: gv.z + (bv.z - gv.z) * k }, true); }
+          if (this.jumpAxis) this.jumpAxis.s = Math.min(this.jumpAxis.s, RUN);
+        }
+      }
       const airborne = !this.grounded && !this.swimming && !hanging;
       // the jump's direction and speed as it left the ground (pulling back is measured against it)
       if (!airborne) this.jumpAxis = hspeed > 0.5 ? { x: hv.x / hspeed, z: hv.z / hspeed, s: hspeed } : null;
@@ -1216,7 +1290,8 @@ export class Player {
         }
       } else this.stuckT = Math.max(0, this.stuckT - DT * 2);
       // a ledge under our grip: jump (or keep pushing forward) to climb over it
-      const wantClimb = bothHeld && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
+      const onAnimal = this.hands.L.owner?.kind === 'animal' || this.hands.R.owner?.kind === 'animal'; // a tug, not a ledge
+      const wantClimb = bothHeld && !onAnimal && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
       const ledge = wantClimb ? this.findLedge() : null;
 
       // jump
@@ -1304,6 +1379,7 @@ export class Player {
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
     this.gear?.step(this, inp, pressed); // gadgets (src/gadgets.js): thrust, glide, aiming arm, hook
+    this.skis?.step(this, inp); // skis (snow/skis.js): stance, surface, coming off
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
@@ -1565,7 +1641,7 @@ export class Player {
       set('uLegL', qx(-1.35 * g), 170, 14); set('uLegR', qx(-1.25 * g), 170, 14);
       set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
-      const dip = Math.max(this.landDip, this.reachDown * 0.7);
+      const dip = Math.max(this.landDip, this.reachDown * 0.7, this.sneak * 0.85); // (sneaking: knees bent)
       // a short, tidy stride (Wobbly Life style): the legs are visual, the wobble lives in the body and arms
       set('uLegL', qx(-s * amp * 0.6 - dip * 0.4), 760, 40); set('uLegR', qx(s * amp * 0.6 - dip * 0.4), 760, 40);
       set('lLegL', qx(Math.max(0, c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
@@ -1877,6 +1953,7 @@ export class Player {
 
   respawn() {
     this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
+    this.skis?.off(this, 'quiet'); // snow/skis.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
@@ -1895,12 +1972,14 @@ export class Player {
     m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q;
     hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
     this.form?.sync(); // forms.js: animal meshes follow the ragdoll
+    this.skis?.sync(this); // snow/skis.js: skis lie on the snow
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
     this.game.forms?.revert(this, { quiet: true }); // forms.js
+    this.skis?.off(this, 'quiet'); // snow/skis.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     for (const n in this.parts) {

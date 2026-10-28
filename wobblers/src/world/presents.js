@@ -72,8 +72,8 @@ function glowTexture() {
   return glowTex;
 }
 
-// One shared confetti burst system (instanced quads, reused).
-function confetti(game) {
+// A confetti burst system (instanced quads, reused); world/waypoints.js has its own.
+export function confetti(game) {
   const N = 160;
   const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.09, 0.06), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }), N);
   mesh.frustumCulled = false; mesh.userData.noCull = true; mesh.count = 0;

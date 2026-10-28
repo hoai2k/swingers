@@ -29,7 +29,11 @@ opens the controls overlay.
 **Start** / **Esc** opens that player's own menu (resume, customise, respawn, settings,
 controls, reset vehicles, leave). With one player it pauses the game; in split screen it
 only covers that player's view. Settings (music and sound volume, shadows, resolution, and
-per-player invert-Y and camera sensitivity) are saved in `localStorage`. The buttons in the top-right
+per-player invert-Y and camera sensitivity, car damage) are saved in `localStorage`.
+**Car damage** (on by default): serious crashes damage your vehicle bit by bit. It smokes (grey,
+then black), starts to wobble, catches fire and, a few seconds later, explodes, throwing out
+anyone still inside (and anyone standing close). The charred wreck smokes for a while, then a
+phone-called vehicle is gone (call another) and a parked one is back home as new. The buttons in the top-right
 corner (they fade out while the mouse is idle in play) toggle fullscreen and sound and open the
 shared settings with the mouse; leaving the title (the first join) goes fullscreen by itself. Menus work with the
 stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or the mouse.
@@ -40,29 +44,47 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 |---|---|---|---|
 | Move / camera | LS / RS | WASD / mouse | Arrows / Numpad 4 6 8 5 |
 | Jump | A | Space | Numpad 0 |
-| Ragdoll (flop) | B | X (or R) | Numpad 7 |
+| Dash | B | V | Delete |
+| Ragdoll (flop) | D-pad left | X (or R) | Numpad 7 |
 | Punch | X | G or middle mouse | Numpad 2 |
 | Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
-| Dive (while swimming) | hold LB | hold Shift | hold Numpad . |
+| Dive (while swimming) | hold LB, or dash (B) looking steeply down | hold Shift, or V looking down | hold Numpad . |
+| Sneak (crouch) | walk slowly for a second | | |
+| Leap out of the water | dash (B) looking up while under | V looking up while under | |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
-| Quick emotes: wave / cheer / dance | D-pad up / left / right | 2 / 3 / 4 | |
+| Quick emotes | D-pad up wave, right dance | 2 wave, 3 cheer, 4 dance | |
 | Menu | Start | Esc | Numpad Enter |
 | Map (pan LS, zoom LT / RT) | View | M | Numpad / |
 | Phone: call a vehicle | D-pad down | P | Numpad * |
 | Gadget: jetpack / glider (hold in the air) · laser / grappling hook (fire) | A · X | Space · G | Numpad 0 · Numpad 2 |
 | Drive | RT gas, LT brake/reverse, LS steer, A handbrake, X horn (siren on police / fire) | W/S, A/D, Space, H | Arrows, Numpad 0, Numpad + |
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
+| Fly (plane / glider) | RT throttle (glider: launch), LT brake / air brake, LS pitch (push = dive) + bank | Space throttle / launch, Shift brake, W/S pitch, A/D bank | Numpad 0, Numpad ., Arrows |
 
 **Map** opens the island map in your own view (pan with the stick, zoom with the triggers,
-**A** to find yourself). The **phone** calls any vehicle to you: it pops in on a clear spot
-beside you, facing your way. Boats need water nearby and helicopters need open space. Each
+**A** to find yourself). **Waypoint stars**: a glowing gold star with a beam of light stands at
+key places on every island (the beach, the lighthouse, Bigtown's plaza, the volcano rim...).
+Touch one to collect it and the place becomes a waypoint: on the map, **LB / RB** picks a
+discovered star (or click it) and **Y** travels there (or click it again), or use **Fast
+travel** in the pause menu. Town is a waypoint from the start. The **phone** calls any vehicle to you: it pops in on a clear spot
+beside you, facing your way. Boats need water nearby; helicopters, planes and gliders need open space. Each
 player has one called vehicle; calling another sends the old one away unless someone is in it.
 Red **phone booths** (in town, at the Fun Park, by the ferry piers and in every island's
 village or harbour; shown on the map) are a garage: **Y** at a booth lists every vehicle you
 have (locked car-dealer ones aren't offered) and the one you pick pops in right outside the
 booth (it counts as your called vehicle).
+
+**Planes and gliders** (on the phone). The toy **plane** (pilot + a passenger) taxis like a car
+(stick steers, RT gas, LT brakes and backs up); past ~14 m/s pull back on the stick and it flies
+off. In the air the stick pitches and banks (banking turns it), it climbs as long as it has the
+speed, and if it gets too slow it drops its nose until it picks up speed again; let go and it
+levels itself. Land by easing the throttle and nosing gently down onto a road or a field. The
+**glider** has no engine: **RT** on the ground gives it a launch push, then it rides the updrafts:
+it keeps flying (climbing gently, up to about 180 m above the ground) as long as you like. One
+waits at the home mountain lookout and one on the Frostpeak summit. To come down, open the air
+brakes (**LT**) or push the nose down.
 
 The **bouncy ball** (on the phone, and parked by the playground, the Fun Park and on each
 island) is a big space hopper: sit on it with **Y** and it hops by itself; the stick leans
@@ -252,6 +274,10 @@ to do (a banner welcomes you as you arrive; the map zooms out to show them all):
   a 22-chair chairlift to the top station, a ski run you carve down at speed, a ski jump, a
   frozen lake to skate on, an ice cave, an observatory, snowmen and snowball fights, and a
   fishing hamlet by the ferry. Snowmobiles, a snowcat and sleds.
+  Ski racks at the top of the lift and in the village (**Y** takes or returns a pair): on skis
+  you zip down the run (and off-piste powder) much faster, with stem christies when slow, parallel turns and carving at speed; pull back to snow-plough when slow or hockey-stop sideways when fast. The camera follows your run, not your turns. Going ragdoll
+  (a crash, or flopping on purpose) knocks them off: press **Y** next to them to put them back on
+  before they vanish. Trying to walk on anything that isn't snow makes them melt away.
 - **Dusty Dunes** (west) — the wild-west town of Dustville (saloon with swinging doors and a
   piano, sheriff's office with a jail, general store, water tower, windmill), a mine-cart ride
   through the gold mine in Red Rock Canyon, a swaying rope bridge, a pyramid with a hidden
@@ -307,9 +333,13 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/water.js` | sea / lake / pool water shader: depth tint, foam, reflections |
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
+| `src/world/waypoints.js` | waypoint stars (`WAYPOINTS`): collect to unlock fast travel (map / pause menu), saved in `settings.waypoints` |
+| `src/world/wildlife.js`, `src/world/townlife.js` | wildlife engine for the islands (desert, snow, tropical `regions/*/animals.js`) and the town's squirrels, crows, cats and Bigtown rats |
+| `src/world/cardamage.js` | car damage: impacts from velocity jumps, smoke / wobble / fire / explosion, charred wrecks, smoke and fire particles |
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/world/booths.js` | phone booths (`BOOTHS`): the phone panel as a garage list spawning outside the booth, map icons |
+| `src/world/aircraft.js` | the plane and glider (`plane` / `glider`: the 'flight' handling — lift by speed, velocity follows the nose, rate-controlled pitch / bank with auto-level, taxiing on frictionless gear balls; glider launch), phone entries and the parked gliders |
 | `src/world/bouncy.js` | the bouncy ball vehicle (`hopper`: ball collider with locked tilt, hop handling, rolling look) and its parked spots |
 | `src/world/ridegrab.js` | grab blocks on ride seats whose kinematic body has no colliders (every ride can be hung from) |
 | `src/ui.js` | HUD, title, join + customiser, per-player menus, controls overlay, prompts, toasts |

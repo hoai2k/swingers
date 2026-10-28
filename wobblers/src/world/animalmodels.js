@@ -461,3 +461,131 @@ export function moorishIdol() { // the striped 'angelfish' with the long trailin
     ...[1, -1].map((s) => ({ s: 'tri', pts: [[s * 0.03, -0.02, 0.03], [s * 0.03, -0.05, -0.01], [s * 0.07, -0.05, -0.05]], r: 0.008, color: K, k: 0.02 })),
   ], { cell: 0.012, colorSharp: 0.003, extras: [fishEyes(0.03, 0.035, 0.07)] });
 }
+
+// =====================================================================================================
+// Round 18 stand-ins (desert, snow, islands, town): simple sculpted shapes until the reference sheets
+// (image-requests.md round 18) arrive and the designed models replace them. Two helpers:
+// quadruped(o) for the four-legged ones, flier(o) for the birds; the rest are one-offs.
+// -----------------------------------------------------------------------------------------------------
+// o: { L body length, H back height, W body half width, coat (colour or fn), belly, leg (radius at the
+// hip), paw (colour), head: [r, len of snout, snout radius], neck: [rise, forward], ear: [len, r, tilt],
+// tail: [[x, y, z, r]...] relative to the rump, hump, eye, nose, res }
+function quadruped(o) {
+  const L = o.L, H = o.H, W = o.W, coat = o.coat;
+  const hb = [0, H * 0.95 + (o.neck?.[0] || 0), L * 0.5 + (o.neck?.[1] || 0)]; // head centre
+  const hp = [0, H * 0.9, L * 0.42];
+  const sh = [
+    { s: 'egg', c: [0, H * 0.82, 0], r: [W, H * 0.3, L * 0.5], color: o.belly ? (x, y, z) => (y < H * 0.62 && Math.abs(x) < W * 0.6 ? o.belly : typeof coat === 'function' ? coat(x, y, z) : coat) : coat, k: L * 0.12 },
+    { s: 'limb', a: [0, H * 0.88, L * 0.36], b: hb, ra: W * 0.62, rb: o.head[0] * 0.75, color: coat, part: HEAD, pivot: hp, k: L * 0.08 },
+    { s: 'ball', c: hb, r: o.head[0], color: coat, part: HEAD, pivot: hp, k: L * 0.06 },
+    { s: 'limb', a: hb, b: [0, hb[1] - o.head[0] * 0.25, hb[2] + o.head[1]], ra: o.head[2] * 1.1, rb: o.head[2], color: o.muzzle || coat, part: HEAD, pivot: hp, k: L * 0.04 },
+    { s: 'ball', c: [0, hb[1] - o.head[0] * 0.2, hb[2] + o.head[1] + o.head[2] * 0.8], r: o.head[2] * 0.4, color: o.nose ?? INK, part: HEAD, pivot: hp, k: 0.01 },
+  ];
+  if (o.hump) sh.push({ s: 'egg', c: [0, H * 1.05, -L * 0.05], r: [W * 0.75, H * 0.28, L * 0.25], color: coat, k: L * 0.1 });
+  if (o.ear) for (const s of [1, -1]) {
+    const [el, er, tilt] = o.ear, base = [s * o.head[0] * 0.55, hb[1] + o.head[0] * 0.6, hb[2] - o.head[0] * 0.2];
+    sh.push({ s: 'limb', a: base, b: [base[0] + s * el * Math.sin(tilt), base[1] + el * Math.cos(tilt), base[2] - el * 0.15], ra: er, rb: er * 0.35, color: o.earColor ?? coat, part: HEAD, pivot: hp, k: 0.01 });
+  }
+  if (o.horns) for (const s of [1, -1]) sh.push({ s: 'limb', a: [s * o.head[0] * 0.35, hb[1] + o.head[0] * 0.7, hb[2]], b: [s * o.head[0] * 0.45, hb[1] + o.head[0] * 1.5, hb[2] - o.head[0] * 0.6], ra: o.head[0] * 0.16, rb: o.head[0] * 0.05, color: 0x1e1e24, part: HEAD, pivot: hp, k: 0.01 });
+  if (o.tail) {
+    const tp = [0, H * 0.85, -L * 0.48];
+    sh.push({ s: 'chain', pts: o.tail.map(([x, y, z, r]) => [x, tp[1] + y, tp[2] + z, r]), color: o.tailColor ?? coat, part: TAIL, pivot: tp, k: L * 0.04 });
+  }
+  sh.push(...legs4(L * 0.36, -L * 0.36, H * 0.8, W * 0.62, o.leg, o.leg * 0.75, o.legColor ?? coat, o.paw));
+  return sculpt(sh, { res: o.res || 56, colorSharp: 0.006, extras: [eyes(HEAD, hp, o.head[0] * 0.55, hb[1] + o.head[0] * 0.25, hb[2] + o.head[0] * 0.6, o.eye || o.head[0] * 0.28)] });
+}
+export const camel = () => quadruped({ L: 1.9, H: 1.55, W: 0.36, coat: 0xd4a464, belly: 0xe8c48a, leg: 0.11, paw: 0xb8884c, head: [0.18, 0.32, 0.11], neck: [0.55, 0.45], ear: [0.1, 0.04, 0.6], hump: true, tail: [[0, 0, 0, 0.05], [0, -0.35, -0.1, 0.035], [0, -0.55, -0.08, 0.04]], res: 64 });
+export const fennec = () => quadruped({ L: 0.42, H: 0.3, W: 0.1, coat: 0xf0d6a4, belly: 0xfff4e0, leg: 0.03, head: [0.08, 0.08, 0.03], ear: [0.16, 0.055, 0.45], earColor: (x, y) => (y > 0.5 ? 0xffd2c0 : 0xf0d6a4), tail: [[0, 0, 0, 0.05], [0, -0.06, -0.15, 0.065], [0, -0.06, -0.3, 0.05]], tailColor: (x, y, z) => (z < -0.4 ? 0x2a2018 : 0xf0d6a4) });
+export const goat = () => quadruped({ L: 1.1, H: 0.85, W: 0.24, coat: 0xf4f2ec, leg: 0.07, paw: 0x2a2a30, legColor: (x, y) => (y < 0.12 ? 0x2a2a30 : 0xf4f2ec), head: [0.14, 0.17, 0.08], neck: [0.25, 0.1], ear: [0.12, 0.035, 1.2], horns: true, tail: [[0, 0, 0, 0.05], [0, 0.05, -0.08, 0.035]] });
+export const arcticFox = () => quadruped({ L: 0.6, H: 0.38, W: 0.13, coat: 0xfafaff, leg: 0.04, head: [0.1, 0.1, 0.04], ear: [0.07, 0.04, 0.35], tail: [[0, 0, 0, 0.07], [0, -0.08, -0.2, 0.1], [0, -0.06, -0.4, 0.08]] });
+export const rat = () => quadruped({ L: 0.24, H: 0.12, W: 0.06, coat: 0x7a7068, belly: 0xb0a89c, leg: 0.014, paw: 0xf0a8b0, head: [0.045, 0.06, 0.02], nose: 0xf08a9a, ear: [0.035, 0.022, 0.6], earColor: 0xf0a8b0, tail: [[0, 0, 0, 0.012], [0, -0.06, -0.12, 0.008], [0, -0.08, -0.28, 0.004]], tailColor: 0xf0a8b0, res: 48 });
+export const squirrel = () => quadruped({ L: 0.24, H: 0.16, W: 0.065, coat: 0x8a8a8e, belly: 0xf0ece4, leg: 0.018, head: [0.05, 0.04, 0.025], ear: [0.03, 0.015, 0.2], tail: [[0, 0, 0, 0.03], [0, 0.1, -0.07, 0.05], [0, 0.22, -0.04, 0.05], [0, 0.28, 0.03, 0.035]], res: 48 });
+export const cat = () => quadruped({ L: 0.5, H: 0.3, W: 0.1, coat: (x, y, z) => (Math.sin(z * 30 + Math.abs(x) * 10) > 0.55 && y > 0.22 ? 0xc06a1c : 0xf09a3a), belly: 0xfff6ea, leg: 0.032, paw: 0xfff6ea, head: [0.085, 0.04, 0.035], muzzle: 0xfff6ea, nose: 0xf08a9a, ear: [0.07, 0.035, 0.3], tail: [[0, 0, 0, 0.025], [0, 0.15, -0.1, 0.022], [0, 0.32, -0.08, 0.02], [0, 0.36, 0.0, 0.018]] });
+
+export function tortoise() {
+  const SH = 0x8a6a3a, SH2 = 0x6a4e2a, SK = 0x9a8a62, hp = [0, 0.14, 0.2];
+  const shell = (x, y, z) => (spots(x, y * 0.6, z, 0.12, 0.05) > 0.2 ? SH2 : SH);
+  return sculpt([
+    { s: 'egg', c: [0, 0.2, 0], r: [0.22, 0.17, 0.28], color: shell, k: 0.04 },
+    { s: 'egg', c: [0, 0.1, 0], r: [0.21, 0.05, 0.26], color: 0xc8b07a, k: 0.04 },
+    { s: 'limb', a: [0, 0.13, 0.22], b: [0, 0.16, 0.34], ra: 0.05, rb: 0.055, color: SK, part: HEAD, pivot: hp, k: 0.03 },
+    { s: 'ball', c: [0, 0.17, 0.37], r: 0.065, color: SK, part: HEAD, pivot: hp, k: 0.03 },
+    ...legs4(0.15, -0.16, 0.12, 0.15, 0.05, 0.045, SK),
+  ], { cell: 0.012, extras: [eyes(HEAD, hp, 0.04, 0.19, 0.41, 0.015)] });
+}
+export function iguana() {
+  const G = 0x5ab83a, D = 0x3a8a2a, hp = [0, 0.14, 0.32];
+  const sh = [
+    { s: 'egg', c: [0, 0.13, 0.05], r: [0.09, 0.08, 0.26], color: G, k: 0.04 },
+    { s: 'egg', c: [0, 0.15, 0.36], r: [0.06, 0.06, 0.1], color: G, part: HEAD, pivot: hp, k: 0.03 },
+    { s: 'egg', c: [0, 0.08, 0.36], r: [0.02, 0.05, 0.06], color: 0x8ad86a, part: HEAD, pivot: hp, k: 0.02 }, // dewlap
+    { s: 'chain', pts: [[0, 0.12, -0.18, 0.06], [0, 0.08, -0.45, 0.035], [0, 0.05, -0.75, 0.018], [0, 0.04, -1.0, 0.006]], color: (x, y, z) => (Math.sin(z * 18) > 0.6 ? D : G), part: TAIL, pivot: [0, 0.12, -0.18], k: 0.03 },
+  ];
+  for (let i = 0; i < 8; i++) sh.push({ s: 'limb', a: [0, 0.2, 0.3 - i * 0.08], b: [0, 0.26 - i * 0.004, 0.29 - i * 0.08], ra: 0.012, rb: 0.003, color: D, k: 0.01 });
+  for (const [part, s, z] of [[FL, 1, 0.2], [FR, -1, 0.2], [BL, 1, -0.12], [BR, -1, -0.12]]) {
+    sh.push({ s: 'limb', a: [s * 0.07, 0.12, z], b: [s * 0.2, 0.02, z + 0.04], ra: 0.03, rb: 0.022, color: G, part, pivot: [s * 0.07, 0.12, z], k: 0.03 });
+  }
+  return sculpt(sh, { cell: 0.012, extras: [eyes(HEAD, hp, 0.045, 0.18, 0.4, 0.016)] });
+}
+export function scorpion() {
+  const A = 0xd88a2a, D = 0xa85e1a, hp = [0, 0.05, 0.08];
+  const sh = [
+    { s: 'egg', c: [0, 0.05, 0], r: [0.045, 0.025, 0.08], color: A, k: 0.015 },
+    { s: 'chain', pts: [[0, 0.05, -0.07, 0.022], [0, 0.09, -0.13, 0.018], [0, 0.15, -0.14, 0.015], [0, 0.19, -0.09, 0.013], [0, 0.18, -0.04, 0.01]], color: A, part: TAIL, pivot: [0, 0.05, -0.07], k: 0.008 },
+    { s: 'limb', a: [0, 0.18, -0.04], b: [0, 0.15, -0.01], ra: 0.01, rb: 0.002, color: 0x3a2010, part: TAIL, pivot: [0, 0.05, -0.07], k: 0.004 },
+  ];
+  for (const s of [1, -1]) {
+    sh.push({ s: 'chain', pts: [[s * 0.03, 0.05, 0.07, 0.012], [s * 0.07, 0.05, 0.11, 0.01], [s * 0.06, 0.05, 0.16, 0.012]], color: A, part: HEAD, pivot: hp, k: 0.006 });
+    sh.push({ s: 'egg', c: [s * 0.06, 0.05, 0.19], r: [0.022, 0.014, 0.03], color: D, part: HEAD, pivot: hp, k: 0.006 });
+  }
+  for (const [part, s] of [[FL, 1], [FR, -1], [BL, 1], [BR, -1]]) for (const z of (part <= FR ? [0.04, 0.0] : [-0.03, -0.06])) sh.push({ s: 'chain', pts: [[s * 0.03, 0.04, z, 0.007], [s * 0.07, 0.06, z, 0.006], [s * 0.1, 0.0, z - 0.01, 0.004]], color: D, part, pivot: [s * 0.03, 0.04, z], k: 0.005 });
+  return sculpt(sh, { cell: 0.006, extras: [{ build: (b) => { for (const s of [-1, 1]) b.sphere(0.006, INK, [s * 0.012, 0.075, 0.07], null, 6); } }] });
+}
+export function rattlesnake() {
+  const T = 0xc8a46a, B = 0x7a5232;
+  const pts = [];
+  for (let i = 0; i <= 16; i++) { const u = i / 16, r = 0.015 + 0.04 * Math.sin(Math.PI * Math.min(1, 0.1 + u * 0.95)); pts.push([0, r * 0.85, 0.75 - u * 1.6, r]); }
+  return sculpt([
+    { s: 'chain', pts, color: (x, y, z) => (z < -0.8 ? 0xe8d0a0 : Math.abs(((z * 7) % 1 + 1) % 1 - 0.5) * 2 + Math.abs(x) * 15 < 0.8 && y > 0.03 ? B : T), k: 0.03 },
+    { s: 'egg', c: [0, 0.05, 0.8], r: [0.055, 0.035, 0.08], color: T, k: 0.03 },
+    { s: 'chain', pts: [[0, 0.02, -0.85, 0.012], [0, 0.02, -0.92, 0.014], [0, 0.02, -0.97, 0.01]], color: 0xe8d0a0, k: 0.005 },
+  ], { cell: 0.012, extras: [eyes(0, [0, 0, 0], 0.035, 0.07, 0.85, 0.014), { build: (b) => { b.box(0.008, 0.004, 0.06, 0xe2304a, [0, 0.04, 0.9]); } }] });
+}
+
+// birds: o = { size, body, belly, head, beak: [len, r, colour, hooked], wing, wingTip, tail, legs: [len, colour] (walkers),
+// crest, neck (flamingo), wingspan }
+function flier(o) {
+  const z = o.size, sh = [];
+  const walker = !!o.legs, by = walker ? o.legs[0] + z * 0.5 : 0;
+  sh.push({ s: 'egg', c: [0, by, 0], r: [z * 0.55, z * 0.55, z * 0.9], color: o.belly ? (x, y) => (y < by - z * 0.1 ? o.belly : o.body) : o.body, k: z * 0.35 });
+  const hc = o.neck ? [0, by + o.neck[0], z * 0.6 + o.neck[1]] : [0, by + z * 0.4, z * 0.8];
+  if (o.neck) sh.push({ s: 'chain', pts: [[0, by + z * 0.3, z * 0.6, z * 0.2], [0, by + o.neck[0] * 0.5, z * 0.4 + o.neck[1] * 0.2, z * 0.15], [0, by + o.neck[0] * 0.85, z * 0.5 + o.neck[1] * 0.8, z * 0.13], [...hc, z * 0.15]], color: o.body, k: z * 0.15 });
+  sh.push({ s: 'ball', c: hc, r: z * (o.headR || 0.45), color: o.head || o.body, k: z * 0.25 });
+  const [bl, br, bc, hook] = o.beak;
+  sh.push({ s: 'limb', a: [0, hc[1], hc[2] + z * 0.3], b: [0, hc[1] - (hook ? bl * 0.5 : bl * 0.1), hc[2] + z * 0.3 + bl], ra: br, rb: br * 0.3, color: bc, k: z * 0.04 });
+  if (o.crest) sh.push({ s: 'limb', a: [0, hc[1] + z * 0.35, hc[2]], b: [0, hc[1] + z * 0.65, hc[2] - z * 0.35], ra: z * 0.12, rb: z * 0.03, color: o.body, k: z * 0.05 });
+  const ws = o.wingspan || 1.1, wc = (x, y, zz) => (o.wingTip && (o.folded ? zz < -z * 0.6 : Math.abs(x) > z * ws * 1.4) ? o.wingTip : typeof (o.wing || o.body) === 'function' ? (o.wing || o.body)(x, y, zz) : o.wing || o.body);
+  for (const [s, part] of [[1, WING_L], [-1, WING_R]]) sh.push(o.folded
+    // folded along the body's side (sitting / walking)
+    ? { s: 'egg', c: [s * z * 0.42, by + z * 0.12, -z * 0.2], r: [z * 0.16, z * 0.36, z * 0.78], rot: [0.15, s * 0.12, 0], color: wc, part, pivot: [s * z * 0.4, by + z * 0.3, z * 0.2], k: z * 0.12 }
+    // spread (flying)
+    : { s: 'egg', c: [s * z * ws, by + z * 0.15, -z * 0.05], r: [z * ws, z * 0.08, z * 0.48], rot: [0, s * -0.2, 0], color: wc, part, pivot: [s * z * 0.4, by + z * 0.2, 0], k: z * 0.25 });
+  // tail: a flattened fan off the rump, rising by tailUp (m) over its length
+  const tl = z * (o.tailLen || 0.6), rise = o.tailUp || 0;
+  sh.push({ s: 'limb', a: [0, by + z * 0.05, -z * 0.55], b: [0, by + z * 0.05 + rise, -z * 0.6 - tl * 1.5], ra: z * 0.22, rb: z * 0.1, color: o.tail || o.body, part: TAIL, pivot: [0, by, -z * 0.6], k: z * 0.2 });
+  if (walker) for (const [part, s] of [[FL, 1], [FR, -1]]) {
+    const hip = [s * z * 0.25, by - z * 0.3, 0];
+    sh.push({ s: 'limb', a: hip, b: [s * z * 0.25, z * 0.06, z * 0.05], ra: z * 0.07, rb: z * 0.045, color: o.legs[1], part, pivot: hip, k: z * 0.04 });
+    sh.push({ s: 'egg', c: [s * z * 0.25, z * 0.03, z * 0.2], r: [z * 0.1, z * 0.03, z * 0.22], color: o.legs[1], part, pivot: hip, k: z * 0.03 });
+  }
+  return sculpt(sh, { cell: z * 0.06, extras: [eyes(0, [0, 0, 0], hc[0] + z * 0.25, hc[1] + z * 0.12, hc[2] + z * 0.3, z * (o.eye || 0.13), o.eyeOpts || {})] });
+}
+export const vulture = () => flier({ size: 0.32, body: 0x3a2c24, head: 0xe8a0a0, headR: 0.32, beak: [0.12, 0.04, 0xe8dcc4, true], wingTip: 0x1e1814, wingspan: 1.9, tailLen: 0.7 });
+const CROW = { size: 0.15, body: 0x1c1c26, beak: [0.09, 0.025, 0x1c1c24], wingspan: 1.5 };
+export const crow = () => flier({ ...CROW, folded: true, legs: [0.07, 0x2a2a30] });
+export const crowFly = () => flier(CROW);
+const OWL = { size: 0.24, body: (x, y, z) => (spots(x, y, z, 0.06, 0.018) > 0.2 ? 0x4a4a52 : 0xfafaff), head: 0xfafaff, headR: 0.6, beak: [0.04, 0.025, 0x3a3a40, true], wingspan: 1.6, tailLen: 0.4, eye: 0.2, eyeOpts: { iris: 0xffd23f } };
+export const snowyOwl = () => flier({ ...OWL, folded: true, legs: [0.05, 0xfafaff] });
+export const owlFly = () => flier(OWL);
+export const roadrunner = () => flier({ size: 0.16, folded: true, body: (x, y, z) => (spots(x, y, z, 0.05, 0.02) > 0.2 ? 0x3a2a1a : 0x9a7a52), belly: 0xf0e4c8, beak: [0.12, 0.02, 0x2a2a2a], crest: true, tailLen: 1.3, tailUp: 0.12, legs: [0.22, 0x5a6a8a] });
+export const flamingo = () => flier({ size: 0.3, folded: true, body: 0xff8ab0, beak: [0.16, 0.04, 0x1e1e24, true], neck: [0.75, 0.15], wing: 0xff7aa4, wingTip: 0x1e1e24, tailLen: 0.4, legs: [0.75, 0xff6a96] });

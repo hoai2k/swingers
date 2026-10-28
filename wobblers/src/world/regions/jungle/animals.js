@@ -17,49 +17,14 @@ import { VILLAGE, LAGOON, TEMPLE, RIVER, CLIFF, POOL, TRAIL, TRACK, VOLCANO, pol
 import { GROVE } from './wild.js';
 import { modelGeometry } from '../../animalgeo.js';
 import { animalGrab } from '../../animalgrab.js';
+import { loop, along, travelled } from '../../wildlife.js';
 
 const SEE = 170;
-// ---- paths ---------------------------------------------------------------------------------------
-// A closed loop round (hx, hz) of about radius r through clear ground, densified every ~1 m with
-// the ground height: { pts: Float32Array [x, y, z]*, len } or null if no clear loop fits there.
-function loop(R, rnd, hx, hz, r, ok, n = 9) {
-  const wp = [];
-  for (let i = 0; i < n; i++) {
-    const a = i / n * Math.PI * 2, rr = r * (0.6 + rnd() * 0.5), x = hx + Math.cos(a) * rr, z = hz + Math.sin(a) * rr;
-    if (!ok(x, z)) return null;
-    wp.push([x, z]);
-  }
-  const pts = [];
-  let prevY = null;
-  for (let i = 0; i < n; i++) {
-    const [ax, az] = wp[i], [bx, bz] = wp[(i + 1) % n], L = Math.hypot(bx - ax, bz - az), k = Math.max(1, Math.round(L));
-    for (let j = 0; j < k; j++) {
-      const x = ax + (bx - ax) * j / k, z = az + (bz - az) * j / k, y = R.groundAt(x, z);
-      if (prevY !== null && Math.abs(y - prevY) > 1.2) return null; // a cliff edge
-      if (!ok(x, z, true)) return null;
-      pts.push(x, y, z); prevY = y;
-    }
-  }
-  return { pts: new Float32Array(pts), n: pts.length / 3 };
-}
-const _o = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
-function along(path, s) { // position + heading at distance s (1 m spacing)
-  const n = path.n, f = ((s % n) + n) % n, i = Math.floor(f), j = (i + 1) % n, k = f - i, P = path.pts;
-  const ax = P[i * 3], ay = P[i * 3 + 1], az = P[i * 3 + 2], bx = P[j * 3], by = P[j * 3 + 1], bz = P[j * 3 + 2];
-  _o.x = ax + (bx - ax) * k; _o.y = ay + (by - ay) * k; _o.z = az + (bz - az) * k;
-  const dx = bx - ax, dz = bz - az;
-  _o.yaw = Math.atan2(dx, dz); _o.pitch = Math.atan2(by - ay, Math.hypot(dx, dz) || 1);
-  return _o;
-}
-// distance travelled by time t: walk for `walk` s, rest for `rest` s, at v m/s (phase-shifted)
-function travelled(t, v, walk, rest, off) {
-  const P = walk + rest, tt = t + off, c = Math.floor(tt / P), u = tt - c * P;
-  return { s: v * (c * walk + Math.min(u, walk)), moving: u < walk, rest: u - walk };
-}
+// paths (loop, along, travelled) are shared with the other islands' wildlife: world/wildlife.js
 
 // ---- build ---------------------------------------------------------------------------------------
 export function buildAnimals(game, R) {
-  const rnd = R.rng(404), S = {};
+  const rnd = R.rng(404 + Math.floor(Math.random() * 100000)), S = {}; // a new layout every session
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, shadow: true, ...opts }));
   const t0 = performance.now();
   mk('tiger', modelGeometry('tiger'), 4, { k: { LEG: 0.6 } });
@@ -69,19 +34,20 @@ export function buildAnimals(game, R) {
   mk('hog', modelGeometry('hog'), 12, { k: { LEG: 0.7 } });
   mk('capybara', modelGeometry('capybara'), 14, { k: { LEG: 0.6 } });
   mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });
-  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 3.9, WAVEA: 0.14 } });
+  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 3.9, WAVEA: 0.22 } }); // (windier than before: 0.14)
   mk('croc', modelGeometry('croc'), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
   mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
   mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
-  // grabbing (animalgrab.js): body capsules (r, half length, centre height, kg); small ones are
-  // picked up, big ones bolt along their way dragging you
+  // grabbing (animalgrab.js): body capsules (r, half length, centre height, kg), how fast it
+  // pulls away (run m/s) and its traction (mu: pull = kg x 9.81 x mu x effort); a wobbler is
+  // ~43 kg and pulls ~500-1100 N. pick = small enough to tumble about in your hands
   const GRAB = {
-    monkey: { r: 0.17, len: 0.2, y: 0.38, kg: 8, pick: true }, hog: { r: 0.26, len: 0.3, y: 0.42, kg: 24, pick: true },
-    capybara: { r: 0.26, len: 0.3, y: 0.38, kg: 28, pick: true },
+    monkey: { r: 0.17, len: 0.2, y: 0.38, kg: 8, run: 4, pick: true }, hog: { r: 0.26, len: 0.3, y: 0.42, kg: 24, run: 4.5, pick: true },
+    capybara: { r: 0.26, len: 0.3, y: 0.38, kg: 28, run: 3, pick: true },
     tiger: { r: 0.36, len: 0.6, y: 0.78, kg: 180, run: 5 }, leopard: { r: 0.3, len: 0.5, y: 0.58, kg: 70, run: 5.5 },
-    tapir: { r: 0.4, len: 0.55, y: 0.72, kg: 250, run: 3.5 }, croc: { r: 0.3, len: 1.0, y: 0.3, kg: 300, run: 3 },
-    snake: { r: 0.13, len: 1.6, y: 0.13, kg: 60, run: 2 },
+    tapir: { r: 0.4, len: 0.55, y: 0.72, kg: 250, run: 3.5 }, croc: { r: 0.3, len: 1.0, y: 0.3, kg: 300, run: 3, mu: 0.6 },
+    snake: { r: 0.13, len: 1.6, y: 0.13, kg: 60, run: 2, mu: 0.5 },
   };
   let lastPut = null;
   for (const sp of list) { const put = sp.put.bind(sp); sp.put = (...a) => { lastPut = a; put(...a); }; }
@@ -180,7 +146,11 @@ export function buildAnimals(game, R) {
     for (const a of animals) {
       let vis = false;
       for (const c of cams) if ((c.x - a.x) ** 2 + (c.z - a.z) ** 2 < (SEE + 40) ** 2) { vis = true; break; }
-      if (!vis) continue;
+      // comings and goings (as wildlife.js): while out of sight, every few minutes a troop / an animal
+      // rolls whether it is about (a path's animals together)
+      const key = a.path || a;
+      if (!vis) { const cyc = Math.floor((t + hash(a.off, 3) * 300) / 240); if (key.cyc !== cyc) { if (key.cyc !== undefined && (!a.g || a.g.st === 'free')) key.away = Math.random() < 0.35; key.cyc = cyc; } continue; }
+      if (key.away) continue;
       lastPut = null;
       pose(a, t);
       if (lastPut) { a.pose = [lastPut[0], lastPut[1], lastPut[2], lastPut[3]]; posed.add(a); }
@@ -290,8 +260,6 @@ export function buildAnimals(game, R) {
     const near = WATCH[a.kind] && (!g || g.st === 'free') && nearestPlayer(a.x, a.z, WATCH[a.kind]);
     if (near) a.tAdj = (a.tAdj || 0) + dt;
     const tr = travelled(t - (a.tAdj || 0), a.v, a.walk, a.rest, a.off);
-    const bolt = g?.st === 'bolt', sB = grab.boltS(a, dt);   // grabbed big animals run on, dragging you
-    tr.s += sB; if (bolt) tr.moving = true;
     const o = along(a.path, tr.s - a.back);
     // legs step with the ground covered (one stride per cycle), the snake's waves stay put on it
     let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / (STRIDE[a.kind] || 1) + a.off, roll = 0, sc = a.s;
@@ -308,7 +276,6 @@ export function buildAnimals(game, R) {
     }
     if (a.kind === 'monkey' && tr.moving) y += Math.abs(Math.sin(ph)) * 0.18; // bounding gait
     if (a.kind === 'croc' && a.startle && t - a.startle < 1) ph = (t - a.startle) * 30; // snap!
-    if (bolt && a.kind !== 'snake') { amp = 1.3; if (a.kind === 'croc' && !a.swim) ph = t * 12; }
     if (g?.st === 'return') {                                 // put down: walking back to its way
       const dx = o.x - g.x, dz = o.z - g.z, d = Math.hypot(dx, dz), st = Math.min(d, 3 * dt);
       if (d > 1e-3) { g.x += dx / d * st; g.z += dz / d * st; }

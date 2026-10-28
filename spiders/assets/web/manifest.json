@@ -142,7 +142,13 @@
     "prop_gear.png",
     "prop_icicles.png",
     "lobby_island.png",
-    "lobby_signboard.png"
+    "lobby_signboard.png",
+    "hud_unlock.png",
+    "btn_fullscreen_exit.png",
+    "mod_squeeze.png",
+    "mod_pool.png",
+    "proj_hexorb.png",
+    "lobby_anchor.png"
   ],
   "music": [
     "win.mp3",

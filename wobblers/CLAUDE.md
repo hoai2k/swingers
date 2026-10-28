@@ -338,7 +338,9 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     placed and sized from the drawn near legs (both pairs one thickness, in proportion to the
     body), stood upright; a tail along the drawn tail (TAIL); ears on the skull. Per-animal knobs in
     `QUADS` (`hock` bend, `head` length range, `head_w` width, `torso_end`, `ears`, `sprawl`,
-    `body_tail`, `jaw`, `leg_r`).
+    `body_tail`, `jaw`, `leg_r`, `leg_r_fixed`, `belly_y` = a rounded belly line this far below the
+    back when diagonal legs fool the belly band, as on the camel). `QDBG=1` (`QDBG_OUT=<png>`) draws
+    the back / belly lines and legs it read over the sheet: check it first when a build looks off.
   - `tools/animals/designed.py`: everything else, one design function each (python, parrot,
     toucan, turtle, plesiosaur, manta, jellyfish, octopus, sea star, crab, seahorse) on shared
     pieces: `Sheet` (views in metres, profiles), `Grid` (ellipsoid, tapered tube `cone`, outline
@@ -348,6 +350,19 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     flippers BL / BR, tentacles and arms parts 10+ (the shader sways them; with the species
     constant `TENTW: 1` they wiggle instead: waves running out along each arm, growing toward
     the tip, plus a lift and curl, `TENTA` / `TENTK` / `TENTS` — the octopus).
+    Hand-placed designs for sheets `quad.py` misreads (round 18): `quadd` (four-legged: fennec,
+    arctic fox, iguana) and `perchd` (standing birds: roadrunner, flamingo, snowy owl) place parts
+    on the side view's box: u from tail end (0) to nose (1), v from top (0) to ground (1), radii in
+    box heights, widths as `xs`; read coordinates off `grid.py`-style u/v grids of the sheet.
+    Flying birds are separate models from the spread-wing top view (`bird`, e.g. `owlFly`).
+    `snake` takes `prof_top` (thickness from the top view) and `rattle=(n, r)` beads on TAIL;
+    snakes are built longer than drawn (`length`) so they wind more. `quadd` also takes `horns`
+    (a mirrored base-to-tip chain, the goat). `scorpiond` places a many-legged body by hand in both
+    views ((u, v) on the side, w across the top), since `crab`'s automatic top-view limb tracing
+    merged the scorpion's legs and tail.
+  - **How to build a new one** (request layout, choosing a builder, coordinates, the review loop
+    with `tools/animals/review/` `grid.py` / `turn.cjs` / `board.py`, in-game checks, learnings):
+    `tools/animals/METHOD.md`. Read it before building or changing an animal model.
   - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
     straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
     other two share (`View`, `write`, `fill_bg`, surface nets).
@@ -398,10 +413,58 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   Grabbing (`src/world/animalgrab.js`): animals have no physics, so the nearest few to a player
   (pool of 8, within 7 m) borrow a kinematic capsule that follows the posed animal (`a.pose`), in
   a group players walk through but hands still find (`handleOwner` kind `'animal'`; player.js
-  also checks low down at the hand for animals, which stand under hand height). Per-kind `GRAB`
-  specs in `jungle/animals.js`: `pick` ones (monkey, hog, capybara) turn dynamic and are carried
-  and thrown like props (`carried` -> `tossed` -> `return` walks home -> `free`); big ones bolt
-  (`run` m/s added to their loop for 2 s past the grab), dragging whoever hangs on.
+  also checks low down at the hand for animals, which stand under hand height, and never
+  mantles onto one). A grab makes it a dynamic body of its weight: a tug of war like grabbing
+  another wobbler. On its feet (or swimming, buoyed) it pulls away (direction picked at the grab,
+  away from the grabber, wandering slowly) toward `run` m/s with a force capped at kg x 9.81 x
+  `mu` x its `effort` (heaving and easing, 0.55..1); its capsule is nearly frictionless, so its
+  legs are its only grip. A wobbler (~43 kg) pulls ~500-1100 N with their own drive, so a hog is
+  carried, a leopard drags someone who just holds on but stalls against one pulling back, a
+  tapir slows but still wins. `pick` kinds (monkey, hog, capybara) tumble freely (thrown like
+  props); the rest only turn about y. `held` -> `loose` (runs on 1.2-2.5 s, then plants its feet)
+  -> `return` (walks home, animals.js) -> `free`. GRAB specs (capsule, kg, run, mu) in
+  `jungle/animals.js`.
+- Other islands and the town (`world/wildlife.js`): the engine the rest share (the jungle uses its
+  `loop` / `along` / `travelled`). `wildlife(game, R, { seed, ok, bounds })` -> `mk` (a species from
+  a model name), `place` (walking loops through `ok` ground; opts `flee` radius / `fleeV` for
+  skittish ones that run off and walk back, `look` to stop and stare, `group`), `add` (records:
+  `fly` circling birds, `perch` birds that sit / peck (`hop`) and take off into a circle when a player
+  comes within `shy` m, then glide back (ground and flying birds are two species of one bird:
+  `crow` / `crowFly`, `owl` / `owlFly`, since wings flap whatever the amount), `coil` (rears up and
+  rattles), `still`, or `custom: fn(a, t, dt, S, W)` with `W.nearest(x, z, r)`), then
+  `start(statsName, { grab })` (grab specs as in the jungle). Stats: `game.desertAnimals`,
+  `snowAnimals`, `tropicalAnimals`, `townAnimals`, `cityRats`.
+  Never the same twice: the layout seed is random per session, and each group (`a.grp`: a herd,
+  a pair, one animal) re-rolls every 150-300 s while no camera can see it whether it is about
+  (`presence`, default 0.65) and, for walkers, which loop of its kind's pool (3x the groups) it is
+  on; `a.hidden` = away. Timid groups (`timid` chance 0.6, re-rolled too) that get scared (fleeing,
+  a flushed perched bird flies off over the horizon, let go after a grab) run on until 40 m from
+  every player and are gone until the next roll (`runOff`); the others calm down and carry on.
+  Noticing (`W.noticed(a, x, z, y, yaw, r)`, used by flee / look / perch and the custom squirrel,
+  rat and flamingo poses): within r scaled by the player's speed (0.25 + 0.75 x (speed - 0.8) / 3.5,
+  so creeping at ~1.5 m/s gets ~3 m from a fennec that bolts at 8 m from a walker), x 0.55 from
+  behind (outside +-110 deg), x 0.5 with static cover in between (a ray), x 1 for a player in a
+  vehicle. The jungle (own loop) also has a per-session layout and per-path comings and goings
+  (`key.away`, 35% away per 240 s cycle while out of sight).
+  - Dusty Dunes (`regions/desert/animals.js`): camel caravans (grabbable, 450 kg), fennec foxes and
+    roadrunners that flee, rattlesnakes that slither between the canyon rims and mesas (`rear`: when one notices you it
+    rears and shakes its rattle), scorpions, tortoises,
+    vultures circling the canyon and mesas.
+  - Frostpeak (`regions/snow/animals.js`): mountain goats above 50 m (stare at you), arctic foxes
+    (flee), snowy owls that take off and circle.
+  - Coconut Cove (`regions/tropical/animals.js`): flamingo flocks wading between shallow points
+    picked at load (the knee-deep band is too thin for loops; they wade off from players), iguanas.
+  - Town (`world/townlife.js`): squirrels under the suburb street trees (`game.treeSpots`, recorded
+    by `kit.tree`) that scamper up the trunk when you come close and come down after you leave;
+    crows on lawns and roofs; stray cats (look, flee) and house cats sitting out; Bigtown rats by
+    bins placed on the side pavements: out some of the time, they dart into the bin (hidden 20 s).
+  - All built from their round-18 sheets (`SHEET_MODELS`): camel, rat, cat (`quad.py`); fennec,
+    arctic fox, iguana, goat, squirrel, tortoise (`quadd`); roadrunner, flamingo, snowy owl, crow
+    (`perchd`); flying `owlFly`, `crowFly`, vulture (`bird`); rattlesnake (`snake`); scorpion
+    (`scorpiond`). The sculpted stand-ins in `animalmodels.js` remain only as the fallback.
+    Snakes slither with phase = distance x WAVEK (rattlesnake `WAVEK` 11, `WAVEA` 0.1; python
+    `WAVEA` 0.22) and their `stride` must be 2pi / WAVEK. Sounds: `yip`, `rattle`, `hoot`,
+    `honk`, `caw`, `chitter` (recorded), plus existing ones.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
 ## Fences (`src/world/fences.js`)
@@ -414,9 +477,91 @@ a loose dynamic panel (`kind 'fence'`, grabbable) flies off with the hit. At mos
 pieces (the oldest unheld goes); broken sections are rebuilt after 120 s when no player is within
 50 m.
 
+## Dash
+
+B (V / Delete on the keyboards) dashes: `DASH_V` 15 m/s the way the stick points (else the way
+you face), with a small hop; the walk drive doesn't brake it for `DASH_T` 0.22 s, and an air dash
+is trimmed back to `RUN` speed when it ends. Once per jump in the air (`airDashed`), 0.65 s
+cooldown; it also gets you up from a flop. Swimming, it is a stroke (`DASH_SWIM` 7 m/s,
+`DASH_SWIM_T` 0.45 s): at the surface straight ahead, a dive (`diveD` += `DIVE_DASH` 2.5 m) only
+when the camera looks steeply down (pitch > 0.75); under water it follows the look up or down.
+Up from under water is a leap: `dashUpT` (1.2 s, until out of the water) drops the depth spring
+for neutral buoyancy, so you break out at ~7 m/s; landing back (`dashLeap`) is surface swimming,
+or a dive straight back under if the camera looks down (pitch > 0.45). The pad's ragdoll
+flop is D-pad left (`input.js` sets `ragdoll` and `dLeft`: menus, the arcade and the forklift
+read a ragdoll press that comes with `dLeft` as 'left', not 'back'; the D-pad cheer emote gave
+way, the keyboards' 3 still cheers).
+
+Sneaking crouch (`player.js` `sneak` / `sneakT`): walking slowly (0.25-2.2 m/s with the stick
+held, on foot and grounded) for 1 s eases into a crouch: hips lower by 0.2 x size, the body
+leans forward and the legs stay bent. It holds through short pauses and ends above 2.6 m/s.
+Animals notice a sneaking player 30% less far away (`wildlife.js` `noticed`).
+
+## Car damage (`src/world/cardamage.js`, Settings > Car damage, `settings.carDamage`, default on)
+
+A stepper compares each damageable vehicle's velocity with the step before (gravity removed): a
+change over `DV0` 5 m/s is a serious hit and adds (dv - 5) x `K` 2.6, at most `HIT_MAX` 40 (one
+collision spreads over a few steps: within 0.3 s only its peak counts), to `v.dmg.hp`. A 20 m/s
+head-on wall crash is ~40, so about three set a car alight. Smoke from 35 (black from 60), a
+wobble while driven from 60 (angular velocity nudges), fire at 100 for `FIRE_T` 5 s, then
+`explode`: flash sprite, fireball, sparks, smoke, the body thrown up and spun, riders
+`leaveSeat` + flung + `knockOut`, players within 9 m flung. The wreck (materials swapped for
+dark copies, seats disabled) smokes `WRECK_T` 12 s, then a phone-called vehicle is destroyed
+(and dropped from `game.calledVehicles`), any other `respawn()`s, which repairs it
+(`Vehicle.prototype.respawn` is wrapped). Never damaged: self-driving traffic (unless a player
+drives it), bumper cars, the bouncy ball. Particles are two pooled `THREE.Points` (normal-blended
+smoke, additive fire; point size from the viewport height in `onBeforeRender`), emitted only
+within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fallbacks.
+`game.carDamage`: `repair(v)`, `explode(v)` (probes), `smoke`, `fire`.
+
+## Frostpeak chairlift and skis (`src/world/regions/snow/lift.js`, `slopes.js`, `skis.js`)
+
+- The chairlift (`lift.js`): chairs run at `V_FAST` 7.6 m/s on the line and slow to `V_SLOW` 1.2 m/s
+  through the stations (Y boards a passing chair; riders are set down on the far platform). A ride
+  up is ~52 s. `game.snowLift` (`chairs`, `at(s)`, `exitTop` / `exitBottom`) for probes.
+- Everyone slides on the snow overlays (`snowSurfaces`: 'piste', 'jump', 'ice'; `installSkiing` in
+  `slopes.js`: carve toward the stick, snow plough, `VMAX` caps). **Skis** (`skis.js`): ski racks
+  (`skiRack`, kit scenery + a `useSpot`, Y takes / returns a pair, `labelFor`) at the top station and
+  two in the village. Wearing them is `player.skis` (+ `player.skiMesh`, a ski mesh on each shin
+  group); player.js hooks are all `this.skis?.…`: `step` after the pose (what you stand on:
+  piste / jump / ice, 'powder' = Frostpeak terrain above the beach, 'deck' = the lift platforms,
+  'hard' = anything else; a knees-bent stance that tucks at speed; the skis can't face backwards
+  while moving, pulling back = `ploughing`), `dip` (lower hover height), `slick` (powder counts as
+  slippery unless stepping slowly uphill), `sync` (skis lie flat on the ground, toes in when
+  ploughing), `off` in `knockOut` / `respawn` / `destroy`. `slopes.js` uses `VMAX_SKI` (piste 25 m/s,
+  powder 15, air 30), a faster carve, poling under 7 m/s, an 8 m/s² plough and less friction
+  (`FRICTION_SKI`). Technique (`skis.step`, drawn in `skis.sync`): pulling back
+  brakes: below 6 m/s a snow plough (`plough`, tips in), faster a hockey stop (`stopping`, latched
+  to a standstill: the body and skis swing to head ± 1.45 rad toward the stick's side, uphill edges
+  dug in, slopes.js brakes 11 m/s² and skips the carve). Turns: `edge` (tilt into the turn, d x
+  (0.35 + 0.75 carve) where carve ramps 10-17 m/s; skis rotated about their length, `lean` adds to
+  the body's bank in player.js), and at low speed stem christies (`stem`: the outside ski's tail
+  out for ~0.55 s as each turn starts, fading out 5-10 m/s). `camYaw` = the run's heading while
+  moving: camera.js follows it (not the body), back to the normal camera once stopped.
+  They come off (`offSkis(p, why)`) whenever the player goes ragdoll: a
+  knock-out ('crash', flung) or any other limp state, a flop on purpose included ('flop', `skis.step`)
+  drops them as a loose pair (kind 'skis', grippy so they stay put, gone after 25 s, at most 8 pairs)
+  carrying a 'Put skis on' use spot (`pairUp`: Y next to them wears them again and removes the pair);
+  ~1 s of walking on 'hard' ground / swimming ('walk') dissolves them (shrink + fade, nothing left); in a vehicle seat, outside Frostpeak (`regionAt`), on respawn or at a rack
+  they are put away. Probe: `game.skis.equip(p)` / `off(p, why)`, `racks`, `loose`; down the piste on
+  skis ~15 s at ~25 m/s (without ~29 s at ~13.5).
+
+## Waypoint stars (`src/world/waypoints.js`)
+
+`WAYPOINTS` ([id, name, x, z]) puts a spinning gold star (glow sprite + two crossed additive beam
+planes, drawn within 700 m of a camera, the star itself within 260 m) on the nearest open, dry,
+level ground to each point (a spiral search at build: a ray from 120 m up must land within 0.8 m
+of the terrain mesh, no water over it). Touching it (chest 1.2 m / hand 0.6 m, checked 20 times a
+second) plays `star` (recorded; synth chime fallback), confetti (`presents.js confetti`) and
+sparkle rings, pays 15 coins and saves the id in `settings.waypoints`. `game.waypoints`:
+`list`, `discovered()`, `travel(p, w)`, `reset()`. The map panel draws discovered ones (LB / RB
+or click picks, Y or a second click travels); the pause menu has "Fast travel ◀ name ▶". Town is
+`start: true` (no star, always there). A new waypoint: one entry; check its spot with a probe
+(`w.miss` is set when the search found nothing within 40 m).
+
 ## Swimming and diving
 
-Swimmers hover at the surface; holding sprint (Shift / LB) dives (`player.diveD`, 1.8 m/s down,
+Swimmers hover at the surface; holding sprint (Shift / LB) dives (or dash looking down) (`player.diveD`, 1.8 m/s down,
 to 0.9 m above the bed, at most 25 m; 1.3 m/s back up when let go). The camera stays under the
 surface with a diver (camera.js), so the sea life (drawn only for cameras under water) shows.
 
@@ -550,6 +695,31 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   `registerHandling(name, { update(vehicle, driver, vel, fwd, up, side), wheels })` with
   `def.handling = name`. Put it on the phone with `registerCallable({ id, type, name, icon | svg,
   color, opts }, beforeId)` (`src/phone.js`). Example: the jet ski in `world/regions/tropical.js`.
+  More def hooks: `control(vehicle, inp)` (own input mapping), `animate(vehicle, dt)` (per-frame
+  visuals, from `sync`), `aircraft: true` ("Fly" label, no shell wobble), `spawn: { hx, hz, cz,
+  below, above, slope, space }` (phone spawn footprint for odd shapes), `driveHint(G)`.
+- **Planes and gliders** (`world/aircraft.js`, vehicles `plane` / `glider`, handling `'flight'`,
+  params in `def.flight`): one body, fuselage / wing / tail colliders plus three frictionless gear
+  balls; the handling does the tyres (side grip, rolling, brake, reverse taxi, hold still when
+  parked) from a down ray (`groundGap`). Flight is velocity-level arcade: lift cancels gravity
+  across the flight path times k = (forward speed / `vs`)² (max 1), the velocity is turned toward
+  the nose at `align` x k per second (speed kept), thrust and `drag` x v² act along the path, so
+  climbing costs speed. Gliders ride updrafts (`F.updraft` 1.2, `F.cruise` 13, fading out
+  `UPDRAFT_TOP` 180 m above ground or sea): in the air, air brakes shut and nose not pushed down,
+  the rising air cancels the drag, keeps up the cruise speed in long turns, makes up the lift a
+  slow / banked wing lacks, and (applied after the nose-alignment step, so it moves the whole
+  glider) tops the climb up toward `updraft` m/s: it climbs ~0.4 m/s circling, ~0.3 straight, and
+  flies as long as you like; air brakes sink ~1.8 m/s, pushing the nose down dives. Attitude is set as angular velocity from Euler rates (yaw about world up, pitch about the
+  level side axis, roll about the nose), blended firmly (0.6 a step) in the air: stick = rate, let
+  go = level to `trim`, limits `bank` / `pitchMax`, bank turns at g tan(bank) / speed, below `vs`
+  the nose drops toward the flight path. On the ground only yaw is driven (pitch / roll follow
+  the gear) unless pulling back past 0.7 `vs` (rotation). The glider's launch is a ~0.5 s push to
+  `launch` m/s (one instant kick counted as a car-damage crash); its tail wheel stops colliding
+  while airborne (`v.airOff`: scraping the slope behind a hill-top launch flipped the nose up into
+  a stall). Keyboards: Space throttle / launch, Shift brake, W/S pitch (W/S can't be gas too).
+  Parked gliders (`PARKED`, `placeAircraft` in the booths build step): home mountain lookout
+  (20 m SW of the top, facing down the slope) and the Frostpeak summit plateau's east side;
+  probe new spots for clearance and a glide line first (sample `groundAt` along the heading).
 - **Phone booths / bouncy ball / grab-on rides**: booths are `BOOTHS` in `world/booths.js`
   (`[name, x, z, yaw]`, yaw = open front; pick spots with a clearance probe: flat ground, an empty
   1.8 m box, room for a car 5 m ahead) and reuse the phone: `new PhonePanel(ui, p, { list, from,

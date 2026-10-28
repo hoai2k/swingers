@@ -232,8 +232,8 @@ class Arcade {
     const d = this.game.input.get(p.deviceId);
     if (!d) return false;
     const pr = d.rawPressed || d.pressed || {};
-    const yes = !!pr.interact, no = !!pr.ragdoll;
-    if (d.pressed) { d.pressed.interact = false; d.pressed.ragdoll = false; }
+    const yes = !!pr.interact, no = !!((pr.ragdoll && !pr.dLeft) || pr.dash);
+    if (d.pressed) { d.pressed.interact = false; d.pressed.ragdoll = false; d.pressed.dash = false; }
     if (yes) { this.answer(p, true); return true; }
     if (no) this.answer(p, false);
     return false;

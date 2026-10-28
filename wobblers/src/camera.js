@@ -103,6 +103,13 @@ export class FollowCam {
       const v = p.chest.linvel();
       const spd = Math.hypot(v.x, v.z);
       wantFov = FOV + Math.min(5, Math.max(0, spd - 3.5) * 1.6);
+      // skiing (snow/skis.js): follow the run (where they're going, not where the body and skis
+      // point while turning or stopping) unless the player is turning the camera; once they
+      // stop it is the normal walking camera again
+      if (p.skis?.camYaw != null && !ride && this.idle > 0.6 && p.state === 'normal') {
+        let d = p.skis.camYaw - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+        this.yaw += d * (1 - Math.exp(-dt * 2.2 * Math.min(1, spd / 4)));
+      } else
       // on a pad, drift round behind a running player (never flip round
       // when they run toward the camera)
       if (!inp.mouse && !ride && this.idle > 1.0 && spd > 2 && p.state === 'normal') {
