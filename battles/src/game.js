@@ -87,7 +87,10 @@ function battleTheme(armies, world, map) {
   }
   const best = Object.keys(gold).sort((x, y) => gold[y] - gold[x])[0];
   if (best && gold[best] >= total * 0.45) return best;
-  return Math.random() < 0.5 ? 'battle' : BATTLE_THEMES[1 + Math.floor(Math.random() * (BATTLE_THEMES.length - 1))];
+  // no clear theme: half the time a main battle theme (battle, battle_2), else a world one
+  const main = BATTLE_THEMES.filter((k) => k === 'battle' || k === 'battle_2'), worlds = BATTLE_THEMES.filter((k) => !main.includes(k));
+  const list = Math.random() < 0.5 || !worlds.length ? main : worlds;
+  return list[Math.floor(Math.random() * list.length)];
 }
 // Setup / planning music: the planning version of the battle theme above (the
 // battleground's, a campaign world's, or the theme of the factions holding most of the
