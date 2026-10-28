@@ -38,6 +38,10 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 | `fennec_fox.png` | a fennec fox: small cream-sand fox with huge ears, black-tipped bushy tail |
 | `roadrunner.png` | a roadrunner: speckled brown-and-cream ground bird, long straight tail, crest, long legs, running pose |
 | `rattlesnake.png` | a desert rattlesnake: tan with bold brown diamond pattern down the back, rattle on the tail tip; body laid out in a gentle S like `snake.png`, head raised slightly |
+| `scorpion.png` | a desert scorpion: amber-orange, two big pincers held forward, eight legs, tail curled up over the back with the stinger |
+| `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
+| `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
+| `mountain_goat.png` | a mountain goat: shaggy white coat (shaped as smooth rounded volumes, no fur strands), short black horns, small beard |
 
 ## Delivered round 17 — hanging monkey turnaround
 
