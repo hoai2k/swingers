@@ -373,7 +373,12 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   (`cameraUnder`, a view hook). Dolphin pods and whales cruise loops found at load in open sea
   (no region within reach), posed only while a camera is within 420 m; dolphins leap, whales
   blow and every third cycle breach (`spray` particles, `splash` / `whale` / `dolphin` sounds).
-  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`).
+  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`; `cellAt(ix, iz)` for probes).
+  Octopuses notice a swimmer over them (within ~5.5 m, bed < 9 m down): one shoots up, sits on the
+  swimmer's head 7-11 s (arms going; `player.octopus` is set and a stepper slows their swimming),
+  then hops off into the water with a splash and jets away in a cloud of ink (`ink`), settling
+  where it lands; 60 s before it grabs again. Swimmers float at the surface, so active octopuses
+  are drawn by `octopusOut`, which is seen from above the water too (the rest only from below).
 - Jungle animals walk loops through clear ground (no village, temple, river, trail, steep or
   volcanic ground) densified with ground heights at load (no terrain queries per frame); only
   those within 170 m of a camera are posed. Crocodiles drift along the river (or bask on the
@@ -382,6 +387,14 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; recorded, with
   synth fallbacks in audio.js; plus the `jungle_ambience` bed of birds, frogs and distant monkeys) when a player comes within its `hear` range.
   Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
+  Movement: legs step with the ground covered (`STRIDE` per kind: phase = distance x 2pi / stride),
+  so feet don't skate; the python's slither waves run head to tail with phase = distance x WAVEK,
+  so its curves stay put on the ground as it glides through them. Encounters: a monkey troop
+  comes to play with a player on foot within 12 m (circling, hopping, spinning, chattering; the
+  troop's first one rides on the player's head for a few seconds; back to their round after 30 s
+  or when the player leaves, 45 s cooldown: `monkeyPlay`, state in `a.mk`); tigers, leopards and
+  tapirs stop and turn to watch a player who comes close (`WATCH` radii; their walk is paused,
+  not skipped: `a.tAdj`).
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
 ## Stratford Fall Fair (`src/world/fair/`)

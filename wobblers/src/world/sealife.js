@@ -42,6 +42,7 @@ export function buildSeaLife(game) {
   mk('crab', modelGeometry('crab'), 30, { k: { LEG: 0.5 } });
   mk('seahorse', modelGeometry('seahorse'), 16);
   mk('octopus', modelGeometry('octopus'), 10, { k: { TENTW: 1, TENTA: 0.5, TENTK: 11, TENTS: 1.3 } });
+  mk('ink', sprayGeo(), 80, { material: { transparent: true, opacity: 0.55, color: 0x2a1d36, depthWrite: false } });
   mk('turtle', modelGeometry('turtle'), 8, { k: { FLAP: 0.5, LEG: 0.3 } });
   mk('manta', modelGeometry('manta'), 6, { k: { FLAP: 0.45, TAILA: 0.2 } });
   mk('shark', modelGeometry('shark'), 8, { mode: 'swim', k: { WAVEK: 1.6, WAVEA: 0.22, TAILZ: 2.8, FLAP: 0.12 } });
@@ -118,14 +119,93 @@ export function buildSeaLife(game) {
         const x = o.x + Math.cos(o.yaw) * k * 1.2, z = o.z - Math.sin(o.yaw) * k * 1.2;
         S.crab.put(x, T.groundAt(x, z), z, o.yaw, 0, 0, 1, t * 14, Math.min(1, Math.abs(side) * 1.5)); break; }
       case 'seahorse': S.seahorse.put(o.x, o.y + 0.8 + Math.sin(t * 0.8 + o.seed) * 0.25, o.z, t * 0.15 + o.seed, 0, 0, 1.4, 0, 0); break;
-      case 'octopus': { const k = Math.sin(t * 0.08 + o.seed), x = o.x + k * 1.5, z = o.z + Math.cos(t * 0.06 + o.seed) * 1.5;
-        S.octopus.put(x, T.groundAt(x, z) + 0.02, z, o.yaw + k, 0, 0, 1.1, t * 1.6 + o.seed, 0.8); break; }
+      case 'octopus': octopus(o, t); break;
       case 'turtle': circle(o, t, 0.9, 0.55, 0.8, 0.8, S.turtle, 1, 2.2); break;
       case 'manta': circle(o, t, 1.4, 0.6, 1.2, 1.0, S.manta, 1, 1.8); break;
       case 'shark': circle(o, t, 2.4, 0.5, 1.0, 1.1, S.shark, 1.1, 5); break;
       case 'plesio': circle(o, t, 1.6, 0.55, 1.6, 1.2, S.plesio, 1, 1.3); break;
     }
   };
+
+  // ---- octopuses: creep about the bed. One that notices a swimmer over it (within ~5 m, not too
+  // deep) shoots up and grabs on: it sits on their head, arms going, and slows their swimming;
+  // after a while it lets go, drops back into the water with a splash and jets off in a cloud of
+  // ink, settling where it lands (then leaves swimmers alone for a minute). Active ones are drawn
+  // by `octOut`, which is seen from above the water too (the rest of sea life only from below).
+  const divers = [];
+  const inks = []; // { x, y, z, vx, vy, vz, age }
+  const active = new Set();
+  const octOut = new Species(game, modelGeometry('octopus'), { max: 4, name: 'octopusOut', k: { TENTW: 1, TENTA: 0.5, TENTK: 11, TENTS: 1.3 } });
+  const ease = (u) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
+  const homeOf = (o, t) => { const k = Math.sin(t * 0.08 + o.seed), x = o.x + k * 1.5, z = o.z + Math.cos(t * 0.06 + o.seed) * 1.5; return [x, T.groundAt(x, z) + 0.02, z, k]; };
+  function octopus(o, t) { // the roaming pass (under-water views)
+    if (o.st) return;
+    const [x, y, z, k] = homeOf(o, t);
+    S.octopus.put(x, y, z, o.yaw + k, 0, 0, 1.1, t * 1.6 + o.seed, 0.8);
+  }
+  function wake(t) {
+    for (const d of divers) {
+      if (d.p.octopus) continue;
+      const ix0 = Math.floor(d.c.x / CELL), iz0 = Math.floor(d.c.z / CELL);
+      for (let i = -1; i <= 1 && !d.p.octopus; i++) for (let j = -1; j <= 1 && !d.p.octopus; j++) for (const o of cellAt(ix0 + i, iz0 + j)) {
+        if (o.t !== 'octopus' || o.st || t < (o.cool || 0)) continue;
+        const [hx, hy, hz] = homeOf(o, t), dx = d.c.x - hx, dz = d.c.z - hz;
+        if (dx * dx + dz * dz > 5.5 * 5.5 || d.c.y - hy > 9) continue;
+        o.st = 'lunge'; o.t0 = t; o.p = d.p; o.from = [hx, hy, hz]; o.hold = 7 + hash(o.seed, t) * 4;
+        o.dur = 0.6 + Math.hypot(dx, d.c.y - hy, dz) * 0.12; d.p.octopus = o; active.add(o);
+        game.audio?.play('squeak', d.c, 0.8);
+        break;
+      }
+    }
+  }
+  function act(o, t) {
+    const p = o.p, c = p?.chest.translation();
+    if ((o.st === 'lunge' || o.st === 'hold') && (!p || !p.swimming || p.seat)) release(o, t, c || { x: o.from[0], y: SEA_LEVEL, z: o.from[2] });
+    if (o.st === 'lunge' || o.st === 'hold') {
+      const hx = c.x, hy = c.y + 0.5, hz = c.z, u = o.st === 'lunge' ? ease((t - o.t0) / o.dur) : 1;
+      const x = o.from[0] + (hx - o.from[0]) * u, y = o.from[1] + (hy - o.from[1]) * u + Math.sin(u * Math.PI) * 0.6, z = o.from[2] + (hz - o.from[2]) * u;
+      if (o.st === 'lunge' && u >= 1) { o.st = 'hold'; o.t0 = t; game.audio?.play('splash', c, 0.4); }
+      if (o.st === 'hold' && t - o.t0 > o.hold) { release(o, t, c); return act(o, t); }
+      // clinging: turning with the swimmer, wobbling, arms flailing
+      if (o.st === 'hold') octOut.put(x, y, z, p.yaw + Math.sin(t * 1.7) * 0.4, Math.sin(t * 2.3) * 0.15, Math.sin(t * 1.9) * 0.15, 0.78, t * 3.2 + o.seed, 1.6);
+      else octOut.put(x, y, z, Math.atan2(hx - o.from[0], hz - o.from[2]), -0.8, 0, 0.62 + 0.48 * (1 - u), t * 5 + o.seed, 0.4);
+      return;
+    }
+    // let go: a hop off the head into the water, then jetting away (arms trailing), gliding down
+    const u = (t - o.t0) / 3, [sx, sy, sz] = o.from, f = ease(u);
+    const x = sx + o.jet[0] * f * 8, z = sz + o.jet[2] * f * 8, g = T.groundAt(x, z);
+    let y;
+    if (u < 0.15) { const w = u / 0.15; y = sy + Math.sin(w * Math.PI) * 0.45 + (SEA_LEVEL - 0.6 - sy) * w * w; }
+    else y = Math.max(g + 0.02, SEA_LEVEL - 0.6 + (g + 0.02 - (SEA_LEVEL - 0.6)) * ease((u - 0.15) / 0.85));
+    if (!o.inked && y < SEA_LEVEL) { o.inked = true; ink(x, z, o.jet); splash(x, z, 10, 2.2, 0.6); game.audio?.play('splash', { x, y: SEA_LEVEL, z }, 0.6); }
+    octOut.put(x, y, z, Math.atan2(o.jet[0], o.jet[2]), u < 0.8 ? -0.9 : 0, 0, 0.62 + 0.48 * Math.min(1, u * 3), t * 6 + o.seed, u < 0.8 ? 0.25 : 0.6);
+    if (u >= 1) { const k = Math.sin(t * 0.08 + o.seed); o.st = null; o.x = x - k * 1.5; o.z = z - Math.cos(t * 0.06 + o.seed) * 1.5; o.cool = t + 60; active.delete(o); }
+  }
+  function release(o, t, c) {
+    if (o.p && o.p.octopus === o) o.p.octopus = null;
+    const a = (o.p?.yaw ?? 0) + Math.PI + (hash(o.seed, t) - 0.5) * 1.6;
+    o.st = 'jet'; o.t0 = t; o.inked = false; o.from = [c.x, c.y + 0.62, c.z]; o.jet = [Math.sin(a), 0, Math.cos(a)]; o.p = null;
+  }
+  function ink(x, z, jet) {
+    for (let i = 0; i < 14; i++) inks.push({ x: x + (Math.random() - 0.5) * 0.4, y: SEA_LEVEL - 0.5 + (Math.random() - 0.5) * 0.4, z: z + (Math.random() - 0.5) * 0.4, vx: (Math.random() - 0.5) * 0.8 - jet[0] * 0.6, vy: -Math.random() * 0.3, vz: (Math.random() - 0.5) * 0.8 - jet[2] * 0.6, age: Math.random() * 0.3 });
+  }
+  function fillInk(dt) {
+    for (let i = inks.length - 1; i >= 0; i--) {
+      const q = inks[i]; q.age += dt;
+      if (q.age > 4) { inks.splice(i, 1); continue; }
+      const dr = Math.exp(-1.2 * dt); q.vx *= dr; q.vy *= dr; q.vz *= dr;
+      q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+      S.ink.put(q.x, q.y, q.z, 0, 0, 0, (0.18 + q.age * 0.35) * (q.age > 3 ? (4 - q.age) : 1), 0, 0);
+    }
+  }
+  // a held diver swims slowly (per step, while an octopus sits on them)
+  game.steppers.push(() => {
+    for (const p of game.players) {
+      if (!p.octopus || !p.swimming) continue;
+      const v = p.chest.linvel(), k = Math.exp(-2.2 / 60);
+      p.chest.setLinvel({ x: v.x * k, y: v.y * (0.5 + 0.5 * k), z: v.z * k }, true);
+    }
+  });
 
   // ---- dolphins and whales: loops in the open sea --------------------------------------------
   const pods = findPods(game);
@@ -201,14 +281,23 @@ export function buildSeaLife(game) {
 
   // ---- per frame -------------------------------------------------------------------------------
   const seen = new Set();
-  const stats = game.seaLife = { cells: 0, creatures: 0, pods: pods.length, species: S, pods_: pods };
+  const stats = game.seaLife = { cells: 0, creatures: 0, pods: pods.length, species: S, pods_: pods, cellAt, CELL }; // cellAt: probes
   game.updaters.push((dt, t) => {
     fillPods(t);
     if (drops.length || spray.n) fillSpray(dt);
     // under-water cameras only
+    // octopuses after swimmers (seen from above the water too)
+    divers.length = 0;
+    for (const p of game.players) if (p.swimming && !p.seat) divers.push({ p, c: p.chest.translation() });
+    if (divers.length) wake(t);
+    octOut.begin();
+    for (const o of active) act(o, t);
+    octOut.end(); octOut.mesh.visible = octOut.n > 0;
     const cams = [];
     for (const p of game.players) if (p.camera?.underwater) cams.push(p.camera.cam.position);
-    if (!cams.length) { if (stats.creatures) { for (const s of under) { s.begin(); s.end(); } stats.creatures = 0; stats.cells = 0; } return; }
+
+    if (!cams.length) {
+      if (stats.creatures) { for (const s of under) { s.begin(); s.end(); } stats.creatures = 0; stats.cells = 0; } return; }
     for (const s of under) s.begin();
     seen.clear();
     const span = Math.ceil(REACH / CELL);
@@ -223,6 +312,7 @@ export function buildSeaLife(game) {
         for (const o of cellAt(ix, iz)) fill(o, t);
       }
     }
+    if (inks.length) fillInk(dt);
     let n = 0;
     for (const s of under) { s.end(); n += s.n; }
     stats.cells = seen.size; stats.creatures = n;
