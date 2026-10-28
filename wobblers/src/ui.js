@@ -73,7 +73,7 @@ class Nav {
       return n;
     }
     n.up = pr.dUp; n.down = pr.dDown; n.left = pr.dLeft; n.right = pr.dRight;
-    n.ok = pr.jump; n.back = pr.dash || pr.ragdoll || pr.back; n.start = pr.start;
+    n.ok = pr.jump; n.back = pr.dash || (pr.ragdoll && !pr.dLeft) || pr.back; // (a pad's ragdoll is D-pad left: menu 'left') n.start = pr.start;
     n.x = pr.punch; n.y = pr.interact; n.lb = pr.sprint; n.rb = pr.rb;
     // stick with auto-repeat
     const sx = st.moveX || 0, sy = st.moveY || 0, now = performance.now();
@@ -393,10 +393,10 @@ function helpHTML(tab, kind) {
   if (tab === 0) {
     body = `<div class="padwrap">
       <div class="callouts left">
-        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint · swimming: hold to dive')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Emotes: up wave, left cheer, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
+        ${row(g('LT'), 'Raise left arm &amp; grab')}${row(g('LB'), 'Sprint · swimming: hold to dive')}${row(g('LS'), 'Move (click: sprint)')}${row(g('DPAD'), 'Left: ragdoll (flop!) · up wave, right dance · down phone')}${row(g('RB'), 'Hold: emote wheel')}${row(g('BACK'), 'Map')}
       </div>${PAD_SVG}
       <div class="callouts right">
-        ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Dash')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera (click: ragdoll)')}${row(g('START'), 'Menu')}
+        ${row(g('RT'), 'Raise right arm &amp; grab')}${row(g('Y'), 'Get in / out, sit')}${row(g('X'), 'Punch')}${row(g('B'), 'Dash')}${row(g('A'), 'Jump · get up')}${row(g('RS'), 'Camera')}${row(g('START'), 'Menu')}
       </div></div>
       <div class="drive"><b>Driving</b> ${g('RT')} gas ${g('LT')} brake / reverse ${g('LS')} steer ${g('A')} handbrake ${g('X')} horn ${g('Y')} get out</div>
       <div class="drive"><b>Gadgets</b> jetpack / glider: hold ${g('A')} in the air · laser gun / grappling hook: ${g('X')} fire · boots: always on</div>`;
@@ -414,7 +414,7 @@ function helpHTML(tab, kind) {
       <li>Hold ${g('LT')} / ${g('RT')} to raise an arm. Your hand grabs whatever it touches: props, friends, ledges, bars.</li>
       <li>Grab a ledge with both hands, then press ${g('A')} to pull yourself up. Look up to reach higher.</li>
       <li>Press ${g('B')} to dash: a quick burst on the ground, in the air (once per jump) or swimming.</li>
-      <li>Click the right stick (${g('RS')}) to go floppy. Great for rolling down hills.</li>
+      <li>Press ${g('DPAD')} left to go floppy. Great for rolling down hills.</li>
       <li>Buy gadgets in the GADGETS shop behind the town's shops and wear one (shop or customiser): jetpack and glider fly while you hold ${g('A')} in the air, the laser gun and grappling hook fire with ${g('X')} (aim the hook with the camera), boots work by themselves.</li>
       <li>Walk up to a car, swing, ride or bench and press ${g('Y')}.</li>
       <li>Up to 8 players: more controllers or the second keyboard join with ${g('A')} any time.</li>

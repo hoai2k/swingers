@@ -38,7 +38,7 @@ const STAND_H = 0.6 * S;      // hover height of the hips centre above ground (f
 const RAY_LEN = 1.05 * S;
 
 const WALK = 5.3, RUN = 9.4, SWIM = 2.6, JUMP_V = 6.6;
-const DASH_V = 15, DASH_SWIM = 7, DASH_T = 0.22; // dash (B / V)
+const DASH_V = 15, DASH_SWIM = 7, DASH_T = 0.22, DASH_SWIM_T = 0.45, DIVE_DASH = 2.5; // dash (B / V); swimming: a stroke, DIVE_DASH m deeper looking down
 const HEAD_TOP = (1.52 - 0.6 + 0.28) * S + 0.04; // hips centre to the top of the head, standing
 const AIR_ACCEL = 16;          // m/s^2 of steering in the air, across and along the jump
 const AIR_BRAKE = 6;           // m/s^2 at most against the jump's take-off direction: pulling back bends a jump...
@@ -1170,19 +1170,37 @@ export class Player {
       // until we land again; the drive doesn't brake it for DASH_T
       if (this.grounded || this.swimming || hanging) this.airDashed = false;
       if (pressed.dash && this.dashCool <= 0 && !hanging && this.state === 'normal' && !this.airDashed) {
-        const dx = mag > 0.1 ? mvx / mag : Math.sin(this.yaw), dz = mag > 0.1 ? mvz / mag : Math.cos(this.yaw);
-        const ds = (this.swimming ? DASH_SWIM : DASH_V * Math.min(1.3, this.gear?.speed || 1)) * (this.form?.speed ?? 1);
-        const lift = this.swimming ? 0 : this.grounded ? 1.2 : 2;
-        for (const b of this.bodies) {
-          const bv = b.linvel(), m = b.mass();
-          b.applyImpulse({ x: (gv.x + dx * ds - bv.x) * m, y: Math.max(0, lift - bv.y) * m, z: (gv.z + dz * ds - bv.z) * m }, true);
+        let dx = mag > 0.1 ? mvx / mag : Math.sin(this.yaw), dz = mag > 0.1 ? mvz / mag : Math.cos(this.yaw);
+        if (this.swimming) {
+          // a swimming dash: a long stroke the way the camera looks (with the stick forward, or
+          // no stick): looking down dives (sets a deeper dive depth), looking up rises
+          const fwdShare = mag > 0.1 ? Math.max(0, my) / mag : 1;
+          let vert = Math.max(-1, Math.min(1, ((cam ? cam.pitch : 0.28) - 0.35) / 0.55)) * fwdShare; // + = down
+          if (vert < 0) vert *= Math.min(1, (this.diveD || 0) / 1.5);   // up only back to the surface, no leaping out
+          const room = Math.max(0, Math.min(25, water - floorY - 0.9)), h = Math.sqrt(1 - vert * vert);
+          const ds = DASH_SWIM * (this.form?.speed ?? 1);
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (dx * h * ds - bv.x) * m, y: (-vert * ds - bv.y) * m, z: (dz * h * ds - bv.z) * m }, true);
+          }
+          this.diveD = Math.max(0, Math.min(room, (this.diveD || 0) + vert * DIVE_DASH));
+          this.dashT = DASH_SWIM_T;
+          this.game.audio?.play(this.diveD > 0.6 || vert > 0.3 ? 'swish' : 'splash', cp, 0.6);
+        } else {
+          const ds = DASH_V * Math.min(1.3, this.gear?.speed || 1) * (this.form?.speed ?? 1);
+          const lift = this.grounded ? 1.2 : 2;
+          for (const b of this.bodies) {
+            const bv = b.linvel(), m = b.mass();
+            b.applyImpulse({ x: (gv.x + dx * ds - bv.x) * m, y: Math.max(0, lift - bv.y) * m, z: (gv.z + dz * ds - bv.z) * m }, true);
+          }
+          this.dashT = DASH_T;
+          this.game.audio?.play('swish', cp, 1.4);
         }
         this.yaw = Math.atan2(dx, dz);
         this.airDashed = !this.grounded && !this.swimming;
-        this.dashT = DASH_T; this.dashCool = 0.65;
+        this.dashCool = 0.65;
         this.impactGrace = Math.max(this.impactGrace, 0.12);
         this.sqV -= 2;
-        this.game.audio?.play('swish', cp, 1.4);
       }
       if (this.dashT > 0) { dvx = 0; dvz = 0; this.dashing = true; }
       else if (this.dashing) {
@@ -1247,7 +1265,8 @@ export class Player {
         }
       } else this.stuckT = Math.max(0, this.stuckT - DT * 2);
       // a ledge under our grip: jump (or keep pushing forward) to climb over it
-      const wantClimb = bothHeld && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
+      const onAnimal = this.hands.L.owner?.kind === 'animal' || this.hands.R.owner?.kind === 'animal'; // a tug, not a ledge
+      const wantClimb = bothHeld && !onAnimal && this.jumpCool <= 0 && this.grip > 0.05 && (pressed.jump || this.hangPush > 0.35);
       const ledge = wantClimb ? this.findLedge() : null;
 
       // jump

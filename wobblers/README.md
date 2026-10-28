@@ -41,14 +41,14 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Move / camera | LS / RS | WASD / mouse | Arrows / Numpad 4 6 8 5 |
 | Jump | A | Space | Numpad 0 |
 | Dash | B | V | Delete |
-| Ragdoll (flop) | click RS | X (or R) | Numpad 7 |
+| Ragdoll (flop) | D-pad left | X (or R) | Numpad 7 |
 | Punch | X | G or middle mouse | Numpad 2 |
 | Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
-| Dive (while swimming) | hold LB | hold Shift | hold Numpad . |
+| Dive (while swimming) | hold LB, or dash (B) looking down | hold Shift, or V looking down | hold Numpad . |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
-| Quick emotes: wave / cheer / dance | D-pad up / left / right | 2 / 3 / 4 | |
+| Quick emotes | D-pad up wave, right dance | 2 wave, 3 cheer, 4 dance | |
 | Menu | Start | Esc | Numpad Enter |
 | Map (pan LS, zoom LT / RT) | View | M | Numpad / |
 | Phone: call a vehicle | D-pad down | P | Numpad * |

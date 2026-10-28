@@ -398,10 +398,17 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   Grabbing (`src/world/animalgrab.js`): animals have no physics, so the nearest few to a player
   (pool of 8, within 7 m) borrow a kinematic capsule that follows the posed animal (`a.pose`), in
   a group players walk through but hands still find (`handleOwner` kind `'animal'`; player.js
-  also checks low down at the hand for animals, which stand under hand height). Per-kind `GRAB`
-  specs in `jungle/animals.js`: `pick` ones (monkey, hog, capybara) turn dynamic and are carried
-  and thrown like props (`carried` -> `tossed` -> `return` walks home -> `free`); big ones bolt
-  (`run` m/s added to their loop for 2 s past the grab), dragging whoever hangs on.
+  also checks low down at the hand for animals, which stand under hand height, and never
+  mantles onto one). A grab makes it a dynamic body of its weight: a tug of war like grabbing
+  another wobbler. On its feet (or swimming, buoyed) it pulls away (direction picked at the grab,
+  away from the grabber, wandering slowly) toward `run` m/s with a force capped at kg x 9.81 x
+  `mu` x its `effort` (heaving and easing, 0.55..1); its capsule is nearly frictionless, so its
+  legs are its only grip. A wobbler (~43 kg) pulls ~500-1100 N with their own drive, so a hog is
+  carried, a leopard drags someone who just holds on but stalls against one pulling back, a
+  tapir slows but still wins. `pick` kinds (monkey, hog, capybara) tumble freely (thrown like
+  props); the rest only turn about y. `held` -> `loose` (runs on 1.2-2.5 s, then plants its feet)
+  -> `return` (walks home, animals.js) -> `free`. GRAB specs (capsule, kg, run, mu) in
+  `jungle/animals.js`.
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
 ## Fences (`src/world/fences.js`)
@@ -417,14 +424,18 @@ pieces (the oldest unheld goes); broken sections are rebuilt after 120 s when no
 ## Dash
 
 B (V / Delete on the keyboards) dashes: `DASH_V` 15 m/s the way the stick points (else the way
-you face), `DASH_SWIM` 7 in water, with a small hop; the walk drive doesn't brake it for `DASH_T`
-0.22 s, and an air dash is trimmed back to `RUN` speed when it ends. Once per jump in the air
-(`airDashed`), 0.65 s cooldown; it also gets you up from a flop. The ragdoll flop moved to
-clicking the right stick (pad); menus, the arcade and the factory forklift still take B.
+you face), with a small hop; the walk drive doesn't brake it for `DASH_T` 0.22 s, and an air dash
+is trimmed back to `RUN` speed when it ends. Once per jump in the air (`airDashed`), 0.65 s
+cooldown; it also gets you up from a flop. Swimming, it is a stroke (`DASH_SWIM` 7 m/s,
+`DASH_SWIM_T` 0.45 s) along the camera's look (stick forward or none): looking down dives
+(`diveD` += `DIVE_DASH` 2.5 m), looking up rises while under (never leaps out). The pad's ragdoll
+flop is D-pad left (`input.js` sets `ragdoll` and `dLeft`: menus, the arcade and the forklift
+read a ragdoll press that comes with `dLeft` as 'left', not 'back'; the D-pad cheer emote gave
+way, the keyboards' 3 still cheers).
 
 ## Swimming and diving
 
-Swimmers hover at the surface; holding sprint (Shift / LB) dives (`player.diveD`, 1.8 m/s down,
+Swimmers hover at the surface; holding sprint (Shift / LB) dives (or dash looking down) (`player.diveD`, 1.8 m/s down,
 to 0.9 m above the bed, at most 25 m; 1.3 m/s back up when let go). The camera stays under the
 surface with a diver (camera.js), so the sea life (drawn only for cameras under water) shows.
 

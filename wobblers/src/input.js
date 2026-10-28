@@ -128,8 +128,8 @@ export class Input {
     const l = Math.hypot(s.moveX, s.moveY); if (l > 1) { s.moveX /= l; s.moveY /= l; }
     const rx = dead(a[2] || 0, 0.15), ry = dead(a[3] || 0, 0.15);
     s.lookX = rx * Math.abs(rx) * 0.07; s.lookY = ry * Math.abs(ry) * 0.05;
-    // B dashes; clicking the right stick flops into a ragdoll
-    s.jump = bp(0); s.dash = bp(1); s.ragdoll = bp(11); s.punch = bp(2); s.interact = bp(3);
+    // B dashes; D-pad left flops into a ragdoll (still 'left' in menus: dLeft is set too)
+    s.jump = bp(0); s.dash = bp(1); s.ragdoll = bp(14); s.punch = bp(2); s.interact = bp(3);
     s.sprint = bp(4) || bp(10); s.rb = bp(5);
     s.grabL = bv(6); s.grabR = bv(7);
     s.back = bp(8); s.start = bp(9); s.rs = bp(11);
