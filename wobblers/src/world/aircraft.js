@@ -19,7 +19,11 @@
 //   - on the ground it taxis: the stick steers, RT gas, LT brakes (reverses when
 //     stopped); past ~0.7 x stall speed pulling back lifts the nose and it flies off
 // Gliders have no engine: RT / A on the ground gives a bungee launch push, LT in
-// the air opens the air brakes (land sooner). Keyboard: Space throttle / launch,
+// the air opens the air brakes (land sooner). They ride updrafts (F.updraft): in the
+// air (air brakes shut, nose not pushed down) the rising air cancels the drag along
+// the path and tops up any sink so it climbs gently at F.updraft m/s, fading out
+// UPDRAFT_TOP m above the ground: a glider keeps flying as long as you like; push the
+// nose down or open the air brakes to come down and land. Keyboard: Space throttle / launch,
 // Shift brake, W/S pitch, A/D bank (W/S can't be gas and pitch at once).
 import * as THREE from 'three';
 import { RAPIER } from '../physics.js';
@@ -27,10 +31,11 @@ import { DT, G_STATIC, G_VEH, G_PROP, VEH_GROUPS, groups } from '../config.js';
 import { registerVehicle, registerHandling, Vehicle } from '../vehicles.js';
 import { registerCallable } from '../phone.js';
 import { Builder, matVC } from '../mesh.js';
-import { MOUNTAIN } from '../terrain.js';
+import { MOUNTAIN, meshHeight } from '../terrain.js';
 import { SUMMIT } from './regions/snow/layout.js';
 
 const GRAV = 9.81;
+const SEA = -0.5, UPDRAFT_TOP = 180; // gliders: updrafts fade out this high above the ground or sea
 const RAY_Q = groups(0xffff, G_STATIC | G_VEH | G_PROP);
 const PI = Math.PI;
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
@@ -89,6 +94,17 @@ registerHandling('flight', {
     ax += fwd.x * T; ay += fwd.y * T; az += fwd.z * T;
     const cd = F.drag * (1 + (grounded ? 0 : c.brake * F.airbrake)) * sp * sp;
     ax -= dx * cd; ay -= dy * cd; az -= dz * cd;
+    // gliders: updrafts keep them up (not with the air brakes out, not near the ceiling)
+    if (F.updraft && !grounded && k > 0.3) {
+      const t = body.translation(), above = t.y - Math.max(SEA, meshHeight(t.x, t.z));
+      // (pushing the nose down or the air brakes let you come down to land)
+      const fade = clamp((UPDRAFT_TOP - above) / 40, 0, 1) * (1 - clamp(c.brake * 2, 0, 1)) * (1 - clamp(c.y * 2.5, 0, 1));
+      const sus = F.drag * sp * sp * fade;                    // cancels the drag along the path
+      const keep = clamp((F.cruise - sp) * 1.5, 0, 4) * fade;  // and keeps up a cruising speed in long turns
+      ax += dx * (sus + keep); az += dz * (sus + keep);
+      ay += dy * (sus + keep) + (1 - k) * GRAV * (1 - dy * dy) * fade; // and makes up the lift a slow / banked wing lacks
+      st.rise = fade;
+    } else st.rise = 0;
     let vx = vel.x + ax * DT, vy = vel.y + ay * DT, vz = vel.z + az * DT;
 
     // the velocity follows the nose: take part of the sideways / vertical slip away
@@ -107,6 +123,9 @@ registerHandling('flight', {
         }
       }
     }
+    // rising air (gliders): lifts the whole glider whatever the nose does, topping up any sink
+    // (a slow turn, low speed) so it climbs gently at F.updraft m/s
+    if (st.rise > 0) vy += clamp((F.updraft - vy) * 3, 0, 8) * st.rise * DT;
     if (grounded) {
       // tyres: grip sideways, roll on, brake (and taxi backwards once stopped)
       const sv = vx * side.x + vy * side.y + vz * side.z, g = Math.min(1, DT * 9);
@@ -249,7 +268,7 @@ registerVehicle('glider', {
   mass: 320, half: [0.42, 0.45, 2.6], handling: 'flight', aircraft: true, maxSpeed: 30,
   com: [0, -0.15, 0.2], camH: 1.8, camDist: 14, horn: 'bumper', engineVoice: GLIDER_VOICE,
   seats: [{ pos: [0, -0.1, 0.55], kind: 'driver' }],
-  flight: { vs: 11, thrust: 0, drag: 0.0028, airbrake: 4, brake: 5, trim: -0.06, align: 2.0,
+  flight: { vs: 11, thrust: 0, drag: 0.0028, airbrake: 4, brake: 5, trim: -0.06, align: 2.0, updraft: 1.2, cruise: 13,
     roll: 1.5, bank: 0.9, pitch: 1.0, pitchMax: 0.7, gear: 0.84, launch: 15 },
   spawn: { hx: 6.4, hz: 3.0, cz: -1.6, below: 0.84, above: 1.5, slope: 0.9, space: true },
   control: flightControl,

@@ -80,9 +80,10 @@ booth (it counts as your called vehicle).
 off. In the air the stick pitches and banks (banking turns it), it climbs as long as it has the
 speed, and if it gets too slow it drops its nose until it picks up speed again; let go and it
 levels itself. Land by easing the throttle and nosing gently down onto a road or a field. The
-**glider** has no engine: **RT** on the ground gives it a launch push, then it glides, sinking about
-1 m/s, so start from somewhere high: one waits at the home mountain lookout (a hands-off glide
-goes ~700 m) and one on the Frostpeak summit. **LT** opens the air brakes to come down sooner.
+**glider** has no engine: **RT** on the ground gives it a launch push, then it rides the updrafts:
+it keeps flying (climbing gently, up to about 180 m above the ground) as long as you like. One
+waits at the home mountain lookout and one on the Frostpeak summit. To come down, open the air
+brakes (**LT**) or push the nose down.
 
 The **bouncy ball** (on the phone, and parked by the playground, the Fun Park and on each
 island) is a big space hopper: sit on it with **Y** and it hops by itself; the stick leans

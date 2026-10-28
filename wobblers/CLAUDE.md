@@ -660,8 +660,12 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   parked) from a down ray (`groundGap`). Flight is velocity-level arcade: lift cancels gravity
   across the flight path times k = (forward speed / `vs`)² (max 1), the velocity is turned toward
   the nose at `align` x k per second (speed kept), thrust and `drag` x v² act along the path, so
-  climbing costs speed and a glider settles into a glide where drag = g sin (~14:1, sinking ~0.9
-  m/s). Attitude is set as angular velocity from Euler rates (yaw about world up, pitch about the
+  climbing costs speed. Gliders ride updrafts (`F.updraft` 1.2, `F.cruise` 13, fading out
+  `UPDRAFT_TOP` 180 m above ground or sea): in the air, air brakes shut and nose not pushed down,
+  the rising air cancels the drag, keeps up the cruise speed in long turns, makes up the lift a
+  slow / banked wing lacks, and (applied after the nose-alignment step, so it moves the whole
+  glider) tops the climb up toward `updraft` m/s: it climbs ~0.4 m/s circling, ~0.3 straight, and
+  flies as long as you like; air brakes sink ~1.8 m/s, pushing the nose down dives. Attitude is set as angular velocity from Euler rates (yaw about world up, pitch about the
   level side axis, roll about the nose), blended firmly (0.6 a step) in the air: stick = rate, let
   go = level to `trim`, limits `bank` / `pitchMax`, bank turns at g tan(bank) / speed, below `vs`
   the nose drops toward the flight path. On the ground only yaw is driven (pitch / roll follow
