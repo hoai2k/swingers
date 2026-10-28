@@ -2425,6 +2425,17 @@
       "initialPrompt": "Use case: stylized-concept. Production 3D modelling turnaround reference sheet for WOBBLERS. Subject: TWO birds, one row each: top row a scarlet macaw, scarlet body with blue-and-yellow WINGS SPREAD; bottom row a toucan, black body, cream chest, large orange-yellow bill, WINGS SPREAD. Each bird in three views in its row: exact side facing right, exact overhead top with head toward right showing symmetric spread wings, front three-quarter. Wings and tail fully in frame. Cute stylized toy in one smooth soft rubber/vinyl material. Rounded chunky shapes flow together without visible joints, seams, boxes, sharp facets, fur or individual feathers. Bold candy colours and painted-on markings, glossy black dot eyes with white highlight, friendly small smile. Plain light grey background, soft studio lighting, subtle contact shadows. Two rows of three views, each bird same scale across its row, same spread-wing pose. Whole animal and all appendages/tail fully in frame each view, generous margins/separation. Landscape16:9 for1920x1080. Attached character sheet is MATERIAL/STYLE reference only; no people, clothing, hats, text, labels, props, scenery, clutter or watermark. Same anatomy and colour pattern across views.",
       "artDirection": "Midpoint stylized game animals: rounded and expressive, recognisable adult anatomy; neither baby toys nor realism.",
       "index": 199
+    },
+    {
+      "file": "reference/animals/monkey_hanging.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 17,
+      "prompt": "Use case: stylized-concept. New pose turnaround reference for WOBBLERS animal modelling. Attached image is the REQUIRED identity, anatomy, material, colour and style reference: use the SAME brown monkey with cream face/chest/hands/feet, modest expressive eyes, longer adult-like body and limbs, long curly tail. Keep this midpoint stylized adventure-game look, neither nursery toy nor realistic wildlife. Change pose to HANGING AT REST from an UNSEEN vine above: monkey's anatomical RIGHT arm raised straight vertically overhead, raised hand closed in a gripping curl; anatomical LEFT arm relaxed down alongside body. Torso vertical, legs dangling with knees slightly bent and feet relaxed. Long tail curves UP beside the raised arm as if also holding on. Exactly TWO arms, TWO legs, ONE tail, coherent anatomy. THREE equal-width columns, same monkey/same pose/same scale across all views in one row: LEFT exact SIDE view facing RIGHT, MIDDLE exact FRONT view looking directly at face (NOT TOP view), RIGHT three-quarter FRONT view. Raised gripping hands at identical height in all3, whole animal including raised fingers and curled tail inside frame with margins. Plain light grey background, soft studio light, smooth sculpted forms and broad painted markings matching reference. No vine, branch, rope, bar, floor props, text, labels, clothes or watermark. Opaque landscape16:9 sheet for1920x1080.",
+      "reference": "reference/animals/monkey.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9c9ad13d-a6eb-40cf-a01c-ed2e3906c219.png",
+      "index": 200
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
