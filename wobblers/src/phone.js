@@ -159,7 +159,7 @@ export class PhonePanel {
     const off = Math.max(0, Math.min(N - vis, this.sel - 2.5)) * per;
     const items = this.list.map((c, i) => {
       const vd = VEHICLES[c.type] || {};
-      const note = this.ui.game.vehicleLock?.(c.id) ? '🔒 car dealer' : vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli ? 'needs space' : '';
+      const note = this.ui.game.vehicleLock?.(c.id) ? '🔒 car dealer' : vd.boat ? (this.water ? 'water nearby' : 'needs water') : vd.heli || vd.spawn?.space ? 'needs space' : '';
       const off2 = vd.boat && !this.water;
       return `<div class="phitem ${i === this.sel ? 'sel' : ''} ${off2 ? 'off' : ''}" data-i="${i}"><svg viewBox="0 0 24 14">${ICONS[c.icon] || ICONS.car}</svg>${c.name}${note ? `<small>${note}</small>` : ''}</div>`;
     }).join('');
@@ -184,6 +184,7 @@ const _q = new THREE.Quaternion();
 // the wheels / hull reach below the body origin, and the roof height above it.
 function extents(def) {
   const h = def.half;
+  if (def.spawn) return def.spawn; // planes / gliders: the wings
   if (def.heli) return { hx: 4.1, hz: 4.6, cz: -1.2, below: 1.18, above: 1.45 };
   if (def.boat) return { hx: h[0] + 0.3, hz: h[2] + 0.3, cz: 0, below: 0.35, above: 0.8 };
   const below = def.axles ? Math.max(...def.axles.map((a) => -(a.y - a.rest - a.r))) : h[1] + 0.2;
@@ -205,7 +206,7 @@ export function findSpot(game, player, def, excludeBody, from = null) {
   const yaw = from ? from.yaw : player.yaw;
   const E = extents(def);
   const footY = c.y - 1.0;
-  const boat = !!def.boat, heli = !!def.heli;
+  const boat = !!def.boat, heli = !!def.heli || !!def.spawn?.space;
   const R0 = Math.max(E.hx, E.hz);
   const dists = boat ? [R0 + 2, R0 + 5, R0 + 9, R0 + 14, R0 + 20, R0 + 27, R0 + 35] : [R0 + 1.6, R0 + 3.5, R0 + 6.5, R0 + 10, R0 + 15];
   const angs = [0.6, -0.6, 1.2, -1.2, 0, 1.9, -1.9, Math.PI];
@@ -236,7 +237,7 @@ export function findSpot(game, player, def, excludeBody, from = null) {
     } else {
       if (wet) continue;
       const mx = Math.max(...hs), mn = Math.min(...hs);
-      if (mx - mn > (heli ? 1.0 : 0.25 + 0.12 * Math.max(E.hx, E.hz))) continue; // too steep or a kerb/step
+      if (mx - mn > (def.spawn?.slope ?? (heli ? 1.0 : 0.25 + 0.12 * Math.max(E.hx, E.hz)))) continue; // too steep or a kerb/step
       if (Math.abs(mx - footY) > 2.2) continue; // a roof, a ledge or a pit
       y = mx + E.below + 0.12;
     }
@@ -270,6 +271,7 @@ export function callVehicle(game, player, entry, from = null) {
   if (!spot) {
     if (def.boat) return { ok: false, msg: 'Boats need water: try the beach, the lake or the pier' };
     if (def.heli) return { ok: false, msg: 'Not enough open space for a helicopter here' };
+    if (def.spawn?.space) return { ok: false, msg: `Not enough open space for a ${entry.name.toLowerCase()} here` };
     return { ok: false, msg: 'No room here, try somewhere more open' };
   }
   if (prev) { if (prevEmpty) prev.destroy(); calls.delete(player); }

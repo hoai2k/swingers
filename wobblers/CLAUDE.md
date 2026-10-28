@@ -602,6 +602,27 @@ collider, `terrain.js` SEA_FLOOR); `WORLD` = +-1400 m.
   `registerHandling(name, { update(vehicle, driver, vel, fwd, up, side), wheels })` with
   `def.handling = name`. Put it on the phone with `registerCallable({ id, type, name, icon | svg,
   color, opts }, beforeId)` (`src/phone.js`). Example: the jet ski in `world/regions/tropical.js`.
+  More def hooks: `control(vehicle, inp)` (own input mapping), `animate(vehicle, dt)` (per-frame
+  visuals, from `sync`), `aircraft: true` ("Fly" label, no shell wobble), `spawn: { hx, hz, cz,
+  below, above, slope, space }` (phone spawn footprint for odd shapes), `driveHint(G)`.
+- **Planes and gliders** (`world/aircraft.js`, vehicles `plane` / `glider`, handling `'flight'`,
+  params in `def.flight`): one body, fuselage / wing / tail colliders plus three frictionless gear
+  balls; the handling does the tyres (side grip, rolling, brake, reverse taxi, hold still when
+  parked) from a down ray (`groundGap`). Flight is velocity-level arcade: lift cancels gravity
+  across the flight path times k = (forward speed / `vs`)² (max 1), the velocity is turned toward
+  the nose at `align` x k per second (speed kept), thrust and `drag` x v² act along the path, so
+  climbing costs speed and a glider settles into a glide where drag = g sin (~14:1, sinking ~0.9
+  m/s). Attitude is set as angular velocity from Euler rates (yaw about world up, pitch about the
+  level side axis, roll about the nose), blended firmly (0.6 a step) in the air: stick = rate, let
+  go = level to `trim`, limits `bank` / `pitchMax`, bank turns at g tan(bank) / speed, below `vs`
+  the nose drops toward the flight path. On the ground only yaw is driven (pitch / roll follow
+  the gear) unless pulling back past 0.7 `vs` (rotation). The glider's launch is a ~0.5 s push to
+  `launch` m/s (one instant kick counted as a car-damage crash); its tail wheel stops colliding
+  while airborne (`v.airOff`: scraping the slope behind a hill-top launch flipped the nose up into
+  a stall). Keyboards: Space throttle / launch, Shift brake, W/S pitch (W/S can't be gas too).
+  Parked gliders (`PARKED`, `placeAircraft` in the booths build step): home mountain lookout
+  (20 m SW of the top, facing down the slope) and the Frostpeak summit plateau's east side;
+  probe new spots for clearance and a glide line first (sample `groundAt` along the heading).
 - **Phone booths / bouncy ball / grab-on rides**: booths are `BOOTHS` in `world/booths.js`
   (`[name, x, z, yaw]`, yaw = open front; pick spots with a clearance probe: flat ground, an empty
   1.8 m box, room for a car 5 m ahead) and reuse the phone: `new PhonePanel(ui, p, { list, from,

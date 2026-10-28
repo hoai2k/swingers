@@ -655,7 +655,7 @@ export class UI {
     const s = g.nearestSeat(p);
     if (s) {
       const veh = s.vehicle;
-      const what = s.kind === 'driver' ? (veh?.def?.heli ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : s.labelFor ? s.labelFor(p) : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
+      const what = s.kind === 'driver' ? (veh?.def?.heli || veh?.def?.aircraft ? 'Fly' : veh?.def?.boat ? 'Drive boat' : 'Drive') : s.labelFor ? s.labelFor(p) : (s.label === 'Sit' ? (veh ? 'Hop in' : 'Sit') : s.label);
       return `${G('Y')} ${what}`;
     }
     const holding = p.hands && (p.hands.L.joint || p.hands.R.joint);
