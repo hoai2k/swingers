@@ -15,7 +15,7 @@ import { Battle, PROJ } from './battle.js';
 import { FX } from './fx.js';
 import { ProjViz } from './projviz.js';
 import { Recorder, Player } from './replay.js';
-import { skillBar, SKILL_KEYS } from './skills.js';
+import { skillBar, SKILL_KEYS, skillsOf } from './skills.js';
 import { SCENARIOS, SIM_CATS, SIM_SIZES, simArmies, simValue, fitToMap } from './sims.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
@@ -2039,7 +2039,7 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        if (rig.unit?.kind?.skills?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('X')}${btn('LB')}${btn('RB')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
+        if (rig.unit && skillsOf(rig.unit)?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('X')}${btn('LB')}${btn('RB')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
         return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;

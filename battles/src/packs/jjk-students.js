@@ -29,6 +29,7 @@
 // Maki's awakening.
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
 import { register } from '../ext.js';
+import { aimTarget, leapSkill } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, crossed, aimPoint, launchVel, addProjectile,
@@ -197,13 +198,22 @@ function divergent(b, u, v, dmg) {
     b.sound('thud', c, 0.8, 0.7);
   }]);
 }
+const BF_CD = 10;
 const yuji = {
   melee: true,
-  init(u) { u.jkZone = 0; u.jkFlash = false; u.jkSure = false; u.jkGlow = null; },
+  init(u) { u.jkZone = 0; u.jkFlash = false; u.jkSure = false; u.jkGlow = null; u.bfCD = 3; },
   think: meleeThink,
+  // possessed (src/skills.js): a Black Flash on demand, and a leap
+  basic: 'Divergent Fist',
+  skills: [
+    { key: 'x', name: 'Black Flash', icon: '⚡', free: true, cd: (u) => u.bfCD, max: () => BF_CD,
+      use(u) { u.bfCD = BF_CD; u.jkSure = true; if (u.cooldown > 0.2) u.cooldown = 0.2; return true; } },
+    leapSkill('lb'),
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (u.jkRage) u.buff = Math.max(u.buff, 0.1);
+    u.bfCD -= dt;
     toughUp(u, dt, 1.5);
     const sw = swing(u);
     if (sw.fresh) {
@@ -318,15 +328,26 @@ const todo = {
   event(u, t0, t1) {
     if (u.st.attack === 'jk_clap' && crossed(t0, t1, 0.5)) { doClap(u, u.bwPlan); u.bwPlan = null; }
   },
-  control(u, dt, c) {
-    // possessed: the attack button punches; the clap comes by itself when it can
-    if (u.bwCD <= 0 && !u.st.attack && c.block) {
-      const plan = bwPlan(u);
-      if (plan) { u.bwPlan = plan; u.st.attack = 'jk_clap'; u.st.attackT = 0; u.bwCD = u.def.weapon.bwCD; return true; }
-    }
-    return false;
-  },
+  // possessed (src/skills.js): RT punches; the clap swaps with the enemy under the
+  // crosshair (or does what the AI would: Brother!, a rescue)
+  basic: 'Punch',
+  skills: [
+    { key: 'x', name: 'Boogie Woogie', icon: '👏', cd: (u) => u.bwCD, max: (u) => u.def.weapon.bwCD,
+      ready: (u) => (bwAim(u) ? true : 'no one to swap'),
+      use(u) {
+        const plan = bwAim(u);
+        if (!plan) return false;
+        u.bwPlan = plan; u.st.attack = 'jk_clap'; u.st.attackT = 0; u.hitSet.clear(); u.bwCD = u.def.weapon.bwCD;
+        return true;
+      } },
+    leapSkill('lb'),
+  ],
 };
+function bwAim(u) {
+  const v = aimTarget(u, u.def.weapon.bwRange, 3);
+  if (v && swappable(v) && flatD(v.pos, u.pos) > 3) return { k: 'snipe', a: v };
+  return bwPlan(u);
+}
 
 // ------------------------------------------------------------------ Nobara Kugisaki
 function resonate(b, nob, v, k = 1, combo = false) {
@@ -373,6 +394,13 @@ const nobara = {
     return t;
   },
   step(u, dt) { u.resoCD -= dt; },
+  // possessed (src/skills.js): RT nails; the doll's Resonance on its own button
+  basic: 'Nails',
+  skills: [
+    { key: 'x', name: 'Resonance', icon: '🪆', free: true, cd: (u) => u.resoCD, max: (u) => u.def.weapon.resoCD,
+      ready: (u) => (nailedNow(u) ? true : 'nail someone first'),
+      use(u) { const v = nailedNow(u); if (!v) return false; u.resoCD = u.def.weapon.resoCD; resonate(u.battle, u, v); return true; } },
+  ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle;
     if (!crossed(t0, t1, w.releaseAt)) return;
@@ -393,12 +421,14 @@ const nobara = {
     b.sound('flyby', hand, 0.5, 1.8);
     // the doll: hurt the last one she nailed, wherever they are
     const v = u.jkNailed;
-    if (v && v.alive && v.team !== u.team && b.time - u.jkNailedAt < w.resoKeep && u.resoCD <= 0) {
+    if (!u.control && v && v.alive && v.team !== u.team && b.time - u.jkNailedAt < w.resoKeep && u.resoCD <= 0) {
       u.resoCD = w.resoCD;
       resonate(b, u, v);
     }
   },
 };
+
+const nailedNow = (u) => { const v = u.jkNailed; return v && v.alive && v.team !== u.team && u.battle.time - u.jkNailedAt < u.def.weapon.resoKeep ? v : null; };
 
 // ------------------------------------------------------------------ Kento Nanami
 // Ratio: he divides his target in a 7:3 ratio and strikes the point: a crit.
@@ -416,13 +446,22 @@ function ratioHit(b, u, v, mul) {
   b.sound('jk_seam', c, 1.0, 1);
   announce(b, 'Ratio Technique: 7:3', c, 'jk_ratio');
 }
+const RATIO_CD = 8;
 const nanami = {
   melee: true,
-  init(u) { u.jkOT = false; u.jkRatio = false; },
+  init(u) { u.jkOT = false; u.jkRatio = false; u.ratioCD = 2; },
   think: meleeThink,
+  // possessed (src/skills.js): the 7:3 strike on demand, and clocking into Overtime early
+  basic: 'Cleaver',
+  skills: [
+    { key: 'x', name: 'Ratio 7:3', icon: '📐', free: true, cd: (u) => u.ratioCD, max: () => RATIO_CD,
+      use(u) { u.ratioCD = RATIO_CD; u.jkRatioNext = true; if (u.cooldown > 0.2) u.cooldown = 0.2; return true; } },
+    { key: 'lb', name: 'Overtime', icon: '⌚', free: true, ready: (u) => !u.jkOT || 'on overtime', use(u) { u.jkOTnow = true; return true; } },
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
-    if (!u.jkOT && b.time >= w.otAt) {
+    u.ratioCD -= dt;
+    if (!u.jkOT && (b.time >= w.otAt || u.jkOTnow)) {
       u.jkOT = true;
       u.jkOTmk = mark(b, u, 'jk_ot', PART.chest, 9999);
       const c = u.chestPos;
@@ -458,12 +497,21 @@ const nanami = {
 };
 
 // ------------------------------------------------------------------ Maki Zen'in
+const SOUL_CD = 6;
 const maki = {
   melee: true,
-  init(u) { u.jkNoCE = true; u.jkN = 0; u.jkAwake = false; },
+  init(u) { u.jkNoCE = true; u.jkN = 0; u.jkAwake = false; u.soulCD = 2; },
   think: meleeThink,
+  // possessed (src/skills.js): the Split Soul Katana's cut on demand, and a leap
+  basic: 'Naginata',
+  skills: [
+    { key: 'x', name: 'Split Soul Katana', icon: '🗡', free: true, cd: (u) => u.soulCD, max: () => SOUL_CD,
+      use(u) { u.soulCD = SOUL_CD; u.jkSoulNext = true; if (u.cooldown > 0.2) u.cooldown = 0.2; return true; } },
+    leapSkill('lb', 3.5),
+  ],
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
+    u.soulCD -= dt;
     u.jkNoCE = true;
     if (!u.jkAwake && u.hp < u.maxHp * w.awakeAt) {
       u.jkAwake = true;
@@ -482,7 +530,8 @@ const maki = {
     for (const v of sw.list) {
       if (!v.alive) continue;
       u.jkN++;
-      if (u.jkN % 3 === 0 || u.jkAwake && u.jkN % 2 === 0) { // the Split Soul Katana: cuts the soul, armour or not
+      if (u.jkSoulNext || u.jkN % 3 === 0 || u.jkAwake && u.jkN % 2 === 0) {
+        u.jkSoulNext = false; // the Split Soul Katana: cuts the soul, armour or not
         const arm = v.def.armor || 0;
         v.hit(w.damage * w.soul / Math.max(0.2, 1 - arm), PART.chest, 0, 0, 0, u, 'jk_splitsoul');
         markSpin(b, 'jk_soul', v.chestPos, 0.3);
@@ -510,6 +559,12 @@ const panda = {
   melee: true,
   init(u) { u.jkCore = false; },
   think: meleeThink,
+  // possessed (src/skills.js): switch to the Gorilla Core when he likes (once)
+  basic: 'Punch',
+  skills: [
+    { key: 'x', name: 'Gorilla Core', icon: '🦍', free: true, ready: (u) => !u.jkCore || 'core on', use(u) { const h = u.hp; gorilla(u); u.hp = Math.max(h, u.hp); u.stun = 0; return true; } },
+    leapSkill('lb'),
+  ],
   hit(u, amount) {
     if (!u.jkCore && amount * (1 - (u.def.armor || 0)) >= u.hp) { gorilla(u); return 0; }
     return amount;
@@ -623,6 +678,7 @@ function stepFrozen(b, dt) {
     v.rag.impulseAll(-vel.x * v.M * 0.5, 0, -vel.z * v.M * 0.5);
   }
 }
+const BLAST_CD = 3;
 const SNACKS = 4; // onigiri ingredients he says instead of talking (speech bubbles)
 const inumaki = {
   aim: false,
@@ -636,13 +692,22 @@ const inumaki = {
     if (u.st.attack) u.desired.multiplyScalar(0.15);
     return t;
   },
+  // possessed (src/skills.js): RT "Don't move!", the other words on their buttons
   control(u, dt, c) {
-    if (c.attack && !u.st.attack && u.cooldown <= 0 && u.soreT <= 0) u.startAttack();
+    if (c.attack && !u.st.attack && u.cooldown <= 0 && u.soreT <= 0) { u.jkWordNext = 'stop'; u.startAttack(); }
     return true;
   },
+  basic: "Don't move!",
+  skills: [
+    { key: 'x', name: 'Blast away!', icon: '💥', cd: (u) => Math.max(u.blastCD || 0, u.soreT), max: () => BLAST_CD,
+      use(u) { u.jkWordNext = 'blast'; u.startAttack(); u.blastCD = BLAST_CD; return true; } },
+    { key: 'lb', name: 'Die.', icon: '💀', cd: (u) => Math.max(u.dieCD, u.soreT), max: (u) => u.def.weapon.dieCD,
+      ready: (u) => (u.hp > u.maxHp * 0.25 ? true : 'throat too sore'),
+      use(u) { u.jkWordNext = 'die'; u.startAttack(); return true; } },
+  ],
   step(u, dt) {
     const b = u.battle;
-    u.dieCD -= dt; u.soreT -= dt;
+    u.dieCD -= dt; u.soreT -= dt; u.blastCD = (u.blastCD || 0) - dt;
     u.snackT -= dt;
     if (u.snackT <= 0 && b.started) {
       u.snackT = rand(5, 11);
@@ -661,7 +726,8 @@ const inumaki = {
         n++; if (d < 3.8) near++;
       });
       u.jkWord = u.dieCD <= 0 && n >= w.dieMin && u.hp > u.maxHp * 0.6 ? 'die' : near ? 'blast' : 'stop';
-      if (u.control) u.jkWord = u.dieCD <= 0 && u.hp > u.maxHp * 0.6 && n >= 2 ? 'die' : near ? 'blast' : 'stop';
+      if (u.control) u.jkWord = u.jkWordNext || 'stop';
+      u.jkWordNext = null;
       mark(b, u, 'jk_collar_open', PART.head, 0.6);
     }
     if (!crossed(t0, t1, w.releaseAt)) return;
@@ -772,6 +838,32 @@ function amlHit(b, dom, v) {
 }
 const yuta = {
   melee: true,
+  // possessed (src/skills.js): Copy, Rika and the domain on their buttons
+  basic: 'Katana',
+  skills: [
+    { key: 'x', name: 'Copy', icon: '💍', cd: (u) => u.copyCD, max: (u) => u.def.weapon.copyCD,
+      ready: (u) => (u.jkCopies.length ? true : 'no one to copy'),
+      use(u) {
+        u.target = aimTarget(u, 20) || u.target;
+        const order = [...u.jkCopies].sort(() => Math.random() - 0.5);
+        for (const c of order) if (useCopy(u, c.k)) { u.copyCD = u.def.weapon.copyCD; announce(u.battle, `Copy: ${c.name}`, u.chestPos); return true; }
+        return false;
+      } },
+    { key: 'lb', name: 'Rika', icon: '👹', cd: (u) => (rikaOut(u) ? 0 : u.rikaCD), max: (u) => u.def.weapon.rikaCD,
+      ready: (u) => (u.jkFull ? 'fully manifested' : !rikaOut(u) && u.rika && !u.rika.dormant ? 'Rika is gone' : true),
+      use(u) {
+        if (rikaOut(u)) { sendRika(u); u.rikaCD = u.def.weapon.rikaCD * 0.5; return true; } // (a second press sends her back)
+        if (callRika(u, false)) { u.rikaCD = u.def.weapon.rikaCD; return true; }
+        return false;
+      } },
+    { key: 'rb', name: 'Authentic Mutual Love', icon: '⚔', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) {
+        const w = u.def.weapon;
+        u.domCD = w.domCD;
+        openDomain(u.battle, u, { name: 'Authentic Mutual Love', radius: AML_R, duration: w.domDur, power: w.domPow, tick: w.domTick, marker: 'jk_aml', sureHit: amlHit, burnout: 5 });
+        return true;
+      } },
+  ],
   init(u) {
     const w = u.def.weapon;
     u.jkCopies = []; u.copyScan = 0.5; u.copyCD = 3; u.rika = null; u.rikaT = 0; u.rikaCD = 2; u.rikaHp = null;
@@ -808,12 +900,12 @@ const yuta = {
         mark(b, u, 'jk_ring', PART.farmR, 9999, new THREE.Vector3(0, -u.skel.handOffset * 1.05, 0));
         announce(b, 'Yuta: "Rika!" — Full manifestation', u.chestPos, 'jk_rika');
       }
-    } else if (!rikaOut(u) && u.rikaCD <= 0 && !u.jkFull && (u.hp < u.maxHp * w.rikaAt || countEnemies(u, u.pos, 6) >= 3)) {
+    } else if (!u.control && !rikaOut(u) && u.rikaCD <= 0 && !u.jkFull && (u.hp < u.maxHp * w.rikaAt || countEnemies(u, u.pos, 6) >= 3)) {
       if (callRika(u, false)) u.rikaCD = w.rikaCD;
       else u.rikaCD = 99;
     }
     // Domain Expansion: Authentic Mutual Love
-    if (u.domCD <= 0 && !burntOut(u) && !b.over && u.stun <= 0.3) {
+    if (u.domCD <= 0 && !u.control && !burntOut(u) && !b.over && u.stun <= 0.3) {
       const n = countEnemies(u, u.pos, AML_R * 0.85);
       const boss = nearestWhere(b, u.pos, AML_R * 0.7, (v) => enemyOf(u, v) && v.maxHp >= 1000);
       if (n >= w.domMin || boss || (u.control && n > 0)) {
@@ -822,7 +914,7 @@ const yuta = {
       } else u.domCD = 0.5;
     }
     // copied techniques, now and then
-    if (u.copyCD <= 0 && u.jkCopies.length && !u.st.attack && u.target && u.stun <= 0) {
+    if (u.copyCD <= 0 && !u.control && u.jkCopies.length && !u.st.attack && u.target && u.stun <= 0) {
       const c = u.jkCopies[Math.floor(rand(0, u.jkCopies.length))];
       u.copyCD = useCopy(u, c.k) ? w.copyCD : 1;
     }

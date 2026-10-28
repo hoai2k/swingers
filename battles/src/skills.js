@@ -3,7 +3,8 @@
 // `skills` and the player fires each with its button, each on its own cooldown:
 //
 // kind.basic = 'Red'                        // name of the RT attack on the skill bar (optional)
-// kind.skills = [{
+// kind.skills = [{                         // (or a function (u) -> list: skills that change,
+//                                           //  e.g. Megumi once Sukuna has taken his body)
 //   key: 'x' | 'lb' | 'rb',                 // its button (keyboard: F / Q / E)
 //   name: 'Hollow Purple', icon: '🟣',
 //   cd(u) -> seconds left (<= 0: ready),    // read from the kind's own timer
@@ -18,6 +19,43 @@
 // for QUEUE seconds, so a press during an attack's swing fires when the swing ends.
 const QUEUE = 0.35;
 export const SKILL_KEYS = ['x', 'lb', 'rb'];
+export const skillsOf = (u) => { const s = u.kind?.skills; return typeof s === 'function' ? s(u) : s; };
+
+// the enemy a possessed unit means: the one nearest the crosshair point (within `slack`
+// of it), else the nearest one in front; within `range` of the unit. null if none.
+export function aimTarget(u, range = 30, slack = 5) {
+  const b = u.battle, p = u.pos, aim = u.control?.aimPt;
+  let best = null, bd = Infinity;
+  const fx = Math.sin(u.heading), fz = Math.cos(u.heading);
+  for (const v of b.foes(u.team)) {
+    if (!v.alive || v.dormant || v.jkSealedT > b.time) continue;
+    const dx = v.pos.x - p.x, dz = v.pos.z - p.z, d = Math.hypot(dx, dz);
+    if (d - v.skel.radius > range) continue;
+    let score;
+    if (aim) { const da = Math.hypot(v.pos.x - aim.x, v.pos.z - aim.z); score = da < slack + v.skel.radius ? da : 1000 + d; }
+    else score = d;
+    if ((dx * fx + dz * fz) < -0.3 * d) score += 2000; // behind: only if nothing else
+    if (score < bd) { bd = score; best = v; }
+  }
+  return best;
+}
+
+// a leap at v (a melee unit closing in on its own button): k = horizontal push per mass
+export function leap(u, v, k = 8) {
+  const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = Math.hypot(dx, dz) || 1;
+  const s = u.M * k * Math.min(1.1, Math.max(0.5, d / 7));
+  u.rag.impulseAll((dx / d) * s, u.M * 2.6, (dz / d) * s);
+  u.heading = u.faceYaw = Math.atan2(dx, dz);
+  const b = u.battle;
+  b.emit('dust', u.pos.x, u.pos.y - u.skel.standHeight, u.pos.z, 2);
+  b.sound('whoosh', u.pos, 0.7, 0.8);
+}
+// the usual leap skill: at the enemy under the crosshair, 3-14 m away
+export const leapSkill = (key = 'lb', cd = 4, name = 'Leap in') => ({
+  key, name, icon: '💨', cd: (u) => (u.leapCD || 0) - u.battle.time, max: () => cd,
+  ready: (u) => (u.airT > 0 ? 'in the air' : aimTarget(u, 14) ? true : 'no target'),
+  use(u) { const v = aimTarget(u, 14); if (!v) return false; leap(u, v); u.leapCD = u.battle.time + cd; return true; },
+});
 
 // state of one skill: { left, max, ready (bool), why }
 export function skillState(u, s) {
@@ -31,7 +69,7 @@ export function skillState(u, s) {
 
 // called from Unit.possessed every step: queue presses (c.press = {key: true}) and fire them
 export function runSkills(u, c, dt) {
-  const sk = u.kind?.skills;
+  const sk = skillsOf(u);
   c.queue ??= {};
   if (c.press) {
     for (const k in c.press) if (c.press[k]) c.queue[k] = QUEUE;
@@ -56,10 +94,10 @@ export function runSkills(u, c, dt) {
 
 // the skill bar for the HUD: the basic attack, then each skill
 export function skillBar(u) {
-  const k = u.kind, w = u.def.weapon;
-  if (!k?.skills?.length) return null;
+  const k = u.kind, w = u.def.weapon, list = skillsOf(u);
+  if (!list?.length) return null;
   const out = [{ key: 'rt', name: k.basic || 'Attack', icon: '', left: Math.max(0, u.cooldown || 0), max: Math.max(0.1, w.cooldown || 1), ready: !(u.cooldown > 0) }];
-  for (const s of k.skills) {
+  for (const s of list) {
     const st = skillState(u, s);
     out.push({ key: s.key, name: s.name, icon: s.icon || '', left: st.left, max: st.max, ready: st.ready, why: st.why });
   }

@@ -28,6 +28,7 @@
 // Everything drawn is a unit part, an extra body (the wheel), a projectile or a marker,
 // so setup previews, battles and replays all show it.
 import { register } from '../ext.js';
+import { aimTarget } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import { RAPIER } from '../physics.js';
 import { makeSkeleton } from '../body.js';
@@ -440,9 +441,27 @@ function skCast(u, tech, t) {
   if (tech === 'fuga') u.fugaCD = SKW.fugaCD;
 }
 function skControl(u, dt, c) {
-  if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u)) skCast(u, u.fugaCD <= 0 && c.block ? 'fuga' : 'cut', null);
+  if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u)) skCast(u, 'cut', null);
   return true;
 }
+// possessed (src/skills.js): RT Dismantle; Fuga, Cleave and the Shrine on their buttons
+// (Megumi uses these too once Sukuna has his body)
+const CLEAVE_CD = 5;
+const SK_SKILLS = [
+  { key: 'x', name: 'Fuga', icon: '🔥', cd: (u) => u.fugaCD, max: () => SKW.fugaCD,
+    use(u) { skCast(u, 'fuga', null); u.aimAt = null; return true; } },
+  { key: 'lb', name: 'Cleave', icon: '🗡', cd: (u) => u.cleaveCD || 0, max: () => CLEAVE_CD,
+    ready: (u) => !!aimTarget(u, SKW.range + 1) || 'no one in reach',
+    use(u) {
+      const v = aimTarget(u, SKW.range + 1);
+      if (!v) return false;
+      skCast(u, 'cut', v);
+      u.jkCleaveNext = v; u.cleaveCD = CLEAVE_CD;
+      return true;
+    } },
+  { key: 'rb', name: 'Malevolent Shrine', icon: '⛩', cd: (u) => u.skDomCD, max: () => SKW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+    use(u) { u.skDomCD = SKW.domCD; openShrine(u.battle, u); return true; } },
+];
 function skEvent(u, t0, t1) {
   const b = u.battle, w = SKW;
   if (u.jkTech === 'fuga') {
@@ -473,17 +492,21 @@ function dismantle(u, n) {
     if (d < R) list.push([d + rand(0, 1.5), v, d]);
   });
   list.sort((a, c) => a[0] - c[0]);
+  // (a Cleave the player aimed: that target first)
+  const cv = u.jkCleaveNext;
+  u.jkCleaveNext = null;
+  if (cv) { const k = list.findIndex((e) => e[1] === cv); if (k > 0) list.unshift(...list.splice(k, 1)); }
   for (let i = 0; i < Math.min(n, list.length); i++) {
     const [, v, d] = list[i];
     // Cleave: up close, a cut that adjusts to how tough the target is
-    if (d < 1.6 && i === 0) cut(b, v, Math.min(w.cleaveMax, (w.cleaveDmg + v.maxHp * w.cleaveK) * u.jkPow), w.force * 1.4, u, 'jk_cleave');
+    if ((d < 1.6 || v === cv) && i === 0) cut(b, v, Math.min(w.cleaveMax, (w.cleaveDmg + v.maxHp * w.cleaveK) * u.jkPow), w.force * 1.4, u, 'jk_cleave');
     else cut(b, v, w.damage * u.jkPow, w.force, u, 'jk_dismantle');
   }
   b.sound('whoosh', u.chestPos, 0.9, 1.6);
 }
 function skStep(u, dt) {
   const b = u.battle, w = SKW;
-  u.fugaCD -= dt; u.skDomCD -= dt;
+  u.fugaCD -= dt; u.skDomCD -= dt; u.cleaveCD = (u.cleaveCD || 0) - dt;
   // fingers: one more for every two kills (twenty in all)
   const f = Math.min(20, 15 + Math.floor(u.kills / 4));
   if (f > u.jkFingers) {
@@ -496,7 +519,7 @@ function skStep(u, dt) {
       b.voice(u, 'cry', true);
     }
   }
-  if (u.skDomCD <= 0 && !sealed(u) && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
+  if (u.skDomCD <= 0 && !u.control && !sealed(u) && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
     if (!domainWorth(b, u, w.domR * 0.8, w.domMin)) u.skDomCD = 0.3;
     else { u.skDomCD = w.domCD; openShrine(b, u); }
   }
@@ -528,6 +551,7 @@ const sukuna = {
   aim: true,
   init(u) { skInit(u); },
   think: skThink, control: skControl, event: skEvent,
+  basic: 'Dismantle', skills: SK_SKILLS,
   step: skStep,
 };
 
@@ -551,6 +575,8 @@ const megumi = {
     return r;
   },
   control(u, dt, c) { return u.jkMeguna ? skControl(u, dt, c) : false; },
+  basic: 'Shadow blade',
+  skills: (u) => (u.jkMeguna ? SK_SKILLS : MG_SKILLS),
   event(u, t0, t1) {
     if (u.st.attack === 'jj_sign') { if (crossed(t0, t1, 0.55)) mgSummon(u, u.jkSign); return; }
     if (u.jkMeguna) skEvent(u, t0, t1);
@@ -572,7 +598,8 @@ const megumi = {
       u.jkRitual = true;
       if (Math.random() < TUNE.ritualChance) { ritual(u); return; }
     }
-    // Chimera Shadow Garden
+    // Chimera Shadow Garden (possessed: the player's call, like the shikigami)
+    if (u.control) return;
     if (u.domCD <= 0 && !burntOut(u) && u.stun <= 0.3 && !u.st.attack) {
       const n = enemiesIn(b, u, u.pos, w.domR * 0.85).length;
       if (n >= w.domMin && (u.hp < u.maxHp * 0.8 || n >= w.domMin + 2)) { u.domCD = w.domCD; openGarden(b, u); }
@@ -591,6 +618,18 @@ const megumi = {
     for (const s of b.units) if (s.reserveOf === u && s.alive && !s.dormant && s.def.id !== 'jk_mahoraga') { shadowPool(b, s.pos, 1.2); dismiss(b, s); }
   },
 };
+// possessed (src/skills.js): the shikigami and the domain on their buttons
+const MG_SKILLS = [
+  { key: 'x', name: 'Divine Dogs / Nue', icon: '🐺', cd: (u) => (dogsReady(u) ? 0 : u.nueCD), max: () => MGW.nueCD,
+    ready: (u) => (!burntOut(u) ? (dogsReady(u) || readyOf(u.battle, u, 'jk_nue') ? true : 'all out') : 'burnt out'),
+    use(u) { sign(u, dogsReady(u) ? 'dogs' : 'jk_nue'); return true; } },
+  { key: 'lb', name: 'Max Elephant', icon: '🐘', cd: (u) => u.eleCD, max: () => MGW.eleCD,
+    ready: (u) => (burntOut(u) ? 'burnt out' : readyOf(u.battle, u, 'jk_elephant') ? true : readyOf(u.battle, u, 'jk_toad') ? true : 'all out'),
+    use(u) { sign(u, readyOf(u.battle, u, 'jk_elephant') ? 'jk_elephant' : 'jk_toad'); return true; } },
+  { key: 'rb', name: 'Chimera Shadow Garden', icon: '🌑', cd: (u) => u.domCD, max: () => MGW.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+    use(u) { u.domCD = MGW.domCD; openGarden(u.battle, u); return true; } },
+];
+const dogsReady = (u) => !!(readyOf(u.battle, u, 'jk_dog_white') || readyOf(u.battle, u, 'jk_dog_black'));
 function sign(u, type) {
   u.jkTech = 'sign'; u.jkSign = type;
   u.attackDur = 0.7;
