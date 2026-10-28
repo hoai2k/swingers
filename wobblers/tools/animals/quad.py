@@ -37,6 +37,10 @@ QUADS = {
     'tapir':    dict(sheet='tapir.png', L=1.9, res=96, hock=0.5),
     'croc':     dict(sheet='crocodile.png', L=3.0, res=120, belly=0.3, cuts=[(0.5, 0.3, 0.5, 1.0)], wmax=2.4, leg_r=0.1, leg_r_fixed=True, sprawl=True, body_tail=True, jaw=True, head=(0.14, 0.24)),
     # round 18
+    'goat':     dict(sheet='mountain_goat.png', L=1.4, res=110, head=(0.15, 0.3)),
+    'cat':      dict(sheet='cat.png', L=0.75, res=110, head=(0.12, 0.25)),
+    'rat':      dict(sheet='rat.png', L=0.45, res=110, head=(0.12, 0.25)),
+    'squirrel': dict(sheet='squirrel.png', L=0.45, res=110, head=(0.12, 0.25)),
     'camel':    dict(sheet='camel.png', L=2.9, res=110, head=(0.2, 0.45), belly_y=0.38, leg_r=0.07, leg_r_fixed=True),
     'fennec':   dict(tris=7000, sheet='fennec_fox.png', L=0.7, res=100),
     'arcticFox': dict(tris=7000, sheet='arctic_fox.png', L=0.95, res=100),

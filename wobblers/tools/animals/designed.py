@@ -359,6 +359,11 @@ def quadd(name, C):
             pl_, ph_ = C.get('paw', (0.12, 0.05))
             foot = pts[-1].copy(); foot[1] = ph_ * vh * 0.6
             fields.append(dict(name='paw' + part, d=G.ell(foot + [pl_ * vh * 0.3, 0, 0], (pl_ * vh * 0.6, ph_ * vh * 0.6, rr[-1] * 1.3)), part=part, pivot=pts[0], blend=0.008 * sh.L))
+    if C.get('horns'):                                   # a curved horn each side: (u, v, r) base to tip, at x = horn_x
+        hp = [P(u, v) for u, v, r in C['horns']]; hrr = [r * vh for u, v, r in C['horns']]
+        for sgn in (1, -1):
+            pts_ = np.array([q + [0, 0, sgn * C.get('horn_x', 0.04) * vh] for q in hp])
+            fields.append(dict(name='horn', d=G.cone(pts_, hrr), part='HEAD', pivot=piv, blend=0.004 * sh.L))
     for u, v, rz, ry, rx, part in C.get('blobs', []):   # extra rounded volumes (a dewlap, a hump)
         fields.append(dict(name='blob', d=G.ell(P(u, v), (rz * vh, ry * vh, rx * vh)), part=part, pivot=piv if part == 'HEAD' else None, blend=0.012 * sh.L))
     if C.get('crest'):                                   # a row of spikes along the back (u0, u1, n, height)
@@ -1001,6 +1006,56 @@ def crab(name, C):
     finish(name, C, fields, G, sh, blend=0.02)
 
 
+
+def scorpiond(name, C):
+    """a scorpion placed by hand on both views: points are (u, v, w): u along the side view's box (tail
+    end 0 .. claw tips 1), v down it (top 0 .. ground 1), w across the top view's box (0.5 = the
+    middle line); radii in side-box heights. Segmented body, a head, four legs a side (arched up
+    to a knee and down to the ground; front pairs FL / FR, back pairs BL / BR), two arms each with
+    a swollen claw and two fingers, the tail as beads along a chain curling up over the back, a sting."""
+    sh = Sheet(C['sheet'], C['L'], land=True)
+    S, T = sh.S, sh.T
+    vh = float(sh.ys(S.r0) - sh.ys(S.r1))
+    P = lambda u, v, w=0.5: np.array([float(sh.zs(S.c0 + u * (S.c1 - S.c0))), float(sh.ys(S.r0 + v * (S.r1 - S.r0))),
+                                      float(sh.xt(T.r0 + w * (T.r1 - T.r0)))])
+    span = float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max())
+    G = Grid((float(sh.zs(S.c0)) - 0.05 * vh, -0.05 * vh, -span - 0.05 * vh), (float(sh.zs(S.c1)) + 0.05 * vh, float(sh.ys(S.r0)) + 0.05 * vh, span + 0.05 * vh), C['res'])
+    fields = []
+    chain = lambda pts: (np.array([P(*q[:3]) if len(q) > 3 else P(q[0], q[1]) for q in pts]), [q[-1] * vh for q in pts])
+    bp, br = chain(C['body'])
+    fields.append(dict(name='body', d=G.cone(bp, br, xs=C.get('xs', 1.2)), part='body'))
+    for k in range(C.get('rings', 6)):                             # the body's plates
+        t = (k + 0.5) / C.get('rings', 6); i = t * (len(bp) - 1); j = min(int(i), len(bp) - 2); c_ = bp[j] + (bp[j + 1] - bp[j]) * (i - j)
+        r_ = (br[j] + (br[j + 1] - br[j]) * (i - j)) * 1.06
+        fields.append(dict(name='plate', d=G.ell(c_, (r_ * 0.45, r_, r_ * C.get('xs', 1.2))), part='body', blend=0.004 * sh.L))
+    hu, hv, hr = C['head']
+    fields.append(dict(name='head', d=G.ell(P(hu, hv), (hr * vh * 1.2, hr * vh * 0.8, hr * vh * 1.1)), part='body'))
+    for side in (0, 1):
+        m = (lambda q: q) if side == 0 else (lambda q: (q[0], q[1], 1 - q[2]) + tuple(q[3:]))
+        L_, R_ = ('L', 'R') if side == 0 else ('R', 'L')
+        for i, leg in enumerate(C['legs']):
+            pts, rad = chain([m(q) for q in leg])
+            part = ('F' if i < 2 else 'B') + ('L' if side == 0 else 'R')
+            fields.append(dict(name='leg', d=G.cone(pts, rad), part=part, pivot=pts[0], blend=0.004 * sh.L))
+        pts, rad = chain([m(q) for q in C['arm']])
+        fields.append(dict(name='arm', d=G.cone(pts, rad), part='body', blend=0.006 * sh.L))
+        cu, cv, cw, rz, ry, rx = C['claw']; cw = cw if side == 0 else 1 - cw
+        fields.append(dict(name='claw', d=G.ell(P(cu, cv, cw), (rz * vh, ry * vh, rx * vh)), part='body', blend=0.006 * sh.L))
+        for f in C['fingers']:
+            pts, rad = chain([m(q) for q in f])
+            fields.append(dict(name='finger', d=G.cone(pts, rad, xs=0.8), part='body', blend=0.003 * sh.L))
+    tp, tr = chain(C['tail'])
+    fields.append(dict(name='tail', d=G.cone(tp, tr), part='TAIL', pivot=tp[0]))
+    seg = np.cumsum(np.r_[0, np.linalg.norm(np.diff(tp, axis=0), axis=1)])
+    nb = C.get('beads', 5)
+    for k in range(1, nb + 1):                                     # the tail's segments
+        q = seg[-1] * (k - 0.5) / nb; i = min(max(int(np.searchsorted(seg, q)), 1), len(tp) - 1)
+        c_ = tp[i - 1] + (tp[i] - tp[i - 1]) * (q - seg[i - 1]) / max(seg[i] - seg[i - 1], 1e-9); r_ = float(np.interp(q, seg, tr)) * 1.2
+        fields.append(dict(name='bead', d=G.ell(c_, (r_, r_, r_)), part='TAIL', pivot=tp[0], blend=0.004 * sh.L))
+    sp_, sr = chain(C['sting'])
+    fields.append(dict(name='sting', d=G.cone(sp_, sr), part='TAIL', pivot=tp[0], blend=0.003 * sh.L))
+    finish(name, C, fields, G, sh, blend=C.get('blend', 0.012))
+
 def seahorse(name, C):
     """a seahorse, upright: a body flattened sideways along the drawn spine (crown to the curled tail
     tip, thickness from the drawing), a trumpet snout, the back fin as a thin plate. Side paint only
@@ -1052,6 +1107,15 @@ DESIGNS = {
         neck=[(0.76, 0.38, 0.2), (0.84, 0.26, 0.19)], head=(0.87, 0.2, 0.2, 0.95), beak=[(0.96, 0.21, 0.04), (0.99, 0.27, 0.015)],
         wing=(0.45, 0.5, 0.42, 0.2, 0.08), wing_x=0.22, tail=[(0.15, 0.63, 0.08), (0.0, 0.67, 0.05)],
         leg=[(0.6, 0.8, 0.07), (0.61, 0.97, 0.05)])),
+    'crow': (perchd, dict(tris=6000, sheet='crow.png', L=0.45, res=150, xs=0.85, spread=0.08, toe=0.11,
+        body=[(0.15, 0.6, 0.74), (0.35, 0.43, 0.74), (0.55, 0.3, 0.75), (0.68, 0.25, 0.64)],
+        neck=[(0.7, 0.3, 0.15), (0.77, 0.18, 0.13)], head=(0.8, 0.12, 0.12, 1.1), beak=[(0.88, 0.13, 0.05), (0.99, 0.17, 0.012)],
+        wing=(0.42, 0.47, 0.32, 0.13, 0.06), wing_x=0.14, tail=[(0.25, 0.6, 0.08), (0.0, 0.75, 0.05)], tail_xs=1.5, tail_ys=0.5,
+        leg=[(0.46, 0.72, 0.05), (0.46, 0.85, 0.025), (0.48, 0.97, 0.02)])),
+    'crowFly': (bird, dict(tris=6000, sheet='crow.png', row=0, rows=1, L=0.45, res=150, wing_top=True, body_u=(0.2, 0.75), body_v=(0.25, 0.8),
+        body_w=0.06, head=(0.8, 0.12, 0.12), beak=[(0.88, 0.13, 0.05), (0.99, 0.17, 0.012)], wing_u=(0.32, 0.7), tail_u=0.25, feet=(0.47, 0.9))),
+    'vulture': (bird, dict(tris=6000, sheet='vulture.png', row=0, rows=1, L=0.9, res=150, wing_top=True, body_u=(0.15, 0.68), body_v=(0.15, 0.82),
+        body_w=0.07, head=(0.85, 0.1, 0.1), beak=[(0.93, 0.12, 0.05), (0.99, 0.2, 0.015)], wing_u=(0.2, 0.62), tail_u=0.15, feet=(0.45, 0.92))),
     'owlFly': (bird, dict(tris=6000, sheet='snowy_owl.png', row=0, rows=1, L=0.6, res=150, wing_top=True, body_u=(0.25, 0.8), body_v=(0.3, 0.85),
         body_w=0.07, head=(0.87, 0.2, 0.2), beak=[(0.96, 0.21, 0.04), (0.99, 0.27, 0.015)], wing_u=(0.3, 0.75), tail_u=0.2, feet=(0.6, 0.85))),
     # round 18 (quadd: designed four-legged animals, parts placed on the side view's box)
@@ -1067,6 +1131,26 @@ DESIGNS = {
         ears=[(0.835, 0.07, 0.06, 0.1)], ear_t=0.45, ear_h=1.1,
         front=[(0.74, 0.58, 0.07), (0.755, 0.8, 0.05), (0.77, 0.95, 0.045)], hind=[(0.45, 0.56, 0.09), (0.4, 0.8, 0.05), (0.43, 0.95, 0.045)], paw=(0.13, 0.06),
         tail=[(0.40, 0.45, 0.08), (0.29, 0.46, 0.17), (0.15, 0.55, 0.18), (0.04, 0.66, 0.07)], tail_xs=0.9)),
+    'tortoise': (quadd, dict(tris=8000, sheet='tortoise.png', L=0.6, res=130, xs=1.3, spread=0.35,
+        blobs=[(0.42, 0.66, 0.26, 0.08, 0.3, 'body')],
+        torso=[(0.1, 0.45, 0.66), (0.22, 0.14, 0.72), (0.42, 0.03, 0.74), (0.6, 0.1, 0.72), (0.72, 0.36, 0.66)],
+        neck=[(0.68, 0.56, 0.13), (0.79, 0.47, 0.11)], head=(0.87, 0.42, 0.105, 1.3), muzzle=[(0.93, 0.45, 0.08), (0.985, 0.46, 0.055)], head_xs=0.85,
+        front=[(0.65, 0.62, 0.14, 0.3), (0.68, 0.8, 0.125, 0.37), (0.69, 0.94, 0.115, 0.39)], hind=[(0.21, 0.62, 0.15, 0.3), (0.18, 0.8, 0.13, 0.37), (0.17, 0.94, 0.12, 0.39)], paw=(0.18, 0.07),
+        tail=[(0.1, 0.56, 0.04), (0.0, 0.6, 0.015)])),
+    'goat': (quadd, dict(tris=8000, sheet='mountain_goat.png', L=1.4, res=130, xs=0.85, spread=0.16,
+        torso=[(0.12, 0.3, 0.62), (0.25, 0.24, 0.68), (0.45, 0.2, 0.68), (0.6, 0.17, 0.66), (0.68, 0.22, 0.6)],
+        neck=[(0.66, 0.35, 0.16), (0.76, 0.3, 0.13)], head=(0.82, 0.27, 0.11, 1.25), muzzle=[(0.88, 0.35, 0.07), (0.96, 0.4, 0.04)],
+        ears=[(0.79, 0.15, 0.05, 0.08)], ear_t=0.3, ear_h=1.5,
+        horns=[(0.81, 0.17, 0.045), (0.835, 0.08, 0.035), (0.825, 0.02, 0.022), (0.79, -0.01, 0.01)], horn_x=0.045,
+        blobs=[(0.89, 0.47, 0.035, 0.08, 0.03, 'HEAD')],
+        front=[(0.62, 0.6, 0.085), (0.65, 0.8, 0.055), (0.67, 0.95, 0.045)], hind=[(0.2, 0.55, 0.11), (0.22, 0.8, 0.055), (0.24, 0.95, 0.045)], paw=(0.12, 0.06),
+        tail=[(0.11, 0.36, 0.05), (0.03, 0.45, 0.04)])),
+    'squirrel': (quadd, dict(tris=8000, sheet='squirrel.png', L=0.45, res=130, xs=0.85, spread=0.13,
+        torso=[(0.29, 0.58, 0.92), (0.42, 0.5, 0.9), (0.58, 0.5, 0.85), (0.7, 0.53, 0.79)],
+        neck=[(0.7, 0.57, 0.13), (0.77, 0.52, 0.11)], head=(0.85, 0.5, 0.12, 1.15), muzzle=[(0.91, 0.55, 0.06), (0.98, 0.58, 0.03)],
+        ears=[(0.8, 0.34, 0.05, 0.05)], ear_t=0.3, ear_h=1.5,
+        front=[(0.68, 0.75, 0.04), (0.72, 0.88, 0.03), (0.75, 0.97, 0.025)], hind=[(0.38, 0.74, 0.14), (0.32, 0.92, 0.055), (0.38, 0.98, 0.03)], paw=(0.1, 0.04),
+        tail=[(0.3, 0.82, 0.06), (0.18, 0.8, 0.13), (0.14, 0.6, 0.17), (0.24, 0.36, 0.19), (0.32, 0.17, 0.17), (0.2, 0.06, 0.14), (0.08, 0.14, 0.11), (0.06, 0.32, 0.07)], tail_xs=1.4)),
     'fennec': (quadd, dict(tris=7000, sheet='fennec_fox.png', L=0.75, res=130, xs=0.75, spread=0.07,
         torso=[(0.37, 0.48, 0.70), (0.47, 0.45, 0.72), (0.6, 0.46, 0.72), (0.70, 0.5, 0.72)],
         neck=[(0.7, 0.58, 0.1), (0.78, 0.55, 0.085)], head=(0.85, 0.54, 0.09, 1.1), muzzle=[(0.88, 0.57, 0.06), (0.97, 0.59, 0.025)],
@@ -1089,6 +1173,17 @@ DESIGNS = {
     'octopus': (octopus, dict(tris=9000, sheet='octopus.png', L=0.9, res=125, head=(0.6, 0.33, 0.13), mantle_u=(0.08, 0.56), mantle_v=(0.02, 0.46), tilt=16,
                                 mantle_lift=0.08, arm_len=1.3, eye=(0.61, 0.32, 0.08))),
     'seaStar': (seastar, dict(tris=1600, sheet='sea_star_crab_seahorse.png', row=0, rows=3, L=0.3, res=110)),
+    'scorpion': (scorpiond, dict(tris=8000, sheet='scorpion.png', L=0.3, res=150, xs=1.25,
+        body=[(0.17, 0.6, 0.06), (0.3, 0.6, 0.085), (0.45, 0.59, 0.09), (0.58, 0.6, 0.085)], rings=6, head=(0.64, 0.61, 0.065),
+        legs=[[(0.55, 0.64, 0.42, 0.038), (0.6, 0.6, 0.2, 0.032), (0.66, 0.78, 0.13, 0.024), (0.67, 0.95, 0.09, 0.013)],
+              [(0.47, 0.65, 0.42, 0.038), (0.5, 0.6, 0.18, 0.032), (0.52, 0.8, 0.08, 0.024), (0.52, 0.96, 0.03, 0.013)],
+              [(0.38, 0.65, 0.42, 0.038), (0.35, 0.6, 0.18, 0.032), (0.31, 0.82, 0.08, 0.024), (0.3, 0.96, 0.03, 0.013)],
+              [(0.3, 0.65, 0.42, 0.038), (0.22, 0.62, 0.22, 0.032), (0.12, 0.82, 0.14, 0.024), (0.08, 0.95, 0.1, 0.013)]],
+        arm=[(0.6, 0.64, 0.4, 0.045), (0.62, 0.68, 0.3, 0.045), (0.68, 0.7, 0.24, 0.055)],
+        claw=(0.76, 0.73, 0.22, 0.12, 0.1, 0.08),
+        fingers=[[(0.82, 0.68, 0.21, 0.055), (0.9, 0.65, 0.22, 0.035), (0.98, 0.64, 0.25, 0.008)], [(0.82, 0.8, 0.23, 0.05), (0.9, 0.8, 0.24, 0.03), (0.97, 0.79, 0.27, 0.008)]],
+        tail=[(0.18, 0.58, 0.05), (0.1, 0.48, 0.055), (0.07, 0.35, 0.055), (0.07, 0.2, 0.05), (0.13, 0.07, 0.045), (0.26, 0.02, 0.045), (0.36, 0.08, 0.04)],
+        sting=[(0.37, 0.1, 0.035), (0.4, 0.2, 0.02), (0.44, 0.3, 0.004)], beads=6)),
     'crab': (crab, dict(tris=5000, sheet='sea_star_crab_seahorse.png', row=1, rows=3, L=0.4, res=120, shell_v=(0.12, 0.55))),
     'seahorse': (seahorse, dict(tris=3000, sheet='sea_star_crab_seahorse.png', row=2, rows=3, L=0.14, res=110, side_only=True,
                                 cut=[(0.62, 1.0, 0.12, 0.34), (0.0, 0.33, 0.33, 0.66)], snout=((0.6, 0.2), (0.98, 0.26)),

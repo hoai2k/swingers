@@ -356,7 +356,13 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     box heights, widths as `xs`; read coordinates off `grid.py`-style u/v grids of the sheet.
     Flying birds are separate models from the spread-wing top view (`bird`, e.g. `owlFly`).
     `snake` takes `prof_top` (thickness from the top view) and `rattle=(n, r)` beads on TAIL;
-    snakes are built longer than drawn (`length`) so they wind more.
+    snakes are built longer than drawn (`length`) so they wind more. `quadd` also takes `horns`
+    (a mirrored base-to-tip chain, the goat). `scorpiond` places a many-legged body by hand in both
+    views ((u, v) on the side, w across the top), since `crab`'s automatic top-view limb tracing
+    merged the scorpion's legs and tail.
+  - **How to build a new one** (request layout, choosing a builder, coordinates, the review loop
+    with `tools/animals/review/` `grid.py` / `turn.cjs` / `board.py`, in-game checks, learnings):
+    `tools/animals/METHOD.md`. Read it before building or changing an animal model.
   - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
     straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
     other two share (`View`, `write`, `fill_bg`, surface nets).
@@ -452,10 +458,10 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     by `kit.tree`) that scamper up the trunk when you come close and come down after you leave;
     crows on lawns and roofs; stray cats (look, flee) and house cats sitting out; Bigtown rats by
     bins placed on the side pavements: out some of the time, they dart into the bin (hidden 20 s).
-  - Built from their round-18 sheets (`SHEET_MODELS`): camel, fennec, arctic fox, iguana,
-    rattlesnake, roadrunner, flamingo, snowy owl (`snowyOwl`, flying `owlFly`). Still sculpted
-    stand-ins in `animalmodels.js` until built: scorpion, vulture, tortoise, goat (sheets in), and
-    rat, squirrel, crow (needs folded + flying models), cat (`image-requests.md` round 18).
+  - All built from their round-18 sheets (`SHEET_MODELS`): camel, rat, cat (`quad.py`); fennec,
+    arctic fox, iguana, goat, squirrel, tortoise (`quadd`); roadrunner, flamingo, snowy owl, crow
+    (`perchd`); flying `owlFly`, `crowFly`, vulture (`bird`); rattlesnake (`snake`); scorpion
+    (`scorpiond`). The sculpted stand-ins in `animalmodels.js` remain only as the fallback.
     Snakes slither with phase = distance x WAVEK (rattlesnake `WAVEK` 11, `WAVEA` 0.1; python
     `WAVEA` 0.22) and their `stride` must be 2pi / WAVEK. Sounds: `yip`, `rattle`, `hoot`,
     `honk`, `caw`, `chitter` (recorded), plus existing ones.
