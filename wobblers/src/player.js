@@ -376,7 +376,7 @@ export class Player {
     this.getUp = -1;       // >=0: seconds into standing back up
     this.getUpH = 0;       // hips height above ground when the get-up started
     this.stumble = 0;      // >0: wobbly after a bump
-    this.dashT = 0; this.dashCool = 0; this.airDashed = false; // dash (B)
+    this.dashT = 0; this.dashCool = 0; this.dashUpT = 0; this.airDashed = false; // dash (B)
     this.mantle = null;    // climbing over a ledge
     this.hangPush = 0;     // time the stick has been held forward while hanging
     this.grip = 1;         // climbing stamina (GRIP_*)
@@ -944,7 +944,7 @@ export class Player {
     this.hands.L.cool -= DT; this.hands.R.cool -= DT;
     if (this.punch.t > 0) this.punch.t -= DT;
     if (this.stumble > 0) this.stumble -= DT;
-    this.dashT -= DT; this.dashCool -= DT;
+    this.dashT -= DT; this.dashCool -= DT; this.dashUpT -= DT;
 
     // --- state transitions
     if (this.state === 'limp') {
@@ -988,8 +988,15 @@ export class Player {
     const floorY = this.groundDist < 50 ? this.hips.translation().y - this.groundDist : -1e9;
     const wasSwimming = this.swimming;
     this.swimming = water != null && cp.y < water + 0.05 && water - floorY > 0.85 && !seated;
-    if (!this.swimming) this.diveD = 0;
+    if (!this.swimming) { this.diveD = 0; this.dashUpT = 0; }
     if (this.swimming && !wasSwimming && chest.linvel().y < -2) this.game.audio?.play('splash', cp, Math.min(1.5, -chest.linvel().y / 6));
+    // back down from a dash out of the water (a leap): surface swimming again, unless the camera
+    // looks down into the water: then dive straight back under
+    if (this.swimming && !wasSwimming && this.dashLeap) {
+      this.dashLeap = false;
+      const pitch = this.cam ? this.cam.pitch : 0;
+      if (pitch > 0.45) this.diveD = Math.min(Math.max(0, Math.min(25, water - floorY - 0.9)), DIVE_DASH * Math.min(1, (pitch - 0.45) / 0.4 + 0.4));
+    } else if (this.grounded) this.dashLeap = false;
     this.waterLevel = water;
 
     // --- landings: knees give, the body squashes
@@ -1114,7 +1121,8 @@ export class Player {
         const target = water - 0.12 - this.diveD;
         const err = target - cp.y;
         const cv = chest.linvel();
-        const a = Math.max(-5, Math.min(25, 40 * err - 6 * cv.y + 9.81));
+        // (a stroke up carries on through the surface: no depth spring while it lasts)
+        const a = this.dashUpT > 0 ? 9.81 : Math.max(-5, Math.min(25, 40 * err - 6 * cv.y + 9.81));
         chest.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.75, z: 0 }, true);
         hips.applyImpulse({ x: 0, y: a * this.totalMass * DT * 0.25, z: 0 }, true);
       } else if (this.grounded && this.jumpCool <= 0) {
@@ -1175,15 +1183,19 @@ export class Player {
           // a swimming dash: a long stroke the way the camera looks (with the stick forward, or
           // no stick): looking down dives (sets a deeper dive depth), looking up rises
           const fwdShare = mag > 0.1 ? Math.max(0, my) / mag : 1;
-          let vert = Math.max(-1, Math.min(1, ((cam ? cam.pitch : 0.28) - 0.35) / 0.55)) * fwdShare; // + = down
-          if (vert < 0) vert *= Math.min(1, (this.diveD || 0) / 1.5);   // up only back to the surface, no leaping out
+          // under water the stroke follows the look up or down (up from below can leap out of the
+          // water: see the re-entry below); at the surface it is a forward stroke, diving only when
+          // the camera looks clearly, steeply down into the water
+          const pitch = cam ? cam.pitch : 0.28, under = (this.diveD || 0) > 0.6;
+          let vert = (under ? Math.max(-1, Math.min(1, (pitch - 0.35) / 0.55)) : Math.max(0, Math.min(1, (pitch - 0.75) / 0.35))) * fwdShare; // + = down
+          if (under && vert < -0.3) { this.dashLeap = true; this.dashUpT = 1.2; } // heading for the surface and out
           const room = Math.max(0, Math.min(25, water - floorY - 0.9)), h = Math.sqrt(1 - vert * vert);
           const ds = DASH_SWIM * (this.form?.speed ?? 1);
           for (const b of this.bodies) {
             const bv = b.linvel(), m = b.mass();
             b.applyImpulse({ x: (dx * h * ds - bv.x) * m, y: (-vert * ds - bv.y) * m, z: (dz * h * ds - bv.z) * m }, true);
           }
-          this.diveD = Math.max(0, Math.min(room, (this.diveD || 0) + vert * DIVE_DASH));
+          this.diveD = this.dashUpT > 0 ? 0 : Math.max(0, Math.min(room, (this.diveD || 0) + vert * DIVE_DASH));
           this.dashT = DASH_SWIM_T;
           this.game.audio?.play(this.diveD > 0.6 || vert > 0.3 ? 'swish' : 'splash', cp, 0.6);
         } else {

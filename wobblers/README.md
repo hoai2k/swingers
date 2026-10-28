@@ -46,7 +46,8 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |
 | Sprint | LB (or click LS) | Shift | Numpad . |
-| Dive (while swimming) | hold LB, or dash (B) looking down | hold Shift, or V looking down | hold Numpad . |
+| Dive (while swimming) | hold LB, or dash (B) looking steeply down | hold Shift, or V looking down | hold Numpad . |
+| Leap out of the water | dash (B) looking up while under | V looking up while under | |
 | Emote wheel (hold, pick, release) | RB + LS / RS | 1 + mouse / WASD | Numpad - + arrows |
 | Quick emotes | D-pad up wave, right dance | 2 wave, 3 cheer, 4 dance | |
 | Menu | Start | Esc | Numpad Enter |
@@ -57,7 +58,11 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 | Fly (helicopter) | RT / A up, LT / LB down, LS forward-back + turn | Space up, Shift down, WASD | Numpad 0 up, Numpad . down, Arrows |
 
 **Map** opens the island map in your own view (pan with the stick, zoom with the triggers,
-**A** to find yourself). The **phone** calls any vehicle to you: it pops in on a clear spot
+**A** to find yourself). **Waypoint stars**: a glowing gold star with a beam of light stands at
+key places on every island (the beach, the lighthouse, Bigtown's plaza, the volcano rim...).
+Touch one to collect it and the place becomes a waypoint: on the map, **LB / RB** picks a
+discovered star (or click it) and **Y** travels there (or click it again), or use **Fast
+travel** in the pause menu. Town is a waypoint from the start. The **phone** calls any vehicle to you: it pops in on a clear spot
 beside you, facing your way. Boats need water nearby and helicopters need open space. Each
 player has one called vehicle; calling another sends the old one away unless someone is in it.
 Red **phone booths** (in town, at the Fun Park, by the ferry piers and in every island's
@@ -308,6 +313,7 @@ over when punched or run over. The phone calls vehicles anywhere (including a je
 | `src/world/water.js` | sea / lake / pool water shader: depth tint, foam, reflections |
 | `src/world/detail.js` | instanced grass, flowers and pebbles per camera, road edges, lamp glow |
 | `src/world/*.js` | the island: roads, town, playground, pool, park rides, stunts, outskirts, props |
+| `src/world/waypoints.js` | waypoint stars (`WAYPOINTS`): collect to unlock fast travel (map / pause menu), saved in `settings.waypoints` |
 | `src/map.js` | archipelago map: an illustrated picture per island painted once from its terrain grid, roads, zones and static colliders, plus vector features (bridge, ferry routes); per-player map panel with players, vehicles, ferries, labels |
 | `src/phone.js` | phone panel: call any vehicle type to a clear spot beside you (one called vehicle per player; `Vehicle.destroy()` removes the old one); `registerCallable` adds entries |
 | `src/world/booths.js` | phone booths (`BOOTHS`): the phone panel as a garage list spawning outside the booth, map icons |

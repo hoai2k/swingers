@@ -10,7 +10,8 @@
 // The panel is a UI panel (see ui.js setPanel): it captures its device, so the
 // player stands still while reading the map. Controls: LS pan, LT/RT zoom
 // (mouse wheel too), A re-centre on me, View/M or B/Esc close, D-pad down /
-// P switches to the phone.
+// P switches to the phone. Discovered waypoint stars (world/waypoints.js) are drawn as stars:
+// LB / RB pick one (or click it), Y travels there (or click it again).
 import { RAPIER } from './physics.js';
 import { SEA_LEVEL, PLAYER_CSS } from './config.js';
 import { terrainGrids, heightAt, PITS, MOUNTAIN, LAKE, REGIONS, WORLD, regionAt } from './terrain.js';
@@ -332,9 +333,12 @@ export class MapPanel {
     this.el.innerHTML = `<div class="mapcard" style="--acc:${accent(p.color)}">
       <div class="mhead" style="background:${accent(p.color)};color:${textCol(p.color === 0xffffff ? 0x2a62c9 : p.color)}">${this.region.name}<small>Player ${p.index + 1}</small></div>
       <canvas></canvas>
-      <div class="foot">${promptRow([['LS', 'Pan'], ['LT', 'Zoom out'], ['RT', 'Zoom in'], ['OK', 'Me'], ['MENUBACK', 'Close']], k)}</div></div>`;
+      <div class="foot"></div></div>`;
     this.card = this.el.firstElementChild;
     this.cv = this.el.querySelector('canvas');
+    this.foot = this.el.querySelector('.foot');
+    this.wsel = -1; // selected waypoint (index into the discovered list)
+    this.drawFoot();
     this.ctx = this.cv.getContext('2d');
     ui.hud.appendChild(this.el);
     // view: centre (x, z) in metres, zoom in screen px per metre (null = fit the island)
@@ -346,16 +350,49 @@ export class MapPanel {
     this.zoom = null; this.me = { x: c.x, z: c.z };
     this.el.addEventListener('wheel', (e) => { this.zoomBy(e.deltaY > 0 ? 1 / 1.25 : 1.25); e.preventDefault(); }, { passive: false });
     let drag = null;
-    this.cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; this.cv.setPointerCapture?.(e.pointerId); });
+    this.cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: 0 }; this.cv.setPointerCapture?.(e.pointerId); });
     this.cv.addEventListener('pointermove', (e) => {
       if (!drag) return;
       const z = this.zoomNow();
       this.cx -= (e.clientX - drag.x) / z; this.cz -= (e.clientY - drag.y) / z;
-      drag = { x: e.clientX, y: e.clientY };
+      drag.moved += Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+      drag.x = e.clientX; drag.y = e.clientY;
     });
-    this.cv.addEventListener('pointerup', () => { drag = null; });
+    this.cv.addEventListener('pointerup', (e) => {
+      // a click on a star: select it; on the selected one: travel
+      if (drag && drag.moved < 6) {
+        const r = this.cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z = this.zoomNow();
+        const wps = this.wps();
+        let best = -1, bd = 22 * Math.max(0.7, this.s || 1);
+        wps.forEach((w, i) => { const d = Math.hypot(this.W / 2 + (w.x - this.cx) * z - mx, this.H / 2 + (w.z - this.cz) * z - my); if (d < bd) { bd = d; best = i; } });
+        if (best >= 0) { if (best === this.wsel) this.travel(); else this.pick(best, false); }
+      }
+      drag = null;
+    });
   }
   remove() { this.el.remove(); }
+  wps() { return this.ui.game.waypoints?.discovered() || []; }
+  drawFoot() {
+    const k = deviceKind(this.p.deviceId), n = this.wps().length, sel = this.wps()[this.wsel];
+    this.foot.innerHTML = promptRow([['LS', 'Pan'], ['LT', 'Zoom out'], ['RT', 'Zoom in'], ['OK', 'Me'],
+      ...(n ? [['LB', ''], ['RB', 'Waypoints']] : []), ...(sel ? [['Y', `Travel to ${sel.name}`]] : []), ['MENUBACK', 'Close']], k);
+  }
+  // select waypoint i (wrapping) and centre the map on it
+  pick(i, centre = true) {
+    const wps = this.wps();
+    if (!wps.length) return;
+    this.wsel = ((i % wps.length) + wps.length) % wps.length;
+    const w = wps[this.wsel];
+    if (centre) { this.cx = w.x; this.cz = w.z; this.zoom = Math.max(this.zoomNow(), this.fit() * 1.5); }
+    this.ui.sfx('uiMove'); this.drawFoot();
+  }
+  travel() {
+    const w = this.wps()[this.wsel];
+    if (!w) return;
+    this.ui.sfx('uiSelect');
+    this.ui.closePanel(this.p);
+    this.ui.game.waypoints.travel(this.p, w);
+  }
   draw() {}
   fit() { return Math.min(this.W, this.H) / this.span; }
   worldFit() { return Math.min(this.W, this.H) / (WORLD.x1 - WORLD.x0 + 100); }
@@ -370,6 +407,16 @@ export class MapPanel {
     const d = this.ui.game.input.get(this.p.deviceId), pr = d?.rawPressed || {};
     if (pr.map || n.back || (this.p.deviceId === 'kb1' && n.start)) { this.ui.sfx('uiBack'); this.ui.closePanel(this.p); return; }
     if (pr.phone) { this.ui.openPhone(this.p); return; }
+    if (pr.sprint || pr.rb) {
+      // LB / RB: previous / next discovered waypoint (the first press picks the nearest to the view)
+      const wps = this.wps();
+      if (wps.length) {
+        if (this.wsel < 0) { let b = 0, bd = Infinity; wps.forEach((w, i) => { const d = Math.hypot(w.x - this.cx, w.z - this.cz); if (d < bd) { bd = d; b = i; } }); this.pick(b); }
+        else this.pick(this.wsel + (pr.rb ? 1 : -1));
+      }
+      return;
+    }
+    if (pr.interact && this.wsel >= 0) { this.travel(); return; }
     if (n.ok) {
       // re-centre on me, zoomed in
       this.cx = this.me.x; this.cz = this.me.z;
@@ -479,6 +526,23 @@ export class MapPanel {
       ctx.fillStyle = own ? PLAYER_CSS(this.p.color) : '#fff'; ctx.fill();
       ctx.lineWidth = own ? 2 : 1.2; ctx.strokeStyle = '#1f3354'; ctx.stroke();
     }
+    // discovered waypoint stars (world/waypoints.js); the selected one pulses with its name
+    const wps = this.wps(), tt = performance.now() / 1000;
+    wps.forEach((w, i) => {
+      const X = sx(w.x), Y = sy(w.z), sel = i === this.wsel;
+      if (X < -30 || X > W + 30 || Y < -30 || Y > H + 30) return;
+      const r = (sel ? 11 + Math.sin(tt * 5) * 1.5 : 7) * Math.max(0.7, s);
+      starPath(ctx, X, Y, r);
+      ctx.fillStyle = '#ffd23f'; ctx.fill(); ctx.lineWidth = sel ? 3 : 2; ctx.strokeStyle = sel ? '#fff' : '#a0620a'; ctx.stroke();
+      if (sel || z > this.fit() * 2.2) {
+        const fs = Math.round((sel ? 14 : 11) * Math.max(0.65, s));
+        ctx.font = `900 ${fs}px "Trebuchet MS", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(w.name).width, ly = Y - r - fs * 0.9;
+        ctx.fillStyle = sel ? '#ffd23f' : 'rgba(255,255,255,.85)';
+        pill(ctx, X - tw / 2 - fs * 0.45, ly - fs * 0.7, tw + fs * 0.9, fs * 1.4, fs * 0.7); ctx.fill();
+        ctx.fillStyle = '#5a3a00'; ctx.fillText(w.name, X, ly + 1);
+      }
+    });
     // overlays from other modules (missions/index.js: job givers and job targets)
     for (const f of g.mapOverlays || []) f(ctx, sx, sy, this.p, z / this.fit(), s);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -511,6 +575,14 @@ export class MapPanel {
   }
 }
 
+function starPath(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2 - Math.PI / 2, rr = i % 2 ? r * 0.45 : r;
+    i ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
+}
 function pill(ctx, x, y, w, h, r) {
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);

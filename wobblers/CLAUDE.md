@@ -427,11 +427,27 @@ B (V / Delete on the keyboards) dashes: `DASH_V` 15 m/s the way the stick points
 you face), with a small hop; the walk drive doesn't brake it for `DASH_T` 0.22 s, and an air dash
 is trimmed back to `RUN` speed when it ends. Once per jump in the air (`airDashed`), 0.65 s
 cooldown; it also gets you up from a flop. Swimming, it is a stroke (`DASH_SWIM` 7 m/s,
-`DASH_SWIM_T` 0.45 s) along the camera's look (stick forward or none): looking down dives
-(`diveD` += `DIVE_DASH` 2.5 m), looking up rises while under (never leaps out). The pad's ragdoll
+`DASH_SWIM_T` 0.45 s): at the surface straight ahead, a dive (`diveD` += `DIVE_DASH` 2.5 m) only
+when the camera looks steeply down (pitch > 0.75); under water it follows the look up or down.
+Up from under water is a leap: `dashUpT` (1.2 s, until out of the water) drops the depth spring
+for neutral buoyancy, so you break out at ~7 m/s; landing back (`dashLeap`) is surface swimming,
+or a dive straight back under if the camera looks down (pitch > 0.45). The pad's ragdoll
 flop is D-pad left (`input.js` sets `ragdoll` and `dLeft`: menus, the arcade and the forklift
 read a ragdoll press that comes with `dLeft` as 'left', not 'back'; the D-pad cheer emote gave
 way, the keyboards' 3 still cheers).
+
+## Waypoint stars (`src/world/waypoints.js`)
+
+`WAYPOINTS` ([id, name, x, z]) puts a spinning gold star (glow sprite + two crossed additive beam
+planes, drawn within 700 m of a camera, the star itself within 260 m) on the nearest open, dry,
+level ground to each point (a spiral search at build: a ray from 120 m up must land within 0.8 m
+of the terrain mesh, no water over it). Touching it (chest 1.2 m / hand 0.6 m, checked 20 times a
+second) plays `star` (recorded; synth chime fallback), confetti (`presents.js confetti`) and
+sparkle rings, pays 15 coins and saves the id in `settings.waypoints`. `game.waypoints`:
+`list`, `discovered()`, `travel(p, w)`, `reset()`. The map panel draws discovered ones (LB / RB
+or click picks, Y or a second click travels); the pause menu has "Fast travel ◀ name ▶". Town is
+`start: true` (no star, always there). A new waypoint: one entry; check its spot with a probe
+(`w.miss` is set when the search found nothing within 40 m).
 
 ## Swimming and diving
 

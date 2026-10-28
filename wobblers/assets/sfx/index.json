@@ -169,6 +169,10 @@
   "assets/sfx/underwater-1.mp3",
   "assets/sfx/underwater-2.mp3"
  ],
+ "star": [
+  "assets/sfx/star-1.mp3",
+  "assets/sfx/star-2.mp3"
+ ],
  "_levels": {
   "punch": 0.8,
   "thud": 0.8,
@@ -209,7 +213,8 @@
   "squeak": 0.5,
   "squawk": 0.5,
   "jungle_ambience": 0.4,
-  "underwater": 0.5
+  "underwater": 0.5,
+  "star": 0.8
  },
  "_loops": [
   "ride_screams",

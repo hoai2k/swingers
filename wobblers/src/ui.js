@@ -255,6 +255,17 @@ class PauseMenu extends Panel {
       act: () => { g.teleportTo(p, q); ui.closePanel(p); },
     }];
   }
+  // fast travel to a discovered waypoint star (world/waypoints.js): left / right picks where
+  travelItem(p, g, ui) {
+    const wps = g.waypoints?.discovered() || [];
+    if (!wps.length) return [];
+    const w = wps[((this.wpIdx || 0) % wps.length + wps.length) % wps.length];
+    return [{
+      label: '⭐ Fast travel', value: w.name,
+      adj: wps.length > 1 ? (d) => { this.wpIdx = (this.wpIdx || 0) + d; } : undefined,
+      act: () => { ui.closePanel(p); g.waypoints.travel(p, w); },
+    }];
+  }
   items() {
     const p = this.p, ui = this.ui, g = ui.game, pf = devicePrefs(p.deviceId);
     if (this.page === 'settings') {
@@ -279,6 +290,7 @@ class PauseMenu extends Panel {
       return [
         { label: 'Instructions', sub: true, act: () => ui.openHelp(p.deviceId) },
         { label: '🎁 Presents found', value: `${foundCount()}/${PRESENTS_TOTAL}` },
+        ...(g.waypoints ? [{ label: '⭐ Waypoints found', value: `${g.waypoints.list.filter((w) => w.found && !w.start).length}/${g.waypoints.list.filter((w) => !w.start).length}` }] : []),
         { label: 'Team coins', value: `${life.coins.toLocaleString('en-US')}` },
         ...(g.missions?.menuItems(p, this) || []), // jobs list, cancel job, jobs done (missions/index.js)
         ...(g.pets?.of(p) ? [{ label: `Call ${g.pets.of(p).def.pet}`, act: () => { g.pets.call(p); ui.closePanel(p); } }] : []),
@@ -290,6 +302,7 @@ class PauseMenu extends Panel {
       { label: g.homes?.homeOf(p) ? 'Respawn at home' : 'Respawn', act: () => { p.respawn(); g.pets?.of(p)?.teleportNear(); ui.closePanel(p); } },
       // join a friend: one item; with several other players, left / right picks which
       ...this.teleportItem(p, g, ui),
+      ...this.travelItem(p, g, ui),
       { label: 'Settings', sub: true, act: () => this.go('settings') },
       { label: 'Info', sub: true, act: () => this.go('info') },
       { label: 'Leave game', danger: true, act: () => ui.leave(p) },
