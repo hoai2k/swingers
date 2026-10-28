@@ -155,8 +155,8 @@ Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avat
 main battle theme or, half the time, one of the world themes (not JJK's electric one,
 which stays with JJK armies). Setup and the result screen play the planning version of the battle
 song that's coming (`setupTheme`: the battleground's, a campaign world's, or the factions
-holding most of the gold already placed), once that planning song is delivered (Wild West, Viking,
-JJK and Avatar are, and Dynasty borrows Avatar's; the rest are requests 1-4 in
+holding most of the gold already placed), once that planning song is delivered (Medieval, Wild West,
+Viking, JJK and Avatar are, and Dynasty borrows Avatar's; the rest are requests 1-3 in
 `music-requests.md`); until then, and
 otherwise, the main setup theme. Songs stream and loop with a crossfade before their ending. The sound effects are ElevenLabs
 recordings in `assets/sfx/` (several variants each, loudness matched to the synth;
