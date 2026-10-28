@@ -1,6 +1,18 @@
 # Wobblers image requests
 
-**Status: all requested images delivered; no open requests.** Rounds 1–16 are delivered; see `image-requests-history.md`.
+**Status: round 17 open (1 reference sheet).** Rounds 1–16 are delivered; see `image-requests-history.md`.
+
+## OPEN round 17 — hanging monkey turnaround
+
+The jungle monkeys also hang from vines (`regions/jungle/animals.js`, `monkeyHang`); that pose is
+still the old sculpted model because round 16 only showed the monkey walking. Same art direction
+and layout as round 16 (see the history doc): stylized game animal, smooth sculpted forms, broad
+painted markings, plain light grey background, soft studio light, no text, no vine or branch
+drawn (the game has its own vines).
+
+| file | animal |
+|---|---|
+| `assets/reference/animals/monkey_hanging.png` (1920 × 1080) | the **same monkey as `monkey.png`** (brown with a cream face, chest and hands, long curly tail) hanging at rest from an unseen vine above it: one arm raised straight up gripping, the other arm relaxed down at its side, legs dangling and slightly bent, tail curled up beside the raised arm as if also holding on. Three views side by side at the same scale: left = exact side view (facing right), middle = exact **front** view (looking at its face; not a top view), right = three-quarter front view. Whole monkey in frame in every view, the raised hand at the same height in all three. |
 
 ## How delivery works
 
