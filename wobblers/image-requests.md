@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 18 remains open (4 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
+**Status: all requested images delivered; no open requests.** Rounds 1–18 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -51,31 +51,6 @@ to the top of `image-requests-history.md`.
 - **Reference sheets** (`assets/reference/`): any 16:9 around 1920 × 1080.
 
 
-## OPEN round 18 — more animal turnarounds (desert, snow, islands, city, suburbs)
-
-New wildlife for the other islands (`src/world/regions/*/animals.js`, `src/world/townlife.js`). The
-code runs on simple stand-in shapes until these arrive; then each model is built from its sheet the
-same way as round 16 (`tools/animals/quad.py` / `designed.py`). **Same art direction and layout as
-round 16** (see `image-requests-history.md`): a midpoint between baby-toy animals and realistic
-wildlife, rounded expressive stylized game animals with recognisable adult anatomy, broad painted
-markings, smooth sculpted forms, no fur / scale / wrinkle detail, no chibi proportions or human
-grins; plain light grey background, soft studio light, no text, no ground clutter.
-
-**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the same
-scale: left = exact side view (facing right), middle = exact top view (head toward the right),
-right = three-quarter front view. Whole animal in frame in every view, standing in a neutral
-walking pose with all legs visible. **Birds that fly** (vulture, crow, owl): side view standing
-with wings folded; top view with the wings spread wide as in flight (head right); three-quarter
-view flying with wings spread.
-
-Files (all `assets/reference/animals/<file>`, 1920 × 1080):
-
-| file | animal |
-|---|---|
-| `rat.png` | a city rat: grey-brown, pink ears, hands, feet and long thin pink tail, a bit cheeky rather than gross |
-| `squirrel.png` | a grey squirrel with a big fluffy S-curved tail and a pale belly |
-| `crow.png` | a glossy black crow with a slight blue-purple sheen and a strong black beak (see the birds note) |
-| `cat.png` | an orange tabby house cat with broad darker stripes, white chest and paws, tail up |
 
 ## For agents adding requests
 

@@ -2585,6 +2585,54 @@
       "styleReference": "reference/animals/crocodile.png",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3f6c9f96-cfcd-4dfa-a0f0-e10d09f08435.png",
       "index": 212
+    },
+    {
+      "id": "rat",
+      "file": "reference/animals/rat.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling sheet. Subject: a CITY RAT, grey-brown with pink ears/hands/feet and long thin PINK tail, small cheeky alert eyes, adult rat proportions, not gross and no human smile. Match crocodile reference's MIDPOINT STYLIZED GAME look only: rounded expressive simplified ADULT animal anatomy, clean smooth sculpted forms, broad painted markings, soft satin/matte material. Neither nursery toy/chibi nor realistic wildlife. No hair strands, tiny feather/skin/scale texture, wrinkles, blush, oversized baby eyes/head or human grin. Three equal-width columns, SAME animal and SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; CENTER true ORTHOGRAPHIC OVERHEAD TOP with ENTIRE spine/head/tail coherently HORIZONTAL, head RIGHT tail LEFT, four limbs naturally paired above/below, NO twisted torso or substituted side view; RIGHT FRONT THREE-QUARTER. Neutral walking pose with all legs visible. Whole animal, tail and all appendages within each column with clear margins. Plain LIGHT GREY background, soft studio lighting. Opaque landscape16:9 for1920x1080. No text/labels/props/ground clutter. Do not copy crocodile anatomy.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1cf2d0a2-8e82-44fe-a161-7c5c98da80b1.png",
+      "index": 213
+    },
+    {
+      "id": "squirrel",
+      "file": "reference/animals/squirrel.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling sheet. Subject: a GREY SQUIRREL with pale belly, large fluffy S-CURVED tail rendered as smooth rounded masses, alert adult squirrel proportions and modest expressive eyes. Match crocodile reference's MIDPOINT STYLIZED GAME look only: rounded expressive simplified ADULT animal anatomy, clean smooth sculpted forms, broad painted markings, soft satin/matte material. Neither nursery toy/chibi nor realistic wildlife. No hair strands, tiny feather/skin/scale texture, wrinkles, blush, oversized baby eyes/head or human grin. Three equal-width columns, SAME animal and SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; CENTER true ORTHOGRAPHIC OVERHEAD TOP with ENTIRE spine/head/tail coherently HORIZONTAL, head RIGHT tail LEFT, four limbs naturally paired above/below, NO twisted torso or substituted side view; RIGHT FRONT THREE-QUARTER. Neutral walking pose with all legs visible. Whole animal, tail and all appendages within each column with clear margins. Plain LIGHT GREY background, soft studio lighting. Opaque landscape16:9 for1920x1080. No text/labels/props/ground clutter. Do not copy crocodile anatomy.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-02d977ff-125e-4767-af27-aebc873cfe54.png",
+      "index": 214
+    },
+    {
+      "id": "crow",
+      "file": "reference/animals/crow.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling sheet. Subject: a GLOSSY BLACK CROW, subtle blue-purple sheen on broad feather masses, strong black beak, alert eyes. Match crocodile reference's MIDPOINT STYLIZED GAME look only: rounded expressive simplified ADULT animal anatomy, clean smooth sculpted forms, broad painted markings, soft satin/matte material. Neither nursery toy/chibi nor realistic wildlife. No hair strands, tiny feather/skin/scale texture, wrinkles, blush, oversized baby eyes/head or human grin. Three equal-width columns, SAME bird and SAME scale: LEFT exact SIDE STANDING facing RIGHT, wings FOLDED; CENTER true ORTHOGRAPHIC OVERHEAD TOP IN FLIGHT with wings SPREAD WIDE symmetrically, head RIGHT tail LEFT; RIGHT FRONT THREE-QUARTER FLYING with wings SPREAD. Whole wingspan in each column. Whole animal, tail and all appendages within each column with clear margins. Plain LIGHT GREY background, soft studio lighting. Opaque landscape16:9 for1920x1080. No text/labels/props/ground clutter. Do not copy crocodile anatomy.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-b07c9e7c-8631-4c53-9504-d21745bf0f77.png",
+      "index": 215
+    },
+    {
+      "id": "cat",
+      "file": "reference/animals/cat.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling sheet. Subject: an ORANGE TABBY HOUSE CAT, broad darker orange stripes, WHITE CHEST AND PAWS, TAIL UP, adult proportions, attentive eyes, relaxed walking pose. Match crocodile reference's MIDPOINT STYLIZED GAME look only: rounded expressive simplified ADULT animal anatomy, clean smooth sculpted forms, broad painted markings, soft satin/matte material. Neither nursery toy/chibi nor realistic wildlife. No hair strands, tiny feather/skin/scale texture, wrinkles, blush, oversized baby eyes/head or human grin. Three equal-width columns, SAME animal and SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; CENTER true ORTHOGRAPHIC OVERHEAD TOP with ENTIRE spine/head/tail coherently HORIZONTAL, head RIGHT tail LEFT, four limbs naturally paired above/below, NO twisted torso or substituted side view; RIGHT FRONT THREE-QUARTER. Neutral walking pose with all legs visible. Whole animal, tail and all appendages within each column with clear margins. Plain LIGHT GREY background, soft studio lighting. Opaque landscape16:9 for1920x1080. No text/labels/props/ground clutter. Do not copy crocodile anatomy.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-14a1d3b9-27d0-4bd0-af97-e2192055c1ad.png",
+      "index": 216
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
