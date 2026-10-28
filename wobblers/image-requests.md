@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 18 remains open (8 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
+**Status: round 18 remains open (4 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -72,10 +72,6 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 
 | file | animal |
 |---|---|
-| `scorpion.png` | a desert scorpion: amber-orange, two big pincers held forward, eight legs, tail curled up over the back with the stinger |
-| `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
-| `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
-| `mountain_goat.png` | a mountain goat: shaggy white coat (shaped as smooth rounded volumes, no fur strands), short black horns, small beard |
 | `rat.png` | a city rat: grey-brown, pink ears, hands, feet and long thin pink tail, a bit cheeky rather than gross |
 | `squirrel.png` | a grey squirrel with a big fluffy S-curved tail and a pale belly |
 | `crow.png` | a glossy black crow with a slight blue-purple sheen and a strong black beak (see the birds note) |

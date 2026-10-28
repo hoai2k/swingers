@@ -2534,6 +2534,57 @@
       "styleReference": "reference/animals/crocodile.png",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-4f0e41a4-1d7d-44a3-ad12-a5cb785eb7a9.png",
       "index": 208
+    },
+    {
+      "id": "scorpion",
+      "file": "reference/animals/scorpion.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Precise anatomy correction to this scorpion sheet. The CENTER OVERHEAD VIEW wrongly has SIX walking legs. A scorpion is an arachnid and MUST have EIGHT walking legs, separate from its two large pincer arms. Redraw ONLY the center view with FOUR clearly distinct walking legs on the upper side of its body and FOUR on the lower side, arranged as FOUR paired attachment points along the torso. Each leg visibly separate and countable. The TWO large forward pincer arms do NOT count as legs. Keep the corrected tail curled over its back, head facing right, same colours/material/body shape/scale and grid position. Preserve left side and right three-quarter views, background and all other details unchanged. No labels or text.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1cb5a9b8-2a13-4335-a68d-a601ea6b00ba.png",
+      "initialSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-27e0a3b1-9e11-48ca-9d43-f8ca91a93d8f.png",
+      "initialPrompt": "Use case: stylized-concept. WOBBLERS creature-model turnaround. Subject: a desert SCORPION, amber-orange, TWO big forward pincers plus EXACTLY EIGHT walking legs, segmented tail curling UP OVER BACK ending in a clear stinger, watchful dangerous silhouette, no smile. Use attached crocodile ONLY as MIDPOINT STYLIZED GAME reference: actual species anatomy and adult proportions simplified into rounded clean smooth sculpted forms, broad painted markings, soft satin/matte material, expressive but natural-sized eyes. Neither baby/nursery toy nor realistic wildlife. No chibi head, giant glossy baby eyes, blush, human grin, hair strands, tiny scales, wrinkles or realistic microtexture. THREE equal columns of SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC TOP with entire body/spine/head/tail on coherent HORIZONTAL axis, head RIGHT tail LEFT, paired limbs above/below, no twisted torso; RIGHT THREE-QUARTER FRONT. Neutral walking pose with all legs visible. Whole animal and appendages inside each column. Clear margins, plain LIGHT GREY background, soft studio light, opaque landscape16:9 for1920x1080. No text, labels, props or ground clutter. Do not copy crocodile-specific features.",
+      "tailCorrectionSource": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-d7103248-5720-4560-a700-e3170b89663c.png",
+      "index": 209
+    },
+    {
+      "id": "vulture",
+      "file": "reference/animals/vulture.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS creature-model turnaround. Subject: a VULTURE with dark brown body/wings, bald pinkish head and neck, hooked beak and pale neck ruff. Use attached crocodile ONLY as MIDPOINT STYLIZED GAME reference: actual species anatomy and adult proportions simplified into rounded clean smooth sculpted forms, broad painted markings, soft satin/matte material, expressive but natural-sized eyes. Neither baby/nursery toy nor realistic wildlife. No chibi head, giant glossy baby eyes, blush, human grin, hair strands, tiny scales, wrinkles or realistic microtexture. THREE equal columns: LEFT exact SIDE STANDING facing RIGHT, wings FOLDED; MIDDLE exact OVERHEAD TOP as in FLIGHT with BOTH WINGS SPREAD WIDE symmetrically, head RIGHT, tail LEFT; RIGHT THREE-QUARTER FRONT FLYING with wings spread. Same bird and scale, whole wingspan fully inside every column. Clear margins, plain LIGHT GREY background, soft studio light, opaque landscape16:9 for1920x1080. No text, labels, props or ground clutter. Do not copy crocodile-specific features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-90828d17-c353-4470-850a-8928688327ad.png",
+      "index": 210
+    },
+    {
+      "id": "tortoise",
+      "file": "reference/animals/tortoise.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS creature-model turnaround. Subject: a DESERT TORTOISE, high domed brown shell with BIG painted plate pattern, stumpy elephant-like legs, small head and short tail. Use attached crocodile ONLY as MIDPOINT STYLIZED GAME reference: actual species anatomy and adult proportions simplified into rounded clean smooth sculpted forms, broad painted markings, soft satin/matte material, expressive but natural-sized eyes. Neither baby/nursery toy nor realistic wildlife. No chibi head, giant glossy baby eyes, blush, human grin, hair strands, tiny scales, wrinkles or realistic microtexture. THREE equal columns of SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC TOP with entire body/spine/head/tail on coherent HORIZONTAL axis, head RIGHT tail LEFT, paired limbs above/below, no twisted torso; RIGHT THREE-QUARTER FRONT. Neutral walking pose with all legs visible. Whole animal and appendages inside each column. Clear margins, plain LIGHT GREY background, soft studio light, opaque landscape16:9 for1920x1080. No text, labels, props or ground clutter. Do not copy crocodile-specific features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7a142608-6bb7-4c87-957e-922908886ae7.png",
+      "index": 211
+    },
+    {
+      "id": "mountain_goat",
+      "file": "reference/animals/mountain_goat.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS creature-model turnaround. Subject: a MOUNTAIN GOAT, white shaggy coat modelled as a FEW smooth rounded masses not hair strands, short black horns, small beard, strong adult legs with dark cloven hooves. Use attached crocodile ONLY as MIDPOINT STYLIZED GAME reference: actual species anatomy and adult proportions simplified into rounded clean smooth sculpted forms, broad painted markings, soft satin/matte material, expressive but natural-sized eyes. Neither baby/nursery toy nor realistic wildlife. No chibi head, giant glossy baby eyes, blush, human grin, hair strands, tiny scales, wrinkles or realistic microtexture. THREE equal columns of SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC TOP with entire body/spine/head/tail on coherent HORIZONTAL axis, head RIGHT tail LEFT, paired limbs above/below, no twisted torso; RIGHT THREE-QUARTER FRONT. Neutral walking pose with all legs visible. Whole animal and appendages inside each column. Clear margins, plain LIGHT GREY background, soft studio light, opaque landscape16:9 for1920x1080. No text, labels, props or ground clutter. Do not copy crocodile-specific features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-3f6c9f96-cfcd-4dfa-a0f0-e10d09f08435.png",
+      "index": 212
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",
