@@ -40,7 +40,8 @@ stick / D-pad + **A** / **B**, with **WASD** / arrows + **Enter** / **Esc**, or 
 |---|---|---|---|
 | Move / camera | LS / RS | WASD / mouse | Arrows / Numpad 4 6 8 5 |
 | Jump | A | Space | Numpad 0 |
-| Ragdoll (flop) | B | X (or R) | Numpad 7 |
+| Dash | B | V | Delete |
+| Ragdoll (flop) | click RS | X (or R) | Numpad 7 |
 | Punch | X | G or middle mouse | Numpad 2 |
 | Interact: enter / exit, sit, use | Y | F (or E) | Numpad 9 |
 | Raise arms & grab (left / right) | LT / RT | left / right mouse (or Q / C) | Numpad 1 / 3 |

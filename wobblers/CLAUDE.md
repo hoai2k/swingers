@@ -414,6 +414,14 @@ a loose dynamic panel (`kind 'fence'`, grabbable) flies off with the hit. At mos
 pieces (the oldest unheld goes); broken sections are rebuilt after 120 s when no player is within
 50 m.
 
+## Dash
+
+B (V / Delete on the keyboards) dashes: `DASH_V` 15 m/s the way the stick points (else the way
+you face), `DASH_SWIM` 7 in water, with a small hop; the walk drive doesn't brake it for `DASH_T`
+0.22 s, and an air dash is trimmed back to `RUN` speed when it ends. Once per jump in the air
+(`airDashed`), 0.65 s cooldown; it also gets you up from a flop. The ragdoll flop moved to
+clicking the right stick (pad); menus, the arcade and the factory forklift still take B.
+
 ## Swimming and diving
 
 Swimmers hover at the surface; holding sprint (Shift / LB) dives (`player.diveD`, 1.8 m/s down,

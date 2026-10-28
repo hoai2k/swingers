@@ -203,7 +203,7 @@ export class Game {
       if (d) d.latch = null;
       const driving = p.seat && p.seat.kind === 'driver';
       const inp = driving ? { ...st, moveX: 0, moveY: 0, grabL: 0, grabR: 0 } : st;
-      p.step(inp, driving ? { ragdoll: false, jump: false, punch: false } : pr);
+      p.step(inp, driving ? { ragdoll: false, dash: false, jump: false, punch: false } : pr);
     }
     const held = this._held ||= new Set(); held.clear(); // bodies in someone's hands stay awake (grab-on vehicles)
     for (const p of this.players) for (const h of ['L', 'R']) if (p.hands?.[h]?.body) held.add(p.hands[h].body);

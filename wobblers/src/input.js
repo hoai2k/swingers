@@ -2,7 +2,7 @@
 // Every device yields the same state shape each frame; `pressed` holds the
 // buttons that went down this frame.
 
-const BUTTONS = ['jump', 'ragdoll', 'punch', 'interact', 'sprint', 'start', 'back', 'emote', 'map', 'phone',
+const BUTTONS = ['jump', 'ragdoll', 'dash', 'punch', 'interact', 'sprint', 'start', 'back', 'emote', 'map', 'phone',
   'dUp', 'dDown', 'dLeft', 'dRight', 'grabLBtn', 'grabRBtn', 'rb', 'ls', 'rs'];
 
 function blank() {
@@ -73,6 +73,7 @@ export class Input {
     s.jump = k.has('Space');
     // Wobbly Life's PC layout: X ragdoll, F interact, H horn, 1 emote wheel, M map
     s.ragdoll = k.has('KeyX') || k.has('KeyR');
+    s.dash = k.has('KeyV');
     s.interact = k.has('KeyF') || k.has('KeyE');
     s.sprint = k.has('ShiftLeft') || k.has('ShiftRight');
     s.start = k.has('Escape') || k.has('Enter');
@@ -103,6 +104,7 @@ export class Input {
     s.jump = k.has('Numpad0');
     s.punch = k.has('Numpad2');
     s.ragdoll = k.has('Numpad7');
+    s.dash = k.has('Delete');
     s.interact = k.has('Numpad9');
     s.sprint = k.has('NumpadDecimal') || k.has('ControlRight');
     s.start = k.has('NumpadEnter');
@@ -126,7 +128,8 @@ export class Input {
     const l = Math.hypot(s.moveX, s.moveY); if (l > 1) { s.moveX /= l; s.moveY /= l; }
     const rx = dead(a[2] || 0, 0.15), ry = dead(a[3] || 0, 0.15);
     s.lookX = rx * Math.abs(rx) * 0.07; s.lookY = ry * Math.abs(ry) * 0.05;
-    s.jump = bp(0); s.ragdoll = bp(1); s.punch = bp(2); s.interact = bp(3);
+    // B dashes; clicking the right stick flops into a ragdoll
+    s.jump = bp(0); s.dash = bp(1); s.ragdoll = bp(11); s.punch = bp(2); s.interact = bp(3);
     s.sprint = bp(4) || bp(10); s.rb = bp(5);
     s.grabL = bv(6); s.grabR = bv(7);
     s.back = bp(8); s.start = bp(9); s.rs = bp(11);
