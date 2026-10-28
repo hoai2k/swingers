@@ -15,6 +15,7 @@ import { Battle, PROJ } from './battle.js';
 import { FX } from './fx.js';
 import { ProjViz } from './projviz.js';
 import { Recorder, Player } from './replay.js';
+import { skillBar, SKILL_KEYS } from './skills.js';
 import { SCENARIOS, SIM_CATS, SIM_SIZES, simArmies, simValue, fitToMap } from './sims.js';
 import { WORLDS, LEVELS, levelById, enemyArmy, armyValue, starGold, starsFor, loadProgress, saveProgress, worldUnlocked, levelUnlocked, totalStars, nextLevel } from './campaign.js';
 
@@ -1956,6 +1957,8 @@ export class Game {
     c.attack = s.rt > 0.4;
     c.block = !aimer && s.lt > 0.3;
     if (this.vPressed(v, 'a')) c.jump = true;
+    // X / LB / RB: the unit's special techniques (src/skills.js)
+    for (const k of SKILL_KEYS) if (this.vPressed(v, k)) (c.press ??= {})[k] = true;
     if (rig.lastHp !== undefined && u.hp < rig.lastHp - 0.5) {
       const f = clamp((rig.lastHp - u.hp) / u.maxHp * 4, 0.15, 1);
       for (const p of this.viewPlayers(v)) this.input.rumble(p, f, f, 160);
@@ -1967,6 +1970,7 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
+        if (rig.unit?.kind?.skills?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('X')}${btn('LB')}${btn('RB')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
         return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('RT')} attack &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('Y')} slow-mo &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
@@ -1998,7 +2002,7 @@ export class Game {
     for (const v of vs) {
       const rig = this.rigs[v];
       let label = this.split ? `<b style="color:${TEAM_COLORS[v]}">P${v + 1}</b> ` : '';
-      let reticle = '', card = null;
+      let reticle = '', card = null, skills = null;
       if (rig.mode === 'follow' && rig.unit) {
         const u = rig.unit;
         label += `Following ${teamTag(u.team)} ${u.def.name}`;
@@ -2009,12 +2013,13 @@ export class Game {
         if (rig.aimInfo) label += ` <small class="${rig.aimInfo.ok ? '' : 'bad'}">${Math.round(rig.aimInfo.dist)} m${rig.aimInfo.ok ? '' : ' · out of range'}</small>`;
         reticle = 'aim';
         card = this.unitCard(u);
+        skills = this.state === 'battle' ? skillBar(u) : null;
       } else if (rig.mode === 'cine') {
         label += '🎬 Cinematic camera';
         if (rig.cine?.target?.def) card = this.unitCard(rig.cine.target);
       } else { label += 'Free camera'; if (this.state !== 'result') reticle = 'dot'; }
       if (Math.abs(rig.zoom) > 0.5) label += ` <small>· FOV ${Math.round(rig.fov)}°</small>`;
-      views[v] = { label, reticle, card, hint: this.hintFor(rig) };
+      views[v] = { label, reticle, card, skills, hint: this.hintFor(rig) };
     }
     const sc = this.state === 'replay' ? 1 : SPEEDS[this.speedIdx];
     const scaleText = this.state === 'result' ? '' : sc === 0 ? 'TIME FROZEN <small>✥↑ resume</small>' : sc !== 1 ? `${sc < 1 ? 'SLOW MOTION' : 'FAST'} ${sc}×` : '';

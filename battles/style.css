@@ -392,3 +392,19 @@ span.ficon svg { width: 100%; height: 100%; display: block; }
 .smtiles .lvtile b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
 .smwhen { font-weight: 800; opacity: 0.65; font-size: 14px; }
 @media (max-width: 1100px) { .smtiles .lvtile { width: 134px; } }
+
+/* a possessed unit's techniques (src/skills.js): one tile per button, the cooldown drains down */
+.skillbar { position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; pointer-events: none; }
+.layer-battle.split .skillbar.v0 { left: 25%; } .layer-battle.split .skillbar.v1 { left: 75%; }
+.sk { position: relative; overflow: hidden; width: 128px; padding: 4px 6px 3px; border-radius: 10px; background: rgba(20,24,34,0.78); border: 2px solid rgba(255,255,255,0.18); color: #fff; font-weight: 800; text-align: center; line-height: 1.1; }
+.sk > i { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.55); }
+.sk > span, .sk > small { position: relative; display: block; }
+.sk-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.sk small { font-size: 11px; opacity: 0.75; }
+.sk.on { border-color: var(--gold); box-shadow: 0 0 8px rgba(242,194,48,0.5); }
+.sk.on small { color: var(--gold); opacity: 1; }
+.sk.flash { background: rgba(242,194,48,0.85); color: var(--ink); }
+.sk.denied { border-color: #ff5a4a; }
+.sk.denied small { color: #ff8a7a; opacity: 1; }
+.layer-battle.split .sk { width: 84px; } .layer-battle.split .sk-name { font-size: 10px; }
+@media (max-width: 900px) { .sk { width: 86px; } .sk-name { font-size: 10px; } }

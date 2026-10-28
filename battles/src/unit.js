@@ -6,6 +6,7 @@ import { Ragdoll } from './ragdoll.js';
 import { ITEMS, gripDir, heldLayout, shieldDef, itemMass, itemSpan } from './items.js';
 import { FIELD } from './world.js';
 import { EXT } from './ext.js';
+import { runSkills } from './skills.js';
 import { RAPIER, GROUPS, itemGroups } from './physics.js';
 
 const _v = new THREE.Vector3();
@@ -282,6 +283,8 @@ export class Unit {
     // pack kinds can take over (steer a mount, crew an engine, dive...); true means
     // the attack button was handled there
     const own = this.kind?.control ? this.kind.control(this, dt, c) : false;
+    // special techniques on their own buttons (src/skills.js)
+    runSkills(this, c, dt);
     if (!own && c.attack && !this.blocking && !this.st.attack && this.cooldown <= 0) {
       this.startAttack();
       this.aimAt = null;

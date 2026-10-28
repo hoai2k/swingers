@@ -356,6 +356,8 @@ export class UI {
     this.viewLabels.forEach((v) => L.appendChild(v));
     this.reticles = [el('div', 'reticle small v0'), el('div', 'reticle small v1')];
     this.reticles.forEach((v) => L.appendChild(v));
+    this.skillbars = [el('div', 'skillbar v0'), el('div', 'skillbar v1')];
+    this.skillbars.forEach((v) => L.appendChild(v));
     this.bhints = [el('div', 'bhints v0'), el('div', 'bhints v1')];
     this.bhints.forEach((v) => L.appendChild(v));
     this.bdivider = el('div', 'divider');
@@ -382,12 +384,25 @@ export class UI {
       }
       this.cards[i].style.display = v && v.card ? '' : 'none';
       if (v && v.card) this.setText(this.cards[i], this.unitCardHtml(v.card));
+      this.skillbars[i].style.display = v && v.skills ? '' : 'none';
+      if (v && v.skills) this.setText(this.skillbars[i], this.skillBarHtml(v.skills));
     }
     for (let i = 0; i < 2; i++) {
       const v = d.views[i];
       this.bhints[i].style.display = d.hints && v ? '' : 'none';
       if (v) this.setText(this.bhints[i], v.hint || '');
     }
+  }
+
+  // a possessed unit's techniques: button, name, cooldown sweep (src/skills.js)
+  skillBarHtml(list) {
+    const key = { rt: 'RT', x: 'X', lb: 'LB', rb: 'RB' };
+    return list.map((s) => {
+      const f = s.ready ? 0 : Math.min(1, s.left / s.max);
+      const note = s.denied || (s.why ? s.why : s.left > 0 ? (s.left >= 10 ? Math.ceil(s.left) : s.left.toFixed(1)) + ' s' : 'ready');
+      return `<div class="sk ${s.ready ? 'on' : ''} ${s.flash ? 'flash' : ''} ${s.denied ? 'denied' : ''}"><i style="height:${(f * 100).toFixed(0)}%"></i>
+        <span class="sk-btn">${btn(key[s.key])}</span><span class="sk-name">${s.icon ? s.icon + ' ' : ''}${s.name}</span><small>${note}</small></div>`;
+    }).join('');
   }
 
   // stats of the followed / possessed unit (like TABS's unit info)

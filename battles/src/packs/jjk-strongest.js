@@ -158,14 +158,20 @@ const gojo = {
     if (u.st.attack) u.desired.multiplyScalar(0.15);
     return t;
   },
+  // possessed: RT Red; Blue, Purple and the Void on their own buttons (src/skills.js)
   control(u, dt, c) {
-    if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) {
-      const tech = u.purpleCD <= 0 ? 'purple' : u.blueCD <= 0 && c.block ? 'blue' : 'red';
-      gojoCast(u, tech);
-      u.aimAt = null;
-    }
+    if (c.attack && !u.st.attack && u.cooldown <= 0 && !sealed(u) && !burntOut(u)) { gojoCast(u, 'red'); u.aimAt = null; }
     return true;
   },
+  basic: 'Red',
+  skills: [
+    { key: 'x', name: 'Blue', icon: '🔵', cd: (u) => u.blueCD, max: (u) => u.def.weapon.blueCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { gojoCast(u, 'blue'); u.aimAt = null; return true; } },
+    { key: 'lb', name: 'Hollow Purple', icon: '🟣', cd: (u) => u.purpleCD, max: (u) => u.def.weapon.purpleCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { gojoCast(u, 'purple'); u.aimAt = null; return true; } },
+    { key: 'rb', name: 'Unlimited Void', icon: '♾', cd: (u) => u.domCD, max: (u) => u.def.weapon.domCD, ready: (u) => !burntOut(u) || 'burnt out',
+      use(u) { u.domCD = u.def.weapon.domCD; openVoid(u.battle, u); return true; } },
+  ],
   event(u, t0, t1) {
     const w = u.def.weapon, b = u.battle, tech = u.jkTech;
     if (tech === 'purple' && crossed(t0, t1, 0.08)) {
@@ -248,8 +254,8 @@ const gojo = {
       const v = nearestEnemyTo(b, u, u.pos, w.blinkR + u.skel.radius);
       if (v && v.def.weapon.range === undefined && (v.jkPierce || !u.jkInfinity)) blink(b, u, v);
     }
-    // Unlimited Void
-    if (u.domCD <= 0 && !sl && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
+    // Unlimited Void (possessed: the player opens it)
+    if (u.domCD <= 0 && !u.control && !sl && !burntOut(u) && !u.st.attack && u.stun <= 0.3 && !b.over) {
       if (!domainWorth(b, u, w.domR * 0.9, w.domMin)) u.domCD = 0.3;
       else { u.domCD = w.domCD; openVoid(b, u); }
     }
