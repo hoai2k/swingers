@@ -1293,7 +1293,7 @@ export class Game {
     this.setupVis[t] = [];
     army.length = 0;
     this.audio.play('remove', null, 0.8, 0.5);
-    this.ui.toast(`${teamTag(t)} army cleared <small>(${btn('X')} undo)</small>`, 2, p);
+    this.ui.toast(`${teamTag(t)} army cleared <small>(${btn('R3')} undo)</small>`, 2, p);
     this.save();
   }
 
@@ -1354,7 +1354,7 @@ export class Game {
     for (const a of added) this.addEntry(t, a);
     this.ps[p].undo.push({ kind: 'replace', team: t, old, entries: added });
     this.audio.play('place', null, 0.8, 1.2);
-    if (!quiet) this.ui.toast(`${teamTag(t)}: random army · ${added.length} units · ${this.armyCost(t).toLocaleString('en-US')} gold <small>(${btn('X')} undo)</small>`, 2.2, p);
+    if (!quiet) this.ui.toast(`${teamTag(t)}: random army · ${added.length} units · ${this.armyCost(t).toLocaleString('en-US')} gold <small>(${btn('R3')} undo)</small>`, 2.2, p);
     this.save();
   }
 
@@ -1496,6 +1496,7 @@ export class Game {
     ];
     if (this.canSwitch(p)) items.push({ label: `Build the ${TEAM_NAMES[this.nextTeam(p)]} army`, key: 'switch' });
     items.push({ label: 'Random army', key: 'random' });
+    items.push({ label: 'Reset camera', key: 'resetcam' });
     if (this.mode !== 'campaign') items.push({ label: 'Save battle…', key: 'savebattle' });
     if (this.mode === 'sandbox') items.push({ label: 'Load battle…', key: 'loadbattle' });
     items.push({ label: `Clear ${this.mode === 'campaign' ? 'my' : TEAM_NAMES[ps.team]} army…`, key: 'clear' });
@@ -1527,7 +1528,7 @@ export class Game {
     const t = this.ps[p].team;
     if (m.kind === 'clear') {
       const n = this.armies[t].length;
-      return { title: `Clear ${TEAM_NAMES[t]} army?`, text: `Removes all ${n} unit${n === 1 ? '' : 's'} (${this.armyCost(t).toLocaleString('en-US')} gold). ${btn('X')} undo brings them back. <small>Tip: hold ${btn('View')} to clear without asking.</small>`, items: [{ label: 'No, keep them', key: 'no' }, { label: 'Yes, clear', key: 'yes', cls: 'danger' }], sel: m.sel };
+      return { title: `Clear ${TEAM_NAMES[t]} army?`, text: `Removes all ${n} unit${n === 1 ? '' : 's'} (${this.armyCost(t).toLocaleString('en-US')} gold). ${btn('R3')} undo brings them back. <small>Tip: hold ${btn('View')} to clear without asking.</small>`, items: [{ label: 'No, keep them', key: 'no' }, { label: 'Yes, clear', key: 'yes', cls: 'danger' }], sel: m.sel };
     }
     if (m.kind === 'perf') return { title: 'PERFORMANCE', text: this.perfLine(), items: [...this.perfItems(), { label: 'Back', key: 'back' }], sel: m.sel };
     if (m.kind === 'save' || m.kind === 'load') {
@@ -1581,6 +1582,7 @@ export class Game {
       case 'ready': ps.modal = null; this.toggleReady(p); break;
       case 'switch': ps.modal = null; this.switchSide(p); break;
       case 'random': ps.modal = null; if (ps.ready) this.toggleReady(p); this.randomArmy(p); break;
+      case 'resetcam': ps.modal = null; this.setupCam(p); break;
       case 'savebattle': ps.modal = { kind: 'save', sel: 0, from: m.sel }; this.audio.play('click'); break;
       case 'loadbattle': ps.modal = { kind: 'load', sel: 0, from: m.sel }; this.audio.play('click'); break;
       case 'clear': this.openClearConfirm(p); break;
@@ -1620,7 +1622,7 @@ export class Game {
     const ps = this.ps[p];
     const view = this.canSwitch(p) ? `${btn('View')} switch side <small>(hold: clear)</small>` : `${btn('View')} <small>hold:</small> clear`;
     return [
-      `${btn('A')} place <small>(hold: paint)</small> ${btn('B')} remove ${btn('X')} undo ${btn('Y')} ${this.solo ? 'start battle' : 'ready'}`,
+      `${btn('A')} place <small>(hold: paint)</small> ${btn('B')} remove ${btn('X')} tag ${btn('R3')} undo ${btn('Y')} ${this.solo ? 'start battle' : 'ready'}`,
       `${btn('LB')}${btn('RB')} faction &nbsp;${btn('LT')}${btn('RT')} unit &nbsp;${btn('dpad')}↑↓ brush &nbsp;${btn('L3')}+${btn('RS')} up/down &nbsp;${view} &nbsp;${btn('Start')} menu`,
     ];
   }
@@ -1639,7 +1641,6 @@ export class Game {
       if (this.state !== 'setup') return;
     } else {
       rig.update(s, dt, this.terrain, { speed: 13, minHeight: 1.5, planar: true, stickHeight: true, ...this.lookOpts });
-      if (I.pressed(p, 'r3')) this.setupCam(p);
       // unit selection: LB/RB faction tabs (as in the Unit Creator and the level
       // select), LT/RT step through the units of the tab (wrapping round), D-pad
       // left/right through every unit (on into the next tab), D-pad up/down the brush
@@ -1754,11 +1755,10 @@ export class Game {
         this.audio.play('remove', null, 0.6, 1);
         this.save();
       }
-      // X: on one of your units, tag it to take control of when the battle starts;
-      // anywhere else, undo (hold to repeat)
-      if (I.pressed(p, 'x') && hover) { this.toggleTag(p, hover); ps.tagX = true; }
-      if (!I.down(p, 'x')) ps.tagX = false;
-      if (!ps.tagX && I.repeat(p, 'x', 0.4, 0.12)) this.undo(p);
+      // X: on one of your units, tag it to take control of when the battle starts
+      if (I.pressed(p, 'x') && hover) this.toggleTag(p, hover);
+      // R3: undo (hold to repeat)
+      if (I.repeat(p, 'r3', 0.4, 0.12)) this.undo(p);
       // View: hold to clear this army; a tap switches side when building alone
       if (I.down(p, 'back')) {
         // real time, so a slow frame rate doesn't stretch the hold
@@ -2022,8 +2022,6 @@ export class Game {
     if (I.anyPressed('back')) this.toggleSplit();
     for (let p = 0; p < 2; p++) {
       if (!I.pressed(p, 'r3')) continue;
-      // in control of a unit Y is a technique, so R3 is slow motion; else R3 cycles the HUD
-      if (this.possessing(p)) { this.toggleSlowmo(); continue; }
       this.hudMode = (this.hudMode + 1) % 3;
       if (this.hudMode !== 2) this.ui.toast(['HUD on', 'Tips hidden', ''][this.hudMode], 1);
     }
@@ -2228,8 +2226,8 @@ export class Game {
     const replay = this.state === 'replay', live = this.state === 'battle';
     switch (rig.mode) {
       case 'possess':
-        if (rig.unit && skillsOf(rig.unit)?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ranged &nbsp; ${btn('LB')}${btn('RB')}${btn('Y')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('R3')} slow-mo &nbsp; ${btn('B')} let go`;
-        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ${aims(rig.unit) ? 'shoot' : 'attack'} &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('R3')} slow-mo &nbsp; ${btn('B')} let go`;
+        if (rig.unit && skillsOf(rig.unit)?.length) return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ranged &nbsp; ${btn('LB')}${btn('RB')}${btn('Y')} techniques &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('dpad')}↑↓ speed &nbsp; ${btn('B')} let go`;
+        return `${btn('LS')} walk &nbsp; ${btn('RS')} look &nbsp; ${btn('X')} attack &nbsp; ${btn('RT')} ${aims(rig.unit) ? 'shoot' : 'attack'} &nbsp; ${btn('LT')} ${aims(rig.unit) ? 'aim' : 'block'} &nbsp; ${btn('A')} jump &nbsp; ${btn('dpad')}↑↓ speed &nbsp; ${btn('B')} let go`;
       case 'follow':
         return `${btn('RS')} orbit &nbsp; ${btn('LS')} zoom &nbsp; ${btn('LB')}${btn('RB')} prev / next unit${live ? ` &nbsp; ${btn('X')} take control` : ''} &nbsp; ${btn('B')} free cam`;
       case 'cine':
