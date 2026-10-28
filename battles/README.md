@@ -158,15 +158,22 @@ health, kills and damage), **X** takes control of it (TABS's *Take control*: lef
 stick walks relative to the camera, right stick looks, **RT** attacks, **LT** blocks (ranged units: aims)
 (zoom), **A** jumps; shooters and casters fire at the crosshair, riders steer their mount
 with the stick, flyers dive on the crosshair, and a siege crew at its engine lays it on the
-crosshair and fires it; a character with techniques fires each on its own button, **X**,
-**LB** and **RB** (keyboard F / Q / E), each with its own cooldown on the skill bar at the
-bottom right: e.g. Gojo RT Red, X Blue, LB Hollow Purple, RB Unlimited Void; Sukuna RT
-Dismantle, X Fuga, LB Cleave, RB Malevolent Shrine. Every JJK character with a technique,
-the Avatar heroes and the Galactic Dark Lord and Jetpack Hunter have them; targeted ones go
-for the enemy under the crosshair, domains open where you stand. A press during a swing
-fires when it ends; the tile says why not when it can't (cooldown, burnt out, no target).
-While possessed a unit never fires these by itself; reflexes and last stands stay
-automatic (Infinity, Iroh's redirection, Mahoraga's wheel)), **B** on the free camera hands over to the cinematic camera,
+crosshair and fires it). Buttons while in control (`src/skills.js`, keyboard in brackets):
+**X** (F) the main / melee attack (a ranged-only unit shoves whoever is right in front),
+**RT** (C) the ranged attack if it has one (else it attacks like X), **LT** (Z) block /
+aim as before, **LB** (Q) a special technique, **RB** (E) the domain or an area technique
+(a character with neither puts its second special there), **Y** (Y) one more special;
+**R3** (V) is slow motion while you're in control. Each has its own cooldown on the skill
+bar at the bottom right. E.g. Gojo: X a shove, RT Red, LB Blue, RB Unlimited Void, Y Hollow
+Purple; Sukuna: X Dismantle, RT Fuga, LB Cleave, RB Malevolent Shrine; Jogo: RT Ember
+Insects, LB Eruption, RB his domain, Y Maximum: Meteor; Megumi: LB the next ready
+shikigami (Dogs, Nue, Toad), Y Max Elephant; Yuta: Y calls Rika out or sends her back. Every
+JJK character with a technique, the Avatar heroes and the Galactic Dark Lord and Jetpack
+Hunter have them; targeted ones go for the enemy under the crosshair, domains open where
+you stand. A press during a swing fires when it ends; the tile says why not when it can't
+(cooldown, burnt out, no target). While possessed a unit never fires these by itself;
+reflexes and last stands stay automatic (Infinity, Iroh's redirection, Mahoraga's wheel,
+Rika's full manifestation), **B** on the free camera hands over to the cinematic camera,
 **Y** eases into slow motion, **R3** cycles tips / HUD off (photo mode). In shared
 screen either pad does all of this; in split screen each pad drives its own view.
 
@@ -176,15 +183,15 @@ screen either pad does all of this; in split screen each pad drives its own view
 |---|---|---|---|
 | Left stick | slide over the field | fly · follow: zoom · possess: walk | fly · follow: zoom |
 | Right stick | look | look · follow: orbit · possess: aim | look / orbit |
-| LB / RB | faction tab | down / up · following: prev / next unit | same |
+| LB / RB | faction tab | down / up · following: prev / next unit · possess: LB special, RB domain / area technique | same |
 | L3 | fast · hold + right stick ↑↓: camera down / up | fast fly | fast fly |
 | A | place (hold to paint) | follow unit in crosshair · possess: jump | play / pause |
 | B | remove (hold) | free cam: cinematic camera · else free camera / let go | free camera, then exit |
-| X | undo (hold to repeat) | possess unit in crosshair (or the followed one) | follow unit |
-| Y | ready / not ready | slow motion | slow-mo final moments |
-| LT / RT | previous / next unit | LT hold: slow smooth cam · RT: attack (possess) | scrub back / forward |
+| X | undo (hold to repeat) | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
+| Y | ready / not ready | slow motion · possess: a special technique | slow-mo final moments |
+| LT / RT | previous / next unit | LT hold: slow smooth cam · possess: LT block / aim, RT ranged attack | scrub back / forward |
 | D-pad | ←→ unit, ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
-| R3 | reset camera | tips / HUD off (photo mode) | same |
+| R3 | reset camera | tips / HUD off (photo mode) · possess: slow motion | same |
 | View | clear army (asks) | split / shared screen | split / shared |
 | Start (Menu) | menu: ready, map, budget, blind, performance, quit | pause: performance, cinematic camera, screen, HUD, time, restart, edit, quit | menu |
 

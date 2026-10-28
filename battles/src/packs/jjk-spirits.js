@@ -125,7 +125,7 @@ const kurourushi = {
   // possessed (src/skills.js): RT bites; the swarm and a leap on buttons
   basic: 'Chew',
   skills: [
-    { key: 'x', name: 'The Swarm', icon: '🪳', cd: (u) => u.jkSw, max: (u) => u.def.weapon.swCD,
+    { key: 'rb', name: 'The Swarm', icon: '🪳', cd: (u) => u.jkSw, max: (u) => u.def.weapon.swCD,
       use(u) { u.jkSw = u.def.weapon.swCD; castPose(u, 'jj_shout', 'swarm'); techBanner(u.battle, 'Kurourushi: the swarm!', u.headPos, 10); return true; } },
     leapSkill('lb'),
   ],
@@ -175,9 +175,9 @@ const uraume = {
   aim: true,
   init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkFC = w.fcFirst; },
   think: rangedThink,
-  basic: 'Icefall',
+  basic: 'Shove', ranged: 'Icefall',
   skills: [
-    { key: 'x', name: 'Frost Calm', icon: '❄', cd: (u) => u.jkFC, max: (u) => u.def.weapon.fcCD, ready: (u) => !burntOut(u) || 'burnt out',
+    { key: 'rb', name: 'Frost Calm', icon: '❄', cd: (u) => u.jkFC, max: (u) => u.def.weapon.fcCD, ready: (u) => !burntOut(u) || 'burnt out',
       use(u) { u.jkFC = u.def.weapon.fcCD; castPose(u, 'jk_push', 'frost'); techBanner(u.battle, 'Ice Formation: Frost Calm', u.headPos, 8); return true; } },
   ],
   event(u, t0, t1) {
@@ -264,9 +264,9 @@ const eso = {
     }
     return t;
   },
-  basic: 'Rot blood',
+  basic: 'Shove', ranged: 'Rot blood',
   skills: [
-    { key: 'x', name: 'Wing King', icon: '🪽', cd: (u) => u.jkHop, max: (u) => u.def.weapon.hopCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+    { key: 'lb', name: 'Wing King', icon: '🪽', cd: (u) => u.jkHop, max: (u) => u.def.weapon.hopCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
       use(u) { // up and back, away from where he's looking
         const w = u.def.weapon, a = u.control?.aimYaw ?? u.heading;
         u.jkHop = w.hopCD;
@@ -305,10 +305,10 @@ const kechizu = {
     return t;
   },
   event(u, t0, t1) { castEvent(u, t0, t1, { spray: rotSpray }); },
-  // possessed (src/skills.js): the rot spray on X (RT is a plain shove)
+  // possessed (src/skills.js): X a plain shove, RB the rot spray (a cone)
   basic: 'Shove',
   skills: [
-    { key: 'x', name: 'Rot Spray', icon: '🤮', cd: (u) => (u.sprayCD || 0) - u.battle.time, max: (u) => u.def.weapon.cooldown * 1.5,
+    { key: 'rb', name: 'Rot Spray', icon: '🤮', cd: (u) => (u.sprayCD || 0) - u.battle.time, max: (u) => u.def.weapon.cooldown * 1.5,
       use(u) { u.sprayCD = u.battle.time + u.def.weapon.cooldown * 1.5; castPose(u, 'jj_shout', 'spray'); return true; } },
   ],
   step(u, dt) { if (!u.st.attack) u.jkCast = null; if (buffed(u)) u.cooldown -= dt * 0.4; },
@@ -388,7 +388,7 @@ const smallpox = {
   // possessed (src/skills.js): the coffin for the enemy under the crosshair
   basic: 'Slam',
   skills: [
-    { key: 'x', name: 'The Grave', icon: '⚰', cd: (u) => (u.jkCof ? 99 : u.jkGrave), max: (u) => u.def.weapon.graveCD,
+    { key: 'lb', name: 'The Grave', icon: '⚰', cd: (u) => (u.jkCof ? 99 : u.jkGrave), max: (u) => u.def.weapon.graveCD,
       ready: (u) => (burntOut(u) ? 'burnt out' : graveTarget(u) ? true : 'no one to bury'),
       use(u) { const v = graveTarget(u); if (!v) return false; grave(u, v); return true; } },
   ],
@@ -473,7 +473,7 @@ const dragon = {
   // possessed (src/skills.js): the ram, where it's looking
   basic: 'Claws & jaws',
   skills: [
-    { key: 'x', name: 'Ram', icon: '🐉', cd: (u) => u.jkRam, max: (u) => u.def.weapon.ramCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
+    { key: 'lb', name: 'Ram', icon: '🐉', cd: (u) => u.jkRam, max: (u) => u.def.weapon.ramCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
       use(u) { const a = u.control?.aimYaw ?? u.heading; ram(u, Math.sin(a), Math.cos(a)); return true; } },
   ],
   // the bite: whatever the claws missed, the jaws find (a target close in front)
@@ -527,7 +527,7 @@ const fingerBearer = {
   event(u, t0, t1) { castEvent(u, t0, t1, { smash: groundSmash, finger: eatFinger }); },
   basic: 'Long arms',
   skills: [
-    { key: 'x', name: 'Ground Smash', icon: '💢', cd: (u) => u.jkSmash, max: (u) => u.def.weapon.smashCD,
+    { key: 'rb', name: 'Ground Smash', icon: '💢', cd: (u) => u.jkSmash, max: (u) => u.def.weapon.smashCD,
       use(u) { u.jkSmash = u.def.weapon.smashCD; castPose(u, 'slam', 'smash'); return true; } },
     { key: 'lb', name: 'Swallow the Finger', icon: '☝', ready: (u) => (u.jkAte ? 'eaten' : true), use(u) { u.jkAte = true; castPose(u, 'cast', 'finger'); return true; } },
   ],
@@ -592,10 +592,10 @@ const kuchisake = {
   },
   basic: 'Scissors',
   skills: [
-    { key: 'x', name: 'Am I beautiful?', icon: '😷', cd: (u) => u.jkAsk, max: (u) => u.def.weapon.askCD,
+    { key: 'lb', name: 'Am I beautiful?', icon: '😷', cd: (u) => u.jkAsk, max: (u) => u.def.weapon.askCD,
       ready: (u) => (askTarget(u) ? true : 'no one close'),
       use(u) { const v = askTarget(u); if (!v) return false; ask(u, v); return true; } },
-    leapSkill('lb'),
+    leapSkill('rb'),
   ],
 };
 function askTarget(u) { const v = aimTarget(u, u.def.weapon.askR, 3); return v && !v.jkNoCE ? v : null; }
@@ -630,7 +630,7 @@ const grasshopper = {
   // possessed (src/skills.js): the leap kick at the enemy under the crosshair
   basic: 'Kick',
   skills: [
-    { key: 'x', name: 'Leap Kick', icon: '🦗', cd: (u) => u.jkLeap, max: (u) => u.def.weapon.leapCD,
+    { key: 'lb', name: 'Leap Kick', icon: '🦗', cd: (u) => u.jkLeap, max: (u) => u.def.weapon.leapCD,
       ready: (u) => (u.airT > 0 ? 'in the air' : aimTarget(u, u.def.weapon.leapMax, 4) ? true : 'no target'),
       use(u) {
         const w = u.def.weapon, v = aimTarget(u, w.leapMax, 4);
@@ -680,9 +680,9 @@ const yorozu = {
   // possessed (src/skills.js): the armour, a wing leap while it's on, the True Sphere
   basic: 'Liquid-metal blade',
   skills: [
-    { key: 'x', name: 'Insect Armour', icon: '🪲', cd: (u) => u.jkArmCD, max: (u) => u.def.weapon.armCD, ready: (u) => (burntOut(u) ? 'burnt out' : true),
+    { key: 'lb', name: 'Insect Armour', icon: '🪲', cd: (u) => u.jkArmCD, max: (u) => u.def.weapon.armCD, ready: (u) => (burntOut(u) ? 'burnt out' : true),
       use(u) { insectArmour(u); return true; } },
-    { key: 'lb', name: 'Wing Leap', icon: '🪽', cd: (u) => u.jkWing, max: (u) => u.def.weapon.wingCD,
+    { key: 'rb', name: 'Wing Leap', icon: '🪽', cd: (u) => u.jkWing, max: (u) => u.def.weapon.wingCD,
       ready: (u) => (!(u.jkArm > u.battle.time) ? 'needs the armour' : u.airT > 0 ? 'in the air' : aimTarget(u, 14) ? true : 'no target'),
       use(u) {
         const v = aimTarget(u, 14);
@@ -693,7 +693,7 @@ const yorozu = {
         u.battle.sound('flyby', u.chestPos, 0.8, 1.2);
         return true;
       } },
-    { key: 'rb', name: 'True Sphere', icon: '⚪', ready: (u) => (u.jkSphDone ? 'used' : burntOut(u) ? 'burnt out' : true),
+    { key: 'rt', name: 'True Sphere', icon: '⚪', ready: (u) => (u.jkSphDone ? 'used' : burntOut(u) ? 'burnt out' : true),
       use(u) {
         u.jkSphDone = true;
         u.aimAt = aimTarget(u, u.def.weapon.sphRange, 5);

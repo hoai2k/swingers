@@ -218,17 +218,16 @@ function fireOnHit(u, blue, burnT, burnDps, size = 0.55) {
   }
 }
 
-// possession: the attack button picks melee up close, else the ranged move
+// possession (src/skills.js): X the melee swing (fireMain), RT the ranged move (or a
+// skill on RT, then ranged is null)
 function controlWith(ranged) {
   return (u, dt, c) => {
-    if (!c.attack || u.st.attack || u.cooldown > 0) return true;
-    const near = nearestEnemy(u, u.chestPos, u.reachDist + 1.2);
-    if (near || !ranged) { u.attackDur = u.avDur0; u.startAttack(); return true; }
-    u.aimAt = null;
-    ranged(u);
-    return true;
+    if (ranged && c.shoot && !u.st.attack && u.cooldown <= 0) { u.aimAt = null; ranged(u); }
+    return 'shoot';
   };
 }
+// (the melee swing with its own timing back: the ranged moves change attackDur)
+function fireMain(u) { u.attackDur = u.avDur0; u.startAttack(); u.aimAt = null; }
 function initCommon(u) {
   u.avDur0 = u.attackDur;
   u.avLit = new Set();
@@ -262,7 +261,7 @@ const soldier = {
     }
   },
   step(u) { fireOnHit(u, false, 0, 0); },
-  control: controlWith(soldierJab),
+  control: controlWith(soldierJab), main: fireMain, ranged: 'Fire jab',
 };
 
 // ------------------------------------------------------------------ Zuko
@@ -339,13 +338,13 @@ const zuko = {
     }
     spinStep(u, dt, 0);
   },
-  control: controlWith(null),
-  // possessed (src/skills.js): RT the dao; fire daggers and the spinning kick on buttons
+  control: controlWith(null), main: fireMain,
+  // possessed (src/skills.js): X the dao, RT fire daggers, RB the spinning kick (a ring)
   basic: 'Twin dao',
   skills: [
-    { key: 'x', name: 'Fire Daggers', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+    { key: 'rt', name: 'Fire Daggers', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
       use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); zukoDaggers(u); return true; } },
-    { key: 'lb', name: 'Fire Spin Kick', icon: '🌀', cd: (u) => u.avSpinCd, max: (u) => u.def.weapon.spinCd ?? 6, use(u) { spinMove(u); return true; } },
+    { key: 'rb', name: 'Fire Spin Kick', icon: '🌀', cd: (u) => u.avSpinCd, max: (u) => u.def.weapon.spinCd ?? 6, use(u) { spinMove(u); return true; } },
   ],
 };
 
@@ -445,11 +444,11 @@ const azula = {
     if (a === 'dual' && u.avTk % 2 === 0) for (const p of [PART.farmL, PART.farmR]) { handAt(u, p, _o, 1.1); b.emit('av_ftrail', _o.x, _o.y, _o.z, 0, 1); }
   },
   die(u) { dropOrbs(u); },
-  control: controlWith(null),
-  // possessed (src/skills.js): RT blue-fire daggers up close; jets, the dash, lightning
+  control: controlWith(null), main: fireMain,
+  // possessed (src/skills.js): X blue-fire daggers, RT jets, LB the dash, RB lightning
   basic: 'Blue-fire daggers',
   skills: [
-    { key: 'x', name: 'Blue Fire Jets', icon: '🔵', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+    { key: 'rt', name: 'Blue Fire Jets', icon: '🔵', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
       use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); azJets(u); return true; } },
     { key: 'lb', name: 'Blue Fire Dash', icon: '💨', cd: (u) => u.avDashCd, max: (u) => u.def.weapon.dashCd,
       use(u) { azDash(u, aimTarget(u, u.def.weapon.dashRange, 4)); return true; } },
@@ -551,14 +550,14 @@ const iroh = {
       }
     }
   },
-  control: controlWith(null),
-  // possessed (src/skills.js): RT fists; fire blasts and the dragon's breath on buttons
+  control: controlWith(null), main: fireMain,
+  // possessed (src/skills.js): X fists, RT fire blast, RB the dragon's breath (a cone)
   // (lightning redirection stays a reflex)
   basic: 'Fists',
   skills: [
-    { key: 'x', name: 'Fire Blast', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
+    { key: 'rt', name: 'Fire Blast', icon: '🔥', cd: (u) => u.avFire, max: (u) => u.def.weapon.fireCd,
       use(u) { u.avFire = u.def.weapon.fireCd; u.aimAt = aimTarget(u, u.def.weapon.fireRange, 4); irohBlast(u); return true; } },
-    { key: 'lb', name: "Dragon's Breath", icon: '🐉', cd: (u) => u.avBreathCd, max: (u) => u.def.weapon.breathCd, use(u) { irohBreath(u); return true; } },
+    { key: 'rb', name: "Dragon's Breath", icon: '🐉', cd: (u) => u.avBreathCd, max: (u) => u.def.weapon.breathCd, use(u) { irohBreath(u); return true; } },
   ],
 };
 
@@ -613,7 +612,7 @@ const sparky = {
     if (!u.alive || (u.st.attack !== 'avf_eye' && u.avEye)) { if (u.avEye) u.avEye.t = 0; u.avEye = null; }
   },
   die(u) { if (u.avEye) { u.avEye.t = 0; u.avEye = null; } },
-  control: controlWith(sparkyShot),
+  control: controlWith(sparkyShot), main: fireMain, ranged: 'Third-eye blast',
 };
 
 // ------------------------------------------------------------------ effects

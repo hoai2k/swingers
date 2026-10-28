@@ -400,7 +400,7 @@ export class UI {
 
   // a possessed unit's techniques: button, name, cooldown sweep (src/skills.js)
   skillBarHtml(list) {
-    const key = { rt: 'RT', x: 'X', lb: 'LB', rb: 'RB' };
+    const key = { rt: 'RT', x: 'X', lb: 'LB', rb: 'RB', y: 'Y' };
     return list.map((s) => {
       const f = s.ready ? 0 : Math.min(1, s.left / s.max);
       const note = s.denied || (s.why ? s.why : s.left > 0 ? (s.left >= 10 ? Math.ceil(s.left) : s.left.toFixed(1)) + ' s' : 'ready');
