@@ -4,6 +4,37 @@ Delivered and reviewed requests, newest first, kept for their prompts, sizes and
 review notes. Open requests live in `image-requests.md`; final prompts and source
 files are recorded in `assets/generation.json`.
 
+## Delivered round 18 — animal turnarounds for the other islands
+
+Delivered in batches with built-in imagegen on 2026-10-28. All sheets are opaque
+1920 × 1080 and were checked for species anatomy, view orientation, browser decoding
+and exclusion from the runtime manifest. Prompts and sources are in
+`assets/generation.json`.
+
+New wildlife for the other islands (`src/world/regions/*/animals.js`, `src/world/townlife.js`). The
+code runs on simple stand-in shapes until these arrive; then each model is built from its sheet the
+same way as round 16 (`tools/animals/quad.py` / `designed.py`). **Same art direction and layout as
+round 16** (see `image-requests-history.md`): a midpoint between baby-toy animals and realistic
+wildlife, rounded expressive stylized game animals with recognisable adult anatomy, broad painted
+markings, smooth sculpted forms, no fur / scale / wrinkle detail, no chibi proportions or human
+grins; plain light grey background, soft studio light, no text, no ground clutter.
+
+**Layout for every image (1920 × 1080):** the same animal three times, side by side, all at the same
+scale: left = exact side view (facing right), middle = exact top view (head toward the right),
+right = three-quarter front view. Whole animal in frame in every view, standing in a neutral
+walking pose with all legs visible. **Birds that fly** (vulture, crow, owl): side view standing
+with wings folded; top view with the wings spread wide as in flight (head right); three-quarter
+view flying with wings spread.
+
+Files (all `assets/reference/animals/<file>`, 1920 × 1080):
+
+| file | animal |
+|---|---|
+| `arctic_fox.png` | an arctic fox in winter white, small rounded ears, very bushy tail |
+| `snowy_owl.png` | a snowy owl: white with dark speckles, big yellow eyes (see the birds note) |
+| `flamingo.png` | a pink flamingo standing on its long legs, S-curved neck, bent black-tipped bill |
+| `iguana.png` | a green iguana: long tail, spiky crest down the back, dewlap under the chin, sprawling legs |
+
 ## Delivered round 17 — hanging monkey turnaround
 
 Delivered 2026-10-27 with built-in imagegen, matching the existing walking monkey.

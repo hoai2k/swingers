@@ -2436,6 +2436,54 @@
       "reference": "reference/animals/monkey.png",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-9c9ad13d-a6eb-40cf-a01c-ed2e3906c219.png",
       "index": 200
+    },
+    {
+      "id": "arctic_fox",
+      "file": "reference/animals/arctic_fox.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling reference. Subject: an ARCTIC FOX in winter WHITE, small rounded ears and VERY BUSHY tail, slender adult fox under thick smooth volumes of winter coat, dark eyes/nose. Match attached crocodile's MIDPOINT stylization ONLY: rounded expressive 3D game animal with recognisable ADULT anatomy, broad painted markings, smooth sculpted forms, softly satin/matte surfaces. Not baby toy/chibi and not realistic wildlife. No fur/feather strands, tiny scales, wrinkles, blush or human grin. Species-appropriate eye size and proportions, no giant baby head. Three equal-width columns, SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP with entire spine/neck/head/tail on one coherent HORIZONTAL axis, head RIGHT tail LEFT, limbs symmetric above/below, no body90degree twist; RIGHT FRONT THREE-QUARTER. Neutral standing/walking pose, all legs visible. For flamingo the long S-neck remains physically coherent from above. Whole animal and every appendage inside each column with generous margins. Plain light grey background, soft studio light, NO text/labels/props/ground clutter. Opaque landscape16:9 for1920x1080. Don't copy crocodile features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-84e70550-f0ab-4124-92a6-284ca9b4479c.png",
+      "index": 201
+    },
+    {
+      "id": "snowy_owl",
+      "file": "reference/animals/snowy_owl.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling reference. Subject: a SNOWY OWL, white with broad dark speckles, natural large YELLOW eyes, round facial disc and small hooked dark beak. Match attached crocodile's MIDPOINT stylization ONLY: rounded expressive 3D game animal with recognisable ADULT anatomy, broad painted markings, smooth sculpted forms, softly satin/matte surfaces. Not baby toy/chibi and not realistic wildlife. No fur/feather strands, tiny scales, wrinkles, blush or human grin. Species-appropriate eye size and proportions, no giant baby head. Three equal-width columns, SAME bird at SAME scale: LEFT exact SIDE STANDING facing RIGHT with wings FOLDED; MIDDLE exact OVERHEAD TOP FLYING with wings SPREAD WIDE symmetrically, head RIGHT tail LEFT; RIGHT FRONT THREE-QUARTER FLYING, wings SPREAD. All feathers/wings fully in frame. Whole animal and every appendage inside each column with generous margins. Plain light grey background, soft studio light, NO text/labels/props/ground clutter. Opaque landscape16:9 for1920x1080. Don't copy crocodile features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-0d6d08c7-4156-40c5-a68f-1dc7183322be.png",
+      "index": 202
+    },
+    {
+      "id": "flamingo",
+      "file": "reference/animals/flamingo.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling reference. Subject: a PINK FLAMINGO standing on LONG LEGS, S-curved neck and bent BLACK-TIPPED bill, smooth pink body, wings FOLDED in all three views. Match attached crocodile's MIDPOINT stylization ONLY: rounded expressive 3D game animal with recognisable ADULT anatomy, broad painted markings, smooth sculpted forms, softly satin/matte surfaces. Not baby toy/chibi and not realistic wildlife. No fur/feather strands, tiny scales, wrinkles, blush or human grin. Species-appropriate eye size and proportions, no giant baby head. Three equal-width columns, SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP with entire spine/neck/head/tail on one coherent HORIZONTAL axis, head RIGHT tail LEFT, limbs symmetric above/below, no body90degree twist; RIGHT FRONT THREE-QUARTER. Neutral standing/walking pose, all legs visible. For flamingo the long S-neck remains physically coherent from above. Whole animal and every appendage inside each column with generous margins. Plain light grey background, soft studio light, NO text/labels/props/ground clutter. Opaque landscape16:9 for1920x1080. Don't copy crocodile features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-550c538f-784e-468f-adee-5ee0f6488034.png",
+      "index": 203
+    },
+    {
+      "id": "iguana",
+      "file": "reference/animals/iguana.png",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "round": 18,
+      "prompt": "Use case: stylized-concept. WOBBLERS animal modelling reference. Subject: a GREEN IGUANA with long tapering tail, simplified SPINY CREST down back, DEWLAP below chin, sprawling four legs and visible toes, alert reptile expression. Match attached crocodile's MIDPOINT stylization ONLY: rounded expressive 3D game animal with recognisable ADULT anatomy, broad painted markings, smooth sculpted forms, softly satin/matte surfaces. Not baby toy/chibi and not realistic wildlife. No fur/feather strands, tiny scales, wrinkles, blush or human grin. Species-appropriate eye size and proportions, no giant baby head. Three equal-width columns, SAME animal at SAME scale in one horizontal row: LEFT exact SIDE facing RIGHT; MIDDLE true ORTHOGRAPHIC OVERHEAD TOP with entire spine/neck/head/tail on one coherent HORIZONTAL axis, head RIGHT tail LEFT, limbs symmetric above/below, no body90degree twist; RIGHT FRONT THREE-QUARTER. Neutral standing/walking pose, all legs visible. For flamingo the long S-neck remains physically coherent from above. Whole animal and every appendage inside each column with generous margins. Plain light grey background, soft studio light, NO text/labels/props/ground clutter. Opaque landscape16:9 for1920x1080. Don't copy crocodile features.",
+      "styleReference": "reference/animals/crocodile.png",
+      "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-2261b44d-2ff4-4de1-9ca7-0d0437d2a3d2.png",
+      "index": 204
     }
   ],
   "music_tool": "ElevenLabs Music API (POST /v1/music, mp3_44100_192, force_instrumental) via dev/sfx/stingers.py; lead-in silence trimmed, tail faded 0.4 s",

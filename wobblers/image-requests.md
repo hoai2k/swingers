@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: round 18 is OPEN** (animal turnarounds for the desert, snow, tropical islands, city and suburbs). Rounds 1–17 are delivered; see `image-requests-history.md`.
+**Status: round 18 remains open (12 animal sheets).** Rounds 1–17 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 
@@ -80,10 +80,6 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 | `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
 | `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
 | `mountain_goat.png` | a mountain goat: shaggy white coat (shaped as smooth rounded volumes, no fur strands), short black horns, small beard |
-| `arctic_fox.png` | an arctic fox in winter white, small rounded ears, very bushy tail |
-| `snowy_owl.png` | a snowy owl: white with dark speckles, big yellow eyes (see the birds note) |
-| `flamingo.png` | a pink flamingo standing on its long legs, S-curved neck, bent black-tipped bill |
-| `iguana.png` | a green iguana: long tail, spiky crest down the back, dewlap under the chin, sprawling legs |
 | `rat.png` | a city rat: grey-brown, pink ears, hands, feet and long thin pink tail, a bit cheeky rather than gross |
 | `squirrel.png` | a grey squirrel with a big fluffy S-curved tail and a pale belly |
 | `crow.png` | a glossy black crow with a slight blue-purple sheen and a strong black beak (see the birds note) |
