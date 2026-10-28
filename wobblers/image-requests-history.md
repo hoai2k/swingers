@@ -42,6 +42,10 @@ Files (all `assets/reference/animals/<file>`, 1920 × 1080):
 | `vulture.png` | a vulture: dark brown body and wings, bald pinkish head and neck, pale ruff (see the birds note) |
 | `tortoise.png` | a desert tortoise: high domed brown shell with big plate pattern, stumpy elephant-like legs, small head |
 | `mountain_goat.png` | a mountain goat: shaggy white coat (shaped as smooth rounded volumes, no fur strands), short black horns, small beard |
+| `rat.png` | a city rat: grey-brown, pink ears, hands, feet and long thin pink tail, a bit cheeky rather than gross |
+| `squirrel.png` | a grey squirrel with a big fluffy S-curved tail and a pale belly |
+| `crow.png` | a glossy black crow with a slight blue-purple sheen and a strong black beak (see the birds note) |
+| `cat.png` | an orange tabby house cat with broad darker stripes, white chest and paws, tail up |
 
 ## Delivered round 17 — hanging monkey turnaround
 
