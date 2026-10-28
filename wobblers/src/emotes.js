@@ -1,6 +1,6 @@
 // Emotes, as in Wobbly Life: a radial emote wheel per player (hold the emote
 // button, pick a slice with a stick / the mouse / the arrows, release to
-// play) and D-pad quick emotes (up wave, left cheer, right dance). Emotes are
+// play) and D-pad quick emotes (up wave, right dance; the keyboards' 3 cheers: D-pad left is the pad's ragdoll). Emotes are
 // animations of the active ragdoll: each one overrides joint targets and
 // gains (and nudges the balance targets, hover height and a few impulses)
 // over time, so the PD drives and gravity make them wobbly, not keyframed.
@@ -345,7 +345,7 @@ export class Emotes {
         if (sel !== s.sel) { s.sel = sel; g.audio?.play('uiMove'); }
       }
     } else if (!blocked && !driver) {
-      for (const k in QUICK) if (pr[k]) { if (startEmote(p, QUICK[k])) break; }
+      for (const k in QUICK) if (pr[k] && !(k === 'dLeft' && pr.ragdoll)) { if (startEmote(p, QUICK[k])) break; }
     }
     // while the wheel is open (and until the stick that picked comes back to
     // the centre) the game sees no move / look input from this device

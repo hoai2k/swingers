@@ -74,14 +74,15 @@ export function buildAnimals(game, R) {
   mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
   mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
-  // grabbing (animalgrab.js): body capsules (r, half length, centre height, kg); small ones are
-  // picked up, big ones bolt along their way dragging you
+  // grabbing (animalgrab.js): body capsules (r, half length, centre height, kg), how fast it
+  // pulls away (run m/s) and its traction (mu: pull = kg x 9.81 x mu x effort); a wobbler is
+  // ~43 kg and pulls ~500-1100 N. pick = small enough to tumble about in your hands
   const GRAB = {
-    monkey: { r: 0.17, len: 0.2, y: 0.38, kg: 8, pick: true }, hog: { r: 0.26, len: 0.3, y: 0.42, kg: 24, pick: true },
-    capybara: { r: 0.26, len: 0.3, y: 0.38, kg: 28, pick: true },
+    monkey: { r: 0.17, len: 0.2, y: 0.38, kg: 8, run: 4, pick: true }, hog: { r: 0.26, len: 0.3, y: 0.42, kg: 24, run: 4.5, pick: true },
+    capybara: { r: 0.26, len: 0.3, y: 0.38, kg: 28, run: 3, pick: true },
     tiger: { r: 0.36, len: 0.6, y: 0.78, kg: 180, run: 5 }, leopard: { r: 0.3, len: 0.5, y: 0.58, kg: 70, run: 5.5 },
-    tapir: { r: 0.4, len: 0.55, y: 0.72, kg: 250, run: 3.5 }, croc: { r: 0.3, len: 1.0, y: 0.3, kg: 300, run: 3 },
-    snake: { r: 0.13, len: 1.6, y: 0.13, kg: 60, run: 2 },
+    tapir: { r: 0.4, len: 0.55, y: 0.72, kg: 250, run: 3.5 }, croc: { r: 0.3, len: 1.0, y: 0.3, kg: 300, run: 3, mu: 0.6 },
+    snake: { r: 0.13, len: 1.6, y: 0.13, kg: 60, run: 2, mu: 0.5 },
   };
   let lastPut = null;
   for (const sp of list) { const put = sp.put.bind(sp); sp.put = (...a) => { lastPut = a; put(...a); }; }
@@ -290,8 +291,6 @@ export function buildAnimals(game, R) {
     const near = WATCH[a.kind] && (!g || g.st === 'free') && nearestPlayer(a.x, a.z, WATCH[a.kind]);
     if (near) a.tAdj = (a.tAdj || 0) + dt;
     const tr = travelled(t - (a.tAdj || 0), a.v, a.walk, a.rest, a.off);
-    const bolt = g?.st === 'bolt', sB = grab.boltS(a, dt);   // grabbed big animals run on, dragging you
-    tr.s += sB; if (bolt) tr.moving = true;
     const o = along(a.path, tr.s - a.back);
     // legs step with the ground covered (one stride per cycle), the snake's waves stay put on it
     let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / (STRIDE[a.kind] || 1) + a.off, roll = 0, sc = a.s;
@@ -308,7 +307,6 @@ export function buildAnimals(game, R) {
     }
     if (a.kind === 'monkey' && tr.moving) y += Math.abs(Math.sin(ph)) * 0.18; // bounding gait
     if (a.kind === 'croc' && a.startle && t - a.startle < 1) ph = (t - a.startle) * 30; // snap!
-    if (bolt && a.kind !== 'snake') { amp = 1.3; if (a.kind === 'croc' && !a.swim) ph = t * 12; }
     if (g?.st === 'return') {                                 // put down: walking back to its way
       const dx = o.x - g.x, dz = o.z - g.z, d = Math.hypot(dx, dz), st = Math.min(d, 3 * dt);
       if (d > 1e-3) { g.x += dx / d * st; g.z += dz / d * st; }

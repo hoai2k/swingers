@@ -18,7 +18,7 @@ export function glyph(b, kind = 'pad') {
     const k = KEYS[kind][b] || b;
     return `<span class="key">${k}</span>`;
   }
-  const map = { GAS: 'RT', BRAKE: 'LT', HORN: 'X', OK: 'A', MENUBACK: 'B', EMOTE: 'RB', MAP: 'BACK', PHONE: 'DPAD', WAVE: 'DPAD', CHEER: 'DPAD', DANCE: 'DPAD', DASH: 'B', RAGDOLL: 'RS' };
+  const map = { GAS: 'RT', BRAKE: 'LT', HORN: 'X', OK: 'A', MENUBACK: 'B', EMOTE: 'RB', MAP: 'BACK', PHONE: 'DPAD', WAVE: 'DPAD', CHEER: 'DPAD', DANCE: 'DPAD', DASH: 'B', RAGDOLL: 'DPAD' };
   b = map[b] || b;
   if ('ABXY'.includes(b) && b.length === 1) return `<span class="btn b${b}">${b}</span>`;
   if (b === 'START') return '<span class="btn bS" title="Menu"><i></i><i></i><i></i></span>';

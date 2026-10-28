@@ -352,7 +352,7 @@ function forklifts(game) {
     const seat = v.seats.find((s) => s.kind === 'driver');
     seat.control = (inp) => {
       v.handbrake = false; // A is the forks here, not the handbrake
-      target = Math.max(0, Math.min(1.9, target + ((inp.jump ? 1 : 0) - (inp.ragdoll || inp.dash ? 1 : 0)) * 0.9 / 60));
+      target = Math.max(0, Math.min(1.9, target + ((inp.jump ? 1 : 0) - ((inp.ragdoll && !inp.dLeft) || inp.dash ? 1 : 0)) * 0.9 / 60));
     };
     game.steppers.push(() => {
       if (!seat.occupant) target = Math.max(0, target - 0.4 / 60); // forks settle when nobody drives
