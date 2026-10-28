@@ -12,7 +12,9 @@
 //   enemySpawns: [[x,y]],     // survival: where enemies enter (default: edges)
 //   killY: 1180,              // fall below this = death (default 1180)
 //   bgDim: 0.38,              // how much a delivered bgFile is darkened (busy art: more)
-//   decor: [ {type, ...} ],   // optional background props (drawDecor)
+//   decor: [ {type, ...} ],   // optional background props (drawDecor); an entry with
+//                             //   `unless: 'prop_x.png'` is skipped once that sprite is in
+//   props: [ {img, x, y, ...} ], // delivered prop sprites, pure decoration (drawProps)
 //   tagline: 'Short hint shown on the board card',
 //   onUpdate(game, dt) / onDraw(ctx, game)  // optional board-specific hooks
 // }
@@ -22,6 +24,7 @@
 import { World } from './physics.js';
 import { loadImage, ready } from './preload.js';
 import { optionalImage } from './optional-art.js';
+import { preloadSprites, sprite, frames, drawSprite } from './sprites.js';
 import { TAU, mulberry, rgba } from './util.js';
 
 export const W = 1920, H = 1080;
@@ -57,6 +60,26 @@ export function spiderImage(file) { return optionalImage(file).img; }
 // delivered terrain tiles: requested at boot (through the loading bar)
 const ICE_TILE = 'tile_spider_frost_ice.png';
 optionalImage(ICE_TILE);
+// each theme's own rock tile (image-requests-history.md round 2, A): fills
+// ordinary rock solids in place of the shared tile_plat_<theme>.png once in.
+// scale: world units per tile pixel; shade: dark wash laid over it so the
+// action reads on top
+const THEME_TILES = {
+  jungle:  { file: 'tile_spider_jungle.jpg',  scale: 0.5, shade: 0.45 },
+  cave:    { file: 'tile_spider_cave.jpg',    scale: 0.55, shade: 0.45 },
+  volcano: { file: 'tile_spider_volcano.jpg', scale: 0.55, shade: 0.34 },
+  factory: { file: 'tile_spider_factory.jpg', scale: 0.5, shade: 0.3 },
+  sky:     { file: 'tile_spider_sky.jpg',     scale: 0.55, shade: 0.18 },
+  night:   { file: 'tile_spider_night.jpg',   scale: 0.5, shade: 0.55 },
+  candy:   { file: 'tile_spider_candy.jpg',   scale: 0.65, shade: 0.5 },
+  storm:   { file: 'tile_spider_storm.jpg',   scale: 0.6, shade: 0.24 },
+  desert:  { file: 'tile_spider_desert.jpg',  scale: 0.5, shade: 0.48 },
+};
+for (const t of Object.values(THEME_TILES)) optionalImage(t.file);
+// board props (round 2, H): drawn behind the terrain, no collision
+const PROP_FILES = ['prop_crystal.png', 'prop_lamp.png', 'prop_fern.png', 'prop_liana.png',
+  'prop_lollipop.png', 'prop_column.png', 'prop_gear.png', 'prop_icicles.png'];
+preloadSprites(PROP_FILES);
 // preload the shared theme art
 for (const t of Object.keys(THEMES)) { themeImage('bg', t); themeImage('tex', t); }
 const MAT = {
@@ -114,6 +137,7 @@ export class Board {
       ctx.fillRect(0, 0, W, H);
     }
     this.drawDecor(ctx, 'back');
+    this.drawProps(ctx);
   }
 
   drawDecor(ctx, layer) {
@@ -122,6 +146,7 @@ export class Board {
     for (const d of decor) {
       if ((d.layer || 'back') !== layer) continue;
       if (this.paintedBg && PAINTED.has(d.type)) continue;
+      if (d.unless && sprite(d.unless)) continue;
       const fn = DECOR[d.type];
       if (fn) fn(ctx, d, this);
     }
@@ -146,7 +171,10 @@ export class Board {
     ctx.fill(path);
     // texture
     const iceTex = mat === 'ice' ? spiderImage(ICE_TILE) : null;
-    const tex = mat === 'lava' ? MAT.lava : mat === 'ice' ? iceTex : themeImage('tex', s.def.tex || this.theme);
+    // plain rock takes the theme's own delivered tile when there is one
+    const own = this.ownTile(s);
+    const ownImg = own && ready(own.img) ? own.img : null;
+    const tex = mat === 'lava' ? MAT.lava : mat === 'ice' ? iceTex : ownImg || themeImage('tex', s.def.tex || this.theme);
     if (mat === 'ice' && !ready(tex)) drawIce(ctx, path, s);
     if (ready(tex) && mat !== 'glass') {
       if (!tex._pat) tex._pat = ctx.createPattern(tex, 'repeat');
@@ -159,12 +187,18 @@ export class Board {
           ctx.fillStyle = '#21557d';
           ctx.fill(path);
         }
-        ctx.globalAlpha = mat === 'lava' ? 1 : mat === 'ice' ? 0.62 : s.def.color ? 0.3 : 0.85;
+        ctx.globalAlpha = ownImg ? 1 : mat === 'lava' ? 1 : mat === 'ice' ? 0.62 : s.def.color ? 0.3 : 0.85;
         // patterns follow moving platforms
-        const m = new DOMMatrix().translate(s.x, s.y).scale(mat === 'ice' ? 1 : 0.5);
+        const m = new DOMMatrix().translate(s.x, s.y).scale(ownImg ? own.scale : mat === 'ice' ? 1 : 0.5);
         tex._pat.setTransform(m);
         ctx.fillStyle = tex._pat;
         ctx.fill(path);
+        if (ownImg) {
+          // calm it down so spiders and pickups read on top
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = `rgba(10,12,26,${own.shade})`;
+          ctx.fill(path);
+        }
         ctx.restore();
       }
     }
@@ -243,6 +277,18 @@ export class Board {
     }
   }
 
+  // the theme's delivered rock tile for this solid ({img, scale, shade}), or
+  // null: only plain rock without its own colour or texture override
+  ownTile(s) {
+    const t = THEME_TILES[this.theme];
+    if (!t || s.mat !== 'rock' || s.def.color || s.def.tex) return null;
+    return { img: optionalImage(t.file).img, scale: t.scale, shade: t.shade };
+  }
+
+  // a listed (requested) image still loading: redraw caches once it's in
+  // (one that failed to load counts as settled, the fallback stays)
+  pending(img) { return !!(img && !img.complete); }
+
   // static terrain is cached; moving pieces + lava glow are drawn live
   drawTerrain(ctx) {
     if (this.dirty || !this.staticCanvas) this.renderStatic();
@@ -284,7 +330,8 @@ export class Board {
     this.fillSolid(x, s);
     s._spr = { c, x: bb.x0 - pad, y: bb.y0 - pad };
     // textures may still be loading: redraw once they are
-    s._sprDirty = !ready(themeImage('tex', s.def.tex || this.theme));
+    const own = this.ownTile(s);
+    s._sprDirty = own && own.img ? this.pending(own.img) : !ready(themeImage('tex', s.def.tex || this.theme));
     [s.x, s.y, s.a] = save; s.refresh();
   }
 
@@ -295,12 +342,67 @@ export class Board {
     x.clearRect(0, 0, W, H);
     for (const s of this.world.solids) if (!s.dynamic && !s.broken) this.fillSolid(x, s);
     this.staticCanvas = c;
-    // textures may still be loading: redraw once more later
-    // textures may still be loading: redraw once more later (theme tile, and a
-    // delivered ice tile that's listed but not in yet)
+    // textures may still be loading: redraw once more later (shared theme
+    // tile, and delivered tiles / props that are listed but not in yet)
     const ice = this.world.solids.some((q) => q.mat === 'ice') ? optionalImage(ICE_TILE).img : null;
-    this.dirty = !ready(themeImage('tex', this.theme)) || !!(ice && !ready(ice));
+    const tile = THEME_TILES[this.theme] ? optionalImage(THEME_TILES[this.theme].file).img : null;
+    this.dirty = !ready(themeImage('tex', this.theme)) || this.pending(ice) || this.pending(tile);
   }
+
+  // delivered prop sprites (def.props), pure decoration drawn with the
+  // background: behind the terrain (roots / hooks tuck under its edge) and
+  // behind spiders and pickups (the terrain itself is drawn over them):
+  //   { img: 'prop_fern.png', x, y, size,   // size: the painted part's larger side
+  //     on: 'floor' | 'ceil',               // drop down / rise up from (x, y) to the
+  //                                         //   first static solid and stand / hang there
+  //     sink: 10,                           // how far the base tucks into that solid
+  //     fit, flip, flipY, rot, alpha,       // as drawSprite
+  //     dim: 0.8,                           // brightness (busy art pushed back)
+  //     spin: 0.3 }                         // turns slowly about its centre
+  // Anchored at the bottom centre (floor) or top centre (ceil / default).
+  // Nothing is drawn for a prop whose image isn't in.
+  drawProps(ctx) {
+    const props = this.def.props;
+    if (!props) return;
+    for (const p of props) {
+      const c = propCanvas(p);
+      if (!c) continue;
+      if (p._y == null) p._y = this.propY(p);
+      const floor = p.on === 'floor';
+      drawSprite(ctx, p.img, p.x, p._y, p.size, {
+        canvas: c,
+        // (flipY mirrors about the anchor, so a flipped prop anchors at its other end)
+        anchor: p.spin ? [0.5, 0.5] : floor !== !!p.flipY ? [0.5, 1] : [0.5, 0],
+        fit: p.fit, flip: p.flip, flipY: p.flipY, alpha: p.alpha,
+        rot: (p.rot || 0) + (p.spin ? this.time * p.spin : 0),
+      });
+    }
+  }
+
+  // where a prop's anchor lands: the first static solid surface below (floor)
+  // or above (ceil) its (x, y), tucked in by `sink`
+  propY(p) {
+    if (p.on !== 'floor' && p.on !== 'ceil') return p.y;
+    const dir = p.on === 'floor' ? 1 : -1, sink = p.sink ?? 10;
+    const hit = (y) => this.world.solids.some((s) => !s.dynamic && s.inside(p.x, y));
+    for (let y = p.y; y > -100 && y < H + 100; y += dir * 2) if (hit(y)) return y + dir * sink;
+    return p.y;
+  }
+}
+
+// a prop's painted part, dimmed once (def.props `dim`), or null until it's in
+function propCanvas(p) {
+  if (p._c) return p._c;
+  const img = sprite(p.img);
+  if (!img) return null;
+  const b = frames(p.img, 1)[0];
+  const c = document.createElement('canvas');
+  c.width = b.sw; c.height = b.sh;
+  const x = c.getContext('2d');
+  if (p.dim != null && p.dim !== 1) x.filter = `brightness(${p.dim})`;
+  x.drawImage(img, b.sx, b.sy, b.sw, b.sh, 0, 0, b.sw, b.sh);
+  p._c = c;
+  return c;
 }
 
 // decor that only stands in for a painted backdrop (skipped once one is delivered)
@@ -486,8 +588,22 @@ export const DECOR = {
     }
   },
   // a hanging work lamp with a light cone
+  // (the delivered prop_lamp.png on its chain when it's in, see d.sprite)
   lamp(ctx, d, b) {
     const sway = Math.sin(b.time * 0.9 + d.x) * 0.05;
+    if (d.sprite && sprite(d.sprite)) {
+      const L = d.len + (d.shade || 70);
+      const ex = d.x + Math.sin(sway) * L, ey = d.y + Math.cos(sway) * L;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(ex, ey, ex, ey + 700);
+      g.addColorStop(0, 'rgba(255,200,110,0.2)'); g.addColorStop(1, 'rgba(255,200,110,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(ex - 30, ey - 8); ctx.lineTo(ex - 220 + sway * 400, ey + 700); ctx.lineTo(ex + 220 + sway * 400, ey + 700); ctx.lineTo(ex + 30, ey - 8); ctx.fill();
+      ctx.restore();
+      drawSprite(ctx, d.sprite, d.x, d.y, L, { fit: 'h', anchor: [0.5, 0], rot: -sway });
+      return;
+    }
     const ex = d.x + Math.sin(sway) * d.len, ey = d.y + Math.cos(sway) * d.len;
     ctx.strokeStyle = 'rgba(20,20,24,0.8)'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(ex, ey); ctx.stroke();

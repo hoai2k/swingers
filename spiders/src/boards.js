@@ -42,12 +42,23 @@ const canopy = {
     { type: 'silhouette', color: 'rgba(10,40,20,0.35)', poly: [[0, 1080], [0, 0], [90, 0], [120, 400], [70, 1080]] },
     { type: 'silhouette', color: 'rgba(10,40,20,0.35)', poly: [[1920, 1080], [1920, 0], [1830, 0], [1800, 400], [1850, 1080]] },
     { type: 'rays', x: 960, y: -100, n: 5, spread: 0.9, len: 1300, color: 'rgba(230,255,190,0.07)' },
-    { type: 'vine', x: 200, y: 140, len: 260 }, { type: 'vine', x: 420, y: 200, len: 180 },
-    { type: 'vine', x: 1720, y: 140, len: 240 }, { type: 'vine', x: 1500, y: 200, len: 200 },
-    { type: 'vine', x: 900, y: 200, len: 140 }, { type: 'vine', x: 1030, y: 200, len: 110 },
+    // drawn vines until the liana sprites are in (props below)
+    ...[[200, 140, 260], [420, 200, 180], [1720, 140, 240], [1500, 200, 200], [900, 200, 140], [1030, 200, 110]]
+      .map(([x, y, len]) => ({ type: 'vine', x, y, len, unless: 'prop_liana.png' })),
     { type: 'fog', y: 1000, h: 160, color: 'rgba(30,90,50,0.5)' },
     { type: 'motes', n: 30, color: 'rgba(220,255,180,0.5)', dir: -1, seed: 5 },
     { type: 'cobweb', x: 0, y: 0, r: 110 },
+  ],
+  props: [
+    { img: 'prop_liana.png', x: 200, y: 300, on: 'ceil', size: 270, dim: 0.75 },
+    { img: 'prop_liana.png', x: 420, y: 330, on: 'ceil', size: 200, dim: 0.75, flip: true },
+    { img: 'prop_liana.png', x: 1720, y: 300, on: 'ceil', size: 250, dim: 0.75, flip: true },
+    { img: 'prop_liana.png', x: 1500, y: 330, on: 'ceil', size: 210, dim: 0.75 },
+    { img: 'prop_liana.png', x: 900, y: 300, on: 'ceil', size: 160, dim: 0.75 },
+    { img: 'prop_liana.png', x: 1030, y: 300, on: 'ceil', size: 130, dim: 0.75, flip: true },
+    { img: 'prop_fern.png', x: 150, y: 600, on: 'floor', size: 150, dim: 0.65 },
+    { img: 'prop_fern.png', x: 1770, y: 600, on: 'floor', size: 150, dim: 0.65, flip: true },
+    { img: 'prop_fern.png', x: 1110, y: 450, on: 'floor', size: 120, dim: 0.65 },
   ],
 };
 
@@ -94,6 +105,12 @@ const hollow = {
     { type: 'cobweb', x: 140, y: 150, r: 130 },
     { type: 'cobweb', x: 1780, y: 150, r: 130, a0: Math.PI / 2 },
     { type: 'motes', n: 20, color: 'rgba(160,200,255,0.35)', dir: 1, seed: 8 },
+  ],
+  props: [
+    { img: 'prop_crystal.png', x: 250, y: 800, on: 'floor', size: 140, dim: 0.85 },
+    { img: 'prop_crystal.png', x: 1670, y: 800, on: 'floor', size: 120, dim: 0.85, flip: true },
+    { img: 'prop_crystal.png', x: 470, y: 450, on: 'floor', size: 80 },
+    { img: 'prop_crystal.png', x: 1060, y: 300, on: 'ceil', size: 90, flipY: true },
   ],
 };
 
@@ -169,8 +186,12 @@ const foundry = {
     { type: 'bggear', x: 560, y: 980, r: 220, teeth: 12, speed: 0.2, color: 'rgba(0,0,0,0.2)' },
     { type: 'bggear', x: 1460, y: 160, r: 180, teeth: 10, speed: -0.25, color: 'rgba(0,0,0,0.18)' },
     { type: 'light', x: 960, y: 560, r: 300, color: '#ffb030' },
-    { type: 'lamp', x: 560, y: 64, len: 120 }, { type: 'lamp', x: 1360, y: 64, len: 120 },
+    { type: 'lamp', x: 560, y: 64, len: 120, sprite: 'prop_lamp.png' }, { type: 'lamp', x: 1360, y: 64, len: 120, sprite: 'prop_lamp.png' },
     { type: 'motes', n: 22, color: 'rgba(255,200,120,0.55)', dir: 1, seed: 4 },
+  ],
+  props: [
+    { img: 'prop_gear.png', x: 560, y: 1000, size: 300, dim: 0.35, spin: 0.2 },
+    { img: 'prop_gear.png', x: 1400, y: 1010, size: 240, dim: 0.35, spin: -0.26 },
   ],
 };
 
@@ -251,6 +272,11 @@ const glasshouse = {
     { type: 'plants', x: 1320, y: 960, n: 4, seed: 7, color: 'rgba(40,110,90,0.6)' },
     { type: 'motes', n: 18, color: 'rgba(190,255,220,0.6)', dir: -1, seed: 12 },
   ],
+  props: [
+    { img: 'prop_fern.png', x: 960, y: 880, on: 'floor', size: 200, dim: 0.6 },
+    { img: 'prop_fern.png', x: 600, y: 900, on: 'floor', size: 170, dim: 0.5 },
+    { img: 'prop_fern.png', x: 1320, y: 900, on: 'floor', size: 170, dim: 0.5, flip: true },
+  ],
 };
 
 // --- 7. Glacier: slopes you can't cling to ----------------------------------
@@ -287,6 +313,11 @@ const glacier = {
   decor: [
     { type: 'fog', y: 1010, h: 200, color: 'rgba(40,80,120,0.55)' },
     { type: 'motes', n: 70, color: 'rgba(255,255,255,0.8)', dir: 1, seed: 7 },
+  ],
+  props: [
+    { img: 'prop_icicles.png', x: 960, y: 640, on: 'ceil', size: 210, sink: 6 },
+    { img: 'prop_icicles.png', x: 600, y: 500, on: 'ceil', size: 120, sink: 6 },
+    { img: 'prop_icicles.png', x: 1320, y: 500, on: 'ceil', size: 120, sink: 6, flip: true },
   ],
 };
 
@@ -325,6 +356,10 @@ const sweets = {
   killY: 1180,
   decor: [
     { type: 'sprinkles', n: 60, seed: 3 },
+  ],
+  props: [
+    { img: 'prop_lollipop.png', x: 110, y: 800, on: 'floor', size: 240, dim: 0.7 },
+    { img: 'prop_lollipop.png', x: 1810, y: 800, on: 'floor', size: 240, dim: 0.7, flip: true },
   ],
 };
 
@@ -391,6 +426,10 @@ const dunes = {
   decor: [
     { type: 'silhouette', color: 'rgba(120,60,20,0.18)', poly: [[0, 820], [300, 700], [520, 760], [900, 640], [1300, 760], [1600, 680], [1920, 760], [1920, 1080], [0, 1080]] },
     { type: 'motes', n: 26, color: 'rgba(255,230,180,0.5)', dir: 0.2, drift: 60, seed: 11 },
+  ],
+  props: [
+    { img: 'prop_column.png', x: 1720, y: 700, on: 'floor', size: 300, dim: 0.65 },
+    { img: 'prop_column.png', x: 500, y: 700, on: 'floor', size: 220, dim: 0.6, flip: true },
   ],
 };
 
