@@ -124,8 +124,8 @@ come back. Changing the battleground from the setup menu takes the armies along 
 as they fit).
 
 **Taking control from the start**: in setup, **X** on one of your placed units (the one the
-red remove ring is on) tags it (a spinning gold marker over it; X again untags; X anywhere
-else is still undo). When the battle starts you're in control of it. Each player can tag
+red remove ring is on) tags it (a spinning gold marker over it; X again untags). Undo is on
+**D-pad ↓** (hold to repeat), the brush on **D-pad ↑**. When the battle starts you're in control of it. Each player can tag
 one unit; in shared screen only one player can start in control (P1 first).
 
 **Saved battles** (`src/saves.js`): the setup menu has *Save battle…* (8 slots: the
@@ -184,7 +184,7 @@ crosshair and fires it). Buttons while in control (`src/skills.js`, keyboard in 
 **RT** (C) the ranged attack if it has one (else it attacks like X), **LT** (Z) block /
 aim as before, **LB** (Q) a special technique, **RB** (E) the domain or an area technique
 (a character with neither puts its second special there), **Y** (Y) one more special;
-**R3** (V) is slow motion while you're in control. Each has its own cooldown on the skill
+**D-pad ↓** (4) is slow motion, in control or not. Each has its own cooldown on the skill
 bar at the bottom right. E.g. Gojo: X a shove, RT Red, LB Blue, RB Unlimited Void, Y Hollow
 Purple; Sukuna: X Dismantle, RT Fuga, LB Cleave, RB Malevolent Shrine; Jogo: RT Ember
 Insects, LB Eruption, RB his domain, Y Maximum: Meteor; Megumi: LB the next ready
@@ -195,7 +195,8 @@ you stand. A press during a swing fires when it ends; the tile says why not when
 (cooldown, burnt out, no target). While possessed a unit never fires these by itself;
 reflexes and last stands stay automatic (Infinity, Iroh's redirection, Mahoraga's wheel,
 Rika's full manifestation), **B** on the free camera hands over to the cinematic camera,
-**Y** eases into slow motion, **R3** cycles tips / HUD off (photo mode). In shared
+**D-pad ↓** eases into slow motion and **↑** into double speed (the same button again: normal
+speed; other speeds and freeze are under *Time* in the pause menu), **R3** cycles tips / HUD off (photo mode). In shared
 screen either pad does all of this; in split screen each pad drives its own view.
 
 ## Controls (Xbox pad, standard mapping)
@@ -208,11 +209,11 @@ screen either pad does all of this; in split screen each pad drives its own view
 | L3 | fast · hold + right stick ↑↓: camera down / up | fast fly | fast fly |
 | A | place (hold to paint) | follow unit in crosshair · possess: jump | play / pause |
 | B | remove (hold) | free cam: cinematic camera · else free camera / let go | free camera, then exit |
-| X | undo (hold to repeat) · on one of your units: tag it to take control of when the battle starts | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
-| Y | ready / not ready | slow motion · possess: a special technique | slow-mo final moments |
+| X | on one of your units: tag it to take control of when the battle starts | possess unit in crosshair (or the followed one) · possess: main / melee attack | follow unit |
+| Y | ready / not ready | possess: a special technique | slow-mo final moments |
 | LT / RT | previous / next unit in the tab (wraps round) | LT hold: slow smooth cam · possess: LT block / aim, RT ranged attack | scrub back / forward |
-| D-pad | ←→ unit (on into the next faction), ↑↓ brush: single, line ×3/×5, block 3×3/4×4 | ↑↓ time speed (down to frozen) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
-| R3 | reset camera | tips / HUD off (photo mode) · possess: slow motion | same |
+| D-pad | ←→ unit (on into the next faction), ↑ brush: single, line ×3/×5, block 3×3/4×4, ↓ undo (hold to repeat) | ↓ slow motion · ↑ double speed (again: normal; freeze etc. in the pause menu) · ←→ FOV | ←→ skip 3 s · ↑↓ speed |
+| R3 | reset camera | tips / HUD off (photo mode) | same |
 | View | clear army (asks) | split / shared screen | split / shared |
 | Start (Menu) | menu: ready, map, budget, blind, performance, quit | pause: performance, cinematic camera, screen, HUD, time, restart, edit, quit | menu |
 
