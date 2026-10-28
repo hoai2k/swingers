@@ -151,6 +151,8 @@ export class FollowCam {
     if (enc && pos.y > enc.top) pos.y = enc.top; // under the ride's roof
     const gh = this.game.groundHeight(pos.x, pos.z, pos.y + 1);
     if (pos.y < gh + 0.35) pos.y = gh + 0.35;
+    // diving (player.diveD): keep the camera under the surface with the swimmer, not above it
+    if (p.diveD > 0.4) { const tw = this.game.physics.waterLevel(t.x, t.y, t.z); if (tw != null) pos.y = Math.min(pos.y, tw - 0.3); }
     const wl = this.game.physics.waterLevel(pos.x, pos.y, pos.z);
     this.underwater = wl != null && pos.y < wl;
     this.cam.position.copy(pos);

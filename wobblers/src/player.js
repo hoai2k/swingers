@@ -985,6 +985,7 @@ export class Player {
     const floorY = this.groundDist < 50 ? this.hips.translation().y - this.groundDist : -1e9;
     const wasSwimming = this.swimming;
     this.swimming = water != null && cp.y < water + 0.05 && water - floorY > 0.85 && !seated;
+    if (!this.swimming) this.diveD = 0;
     if (this.swimming && !wasSwimming && chest.linvel().y < -2) this.game.audio?.play('splash', cp, Math.min(1.5, -chest.linvel().y / 6));
     this.waterLevel = water;
 
@@ -1104,7 +1105,10 @@ export class Player {
     // --- hover spring / swimming lift
     if (!limp && !seated && !this.mantle) {
       if (this.swimming) {
-        const target = water - 0.12;
+        // diving: hold sprint (Shift / LB) to swim down (to just above the bed); let go to float up
+        const room = Math.max(0, Math.min(25, water - floorY - 0.9));
+        this.diveD = Math.max(0, Math.min(room, (this.diveD || 0) + (inp.sprint ? 1.8 : -1.3) * DT));
+        const target = water - 0.12 - this.diveD;
         const err = target - cp.y;
         const cv = chest.linvel();
         const a = Math.max(-5, Math.min(25, 40 * err - 6 * cv.y + 9.81));
@@ -1717,6 +1721,13 @@ export class Player {
             if (d < bestD) { bestD = d; found = col; }
             return true;
           }, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
+        // nothing at the mitten: an animal just below it (they're lower than our hands)
+        if (!found) {
+          const own = this.physics.handleOwner;
+          this.world.intersectionsWithShape({ x: hp.x, y: hp.y - 0.5, z: hp.z }, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(GRAB_R * 2.2),
+            (col) => { if (own.get(col.handle)?.kind === 'animal') { found = col; return false; } return true; },
+            RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups);
+        }
         if (found) {
           const tb = found.parent();
           if (!tb) continue;
