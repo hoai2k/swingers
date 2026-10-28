@@ -24,7 +24,7 @@ const SEE = 170;
 
 // ---- build ---------------------------------------------------------------------------------------
 export function buildAnimals(game, R) {
-  const rnd = R.rng(404), S = {};
+  const rnd = R.rng(404 + Math.floor(Math.random() * 100000)), S = {}; // a new layout every session
   const mk = (name, geo, max, opts = {}) => (S[name] = new Species(game, geo, { max, name, shadow: true, ...opts }));
   const t0 = performance.now();
   mk('tiger', modelGeometry('tiger'), 4, { k: { LEG: 0.6 } });
@@ -146,7 +146,11 @@ export function buildAnimals(game, R) {
     for (const a of animals) {
       let vis = false;
       for (const c of cams) if ((c.x - a.x) ** 2 + (c.z - a.z) ** 2 < (SEE + 40) ** 2) { vis = true; break; }
-      if (!vis) continue;
+      // comings and goings (as wildlife.js): while out of sight, every few minutes a troop / an animal
+      // rolls whether it is about (a path's animals together)
+      const key = a.path || a;
+      if (!vis) { const cyc = Math.floor((t + hash(a.off, 3) * 300) / 240); if (key.cyc !== cyc) { if (key.cyc !== undefined && (!a.g || a.g.st === 'free')) key.away = Math.random() < 0.35; key.cyc = cyc; } continue; }
+      if (key.away) continue;
       lastPut = null;
       pose(a, t);
       if (lastPut) { a.pose = [lastPut[0], lastPut[1], lastPut[2], lastPut[3]]; posed.add(a); }

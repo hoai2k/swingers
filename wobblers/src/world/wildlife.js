@@ -17,7 +17,19 @@
 //     coil: { x, y, z, yaw }                          lies still; rears and rattles at a player close by
 //     custom: fn(a, t, dt, S, W)                      its own pose (true = drawn); W.nearest(x, z, r) finds a player
 //   W.start(statsName, { grab, onGrab })           installs the per-frame updater; game[statsName] = stats
+//
+// Never the same twice: the layout is drawn from a per-session seed, and each group (a herd, a
+// pair, one animal) comes and goes: every few minutes, while no camera can see it, it rolls
+// whether it is about (`presence`, default 0.65) and, for walkers, which of its kind's loops
+// (a pool with spares) it is on. Timid ones (`timid` chance, default 0.6, rolled per group) that
+// are scared off (fleeing, a perched bird flushed, let go after a grab) run on until 40 m from
+// everyone and are gone until the next roll; the others calm down and carry on.
+// Noticing a player (W.noticed): within its radius scaled by how fast the player moves (creeping
+// at ~1.5 m/s cuts it to ~40%), less from behind (outside a +-110 deg view) and less again with
+// something solid in between (a ray against the static world): you can sneak up on them.
 import { Species, hash } from './critters.js';
+import { RAPIER } from '../physics.js';
+import { CAMERA_QUERY } from '../config.js';
 import { modelGeometry } from './animalgeo.js';
 import { animalGrab } from './animalgrab.js';
 
@@ -62,9 +74,20 @@ export function travelled(t, v, walk, rest, off) {
 
 // ---- engine ----------------------------------------------------------------------------------------
 export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
-  const rnd = R.rng(seed), S = {}, list = [], animals = [];
+  const rnd = R.rng(seed + Math.floor(Math.random() * 100000)), S = {}, list = [], animals = []; // a new layout every session
   const [bx0, bx1, bz0, bz1] = bounds;
   const geos = new Map();
+  // a group's comings and goings (see the top)
+  function group(opts, pool) {
+    return { members: [], pool, presence: opts.presence ?? 0.65, timid: rnd() < (opts.timid ?? 0.6), present: rnd() < (opts.presence ?? 0.65),
+      period: 150 + rnd() * 150, phase: rnd() * 300, cycle: null };
+  }
+  function reroll(grp) {
+    grp.present = Math.random() < grp.presence;
+    grp.timid = Math.random() < 0.6;
+    const path = grp.pool?.length ? grp.pool[(Math.random() * grp.pool.length) | 0] : null;
+    for (const a of grp.members) { if (path) a.path = path; a.fl = null; a.st = null; a.tAdj = 0; }
+  }
   const W = {
     S, animals, rnd,
     mk(name, model, max, opts = {}) {
@@ -73,21 +96,28 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
       list.push(sp); return sp;
     },
     place(kind, count, r, v, walk, rest, opts = {}) {
-      let made = 0;
-      for (let k = 0, tries = 0; k < count && tries < 500; tries++) {
+      // count groups, plus spare loops in the pool they move between from one visit to the next
+      const pool = [];
+      for (let tries = 0; pool.length < count * 3 && tries < 900; tries++) {
         const hx = bx0 + 30 + rnd() * (bx1 - bx0 - 60), hz = bz0 + 30 + rnd() * (bz1 - bz0 - 60);
         if (opts.near && !opts.near(hx, hz)) continue;
         const path = loop(R, rnd, hx, hz, r, opts.ok || ok, opts.n || 9);
-        if (!path) continue;
-        const group = opts.group || 1;
-        for (let g = 0; g < group; g++) animals.push({ kind, path, v, walk, rest, off: rnd() * 100, back: g * (opts.gap || 1.4), side: g ? (rnd() - 0.5) * 0.8 : 0,
-          x: path.pts[0], z: path.pts[2], s: (opts.size || 1) * (g && opts.young ? 0.75 : 1) * (0.92 + rnd() * 0.16), sound: opts.sound, hear: opts.hear || 8,
-          stride: opts.stride || 0.8, flee: opts.flee, fleeV: opts.fleeV || 5, look: opts.look, roll: opts.roll });
-        k++; made++;
+        if (path) pool.push(path);
+      }
+      let made = 0;
+      for (let k = 0; k < Math.min(count, pool.length); k++) {
+        const path = pool[k], grp = group(opts, pool);
+        for (let g = 0; g < (opts.group || 1); g++) {
+          const a = { kind, path, v, walk, rest, off: rnd() * 100, back: g * (opts.gap || 1.4), side: g ? (rnd() - 0.5) * 0.8 : 0,
+            x: path.pts[0], z: path.pts[2], s: (opts.size || 1) * (g && opts.young ? 0.75 : 1) * (0.92 + rnd() * 0.16), sound: opts.sound, hear: opts.hear || 8,
+            stride: opts.stride || 0.8, flee: opts.flee, fleeV: opts.fleeV || 5, look: opts.look, roll: opts.roll, grp };
+          grp.members.push(a); animals.push(a);
+        }
+        made++;
       }
       return made;
     },
-    add(a) { a.off ??= rnd() * 100; a.s ??= 1; a.hear ??= 8; animals.push(a); return a; },
+    add(a, opts = {}) { a.off ??= rnd() * 100; a.s ??= 1; a.hear ??= 8; a.grp ||= group(opts, null); a.grp.members.push(a); animals.push(a); return a; },
     start(statsName, { grab: GRAB, onGrab } = {}) {
       let lastPut = null;
       for (const sp of list) { const put = sp.put.bind(sp); sp.put = (...a) => { lastPut = a; put(...a); }; }
@@ -105,6 +135,13 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         for (const a of animals) {
           let vis = false;
           for (const c of cams) if ((c.x - a.x) ** 2 + (c.z - a.z) ** 2 < (SEE + 30) ** 2) { vis = true; break; }
+          const grp = a.grp;
+          if (!vis && grp && (!a.g || a.g.st === 'free')) { // out of sight: maybe it wanders off, or turns up somewhere else
+            const cyc = Math.floor((t + grp.phase) / grp.period);
+            if (grp.cycle === null) grp.cycle = cyc;
+            else if (cyc !== grp.cycle) { grp.cycle = cyc; reroll(grp); }
+          }
+          a.hidden = grp ? !grp.present : a.hidden;
           if (!vis || a.hidden) continue;
           lastPut = null;
           pose(a, t, dt);
@@ -125,6 +162,39 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
       });
 
       W.nearest = (x, z, r) => nearestPlayer(x, z, r);
+      W.noticed = (a, x, z, y, yaw, r) => noticed(a, x, z, y, yaw, r);
+      // a player this animal notices within radius r (see the top: speed, view, cover)
+      const _n = { x: 0, z: 0, y: 0, p: null, d: 0 }, _ray = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 });
+      function noticed(a, x, z, y, yaw, r) {
+        let best = null, bd = 1e9;
+        for (const p of game.players) {
+          const c = p.chest.translation(), dx = c.x - x, dz = c.z - z, d = Math.hypot(dx, dz);
+          if (d > r || d > bd) continue;
+          const v = p.chest.linvel(), sp = Math.hypot(v.x, v.z);
+          let k = 0.25 + 0.75 * Math.min(1, Math.max(0, (sp - 0.8) / 3.5));
+          if (p.seat) k = 1;                                       // engines are loud
+          if (yaw != null && d > 0.5) { let da = Math.atan2(dx, dz) - yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > 1.9) k *= 0.55; }
+          if (d > r * k * 0.5) {                                   // cover: something solid in between
+            const ey = y + 0.4, dy = c.y - ey, L = Math.hypot(dx, dy, dz);
+            _ray.origin.x = x; _ray.origin.y = ey; _ray.origin.z = z; _ray.dir.x = dx / L; _ray.dir.y = dy / L; _ray.dir.z = dz / L;
+            if (game.physics.world.castRay(_ray, L - 0.6, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CAMERA_QUERY)) k *= 0.5;
+          }
+          if (d < r * k) { best = p; bd = d; _n.x = c.x; _n.y = c.y; _n.z = c.z; _n.d = d; }
+        }
+        if (!best) return null;
+        _n.p = best; return _n;
+      }
+      // scared off for good (timid): run on away from everyone, and vanish once 40 m from them all
+      function runOff(a, t, dt, sp, st) {
+        const n = nearestPlayer(st.x, st.z, 40);
+        if (!n) { a.grp.present = false; a.hidden = true; return false; }
+        const dx = st.x - n.x, dz = st.z - n.z, l = Math.hypot(dx, dz) || 1, v = a.fleeV || 4, step = v * dt;
+        st.x += dx / l * step; st.z += dz / l * step;
+        st.ph = (st.ph || 0) + step * 6.283 / (a.stride || 0.8);
+        sp.put(st.x, R.groundAt(st.x, st.z), st.z, Math.atan2(dx, dz), 0, 0, a.s, st.ph, 1.2);
+        a.x = st.x; a.z = st.z;
+        return true;
+      }
       const _np = { x: 0, z: 0, y: 0, p: null, d: 0 };
       function nearestPlayer(x, z, r) {
         let best = r * r, hit = null;
@@ -137,17 +207,18 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         const f = a.fl ||= { st: null, x: a.x, z: a.z, cool: 0 };
         if (!f.st) {
           if (t < f.cool) return false;
-          const n = nearestPlayer(a.x, a.z, a.flee);
+          const n = noticed(a, a.x, a.z, a.pose?.[1] ?? 0, a.pose?.[3], a.flee);
           if (!n) return false;
           f.st = 'run'; f.t0 = t; f.x = a.x; f.z = a.z;
           const dx = a.x - n.x, dz = a.z - n.z, l = Math.hypot(dx, dz) || 1; f.dx = dx / l; f.dz = dz / l;
           if (a.sound) game.audio?.play(a.sound, { x: a.x, y: n.y, z: a.z }, 0.7);
         }
+        if (f.st === 'gone') return runOff(a, t, dt, sp, f);
         let tx, tz, v;
         if (f.st === 'run') {
           const turn = Math.sin(t * 2 + a.off) * 0.6; // zig-zag a little
           tx = f.x + (f.dx * Math.cos(turn) - f.dz * Math.sin(turn)) * 3; tz = f.z + (f.dz * Math.cos(turn) + f.dx * Math.sin(turn)) * 3; v = a.fleeV;
-          if (t - f.t0 > 2.2) { const n = nearestPlayer(f.x, f.z, a.flee * 1.3); if (n) { f.t0 = t; const dx = f.x - n.x, dz = f.z - n.z, l = Math.hypot(dx, dz) || 1; f.dx = dx / l; f.dz = dz / l; } else f.st = 'back'; }
+          if (t - f.t0 > 2.2) { const n = nearestPlayer(f.x, f.z, a.flee * 1.3); if (n) { f.t0 = t; const dx = f.x - n.x, dz = f.z - n.z, l = Math.hypot(dx, dz) || 1; f.dx = dx / l; f.dz = dz / l; } else f.st = a.grp?.timid ? 'gone' : 'back'; }
         } else { tx = home.x; tz = home.z; v = Math.max(1.5, a.v * 1.5); }
         const dx = tx - f.x, dz = tz - f.z, d = Math.hypot(dx, dz), st = Math.min(d, v * dt);
         if (d > 1e-3) { f.x += dx / d * st; f.z += dz / d * st; }
@@ -184,11 +255,16 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         const o = along(a.path, tr.s - a.back);
         if (a.flee && (!g || g.st === 'free') && flee(a, t, dt, sp, o)) return;
         let near = null;
-        if (a.look && (!g || g.st === 'free')) { near = nearestPlayer(a.x, a.z, a.look); if (near) a.tAdj = (a.tAdj || 0) + dt; }
+        if (a.look && (!g || g.st === 'free')) { near = noticed(a, a.x, a.z, a.pose?.[1] ?? 0, a.pose?.[3], a.look); if (near) a.tAdj = (a.tAdj || 0) + dt; }
         let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / a.stride + a.off;
         if (a.side) { const cs = Math.cos(yaw), sn = Math.sin(yaw); o.x += cs * a.side; o.z -= sn * a.side; }
         if (near) { yaw = Math.atan2(near.x - o.x, near.z - o.z); amp = 0; pitch = 0; }
         else if (!tr.moving) { yaw += Math.sin(t * 0.6 + a.off) * 0.3; ph = t * 1.2 + a.off; amp = 0.15; }
+        if (g?.st === 'return' && a.grp?.timid) {       // let go: a timid one runs off and is gone
+          const st = a.fl?.st === 'gone' ? a.fl : (a.fl = { st: 'gone', x: g.x, z: g.z });
+          if (runOff(a, t, dt, sp, st)) { g.x = a.x; g.z = a.z; return; }
+          g.st = 'free'; a.fl = null; return;
+        }
         if (g?.st === 'return') {
           const dx = o.x - g.x, dz = o.z - g.z, d = Math.hypot(dx, dz), st = Math.min(d, 2.5 * dt);
           if (d > 1e-3) { g.x += dx / d * st; g.z += dz / d * st; }
@@ -206,8 +282,8 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         const st = a.st ||= { mode: 'sit', t0: 0, x: a.px, y: a.py, z: a.pz };
         const sit = S[a.kind], fly = S[a.flyKind];
         if (st.mode === 'sit') {
-          const n = nearestPlayer(a.px, a.pz, a.shy || 6);
-          if (n && t - st.t0 > 3) { st.mode = 'up'; st.t0 = t; st.a0 = Math.atan2(a.pz - n.z, a.px - n.x); if (a.sound) game.audio?.play(a.sound, { x: a.px, y: a.py, z: a.pz }, 0.8); }
+          const n = noticed(a, a.px, a.pz, a.py, a.yaw, a.shy || 6);
+          if (n && t - st.t0 > 3) { st.mode = a.grp?.timid ? 'away' : 'up'; st.t0 = t; st.a0 = Math.atan2(a.pz - n.z, a.px - n.x); if (a.sound) game.audio?.play(a.sound, { x: a.px, y: a.py, z: a.pz }, 0.8); }
           else {
             const hop = a.hop ? Math.max(0, Math.sin(t * 5 + a.off)) * 0.04 : 0, look = Math.sin(t * 0.9 + a.off) * 0.8;
             const peck = a.hop && Math.sin(t * 1.7 + a.off * 3) > 0.7 ? -0.5 : 0;
@@ -218,6 +294,14 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
         }
         const u = t - st.t0, alt = a.alt || 14, R0 = a.circle || 12, w = 0.45;
         let x, y, z, yaw, k;
+        if (st.mode === 'away') {                     // timid: flies off over the horizon, gone
+          const dx = Math.cos(st.a0), dz = Math.sin(st.a0), d = u * 9;
+          x = a.px + dx * d; z = a.pz + dz * d; y = a.py + Math.min(alt * 2, u * 4);
+          if (!nearestPlayer(x, z, 70)) { st.mode = 'sit'; st.t0 = t; a.grp.present = false; a.hidden = true; return; }
+          fly.put(x, y, z, Math.atan2(dx, dz), 0.15, 0, a.s, t * 12 + a.off, 1);
+          a.x = x; a.z = z;
+          return;
+        }
         if (st.mode === 'up') {                      // climb out to the circle
           k = Math.min(1, u / 2.5);
           const ang = st.a0 + u * w * k;

@@ -33,7 +33,7 @@ export function buildTropicalAnimals(game, R) {
   flocks.forEach((f, fi) => { for (let i = 0; i < 5; i++) W.add({ kind: 'flamingo', custom: wade, flock: f, i: fi * 5 + i, x: f.x, z: f.z, s: 0.9 + W.rnd() * 0.2, sound: 'honk', hear: 9 }); });
   function wade(a, t, dt, S, Wl) {
     const P = a.flock.pts, st = a.st ||= { k: a.i % P.length, x: P[a.i % P.length][0] + (a.i % 3) * 0.7, z: P[a.i % P.length][2], ph: 0, until: 0 };
-    const n = Wl.nearest(st.x, st.z, 6);
+    const n = Wl.noticed(a, st.x, st.z, R.groundAt(st.x, st.z), st.yaw, 6);
     if (n && !st.flee) { let best = st.k, bd = 0; P.forEach((p, k) => { const d = Math.hypot(p[0] - n.x, p[2] - n.z); if (d > bd) { bd = d; best = k; } }); st.k = best; st.flee = true; }
     if (!n) st.flee = false;
     if (t > st.until && !st.flee) { st.k = Math.floor((a.i * 7 + t / 9) % P.length); st.until = t + 8 + (a.i % 4) * 3; }

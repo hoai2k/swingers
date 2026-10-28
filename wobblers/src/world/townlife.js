@@ -71,7 +71,7 @@ export function buildTownLife(game) {
   function squirrel(a, t, dt, S, W) {
     const sp = S.squirrel, [tx, ty, tz, , sc] = a.tree, st = a.st ||= { mode: 'ground', x: tx + 1.5, z: tz, gx: tx + 1.5, gz: tz, next: 0, ang: hash(a.i, 3) * 6.283, h: 0 };
     const trunkR = 0.3 * sc + 0.05, top = 1.9 * sc + 0.4;
-    const near = W.nearest(st.x, st.z, 6.5);
+    const near = W.noticed(a, st.x, st.z, groundAt(st.x, st.z), st.yaw, 6.5); // creep up slowly / from behind to get close
     if (st.mode === 'ground' && near) { st.mode = 'run'; game.audio?.play('chitter', { x: st.x, y: ty + 0.2, z: st.z }, 0.8); }
     if (st.mode === 'up' && !W.nearest(tx, tz, 9)) { if ((st.calm = (st.calm || 0) + dt) > 3) { st.mode = 'down'; st.calm = 0; } } else st.calm = 0;
     if (st.mode === 'ground') {
@@ -103,7 +103,7 @@ export function buildTownLife(game) {
     const out = hash(Math.floor((t + a.i * 13) / 35), a.i) < 0.5;   // only some of the time
     if (t < st.hide || !out) { st.x = b.x; st.z = b.z; st.mode = 'out'; a.x = b.x; a.z = b.z; return false; }
     const wx = b.x - a.side * 0.7;                                     // along the wall behind the bin
-    if (st.mode === 'out' && W.nearest(st.x, st.z, 4.5)) { st.mode = 'flee'; game.audio?.play('squeak', { x: st.x, y: SW, z: st.z }, 0.7); }
+    if (st.mode === 'out' && W.noticed(a, st.x, st.z, SW, st.yaw, 4.5)) { st.mode = 'flee'; game.audio?.play('squeak', { x: st.x, y: SW, z: st.z }, 0.7); }
     let tx, tz, v;
     if (st.mode === 'flee') { tx = b.x; tz = b.z; v = 5; }
     else {

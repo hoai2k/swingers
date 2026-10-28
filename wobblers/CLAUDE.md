@@ -419,6 +419,18 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   rattles), `still`, or `custom: fn(a, t, dt, S, W)` with `W.nearest(x, z, r)`), then
   `start(statsName, { grab })` (grab specs as in the jungle). Stats: `game.desertAnimals`,
   `snowAnimals`, `tropicalAnimals`, `townAnimals`, `cityRats`.
+  Never the same twice: the layout seed is random per session, and each group (`a.grp`: a herd,
+  a pair, one animal) re-rolls every 150-300 s while no camera can see it whether it is about
+  (`presence`, default 0.65) and, for walkers, which loop of its kind's pool (3x the groups) it is
+  on; `a.hidden` = away. Timid groups (`timid` chance 0.6, re-rolled too) that get scared (fleeing,
+  a flushed perched bird flies off over the horizon, let go after a grab) run on until 40 m from
+  every player and are gone until the next roll (`runOff`); the others calm down and carry on.
+  Noticing (`W.noticed(a, x, z, y, yaw, r)`, used by flee / look / perch and the custom squirrel,
+  rat and flamingo poses): within r scaled by the player's speed (0.25 + 0.75 x (speed - 0.8) / 3.5,
+  so creeping at ~1.5 m/s gets ~3 m from a fennec that bolts at 8 m from a walker), x 0.55 from
+  behind (outside +-110 deg), x 0.5 with static cover in between (a ray), x 1 for a player in a
+  vehicle. The jungle (own loop) also has a per-session layout and per-path comings and goings
+  (`key.away`, 35% away per 240 s cycle while out of sight).
   - Dusty Dunes (`regions/desert/animals.js`): camel caravans (grabbable, 450 kg), fennec foxes and
     roadrunners that flee, rattlesnakes coiled by the canyon rims and mesas, scorpions, tortoises,
     vultures circling the canyon and mesas.
