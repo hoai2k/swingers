@@ -173,6 +173,7 @@ export function wildlife(game, R, { seed = 1, ok, bounds = R.bounds } = {}) {
           const v = p.chest.linvel(), sp = Math.hypot(v.x, v.z);
           let k = 0.25 + 0.75 * Math.min(1, Math.max(0, (sp - 0.8) / 3.5));
           if (p.seat) k = 1;                                       // engines are loud
+          else k *= 1 - 0.3 * (p.sneak || 0);                     // crouched, sneaking (player.js)
           if (yaw != null && d > 0.5) { let da = Math.atan2(dx, dz) - yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > 1.9) k *= 0.55; }
           if (d > r * k * 0.5) {                                   // cover: something solid in between
             const ey = y + 0.4, dy = c.y - ey, L = Math.hypot(dx, dy, dz);

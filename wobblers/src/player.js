@@ -382,6 +382,7 @@ export class Player {
     this.grip = 1;         // climbing stamina (GRIP_*)
     this.accFwd = 0;       // forward acceleration commanded last step
     this.reachDown = 0;    // 0..1 bending over to reach the floor
+    this.sneak = 0; this.sneakT = 0; // 0..1 sneaking crouch after moving slowly for a while (wildlife.js notices it less)
     this.reachArm = { L: false, R: false }; // arm is reaching out to grab
     this.cam = null;
     this.lastInput = null;
@@ -1032,6 +1033,16 @@ export class Player {
     const reachingNow = !limp && !seated && ((inp.grabL || 0) > 0.3 || (inp.grabR || 0) > 0.3);
     const rdT = reachingNow && this.grounded && !this.swimming ? Math.max(0, Math.min(1, (camPitch - 0.45) / 0.75)) : 0;
     this.reachDown += (rdT - this.reachDown) * Math.min(1, DT * 6);
+    // sneaking: creeping along slowly for a second sinks into a crouch (kept through short pauses)
+    {
+      const hs = Math.hypot(v.x, v.z);
+      const can = this.state === 'normal' && this.grounded && !this.swimming && !seated && !this.skis && !this.mantle && !this.form;
+      if (!can || hs > 2.6) this.sneakT = 0;
+      else if (hs > 0.25 && hs < 2.2 && mag > 0.05) this.sneakT = Math.min(3, this.sneakT + DT);
+      else if (hs <= 0.25) this.sneakT = Math.max(0, this.sneakT - DT * 0.5);
+      const want = can && this.sneakT > 1 ? 1 : 0;
+      this.sneak += (want - this.sneak) * Math.min(1, DT * (want ? 4 : 6));
+    }
 
     // --- facing
     if (!limp && !seated && mag > 0.1 && !this.mantle) {
@@ -1066,7 +1077,7 @@ export class Player {
     if (!limp && !seated) {
       if (this.swimming) leanT = mag > 0.1 ? 1.15 : 0.5;
       else if (this.grounded) {
-        leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0;
+        leanT = Math.max(-0.35, Math.min(0.5, fwdSpeed * 0.045 + this.accFwd * 0.03)) + this.reachDown * 1.0 + this.sneak * 0.4; // sneaking: hunched forward
         rollT = Math.max(-0.35, Math.min(0.35, -this.yawRate * Math.min(hspeed, RUN) * 0.05)) + (this.skis?.lean || 0); // skis: lean into a carve
         waddle = Math.sin(this.phase) * 0.1 * Math.max(amp, mag > 0.1 ? 0.3 : 0);
         twist = Math.sin(this.phase) * 0.14 * amp;
@@ -1130,7 +1141,7 @@ export class Player {
       } else if (this.grounded && this.jumpCool <= 0) {
         // bouncy walk: the hips bob up as the legs pass each other
         const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
-        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0) - (this.skis?.dip || 0); // skis: knees bent
+        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - this.sneak * 0.2 * S - (this.emoteBody?.dip || 0) - (this.skis?.dip || 0); // skis: knees bent
         // duck under a low ceiling (under the pier, in a crawl space) instead of wedging the head in it
         const room = this.headroom();
         if (room < HEAD_TOP) h = Math.max(STAND_H * 0.55, h - (HEAD_TOP - room));
@@ -1630,7 +1641,7 @@ export class Player {
       set('uLegL', qx(-1.35 * g), 170, 14); set('uLegR', qx(-1.25 * g), 170, 14);
       set('lLegL', qx(1.9 * g + 0.05), 150, 12); set('lLegR', qx(1.8 * g + 0.05), 150, 12);
     } else if (this.grounded) {
-      const dip = Math.max(this.landDip, this.reachDown * 0.7);
+      const dip = Math.max(this.landDip, this.reachDown * 0.7, this.sneak * 0.85); // (sneaking: knees bent)
       // a short, tidy stride (Wobbly Life style): the legs are visual, the wobble lives in the body and arms
       set('uLegL', qx(-s * amp * 0.6 - dip * 0.4), 760, 40); set('uLegR', qx(s * amp * 0.6 - dip * 0.4), 760, 40);
       set('lLegL', qx(Math.max(0, c) * amp * 0.55 + 0.05 + dip * 0.7), 680, 36);
