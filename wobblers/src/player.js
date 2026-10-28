@@ -480,6 +480,7 @@ export class Player {
     const b = new Builder();
     this.outfit?.(p.n, b); // outfits (src/outfits.js, NPCs: src/npc.js): ties, scarves, backpacks...
     this.gearMesh?.(p.n, b, g); // gadgets (src/gadgets.js): jetpack, boots, laser gun...
+    this.skiMesh?.(p.n, g); // skis on the feet (world/regions/snow/skis.js)
     if (b.parts.length) g.add(b.mesh(PLAYER_MAT));
     return g;
   }
@@ -684,6 +685,7 @@ export class Player {
     if (this.state === 'seated') return;
     this.releaseAll();
     this.mantle = null;
+    this.skis?.off(this, 'crash'); // a big hit knocks the skis off (snow/skis.js)
     this.state = 'limp';
     this.limpTimer = Math.max(this.limpTimer, t);
     this.headMesh.material = headMaterials().ko;
@@ -1128,7 +1130,7 @@ export class Player {
       } else if (this.grounded && this.jumpCool <= 0) {
         // bouncy walk: the hips bob up as the legs pass each other
         const bob = (Math.abs(Math.cos(this.phase)) - 0.55) * 0.2 * S * amp;
-        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0);
+        let h = STAND_H + bob - this.landDip * 0.16 * S - this.reachDown * 0.12 * S - (this.emoteBody?.dip || 0) - (this.skis?.dip || 0); // skis: knees bent
         // duck under a low ceiling (under the pier, in a crawl space) instead of wedging the head in it
         const room = this.headroom();
         if (room < HEAD_TOP) h = Math.max(STAND_H * 0.55, h - (HEAD_TOP - room));
@@ -1152,7 +1154,7 @@ export class Player {
     // --- locomotion
     this.accFwd = 0;
     if (!limp && !seated && !this.mantle) {
-      const slippery = this.grounded && this.groundCollider && this.physics.slippery.has(this.groundCollider.handle);
+      const slippery = this.grounded && this.groundCollider && (this.physics.slippery.has(this.groundCollider.handle) || !!this.skis?.slick); // skis: powder snow
       const tvx = mvx * speed + gv.x, tvz = mvz * speed + gv.z;
       let dvx = (mag > 0.05 ? tvx : (this.grounded ? gv.x : v.x)) - v.x;
       let dvz = (mag > 0.05 ? tvz : (this.grounded ? gv.z : v.z)) - v.z;
@@ -1366,6 +1368,7 @@ export class Player {
     this.animate(inp, fwdSpeed, limp, seated, mag, amp, hanging);
     if (this.emote) emoteStep(this, inp, pressed, mag, limp, seated);
     this.gear?.step(this, inp, pressed); // gadgets (src/gadgets.js): thrust, glide, aiming arm, hook
+    this.skis?.step(this, inp); // skis (snow/skis.js): stance, surface, coming off
     const kLimb = limp ? 0.06 : strength * 0.85 + 0.15;
     if (!limp && !seated) for (const h of ['L', 'R']) if (this.reachArm[h] && !this.hands[h].joint) this.handAssist(h, kLimb);
     this.gravityComp(limp);
@@ -1939,6 +1942,7 @@ export class Player {
 
   respawn() {
     this.game.forms?.revert(this, { quiet: true }); // forms.js: respawn as your normal self
+    this.skis?.off(this, 'quiet'); // snow/skis.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     this.mantle = null;
@@ -1957,12 +1961,14 @@ export class Player {
     m.scale.set(1 + q * 0.5, 1 - q, 1 + q * 0.5); m.position.y = 0.22 * S * q;
     hm.scale.set(1 + q * 0.3, 1 - q * 0.5, 1 + q * 0.3);
     this.form?.sync(); // forms.js: animal meshes follow the ragdoll
+    this.skis?.sync(this); // snow/skis.js: skis lie on the snow
   }
   // Interpolated chest position (for cameras and tags).
   viewPos(out, part = 'chest') { return this.physics.ipos(this.parts[part].rec, out); }
 
   destroy() {
     this.game.forms?.revert(this, { quiet: true }); // forms.js
+    this.skis?.off(this, 'quiet'); // snow/skis.js
     if (this.seat) this.leaveSeat();
     this.releaseAll();
     for (const n in this.parts) {
