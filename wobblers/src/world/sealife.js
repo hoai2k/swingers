@@ -41,7 +41,7 @@ export function buildSeaLife(game) {
   mk('star', modelGeometry('seaStar'), 80, { tint: true });
   mk('crab', modelGeometry('crab'), 30, { k: { LEG: 0.5 } });
   mk('seahorse', modelGeometry('seahorse'), 16);
-  mk('octopus', modelGeometry('octopus'), 10);
+  mk('octopus', modelGeometry('octopus'), 10, { k: { TENTW: 1, TENTA: 0.5, TENTK: 11, TENTS: 1.3 } });
   mk('turtle', modelGeometry('turtle'), 8, { k: { FLAP: 0.5, LEG: 0.3 } });
   mk('manta', modelGeometry('manta'), 6, { k: { FLAP: 0.45, TAILA: 0.2 } });
   mk('shark', modelGeometry('shark'), 8, { mode: 'swim', k: { WAVEK: 1.6, WAVEA: 0.22, TAILZ: 2.8, FLAP: 0.12 } });

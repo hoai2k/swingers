@@ -345,7 +345,9 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
     `plate` for wings / flippers / fins / tails), `trace` (a limb's centre line from where it
     leaves the body) and `finish` (smooth union, surface nets, `decimate` to the `tris` budget,
     rig weights, pivots, paint, write). Wings and flippers are WING_L / WING_R (flap), back
-    flippers BL / BR, tentacles and arms parts 10+ (the shader waves them).
+    flippers BL / BR, tentacles and arms parts 10+ (the shader sways them; with the species
+    constant `TENTW: 1` they wiggle instead: waves running out along each arm, growing toward
+    the tip, plus a lift and curl, `TENTA` / `TENTK` / `TENTS` — the octopus).
   - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
     straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
     other two share (`View`, `write`, `fill_bg`, surface nets).

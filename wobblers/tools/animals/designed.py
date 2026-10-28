@@ -519,7 +519,7 @@ def plesiosaur(name, C):
     wcol = np.array([((torso_t[:, int(round(float(sh.col_t(z))))]).sum() / 2) * sh.kt for z in zc])
     wcol = ndi.gaussian_filter1d(wcol, 3)
     # (side-on, flippers reach the ground under nearly all of the torso: its depth follows its width)
-    ax = wcol; ay = np.maximum(C.get('depth', 0.85) * ax, 1e-3); yc = top - ay
+    ax = wcol; ay = np.maximum(C.get('depth', 0.6) * ax, 1e-3); yc = top - ay
     lo = (float(sh.zs(S.c0)) - 0.05, float(sh.ys(S.r1)) - 0.05, -float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max()) - 0.05)
     hi = (float(sh.zs(S.c1)) + 0.05, float(sh.ys(S.r0)) + 0.05, -lo[2])
     G = Grid(lo, hi, C['res'])
@@ -561,7 +561,20 @@ def plesiosaur(name, C):
             skull = hp[int(nh * 0.35)]
             fields.append(dict(name='skull', d=G.ell(skull, (1.3 * hr, hr, 0.95 * hr)), part='HEAD', pivot=pts[0]))
             fields.append(dict(name='snout', d=G.cone([skull, pts[-1] - (pts[-1] - skull) * 0.05], [0.85 * hr, 0.35 * hr], xs=0.9), part='HEAD', pivot=pts[0]))
-            pts, rad = pts[:-nh // 2], np.minimum(rad[:-nh // 2], np.linspace(rad[0], 0.7 * hr, len(rad[:-nh // 2])) * 1.15)
+            # the neck: from deep in the front of the torso, as thick as the body there, along the
+            # drawn neck's (smoothed) line, tapering steadily to the head; a wide fillet into the shoulders
+            zb = tz1 - C.get('neck_root', 0.15) * (tz1 - tz0)
+            yb_, ab_, xb_ = float(np.interp(zb, zc, yc)), float(np.interp(zb, zc, ay)), float(np.interp(zb, zc, ax))
+            npts = pts[:-nh // 2].copy()
+            npts[:, 0] = ndi.gaussian_filter1d(npts[:, 0], 2, mode='nearest'); npts[:, 1] = ndi.gaussian_filter1d(npts[:, 1], 2, mode='nearest')
+            npts = npts[npts[:, 0] > zb + 0.3 * ab_]
+            base = np.array([zb, yb_ + 0.15 * ab_, 0.0])
+            pts = np.vstack([base, npts])
+            t = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]); t /= t[-1]
+            rb = 0.85 * min(ab_, xb_); rhd = 0.75 * hr
+            rad = rhd + (rb - rhd) * (1 - t) ** 1.8
+            fields.append(dict(name=nm, d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=part, pivot=pts[0], blend=C.get('neck_blend', 0.06) * sh.L))
+            continue
         fields.append(dict(name=nm, d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=part, pivot=pts[0]))
     keep = ndi.binary_dilation(torso_t, iterations=4) | (np.abs(xT) < 0.6 * bwpx * sh.kt)
     yr = float(np.interp(zmid, zc, yc)) - 0.3 * float(np.interp(zmid, zc, ay))
@@ -698,19 +711,31 @@ def octopus(name, C):
     hu, hv, hr = C['head']; zh, yh = zu(hu), yv(hv); rh = hr * vh
     (mu0, mu1), (mv0, mv1) = C['mantle_u'], C['mantle_v']
     zm0, zm1 = zu(mu0), zu(mu1); ym = (yv(mv0) + yv(mv1)) / 2
+    lift = C.get('mantle_lift', 0) * (yv(0) - yv(1))            # the mantle carried higher than drawn
     rmz, rmy = (zm1 - zm0) / 2, (yv(mv0) - yv(mv1)) / 2
     rmx = float(np.percentile(cx[(cz > zm0) & (cz < zm1)], 95)) if ((cz > zm0) & (cz < zm1)).any() else rmy
     rmx = min(rmx, 1.3 * rmy)
     span = float(np.abs(sh.xt(np.array([T.r0, T.r1]))).max())
-    G = Grid((zu(0) - 0.03, -0.02, -span - 0.03), (zu(1) + 0.03, yv(0) + 0.03, span + 0.03), C['res'])
+    ext = (C.get('arm_len', 1.0) - 1) * 0.6 * sh.L                  # room for the longer arms
+    G = Grid((zu(0) - 0.03 - ext, -0.02, -span * C.get('arm_len', 1.0) - 0.03), (zu(1) + 0.03 + ext, yv(0) + 0.03 + lift, span * C.get('arm_len', 1.0) + 0.03), C['res'])
     gz, gy, gx = G.gz, G.gy, G.gx
     tilt = np.radians(C.get('tilt', 18)); zc_ = (zm0 + zm1) / 2
-    dz, dy = gz - zc_, gy - ym
+    dz, dy = gz - zc_, gy - ym - lift
     rz_, ry_ = dz * np.cos(tilt) + dy * np.sin(tilt), -dz * np.sin(tilt) + dy * np.cos(tilt)
     e = np.sqrt((rz_ / rmz) ** 2 + (ry_ / rmy) ** 2 + (gx / rmx) ** 2)
-    fields = [dict(name='mantle', d=((e - 1) * min(rmz, rmy, rmx)).astype(np.float32), part='body')]
+    fields = [dict(name='mantle', d=((e - 1) * min(rmz, rmy, rmx)).astype(np.float32), part='body',
+                   inv=lambda P: P - np.array([0, lift, 0]) * np.clip((zh - P[:, :1]) / max(1e-6, zh - zc_), 0, 1))]
     hx = min(rh * 1.1, float(np.percentile(cx[np.abs(cz - zh) < rh], 95)) if (np.abs(cz - zh) < rh).any() else rh)
     fields.append(dict(name='head', d=G.ell((zh, yh, 0), (rh, rh, hx)), part='body'))
+    # the mantle grows out of the back of the head
+    fields.append(dict(name='nape', d=G.cone([[zh, yh, 0], [zc_ + 0.35 * rmz, ym + lift + 0.1 * rmy, 0]], [0.85 * rh, 0.75 * rmy], xs=float(np.clip(hx / rh, 0.8, 1.2))), part='body',
+                       inv=lambda P: P - np.array([0, lift, 0]) * np.clip((zh - P[:, :1]) / max(1e-6, zh - zc_), 0, 1)))
+    # eyes: bulging from the sides of the head where the side view draws them (its eye paints them;
+    # their tops, seen from above, read as lids)
+    eu, ev, er = C['eye']
+    ze, ye = zu(eu), yv(ev); re = er * vh
+    for sgn in (1, -1):
+        fields.append(dict(name='eye', d=G.ell((ze, ye, sgn * 0.92 * hx), (re, re, 0.8 * re)), part='body', blend=0.006 * sh.L))
     # the skirt under the head where the arms meet
     fields.append(dict(name='web', d=G.ell((zh - 0.2 * rh, 0.45 * yh, 0), (1.3 * rh, 0.45 * yh, 1.2 * hx)), part='body'))
     # arms: the top view outside the mantle / head, traced from where they leave it
@@ -739,12 +764,18 @@ def octopus(name, C):
             th = np.linspace(0, 1.6 * np.pi, 14)[1:]
             rr = rc * (1 - 0.55 * th / th[-1])
             z_ = np.concatenate([z_, cz + rr * np.cos(ang0 + turn * th)]); x_ = np.concatenate([x_, cx2 + rr * np.sin(ang0 + turn * th)])
+        # longer than drawn (stretched out from where it leaves the head); paint mapped back
+        al = C.get('arm_len', 1.0); z00, x00 = float(z_[0]), float(x_[0])
+        z_ = z00 + (z_ - z00) * al; x_ = x00 + (x_ - x00) * al
         n_ = len(z_); t = np.linspace(0, 1, n_)
         r_ = r0 * (1 - 0.8 * t)                                    # tapering to the tip
         y_ = r_ + (0.5 * yh) * np.clip(1 - t / 0.35, 0, 1) ** 2        # rising to the head at the root
         root = np.array([zh - 0.2 * rh, 0.55 * yh, 0.3 * np.sign(x_[0]) * hx])
         pts = np.vstack([root, np.stack([z_, y_, x_], 1)]); rad = np.concatenate([[r_[0] * 1.1], r_])
-        fields.append(dict(name='arm', d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=10 + k, pivot=pts[1]))
+        def inv(P, z00=z00, x00=x00, al=al):
+            out = P.copy(); out[:, 0] = z00 + (P[:, 0] - z00) / al; out[:, 2] = x00 + (P[:, 2] - x00) / al
+            return out
+        fields.append(dict(name='arm', d=G.cone(pts, np.maximum(rad, 0.8 * G.h)), part=10 + k, pivot=pts[1], inv=inv))
         k += 1
     print(f'{name}: {k} arms')
     finish(name, C, fields, G, sh, blend=0.03)
@@ -842,13 +873,18 @@ def crab(name, C):
         ra = max(ra, 0.35 * rc)
         fields.append(dict(name='arm', d=G.cone(pts, np.full(len(pts), max(ra, 0.8 * G.h))), part='body'))
         if len(hand) >= 2:
-            j = max(1, int(len(hand) * 0.6))
-            fields.append(dict(name='claw', d=G.cone(hand[[0, j]], [0.8 * rc, rc], ysc=0.75), part='body'))
-            tip = hand[-1]; mid = hand[j]
-            d = tip - mid; d /= np.linalg.norm(d) + 1e-9
-            for off in (0.45, -0.45):
-                fpts = np.array([mid + [0, off * rc, 0], tip + [0, off * rc * 0.4, 0]])
-                fields.append(dict(name='finger', d=G.cone(fpts, [0.45 * rc, 0.15 * rc], ysc=0.8), part='body'))
+            # the palm: an oval from the wrist; then a pincer: an upper and a lower finger from the
+            # palm's end, bowed apart and closing toward the tips, an open gap between them
+            j = max(1, int(len(hand) * 0.55))
+            base = hand[j]; d = hand[-1] - base; d[1] = 0; d /= np.linalg.norm(d) + 1e-9
+            fields.append(dict(name='claw', d=G.cone([hand[0], base - d * 0.35 * rc], [0.8 * rc, rc], ysc=0.85), part='body'))
+            fl = max(float(np.linalg.norm(hand[-1] - base)), 2.1 * rc)
+            up = np.array([0, 1.0, 0])
+            for sgn_f, rf0 in ((1, 0.4), (-1, 0.48)):                    # upper (moving) and lower (fixed) finger
+                fp = np.array([base + up * sgn_f * 0.4 * rc,
+                               base + d * 0.5 * fl + up * sgn_f * 0.72 * rc,
+                               base + d * fl + up * sgn_f * 0.16 * rc])
+                fields.append(dict(name='finger', d=G.cone(fp, [rf0 * rc, 0.27 * rc, 0.07 * rc], xs=0.8), part='body', blend=0.002 * sh.L))
     # eye stalks
     for sgn in (1, -1):
         base = np.array([z1 - 0.35 * rz, yc_ + 0.4 * ry, sgn * 0.22 * rx]); top = np.array([z1 - 0.1 * rz, max(yv(0.06), ytop + 0.25 * ry), sgn * 0.3 * rx])
@@ -903,7 +939,8 @@ DESIGNS = {
     'manta': (manta, dict(tris=9000, sheet='manta_ray.png', L=4.0, res=150, body_u=(0.4, 0.93), body_w=(0.42, 0.95), body_x=0.09,
                           ceph_u=0.88, tail_u=0.42, belly_w=0.9, lift=6)),
     'jelly': (jellyfish, dict(tris=4000, sheet='jellyfish.png', L=1.2, R=0.22, D=0.2, tent=0.75, rim_u=0.7, res=150, side_only=True, tentacles=10)),
-    'octopus': (octopus, dict(tris=9000, sheet='octopus.png', L=0.9, res=125, head=(0.6, 0.33, 0.13), mantle_u=(0.08, 0.56), mantle_v=(0.02, 0.46), tilt=16)),
+    'octopus': (octopus, dict(tris=9000, sheet='octopus.png', L=0.9, res=125, head=(0.6, 0.33, 0.13), mantle_u=(0.08, 0.56), mantle_v=(0.02, 0.46), tilt=16,
+                                mantle_lift=0.08, arm_len=1.3, eye=(0.61, 0.32, 0.08))),
     'seaStar': (seastar, dict(tris=1600, sheet='sea_star_crab_seahorse.png', row=0, rows=3, L=0.3, res=110)),
     'crab': (crab, dict(tris=5000, sheet='sea_star_crab_seahorse.png', row=1, rows=3, L=0.4, res=120, shell_v=(0.12, 0.55))),
     'seahorse': (seahorse, dict(tris=3000, sheet='sea_star_crab_seahorse.png', row=2, rows=3, L=0.14, res=110, side_only=True,
