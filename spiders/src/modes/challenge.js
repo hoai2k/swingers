@@ -15,16 +15,32 @@ import { SurvivalMode, ROSTER, WAVES_PER_STAGE } from './survival.js';
 import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
 import { pick } from '../util.js';
-import { text, drawBanner, drawPanel } from '../hud.js';
+import { text, drawBanner, drawPanel, drawGlyph } from '../hud.js';
+import { preloadSprites } from '../sprites.js';
 
 export const TIERS = [
-  { name: 'Hatchling', color: '#8fe8a0' },
-  { name: 'Webling', color: '#5ad1ff' },
-  { name: 'Hunter', color: '#ffd23f' },
-  { name: 'Stalker', color: '#ff9a3c' },
-  { name: 'Widow', color: '#ff5a7a' },
-  { name: 'Matriarch', color: '#c46bff' },
+  { name: 'Hatchling', color: '#8fe8a0', badge: 'tier_hatchling' },
+  { name: 'Webling', color: '#5ad1ff', badge: 'tier_webling' },
+  { name: 'Hunter', color: '#ffd23f', badge: 'tier_hunter' },
+  { name: 'Stalker', color: '#ff9a3c', badge: 'tier_stalker' },
+  { name: 'Widow', color: '#ff5a7a', badge: 'tier_widow' },
+  { name: 'Matriarch', color: '#c46bff', badge: 'tier_matriarch' },
 ];
+preloadSprites(TIERS.map((t) => t.badge + '.png'));
+
+// a tier's badge (white glyph tinted to the tier colour, or dimmed while
+// the tier is locked); false while the art isn't loaded
+export function drawTierBadge(ctx, tier, x, y, size, { locked = false } = {}) {
+  const T = TIERS[tier - 1];
+  if (!T) return false;
+  return drawGlyph(ctx, T.badge, x, y, size, locked ? '#8a90b8' : T.color, locked ? { alpha: 0.85 } : {});
+}
+
+// a cleared trial's star
+export function drawStar(ctx, x, y, size, color = '#ffd23f') {
+  if (drawGlyph(ctx, 'hud_star', x, y, size, color)) return;
+  text(ctx, '✓', x, y + size * 0.36, { size: size, color: '#4fdc6a', sw: 4 });
+}
 
 // rules: weapon (forced) | pool (weapon ids) | lowGrav | noWeb | timeLimit (s per wave)
 //        roster (insect ids) | armored (plates on every insect) | frenzy | swarm (budget x) | boss (wave 3)
@@ -260,7 +276,8 @@ export class ChallengeMode extends SurvivalMode {
       } else if (TRIALS.every((q, i) => trialCleared(i))) { msg = 'Every trial cleared. The Gauntlet of Webs is yours!'; col = '#c46bff'; }
       else msg = 'Already cleared before: no new unlock';
       drawPanel(ctx, W / 2 - 430, 330, 860, 80, { r: 24, fill: 'rgba(10,8,26,0.88)', accent: col });
-      this.drawLock(ctx, W / 2 - 380, 370, 22, col, this.unlockedNow !== null);
+      const U = this.unlockedNow !== null ? TRIALS[this.unlockedNow] : null;
+      if (!(U && U.tier !== T.tier && drawTierBadge(ctx, U.tier, W / 2 - 380, 368, 60))) this.drawLock(ctx, W / 2 - 380, 370, 22, col, this.unlockedNow !== null);
       text(ctx, msg, W / 2 + 20, 382, { size: 30, color: col, sw: 5, maxWidth: 740 });
       const end = this.drawPlayerTable(ctx, 440);
       if (this.t > 1.2) {
@@ -279,6 +296,9 @@ export class ChallengeMode extends SurvivalMode {
 }
 
 export function drawLock(ctx, x, y, s, color, open = false) {
+  // the delivered padlock (hud_lock.png) is a closed lock: an opened one is
+  // still drawn here
+  if (!open && drawGlyph(ctx, 'hud_lock', x, y + s * 0.18, s * 1.75, color)) return;
   ctx.save();
   ctx.translate(x, y);
   ctx.strokeStyle = color; ctx.fillStyle = color;

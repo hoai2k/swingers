@@ -58,18 +58,20 @@ mat3 rigRot() {
 const BODY_MODES = {
   swim: 'transformed.x += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA * pow(clamp((TAILZ * 0.5 - transformed.z) / TAILZ, 0., 1.), 2.);',
   swimv: 'transformed.y += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA * pow(clamp((TAILZ * 0.5 - transformed.z) / TAILZ, 0., 1.), 2.);',
-  slither: 'transformed.x += sin(aAnim.x - transformed.z * WAVEK) * aAnim.y * WAVEA;',
+  slither: 'transformed.x += sin(aAnim.x + transformed.z * WAVEK) * aAnim.y * WAVEA;', // waves run head to tail (phase = distance x WAVEK: still on the ground)
   pulse: 'if (aRig.x < 0.5) { float k = sin(aAnim.x); transformed.xz *= 1. + k * 0.14 * aAnim.y; transformed.y *= 1. - k * 0.1 * aAnim.y; }',
 };
 
 export class Species {
   // opts: max, name, mode, tint (instances get their own colour), shadow, k: shader constants
-  // { LEG, TAILA, FLAP, JAWA, WAVEK, WAVEA, TAILZ } (TAILZ: nose-to-tail length, nose at z = TAILZ / 2: the wave grows toward the tail)
+  // { LEG, TAILA, FLAP, JAWA, WAVEK, WAVEA, TAILZ, TENTW, TENTA, TENTK, TENTS } (TAILZ: nose-to-tail
+  // length, nose at z = TAILZ / 2: the wave grows toward the tail; TENTW 1: tentacles wiggle in
+  // travelling waves (octopus arms) instead of swaying)
   // geo: a BufferGeometry, or a Promise of one (animalgeo.js): until it arrives the species
   // draws nothing and put() is ignored
   constructor(game, geo, opts = {}) {
     const max = opts.max || 32;
-    const k = { LEG: 0.7, TAILA: 0.35, FLAP: 0.6, JAWA: 0.5, WAVEK: 2, WAVEA: 0.15, TAILZ: 1, ...(opts.k || {}) };
+    const k = { LEG: 0.7, TAILA: 0.35, FLAP: 0.6, JAWA: 0.5, WAVEK: 2, WAVEA: 0.15, TAILZ: 1, TENTW: 0, TENTA: 0.4, TENTK: 9, TENTS: 1, ...(opts.k || {}) };
     this.anim = new Float32Array(max * 2);
     this.animAttr = new THREE.InstancedBufferAttribute(this.anim, 2);
     this.animAttr.setUsage(THREE.DynamicDrawUsage);
@@ -86,10 +88,14 @@ export class Species {
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, PU);
       if (mat.defines?.USE_PROJ) {
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvObjP = position; vObjN = normal;');
+        // (USE_PAINT: limbs posed away from where the sheet draws them carry their sheet position)
+        // (WING_TOP: wings and flippers (WING_L / WING_R) take the top view all over: seen from below
+        // or edge-on too, it is the only picture of them; SIDE_ONLY: the side view alone, for
+        // animals the sheet draws in another orientation than the model's)
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vObjP; varying vec3 vObjN; varying float vWing;\n#ifdef USE_PAINT\nattribute vec3 aPaint;\n#endif')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_PAINT\nvObjP = aPaint;\n#else\nvObjP = position;\n#endif\nvObjN = normal; vWing = (aRig.x > 6.5 && aRig.x < 8.5) ? 1. : 0.;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vObjP; varying vec3 vObjN;
+varying vec3 vObjP; varying vec3 vObjN; varying float vWing;
 uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform vec4 uTopBox;`)
           .replace('#include <color_fragment>', `#include <color_fragment>
 {
@@ -97,6 +103,12 @@ uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform 
   vec2 tu = vec2((vObjP.z - uTopBox.x) / (uTopBox.y - uTopBox.x), (vObjP.x - uTopBox.w) / (uTopBox.z - uTopBox.w));
   vec3 n = normalize(vObjN);
   float wt = smoothstep(0.3, 0.8, n.y);
+#ifdef WING_TOP
+  wt = mix(wt, 1., vWing);
+#endif
+#ifdef SIDE_ONLY
+  wt = 0.;
+#endif
   vec3 c = mix(texture2D(uSide, su).rgb, texture2D(uTop, tu).rgb, wt);
   diffuseColor.rgb *= c * 1.05;
 }`).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * 0.22; // the paint already has its own shading: lift the shadow side');
@@ -106,10 +118,19 @@ uniform sampler2D uSide; uniform sampler2D uTop; uniform vec4 uSideBox; uniform 
         .replace('#include <beginnormal_vertex>', 'mat3 rigR = rigRot();\nvec3 objectNormal = normalize(mix(vec3(normal), rigR * vec3(normal), aW));')
         .replace('#include <begin_vertex>', `vec3 transformed = mix(vec3(position), rigR * (vec3(position) - aRig.yzw) + aRig.yzw, aW);
 if (aRig.x > 9.5) { float d = length(position - aRig.yzw); float i = aRig.x - 10.;
+  if (TENTW > 0.5) {
+    // arms: waves running out along each arm, sideways to it and growing toward the tip, plus a
+    // slow lift and curl (TENTA: bend per metre out, TENTK: waves per metre, TENTS: speed)
+    vec2 dir = position.xz - aRig.yw; float l = length(dir); dir = l > 1e-4 ? dir / l : vec2(0., 1.);
+    float ph = aAnim.x * TENTS + i * 1.9, a = TENTA * d * (0.35 + aAnim.y) * aW;
+    float w = sin(ph - d * TENTK) + 0.45 * sin(ph * 1.7 + 1.3 - d * TENTK * 1.9);
+    transformed.xz += vec2(-dir.y, dir.x) * w * a;
+    transformed.y += (0.55 + 0.45 * sin(ph * 0.6 + i * 2.3 - d * TENTK * 0.5)) * a * 0.9;
+  } else
   transformed.xz += vec2(sin(aAnim.x * 0.8 + i * 1.7 + d * 2.5), cos(aAnim.x * 0.7 + i * 1.3 + d * 2.)) * 0.16 * d * (0.3 + aAnim.y) * aW; }
 ${mode}`);
     };
-    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '');
+    mat.customProgramCacheKey = () => 'critter:' + (opts.name || '') + consts + (opts.mode || '') + (mat.defines?.USE_PROJ ? ':proj' : '') + (mat.defines?.USE_PAINT ? ':paint' : '') + (mat.defines?.WING_TOP ? ':wt' : '') + (mat.defines?.SIDE_ONLY ? ':so' : '');
     const mesh = this.mesh = new THREE.InstancedMesh(g, mat, max);
     mesh.name = 'critters_' + (opts.name || 'x');
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -126,7 +147,7 @@ ${mode}`);
     const U = this.projU;
     U.uSide.value = p.side; U.uTop.value = p.top;
     U.uSideBox.value.set(...p.sideBox); U.uTopBox.value.set(...p.topBox);
-    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1 };
+    this.mesh.material.defines = { ...(this.mesh.material.defines || {}), USE_PROJ: 1, ...(p.paint ? { USE_PAINT: 1 } : {}), ...(p.wingTop ? { WING_TOP: 1 } : {}), ...(p.sideOnly ? { SIDE_ONLY: 1 } : {}) };
     this.mesh.material.needsUpdate = true;
   }
   begin() { this.n = 0; }

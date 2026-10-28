@@ -18,6 +18,11 @@
 //                    then fire on ctl.fire / firePressed.
 //   drawShape(ctx)   draw in local coords: grip at (0,0), barrel along +x,
 //                    "up" is -y (the base flips it when aiming left).
+//                    This is the procedural fallback: when the held sprite
+//                    assets/web/wpn_<id>.png has loaded it is drawn instead,
+//                    placed by  static art = { hx, hy, s }  (the image pixel
+//                    the leg holds, and local units per pixel), then the
+//                    optional drawArtOver(ctx) adds live bits (charge, heat).
 //   onThrow(ctl)     return true to take over the throw (e.g. saber)
 //   onEquip/onUnequip(spider)
 // When ammo runs out call this.empty(): the spider tosses it away.
@@ -26,6 +31,13 @@
 
 import { clamp, lerp, TAU, rand, angApproach, angDiff, pick } from './util.js';
 import { sfx } from './audio.js';
+import { sprite, frames, preloadSprites, tinted } from './sprites.js';
+
+// delivered art (image-requests-history.md round 2, B/C/F): held sprites,
+// pickup icons and the drop marker
+const ART_IDS = ['pistol', 'shotgun', 'railgun', 'rocket', 'minigun', 'saw', 'deathray', 'tesla',
+  'singularity', 'swarm', 'grenade', 'mines', 'saber', 'twinsaber', 'glaive'];
+preloadSprites([...ART_IDS.map((id) => `wpn_${id}.png`), ...ART_IDS.map((id) => `pick_${id}.png`), 'icon_drop.png']);
 
 export const WEAPONS = new Map();
 export function registerWeapon(Cls) { WEAPONS.set(Cls.id, Cls); }
@@ -59,6 +71,8 @@ export class Weapon {
   static ammo = 10;
   static weight = 1;
   static color = '#ffd23f';
+  static art = null;          // { hx, hy, s }: see drawShape above
+  static iconSize = 0;        // pickup icon size (0: from this.length)
 
   constructor(game) {
     this.game = game;
@@ -149,8 +163,40 @@ export class Weapon {
     ctx.rotate(this.angle);
     if (this.flip) ctx.scale(1, -1);
     if (this.vis !== 1) ctx.scale(this.vis, this.vis);
-    this.drawShape(ctx);
+    this.drawHeld(ctx);
     ctx.restore();
+  }
+
+  // the held look: the delivered sprite, else the procedural drawing
+  drawHeld(ctx) {
+    if (this.drawArt(ctx)) { if (this.drawArtOver) this.drawArtOver(ctx); }
+    else this.drawShape(ctx);
+  }
+
+  // wpn_<id>.png in local coords (grip at 0,0, pointing +x); false if not loaded
+  drawArt(ctx) {
+    const A = this.constructor.art;
+    if (!A) return false;
+    const name = `wpn_${this.id}.png`;
+    const img = sprite(name), fr = img && frames(name);
+    if (!fr) return false;
+    const b = fr[0], s = A.s;
+    ctx.drawImage(img, b.sx, b.sy, b.sw, b.sh, (b.sx - A.hx) * s, (b.sy - A.hy) * s, b.sw * s, b.sh * s);
+    return true;
+  }
+
+  // pick_<id>.png centred on the pickup (ctx at its centre, rotated to its
+  // angle). Lying the other way round it is mirrored, never upside down.
+  drawIcon(ctx, p) {
+    const name = `pick_${this.id}.png`;
+    const img = sprite(name), fr = img && frames(name);
+    if (!fr) return false;
+    const b = fr[0];
+    const size = this.constructor.iconSize || Math.min(60, Math.max(30, this.length * 0.95));
+    const k = size / Math.max(b.sw, b.sh);
+    if (p && Math.cos(p.angle) < 0) ctx.scale(1, -1);
+    ctx.drawImage(img, b.sx, b.sy, b.sw, b.sh, -b.sw * k / 2, -b.sh * k / 2, b.sw * k, b.sh * k);
+    return true;
   }
 
   drawPickup(ctx) { this.drawShape(ctx); }
@@ -246,8 +292,37 @@ export class Pickup {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
     const w = this.weapon;
-    ctx.translate(-w.length * 0.4, 0);
-    w.drawPickup(ctx, this);
+    // loose weapons show their pickup icon; flying / stuck plasma blades
+    // stay lit (drawPickup)
+    if (w.mode || !w.drawIcon(ctx, this)) {
+      ctx.translate(-w.length * 0.4, 0);
+      w.drawPickup(ctx, this);
+    }
+    ctx.restore();
+    if (this.dropping) this.drawDropMarker(ctx, time);
+  }
+
+  // an incoming drop: a web-strand marker (icon_drop.png, tinted with the
+  // weapon's colour) points down at it while it falls in; pinned to the top
+  // of the view while the drop is still above it. Fades out as it lands.
+  drawDropMarker(ctx, time) {
+    if (this.grounded || this.age > 3 || this.removed) { this.dropping = false; return; }
+    const top = this.game.cam ? this.game.cam.y0 || 0 : 0;
+    const k = Math.min(1, this.age / 0.06) * Math.min(1, (3 - this.age) / 0.5);
+    const above = this.y < top - 5;
+    const y = (above ? top + 30 : this.y - 52) + Math.sin(time * 7) * 2;
+    const icon = tinted('icon_drop.png', this.weapon.color);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, k);
+    if (icon) {
+      const h = 40, w = icon.width * h / icon.height;
+      ctx.drawImage(icon, this.x - w / 2, y - h / 2, w, h);
+    } else {
+      ctx.strokeStyle = this.weapon.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(this.x, y - 18); ctx.lineTo(this.x, y + 12); ctx.stroke();
+      ctx.fillStyle = this.weapon.color;
+      ctx.beginPath(); ctx.arc(this.x, y + 15, 4, 0, TAU); ctx.fill();
+    }
     ctx.restore();
   }
 }

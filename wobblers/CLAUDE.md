@@ -324,19 +324,46 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   `pulse`). Per frame an animal is `put(x, y, z, yaw, pitch, roll, scale, phase, amount)` between
   `begin()` / `end()`.
 - Models must look like the Wobblers: one smooth, rounded rubber-toy surface, never boxes or
-  primitives stuck together. They are **sculpted** (`animalmodels.js`): smooth-unioned shapes
-  (`ball`, `egg`, tapered `limb`, `chain` tubes, rounded `slab`) with colour functions for
-  markings, meshed by `sculpt.js` (signed distance field + surface nets, normals from the field);
-  where a moving part meets the body the vertices get a blended weight (`aW`) so limbs bend out
-  of the body like rubber. Eyes / teeth / smiles are small Builder `extras`. Meshing runs in a
-  worker (`animalworker.js`, via `animalgeo.js modelGeometry(name, ...args)`): the world build
-  doesn't wait, and a species is invisible until its geometry arrives (~3 s after load).
-  `animalmodels.js`, `sculpt.js` and `rigparts.js` must import nothing that needs a page (no
-  three.js) because the worker loads them. Detail: `res` (cells along the longest side) or
-  `cell` (m); keep many-instance creatures small (reef fish ~1.8k triangles, cats ~12k). Check a
-  model with a turnaround render (a probe that hides everything but one species' mesh, after
-  waiting for every `critters_*` mesh to have its `aAnim` attribute);
-  `assets/reference/animals/*.png` (image round 16) are the look to match once delivered.
+  primitives stuck together, and **built from body parts that make sense for the animal** (a torso,
+  a neck and head, legs with real joints, a tail, wings, flippers...), never traced literally from
+  a picture (that gave six-legged cats and lumps where manes were). The reference sheets
+  (`assets/reference/animals/*.png`, image round 16: side view facing right, top view head right,
+  3/4) are only a measuring tape and the paint. Built offline, written to `assets/animals/`
+  (`<name>.bin` mesh, `.json` layout / pivots / paint boxes, `_side.jpg` / `_top.jpg` paint) and
+  loaded by `animalgeo.js sheetGeometry` for every name in `SHEET_MODELS`:
+  - `tools/animals/quad.py`: the four-legged animals (tiger, leopard, monkey, hog, capybara, tapir,
+    croc). Torso = the side view's back and belly lines (ears, crests and leg gaps smoothed away)
+    and the top view's width; neck, skull and muzzle on HEAD (the croc's lower jaw on JAW); legs
+    with shoulder / elbow / wrist and hip / knee / hock joints and oval paws on FL / FR / BL / BR,
+    placed and sized from the drawn near legs (both pairs one thickness, in proportion to the
+    body), stood upright; a tail along the drawn tail (TAIL); ears on the skull. Per-animal knobs in
+    `QUADS` (`hock` bend, `head` length range, `head_w` width, `torso_end`, `ears`, `sprawl`,
+    `body_tail`, `jaw`, `leg_r`).
+  - `tools/animals/designed.py`: everything else, one design function each (python, parrot,
+    toucan, turtle, plesiosaur, manta, jellyfish, octopus, sea star, crab, seahorse) on shared
+    pieces: `Sheet` (views in metres, profiles), `Grid` (ellipsoid, tapered tube `cone`, outline
+    `plate` for wings / flippers / fins / tails), `trace` (a limb's centre line from where it
+    leaves the body) and `finish` (smooth union, surface nets, `decimate` to the `tris` budget,
+    rig weights, pivots, paint, write). Wings and flippers are WING_L / WING_R (flap), back
+    flippers BL / BR, tentacles and arms parts 10+ (the shader sways them; with the species
+    constant `TENTW: 1` they wiggle instead: waves running out along each arm, growing toward
+    the tip, plus a lift and curl, `TENTA` / `TENTK` / `TENTS` — the octopus).
+  - `tools/animals/build.py`: the streamlined swimmers (shark, dolphin, whale, puffer, reef fish)
+    straight from their silhouettes (a fish's outline already is its anatomy), plus the helpers the
+    other two share (`View`, `write`, `fill_bg`, surface nets).
+  - Paint: the side and top views are projected on the model per pixel (critters.js `USE_PROJ`).
+    Parts posed or stretched away from the drawing carry `aPaint`, where the drawing has them
+    (legs stood upright, the python's body repeating the drawn blotches, the upright jellyfish).
+    Model json flags: `wingTop` (wings painted from the top view on both faces) and `sideOnly`.
+    The paint's background is filled from the animal's own colours (`build.py fill_bg`).
+  - Triangle budgets (`tris`): many-instance animals small (sea star 1.6k, jellyfish 4k, crab 5k,
+    reef fish ~2-4k), big ones ~9-12k. Under water all sea life together stays under ~0.8M.
+  - Check a model with a turnaround render (a Playwright probe that hides everything but one
+    species' mesh after every `critters_*` mesh has its `aAnim` attribute, renders side / top /
+    3/4 / front, and once with `aAnim` amount 1 to see it move), next to its sheet.
+  - Fallbacks: `animalmodels.js` + `sculpt.js` (sculpted in a worker, `animalworker.js`) for any
+    model whose files are missing; they must import nothing that needs a page (no three.js).
+    The hanging monkey still uses the sculpted one.
 - Poses are functions of time (loops, circles, drifts; `travelled()` = walk, rest, walk on), so
   nothing is stored or stepped while nobody is near, and animals are where they "would be" when
   you arrive.
@@ -346,7 +373,12 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   (`cameraUnder`, a view hook). Dolphin pods and whales cruise loops found at load in open sea
   (no region within reach), posed only while a camera is within 420 m; dolphins leap, whales
   blow and every third cycle breach (`spray` particles, `splash` / `whale` / `dolphin` sounds).
-  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`).
+  Stats: `game.seaLife` (`cells`, `creatures`, `pods_`; `cellAt(ix, iz)` for probes).
+  Octopuses notice a swimmer over them (within ~5.5 m, bed < 9 m down): one shoots up, sits on the
+  swimmer's head 7-11 s (arms going; `player.octopus` is set and a stepper slows their swimming),
+  then hops off into the water with a splash and jets away in a cloud of ink (`ink`), settling
+  where it lands; 60 s before it grabs again. Swimmers float at the surface, so active octopuses
+  are drawn by `octopusOut`, which is seen from above the water too (the rest only from below).
 - Jungle animals walk loops through clear ground (no village, temple, river, trail, steep or
   volcanic ground) densified with ground heights at load (no terrain queries per frame); only
   those within 170 m of a camera are posed. Crocodiles drift along the river (or bask on the
@@ -355,6 +387,14 @@ it is easy to add something that quietly costs every frame everywhere. Rules:
   makes its sound (`growl`, `monkey`, `grunt`, `squeak`, `hiss`, `snap`, `squawk`; recorded, with
   synth fallbacks in audio.js; plus the `jungle_ambience` bed of birds, frogs and distant monkeys) when a player comes within its `hear` range.
   Stats: `game.jungleAnimals` (`count`, `shown`, `list`).
+  Movement: legs step with the ground covered (`STRIDE` per kind: phase = distance x 2pi / stride),
+  so feet don't skate; the python's slither waves run head to tail with phase = distance x WAVEK,
+  so its curves stay put on the ground as it glides through them. Encounters: a monkey troop
+  comes to play with a player on foot within 12 m (circling, hopping, spinning, chattering; the
+  troop's first one rides on the player's head for a few seconds; back to their round after 30 s
+  or when the player leaves, 45 s cooldown: `monkeyPlay`, state in `a.mk`); tigers, leopards and
+  tapirs stop and turn to watch a player who comes close (`WATCH` radii; their walk is paused,
+  not skipped: `a.tAdj`).
 - New animals elsewhere: same pattern (a species per kind, time-based poses, distance-gated).
 
 ## Stratford Fall Fair (`src/world/fair/`)

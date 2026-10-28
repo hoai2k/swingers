@@ -105,6 +105,8 @@ export function monkey(hang) {
 
 export const monkeyHang = () => monkey(true);
 export const tiger = () => bigCat('tiger');
+export const parrot = () => bird('parrot');
+export const toucan = () => bird('toucan');
 export const leopard = () => bigCat('leopard');
 
 // ---- river hog ------------------------------------------------------------------------------------

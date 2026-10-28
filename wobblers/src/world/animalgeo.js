@@ -28,7 +28,7 @@ function pump() { // main-thread fallback
 
 // Models built from the reference sheets (tools/animals/build.py -> assets/animals/): a mesh
 // and two paint images projected onto it (critters.js Species `proj`).
-export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc']);
+export const SHEET_MODELS = new Set(['shark', 'dolphin', 'whale', 'puffer', 'clownfish', 'blueTang', 'yellowTang', 'moorishIdol', 'tiger', 'leopard', 'monkey', 'hog', 'capybara', 'tapir', 'croc', 'snake', 'parrot', 'toucan', 'turtle', 'plesiosaur', 'manta', 'jelly', 'octopus', 'seaStar', 'crab', 'seahorse']);
 const texLoader = new THREE.TextureLoader();
 async function sheetGeometry(name) {
   const base = 'assets/animals/' + name;
@@ -39,12 +39,20 @@ async function sheetGeometry(name) {
   const nq = new Int8Array(buf, o, n * 3); o += n * 3;
   const part = new Uint8Array(buf, o, n); o += n;
   const wq = new Uint8Array(buf, o, n); o += n;
-  const idx = meta.index32 ? new Uint32Array(buf.slice(o)) : new Uint16Array(buf.slice(o, o + meta.tris * 6));
+  const ib = meta.tris * 3 * (meta.index32 ? 4 : 2);
+  const idx = meta.index32 ? new Uint32Array(buf.slice(o, o + ib)) : new Uint16Array(buf.slice(o, o + ib)); o += ib;
+  // optional: where on the sheet each vertex takes its paint from (limbs posed differently from the drawing)
+  let paint = null;
+  if (meta.paint) {
+    const pq = new Uint16Array(buf.slice(o, o + n * 6)), plo = meta.paint.lo, phi = meta.paint.hi;
+    paint = new Float32Array(n * 3);
+    for (let i = 0; i < n * 3; i++) paint[i] = plo[i % 3] + (pq[i] / 65535) * (phi[i % 3] - plo[i % 3]);
+  }
   const pos = new Float32Array(n * 3), nrm = new Float32Array(n * 3), rigA = new Float32Array(n * 4), w = new Float32Array(n), col = new Float32Array(n * 3).fill(1);
   const PIV = { 1: 'FL', 2: 'FR', 3: 'BL', 4: 'BR', 5: 'TAIL', 6: 'HEAD', 7: 'WING_L', 8: 'WING_R', 9: 'JAW' };
   for (let i = 0; i < n; i++) {
     for (let k = 0; k < 3; k++) { pos[i * 3 + k] = lo[k] + (q[i * 3 + k] / 65535) * (hi[k] - lo[k]); nrm[i * 3 + k] = nq[i * 3 + k] / 127; }
-    const pv = meta.pivots[PIV[part[i]]] || [0, 0, 0];
+    const pv = meta.pivots[part[i] >= 10 ? 'TENT' + (part[i] - 10) : PIV[part[i]]] || [0, 0, 0];
     rigA.set([part[i], pv[0], pv[1], pv[2]], i * 4);
     w[i] = wq[i] / 255;
   }
@@ -54,11 +62,12 @@ async function sheetGeometry(name) {
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   g.setAttribute('aRig', new THREE.BufferAttribute(rigA, 4));
   g.setAttribute('aW', new THREE.BufferAttribute(w, 1));
+  if (paint) g.setAttribute('aPaint', new THREE.BufferAttribute(paint, 3));
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   g.computeBoundingSphere();
   const tex = (f) => new Promise((res) => texLoader.load(f, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
   const [side, top] = await Promise.all([tex(base + '_side.jpg'), tex(base + '_top.jpg')]);
-  g.userData.proj = { side, top, sideBox: meta.proj.side, topBox: meta.proj.top };
+  g.userData.proj = { side, top, sideBox: meta.proj.side, topBox: meta.proj.top, paint: !!paint, wingTop: !!meta.wingTop, sideOnly: !!meta.sideOnly };
   return g;
 }
 

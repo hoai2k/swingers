@@ -15,9 +15,13 @@ import { clamp, rand, TAU } from '../util.js';
 import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
 import { randomWeaponId } from '../weapons.js';
+import { drawSil } from './art.js';
 
 // Insects are a good deal bigger than the spiders: easy to read and to hit.
 export const ENEMY_SCALE = 1.45;
+// ...and they move at this fraction of their nominal speed: they close in
+// warily rather than racing at you from across the board.
+export const ENEMY_PACE = 0.62;
 
 let NEXT = 1;
 
@@ -45,7 +49,7 @@ export class Enemy {
     this.r = C.r * ENEMY_SCALE;   // insects are drawn and hit at this size
     this.wave = wave;
     // gentle difficulty creep: a bit faster and quicker to attack each wave
-    this.agg = 1 + Math.min(0.5, (wave - 1) * 0.03);
+    this.agg = 1 + Math.min(0.3, (wave - 1) * 0.02);
     this.maxHp = C.hp;
     this.hp = C.hp;
     this.alive = true;
@@ -99,7 +103,7 @@ export class Enemy {
     const m = this.r + 20;
     tx = clamp(tx, m, W - m); ty = clamp(ty, m, H - m);
     const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy) || 1;
-    const s = Math.min(speed, d * 3);
+    const s = Math.min(speed * (this.entered ? ENEMY_PACE : 0.85), d * 3);
     const k = Math.min(1, accel * dt);
     this.vx += (dx / d * s - this.vx) * k;
     this.vy += (dy / d * s - this.vy) * k;
@@ -267,8 +271,12 @@ export class Enemy {
   draw(ctx) {
     ctx.save();
     if (this.spawnFade !== undefined && this.spawnFade < 1) ctx.globalAlpha = this.spawnFade;
+    this._spr = null;              // set by drawBug when a sprite frame was drawn
     this.drawBody(ctx);
-    if (this.flash > 0) {
+    if (this.flash > 0 && this._spr) {
+      // hit flash: a white copy of the painted frame
+      drawSil(ctx, this, '#ffffff', this.flash * 0.75);
+    } else if (this.flash > 0) {
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = this.flash * 0.6;
       ctx.fillStyle = '#ffffff';

@@ -1,6 +1,6 @@
 # Wobblers image requests
 
-**Status: all requested images delivered; no open requests.** Rounds 1–16 are delivered; see `image-requests-history.md`.
+**Status: all requested images delivered; no open requests.** Rounds 1–17 are delivered; see `image-requests-history.md`.
 
 ## How delivery works
 

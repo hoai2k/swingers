@@ -68,10 +68,10 @@ export function buildAnimals(game, R) {
   mk('hog', modelGeometry('hog'), 12, { k: { LEG: 0.7 } });
   mk('capybara', modelGeometry('capybara'), 14, { k: { LEG: 0.6 } });
   mk('tapir', modelGeometry('tapir'), 4, { k: { LEG: 0.5 } });
-  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 4.5, WAVEA: 0.16 } });
+  mk('snake', modelGeometry('snake'), 8, { mode: 'slither', k: { WAVEK: 3.9, WAVEA: 0.14 } });
   mk('croc', modelGeometry('croc'), 8, { k: { LEG: 0.5, TAILA: 0.4, JAWA: 0.55 } });
-  mk('parrot', modelGeometry('bird', 'parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
-  mk('toucan', modelGeometry('bird', 'toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
+  mk('parrot', modelGeometry('parrot'), 8, { k: { FLAP: 0.8 }, shadow: false });
+  mk('toucan', modelGeometry('toucan'), 6, { k: { FLAP: 0.8 }, shadow: false });
   const list = Object.values(S);
   (game.buildTimes ||= {}).sculptJungle = Math.round(performance.now() - t0);
 
@@ -178,6 +178,68 @@ export function buildAnimals(game, R) {
     }
   });
 
+  const STRIDE = { tiger: 1.5, leopard: 1.3, monkey: 0.6, hog: 0.7, capybara: 0.6, tapir: 1.1, croc: 0.9 };
+  const WATCH = { tiger: 11, leopard: 10, tapir: 7 };
+  const _np = { x: 0, z: 0, p: null };
+  function nearestPlayer(x, z, r) {
+    let best = r * r, hit = null;
+    for (const p of game.players) {
+      const c = p.chest.translation(), d = (c.x - x) ** 2 + (c.z - z) ** 2;
+      if (d < best) { best = d; hit = p; _np.x = c.x; _np.z = c.z; _np.y = c.y; }
+    }
+    if (!hit) return null;
+    _np.p = hit; return _np;
+  }
+  // Monkeys come and play with a player on foot who walks up to their troop: they gather round,
+  // hop, spin and dance, chattering, and the boldest one jumps on the player's head for a ride;
+  // after half a minute (or when the player leaves) they scamper back to their round.
+  function monkeyPlay(a, t, dt, sp) {
+    const m = a.mk ||= { st: null, x: a.x, z: a.z, i: Math.floor(hash(a.off, 7) * 3), cool: 0 };
+    if (!m.st) {
+      if (t < m.cool) return false;
+      const n = nearestPlayer(a.x, a.z, 12);
+      if (!n || n.p.seat) return false;
+      m.st = 'play'; m.p = n.p; m.t0 = t; m.x = a.x; m.z = a.z;
+      m.ride = !a.path.rider; if (m.ride) a.path.rider = a;              // the troop's first to come over rides
+      game.audio?.play('monkey', { x: a.x, y: n.y, z: a.z });
+    }
+    const p = m.p, c = p.chest.translation(), far = (c.x - m.x) ** 2 + (c.z - m.z) ** 2 > 22 * 22;
+    if (m.st === 'play' && (far || t - m.t0 > 30 || p.seat)) { m.st = 'back'; m.cool = t + 45; m.ride = false; if (a.path.rider === a) a.path.rider = null; }
+    let tx, tz, ty = null, face = null, run = 4;
+    const u = t - m.t0;
+    if (m.st === 'play') {
+      if (m.ride && u > 7 && u < 13) {                     // riding on the player's head
+        const k = Math.min(1, (u - 7) / 0.5), h = Math.sin(Math.min(1, (u - 7) / 0.5) * Math.PI) * 0.8;
+        tx = c.x; tz = c.z; ty = c.y + 0.75 + h * (1 - k);
+        m.x += (tx - m.x) * Math.min(1, dt * 12); m.z += (tz - m.z) * Math.min(1, dt * 12);
+        sp.put(m.x, ty + Math.abs(Math.sin(t * 5)) * 0.05, m.z, p.yaw + Math.sin(t * 2) * 0.5, -0.2, Math.sin(t * 3) * 0.2, a.s * 0.85, t * 2, 0.3);
+        if (u > 12.9) m.ride = false;
+        a.x = m.x; a.z = m.z; return true;
+      }
+      const dir = m.i % 2 ? 1 : -1, ang = m.i * 2.1 + u * 0.55 * dir, r = 1.9 + 0.5 * Math.sin(t * 0.7 + m.i);
+      tx = c.x + Math.sin(ang) * r; tz = c.z + Math.cos(ang) * r; face = [c.x, c.z];
+    } else {
+      const tr = travelled(t - (a.tAdj || 0), a.v, a.walk, a.rest, a.off), o = along(a.path, tr.s - a.back);
+      tx = o.x; tz = o.z; run = 3.2;
+    }
+    const dx = tx - m.x, dz = tz - m.z, dist = Math.hypot(dx, dz), step = Math.min(dist, run * dt);
+    if (dist > 1e-3) { m.x += dx / dist * step; m.z += dz / dist * step; }
+    if (m.st === 'back' && dist < 0.3) { m.st = null; return false; }
+    const g = R.groundAt(m.x, m.z), moving = dist > 0.25;
+    let yaw = moving ? Math.atan2(dx, dz) : Math.atan2(face[0] - m.x, face[1] - m.z), y = g, roll = 0, ph = t * 12, amp = 1;
+    if (m.st === 'play' && !moving) {                       // dancing: hops, a spin now and then, a wiggle
+      const beat = t * 6 + m.i * 1.3;
+      y += Math.abs(Math.sin(beat)) * 0.32;
+      const sp_ = (t * 0.35 + m.i * 0.37) % 1; if (sp_ < 0.12) yaw += (sp_ / 0.12) * Math.PI * 2;
+      roll = Math.sin(beat * 0.5) * 0.25; ph = beat * 1.5;
+      if (hash(Math.floor(t / 3), m.i, a.off) < 0.08 && !m.chat) { m.chat = true; game.audio?.play('monkey', { x: m.x, y: g, z: m.z }, 0.6); }
+      if (hash(Math.floor(t / 3), m.i, a.off) >= 0.08) m.chat = false;
+    } else y += Math.abs(Math.sin(t * 9)) * 0.18;            // bounding
+    sp.put(m.x, y, m.z, yaw, 0, roll, a.s, ph, amp);
+    a.x = m.x; a.z = m.z;
+    return true;
+  }
+
   function pose(a, t) {
     const sp = S[a.kind];
     if (a.fly) { // birds: circles over the canopy, flapping, gliding now and then
@@ -197,13 +259,21 @@ export function buildAnimals(game, R) {
       sp.put(a.x, a.y, a.z, a.yaw, 0, 0, a.s, st ? (t - a.startle) * 30 : t * 0.4 + a.off, 0);
       return;
     }
-    const tr = travelled(t, a.v, a.walk, a.rest, a.off);
+    const dt = Math.min(0.1, Math.max(0, t - (a.lt ?? t))); a.lt = t;
+    if (a.kind === 'monkey' && monkeyPlay(a, t, dt, sp)) return;
+    // big cats and tapirs stop and watch a player who comes close (their walk resumes after)
+    const near = WATCH[a.kind] && nearestPlayer(a.x, a.z, WATCH[a.kind]);
+    if (near) a.tAdj = (a.tAdj || 0) + dt;
+    const tr = travelled(t - (a.tAdj || 0), a.v, a.walk, a.rest, a.off);
     const o = along(a.path, tr.s - a.back);
-    let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = t * (a.v * 5 + 3) + a.off, roll = 0, sc = a.s;
+    // legs step with the ground covered (one stride per cycle), the snake's waves stay put on it
+    let y = o.y, pitch = o.pitch * 0.7, yaw = o.yaw, amp = tr.moving ? 1 : 0, ph = tr.s * 6.283 / (STRIDE[a.kind] || 1) + a.off, roll = 0, sc = a.s;
+    if (a.kind === 'snake') { ph = tr.s * 3.9 + a.off; amp = tr.moving ? 1 : 0.35; if (!tr.moving) ph = tr.s * 3.9 + Math.sin(t * 0.8 + a.off) * 0.6; }
+    if (near) { yaw = Math.atan2(near.x - o.x, near.z - o.z); amp = 0; pitch = 0; }
     // walking side by side in a group
     if (a.side) { const cs = Math.cos(yaw), sn = Math.sin(yaw); o.x += cs * a.side; o.z -= sn * a.side; }
     if (a.swim) { y = SEA_LEVEL - (a.kind === 'croc' ? 0.36 : 0.42) * sc; pitch = 0; amp = 0.4; ph = t * 1.5 + a.off; }
-    else if (!tr.moving) {
+    else if (!tr.moving && a.kind !== 'snake') {
       // resting: big cats lie down, the others look about / root about
       if (a.kind === 'tiger' || a.kind === 'leopard') { const k = Math.min(1, tr.rest * 1.5); y -= 0.32 * k * sc; pitch = 0; }
       if (a.kind === 'capybara') y -= 0.12 * sc;

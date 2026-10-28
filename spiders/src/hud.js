@@ -11,11 +11,25 @@
 //   drawAmmoBar(ctx, spider)                     ammo bar under one spider
 //   drawScoreboard(ctx, game, {compact|big, highlight, stats, title})
 //   drawPanel(ctx, x, y, w, h, {r, fill, stroke, accent})
+//   drawGlyph(ctx, name, x, y, size, color, opts)  a delivered white glyph
+//                                                (assets/web/<name>.png) tinted to color;
+//                                                false while it isn't loaded (draw a fallback)
 
 import { W, H } from './board.js';
 import { FONT, TAU, rgba, clamp } from './util.js';
 import { castAt, drawBody } from './cast.js';
 import { settings } from './settings.js';
+import { preloadSprites, drawSprite, tinted } from './sprites.js';
+
+// white HUD / menu glyphs (image-requests-history.md round 2, F)
+preloadSprites(['hud_heart.png', 'hud_shield.png', 'hud_skull.png', 'hud_crown.png', 'hud_wave.png', 'hud_trophy.png', 'hud_lock.png', 'hud_star.png']);
+
+export function drawGlyph(ctx, name, x, y, size, color, opts = {}) {
+  const file = name.endsWith('.png') ? name : name + '.png';
+  const c = tinted(file, color);
+  if (!c) return false;
+  return drawSprite(ctx, file, x, y, size, { ...opts, canvas: c });
+}
 
 export function text(ctx, str, x, y, { size = 32, color = '#fff', align = 'center', weight = 700, stroke = 'rgba(0,0,0,0.6)', sw = 6, baseline = 'alphabetic', maxWidth } = {}) {
   ctx.font = `${weight} ${size}px ${FONT}`;
@@ -215,6 +229,8 @@ export function drawScoreboard(ctx, game, { compact = false, big = false, highli
       ctx.strokeStyle = rgba(p.color.main, alive ? 0.9 : 0.4); ctx.lineWidth = 2.5; ctx.stroke();
       drawPortrait(ctx, x + 23, 35, 19, p, { dead: !alive });
       text(ctx, `P${p.slot + 1}`, x + 52, 31, { size: 15, color: p.color.main, sw: 3, align: 'left' });
+      // match point: one more round wins it
+      if (target > 1 && scoreOf(p) === target - 1) drawGlyph(ctx, 'hud_trophy', x + pillW - 16, 24, 20, '#ffd23f');
       pips(ctx, x + 58, 45, target, scoreOf(p), p.color.main, { r: target > 7 ? 4 : 5, gap: pipGap });
       ctx.restore();
     });
@@ -245,12 +261,17 @@ export function drawScoreboard(ctx, game, { compact = false, big = false, highli
       text(ctx, `P${p.slot + 1}`, x0 + 104 + r + 18, y + 24, { size: 15, align: 'left', color: '#9aa0c8', stroke: null });
       const pg = target > 7 ? 24 : 32;
       pips(ctx, W / 2 + 10, y, target, scoreOf(p), p.color.main, { r: target > 7 ? 8 : 10, gap: pg });
-      if (stats) text(ctx, `${p.kills} KO · ${p.deaths} falls`, x0 + bw - 34, y + 9, { size: 22, align: 'right', color: '#cfd6ff', stroke: null });
+      if (stats) {
+        text(ctx, `${p.kills} KO · ${p.deaths} falls`, x0 + bw - 34, y + 9, { size: 22, align: 'right', color: '#cfd6ff', stroke: null });
+        // the match winner's trophy
+        if (scoreOf(p) >= target) drawGlyph(ctx, 'hud_trophy', x0 + bw - 236, y, Math.min(44, rowH * 0.7), '#ffd23f');
+      }
     });
   }
 }
 
 export function drawCrown(ctx, x, y, s) {
+  if (drawGlyph(ctx, 'hud_crown', x, y + s * 0.12, s * 2.3, '#ffd23f', { anchor: [0.5, 1] })) return;
   ctx.save();
   ctx.translate(x, y);
   ctx.fillStyle = '#ffd23f';

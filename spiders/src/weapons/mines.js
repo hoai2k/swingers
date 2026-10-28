@@ -9,8 +9,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { drawSprite, preloadSprites } from '../sprites.js';
 import { TAU } from '../util.js';
 import { safeMuzzle, bladeNear } from './kit.js';
+
+preloadSprites(['proj_mine_strip.png']);
 
 const ARM = 0.7, TRIP = 70, LIFE = 30;
 
@@ -123,9 +126,22 @@ export class Mine {
 }
 
 function drawMine(ctx, x, y, rot, t, trip) {
+  const armed = t >= ARM;
+  const on = trip || (t >= 0 && (armed ? Math.sin(t * 9) > 0.3 : Math.sin(t * 30) > 0));
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rot);
+  // the delivered strip: light off / on, sitting on its base (toward +y)
+  if (drawSprite(ctx, 'proj_mine_strip.png', 0, 0, 19, { frame: on ? 1 : 0, of: 2, anchor: [0.5, 0.62] })) {
+    if (on) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = '#ff4a6a';
+      ctx.globalAlpha = trip ? 0.7 : 0.3;
+      ctx.beginPath(); ctx.arc(0, -3, trip ? 14 : 7, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+    return;
+  }
   // flat puck with a dome, sitting on its base (base toward +y = the surface)
   ctx.fillStyle = '#3a3f4c';
   ctx.beginPath(); ctx.roundRect(-8, -1, 16, 5, 2); ctx.fill();
@@ -134,8 +150,6 @@ function drawMine(ctx, x, y, rot, t, trip) {
   ctx.fillStyle = '#ffd23f';
   ctx.fillRect(-7, 2, 3, 2); ctx.fillRect(4, 2, 3, 2);
   // light: dim while arming, blinking once armed, solid when tripped
-  const armed = t >= ARM;
-  const on = trip || (t >= 0 && (armed ? Math.sin(t * 9) > 0.3 : Math.sin(t * 30) > 0));
   ctx.fillStyle = on ? '#ff4a6a' : '#6a2030';
   ctx.beginPath(); ctx.arc(0, -3, 2.2, 0, TAU); ctx.fill();
   if (on) {
@@ -151,8 +165,9 @@ export class Mines extends Weapon {
   static label = 'Stick Mines';
   static kind = 'throwable';
   static ammo = 3;
-  static weight = 0.9;
+  static weight = 0.41;   // guns are rarer than blades
   static color = '#ff4a6a';
+  static art = { hx: 48, hy: 33, s: 0.25 };   // wpn_mines.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -175,6 +190,19 @@ export class Mines extends Weapon {
     this.kick = 6;
     sfx.throwIt();
     if (--this.ammo <= 0) this.empty();
+  }
+
+  // the held sprite: carried flat, feet down, just past the leg tip
+  drawArt(ctx) {
+    ctx.save();
+    ctx.translate(10, 0);
+    const ok = super.drawArt(ctx);
+    ctx.restore();
+    return ok;
+  }
+
+  drawArtOver(ctx) {
+    for (let i = 1; i < Math.min(3, this.ammo); i++) drawSprite(ctx, 'wpn_mines.png', -4 - i * 9, 5, 11);
   }
 
   drawShape(ctx) {

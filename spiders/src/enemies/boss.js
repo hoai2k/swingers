@@ -10,6 +10,7 @@
 
 import { Enemy, wings, eyes, abdomen, legs, antennae } from './base.js';
 import { Bolt, Orb } from './shots.js';
+import { drawBug, flap } from './art.js';
 import { Gnatling, Stinglet } from './insects.js';
 import { sfx } from '../audio.js';
 import { W, H } from '../board.js';
@@ -100,6 +101,7 @@ export class BroodTyrant extends Enemy {
   think(dt) {
     const t = this.target;
     this.st += dt;
+    this.layT = Math.max(0, (this.layT || 0) - dt);
     this.shoveSpiders(300);
     if (t) this.facing = t.x >= this.x ? 1 : -1;
     switch (this.state) {
@@ -154,11 +156,11 @@ export class BroodTyrant extends Enemy {
         this.drag(dt, 5);
         this.move(dt);
         if (t && this.st < 0.7) { const a = this.aimAt(t, 1100, { lead: 0.25, spread: 0.04 }); this.charge.x = a.x; this.charge.y = a.y; }
-        if (this.st > 1.0 / this.rage) { this.state = 'charge'; this.st = 0; sfx.throwIt(); }
+        if (this.st > 1.35 / this.rage) { this.state = 'charge'; this.st = 0; sfx.throwIt(); }
         return;
       }
       case 'charge': {
-        const sp = 1050 * this.rage;
+        const sp = 640 * this.rage;          // a charge you can get out of the way of
         this.vx = this.charge.x * sp; this.vy = this.charge.y * sp;
         this.move(dt, { avoid: false, bounce: 0.2 });
         this.touchSpiders({ amount: 3 });
@@ -199,6 +201,7 @@ export class BroodTyrant extends Enemy {
   summon() {
     const game = this.game;
     const n = this.phase >= 3 ? 2 : 3;
+    this.layT = 0.8;          // egg-laying pose
     sfx.bossRoar();
     for (let i = 0; i < n; i++) {
       const a = rand(0, TAU);
@@ -281,6 +284,27 @@ export class BroodTyrant extends Enemy {
     const enraged = this.phase === 3;
     const dazed = this.state === 'dazed';
     const shake = this.state === 'roar' || this.state === 'chargeUp' ? rand(-3, 3) : 0;
+    // painted queen (rage strip in phase 3): 1-4 flap, 5 roar, 6 charge, 7 dazed, 8 egg-laying
+    const st = this.state;
+    const charging = st === 'charge' || st === 'chargeUp';
+    const frame = st === 'roar' ? 4 : charging ? 5 : dazed ? 6 : this.layT > 0 ? 7 : flap(this, 4, 9);
+    const face = charging ? (this.charge.x >= 0 ? 1 : -1) : this.facing;
+    const rot = st === 'charge' ? Math.max(-0.6, Math.min(0.6, Math.atan2(this.charge.y, Math.abs(this.charge.x) || 1e-3))) : 0;
+    const alpha = this.invuln > 0 ? 0.6 + 0.4 * Math.sin(this.t * 40) : 1;
+    if (drawBug(ctx, this, enraged ? 'boss_tyrant_rage.png' : 'boss_tyrant.png', frame, { x: this.x + shake, face, rot, alpha })) {
+      if (st === 'aim' || st === 'chargeUp') {
+        // eyes flare while it lines up a volley / charge
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const ex = this.x + shake + face * r * (frame === 5 ? 0.85 : 0.05), ey = this.y - r * (frame === 5 ? 0.25 : 0.72);
+        const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, r * 0.45);
+        g.addColorStop(0, enraged ? 'rgba(255,60,40,0.9)' : 'rgba(255,225,80,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(ex, ey, r * 0.45, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+      return;
+    }
     ctx.save();
     ctx.translate(this.x + shake, this.y);
     ctx.scale(this.facing < 0 ? -1 : 1, 1);

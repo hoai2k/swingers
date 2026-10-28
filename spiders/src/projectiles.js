@@ -53,6 +53,7 @@ export class Bullet {
       const hx = this.x + (nx - this.x) * h.t, hy = this.y + (ny - this.y) * h.t;
       game.damage(h.actor, { amount: this.damage, from: this.owner, cause: this.cause, x: hx, y: hy, ix, iy, projectile: this });
       if (this.onHitActor) this.onHitActor(this, h.actor, hx, hy);
+      game.fx.hitSpark(hx, hy, 26 + this.width * 3, this.core);
       if (this.pierce-- <= 0) {
         game.fx.burst(hx, hy, { n: 8, speed: 300, color: this.color, life: 0.2 });
         return false;
@@ -72,6 +73,7 @@ export class Bullet {
         return true;
       }
       game.fx.burst(wall.x, wall.y, { n: 7, speed: 260, color: this.color, life: 0.25, size: 2, dir: Math.atan2(wall.ny, wall.nx), spread: 2.4 });
+      game.fx.hitSpark(wall.x, wall.y, 12 + this.width * 2, this.color, 0.1);
       this.x = wall.x; this.y = wall.y;
       return false;
     }

@@ -19,8 +19,9 @@ export class Glaive extends Saber {
   static label = 'Plasma Glaive';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 0.9;
+  static weight = 1.6;
   static color = '#ffe066';
+  static art = { hx: 66, hy: 31, s: 0.75 };   // the blade grows out of the golden fork
   static blades = [{ from: 74, to: 112 }];
   static chargeThrow = false;      // RT is an instant lunge
 
@@ -148,10 +149,10 @@ export class Glaive extends Saber {
       const c = this.thrower ? this.thrower.color.main : this.color;
       const b = this.constructor.blades[0];
       glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
-      this.drawPole(ctx);
+      if (!this.drawArt(ctx)) this.drawPole(ctx);
       return;
     }
-    this.drawPole(ctx);
+    if (!this.drawArt(ctx)) this.drawPole(ctx);      // pinned in a wall: the unlit pole
     ctx.fillStyle = this.color;
     ctx.globalAlpha *= 0.5;
     ctx.beginPath(); ctx.moveTo(76, -2); ctx.lineTo(100, 0); ctx.lineTo(76, 2); ctx.fill();

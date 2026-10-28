@@ -9,6 +9,7 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { glowLine } from '../fx.js';
+import { tinted, drawSprite } from '../sprites.js';
 import { sfx } from '../audio.js';
 import { angDiff, segSegDist, closestOnSeg, TAU, clamp, lerp, segSeg } from '../util.js';
 
@@ -17,8 +18,9 @@ export class Saber extends Weapon {
   static label = 'Plasma Saber';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 1.3;
+  static weight = 3.4;
   static color = '#4dd2ff';
+  static art = { hx: 117, hy: 24, s: 0.24 };   // hilt only: the emitter collar ends where the blade starts
   static blades = [{ from: 4, to: 92 }];    // along the axis from the grip
   static throwSpeed = 1500;
   static chargeThrow = true;               // hold RT to wind up the throw, release to let fly
@@ -122,6 +124,7 @@ export class Saber extends Weapon {
           const dx = actor.x - (owner ? owner.x : x), dy = actor.y - (owner ? owner.y : y), m = Math.hypot(dx, dy) || 1;
           if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), iy: dy / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), weapon: this, melee: true })) {
             game.fx.burst(c.x, c.y, { n: 14, speed: 500, color: this.bladeColor, life: 0.3 });
+            game.fx.hitSpark(c.x, c.y, 44);
           }
           break;
         }
@@ -152,6 +155,7 @@ export class Saber extends Weapon {
     const cx = (s.x2 + b.x2) / 2, cy = (s.y2 + b.y2) / 2;
     game.fx.burst(cx, cy, { n: 22, speed: 650, color: '#fff6c8', life: 0.35, size: 2.5 });
     game.fx.glow(cx, cy, 60, '#ffffff', 0.12);
+    game.fx.hitSpark(cx, cy, 56, null, 0.18);
     game.fx.shake(4);
     game.hitStop(0.05);
     sfx.clash();
@@ -320,8 +324,29 @@ export class Saber extends Weapon {
       }
       ctx.restore();
     }
+    this.drawSlash(ctx, color);
     for (const s of this.segsAt(this.x, this.y, this.angle)) glowLine(ctx, s.x1, s.y1, s.x2, s.y2, color, 4.5);
     super.draw(ctx);
+  }
+
+  // a fast swing: the crescent slash (fx_slash.png, tinted to the blade)
+  // trailing just behind the blade, over the plasma smear
+  drawSlash(ctx, color) {
+    const sp = Math.abs(this.av);
+    if (sp < 12 || this.on < 0.9 || this.mode) return;
+    const img = tinted('fx_slash.png', color);
+    if (!img) return;
+    const dir = Math.sign(this.av);
+    const b = this.constructor.blades[0];
+    const r = b.from + (b.to - b.from) * 0.72;
+    const back = this.angle - dir * 0.3;            // a little behind the blade
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = clamp((sp - 12) / 14, 0, 1) * 0.9;
+    // its +x runs along the sweep, the bulge faces away from the grip
+    drawSprite(ctx, null, this.x + Math.cos(back) * r, this.y + Math.sin(back) * r, (b.to - b.from) * 1.1,
+      { canvas: img, rot: back + dir * Math.PI / 2, flipY: dir > 0 });
+    ctx.restore();
   }
 
   drawShape(ctx) { this.drawHilt(ctx); }
@@ -333,7 +358,7 @@ export class Saber extends Weapon {
       const c = this.thrower ? this.thrower.color.main : this.color;
       ctx.translate(-this.constructor.throwCenter, 0);
       for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
-      this.drawHilt(ctx);
+      if (!this.drawArt(ctx)) this.drawHilt(ctx);
       return;
     }
     this.drawHilt(ctx);

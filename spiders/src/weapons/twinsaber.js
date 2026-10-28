@@ -18,8 +18,9 @@ export class TwinSaber extends Saber {
   static label = 'Twin Saber';
   static kind = 'melee';
   static ammo = Infinity;
-  static weight = 0.9;
+  static weight = 1.8;
   static color = '#ff5ad1';
+  static art = { hx: 99.5, hy: 23, s: 0.3 };   // staff held at its middle, a collar at each end
   static blades = [{ from: 10, to: 68 }, { from: -10, to: -68 }];
   static throwSpeed = 1250;
   static throwCenter = 0;           // spins about the middle of the staff
@@ -112,11 +113,11 @@ export class TwinSaber extends Saber {
         ctx.restore();
       }
       for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
-      this.drawHilt(ctx);
+      if (!this.drawArt(ctx)) this.drawHilt(ctx);
       return;
     }
     ctx.translate(this.length * 0.4, 0);
-    this.drawHilt(ctx);
+    if (!this.drawArt(ctx)) this.drawHilt(ctx);
     ctx.fillStyle = this.color;
     ctx.globalAlpha *= 0.5;
     ctx.fillRect(13, -1.5, 16, 3);

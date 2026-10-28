@@ -7,8 +7,11 @@
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { sfx } from '../audio.js';
+import { sprite, drawSprite, preloadSprites } from '../sprites.js';
 import { TAU, rand } from '../util.js';
 import { safeMuzzle, unstick } from './kit.js';
+
+preloadSprites(['proj_void.png']);
 
 const PULL_R = 320, WELL_T = 2.0;
 
@@ -101,6 +104,7 @@ export class VoidOrb {
       drawOrb(ctx, x, y, 9, this.age);
       return;
     }
+    const art = sprite('proj_void.png');
     const grow = Math.min(1, this.t / 0.25);
     const end = this.t > WELL_T - 0.3 ? 1 - (this.t - (WELL_T - 0.3)) / 0.3 * 0.6 : 1;
     const R = 26 * grow * end;
@@ -122,7 +126,8 @@ export class VoidOrb {
       ctx.beginPath(); ctx.arc(x, y, R * 2.4, a0 + 0.8, a0 + 1.7); ctx.stroke();
     }
     ctx.restore();
-    // the dark core
+    // the dark core (the swirling orb sprite when delivered)
+    if (art) { drawSprite(ctx, 'proj_void.png', x, y, R * 2.6, { rot: -this.t * 5 }); return; }
     ctx.fillStyle = '#05010c';
     ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.fill();
     ctx.strokeStyle = '#e6d8ff';
@@ -138,6 +143,7 @@ function drawOrb(ctx, x, y, r, t) {
   ctx.globalAlpha = 0.35;
   ctx.beginPath(); ctx.arc(x, y, r * 2, 0, TAU); ctx.fill();
   ctx.restore();
+  if (drawSprite(ctx, 'proj_void.png', x, y, r * 3, { rot: -t * 6 })) return;
   ctx.fillStyle = '#12061f';
   ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
   ctx.strokeStyle = '#c9a8ff'; ctx.lineWidth = 2;
@@ -149,8 +155,9 @@ export class SingularityGun extends Weapon {
   static label = 'Void Lobber';
   static kind = 'special';
   static ammo = 2;
-  static weight = 0.6;
+  static weight = 0.27;   // guns are rarer than blades
   static color = '#9a6bff';
+  static art = { hx: 45, hy: 50, s: 0.25 };   // wpn_singularity.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);

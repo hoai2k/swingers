@@ -29,6 +29,11 @@
     .ui-btn:hover { transform: scale(1.1); background: rgba(255,90,122,.85); border-color: #fff; }
     .ui-btn:active { transform: scale(.94); }
     .ui-btn.off { color: rgba(255,255,255,.55); }
+    /* delivered glyph icons (assets/web/btn_*.png): white with a dark outline */
+    .ui-btn .ui-ico { width: 66%; height: 66%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-drag: none;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+    .ui-btn.off .ui-ico { opacity: .7; }
+    .ui-btn.on { border-color: rgba(90,209,255,.7); }
 
     .ui-layer { position: absolute; inset: 0; z-index: 1; display: none; place-items: center; pointer-events: auto;
       background: radial-gradient(ellipse at center, rgba(10,6,30,.55), rgba(3,2,10,.82)); }

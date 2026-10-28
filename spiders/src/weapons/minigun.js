@@ -19,8 +19,9 @@ export class Minigun extends Weapon {
   static label = 'Hornet Gatling';
   static kind = 'gun';
   static ammo = 110;
-  static weight = 0.9;
+  static weight = 0.41;   // guns are rarer than blades
   static color = '#ffd23f';
+  static art = { hx: 28, hy: 40, s: 0.22 };   // wpn_minigun.png: grip pixel, units per pixel
 
   constructor(game) {
     super(game);
@@ -81,6 +82,25 @@ export class Minigun extends Weapon {
     this.kick = 3;
     sfx.rattle();
     if (--this.ammo <= 0) this.empty();
+  }
+
+  // over the sprite: glints running round the spinning barrels, heat glow
+  drawArtOver(ctx) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 3; i++) {
+      const ph = this.rot + i * (Math.PI * 2 / 3);
+      if (Math.cos(ph) <= 0) continue;
+      ctx.globalAlpha = 0.25 * Math.cos(ph);
+      ctx.fillRect(18, Math.sin(ph) * 2.6 - 0.5, 19, 1);
+    }
+    if (this.heat > 0.05) {
+      ctx.globalAlpha = this.heat * 0.7;
+      ctx.fillStyle = `rgb(255,${120 - this.heat * 80 | 0},40)`;
+      ctx.beginPath(); ctx.roundRect(17, -3.4, 21, 6.8, 2); ctx.fill();
+    }
+    ctx.restore();
   }
 
   drawShape(ctx) {

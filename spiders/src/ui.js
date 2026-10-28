@@ -21,6 +21,7 @@ import { WEAPONS } from './weapons.js';
 import { POOLS, mixValue } from './pool.js';
 import { MODIFIERS } from './modifiers.js';
 import { SQUEEZE_SPEEDS } from './squeeze.js';
+import { preloadSprites, sprite } from './sprites.js';
 
 let currentUI = null;   // the UI instance (sub-pages push onto it)
 const openSub = (makeDef) => { if (currentUI) currentUI.push(makeDef()); };
@@ -38,6 +39,24 @@ export const ICONS = {
   help: svg('<circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.3a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.2 1-1.2 1.9v.6"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
 };
+
+// delivered white glyphs for the corner buttons (image-requests-history.md
+// round 2, F); the SVGs above stay the fallback until (or unless) they load
+const BTN_ART = {
+  full: 'btn_fullscreen.png', unfull: 'btn_fullscreen.png', sound: 'btn_sound.png', soundOff: 'btn_sound_off.png',
+  music: 'btn_music.png', musicOff: 'btn_music_off.png', gear: 'icon_settings.png', help: 'btn_help.png', pause: 'btn_pause.png',
+};
+preloadSprites([...new Set(Object.values(BTN_ART))]);
+ICONS.pause = svg('<path d="M9 5v14M15 5v14"/>');
+// set a corner button's icon (only touches the DOM when it changes)
+function setBtnIcon(b, key) {
+  const img = BTN_ART[key] && sprite(BTN_ART[key]);
+  const want = key + (img ? ':art' : ':svg');
+  if (b.dataset.icon === want) return;
+  b.dataset.icon = want;
+  b.classList.toggle('art', !!img);
+  b.innerHTML = img ? `<img class="ui-ico" src="${img.src}" alt="" draggable="false">` : ICONS[key];
+}
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
 
@@ -220,6 +239,9 @@ export class UI {
       bar.append(b);
       return b;
     };
+    // pause: only shown while a match can be paused (touch players have no Start)
+    this.btnPause = btn('pause', 'Pause', () => { const o = this.game && this.game.overlay; if (o && o.canPause && !this.open) o.openPause(); });
+    this.btnPause.style.display = 'none';
     this.btnFull = btn('fullscreen', 'Fullscreen', () => toggleFullscreen());
     if (!fsEnabled()) this.btnFull.style.display = 'none';
     this.btnSound = btn('sound', 'Sound on/off', () => { setSetting('sound', !settings.sound); if (settings.sound) sfx.uiOk(); });
@@ -249,6 +271,10 @@ export class UI {
       this.idle -= 0.25;
       const show = this.idle > 0 || this.open || this.bar.matches(':hover');
       this.bar.classList.toggle('hidden', !show);
+      const o = this.game && this.game.overlay;
+      const canPause = !!(o && o.inMatch && o.canPause && !this.open);
+      if ((this.btnPause.style.display !== 'none') !== canPause) this.btnPause.style.display = canPause ? '' : 'none';
+      this.refreshButtons();   // swaps in the delivered icons once they load
     }, 250);
   }
 
@@ -260,14 +286,20 @@ export class UI {
 
   poke(t = 2.5) { this.idle = Math.max(this.idle, t); this.bar.classList.remove('hidden'); }
 
-  refresh() {
-    this.btnFull.innerHTML = fsElement() ? ICONS.unfull : ICONS.full;
-    this.btnSound.innerHTML = settings.sound ? ICONS.sound : ICONS.soundOff;
+  refreshButtons() {
+    setBtnIcon(this.btnFull, fsElement() ? 'unfull' : 'full');
+    this.btnFull.classList.toggle('on', !!fsElement());
+    setBtnIcon(this.btnSound, settings.sound ? 'sound' : 'soundOff');
     this.btnSound.classList.toggle('off', !settings.sound);
-    this.btnMusic.innerHTML = settings.music && settings.sound ? ICONS.music : ICONS.musicOff;
+    setBtnIcon(this.btnMusic, settings.music && settings.sound ? 'music' : 'musicOff');
     this.btnMusic.classList.toggle('off', !(settings.music && settings.sound));
-    this.btnSettings.innerHTML = ICONS.gear;
-    this.btnHelp.innerHTML = ICONS.help;
+    setBtnIcon(this.btnSettings, 'gear');
+    setBtnIcon(this.btnHelp, 'help');
+    setBtnIcon(this.btnPause, 'pause');
+  }
+
+  refresh() {
+    this.refreshButtons();
     for (const m of this.stack) this.renderRows(m);
   }
 
