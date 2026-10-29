@@ -5,12 +5,14 @@
 // protection; with no lives left that player is OUT until the stage is
 // cleared. Clearing a stage (its 3rd wave) gives everyone +1 life (cap 5,
 // +1 per Spare Heart; the OUT come back with 1), revives the fallen and
-// offers the perk pick (each player chooses 1 of 3 with the stick + A).
+// offers the team's power-up pick (one card for everyone); then the team
+// moves on to the next board (unless a board was picked in the lobby).
 // Game over when nobody is left standing and nobody has a life to spend.
 //
 // Flow: 'break' (STAGE s · WAVE n/3 banner, weapons restocked) -> 'wave'
 // (insects enter from board.enemySpawns after a warning marker at the edge)
-// -> 'clear' (wave or stage cleared) -> 'perk' (power-up cards, every wave) -> next 'break'.
+// -> 'clear' (wave or stage cleared) -> next 'break'; after a stage's last wave,
+// 'perk' (power-up cards) and a new board come first.
 // The last wave of every 2nd stage is a boss wave (Brood Tyrant + escorts).
 // Everyone down for good: 'lost' (slow motion) -> 'over' (results; A = lobby).
 //
@@ -213,7 +215,11 @@ export class SurvivalMode {
 
   updatePerks(dt) {
     for (const sp of this.game.spiders) if (sp.alive) sp.stun = Math.max(sp.stun, 0.05);
-    if (this.perkPick.update(dt, this.t)) { this.perkPick = null; this.nextWave(); }
+    if (this.perkPick.update(dt, this.t)) {
+      this.perkPick = null;
+      if (this.boardNext) { this.boardNext = false; this.nextBoard(); }
+      this.nextWave();
+    }
   }
 
   teamTakes(P) {
@@ -498,10 +504,42 @@ export class SurvivalMode {
     this.reviveAll();
   }
 
-  // after the stage-clear banner
-  afterStage() { this.startPerks(); }
-  // between waves too: pick a power-up card (Trials skip them)
-  afterWave() { this.startPerks(); }
+  // after the stage-clear banner: the team picks a power-up, then moves on to
+  // the next board
+  afterStage() { this.boardNext = true; this.startPerks(); }
+  // between the waves of a stage: straight on, no cards
+  afterWave() { this.nextWave(); }
+
+  // a new stage is played on a new board (every board once before any
+  // repeats); a board picked in the lobby stays. Lives, perks, modifiers and
+  // the weapon each spider holds come along.
+  nextBoard() {
+    if (this.boardId && this.boardId !== 'random') return;
+    const game = this.game;
+    this.boardsSeen = this.boardsSeen || [];
+    this.boardsSeen.push(game.board.def.id);
+    let pool = BOARDS.filter((b) => !this.boardsSeen.includes(b.id));
+    if (!pool.length) { this.boardsSeen = [game.board.def.id]; pool = BOARDS.filter((b) => b.id !== game.board.def.id); }
+    const def = pick(pool);
+    const held = new Map(game.players.map((p) => [p, p.spider && p.spider.alive && p.spider.weapon ? p.spider.weapon.id : null]));
+    const mods = game.mods;
+    const board = game.loadBoard(def);
+    game.mods = mods;
+    game.music.match(def.music, 'survival');
+    this.drops = new DropSpawner(game, board, this.dropRate);
+    this.setupDrops();
+    this.respawns = []; this.blasts = []; this.pending = []; this.queue = [];
+    this.newBoard = true;
+    const spawns = board.spawns.slice().sort(() => Math.random() - 0.5);
+    game.players.forEach((p, i) => {
+      if (!(p.lives > 0)) return;
+      const [x, y] = spawns[i % spawns.length];
+      const sp = game.spawnSpider(p, x, y, { invuln: 2 });
+      this.applyPerks(sp, true);
+      const id = held.get(p);
+      if (id && !sp.weapon) { const w = game.createWeapon(id); if (w) sp.giveWeapon(w); }
+    });
+  }
 
   // ---- update -----------------------------------------------------------------
   update(dt, realDt) {
@@ -710,9 +748,11 @@ export class SurvivalMode {
 
   breakBanner() {
     const first = this.wave === this.startWave;
+    const moved = !first && this.newBoard && this.waveInStage === 1;
     const boss = this.isBossWave;
     const title = `STAGE ${this.stage} · WAVE ${this.waveInStage}${boss ? ' · BOSS' : ''}`;
-    const sub = boss ? 'The Brood Tyrant approaches' : first ? `${this.game.board.name} — survive the swarm together` : this.introLine();
+    const sub = boss ? 'The Brood Tyrant approaches' : first ? `${this.game.board.name} — survive the swarm together`
+      : moved ? `On to ${this.game.board.name} · ${this.introLine()}` : this.introLine();
     return { title, sub, color: boss ? '#ffb020' : '#5ad1ff' };
   }
 
