@@ -41,7 +41,7 @@ import { UPY, markAt, STANCE, setArmKey, hover, refreshBeam, endBeam } from './g
 import { placeExtra } from './sm-core.js';
 import {
   jk, openDomain, domeMesh, summon, dismiss, switchTeam, onSecret, announce, isA, burntOut, ensureHitHook,
-  markerAt, markerOn, enemyOf,
+  markerAt, markerOn, enemyOf, isJJK,
 } from './jjk-core.js';
 // (no static import of battle.js here: see jjk-core.js; this is battle.js park())
 function park(u) {
@@ -1097,7 +1097,7 @@ const SUMMON = 'jjk_shiki'; // shikigami: not a shop faction (they come from Meg
 const MEGUMI_BUILD = { scale: 1.0, girth: 0.92, legs: 1.04 };
 const units = [
   {
-    id: 'jk_gojo', name: 'Satoru Gojo', faction: 'jjk', side: 'sorcerer', cost: 6000, hp: 900, speed: 5.0,
+    id: 'jk_gojo', name: 'Satoru Gojo', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 6000, hp: 900, speed: 5.0,
     build: { scale: 1.16, girth: 0.86, legs: 1.25, arms: 1.08 },
     weapon: {
       line: 'Hero · Infinity · Red blasts, Blue drags, Hollow Purple erases a line · Domain: Unlimited Void', kind: 'jk_gojo', style: 'jj_pockets', anim: 'jk_flick', item: 'none',
@@ -1113,7 +1113,7 @@ const units = [
     desc: 'The Strongest. Nothing reaches him through Infinity - except in the gaps. "Nah, I\'d win."',
   },
   {
-    id: 'jk_sukuna', name: 'Ryomen Sukuna', faction: 'jjk', side: 'curse', cost: 3300, hp: SK_HP, speed: 4.9,
+    id: 'jk_sukuna', name: 'Ryomen Sukuna', faction: 'jjk_curses', side: 'curse', cost: 3300, hp: SK_HP, speed: 4.9,
     build: { scale: 1.12, girth: 1.0, arms: 1.05, armThick: 1.1 },
     weapon: {
       line: 'Boss · Dismantle and Cleave cut unseen · Fuga fire arrow · Domain: Malevolent Shrine (no barrier)', kind: 'jk_sukuna', style: 'jj_king', anim: 'dual', item: 'none',
@@ -1127,7 +1127,7 @@ const units = [
     desc: 'The King of Curses. Cuts you without moving a finger - and he has fifteen of them. So far.',
   },
   {
-    id: 'jk_megumi', name: 'Megumi Fushiguro', faction: 'jjk', side: 'sorcerer', cost: 1200, hp: 380, speed: 5.1,
+    id: 'jk_megumi', name: 'Megumi Fushiguro', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 1200, hp: 380, speed: 5.1,
     build: MEGUMI_BUILD,
     reserve: [{ type: 'jk_dog_white' }, { type: 'jk_dog_black' }, { type: 'jk_nue' }, { type: 'jk_toad' }, { type: 'jk_elephant' }, { type: 'jk_mahoraga' }],
     weapon: {
@@ -1141,7 +1141,7 @@ const units = [
     desc: 'Ten Shadows: his shikigami climb out of his shadow. If it all goes wrong, there is always the ritual.',
   },
   {
-    id: 'jk_mahoraga', name: 'Mahoraga', faction: 'jjk', side: 'curse', cost: 2600, hp: 1500, speed: 4.7,
+    id: 'jk_mahoraga', name: 'Mahoraga', faction: 'jjk_curses', side: 'curse', cost: 2600, hp: 1500, speed: 4.7,
     build: { scale: 1.75, girth: 1.12, head: 0.95, arms: 1.12, armThick: 1.35, legs: 1.05, mass: 1.3 },
     weapon: {
       line: 'Divine General · Sword of Extermination · adapts: every kind of harm turns the wheel and hurts it less', kind: 'jk_mahoraga', style: 'jk_blade', anim: 'overhead', item: 'jk_exterminate',
@@ -1393,7 +1393,7 @@ function buildHat(kind, r, team, g, H) {
 }
 
 function decorate(def, team, vis, H) {
-  if (def.faction !== 'jjk' && def.faction !== SUMMON) return;
+  if (!isJJK(def.faction) && def.faction !== SUMMON) return;
   const { parts, skel, extraParts } = vis;
   const { mesh, sphere, box, cyl, cone, mat, glow, capsule } = H;
   const tc = tcol(H, team), td = tdark(H, team);

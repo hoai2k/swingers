@@ -37,12 +37,11 @@ import {
 } from './common.js';
 import { UPY, mark, markAt, setArmKey, STANCE } from './ges-core.js';
 import {
-  FACTION, onSecret, announce, enemyOf, isA, burntOut, openDomain, domainAt, domeMesh, summon, dismiss,
+  isJJK, onSecret, announce, enemyOf, isA, burntOut, openDomain, domainAt, domeMesh, summon, dismiss,
 } from './jjk-core.js';
 
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _e = new THREE.Euler();
-const F = FACTION.id;
 const UNI = '#191a24', GOLDB = '#d8b04a', CE = '#5aa8ff';
 export const AML_R = 9; // Authentic Mutual Love's radius (its marker is built at this size)
 
@@ -1000,7 +999,7 @@ for (const k of ['jk_bf', 'jk_fistbf', 'jk_div', 'jk_swap', 'jk_clap', 'jk_reso'
 const STUDENT = { aggro: 0.9, bravery: 0, voice: 1.0, chatter: 0.7 };
 const units = [
   {
-    id: 'jk_yuji', name: 'Yuji Itadori', faction: F, side: 'sorcerer', cost: 430, hp: 520, speed: 6.1,
+    id: 'jk_yuji', name: 'Yuji Itadori', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 430, hp: 520, speed: 6.1,
     build: { scale: 1.02, girth: 1.02, arms: 1.03, armThick: 1.12 },
     weapon: { line: 'Brawler · Divergent Fist hits twice · Black Flash crits', kind: 'jk_yuji', style: 'dual', anim: 'dual', item: 'jk_fist', damage: 30, reach: 1.0, cooldown: 0.62, force: 380, divK: 0.45, flash: 0.12, zone: 0.25, zoneT: 6, rage: 0.15, flashMul: 2.5, flashForce: 1700 },
     look: { skin: '#f2c8a6', hat: 'jk_hair_yuji', top: 'jk_yuji', legs: UNI, accent: '#c8322e' },
@@ -1009,7 +1008,7 @@ const units = [
     desc: 'Inhumanly tough and fast. His punches land twice, and sometimes they flash black.',
   },
   {
-    id: 'jk_todo', name: 'Aoi Todo', faction: F, side: 'sorcerer', cost: 680, hp: 1100, speed: 5.0, face: 1,
+    id: 'jk_todo', name: 'Aoi Todo', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 680, hp: 1100, speed: 5.0, face: 1,
     build: { scale: 1.38, girth: 1.12, head: 0.95, arms: 1.05, armThick: 1.4, mass: 1.35 },
     weapon: { line: 'Brawler · Boogie Woogie: a clap and two units swap places', kind: 'jk_todo', style: 'dual', anim: 'dual', item: 'jk_fist', sweep: true, damage: 52, reach: 1.1, cooldown: 1.0, force: 650, bwRange: 18, bwCD: 7, bwStun: 0.9 },
     look: { skin: '#d9a07a', hat: 'jk_hair_todo', top: 'jk_todo', legs: '#24252e', accent: '#1a1a1e' },
@@ -1018,7 +1017,7 @@ const units = [
     desc: '"What kind of woman is your type?" Claps, and you are somewhere else.',
   },
   {
-    id: 'jk_nobara', name: 'Nobara Kugisaki', faction: F, side: 'sorcerer', cost: 310, hp: 150, speed: 4.8, face: 2,
+    id: 'jk_nobara', name: 'Nobara Kugisaki', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 310, hp: 150, speed: 4.8, face: 2,
     build: { scale: 0.95, girth: 0.92, head: 1.05 },
     weapon: { line: 'Ranged · three nails a blow · Hairpin blows them up · Resonance', kind: 'jk_nobara', style: 'sword', anim: 'overhead', item: 'jk_hammer', damage: 20, speed: 30, range: 21, minRange: 5, cooldown: 2.7, force: 110, spread: 0.035, fan: 0.07, releaseAt: 0.55, windup: 0.75, pin: 14, reso: 40, resoCD: 5.5, resoKeep: 12, resoStun: 0.7 },
     look: { skin: '#f4cdb0', hat: 'jk_hair_nobara', top: 'jk_nobara', legs: '#2a2a38', accent: '#5a3020' },
@@ -1026,7 +1025,7 @@ const units = [
     desc: 'A hammer, a pouch of nails and a straw doll. Nails she hits explode.',
   },
   {
-    id: 'jk_nanami', name: 'Kento Nanami', faction: F, side: 'sorcerer', cost: 400, hp: 520, speed: 4.7,
+    id: 'jk_nanami', name: 'Kento Nanami', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 400, hp: 520, speed: 4.7,
     build: { scale: 1.1, girth: 1.0, legs: 1.06 },
     weapon: { line: 'Melee · Ratio 7:3 crits · Overtime after 30 s: stronger', kind: 'jk_nanami', style: 'jk_cleaver', anim: 'overhead', item: 'jk_cleaver', damage: 52, reach: 1.25, cooldown: 1.0, force: 320, ratio: 0.22, ratioOT: 0.55, ratioMul: 2.0, otAt: 30, otBonus: 0.35 },
     look: { skin: '#f0caa8', hat: 'jk_hair_nanami', top: 'jk_nanami', legs: '#c9b48a', accent: '#5a3a24' },
@@ -1035,7 +1034,7 @@ const units = [
     desc: 'Works by the clock. Hits the 7:3 point. After thirty seconds, he is on overtime.',
   },
   {
-    id: 'jk_maki', name: "Maki Zen'in", faction: F, side: 'sorcerer', cost: 580, hp: 560, speed: 6.5,
+    id: 'jk_maki', name: "Maki Zen'in", faction: 'jjk_sorcerers', side: 'sorcerer', cost: 580, hp: 560, speed: 6.5,
     build: { scale: 1.0, girth: 0.95, legs: 1.05 },
     weapon: { line: 'Melee · no cursed energy (sure-hits miss her) · Split Soul Katana', kind: 'jk_maki', style: 'spear', anim: 'stab', item: 'jk_naginata', damage: 56, reach: 2.0, cooldown: 0.8, force: 360, soul: 0.7, awakeAt: 0.4, awakeHp: 0.8 },
     look: { skin: '#f2cdb2', hat: 'jk_hair_maki', top: 'jk_maki', legs: '#22242c', accent: '#16161a' },
@@ -1044,7 +1043,7 @@ const units = [
     desc: 'No cursed energy at all. Doesn\'t need it. Cursed tools and a lot of anger.',
   },
   {
-    id: 'jk_panda', name: 'Panda', faction: F, side: 'sorcerer', cost: 420, hp: 560, speed: 4.8, face: 2,
+    id: 'jk_panda', name: 'Panda', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 420, hp: 560, speed: 4.8, face: 2,
     build: { scale: 1.25, girth: 1.42, head: 1.6, legs: 0.85, arms: 1.0, armThick: 1.4, mass: 1.2, neck: 0.1 },
     weapon: { line: 'Brawler · knocked out once, the Gorilla Core takes over', kind: 'jk_panda', style: 'dual', anim: 'dual', item: 'jk_fist', damage: 34, reach: 1.0, cooldown: 0.9, force: 600, coreHp: 0.55, drum: 0.6, drumBehind: 0.5 },
     look: { skin: '#f2f0ea', hat: 'jk_panda', top: 'jk_panda', legs: '#1c1c20', accent: '#1c1c20' },
@@ -1053,7 +1052,7 @@ const units = [
     desc: 'Not a panda. Well, mostly a panda. He has a spare core.',
   },
   {
-    id: 'jk_inumaki', name: 'Toge Inumaki', faction: F, side: 'sorcerer', cost: 560, hp: 150, speed: 4.9,
+    id: 'jk_inumaki', name: 'Toge Inumaki', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 560, hp: 150, speed: 4.9,
     build: { scale: 0.96, girth: 0.92, neck: 0.1 },
     weapon: { line: 'Support · Cursed Speech: "Don\'t move!", "Blast away!", rarely "Die"', kind: 'jk_inumaki', style: 'jk_inumaki', anim: 'jk_shout', item: 'none', damage: 22, range: 10, cone: 0.5, cooldown: 5.5, windup: 0.9, releaseAt: 0.5, stopT: 2.0, blastStun: 1.8, selfCost: 5, dieDmg: 140, dieSelf: 0.3, dieMin: 3, dieFirst: 10, dieCD: 30, soreT: 8 },
     look: { skin: '#f2d6c2', hat: 'jk_hair_inumaki', top: 'jk_inumaki', legs: UNI, accent: '#16161a' },
@@ -1061,7 +1060,7 @@ const units = [
     desc: 'Only says onigiri ingredients. Until he says "Don\'t move."',
   },
   {
-    id: 'jk_yuta', name: 'Yuta Okkotsu', faction: F, side: 'sorcerer', cost: 1700, hp: 850, speed: 5.6,
+    id: 'jk_yuta', name: 'Yuta Okkotsu', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 1700, hp: 850, speed: 5.6,
     build: { scale: 1.02, girth: 0.92, legs: 1.04 },
     weapon: { line: 'Special grade · katana, Rika, Copy · Domain: Authentic Mutual Love', kind: 'jk_yuta', style: 'sword', anim: 'overhead', item: 'jk_katana', damage: 58, reach: 1.3, cooldown: 0.85, force: 420,
       copyR: 14, copyCD: 6, copyReso: 35, rikaT: 12, rikaCD: 12, rikaAt: 0.8, fullAt: 0.3, rct: 0.3, domFirst: 8, domCD: 30, domPow: 9, domDur: 6, domTick: 0.8, domDmg: 22, domMin: 3 },
@@ -1324,7 +1323,7 @@ function buildHat(kind, r, team, g, H) {
 }
 
 function decorate(def, team, vis, H) {
-  if (def.faction !== F && def.faction !== 'jjk_summon') return;
+  if (!isJJK(def.faction) && def.faction !== 'jjk_summon') return;
   const id = def.id;
   const { parts, skel } = vis;
   const { mesh, sphere, box, cyl, cone, mat, capsule } = H;

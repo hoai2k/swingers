@@ -1,7 +1,8 @@
 // Jujutsu Kaisen faction: shared core (the characters live in jjk-*.js).
 //
 // What the character files build on:
-//  - the faction (id 'jjk') and the unit id prefix 'jk_'
+//  - the factions (JJK Sorcerers 'jjk_sorcerers', JJK Curses 'jjk_curses': SORCERERS /
+//    CURSES, isJJK) and the unit id prefix 'jk_'
 //  - domains: openDomain() raises a dome where the owner's sure-hit lands on every
 //    enemy inside. A closed domain (the default) has a real barrier: a ring of wall
 //    colliders units can't walk through, units inside stay in (flyers too), and
@@ -31,7 +32,11 @@ let UnitP = null, park = null;
 import('../unit.js').then((m) => { UnitP = m.Unit.prototype; });
 import('../battle.js').then((m) => { park = m.park; });
 
-export const FACTION = { id: 'jjk', name: 'JJK', color: '#2b2f6b' };
+// two shop factions, by the unit's side: the sorcerers (good) and the curses and curse
+// users (evil); everything JJK-wide checks isJJK()
+export const SORCERERS = { id: 'jjk_sorcerers', name: 'JJK Sorcerers', color: '#3a52b8' };
+export const CURSES = { id: 'jjk_curses', name: 'JJK Curses', color: '#8a1c2c' };
+export const isJJK = (faction) => faction === SORCERERS.id || faction === CURSES.id;
 const UPY = new THREE.Vector3(0, 1, 0);
 const _a = new THREE.Vector3(), _b = new THREE.Vector3();
 
@@ -309,7 +314,7 @@ function stepSealed(b) {
 }
 
 register({
-  factions: [FACTION],
+  factions: [SORCERERS, CURSES],
   proj: {
     jk_prison: { g: 0, len: 0, r: 0, life: 1 }, // the Prison Realm cube around a sealed unit
   },
