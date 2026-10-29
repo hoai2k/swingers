@@ -752,6 +752,22 @@ Priced by duel tier like *JJK power levels* (`dev/balance/duel.mjs`, 4-6 duels a
 | Eso / Kuchisake-onna | 420 / 380 | 380 / 600 | B tier: about even with Yuji |
 | Kechizu / Grasshopper Curse | 220 / 140 | 360 / 210 | fodder |
 
+**Villains and Geto's spirits** (later change). Eso and Kechizu were removed; the Rainbow
+Dragon, Kuchisake-onna and the Grasshopper Curse became Geto's summons (not sold), and five
+villains joined the curses, priced by duels (6 per pair) against the B / A tier:
+
+| Unit | Price | Notes |
+|---|---|---|
+| Geto | 700 → **2600** | with the three spirits in his reserve: beats Yuki, Toji, Hakari 6/6, Yuta 5/6, Mahoraga 67%; loses to Sukuna |
+| Shigemo Haruta | 280 | about Nobara level (83% vs her); Miracles save him from up to 3 fatal hits |
+| Jiro Awasaka | 550 | beats Todo 100%, Panda 83%; ~33% vs Yuji, Maki |
+| Reggie Star | 650 | beats Yuji, Kusakabe; 50% vs Panda |
+| Ogi Zen'in | 700 | beats Yuji, Panda, Mei Mei; 50% vs Maki |
+| Ogami | 550 | about Nobara level; the séance Toji lasts 30 s and kills her first |
+
+*Sorcerers vs Curses* no longer adds Fly Heads; with the new roster it's 56% for the sorcerers
+over 8 battles (about 42% over 48 on two seed sets).
+
 Nobody new beats Gojo or Sukuna one on one (Higuruma's Executioner's Sword doesn't one-shot a
 convict worth 3000+: `topCost`).
 

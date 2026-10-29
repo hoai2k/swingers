@@ -20,7 +20,8 @@ import './jjk-students.js'; // JJK: Yuji, Todo, Nobara, Nanami, Maki, Panda, Inu
 import './jjk-strongest.js'; // JJK: Gojo, Sukuna, Megumi (+ shikigami), Mahoraga
 import './jjk-curses.js'; // JJK: Toji, Dagon, Mahito, Jogo, Hanami, Geto, Choso, Hakari, Fly Heads
 import './jjk-sorcerers.js'; // JJK: Ryu, Uro, Kashimo, Higuruma, Yuki, Mei Mei, Kamo, Naoya, Mechamaru, Kusakabe
-import './jjk-spirits.js'; // JJK: Kurourushi, Uraume, Eso, Kechizu, Smallpox Deity, Rainbow Dragon, Finger Bearer, Kuchisake-onna, Grasshopper Curse, Yorozu
+import './jjk-spirits.js'; // JJK: Kurourushi, Uraume, Smallpox Deity, Finger Bearer, Yorozu (+ Geto's spirits: Rainbow Dragon, Kuchisake-onna, Grasshopper Curse)
+import './jjk-villains.js'; // JJK: curse users Shigemo Haruta, Jiro Awasaka, Reggie Star, Ogi Zen'in, Ogami
 import './minecraft.js';
 import './avatar-core.js'; // Avatar: the faction, elemental effects (fire, water, ice, air, earth, lightning)
 import './avatar-fire.js'; // Avatar: the Fire Nation

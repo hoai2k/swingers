@@ -7,16 +7,17 @@
 //    transfigured humans); Self-Embodiment of Perfection (hands everywhere)
 //  - Jogo: Ember Insects, Maximum: Meteor; Coffin of the Iron Mountain (volcanic)
 //  - Hanami: wooden balls, roots out of the ground, a flower field that saps
-//  - Suguru Geto (Kenjaku): Cursed Spirit Manipulation (stored curses come out) and
-//    Maximum: Uzumaki (the curses compressed into one spiral blast)
+//  - Suguru Geto (Kenjaku): Cursed Spirit Manipulation (stored curses come out, and his
+//    named spirits: the Rainbow Dragon, Kuchisake-onna and two Grasshopper Curses, from
+//    jjk-spirits.js) and Maximum: Uzumaki (the curses compressed into one spiral blast)
 //  - Choso: Blood Manipulation - Convergence, Piercing Blood, Supernova
 //  - Kinji Hakari: Idle Death Gamble (pachinko): a JACKPOT makes him all but immortal
 //  - Fly Heads: cheap swarm curses
 // Secrets: Prison Realm (Geto near an enemy Gojo), the Inverted Spear of Heaven cuts
 // through Infinity, Toji cuts a domain open (the sure-hit can't find him), Mahito can't
 // reshape Yuji, Yuji's blows hurt Mahito's soul, Choso meets his little brother.
-// Summons (Geto's curses, Mahito's transfigured humans) are jjk-core reserves of
-// summon-only units (faction 'jjk_summon': no tab, cost 0).
+// Summons (Geto's curses and spirits, Mahito's transfigured humans, Ogami's Séance Toji)
+// are jjk-core reserves of summon-only units (faction 'jjk_summon': no tab, cost 0).
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
 import { register } from '../ext.js';
 import { aimTarget, leapSkill } from '../skills.js';
@@ -189,7 +190,8 @@ const toji = {
   ],
   init(u) {
     ensureHitHook(u);
-    u.jkNoCE = true; u.jkPierce = true;
+    if (u.def.id !== 'jk_toji') u.jkAs = 'jk_toji'; // (Ogami's Séance Toji: secrets know him)
+    u.jkNoCE = true; u.jkPierce = u.def.weapon.item === 'jk_isoh'; // (the Séance Toji came back without the spear)
     u.jkPC = rand(2, 4); u.jkDash = rand(0.3, 1.2); u.jkFl = 0; u.jkCloud = null;
   },
   think(u, dt, c) {
@@ -208,6 +210,7 @@ const toji = {
     const b = u.battle, w = u.def.weapon;
     u.jkDash -= dt; u.jkPC -= dt;
     newVictims(u, (v) => {
+      if (!u.jkPierce) return; // (the Séance Toji: bare fists)
       if (v.jkInfinity) announce(b, 'SECRET: The Inverted Spear of Heaven cuts through Infinity!', v.chestPos, 'toji_inf');
       if (u.jkFl <= 0) markSpin(b, 'jk_cut', v.chestPos, 0.2);
     });
@@ -630,24 +633,39 @@ function stepFields(b, dt) {
 
 // ------------------------------------------------------------------ Suguru Geto (Kenjaku)
 // Cursed Spirit Manipulation: brings out the curses he has swallowed (reserves), two at
-// a time; Maximum: Uzumaki compresses every curse he has out into one spiral blast that
-// ploughs through a line (more curses, more damage). Fights with his fists up close.
+// a time; Maximum: Uzumaki compresses every stored curse he has out into one spiral
+// blast that ploughs through a line (more curses, more damage). His named spirits come
+// out one at a time from a vortex - the Rainbow Dragon first (to hold the line), then
+// Kuchisake-onna, then the two Grasshopper Curses together - and stay out (Uzumaki
+// doesn't take them). When he falls, everything he has out goes back into the vortex.
+// Fights with his fists up close.
+const SPIRITS = ['jk_rainbowdragon', 'jk_kuchisake', 'jk_grasshopper'];
+const SPIRIT_NAME = { jk_rainbowdragon: 'Rainbow Dragon', jk_kuchisake: 'Kuchisake-onna', jk_grasshopper: 'Grasshopper Curses' };
+const spiritLeft = (u, type) => u.battle.units.some((s) => s.reserveOf === u && s.dormant && s.def.id === type);
+const nextSpirit = (u) => SPIRITS.find((t) => spiritLeft(u, t)) || null;
+const GETO_SKILLS = [
+  { key: 'lb', name: 'Release Curses', icon: '👻', cd: (u) => u.jkSum, max: (u) => u.def.weapon.sumCD,
+    ready: (u) => (curses(u).length >= u.def.weapon.sumMax ? 'curses out' : u.battle.units.some((s) => s.reserveOf === u && s.dormant && s.def.id === 'jk_gcurse') ? true : 'none left'),
+    use(u) { u.jkSum = u.def.weapon.sumCD; castPose(u, 'jk_sign', 'summon'); return true; } },
+  { key: 'rb', name: 'Maximum: Uzumaki', icon: '🌀', cd: (u) => u.jkUzu, max: (u) => u.def.weapon.uzuCD,
+    ready: (u) => (burntOut(u) ? 'burnt out' : curses(u).length ? true : 'release curses first'),
+    use(u) { u.jkUzu = u.def.weapon.uzuCD; u.aimAt = aimTarget(u, u.def.weapon.uzuRange, 4); castPose(u, 'jk_push', 'uzumaki'); for (const s of curses(u)) markerAt(u.battle, 'jk_vortex', s.chestPos, 0.6, rand(0, 6)); techBanner(u.battle, 'Maximum: Uzumaki!', u.headPos); return true; } },
+];
+// Y: the next spirit still stored (the button's name says which)
+const spiritSkill = (u) => ({
+  key: 'y', name: nextSpirit(u) ? SPIRIT_NAME[nextSpirit(u)] : 'Spirits', icon: '🐉', cd: (x) => x.jkSpirit, max: (x) => x.def.weapon.spCD,
+  ready: (x) => (nextSpirit(x) ? true : 'all out'),
+  use(x) { const t = nextSpirit(x); if (!t) return false; callSpirit(x, t); return true; },
+});
 const geto = {
   melee: true,
-  init(u) { const w = u.def.weapon; u.jkSum = rand(0.2, 0.6); u.jkUzu = w.uzuFirst; },
+  init(u) { const w = u.def.weapon; u.jkSum = rand(0.2, 0.6); u.jkUzu = w.uzuFirst; u.jkSpirit = w.spFirst * rand(0.8, 1.2); },
   basic: 'Punch',
-  skills: [
-    { key: 'lb', name: 'Release Curses', icon: '👻', cd: (u) => u.jkSum, max: (u) => u.def.weapon.sumCD,
-      ready: (u) => (curses(u).length >= u.def.weapon.sumMax ? 'curses out' : u.battle.units.some((s) => s.reserveOf === u && s.dormant && s.def.id === 'jk_gcurse') ? true : 'none left'),
-      use(u) { u.jkSum = u.def.weapon.sumCD; castPose(u, 'jk_sign', 'summon'); return true; } },
-    { key: 'rb', name: 'Maximum: Uzumaki', icon: '🌀', cd: (u) => u.jkUzu, max: (u) => u.def.weapon.uzuCD,
-      ready: (u) => (burntOut(u) ? 'burnt out' : curses(u).length ? true : 'release curses first'),
-      use(u) { u.jkUzu = u.def.weapon.uzuCD; u.aimAt = aimTarget(u, u.def.weapon.uzuRange, 4); castPose(u, 'jk_push', 'uzumaki'); for (const s of curses(u)) markerAt(u.battle, 'jk_vortex', s.chestPos, 0.6, rand(0, 6)); techBanner(u.battle, 'Maximum: Uzumaki!', u.headPos); return true; } },
-  ],
+  skills: (u) => [...GETO_SKILLS, spiritSkill(u)],
   think(u, dt, c) {
     const w = u.def.weapon, { t, dist, gap, dirx, dirz, spd } = c;
     u.expr = gap < 5 ? EXPR.angry : EXPR.normal;
-    const out = curses(u).length;
+    const out = curses(u).length || spiritsOut(u);
     // hang back behind his curses, step in to punch whatever reaches him
     const keep = out ? w.keep : 1.0;
     if (gap > keep) u.desired.set(dirx * spd * (out ? 0.7 : 1), 0, dirz * spd * (out ? 0.7 : 1));
@@ -656,11 +674,11 @@ const geto = {
     if (u.st.attack) u.desired.multiplyScalar(0.35);
     return t;
   },
-  event(u, t0, t1) { castEvent(u, t0, t1, { summon: releaseCurses, uzumaki: uzumaki }); },
+  event(u, t0, t1) { castEvent(u, t0, t1, { summon: releaseCurses, uzumaki: uzumaki, spirit: (x) => releaseSpirit(x, x.jkSpType) }); },
   step(u, dt) {
     const b = u.battle, w = u.def.weapon;
     if (!u.st.attack) u.jkCast = null;
-    u.jkSum -= dt; u.jkUzu -= dt;
+    u.jkSum -= dt; u.jkUzu -= dt; u.jkSpirit -= dt;
     if (u.control || u.st.attack || u.stun > 0.3 || b.over || u.isDown()) return;
     const out = curses(u), left = b.units.filter((s) => s.reserveOf === u && s.dormant && s.def.id === 'jk_gcurse').length;
     const tgt = u.target && u.target.alive ? u.target : null;
@@ -672,12 +690,51 @@ const geto = {
       techBanner(b, 'Maximum: Uzumaki!', u.headPos);
       return;
     }
+    const sp = nextSpirit(u);
+    if (u.jkSpirit <= 0 && sp && tgt && flat(tgt.pos, u.pos) < w.sumRange) { callSpirit(u, sp); return; }
     if (u.jkSum <= 0 && out.length < w.sumMax && left > 0 && tgt && flat(tgt.pos, u.pos) < w.sumRange) {
       u.jkSum = w.sumCD;
       castPose(u, 'jk_sign', 'summon');
     }
   },
+  // his curses and spirits go back into the vortex with him
+  die(u) {
+    const b = u.battle;
+    for (const s of b.units) {
+      if (s.reserveOf !== u || !s.alive || s.dormant) continue;
+      _p.copy(s.pos); _p.y = b.terrain.height(_p.x, _p.z) + 0.05;
+      markerAt(b, 'jk_vortex', _p, 0.8, rand(0, 6));
+      dismiss(b, s);
+    }
+  },
 };
+const spiritsOut = (u) => u.battle.units.filter((s) => s.reserveOf === u && !s.dormant && s.alive && SPIRITS.includes(s.def.id)).length;
+function callSpirit(u, type) {
+  u.jkSpirit = u.def.weapon.spCD;
+  u.jkSpType = type;
+  castPose(u, 'jk_sign', 'spirit');
+  techBanner(u.battle, `Cursed Spirit Manipulation: ${SPIRIT_NAME[type]}!`, u.headPos, 2);
+}
+// a named spirit (both Grasshopper Curses at once) out of a vortex in front of him
+function releaseSpirit(u, type) {
+  const b = u.battle, fx = Math.sin(u.heading), fz = Math.cos(u.heading);
+  const n = type === 'jk_grasshopper' ? 2 : 1, fwd = type === 'jk_rainbowdragon' ? 3.0 : 2.0;
+  let k = 0;
+  for (let i = 0; i < n; i++) {
+    const sd = n > 1 ? (i ? 1 : -1) * 1.3 : 0;
+    _p.set(u.pos.x + fx * fwd - fz * sd, 0, u.pos.z + fz * fwd + fx * sd);
+    _p.y = b.terrain.height(_p.x, _p.z);
+    const s = summon(b, u, type, _p, u.heading);
+    if (!s) break;
+    k++;
+    markerAt(b, 'jk_vortex', _p.clone().setY(_p.y + 0.05), 1.2, rand(0, 6));
+    s.stun = 0.3;
+  }
+  if (!k) return;
+  b.sound('magic', u.chestPos, 0.9, 0.45);
+  b.sound('whoosh', u.chestPos, 0.9, 0.35);
+  if (Math.random() < 0.6) b.voice(u, 'cackle', true);
+}
 const curses = (u) => u.battle.units.filter((s) => s.reserveOf === u && !s.dormant && s.alive && s.def.id === 'jk_gcurse');
 function releaseCurses(u) {
   const b = u.battle, w = u.def.weapon, fx = Math.sin(u.heading), fz = Math.cos(u.heading);
@@ -933,13 +990,13 @@ onSecret((b, dt) => {
     }
     // Toji in (or at the wall of) an enemy domain: the sure-hit can't find him, and the
     // Inverted Spear of Heaven cuts the barrier open
-    if (id === 'jk_toji') {
+    if (u.def.weapon.kind === 'jk_toji') {
       let dom = null;
       for (const d of jk(b).domains) if (d.team !== u.team && flat(u.pos, d.pos) < d.R + (d.barrier ? 1.2 : 0)) { dom = d; break; }
       if (!dom) { u.jkCutT = 0; continue; }
       if (flat(u.pos, dom.pos) < dom.R) announce(b, "SECRET: Heavenly Restriction - the sure-hit can't find Toji!", u.headPos, 'toji_ce');
       u.jkCutT = (u.jkCutT || 0) + dt;
-      if (u.jkCutT > u.def.weapon.cutT && dom.barrier && u.stun <= 0) {
+      if (u.jkCutT > u.def.weapon.cutT && dom.barrier && u.stun <= 0 && u.jkPierce) {
         u.jkCutT = 0;
         const dagonDom = dom.owner.def.id === 'jk_dagon';
         announce(b, dagonDom ? "SECRET: Toji crashes Dagon's beach!" : `SECRET: The Inverted Spear of Heaven cuts ${dom.name} open!`, u.headPos);
@@ -1123,16 +1180,16 @@ const units = [
     desc: 'A curse of the forest. Calm, polite, and made of very hard wood.',
   },
   {
-    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: 'jjk_curses', side: 'curse', cost: 700, hp: 650, speed: 4.7,
+    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: 'jjk_curses', side: 'curse', cost: 2600, hp: 650, speed: 4.7,
     build: { scale: 1.08, girth: 0.98, legs: 1.05 },
     weapon: {
-      line: 'Summoner · Cursed Spirit Manipulation releases his stored curses · Maximum: Uzumaki',
+      line: 'Summoner · Cursed Spirit Manipulation: stored curses, the Rainbow Dragon, Kuchisake-onna, Grasshopper Curses · Maximum: Uzumaki',
       kind: 'jk_geto', style: 'jk_sleeves', anim: 'punch', item: 'jk_palm', damage: 30, reach: 0.9, cooldown: 0.9, force: 300, keep: 6,
-      sumCD: 3.5, sumN: 2, sumMax: 4, sumRange: 26,
+      sumCD: 4.5, sumN: 2, sumMax: 2, sumRange: 26, spCD: 7, spFirst: 1.5,
       uzuCD: 14, uzuFirst: 9, uzuMin: 2, uzuRange: 16, uzuSpeed: 15, uzuDmg: 70, uzuPer: 35, uzuForce: 1100,
       prisonR: 10, prisonT: 15,
     },
-    reserve: [{ type: 'jk_gcurse', n: 6 }],
+    reserve: [{ type: 'jk_gcurse', n: 2 }, { type: 'jk_rainbowdragon' }, { type: 'jk_kuchisake' }, { type: 'jk_grasshopper', n: 2 }],
     look: { skin: '#eccaaa', hat: 'jk_geto_hair', top: 'jk_geto', legs: '#1c1c24', accent: '#141418' },
     personality: { aggro: 0.5, bravery: 0, voice: 0.95, chatter: 0.7, cry: 'royal', idle: 'regal' },
     stagger: 0.7,
@@ -1193,6 +1250,18 @@ const units = [
     desc: 'It used to be somebody.',
   },
 ];
+// Ogami's Séance (jjk-villains.js): Toji's flesh called down onto her grandson - Toji's
+// kit and look, a summon. He came back without the Inverted Spear of Heaven (as in
+// Shibuya): bare fists and the Playful Cloud, so he doesn't cut through Infinity.
+{
+  const { side, ...TOJI } = units.find((d) => d.id === 'jk_toji'); void side;
+  units.push({
+    ...TOJI, id: 'jk_toji_seance', name: 'Toji Fushiguro (Séance)', faction: SUMMON, cost: 0,
+    look: { ...TOJI.look, top: 'jk_toji_seance' },
+    weapon: { ...TOJI.weapon, style: 'fists', anim: 'punch', item: 'jk_fist', damage: 50, reach: 1.0, cooldown: 0.55, force: 400, line: "Summon · Ogami's Séance: Toji's body takes over her grandson · fists and the Playful Cloud · no cursed energy" },
+    desc: 'Called down by Ogami onto her grandson. Then the body remembered who it was.',
+  });
+}
 
 // ------------------------------------------------------------------ visuals
 // spiky hair: n cones from the scalp (fanned over the top and back of the head)
@@ -1229,6 +1298,18 @@ function stitches(H, g, a, b, w, m, ticks = 4) {
   for (let i = 0; i < ticks; i++) {
     const p = A.clone().lerp(B, (i + 0.5) / ticks);
     const t = H.mesh(H.box(w * 0.8, w * 3.2, w * 0.6), m, p.x, p.y, p.z, g); t.quaternion.copy(q);
+  }
+}
+// stitches round the head at height y (head radii) from x0 to x1: segments that follow
+// the skull, with cross ticks
+function arcStitches(H, g, r, y, x0, x1, w, m, n = 8) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) pts.push(new THREE.Vector3(...onHead(r, x0 + (x1 - x0) * (i / n), y, 1.025)));
+  for (let i = 0; i < n; i++) {
+    const A = pts[i], B = pts[i + 1], d = B.clone().sub(A), L = d.length(), mid = A.clone().add(B).multiplyScalar(0.5);
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), d.normalize());
+    H.mesh(H.box(L * 1.05, w, w * 0.6), m, mid.x, mid.y, mid.z, g).quaternion.copy(q);
+    H.mesh(H.box(w * 0.8, w * 3.4, w * 0.6), m, mid.x, mid.y, mid.z, g).quaternion.copy(q);
   }
 }
 // a point on the head sphere (unit-frame direction), for face details
@@ -1377,32 +1458,40 @@ function buildHat(kind, r, team, g, H) {
       mesh(box(r * 0.4, r * 0.04, r * 0.04), ink, mp[0], mp[1], mp[2], g);
       return true;
     }
-    case 'jk_geto_hair': { // black hair in a bun, one long lock hanging over the brow, stitches across the forehead, big earrings
-      const hair = mat('#16141a', { spec: 0.25 });
-      hairCap(H, g, r, hair, 1.07, 0.38, -0.3);
-      const bun = mesh(sphere(r * 0.42, 12, 10), hair, 0, r * 0.82, -r * 0.6, g); bun.scale.set(1.1, 0.9, 1);
-      mesh(cyl(r * 0.2, r * 0.3, r * 0.2, 10), hair, 0, r * 0.62, -r * 0.45, g).rotation.x = -0.9;
-      mesh(torus(H, r * 0.22, r * 0.05, Math.PI * 2, 10), tc, 0, r * 0.68, -r * 0.52, g).rotation.x = 0.7; // team hair tie
-      // the long fringe lock on his right, down past the eye
-      mesh(tube(H, 'gt' + r.toFixed(3), [[-r * 0.2, r * 0.85, r * 0.55], [-r * 0.45, r * 0.55, r * 0.95], [-r * 0.55, r * 0.0, r * 1.0], [-r * 0.6, -r * 0.45, r * 0.85]], r * 0.13, r * 0.05, 10), hair, 0, 0, 0, g);
-      // Kenjaku's stitches across the forehead
-      stitches(H, g, onHead(r, -0.62, 0.5, 1.03), onHead(r, 0.62, 0.5, 1.03), r * 0.04, mat('#5a1e22'), 7);
+    case 'jk_geto_hair': { // long black hair: the top half tied up in a bun, the rest loose to the shoulders; the long bang over his brow; Kenjaku's stitches across the forehead; stretched lobes with big plugs
+      const hair = mat('#16141a', { spec: 0.3 });
+      hairCap(H, g, r, hair, 1.07, 0.4, -0.3);
+      // the half-up bun on the crown, and its tie
+      const bun = mesh(sphere(r * 0.4, 14, 10), hair, 0, r * 0.98, -r * 0.42, g); bun.scale.set(1.15, 0.85, 1.0);
+      mesh(sphere(r * 0.22, 10, 8), hair, 0, r * 1.18, -r * 0.4, g);
+      mesh(torus(H, r * 0.24, r * 0.05, Math.PI * 2, 12), tc, 0, r * 0.84, -r * 0.42, g).rotation.x = Math.PI / 2 - 0.4; // team hair tie
+      // the lower half hangs loose behind, past the nape to the shoulders
+      const back = mesh(sphere(r * 1.1, 16, 12), hair, 0, -r * 0.3, -r * 0.32, g); back.scale.set(1.05, 1.3, 0.8);
+      for (const sd of [-1, 1]) for (const [x, z, L] of [[0.82, -0.15, 1.35], [0.6, -0.55, 1.55], [0.25, -0.8, 1.6]]) lock(H, g, hair, [sd * x * r, -r * 0.2, z * r], [sd * 0.12, -1, -0.12], r * 0.24, r * L);
+      for (const sd of [-1, 1]) lock(H, g, hair, onHead(r, sd * 0.86, 0.3, 1.0), [sd * 0.15, -1, -0.05], r * 0.16, r * 0.8); // locks in front of the ears
+      // the long bang on his right, curving down past the eye
+      mesh(tube(H, 'gt' + r.toFixed(3), [[-r * 0.1, r * 0.95, r * 0.45], [-r * 0.38, r * 0.62, r * 0.98], [-r * 0.5, r * 0.05, r * 1.04], [-r * 0.42, -r * 0.5, r * 0.92]], r * 0.14, r * 0.05, 12), hair, 0, 0, 0, g);
+      // Kenjaku's stitches: a seam right across the forehead, following the skull
+      arcStitches(H, g, r, 0.47, -0.66, 0.66, r * 0.045, mat('#2a0e12'), 9);
       for (const sd of [-1, 1]) { // stretched lobes with big plugs
         const e = mesh(cyl(r * 0.16, r * 0.16, r * 0.06, 12), mat('#1a1a1a', { spec: 0.6 }), sd * r * 1.0, -r * 0.18, -r * 0.02, g); e.rotation.z = Math.PI / 2;
         mesh(torus(H, r * 0.16, r * 0.035, Math.PI * 2, 12), mat('#c8a040', { spec: 1 }), sd * r * 1.02, -r * 0.18, -r * 0.02, g).rotation.y = Math.PI / 2;
       }
       return true;
     }
-    case 'jk_choso_hair': { // black hair tied into two spiky tufts, the dark band across his nose
-      const hair = mat('#141216', { spec: 0.2 });
-      hairCap(H, g, r, hair, 1.07, 0.38, -0.3);
+    case 'jk_choso_hair': { // black hair tied up in two short spiky tufts on top, a ragged fringe; the dark line across the bridge of his nose
+      const hair = mat('#141216', { spec: 0.25 });
+      hairCap(H, g, r, hair, 1.07, 0.4, -0.25);
+      const nape = mesh(sphere(r * 1.06, 14, 10), hair, 0, r * 0.05, -r * 0.22, g); nape.scale.set(1.02, 0.95, 0.85); // short at the back
       for (const sd of [-1, 1]) {
-        mesh(cyl(r * 0.14, r * 0.14, r * 0.1, 10), mat('#2a1a22'), sd * r * 0.55, r * 0.95, -r * 0.05, g).rotation.z = sd * 0.5; // the ties
-        for (const [dx, dy, dz, L] of [[0.55, 1, 0, 0.75], [0.8, 0.7, -0.2, 0.6], [0.4, 1, -0.4, 0.62], [0.9, 0.9, 0.3, 0.5]]) lock(H, g, hair, [sd * r * 0.58, r * 1.0, -r * 0.05], [sd * dx, dy, dz], r * 0.14, r * L);
+        const at = [sd * r * 0.48, r * 0.98, -r * 0.12];
+        const tie = mesh(cyl(r * 0.15, r * 0.17, r * 0.12, 10), mat('#3a1a2a'), at[0], at[1] - r * 0.05, at[2], g); tie.rotation.z = sd * 0.55;
+        // the tuft: thick spikes fanning up and out from the tie
+        for (const [dx, dy, dz, L, k] of [[0.55, 1, 0.05, 0.85, 0.2], [0.9, 0.6, -0.1, 0.7, 0.17], [0.35, 1, -0.45, 0.72, 0.17], [0.75, 0.9, 0.4, 0.62, 0.15], [0.2, 1, 0.3, 0.6, 0.14], [1, 0.3, -0.35, 0.55, 0.14]]) lock(H, g, hair, at, [sd * dx, dy, dz], r * k, r * L);
       }
-      for (const [x, L] of [[-0.3, 0.4], [0.0, 0.45], [0.3, 0.4]]) lock(H, g, hair, onHead(r, x, 0.66, 1.02), [x * 0.4, -1, 0.5], r * 0.15, r * L);
-      // the band across the bridge of the nose (Death Painting blood)
-      mesh(box(r * 1.15, r * 0.13, r * 0.3), mat('#3a0e1c'), 0, -r * 0.03, r * 0.98, g);
+      for (const [x, L, a] of [[-0.42, 0.42, 0.25], [-0.15, 0.5, 0.05], [0.15, 0.48, -0.08], [0.42, 0.4, -0.25], [-0.68, 0.45, 0.4], [0.68, 0.45, -0.4]]) lock(H, g, hair, onHead(r, x, 0.62, 1.02), [a, -1, 0.45], r * 0.15, r * L); // ragged fringe
+      // the dark stripe across the bridge of the nose, cheek to cheek, following the face
+      mesh(H.geo('ch-nose' + r.toFixed(3), () => new THREE.CylinderGeometry(r * 1.02, r * 1.02, r * 0.09, 20, 1, true, -1.15, 2.3)), mat('#1c0a12'), 0, -r * 0.09, 0, g);
       return true;
     }
     case 'jk_hakari_hair': { // a big swept-up pompadour, short sides, hoop earrings
@@ -1494,7 +1583,7 @@ function decorate(def, team, vis, H) {
   const skirt = (m, top0, bot, len) => mesh(cyl(pel.r * top0, pel.r * bot, pel.r * len, 16), m, 0, -pel.r * len * 0.42, 0, P);
   const belt = (m, y = -hh - r * 0.38, k = 1.12) => mesh(cyl(r * k, r * (k + 0.02), r * 0.2, 16), m, 0, y, 0, C);
 
-  if (top === 'jk_toji') {
+  if (top === 'jk_toji' || top === 'jk_toji_seance') {
     // black tight shirt with short sleeves, bare forearms (team wristbands), a dark belt
     // knotted in front, baggy white trousers gathered at the ankle, and the Inventory
     // Curse wound round him with its head on his left shoulder
@@ -1513,7 +1602,10 @@ function decorate(def, team, vis, H) {
       const b = mesh(sphere(sp.r * 2.0, 12, 10), pants, 0, -L * 0.05, sp.r * 0.15, parts[p]); b.scale.set(1, 1.75, 1.05); // the balloon of the leg
       mesh(cyl(sp.r * 1.3, sp.r * 1.25, L * 0.12, 12), pants, 0, -L * 0.36, 0, parts[p]); // gathered at the ankle
     }
-    // the Inventory Curse: a fat purple worm wound round his neck and body
+  }
+  if (top === 'jk_toji') {
+    // the Inventory Curse: a fat purple worm wound round his neck and body (not on the
+    // Séance Toji: he came back without it)
     const worm = mat('#6e3e7e', { spec: 0.3 }), belly = mat('#8e5a9a', { spec: 0.3 });
     // (from its head on the left shoulder, behind the neck, over the right shoulder,
     // across the chest to the left hip, round the back and out at the right hip)
@@ -1598,39 +1690,50 @@ function decorate(def, team, vis, H) {
     mesh(cyl(pel.r * 1.52, pel.r * 1.52, pel.r * 0.18, 16), tc, 0, -pel.r * 1.92, 0, P);
   }
   if (top === 'jk_geto') {
-    // a black monk's robe with wide sleeves; the kesa (patched gold-brown cloth) slung
-    // over his left shoulder; a team cord at the waist
-    const robe = mat('#1e1e26', { spec: 0.15 }), kesa = mat('#c49a3e', { spec: 0.3 }), kline = mat('#8a6a2a');
+    // a black kosode with wide sleeves under the monk's kesa: a broad band of patched
+    // gold-ochre cloth slung over his left shoulder and under his right arm (front and back),
+    // panelled with darker seams, a gold ring where it crosses his chest; wide black
+    // hakama; a team cord at the waist
+    const robe = mat('#1c1c22', { spec: 0.15 }), kesa = mat('#c49a3e', { spec: 0.3 }), kline = mat('#7a5a22', { spec: 0.2 });
     chestShell(H, ch, robe, C);
     mesh(cyl(r * 0.55, r * 0.66, r * 0.3, 14), robe, 0, hh + r * 0.58, 0, C);
-    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.16, (hh + r) * 1.15, r * 0.05), mat('#3a3a46'), sd * r * 0.28, hh * 0.4, r * 1.05, C); l.rotation.z = -sd * 0.35; }
-    for (const sgn of [1, -1]) { // front and back of the kesa, from the left shoulder down to the right hip
-      const k = mesh(box(r * 0.55, (hh + r) * 2.15, r * 0.06), kesa, r * 0.1, -hh * 0.05, sgn * r * 1.07, C); k.rotation.z = sgn * 0.6;
-      for (let i = -2; i <= 2; i++) { const l = mesh(box(r * 0.58, r * 0.03, r * 0.065), kline, r * 0.1 - Math.sin(0.6) * i * r * 0.4 * sgn, -hh * 0.05 + Math.cos(0.6) * i * r * 0.4, sgn * r * 1.08, C); l.rotation.z = sgn * 0.6; }
-      const l2 = mesh(box(r * 0.03, (hh + r) * 2.1, r * 0.065), kline, r * 0.1, -hh * 0.05, sgn * r * 1.09, C); l2.rotation.z = sgn * 0.6;
+    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.14, (hh + r) * 1.1, r * 0.05), mat('#34343e'), sd * r * 0.25, hh * 0.4, r * 1.06, C); l.rotation.z = -sd * 0.38; } // the kosode's collar
+    // the kesa: an elliptical band round the torso, tilted from the left shoulder to the right hip
+    const kg = new THREE.Group(); kg.position.set(0, hh * 0.2, 0); kg.rotation.z = 0.92; C.add(kg);
+    const RX = r * 1.5, RZ = r * 1.14, KH = r * 0.85;
+    const ring = () => H.geo('gk-ring', () => new THREE.CylinderGeometry(1, 1, 1, 32, 1, true));
+    mesh(ring(), kesa, 0, 0, 0, kg).scale.set(RX, KH, RZ);
+    for (const y of [-0.5, 0.5]) mesh(ring(), kline, 0, y * KH, 0, kg).scale.set(RX * 1.01, r * 0.06, RZ * 1.01);
+    mesh(ring(), kline, 0, 0, 0, kg).scale.set(RX * 1.01, r * 0.03, RZ * 1.01);
+    for (let i = 0; i < 12; i++) { // the panel seams across the band
+      const a = (i / 12) * Math.PI * 2 + 0.13, x = Math.sin(a) * RX * 1.01, z = Math.cos(a) * RZ * 1.01;
+      const sm = mesh(box(r * 0.035, KH, r * 0.035), kline, x, 0, z, kg); sm.rotation.y = Math.atan2(Math.sin(a) * RZ, Math.cos(a) * RX);
     }
-    mesh(torus(H, r * 0.16, r * 0.04, Math.PI * 2, 12), mat('#d8b860', { spec: 1 }), r * 0.55, hh * 0.65, r * 1.1, C); // the kesa ring
+    mesh(torus(H, r * 0.17, r * 0.045, Math.PI * 2, 14), mat('#e0c060', { spec: 1 }), Math.sin(0.5) * RX, 0, Math.cos(0.5) * RZ + r * 0.04, kg).rotation.y = 0.35; // the kesa ring
     belt(tc, -hh - r * 0.38, 1.13);
     for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); cover(p, robe, 1.2, 1); mesh(cyl(sp.r * 1.4, sp.r * 2.2, sp.hh * 2.0, 10), robe, 0, -sp.hh * 0.2, 0, parts[p]); }
     for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 2.0, sp.r * 2.5, sp.hh * 1.5, 10), robe, 0, sp.hh * 0.2, 0, parts[p]); }
-    skirt(robe, 1.15, 1.8, 2.7);
+    skirt(robe, 1.15, 1.85, 2.7);
   }
   if (top === 'jk_choso') {
-    // a pale robe top with a dark purple overlap and sash, dark trousers, blood rings at the wrists
-    const robe = mat('#e9e3d8', { spec: 0.1 }), plum = mat('#3e2a44'), blood = glow('#c0102a');
-    chestShell(H, ch, robe, C);
-    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.35, (hh + r) * 1.2, r * 0.05), plum, sd * r * 0.32, hh * 0.3, r * 1.05, C); l.rotation.z = -sd * 0.38; }
-    mesh(cyl(r * 0.58, r * 0.64, r * 0.25, 14), plum, 0, hh + r * 0.58, 0, C);
-    belt(plum, -hh - r * 0.36, 1.14);
-    mesh(box(r * 0.3, r * 0.2, r * 0.08), tc, r * 0.4, -hh - r * 0.36, r * 1.1, C);
-    for (const p of [PART.uarmL, PART.uarmR]) cover(p, robe, 1.3, 1);
+    // a pale, wide-sleeved top under a dark plum sleeveless vest with a tall collar, a plum
+    // sash, baggy dark trousers; blood rings at the wrists
+    const robe = mat('#e9e3d8', { spec: 0.1 }), plum = mat('#3a2440', { spec: 0.15 }), dk = mat('#2a2630'), blood = glow('#c0102a');
+    chestShell(H, ch, plum, C, 1.03);
+    mesh(box(r * 0.5, hh * 2 + r * 0.75, r * 0.05), robe, 0, r * 0.05, r * 1.11, C); // the shirt in the vest's opening
+    for (const sd of [-1, 1]) mesh(box(r * 0.08, hh * 2 + r * 0.75, r * 0.06), mat('#24162a'), sd * r * 0.26, r * 0.05, r * 1.12, C);
+    mesh(cyl(r * 0.6, r * 0.7, r * 0.42, 14), plum, 0, hh + r * 0.62, -r * 0.04, C); // the tall collar
+    belt(plum, -hh - r * 0.36, 1.15);
+    mesh(box(r * 0.3, r * 0.2, r * 0.08), tc, r * 0.4, -hh - r * 0.36, r * 1.12, C);
+    for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); cover(p, robe, 1.3, 1); mesh(sphere(sp.r * 1.6, 10, 8), plum, 0, sp.hh * 0.8, 0, parts[p]); } // (vest shoulders)
     for (const p of [PART.farmL, PART.farmR]) {
       const sp = limb(p);
-      mesh(cyl(sp.r * 1.55, sp.r * 1.75, sp.hh * 1.3, 10), robe, 0, sp.hh * 0.3, 0, parts[p]);
+      mesh(cyl(sp.r * 1.6, sp.r * 2.0, sp.hh * 1.4, 10), robe, 0, sp.hh * 0.3, 0, parts[p]);
       ns(mesh(torus(H, sp.r * 1.7, sp.r * 0.22, Math.PI * 2, 14), blood, 0, -sp.hh * 0.6, 0, parts[p])).rotation.x = Math.PI / 2;
     }
-    skirt(mat('#2a2630'), 1.15, 1.4, 1.2);
-    for (const p of [PART.thighL, PART.thighR]) cover(p, mat('#2a2630'), 1.4, 1);
+    skirt(dk, 1.15, 1.45, 1.3);
+    for (const p of [PART.thighL, PART.thighR]) cover(p, dk, 1.45, 1);
+    for (const p of [PART.shinL, PART.shinR]) { const sp = limb(p); cover(p, dk, 1.4, 0.75, 0.2); mesh(cyl(sp.r * 1.3, sp.r * 1.25, sp.hh * 0.25, 10), dk, 0, -sp.hh * 0.75, 0, parts[p]); }
   }
   if (top === 'jk_hakari') {
     // a long white jacket with a tall collar, open over a black shirt; team armband

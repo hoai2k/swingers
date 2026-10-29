@@ -183,15 +183,15 @@ export const SCENARIOS = [
     desc: 'One of every jujutsu sorcerer against one of every curse and curse user, each side worth about the same. Who wins the war between the sorcerers and the curses?',
     sides: [
       { name: 'Jujutsu Sorcerers', army: everyone('sorcerer') },
-      { name: 'Curses', army: everyone('curse', line('jk_flyhead', 4, 30, 0, 2.2)) },
+      { name: 'Curses', army: everyone('curse') },
     ],
   },
   {
     id: 'shibuya', cat: 'jjk', name: 'The Shibuya Incident', when: 'October 31st, 2018', map: 'shibuya',
-    desc: 'The curses take Shibuya on Halloween night. Gojo walks in alone... and Geto (Kenjaku) has brought the Prison Realm.',
+    desc: 'The curses take Shibuya on Halloween night. Gojo walks in alone... and Geto (Kenjaku) has brought the Prison Realm. The curse users Haruta and Ogami are in the station too, and Ogami knows a séance.',
     sides: [
       { name: 'Tokyo Jujutsu High', army: army(heroes(['jk_yuji', 'jk_megumi', 'jk_nobara', 'jk_nanami', 'jk_maki', 'jk_todo'], 8, 0, 3.5), heroes(['jk_meimei', 'jk_kusakabe', 'jk_naoya'], 13, 0, 4.5), one('jk_gojo', 18)) },
-      { name: 'The Curses', army: army(heroes(['jk_jogo', 'jk_hanami', 'jk_dagon', 'jk_mahito', 'jk_choso'], 9, 0, 4), heroes(['jk_eso', 'jk_kechizu', 'jk_grasshopper'], 6, 0, 5), one('jk_geto', 15), block('jk_flyhead', 10, 2, 4, 0, 2), one('jk_smallpox', 20)) },
+      { name: 'The Curses', army: army(heroes(['jk_jogo', 'jk_hanami', 'jk_dagon', 'jk_mahito', 'jk_choso'], 9, 0, 4), heroes(['jk_haruta', 'jk_ogami'], 6, 0, 5), one('jk_geto', 15), block('jk_flyhead', 6, 2, 4, 0, 2), one('jk_smallpox', 20)) },
     ],
   },
   {
@@ -217,7 +217,7 @@ export const SCENARIOS = [
       { name: 'Yuta Okkotsu', army: one('jk_yuta', 8) },
       { name: 'Ryu Ishigori', army: one('jk_ryu', 8) },
       { name: 'Takako Uro', army: one('jk_uro', 8) },
-      { name: 'Kurourushi', army: army(one('jk_kurourushi', 8), line('jk_grasshopper', 2, 11, 0, 3)) },
+      { name: 'Kurourushi', army: one('jk_kurourushi', 8) },
     ],
   },
   {
@@ -225,7 +225,7 @@ export const SCENARIOS = [
     desc: 'Before Yuta came: the reincarnated sorcerers Ryu and Uro against the cockroach curse Kurourushi and its endless swarm.',
     sides: [
       { name: 'Ryu & Uro', army: heroes(['jk_ryu', 'jk_uro'], 8, 0, 5) },
-      { name: 'Kurourushi', army: army(one('jk_kurourushi', 9), line('jk_grasshopper', 4, 6, 0, 3)) },
+      { name: 'Kurourushi', army: army(one('jk_kurourushi', 9), line('jk_flyhead', 8, 6, 0, 2)) },
     ],
   },
   {
@@ -253,11 +253,11 @@ export const SCENARIOS = [
     ],
   },
   {
-    id: 'deathpainting', cat: 'jjk', name: 'The Death Painting Arc', when: 'Yuji & Nobara vs Eso & Kechizu', map: 'grass',
-    desc: 'Two of the Death Painting brothers come for Yuji and Nobara. Their blood rots. Black Flash and Resonance answer.',
+    id: 'reggie', cat: 'jjk', name: 'Culling Game: Reggie Star', when: 'Megumi vs Reggie Star', map: 'shibuya',
+    desc: 'Tokyo Colony No. 1. Megumi Fushiguro against the player who keeps every receipt: knives, a car, anything Reggie Star ever bought, he can have again.',
     sides: [
-      { name: 'Yuji & Nobara', army: heroes(['jk_yuji', 'jk_nobara'], 6, 0, 3) },
-      { name: 'Eso & Kechizu', army: heroes(['jk_eso', 'jk_kechizu'], 6, 0, 3) },
+      { name: 'Megumi Fushiguro', army: one('jk_megumi', 7) },
+      { name: 'Reggie Star', army: one('jk_reggie', 7) },
     ],
   },
   {
@@ -278,10 +278,10 @@ export const SCENARIOS = [
   },
   {
     id: 'kenjaku', cat: 'jjk', name: 'Yuki & Choso vs Kenjaku', when: 'the battle at Jujutsu High', map: 'grass',
-    desc: 'The special grade Yuki Tsukumo and Choso against the thousand-year-old Kenjaku in Geto\'s body, with Uraume at his side.',
+    desc: 'The special grade Yuki Tsukumo and Choso against the thousand-year-old Kenjaku in Geto\'s body, with Uraume at his side and his stored spirits to call on.',
     sides: [
       { name: 'Yuki & Choso', army: heroes(['jk_yuki', 'jk_choso'], 7, 0, 4) },
-      { name: 'Kenjaku', army: army(heroes(['jk_geto', 'jk_uraume'], 10, 0, 4), one('jk_kuchisake', 7), line('jk_flyhead', 6, 14, 0, 2)) },
+      { name: 'Kenjaku', army: army(heroes(['jk_geto', 'jk_uraume'], 10, 0, 4), line('jk_flyhead', 6, 14, 0, 2)) },
     ],
   },
   {
@@ -455,7 +455,7 @@ export function simArmies(sc, k = 1, seed = [Math.random(), Math.random(), Math.
   return { armies, names };
 }
 // a unit's footprint radius for spacing (big beasts, mounts and machines need room)
-const BIG = /^(bb_|sm_|pr_trex|pr_triceratops|ga_walker|mc_golem|ev_tree_giant|giant|jk_mahoraga|jk_rainbowdragon|jk_smallpox)/;
+const BIG = /^(bb_|sm_|pr_trex|pr_triceratops|ga_walker|mc_golem|ev_tree_giant|giant|jk_mahoraga|jk_smallpox)/;
 const footprint = (d) => (BIG.test(d.id) ? 2.2 : 0.8 * Math.max(1, d.build?.scale || 1));
 // formations can overlap (an Epic army's longer blocks run into the next rank): walk
 // each unit back from the enemy until it has room, then sideways if the field ends

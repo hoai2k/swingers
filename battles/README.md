@@ -82,7 +82,7 @@ The game is built not to freeze, however big the battle (`src/perf.js`):
   Hastings, Stamford Bridge, Agincourt, Sekigahara, Nassau, Waterloo, Little Bighorn),
   **Jujutsu Kaisen** (*Sorcerers vs Curses*: one of every sorcerer against one of every
   curse, sides from each unit's `side`; Shibuya, the Shinjuku Showdown, the Culling Game in
-  Sendai and Tokyo No. 2, the Trial, the Goodwill Event, Death Painting, the Detention
+  Sendai and Tokyo No. 2, the Trial, the Goodwill Event, Megumi vs Reggie Star, the Detention
   Centre, Hidden Inventory, Yuki & Choso vs Kenjaku, "Nah, I'd win"), **Avatar** (the Siege
   of Ba Sing Se, the Day of Black Sun, the Crossroads of Destiny, Agni Kai, Sozin's Comet),
   **Sci-fi & games** (Galactic, Minecraft, dinosaurs vs cowboys, the undead) and
@@ -261,8 +261,9 @@ when delivered; without one the tab shows just the name in the faction colour.
   Transfiguration turns the people he kills into his transfigured humans; domain
   *Self-Embodiment of Perfection*, hands everywhere), Jogo (Ember Insects, *Maximum:
   Meteor*; domain *Coffin of the Iron Mountain*), Hanami (wooden balls, roots, a flower
-  field that saps), Suguru Geto / Kenjaku (stored curses come out as reserves; *Maximum:
-  Uzumaki*), Choso (Piercing Blood beam, Supernova), Kinji Hakari (domain *Idle Death
+  field that saps), Suguru Geto / Kenjaku (Cursed Spirit Manipulation: Stored Curses, then the Rainbow Dragon,
+  Kuchisake-onna and two Grasshopper Curses come out of his vortex, Y calls the next one in
+  control, and they go back in when he dies; *Maximum: Uzumaki*), Choso (Piercing Blood beam, Supernova), Kinji Hakari (domain *Idle Death
   Gamble*: a JACKPOT makes him all but immortal) and Fly Heads (cheap swarm). Secrets:
   Prison Realm (Geto next to an enemy Gojo), the spear cuts through Infinity, Toji cuts a
   domain open, Mahito can't reshape Yuji (and Yuji's fists hurt his soul), Choso switches
@@ -280,12 +281,20 @@ when delivered; without one the tab shows just the name in the faction colour.
   (Simple Domain: a quick-draw circle, and domain sure-hits can't land on him).
 - **Jujutsu Kaisen: more curses** (`src/packs/jjk-spirits.js`): **Kurourushi** (flesh-eating
   bites, swarms of homing cockroaches), **Uraume** (Icefall; Frost Calm freezes a cone solid, and
-  a frozen victim shatters), **Eso** and **Kechizu** (rotting blood; if one brother dies the other
-  flies into a rage), the **Smallpox Deity** (pox aura; shuts the strongest enemy in a coffin and
-  counts "One... Two... Three!"), the **Rainbow Dragon** (armoured hide, rams through lines), the
-  **Finger Bearer** (swallows a Sukuna finger once when hurt), **Kuchisake-onna** ("Am I
-  beautiful?" dazes, then the scissors), the **Grasshopper Curse** (cheap, leaps in with a kick)
-  and **Yorozu** (Construction blades, Insect Armour, the True Sphere).
+  a frozen victim shatters), the **Smallpox Deity** (pox aura; shuts the strongest enemy in a coffin and
+  counts "One... Two... Three!"), the **Finger Bearer** (swallows a Sukuna finger once when hurt) and
+  **Yorozu** (Construction blades, Insect Armour, the True Sphere). Geto's spirits (the
+  **Rainbow Dragon**: armoured hide, rams through lines; **Kuchisake-onna**: "Am I beautiful?"
+  dazes, then the scissors; the **Grasshopper Curse**: leaps in with a kick) live here too, as
+  his summons (faction `jjk_summon`, not sold).
+- **Jujutsu Kaisen: villains** (`src/packs/jjk-villains.js`, all JJK Curses): **Shigemo
+  Haruta** (knife; *Miracles*: stored lucky breaks, gold stars over his head, each one survives a
+  fatal hit), **Jiro Awasaka** (the stronger the blow, the less it does: big hits and techniques
+  are cut right down, small hits land), **Reggie Star** (*Contract Re-creation*: a wad of
+  receipts fluttering round him buys re-created knives and a car that rams through a line),
+  **Ogi Zen'in** (flaming katana, Blazing slash) and **Ogami** (weak; her *Séance* channels Toji
+  onto her grandson, and Toji's first blow kills her; near an enemy Megumi he ends it himself:
+  "Fushiguro? ...Good for you.").
 - **Sorcerers and curses**: JJK is two factions, **JJK Sorcerers** (`jjk_sorcerers`, the good
   side, 21 units) and **JJK Curses** (`jjk_curses`, the evil side, 20 curses and curse users:
   Toji, Geto/Kenjaku, Choso, Uraume and Yorozu fight with the curses); each unit's `side`
@@ -317,7 +326,8 @@ when delivered; without one the tab shows just the name in the faction colour.
   Inumaki (Cursed Speech) and Yuta (Rika, Copy, domain Authentic Mutual Love). Secrets: "Brother!",
   Black Flash × Resonance, Nanami's last words, Rika's full manifestation.
 - `src/packs/jjk-sorcerers.js` / `jjk-spirits.js` the 20 JJK characters added with the Simulation
-  mode (sorcerer and curse halves; each file is self-contained on `jjk-core.js`).
+  mode (sorcerer and curse halves; each file is self-contained on `jjk-core.js`);
+  `jjk-villains.js` the five human villains (Haruta, Awasaka, Reggie, Ogi, Ogami) and the séance Toji.
 - `src/sims.js` the Simulation scenarios (format at its top) · `dev/balance/sims.mjs` fights them headless
 - `src/packs/jjk-shared.js` the JJK packs' shared hand-sign/shout animations, Gojo's and Sukuna's
   stances, the curses' claws and the effect markers (Infinity ripple, cuts, shadow pools, Black Flash).

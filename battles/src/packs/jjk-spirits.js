@@ -1,24 +1,23 @@
-// Jujutsu Kaisen: more curses and their allies (faction JJK Curses, side 'curse', on jjk-core.js).
+// Jujutsu Kaisen: more curses and their allies (faction JJK Curses, side 'curse', on jjk-core.js),
+// and three of Suguru Geto's spirits (summons: faction 'jjk_summon', no tab, cost 0 - Geto
+// calls them out in battle, see jjk-curses.js).
 //  - Kurourushi: the cockroach curse of the Sendai colony - a hard shell, bites that chew
 //    (flesh-eating damage over time) and swarms of cockroaches that crawl over enemies
 //  - Uraume: Sukuna's servant - Ice Formation: Frost Calm (a cold wave that freezes
 //    everyone in front of them solid) and Icefall (ice dropped on a target; a frozen
 //    victim shatters for double damage)
-//  - Eso and Kechizu: Death Painting brothers - Eso's Wing King hops and rotting blood
-//    shots, Kechizu's rotting vomit at close range; Rot Technique decays what it touches
 //  - Smallpox Deity: Kenjaku's disease curse - a pox cloud that sickens, and the grave:
 //    a victim shut in a coffin while it counts to three, then buried
-//  - Rainbow Dragon: Geto's serpent with a near-unbreakable hide; it rams through lines
+//  - Rainbow Dragon (Geto's spirit): a serpent with a near-unbreakable hide; it rams through lines
 //  - Finger Bearer: the special grade of the detention centre - long arms, many eyes;
 //    badly hurt, it swallows a Sukuna finger (heals, grows stronger)
-//  - Kuchisake-onna: "Am I beautiful?" - the question dazes whoever it asks, then the
+//  - Kuchisake-onna (Geto's spirit): "Am I beautiful?" - the question dazes whoever it asks, then the
 //    scissors cut deep
-//  - Grasshopper Curse: huge leaps that land in a kick
+//  - Grasshopper Curse (Geto's spirit): huge leaps that land in a kick
 //  - Yorozu: Sukuna's admirer - Construction: liquid metal blades, insect armour with
 //    wings, and once a battle the True Sphere (a perfect sphere of mass) at the strongest
 //    enemy
-// Secrets: the Death Painting brothers avenge each other ("Big brother Eso!" / "Kechizu!"),
-// Yorozu meets her beloved Sukuna on her own side.
+// Secret: Yorozu meets her beloved Sukuna on her own side.
 // Everything drawn is a unit part, a projectile or a marker, so replays show it.
 import { register } from '../ext.js';
 import { aimTarget, leapSkill } from '../skills.js';
@@ -29,6 +28,7 @@ import {
 import { UPY } from './ges-core.js';
 import { isJJK, jk, onSecret, announce, isA, burntOut, markerAt, markerOn } from './jjk-core.js';
 
+const SUMMON = 'jjk_summon'; // Geto's spirits: not sold, they come out of Geto
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _e = new THREE.Euler();
 const flat = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
@@ -93,7 +93,7 @@ function leap(u, dirx, dirz, k, up) {
   u.battle.emit('dust', u.pos.x, u.pos.y - u.skel.standHeight, u.pos.z, 2);
   u.battle.sound('whoosh', u.pos, 0.7, 0.9);
 }
-// rage (the brothers) and the finger: extra damage on every blow that lands
+// the finger: extra damage on every blow that lands
 const buffed = (u) => (u.jkBuffT || 0) > u.battle.time;
 function bonusBlows(u, k, kind) {
   newVictims(u, (v) => { if (k > 0 && v.alive) v.hit(u.def.weapon.damage * k, PART.chest, 0, 0, 0, u, kind); });
@@ -245,114 +245,6 @@ function iceImpact(b, pr) {
   });
   markSpin(b, 'jk_iceshards', _o.set(pr.pos.x, gy + 0.1, pr.pos.z), 0.8).quat.setFromAxisAngle(UPY, rand(0, 6));
   b.emit('dust', pr.pos.x, gy, pr.pos.z, 2);
-}
-
-// ------------------------------------------------------------------ Eso and Kechizu
-// Eso: ranged, spits blood that rots (Rot Technique: decay over time); Wing King lets
-// him hop clear of anyone who closes in. Kechizu: waddles in and vomits a spray of
-// rotting blood over everyone in front. The brothers avenge each other.
-const eso = {
-  aim: true,
-  init(u) { const w = u.def.weapon; u.attackDur = w.windup; u.jkHop = rand(0.5, 1.5); },
-  think(u, dt, c) {
-    const w = u.def.weapon, t = rangedThink(u, dt, c);
-    if (u.jkHop <= 0 && c.gap < w.hopAt && !busy(u) && u.airT <= 0) {
-      u.jkHop = w.hopCD;
-      leap(u, -c.dirx, -c.dirz, w.hopV, w.hopUp); // wings beat: up and back out of reach
-      u.battle.sound('flyby', u.chestPos, 0.6, 1.4);
-    }
-    return t;
-  },
-  basic: 'Shove', ranged: 'Rot blood',
-  skills: [
-    { key: 'lb', name: 'Wing King', icon: '🪽', cd: (u) => u.jkHop, max: (u) => u.def.weapon.hopCD, ready: (u) => (u.airT > 0 ? 'in the air' : true),
-      use(u) { // up and back, away from where he's looking
-        const w = u.def.weapon, a = u.control?.aimYaw ?? u.heading;
-        u.jkHop = w.hopCD;
-        leap(u, -Math.sin(a), -Math.cos(a), w.hopV, w.hopUp);
-        u.battle.sound('flyby', u.chestPos, 0.6, 1.4);
-        return true;
-      } },
-  ],
-  event(u, t0, t1) {
-    const w = u.def.weapon, b = u.battle;
-    if (u.st.attack !== u.anim || !crossed(t0, t1, w.releaseAt)) return;
-    u.released = true;
-    const c = u.headPos;
-    _o.set(c.x + Math.sin(u.heading) * 0.4, c.y - 0.15, c.z + Math.cos(u.heading) * 0.4);
-    aimPoint(u, _p, 0.6, 0.8);
-    const rage = buffed(u) ? w.rageK : 1;
-    for (let i = 0; i < w.globs; i++) {
-      launchVel(_o, _p, w.speed, 9.81, false, 0.05, _v);
-      addProjectile(b, 'jk_rotblood', _o, _v, u, { life: 3, damage: w.damage * rage, force: w.force, rot: w.rotDps * rage, rotT: w.rotT });
-    }
-    b.sound('pop', _o, 0.7, 0.7);
-    b.emit('blood', _o.x, _o.y, _o.z, 2, Math.sin(u.heading), Math.cos(u.heading));
-  },
-  step(u, dt) { u.jkHop -= dt; if (buffed(u)) u.cooldown -= dt * 0.4; },
-  die(u) { brotherFalls(u, 'jk_kechizu', 'SECRET: "Big brother Eso!" Kechizu flies into a rage'); },
-};
-const kechizu = {
-  melee: true,
-  think(u, dt, c) {
-    const w = u.def.weapon, { t, dist, dirx, dirz, spd } = c;
-    u.expr = c.gap < 6 ? EXPR.angry : EXPR.normal;
-    const near = dist - t.skel.radius;
-    if (near > w.sprayR * 0.6) u.desired.set(dirx * spd, 0, dirz * spd);
-    if (near < w.sprayR * 0.8 && u.cooldown <= 0 && !busy(u)) { u.cooldown = w.cooldown; castPose(u, 'jj_shout', 'spray'); }
-    if (u.st.attack) u.desired.multiplyScalar(0.25);
-    return t;
-  },
-  event(u, t0, t1) { castEvent(u, t0, t1, { spray: rotSpray }); },
-  // possessed (src/skills.js): X a plain shove, RB the rot spray (a cone)
-  basic: 'Shove',
-  skills: [
-    { key: 'rb', name: 'Rot Spray', icon: '🤮', cd: (u) => (u.sprayCD || 0) - u.battle.time, max: (u) => u.def.weapon.cooldown * 1.5,
-      use(u) { u.sprayCD = u.battle.time + u.def.weapon.cooldown * 1.5; castPose(u, 'jj_shout', 'spray'); return true; } },
-  ],
-  step(u, dt) { if (!u.st.attack) u.jkCast = null; if (buffed(u)) u.cooldown -= dt * 0.4; },
-  die(u) { brotherFalls(u, 'jk_eso', 'SECRET: "Kechizu!" Eso flies into a rage'); },
-};
-function rotSpray(u) {
-  const b = u.battle, w = u.def.weapon, fx = Math.sin(u.heading), fz = Math.cos(u.heading);
-  const rage = buffed(u) ? w.rageK : 1;
-  for (const v of enemiesNear(u, u.pos, w.sprayR)) {
-    const dx = v.pos.x - u.pos.x, dz = v.pos.z - u.pos.z, d = Math.hypot(dx, dz) || 1;
-    if ((dx * fx + dz * fz) / d < 0.45) continue;
-    _d.set(dx / d, 0.2, dz / d);
-    strike(b, v, w.damage * rage, _d, w.force, u, 'jk_rot', PART.chest, null);
-    addStatus(b, v, 'poison', w.rotT, w.rotDps * rage, u);
-  }
-  const h = u.headPos;
-  _o.copy(u.pos); _o.y = b.terrain.height(_o.x, _o.z) + 0.05;
-  markerAt(b, 'jk_spray', _o, 0.6, u.heading);
-  b.emit('blood', h.x + fx * 0.5, h.y - 0.2, h.z + fz * 0.5, 10, fx, fz);
-  b.sound('crunch', h, 0.6, 0.5);
-}
-function brotherFalls(u, other, text) {
-  const b = u.battle;
-  for (const v of b.teams[u.team]) {
-    if (!v.alive || v.def.id !== other || flat(v.pos, u.pos) > 25) continue;
-    announce(b, text, v.headPos, 'dpb' + v.id);
-    v.jkBuffT = b.time + 30;
-    v.hp = Math.min(v.maxHp, v.hp + v.maxHp * 0.5);
-    v.expr = EXPR.angry;
-    markerOn(b, v, 'jk_rage', PART.chest, 30);
-    b.voice(v, 'cry', true);
-    break;
-  }
-}
-function rotHit(b, pr, v) {
-  if (v) {
-    _d.copy(pr.vel).normalize();
-    strike(b, v, pr.damage, _d, pr.force, pr.owner, 'jk_rot', PART.chest, 'thud');
-    addStatus(b, v, 'poison', pr.rotT, pr.rot, pr.owner);
-  } else {
-    const gy = b.terrain.height(pr.pos.x, pr.pos.z);
-    markerAt(b, 'jk_rotpool', _o.set(pr.pos.x, gy + 0.03, pr.pos.z), 2.5, rand(0, 6));
-    for (const e of enemiesNear(pr.owner, _o, 1.1)) addStatus(b, e, 'poison', pr.rotT * 0.6, pr.rot, pr.owner);
-  }
-  b.emit('blood', pr.pos.x, pr.pos.y, pr.pos.z, 3, 0, 0);
 }
 
 // ------------------------------------------------------------------ Smallpox Deity
@@ -790,7 +682,6 @@ const PJ = {
     ground(b, pr) { b.emit('dust', pr.pos.x, pr.pos.y, pr.pos.z, 0.4); return true; },
   },
   jk_icefall: { g: 9.81, len: 0, r: 0.6, life: 3, hit(b, pr) { iceImpact(b, pr); return true; }, ground(b, pr) { iceImpact(b, pr); return true; } },
-  jk_rotblood: { g: 9.81, len: 0, r: 0.2, life: 3, hit(b, pr, v) { rotHit(b, pr, v); return true; }, ground(b, pr) { rotHit(b, pr, null); return true; } },
   jk_sphere: {
     g: 0, len: 0, r: 0.7, life: 4,
     step(b, pr, dt) { if (pr.tgt) home(pr, dt, pr.spd, 2.5); if (pr.life <= 0) sphereImpact(b, pr, null); },
@@ -802,9 +693,6 @@ const PJ = {
   jk_iceblock: { g: 0, len: 0, r: 0, life: 1 },
   jk_iceshards: { g: 0, len: 0, r: 0, life: 1 },
   jk_frostwave: { g: 0, len: 0, r: 0, life: 1 },
-  jk_spray: { g: 0, len: 0, r: 0, life: 1 },
-  jk_rotpool: { g: 0, len: 0, r: 0, life: 1 },
-  jk_rage: { g: 0, len: 0, r: 0, life: 1 },
   jk_coffin: { g: 0, len: 0, r: 0, life: 1 },
   jk_coffinlid: { g: 0, len: 0, r: 0, life: 1 },
   jk_crack: { g: 0, len: 0, r: 0, life: 1 },
@@ -844,33 +732,6 @@ const units = [
     desc: "Sukuna's loyal servant, a thousand years on. Cold manners, colder technique.",
   },
   {
-    id: 'jk_eso', name: 'Eso', faction: 'jjk_curses', side: 'curse', cost: 420, hp: 380, speed: 5.0,
-    build: { scale: 1.02, girth: 0.95, arms: 1.05 },
-    weapon: {
-      line: 'Death Painting · Rot Technique: blood that rots · Wing King: hops clear of anyone close',
-      kind: 'jk_eso', style: 'none', anim: 'cast', item: 'none', damage: 22, speed: 15, range: 17, minRange: 5, cooldown: 2.1, force: 120,
-      windup: 0.65, releaseAt: 0.55, globs: 2, rotDps: 13, rotT: 4,
-      hopAt: 3.5, hopCD: 3.5, hopV: 5, hopUp: 4.5, rageK: 1.6,
-    },
-    look: { skin: '#6e9a52', hat: 'jk_eso_head', top: 'jk_eso', legs: '#3a4a2a', accent: '#2a3a20' },
-    personality: { ...CURSE, aggro: 0.4, voice: 1.0, chatter: 0.7, cry: 'cackle', idle: 'shift' },
-    stagger: 0.7,
-    desc: 'Second of the Death Painting brothers. Wings on his back, a face on his back, rot in his blood.',
-  },
-  {
-    id: 'jk_kechizu', name: 'Kechizu', faction: 'jjk_curses', side: 'curse', cost: 220, hp: 360, speed: 4.0,
-    build: { scale: 0.92, girth: 1.5, head: 1.35, legs: 0.65, arms: 0.85, mass: 1.15 },
-    weapon: {
-      line: 'Death Painting · vomits rotting blood over everyone in front (rot over time) · avenges Eso',
-      kind: 'jk_kechizu', style: 'none', anim: 'jj_shout', item: 'none', damage: 16, reach: 2.6, cooldown: 2.4, force: 140,
-      sprayR: 3.2, rotDps: 14, rotT: 4, rageK: 1.6,
-    },
-    look: { skin: '#d8a050', hat: 'jk_kechizu_head', top: 'jk_kechizu', legs: '#b07a38', accent: '#5a3a18' },
-    personality: { ...CURSE, aggro: 0.9, voice: 1.6, chatter: 1, cry: 'cackle', idle: 'bounce' },
-    stagger: 0.8,
-    desc: 'Youngest of the Death Painting brothers. Not pretty, not polite, very sticky.',
-  },
-  {
     id: 'jk_smallpox', name: 'Smallpox Deity', faction: 'jjk_curses', side: 'curse', cost: 1100, hp: 950, speed: 3.6,
     build: { scale: 1.35, girth: 1.2, head: 1.4, legs: 0.85, arms: 1.1, mass: 1.5 },
     weapon: {
@@ -884,10 +745,10 @@ const units = [
     desc: "A walking grave from Kenjaku's collection. Count with it: one... two...",
   },
   {
-    id: 'jk_rainbowdragon', name: 'Rainbow Dragon', faction: 'jjk_curses', side: 'curse', cost: 950, hp: 1100, speed: 5.0,
+    id: 'jk_rainbowdragon', name: 'Rainbow Dragon', faction: SUMMON, cost: 0, hp: 1100, speed: 5.0,
     build: { scale: 1.45, girth: 1.15, head: 1.3, legs: 0.7, arms: 0.8, mass: 1.6 },
     weapon: {
-      line: "Curse · Geto's dragon: rainbow scales shrug off most blows · rams through lines · bites",
+      line: "Summon · Geto's dragon: rainbow scales shrug off most blows · rams through lines · bites",
       kind: 'jk_rainbowdragon', style: 'none', anim: 'slam', item: 'jj_claw', damage: 42, reach: 1.15, cooldown: 1.0, force: 380,
       biteR: 0.5, ramCD: 5, ramMin: 4, ramMax: 14, ramT: 0.9, ramV: 10, ramR: 1.3, ramDmg: 60, ramForce: 1000,
     },
@@ -910,10 +771,10 @@ const units = [
     desc: 'It grew up around a finger of the King of Curses. It would like the rest of them.',
   },
   {
-    id: 'jk_kuchisake', name: 'Kuchisake-onna', faction: 'jjk_curses', side: 'curse', cost: 380, hp: 600, speed: 5.4, face: 2,
+    id: 'jk_kuchisake', name: 'Kuchisake-onna', faction: SUMMON, cost: 0, hp: 600, speed: 5.4, face: 2,
     build: { scale: 1.06, girth: 0.88, legs: 1.08 },
     weapon: {
-      line: '"Am I beautiful?" - the question dazes its target, then giant scissors cut a dazed victim twice as deep',
+      line: 'Summon · "Am I beautiful?" - the question dazes its target, then giant scissors cut a dazed victim twice as deep',
       kind: 'jk_kuchisake', style: 'sword', anim: 'overhead', item: 'jk_scissors', damage: 52, reach: 1.15, cooldown: 0.85, force: 260,
       askR: 5, askCD: 5, askDaze: 1.6, cutK: 1.0,
     },
@@ -923,10 +784,10 @@ const units = [
     desc: "One of Geto's curses. There is only one right answer, and it isn't either of them.",
   },
   {
-    id: 'jk_grasshopper', name: 'Grasshopper Curse', faction: 'jjk_curses', side: 'curse', cost: 140, hp: 210, speed: 6.0,
+    id: 'jk_grasshopper', name: 'Grasshopper Curse', faction: SUMMON, cost: 0, hp: 210, speed: 6.0,
     build: { scale: 1.0, girth: 0.9, head: 1.15, legs: 1.15, arms: 0.95 },
     weapon: {
-      line: 'Curse · huge leaps that land feet first · cheap, comes in swarms',
+      line: "Summon · one of Geto's curses: huge leaps that land feet first",
       kind: 'jk_grasshopper', style: 'none', anim: 'punch', item: 'jj_claw', damage: 22, reach: 0.95, cooldown: 0.7, force: 180,
       leapCD: 3, leapMin: 3, leapMax: 10, leapV: 7, leapUp: 4.5, kickDmg: 38, kickForce: 520,
     },
@@ -1019,40 +880,17 @@ function buildHat(kind, r, team, g, H) {
       }
       return true;
     }
-    case 'jk_uraume_hair': { // a pale, almost white bob with a straight fringe
-      const hair = mat('#f2f0f4', { spec: 0.35 });
-      hairCap(H, g, r, hair, 1.09, 0.45, -0.2);
-      const back = mesh(sphere(r * 1.1, 14, 10), hair, 0, -r * 0.12, -r * 0.25, g); back.scale.set(1.05, 0.95, 0.9);
-      for (let i = -3; i <= 3; i++) lock(H, g, hair, onHead(r, i * 0.14, 0.58, 1.04), [0, -1, 0.3], r * 0.13, r * 0.42); // straight fringe
-      for (const sd of [-1, 1]) for (const [z, L] of [[0.35, 1.0], [0.0, 1.05], [-0.4, 0.95]]) lock(H, g, hair, [sd * r * 0.92, r * 0.25, z * r], [sd * 0.08, -1, 0], r * 0.24, r * L); // the bob to the jaw
-      mesh(sphere(r * 0.06, 6, 5), tc, -r * 0.7, r * 0.5, r * 0.55, g); // a team hair clip
-      return true;
-    }
-    case 'jk_eso_head': { // a dark green topknot, green-grey skin patches and black marks under the eyes
-      const hair = mat('#1e2a18', { spec: 0.25 }), mark = mat('#1a2414');
-      hairCap(H, g, r, hair, 1.07, 0.32, -0.45);
-      const kn = mesh(sphere(r * 0.38, 10, 8), hair, 0, r * 0.95, -r * 0.35, g); kn.scale.set(1, 0.8, 1);
-      for (const sd of [-1, 1]) {
-        lock(H, g, hair, onHead(r, sd * 0.3, 0.62, 1.03), [sd * 0.4, -1, 0.3], r * 0.15, r * 0.5);
-        const m = mesh(box(r * 0.3, r * 0.05, r * 0.04), mark, ...onHead(r, sd * 0.35, -0.05, 1.01), g); m.rotation.z = sd * 0.3;
+    case 'jk_uraume_hair': { // a pale, almost white bob: a blunt fringe straight across the brow, sides cut level at the jaw
+      const hair = mat('#f4eef2', { spec: 0.35 });
+      hairCap(H, g, r, hair, 1.08, 0.45, -0.15);
+      const back = mesh(sphere(r * 1.12, 16, 12), hair, 0, -r * 0.15, -r * 0.2, g); back.scale.set(1.06, 1.0, 0.88);
+      // the fringe: a shell over the forehead, cut straight just above the eyes
+      mesh(H.geo('ur-fringe' + r.toFixed(3), () => new THREE.SphereGeometry(r * 1.07, 18, 8, Math.PI / 2 - 1.1, 2.2, 0.15, 1.0)), hair, 0, 0, 0, g);
+      for (let i = -4; i <= 4; i++) { const p = onHead(r, i * 0.11, 0.38, 1.07); mesh(box(r * 0.03, r * 0.1, r * 0.03), mat('#e2dae2'), p[0], p[1] + r * 0.03, p[2], g); } // strands at the cut
+      for (const sd of [-1, 1]) { // the sides of the bob, straight down to the jaw
+        const sdH = mesh(capsule(r * 0.3, r * 0.75), hair, sd * r * 0.82, -r * 0.2, r * 0.12, g); sdH.scale.set(0.7, 1, 1.25);
       }
-      mesh(box(r * 0.06, r * 0.5, r * 0.04), mark, ...onHead(r, 0, 0.35, 1.02), g); // the line down his brow
-      return true;
-    }
-    case 'jk_kechizu_head': { // a bulbous yellow head: droopy eyes, a lolling tongue, a tuft of hair
-      g.userData.hidesFace = true;
-      const skin = mat('#d8a050', { spec: 0.2 }), ink = mat('#1a1410');
-      const hd = mesh(sphere(r * 1.12, 16, 12), skin, 0, r * 0.05, 0, g); hd.scale.set(1.15, 1.0, 1.05);
-      for (let i = 0; i < 5; i++) lock(H, g, mat('#2a1a10'), [(i - 2) * r * 0.12, r * 1.05, -r * 0.1], [(i - 2) * 0.3, 1, -0.2], r * 0.06, r * 0.4);
-      for (const sd of [-1, 1]) {
-        const p = onHead(r * 1.1, sd * 0.4, 0.15, 1.0);
-        mesh(sphere(r * 0.24, 10, 8), mat('#f6eedc'), p[0], p[1], p[2], g).scale.set(1, 0.7, 0.6);
-        mesh(sphere(r * 0.1, 8, 6), ink, p[0] + sd * r * 0.05, p[1] - r * 0.06, p[2] + r * 0.12, g);
-        const lid = mesh(box(r * 0.45, r * 0.08, r * 0.05), mat('#a87030'), p[0], p[1] + r * 0.12, p[2] + r * 0.06, g); lid.rotation.z = -sd * 0.3; // droopy lids
-      }
-      const mp = onHead(r * 1.1, 0, -0.42, 1.0);
-      mesh(box(r * 0.7, r * 0.2, r * 0.12), mat('#4a1810'), mp[0], mp[1], mp[2] - r * 0.04, g);
-      const tg = mesh(capsule(r * 0.13, r * 0.5), mat('#d04a5a'), mp[0] + r * 0.12, mp[1] - r * 0.3, mp[2] + r * 0.05, g); tg.rotation.x = 0.4;
+      mesh(sphere(r * 0.07, 6, 5), tc, -r * 0.82, r * 0.42, r * 0.5, g); // a team hair clip
       return true;
     }
     case 'jk_smallpox_head': { // a gravestone rising behind a pale sunken face, long black hair hanging down
@@ -1154,7 +992,7 @@ function buildHat(kind, r, team, g, H) {
 }
 
 function decorate(def, team, vis, H) {
-  if (!isJJK(def.faction) || !def.id.startsWith('jk_')) return;
+  if ((!isJJK(def.faction) && def.faction !== SUMMON) || !def.id.startsWith('jk_')) return;
   const top = def.look.top;
   if (!TOPS.has(top)) return;
   const { parts, skel } = vis;
@@ -1193,45 +1031,18 @@ function decorate(def, team, vis, H) {
     belt(tc, -hh - r * 0.3, 1.14);
   }
   if (top === 'jk_uraume') {
-    // a pale kimono with wide sleeves, a light blue-grey under-collar, a team obi, a long white hakama
-    const robe = mat('#f2eef4', { spec: 0.1 }), blue = mat('#a8b8d8', { spec: 0.1 });
+    // a white kimono with long, wide sleeves, the collar crossed left over right with a
+    // pale lilac under-collar, a team obi, a long white hakama
+    const robe = mat('#f4f1f4', { spec: 0.1 }), lil = mat('#c8b8d8', { spec: 0.1 }), fold = mat('#dcd6e0');
     chestShell(H, ch, robe, C);
-    for (const sd of [-1, 1]) { const l = mesh(box(r * 0.2, (hh + r) * 1.1, r * 0.05), blue, sd * r * 0.22, hh * 0.35, r * 1.06, C); l.rotation.z = -sd * 0.42; }
-    for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.4, sp.r * 2.3, sp.hh * 2.3, 10), robe, 0, -sp.hh * 0.2, 0, parts[p]); }
-    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 2.0, sp.r * 2.4, sp.hh * 1.1, 10), robe, 0, sp.hh * 0.45, 0, parts[p]); cover(p, skin, 1.1, 0.5, -0.4); }
+    for (const [sd, w0] of [[-1, 0.2], [1, 0.14]]) { const l = mesh(box(r * w0, (hh + r) * 1.15, r * 0.05), sd < 0 ? lil : fold, sd * r * 0.22, hh * 0.35, r * 1.07, C); l.rotation.z = -sd * 0.42; }
+    mesh(cyl(r * 0.55, r * 0.64, r * 0.28, 14), robe, 0, hh + r * 0.6, 0, C);
+    for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); cover(p, robe, 1.25, 1); mesh(cyl(sp.r * 1.45, sp.r * 2.4, sp.hh * 2.3, 12), robe, 0, -sp.hh * 0.2, 0, parts[p]); }
+    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 2.1, sp.r * 2.5, sp.hh * 1.2, 12), robe, 0, sp.hh * 0.4, 0, parts[p]); mesh(cyl(sp.r * 2.52, sp.r * 2.52, sp.hh * 0.1, 12), lil, 0, -sp.hh * 0.2, 0, parts[p]); cover(p, skin, 1.1, 0.5, -0.4); }
     belt(tc, -hh - r * 0.3, 1.16);
     belt(td, -hh - r * 0.12, 1.17).scale.set(1, 0.3, 1);
     skirt(robe, 1.15, 1.8, 2.5);
-    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const pl = mesh(box(pel.r * 0.05, pel.r * 2.3, pel.r * 0.05), blue, Math.sin(a) * pel.r * 1.5, -pel.r * 1.05, Math.cos(a) * pel.r * 1.5, P); pl.rotation.set(Math.cos(a) * 0.22, 0, -Math.sin(a) * 0.22); }
-  }
-  if (top === 'jk_eso') {
-    // bare green body, insect wings on his back with a second face between them, a team cloth
-    const wingM = mat('#c8e0a0', { transparent: true, opacity: 0.55, depthWrite: false, spec: 0.8 }), ink = mat('#1a2414');
-    chestShell(H, ch, skin, C);
-    for (const [x, y] of [[-0.4, 0.3], [0.45, -0.2], [0, -0.6]]) mesh(box(r * 0.35, r * 0.06, r * 0.05), ink, x * r, y * hh, r * 1.08, C); // markings
-    for (const sd of [-1, 1]) for (const [k, a] of [[1.0, 0.5], [0.75, 1.1]]) {
-      const w = ns(mesh(sphere(r * 1.15 * k, 12, 8), wingM, sd * r * 1.0, hh + r * 0.2 - (a - 0.5) * r, -r * 1.25, C));
-      w.scale.set(1.0, 0.1, 1.9); w.rotation.set(0.7, sd * 0.7, sd * a);
-    }
-    // the face on his back: two eyes and a mouth
-    for (const sd of [-1, 1]) { mesh(sphere(r * 0.16, 8, 6), mat('#f6f0d0'), sd * r * 0.3, hh * 0.3, -r * 1.06, C); mesh(sphere(r * 0.07, 6, 5), ink, sd * r * 0.3, hh * 0.3, -r * 1.2, C); }
-    mesh(box(r * 0.45, r * 0.1, r * 0.06), mat('#4a1a18'), 0, -hh * 0.2, -r * 1.08, C);
-    for (const p of ARMS) cover(p, skin, 1.12, 1);
-    for (const p of LEGS) cover(p, mat('#3a4a2a'), 1.25, 1);
-    belt(tc, -hh - r * 0.35, 1.14);
-    mesh(box(r * 0.7, pel.r * 1.3, r * 0.08), tc, 0, -pel.r * 0.5, pel.r * 1.05, P);
-  }
-  if (top === 'jk_kechizu') {
-    // a huge round belly, a little team bib, and a second face on its rump
-    const ink = mat('#1a1410');
-    const bl = mesh(sphere(r * 1.45, 16, 12), skin, 0, -hh * 0.3, r * 0.15, C); bl.scale.set(1.1, 1.05, 1.05);
-    mesh(sphere(r * 0.12, 8, 6), mat('#a87030'), 0, -hh * 0.2, r * 1.62, C); // navel
-    const bib = mesh(cyl(r * 0.85, r * 1.0, r * 0.4, 14), tc, 0, hh + r * 0.15, r * 0.1, C); bib.scale.set(1, 1, 0.9);
-    for (const sd of [-1, 1]) { mesh(sphere(r * 0.15, 8, 6), mat('#f6eedc'), sd * r * 0.4, -pel.r * 0.1, -pel.r * 1.25, P); mesh(sphere(r * 0.07, 6, 5), ink, sd * r * 0.4, -pel.r * 0.1, -pel.r * 1.4, P); }
-    mesh(box(r * 0.5, r * 0.08, r * 0.06), mat('#4a1810'), 0, -pel.r * 0.55, -pel.r * 1.25, P);
-    mesh(sphere(pel.r * 1.35, 12, 10), skin, 0, -pel.r * 0.2, 0, P);
-    for (const p of ARMS) cover(p, skin, 1.2, 1);
-    for (const p of LEGS) cover(p, skin, 1.35, 1);
+    mesh(cyl(pel.r * 1.82, pel.r * 1.82, pel.r * 0.12, 16), lil, 0, -pel.r * 2.05, 0, P); // a lilac hem
   }
   if (top === 'jk_smallpox') {
     // a body of grave stone: a tomb base for a skirt, pox spots, a team shroud
@@ -1319,7 +1130,7 @@ function decorate(def, team, vis, H) {
     skirt(top0, 1.1, 1.35, 1.5);
   }
 }
-const TOPS = new Set(['jk_roach', 'jk_uraume', 'jk_eso', 'jk_kechizu', 'jk_smallpox', 'jk_dragon', 'jk_fbearer', 'jk_kuchi', 'jk_hopper', 'jk_yorozu']);
+const TOPS = new Set(['jk_roach', 'jk_uraume', 'jk_smallpox', 'jk_dragon', 'jk_fbearer', 'jk_kuchi', 'jk_hopper', 'jk_yorozu']);
 
 function buildProj(type, g, H) {
   const { mesh, cyl, cone, box, sphere, octa, mat, glow, capsule } = H;
@@ -1361,26 +1172,6 @@ function buildProj(type, g, H) {
       const R = 8;
       ns(mesh(H.geo('jkfw', () => new T.CircleGeometry(R, 24, Math.PI / 2 - 1.05, 2.1).rotateX(-Math.PI / 2)), mat('#e0f6ff', { emit: 0.4, transparent: true, opacity: 0.55, depthWrite: false }), 0, 0.03, 0, g));
       for (let i = 0; i < 14; i++) { const a = -0.95 + (i / 13) * 1.9, d = 2 + (i % 4) * 1.5; ns(mesh(sphere(0.6 + (i % 3) * 0.2, 8, 6), mat('#f4fbff', { transparent: true, opacity: 0.4, depthWrite: false }), Math.sin(a) * d, 0.6, Math.cos(a) * d, g)); }
-      return true;
-    }
-    case 'jk_rotblood': { // a glob of dark, rotting blood
-      ns(mesh(sphere(0.14, 8, 6), mat('#4a2a1a', { spec: 0.8 }), 0, 0, 0, g)).scale.set(0.9, 1.3, 0.9);
-      ns(mesh(sphere(0.2, 8, 6), mat('#6a8a2a', { emit: 0.3, transparent: true, opacity: 0.4, depthWrite: false }), 0, -0.05, 0, g));
-      return true;
-    }
-    case 'jk_rotpool': { // a puddle of rot
-      ns(mesh(cyl(0.9, 0.9, 0.02, 16), mat('#4a3a1a', { transparent: true, opacity: 0.8, depthWrite: false }), 0, 0, 0, g));
-      for (let i = 0; i < 4; i++) ns(mesh(sphere(0.12, 6, 5), mat('#7a9a3a', { emit: 0.3 }), Math.sin(i * 1.7) * 0.5, 0.04, Math.cos(i * 1.7) * 0.5, g)).scale.set(1, 0.4, 1);
-      return true;
-    }
-    case 'jk_spray': { // a fan of rotting vomit in front (+Z)
-      ns(mesh(H.geo('jksp', () => new T.CircleGeometry(3.2, 16, Math.PI / 2 - 0.55, 1.1).rotateX(-Math.PI / 2)), mat('#6a5a1a', { transparent: true, opacity: 0.7, depthWrite: false }), 0, 0.03, 0, g));
-      for (let i = 0; i < 8; i++) { const a = -0.5 + (i / 7), d = 1 + (i % 3) * 0.8; ns(mesh(sphere(0.15, 6, 5), mat('#7a8a2a', { emit: 0.2 }), Math.sin(a) * d, 0.5 + (i % 2) * 0.3, Math.cos(a) * d, g)); }
-      return true;
-    }
-    case 'jk_rage': { // a brother's rage: a red flicker round the body
-      ns(mesh(sphere(0.7, 12, 8), mat('#ff2a1a', { emit: 1, transparent: true, opacity: 0.14, depthWrite: false }), 0, 0, 0, g));
-      for (let i = 0; i < 2; i++) ns(mesh(torus(H, 0.6, 0.02, Math.PI * 2, 16), glow('#ff4a2a'), 0, -0.2 + i * 0.4, 0, g)).rotation.x = Math.PI / 2 + i * 0.3;
       return true;
     }
     case 'jk_coffin': { // the Smallpox Deity's coffin round a victim (lid open)
@@ -1441,7 +1232,7 @@ register({
     jk_ylblade: { len: 0.78, r: 0.07, grip: 30, metal: true, mass: 0.9 },
   },
   kinds: {
-    jk_kurourushi: kurourushi, jk_uraume: uraume, jk_eso: eso, jk_kechizu: kechizu, jk_smallpox: smallpox,
+    jk_kurourushi: kurourushi, jk_uraume: uraume, jk_smallpox: smallpox,
     jk_rainbowdragon: dragon, jk_fingerbearer: fingerBearer, jk_kuchisake: kuchisake, jk_grasshopper: grasshopper, jk_yorozu: yorozu,
   },
   proj: PJ,
