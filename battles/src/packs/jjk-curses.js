@@ -1,4 +1,4 @@
-// Jujutsu Kaisen: the curses and the sorcerer killers (faction 'jjk', on jjk-core.js).
+// Jujutsu Kaisen: the curses and the sorcerer killers (faction JJK Curses, side 'curse', on jjk-core.js).
 //  - Toji Fushiguro: Heavenly Restriction (no cursed energy: sure-hits can't find him),
 //    blindingly fast leaps, the Inverted Spear of Heaven (cuts through Infinity and
 //    barriers), the Playful Cloud flurry, the Inventory Curse wrapped round him
@@ -27,11 +27,11 @@ import {
 } from './common.js';
 import { UPY, STANCE, setArmKey, refreshBeam, endBeam } from './ges-core.js';
 import {
-  FACTION, jk, onSecret, announce, isA, burntOut, openDomain, closeDomain, domeMesh, markerAt, markerOn,
+  isJJK, jk, onSecret, announce, isA, burntOut, openDomain, closeDomain, domeMesh, markerAt, markerOn,
   summon, dismiss, switchTeam, seal, ensureHitHook,
 } from './jjk-core.js';
 
-const FAC = FACTION.id, SUMMON = 'jjk_summon';
+const SUMMON = 'jjk_summon';
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _e = new THREE.Euler();
 // domain radii (the dome meshes are built at these sizes)
@@ -1051,7 +1051,7 @@ function emberBurst(b, pr) {
 const CURSE = { aggro: 1, bravery: 0, voice: 0.7, chatter: 0.8, cry: 'cackle', idle: 'shift' };
 const units = [
   {
-    id: 'jk_toji', name: 'Toji Fushiguro', faction: FAC, side: 'curse', cost: 1400, hp: 950, speed: 7.4,
+    id: 'jk_toji', name: 'Toji Fushiguro', faction: 'jjk_curses', side: 'curse', cost: 1400, hp: 950, speed: 7.4,
     build: { scale: 1.08, girth: 1.0, arms: 1.05, armThick: 1.15, legs: 1.04 },
     weapon: {
       line: 'Assassin · Inverted Spear of Heaven cuts through Infinity · Playful Cloud flurry · no cursed energy: sure-hits miss him',
@@ -1064,7 +1064,7 @@ const units = [
     desc: 'The Sorcerer Killer. No cursed energy at all: just speed, strength and a worm full of weapons.',
   },
   {
-    id: 'jk_dagon', name: 'Dagon', faction: FAC, side: 'curse', cost: 1050, hp: 1200, speed: 3.7,
+    id: 'jk_dagon', name: 'Dagon', faction: 'jjk_curses', side: 'curse', cost: 1050, hp: 1200, speed: 3.7,
     build: { scale: 1.32, girth: 1.3, head: 1.5, legs: 0.85, arms: 1.0, mass: 1.35 },
     weapon: {
       line: 'Curse · shikigami fish swarms · Domain: Horizon of the Captivating Skandha (sure-hit fish)',
@@ -1078,7 +1078,7 @@ const units = [
     desc: 'A sea of shikigami fish at its beck and call. In its domain the fish always find you.',
   },
   {
-    id: 'jk_mahito', name: 'Mahito', faction: FAC, side: 'curse', cost: 850, hp: 470, speed: 5.4,
+    id: 'jk_mahito', name: 'Mahito', faction: 'jjk_curses', side: 'curse', cost: 850, hp: 470, speed: 5.4,
     build: { scale: 0.98, girth: 0.9, arms: 1.06 },
     weapon: {
       line: 'Curse · Idle Transfiguration: his touch reshapes souls · Domain: Self-Embodiment of Perfection',
@@ -1093,7 +1093,7 @@ const units = [
     desc: 'Touches your soul and kneads it into something new. Patches himself up the same way.',
   },
   {
-    id: 'jk_jogo', name: 'Jogo', faction: FAC, side: 'curse', cost: 1250, hp: 430, speed: 4.5,
+    id: 'jk_jogo', name: 'Jogo', faction: 'jjk_curses', side: 'curse', cost: 1250, hp: 430, speed: 4.5,
     build: { scale: 0.86, girth: 1.12, head: 1.3, legs: 0.82 },
     weapon: {
       line: 'Curse · Ember Insects · Maximum: Meteor · Domain: Coffin of the Iron Mountain',
@@ -1108,7 +1108,7 @@ const units = [
     desc: 'Short temper, shorter fuse. Insects of fire, and when that bores him, a meteor.',
   },
   {
-    id: 'jk_hanami', name: 'Hanami', faction: FAC, side: 'curse', cost: 1150, hp: 1000, speed: 4.3,
+    id: 'jk_hanami', name: 'Hanami', faction: 'jjk_curses', side: 'curse', cost: 1150, hp: 1000, speed: 4.3,
     build: { scale: 1.2, girth: 1.15, head: 1.08, arms: 1.15, armThick: 1.2, mass: 1.25 },
     weapon: {
       line: 'Curse · wooden fists, wooden balls, roots out of the ground · a flower field that saps',
@@ -1123,7 +1123,7 @@ const units = [
     desc: 'A curse of the forest. Calm, polite, and made of very hard wood.',
   },
   {
-    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: FAC, side: 'curse', cost: 700, hp: 650, speed: 4.7,
+    id: 'jk_geto', name: 'Suguru Geto (Kenjaku)', faction: 'jjk_curses', side: 'curse', cost: 700, hp: 650, speed: 4.7,
     build: { scale: 1.08, girth: 0.98, legs: 1.05 },
     weapon: {
       line: 'Summoner · Cursed Spirit Manipulation releases his stored curses · Maximum: Uzumaki',
@@ -1139,7 +1139,7 @@ const units = [
     desc: 'Swallows curses and lets them out again. Mind the stitches across his forehead.',
   },
   {
-    id: 'jk_choso', name: 'Choso', faction: FAC, side: 'curse', cost: 800, hp: 520, speed: 4.8,
+    id: 'jk_choso', name: 'Choso', faction: 'jjk_curses', side: 'curse', cost: 800, hp: 520, speed: 4.8,
     build: { scale: 1.02, girth: 0.95 },
     weapon: {
       line: 'Ranged · Blood Manipulation: Convergence, Piercing Blood (pierces a line), Supernova',
@@ -1154,7 +1154,7 @@ const units = [
     desc: 'The eldest of the Death Painting brothers. His blood flies faster than a bullet.',
   },
   {
-    id: 'jk_hakari', name: 'Kinji Hakari', faction: FAC, side: 'sorcerer', cost: 1500, hp: 900, speed: 5.4,
+    id: 'jk_hakari', name: 'Kinji Hakari', faction: 'jjk_sorcerers', side: 'sorcerer', cost: 1500, hp: 900, speed: 5.4,
     build: { scale: 1.07, girth: 1.05, armThick: 1.15 },
     weapon: {
       line: 'Brawler · Domain: Idle Death Gamble - hit the JACKPOT and he is all but immortal',
@@ -1168,7 +1168,7 @@ const units = [
     desc: 'Lives for the gamble. When the jackpot hits, nothing can put him down.',
   },
   {
-    id: 'jk_flyhead', name: 'Fly Head', faction: FAC, side: 'curse', cost: 22, hp: 58, speed: 5.9,
+    id: 'jk_flyhead', name: 'Fly Head', faction: 'jjk_curses', side: 'curse', cost: 22, hp: 58, speed: 5.9,
     build: { scale: 0.7, girth: 1.0, head: 1.9, legs: 0.85, arms: 0.85 },
     weapon: { line: 'Swarm · a low-grade curse, comes in clouds', kind: 'melee', style: 'none', anim: 'punch', item: 'jj_claw', damage: 17, reach: 0.8, cooldown: 0.7, force: 140 },
     look: { skin: '#3a3836', hat: 'jk_flyhead', top: 'jk_fly', legs: '#2a2a30', accent: '#1a1a1a' },
@@ -1476,7 +1476,7 @@ function hand(H, g, skin, pos, dir, s, curl = 0.3) {
 }
 
 function decorate(def, team, vis, H) {
-  if (def.faction !== FAC && def.faction !== SUMMON) return;
+  if (!isJJK(def.faction) && def.faction !== SUMMON) return;
   const { parts, skel } = vis;
   const { mesh, sphere, box, cyl, cone, mat, glow, capsule } = H;
   const tc = tcol(H, team), td = tdark(H, team);

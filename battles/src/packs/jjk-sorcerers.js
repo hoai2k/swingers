@@ -1,4 +1,4 @@
-// Jujutsu Kaisen: more sorcerers (faction 'jjk', side 'sorcerer', on jjk-core.js).
+// Jujutsu Kaisen: more sorcerers (faction JJK Sorcerers, side 'sorcerer', on jjk-core.js).
 //  - Ryu Ishigori: heavy fists; Granite Blast - a long charge, then the thickest beam
 //    of cursed energy there is, through everyone on the line
 //  - Takako Uro: Sky Manipulation - Thin Ice Breaker folds the sky over everyone in front
@@ -31,10 +31,10 @@ import {
 } from './common.js';
 import { UPY, STANCE, setArmKey, refreshBeam, endBeam, hover } from './ges-core.js';
 import {
-  FACTION, jk, announce, burntOut, openDomain, domainAt, domeMesh, markerAt, markerOn,
+  isJJK, jk, announce, burntOut, openDomain, domainAt, domeMesh, markerAt, markerOn,
 } from './jjk-core.js';
 
-const FAC = FACTION.id, SIDE = 'sorcerer';
+const SIDE = 'sorcerer';
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _A = new THREE.Vector3();
 const _e = new THREE.Euler();
@@ -1069,7 +1069,7 @@ for (const k of ['jk_gbseg', 'jk_gbcharge', 'jk_mcseg', 'jk_arcseg', 'jk_amber',
 // ------------------------------------------------------------------ units
 const units = [
   {
-    id: 'jk_ryu', name: 'Ryu Ishigori', faction: FAC, side: SIDE, cost: 1100, hp: 900, speed: 4.8,
+    id: 'jk_ryu', name: 'Ryu Ishigori', faction: 'jjk_sorcerers', side: SIDE, cost: 1100, hp: 900, speed: 4.8,
     build: { scale: 1.16, girth: 1.12, arms: 1.05, armThick: 1.3, mass: 1.2 },
     weapon: {
       line: 'Powerhouse · heavy fists · Granite Blast: a long charge, then the thickest beam of all',
@@ -1082,7 +1082,7 @@ const units = [
     desc: 'A sorcerer from four hundred years ago with more cursed energy output than anyone. Mind the hair.',
   },
   {
-    id: 'jk_uro', name: 'Takako Uro', faction: FAC, side: SIDE, cost: 750, hp: 900, speed: 5.6,
+    id: 'jk_uro', name: 'Takako Uro', faction: 'jjk_sorcerers', side: SIDE, cost: 750, hp: 900, speed: 5.6,
     build: { scale: 1.02, girth: 0.92, legs: 1.08 },
     weapon: {
       line: 'Sky Manipulation · Thin Ice Breaker folds the sky and flings enemies · bends shots back · kicks',
@@ -1095,7 +1095,7 @@ const units = [
     desc: 'Captain of the Sun-Moon Corps a thousand years ago. Treats the sky like a sheet of paper.',
   },
   {
-    id: 'jk_kashimo', name: 'Hajime Kashimo', faction: FAC, side: SIDE, cost: 1300, hp: 800, speed: 6.0,
+    id: 'jk_kashimo', name: 'Hajime Kashimo', faction: 'jjk_sorcerers', side: SIDE, cost: 1300, hp: 800, speed: 6.0,
     build: { scale: 1.02, girth: 0.95, arms: 1.05 },
     weapon: {
       line: 'Lightning · staff blows arc to nearby foes and can\'t be parried · bolts · Mythical Beast Amber (then he burns out)',
@@ -1109,7 +1109,7 @@ const units = [
     desc: 'Four hundred years of looking for someone strong enough. Electric. Has exactly one trump card.',
   },
   {
-    id: 'jk_higuruma', name: 'Hiromi Higuruma', faction: FAC, side: SIDE, cost: 1100, hp: 700, speed: 5.0,
+    id: 'jk_higuruma', name: 'Hiromi Higuruma', faction: 'jjk_sorcerers', side: SIDE, cost: 1100, hp: 700, speed: 5.0,
     build: { scale: 1.06, girth: 0.95, legs: 1.04 },
     weapon: {
       line: "Domain: Deadly Sentencing - GUILTY: Confiscation and the Executioner's Sword · the gavel",
@@ -1123,7 +1123,7 @@ const units = [
     desc: 'A defence lawyer who gave up on the law. In his court, the verdict is final.',
   },
   {
-    id: 'jk_yuki', name: 'Yuki Tsukumo', faction: FAC, side: SIDE, cost: 1900, hp: 1300, speed: 5.4,
+    id: 'jk_yuki', name: 'Yuki Tsukumo', faction: 'jjk_sorcerers', side: SIDE, cost: 1900, hp: 1300, speed: 5.4,
     build: { scale: 1.12, girth: 0.98, arms: 1.04, armThick: 1.1, legs: 1.08 },
     weapon: {
       line: 'Special grade · Star Rage: blows with virtual mass bowl over crowds · Garuda · last stand: Black Hole',
@@ -1137,7 +1137,7 @@ const units = [
     desc: '"What kind of man is your type?" One of the special grades. Hits like a falling star.',
   },
   {
-    id: 'jk_meimei', name: 'Mei Mei', faction: FAC, side: SIDE, cost: 850, hp: 650, speed: 4.9,
+    id: 'jk_meimei', name: 'Mei Mei', faction: 'jjk_sorcerers', side: SIDE, cost: 850, hp: 650, speed: 4.9,
     build: { scale: 1.06, girth: 0.92, legs: 1.06 },
     weapon: {
       line: 'Battle-axe · Bird Strike: homing crows, and now and then one that flies in to die',
@@ -1150,7 +1150,7 @@ const units = [
     desc: 'Works for money, and her crows see everything. The axe is not for show.',
   },
   {
-    id: 'jk_kamo', name: 'Noritoshi Kamo', faction: FAC, side: SIDE, cost: 500, hp: 450, speed: 4.9,
+    id: 'jk_kamo', name: 'Noritoshi Kamo', faction: 'jjk_sorcerers', side: SIDE, cost: 500, hp: 450, speed: 4.9,
     build: { scale: 1.0, girth: 0.9, legs: 1.04 },
     weapon: {
       line: 'Archer · Blood Manipulation: blood arrows that curve onto the target · Flowing Red Scale',
@@ -1163,7 +1163,7 @@ const units = [
     desc: 'Heir of the Kamo clan, bow in hand. His arrows are his own blood.',
   },
   {
-    id: 'jk_naoya', name: "Naoya Zen'in", faction: FAC, side: SIDE, cost: 950, hp: 620, speed: 7.6,
+    id: 'jk_naoya', name: "Naoya Zen'in", faction: 'jjk_sorcerers', side: SIDE, cost: 950, hp: 620, speed: 7.6,
     build: { scale: 1.02, girth: 0.9, legs: 1.06 },
     weapon: {
       line: 'Projection Sorcery · 24-frame dashes · his touch freezes you in a frame · very fast',
@@ -1176,7 +1176,7 @@ const units = [
     desc: "Second fastest sorcerer alive, as he will tell you. Can't keep up? Then freeze.",
   },
   {
-    id: 'jk_mechamaru', name: 'Ultimate Mechamaru', faction: FAC, side: SIDE, cost: 750, hp: 620, speed: 4.7,
+    id: 'jk_mechamaru', name: 'Ultimate Mechamaru', faction: 'jjk_sorcerers', side: SIDE, cost: 750, hp: 620, speed: 4.7,
     build: { scale: 1.14, girth: 1.12, arms: 1.05, armThick: 1.25, legs: 0.95, mass: 1.25 },
     weapon: {
       line: 'Puppet robot · blade arm · Ultra Cannon beam · thrusters · once: Absolute Mode (flies, rains missiles)',
@@ -1190,7 +1190,7 @@ const units = [
     desc: 'Kokichi Muta pilots it from far away. Every gun it has, at once.',
   },
   {
-    id: 'jk_kusakabe', name: 'Atsuya Kusakabe', faction: FAC, side: SIDE, cost: 700, hp: 600, speed: 4.8,
+    id: 'jk_kusakabe', name: 'Atsuya Kusakabe', faction: 'jjk_sorcerers', side: SIDE, cost: 700, hp: 600, speed: 4.8,
     build: { scale: 1.08, girth: 1.0, legs: 1.02 },
     weapon: {
       line: 'Swordsman · Simple Domain: quick-draw on anyone who steps in · sure-hits can\'t land on him',
@@ -1377,7 +1377,7 @@ function buildHat(kind, r, team, g, H) {
 }
 
 function decorate(def, team, vis, H) {
-  if (def.faction !== FAC || def.side !== SIDE) return;
+  if (!isJJK(def.faction) || def.side !== SIDE) return;
   const id = def.id;
   const { parts, skel } = vis;
   const { mesh, sphere, box, cyl, cone, mat, capsule } = H;

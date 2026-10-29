@@ -45,7 +45,7 @@ const army = (...parts) => (k) => parts.flatMap((p) => p(k));
 
 // ---- Jujutsu Kaisen: every sorcerer against every curse (one of each, from `side` on
 // the unit), front line first: the toughest in front, casters at the back
-export const jjkSide = (side) => UNITS.filter((d) => d.faction === 'jjk' && d.side === side);
+export const jjkSide = (side) => UNITS.filter((d) => d.faction === (side === 'curse' ? 'jjk_curses' : 'jjk_sorcerers'));
 function everyone(side, extra = null) {
   return (k) => {
     const defs = jjkSide(side).filter((d) => d.cost > 50);

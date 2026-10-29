@@ -1,4 +1,4 @@
-// Jujutsu Kaisen: more curses and their allies (faction 'jjk', side 'curse', on jjk-core.js).
+// Jujutsu Kaisen: more curses and their allies (faction JJK Curses, side 'curse', on jjk-core.js).
 //  - Kurourushi: the cockroach curse of the Sendai colony - a hard shell, bites that chew
 //    (flesh-eating damage over time) and swarms of cockroaches that crawl over enemies
 //  - Uraume: Sukuna's servant - Ice Formation: Frost Calm (a cold wave that freezes
@@ -27,9 +27,8 @@ import {
   strike, handPos, torus, dome, tcol, tdark, chestShell, blast, addStatus, tube, slowBeast,
 } from './common.js';
 import { UPY } from './ges-core.js';
-import { FACTION, jk, onSecret, announce, isA, burntOut, markerAt, markerOn } from './jjk-core.js';
+import { isJJK, jk, onSecret, announce, isA, burntOut, markerAt, markerOn } from './jjk-core.js';
 
-const FAC = FACTION.id;
 const _p = new THREE.Vector3(), _o = new THREE.Vector3(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 const _e = new THREE.Euler();
 const flat = (p, q) => Math.hypot(p.x - q.x, p.z - q.z);
@@ -818,7 +817,7 @@ const PJ = {
 const CURSE = { aggro: 1, bravery: 0, voice: 0.7, chatter: 0.8, cry: 'cackle', idle: 'shift' };
 const units = [
   {
-    id: 'jk_kurourushi', name: 'Kurourushi', faction: FAC, side: 'curse', cost: 900, hp: 1000, speed: 5.4,
+    id: 'jk_kurourushi', name: 'Kurourushi', faction: 'jjk_curses', side: 'curse', cost: 900, hp: 1000, speed: 5.4,
     build: { scale: 1.15, girth: 1.15, head: 1.15, arms: 1.1, legs: 0.95, mass: 1.2 },
     weapon: {
       line: 'Curse · chewing bites eat flesh · cockroach swarms crawl over enemies · a hard shell',
@@ -831,7 +830,7 @@ const units = [
     desc: 'The special-grade cockroach of the Sendai colony. Where there is one, there are thousands.',
   },
   {
-    id: 'jk_uraume', name: 'Uraume', faction: FAC, side: 'curse', cost: 1100, hp: 640, speed: 4.8,
+    id: 'jk_uraume', name: 'Uraume', faction: 'jjk_curses', side: 'curse', cost: 1100, hp: 640, speed: 4.8,
     build: { scale: 0.98, girth: 0.9 },
     weapon: {
       line: 'Ice Formation · Icefall drops ice on a target (frozen victims shatter) · Frost Calm freezes everyone in front',
@@ -845,7 +844,7 @@ const units = [
     desc: "Sukuna's loyal servant, a thousand years on. Cold manners, colder technique.",
   },
   {
-    id: 'jk_eso', name: 'Eso', faction: FAC, side: 'curse', cost: 420, hp: 380, speed: 5.0,
+    id: 'jk_eso', name: 'Eso', faction: 'jjk_curses', side: 'curse', cost: 420, hp: 380, speed: 5.0,
     build: { scale: 1.02, girth: 0.95, arms: 1.05 },
     weapon: {
       line: 'Death Painting · Rot Technique: blood that rots · Wing King: hops clear of anyone close',
@@ -859,7 +858,7 @@ const units = [
     desc: 'Second of the Death Painting brothers. Wings on his back, a face on his back, rot in his blood.',
   },
   {
-    id: 'jk_kechizu', name: 'Kechizu', faction: FAC, side: 'curse', cost: 220, hp: 360, speed: 4.0,
+    id: 'jk_kechizu', name: 'Kechizu', faction: 'jjk_curses', side: 'curse', cost: 220, hp: 360, speed: 4.0,
     build: { scale: 0.92, girth: 1.5, head: 1.35, legs: 0.65, arms: 0.85, mass: 1.15 },
     weapon: {
       line: 'Death Painting · vomits rotting blood over everyone in front (rot over time) · avenges Eso',
@@ -872,7 +871,7 @@ const units = [
     desc: 'Youngest of the Death Painting brothers. Not pretty, not polite, very sticky.',
   },
   {
-    id: 'jk_smallpox', name: 'Smallpox Deity', faction: FAC, side: 'curse', cost: 1100, hp: 950, speed: 3.6,
+    id: 'jk_smallpox', name: 'Smallpox Deity', faction: 'jjk_curses', side: 'curse', cost: 1100, hp: 950, speed: 3.6,
     build: { scale: 1.35, girth: 1.2, head: 1.4, legs: 0.85, arms: 1.1, mass: 1.5 },
     weapon: {
       line: 'Disease curse · a pox cloud that sickens · the grave: shut in a coffin, it counts to three, then buries you',
@@ -885,7 +884,7 @@ const units = [
     desc: "A walking grave from Kenjaku's collection. Count with it: one... two...",
   },
   {
-    id: 'jk_rainbowdragon', name: 'Rainbow Dragon', faction: FAC, side: 'curse', cost: 950, hp: 1100, speed: 5.0,
+    id: 'jk_rainbowdragon', name: 'Rainbow Dragon', faction: 'jjk_curses', side: 'curse', cost: 950, hp: 1100, speed: 5.0,
     build: { scale: 1.45, girth: 1.15, head: 1.3, legs: 0.7, arms: 0.8, mass: 1.6 },
     weapon: {
       line: "Curse · Geto's dragon: rainbow scales shrug off most blows · rams through lines · bites",
@@ -898,7 +897,7 @@ const units = [
     desc: "One of Geto's prized curses. Its hide is the hardest thing in the Jujutsu world, almost.",
   },
   {
-    id: 'jk_fingerbearer', name: 'Finger Bearer', faction: FAC, side: 'curse', cost: 750, hp: 900, speed: 4.6,
+    id: 'jk_fingerbearer', name: 'Finger Bearer', faction: 'jjk_curses', side: 'curse', cost: 750, hp: 900, speed: 4.6,
     build: { scale: 1.4, girth: 1.1, head: 1.25, arms: 1.4, armThick: 1.2, legs: 0.95, mass: 1.4 },
     weapon: {
       line: 'Special grade · long-armed smashes that shake the ground · swallows a Sukuna finger when badly hurt',
@@ -911,7 +910,7 @@ const units = [
     desc: 'It grew up around a finger of the King of Curses. It would like the rest of them.',
   },
   {
-    id: 'jk_kuchisake', name: 'Kuchisake-onna', faction: FAC, side: 'curse', cost: 380, hp: 600, speed: 5.4, face: 2,
+    id: 'jk_kuchisake', name: 'Kuchisake-onna', faction: 'jjk_curses', side: 'curse', cost: 380, hp: 600, speed: 5.4, face: 2,
     build: { scale: 1.06, girth: 0.88, legs: 1.08 },
     weapon: {
       line: '"Am I beautiful?" - the question dazes its target, then giant scissors cut a dazed victim twice as deep',
@@ -924,7 +923,7 @@ const units = [
     desc: "One of Geto's curses. There is only one right answer, and it isn't either of them.",
   },
   {
-    id: 'jk_grasshopper', name: 'Grasshopper Curse', faction: FAC, side: 'curse', cost: 140, hp: 210, speed: 6.0,
+    id: 'jk_grasshopper', name: 'Grasshopper Curse', faction: 'jjk_curses', side: 'curse', cost: 140, hp: 210, speed: 6.0,
     build: { scale: 1.0, girth: 0.9, head: 1.15, legs: 1.15, arms: 0.95 },
     weapon: {
       line: 'Curse · huge leaps that land feet first · cheap, comes in swarms',
@@ -937,7 +936,7 @@ const units = [
     desc: 'The Shibuya grasshopper. Boing.',
   },
   {
-    id: 'jk_yorozu', name: 'Yorozu', faction: FAC, side: 'curse', cost: 1200, hp: 700, speed: 5.4, face: 2,
+    id: 'jk_yorozu', name: 'Yorozu', faction: 'jjk_curses', side: 'curse', cost: 1200, hp: 700, speed: 5.4, face: 2,
     build: { scale: 0.96, girth: 0.9 },
     weapon: {
       line: 'Construction · liquid metal blade · Insect Armour (wings, takes less harm) · once: the True Sphere at the strongest enemy',
@@ -1155,7 +1154,7 @@ function buildHat(kind, r, team, g, H) {
 }
 
 function decorate(def, team, vis, H) {
-  if (def.faction !== FAC || !def.id.startsWith('jk_')) return;
+  if (!isJJK(def.faction) || !def.id.startsWith('jk_')) return;
   const top = def.look.top;
   if (!TOPS.has(top)) return;
   const { parts, skel } = vis;

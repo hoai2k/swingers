@@ -627,8 +627,8 @@
       "length_s": 7.75
     },
     {
-      "file": "assets/ui/faction-jujutsu.png",
-      "original": "assets/originals/ui/faction-jujutsu.png",
+      "file": "assets/ui/faction-jjk_sorcerers.png",
+      "original": "assets/originals/ui/faction-jjk_sorcerers.png",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-7311e2c4-d670-43e8-9bd0-605d9507159d.png",
       "prompt": "Use case: stylized-concept. Asset type: game faction emblem for Wobbly Battles, to be downsampled to 128x128 and displayed at 28px. A cracked paper talisman (ofuda) with a swirl of blue-violet cursed flame curling up out of it, and a tiny round straw doll with a nail behind it. Deep indigo #3b2a7a and electric violet #9b5cff, a touch of black. Bright toy-like comedic fantasy, clean flat sticker style with soft shading and bold dark navy outlines. Centered compact silhouette filling 85% of square, clear margin, extremely simple bold shapes readable tiny. Original designs only, no franchise symbols, no copied hand signs or eyes, no starbird or Imperial cog or rebel crest. No text, lettering, runes, logos or watermark. Genuinely transparent background.",
       "mode": "built-in",
@@ -655,8 +655,8 @@
     {
       "prompt": "Use case: stylized-concept. Wobbly Battles faction emblem, square, 128x128 final, readable at 28px. A cursed finger: a withered dark-red mummified finger with a black nail, non-graphic and toy-like, crossed with a cursed-tool paper talisman, in front of a dark circle of blue-violet cursed energy flames. Black, deep red #8a1c1c, electric blue #3a7bff. Clean flat sticker style with soft shading, bold dark outlines, compact centered silhouette filling 85% of canvas with clear margins. No text, lettering, logos, blood or gore. Genuinely transparent background.",
       "source": "/Users/hoai/.codex/generated_images/01a16df0-60fe-7612-8f44-1ea230734a9a/exec-1caae5f8-3f6b-404d-8487-7f930c6fdd2c.png",
-      "file": "assets/ui/faction-jjk.png",
-      "original": "assets/originals/ui/faction-jjk.png",
+      "file": "assets/ui/faction-jjk_curses.png",
+      "original": "assets/originals/ui/faction-jjk_curses.png",
       "mode": "built-in",
       "transparent": true,
       "size": [

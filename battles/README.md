@@ -151,7 +151,7 @@ to its file, with its loop point. Each battle picks its song
 delivered: Castle → Medieval, Pirate Cove → Pirate, Volcano Jungle → Tribal, Canyon Ruins →
 Wild West), else a campaign world's theme, else the theme of the factions
 holding most of the gold on the field (Tribal / Farmer / Prehistoric → Tribal; Medieval /
-Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK; Avatar), else the
+Legacy / Renaissance → Medieval; Pirate; Wild West; Viking; Dynasty; JJK Sorcerers / JJK Curses → JJK; Avatar), else the
 main battle theme or the second one (the cavalry charge) or, half the time, one of the world themes (not JJK's electric one,
 which stays with JJK armies). Setup and the result screen play the planning version of the battle
 song that's coming (`setupTheme`: the battleground's, a campaign world's, or the factions
@@ -286,9 +286,10 @@ when delivered; without one the tab shows just the name in the faction colour.
   **Finger Bearer** (swallows a Sukuna finger once when hurt), **Kuchisake-onna** ("Am I
   beautiful?" dazes, then the scissors), the **Grasshopper Curse** (cheap, leaps in with a kick)
   and **Yorozu** (Construction blades, Insect Armour, the True Sphere).
-- **Sorcerers and curses**: every JJK unit has `side: 'sorcerer'` or `side: 'curse'` (21
-  sorcerers, 20 curses and curse users: Toji, Geto/Kenjaku, Choso, Uraume and Yorozu fight
-  with the curses). The Simulation *Sorcerers vs Curses* puts one of each on its side and is
+- **Sorcerers and curses**: JJK is two factions, **JJK Sorcerers** (`jjk_sorcerers`, the good
+  side, 21 units) and **JJK Curses** (`jjk_curses`, the evil side, 20 curses and curse users:
+  Toji, Geto/Kenjaku, Choso, Uraume and Yorozu fight with the curses); each unit's `side`
+  ('sorcerer' / 'curse') matches its faction, and everything JJK-wide checks `isJJK()`. The Simulation *Sorcerers vs Curses* puts one of each on its side and is
   tuned to an even fight (see BALANCE.md).
 - **JJK power levels**: one on one the faction follows the anime: Gojo (who teleports
   clear of blows Infinity can't stop, and whose Unlimited Void wins the clash with the
@@ -309,7 +310,7 @@ when delivered; without one the tab shows just the name in the faction colour.
 - `src/world.js` maps/terrain/scenery · `src/fx.js` particles · `src/audio.js` synthesised sfx, voices, music
 - `src/maps-new.js` feature maps (castle, river, cove, volcano, canyon, graveyard) · `src/features.js` hills, plateaus, water, bridges, walls and breakables: height grid, colliders, AI steering, placement checks, projectile blocking (all mirrored through the centre for fairness) · `src/mapscene.js` their meshes and set dressing
 - `src/packs/` the faction packs (registered through `src/ext.js`, listed in `src/packs/index.js`).
-- `src/packs/jjk-*.js` the **Jujutsu Kaisen** faction (`jjk`): `jjk-core.js` (domains with barriers,
+- `src/packs/jjk-*.js` the **Jujutsu Kaisen** factions (JJK Sorcerers `jjk_sorcerers`, JJK Curses `jjk_curses`): `jjk-core.js` (domains with barriers,
   clashes, Prison Realm, Infinity, reserves, secrets) and the characters. `jjk-students.js`: Yuji
   (Divergent Fist, Black Flash), Todo (Boogie Woogie swaps), Nobara (nails, Hairpin, Resonance),
   Nanami (Ratio 7:3, Overtime), Maki (no cursed energy, Split Soul Katana), Panda (Gorilla Core),
