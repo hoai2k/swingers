@@ -1,13 +1,14 @@
 // SURVIVAL: co-op against escalating waves of insects (src/enemies/*).
 //
-// Structure: waves come in STAGES of 3. Every player has LIVES (3 to start):
-// dying costs one and the spider drops back in 3 s later with spawn
-// protection; with no lives left that player is OUT until the stage is
-// cleared. Clearing a stage (its 3rd wave) gives everyone +1 life (cap 5,
-// +1 per Spare Heart; the OUT come back with 1), revives the fallen and
+// Structure: waves come in STAGES of 3. The TEAM shares its LIVES (3 to
+// start; p.lives mirrors the team count on every player): a spider that falls
+// stays down while anyone is still standing, and comes back for free when
+// the wave is cleared. Only when the last spider falls does the team lose a
+// life, and then everyone drops back in together 3 s later. Clearing a stage
+// (its 3rd wave) gives the team +1 life (cap 5, +1 per Spare Heart) and
 // offers the team's power-up pick (one card for everyone); then the team
 // moves on to the next board (unless a board was picked in the lobby).
-// Game over when nobody is left standing and nobody has a life to spend.
+// Game over when the whole team is down with no life left to spend.
 //
 // Flow: 'break' (STAGE s · WAVE n/3 banner, weapons restocked) -> 'wave'
 // (insects enter from board.enemySpawns after a warning marker at the edge)
@@ -57,7 +58,7 @@ export const WAVES_PER_STAGE = 3;
 const BOSS_STAGES = 2;           // the last wave of every 2nd stage is a boss wave (6, 12, ...)
 const START_LIVES = 3;
 const LIFE_CAP = 5;
-const RESPAWN_T = 3;             // seconds before a fallen spider drops back in
+const RESPAWN_T = 3;             // seconds before a wiped-out team drops back in
 
 const BEST_KEY = 'spiders.survival.best';             // most waves cleared
 const BEST_STAGE_KEY = 'spiders.survival.bestStage';   // most stages cleared
@@ -129,7 +130,9 @@ export class SurvivalMode {
   // keep live insects in frame too (but zoom tracks the spiders mostly)
   cameraExtra() { return this.game.enemies.filter((e) => e.alive && e.x > 0 && e.x < 1920 && e.y > 0 && e.y < 1080).map((e) => [e.x, e.y]); }
   bossOn(w) { return w % (WAVES_PER_STAGE * BOSS_STAGES) === 0; }
-  maxLives(p) { return this.lifeCap + (((p.perks || {}).heart) || 0); }
+  maxLives(p = this.game.players[0]) { return this.lifeCap + (((p && p.perks || {}).heart) || 0); }
+  // the team's lives, mirrored on every player (perks read p.lives)
+  setLives(n) { this.lives = Math.max(0, n); for (const p of this.game.players) p.lives = this.lives; }
 
   // ---- setup -------------------------------------------------------------------
   pickBoard() {
@@ -152,10 +155,11 @@ export class SurvivalMode {
     for (const p of game.players) {
       p.score = 0; p.kills = 0; p.deaths = 0;
       p.perks = {};
-      p.lives = this.startLives;
       p.windStage = 0;
       this.stats.set(p, { kills: 0, deaths: 0 });
     }
+    this.setLives(this.startLives);
+    this.windStage = 0;
     const spawns = board.spawns.slice().sort(() => Math.random() - 0.5);
     game.players.forEach((p, i) => {
       const [x, y] = spawns[i % spawns.length];
@@ -226,13 +230,16 @@ export class SurvivalMode {
     for (const p of this.game.players) {
       p.perks = p.perks || {};
       p.perks[P.id] = (p.perks[P.id] || 0) + 1;
-      if (P.take) P.take(p, p.perks[P.id], this);
+      if (P.take) { p.lives = this.lives; P.take(p, p.perks[P.id], this); }
       if (p.spider && p.spider.alive) {
         this.applyPerks(p.spider);
         this.game.fx.text(p.spider.x, p.spider.y - 40, P.name, P.color, 24, 1.2);
         this.game.fx.ring(p.spider.x, p.spider.y, 50, P.color, 0.4, 4);
       }
     }
+    // a team perk that adds a life (Spare Heart) adds it once, to the team
+    const lives = Math.max(...this.game.players.map((p) => p.lives || 0));
+    this.setLives(Math.min(this.maxLives(), lives));
   }
 
   // ---- waves ------------------------------------------------------------------
@@ -290,8 +297,8 @@ export class SurvivalMode {
     const free = game.board.spawns.filter(([x, y]) => !game.pickups.some((p) => !p.spent && Math.hypot(p.x - x, p.y - (y - 40)) < 120));
     this.drops.seedSpawns(free);
     for (const sp of game.spiders) if (sp.alive) this.applyPerks(sp, true);
-    // anyone who fell between waves (perk pick) with a life to spend comes back now
-    for (const p of game.players) if (!(p.spider && p.spider.alive) && p.lives > 0 && !this.respawns.some((r) => r.p === p)) this.revive(p);
+    // anyone still down (fell after the wave was cleared) comes back now
+    if (this.lives > 0) for (const p of game.players) if (!(p.spider && p.spider.alive) && !this.respawns.some((r) => r.p === p)) this.revive(p);
     sfx.wave();
   }
 
@@ -448,18 +455,23 @@ export class SurvivalMode {
     this.statsOf(p).deaths++;
     const perks = p.perks || {};
     if (perks.boom) this.blasts.push({ x: sp.x, y: sp.y, t: 0.18, owner: sp });
-    if (!this.inPlay) return;
-    let free = false;
-    if (perks.wind && p.windStage !== this.stage) { p.windStage = this.stage; free = true; }
-    if (!free) p.lives = Math.max(0, (p.lives || 0) - 1);
-    if (p.lives > 0) {
-      this.respawns.push({ p, t: RESPAWN_T, T: RESPAWN_T, x: sp.x, y: sp.y });
-      if (free) this.game.fx.text(sp.x, sp.y - 40, 'SECOND WIND', '#ff7ad9', 24, 1.2);
-    } else {
-      this.game.fx.text(sp.x, sp.y - 40, 'OUT!', '#ff5a7a', 34, 1.4);
+    if (!this.inPlay || this.respawns.length) return;
+    // teammates still standing: this spider stays down until the wave is cleared
+    if (this.game.spiders.some((s) => s.alive && s !== sp)) {
+      this.game.fx.text(sp.x, sp.y - 40, 'DOWN', p.color.main, 26, 1.2);
+      return;
     }
-    const alive = this.game.spiders.filter((s) => s.alive).length;
-    if (alive === 0 && !this.respawns.length && settings.slowmo) this.game.slowmo(0.3, 1.2);
+    // the last one fell: the team loses a life and everyone drops back in together
+    let free = false;
+    if (perks.wind && this.windStage !== this.stage) { this.windStage = this.stage; free = true; }
+    if (!free) this.setLives(this.lives - 1);
+    if (this.lives > 0) {
+      for (const q of this.game.players) {
+        const at = q.spider || sp;
+        this.respawns.push({ p: q, t: RESPAWN_T, T: RESPAWN_T, x: at.x, y: at.y });
+      }
+      this.game.fx.text(sp.x, sp.y - 40, free ? 'SECOND WIND' : 'TEAM DOWN · −1 LIFE', free ? '#ff7ad9' : '#ff5a7a', 28, 1.6);
+    } else if (settings.slowmo) this.game.slowmo(0.3, 1.2);
   }
 
   updateRespawns(dt) {
@@ -482,6 +494,24 @@ export class SurvivalMode {
     return true;
   }
 
+  // game over -> continue: the same board, perks and weapons, the team's lives
+  // back to the start, and the wave that beat them starts again
+  continueRun() {
+    const game = this.game;
+    this.continues = (this.continues || 0) + 1;
+    game.enemies = [];
+    game.projectiles = game.projectiles.filter((p) => p.team !== 'enemy');
+    game.timeScale = 1; game.slowT = 0;
+    this.pending = []; this.queue = []; this.respawns = []; this.blasts = [];
+    this.lostReason = null;
+    this.setLives(this.startLives);
+    this.reviveAll();
+    this.wave--;
+    this.nextWave();
+    game.music.match(game.board.def.music, 'survival');
+    game.music.setDuck(1);
+  }
+
   waveCleared() {
     const game = this.game;
     this.state = 'clear'; this.t = 0;
@@ -495,12 +525,16 @@ export class SurvivalMode {
       if (this.recordBest && this.stagesCleared > this.bestStage) { this.bestStage = this.stagesCleared; saveNum(BEST_STAGE_KEY, this.bestStage); }
       this.stageReward();
       sfx.win();
-    } else sfx.perk();
+    } else {
+      // the wave is won: whoever is down is back, free of charge
+      this.reviveAll();
+      sfx.perk();
+    }
   }
 
-  // stage clear: +1 life each (the OUT come back with 1), the fallen return
+  // stage clear: +1 team life, the fallen return
   stageReward() {
-    for (const p of this.game.players) p.lives = Math.min(this.maxLives(p), (p.lives || 0) + 1);
+    this.setLives(Math.min(this.maxLives(), this.lives + 1));
     this.reviveAll();
   }
 
@@ -532,7 +566,6 @@ export class SurvivalMode {
     this.newBoard = true;
     const spawns = board.spawns.slice().sort(() => Math.random() - 0.5);
     game.players.forEach((p, i) => {
-      if (!(p.lives > 0)) return;
       const [x, y] = spawns[i % spawns.length];
       const sp = game.spawnSpider(p, x, y, { invuln: 2 });
       this.applyPerks(sp, true);
@@ -586,9 +619,13 @@ export class SurvivalMode {
         if (this.t >= 2.2) { this.state = 'over'; this.t = 0; }
         break;
       case 'over':
+        // A: continue (replay the wave that beat the team, lives refilled);
+        // B: back to the lobby
         for (const p of game.players) {
           const s = game.input.get(p.inputId);
-          if (this.t > 1.5 && s && (s.pressed.a || s.pressed.start)) { game.go('lobby'); return; }
+          if (this.t <= 1.5 || !s) continue;
+          if (s.pressed.a || s.pressed.start) { this.continueRun(); return; }
+          if (s.pressed.b || s.pressed.back) { game.go('lobby'); return; }
         }
         if (!game.players.length && this.t > 1) game.go('lobby');
         break;
@@ -652,13 +689,22 @@ export class SurvivalMode {
     if (drawGlyph(ctx, 'hud_wave', W / 2 - 160, 42, 40, pillCol)) text(ctx, this.pillLabel(), W / 2 + 18, 44, { size: 30, color: pillCol, sw: 0, stroke: null, maxWidth: 300 });
     else text(ctx, this.pillLabel(), W / 2, 44, { size: 30, color: pillCol, sw: 0, stroke: null, maxWidth: 360 });
     if (rem) text(ctx, rem, W / 2, 67, { size: 17, color: '#cfd6ff', stroke: null });
+    // the team's lives: filled hearts, empty slots up to the cap
+    {
+      const max = this.maxLives(), n = this.lives || 0, step = 26;
+      const x0 = W / 2 - ((max - 1) * step) / 2;
+      for (let k = 0; k < max; k++) {
+        if (k < n) drawHeart(ctx, x0 + k * step, 92, 10, n === 1 ? '#ff2a4a' : '#ff5a7a', 'rgba(40,0,10,0.8)');
+        else drawHeart(ctx, x0 + k * step, 92, 10, null, 'rgba(255,255,255,0.28)');
+      }
+    }
     // per-player cards, top-left: portrait, kills, lives
     const ps = game.players;
     const cw = 172, ch = 54;
     ps.forEach((p, i) => {
       const x = 18 + (i % 4) * (cw + 8), y = 12 + Math.floor(i / 4) * (ch + 8);
       const sp = p.spider, alive = sp && sp.alive;
-      const out = !alive && !(p.lives > 0);
+      const out = !alive;
       const rs = this.respawns.find((r) => r.p === p);
       ctx.save();
       ctx.globalAlpha = alive ? 1 : 0.75;
@@ -679,17 +725,8 @@ export class SurvivalMode {
         text(ctx, `${kills}`, x + 56, y + 25, { size: 20, color: p.color.main, sw: 4, align: 'left' });
         text(ctx, 'kills', x + 58 + 12 * String(kills).length, y + 25, { size: 13, color: '#9aa0c8', stroke: null, align: 'left' });
       }
-      // lives: filled hearts, empty slots up to the cap
-      if (out) text(ctx, 'OUT', x + 56, y + 46, { size: 18, color: '#ff5a7a', sw: 4, align: 'left' });
-      else {
-        const max = this.maxLives(p), n = p.lives || 0;
-        const step = Math.min(18, 106 / Math.max(1, max));
-        for (let k = 0; k < max; k++) {
-          const hx = x + 64 + k * step, hy = y + 39;
-          if (k < n) drawHeart(ctx, hx, hy, 8, k === n - 1 && n === 1 ? '#ff2a4a' : '#ff5a7a', 'rgba(40,0,10,0.8)');
-          else drawHeart(ctx, hx, hy, 8, null, 'rgba(255,255,255,0.28)');
-        }
-      }
+      // down until the wave is cleared (lives are the team's: under the wave pill)
+      if (out && !rs) text(ctx, 'DOWN', x + 56, y + 46, { size: 18, color: '#ff5a7a', sw: 4, align: 'left' });
       // shield pips
       if (alive && sp.shield > 0) {
         for (let k = 0; k < sp.shield; k++) {
@@ -743,7 +780,10 @@ export class SurvivalMode {
     ctx.fillRect(0, 0, W, H);
     drawBanner(ctx, 'THE SWARM WINS', `Stages cleared: ${this.stagesCleared} (best ${this.bestStage})   ·   waves: ${this.cleared} (best ${this.best})`, Math.min(1, this.t * 2), '#ff5a7a');
     const end = this.drawPlayerTable(ctx, 360);
-    if (this.t > 1.5) text(ctx, 'Press A to return to the lobby', W / 2, end + 60, { size: 30, color: '#e4e8ff' });
+    if (this.t > 1.5) {
+      text(ctx, `A  continue from wave ${this.wave} with ${this.startLives} lives      B  back to the lobby`, W / 2, end + 60, { size: 30, color: '#e4e8ff' });
+      if (this.continues) text(ctx, `continues used: ${this.continues}`, W / 2, end + 96, { size: 20, color: '#9aa0c8', stroke: null });
+    }
   }
 
   breakBanner() {
