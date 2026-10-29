@@ -594,7 +594,11 @@ within 160 m of a camera. Sounds `explode` / `fire` are recorded with synth fall
 
 ## Waypoint stars (`src/world/waypoints.js`)
 
-`WAYPOINTS` ([id, name, x, z]) puts a spinning gold star (glow sprite + two crossed additive beam
+`WAYPOINTS` ([id, name, x, z]) holds **one star per ecosystem, at its best-known landmark**: the Fall
+Fair arch (suburbs), Pooh Berry Farm (farmland), the Mountain Lookout, the foot of Bigtown Tower (city),
+Frostpeak Summit, the Old Pyramid's south face (desert), the Volcano Rim (jungle) and the Coconut Cove
+lighthouse; Town is the free start point. Keep it that way: a new ecosystem gets one star at its
+landmark, not one per sight. Each entry puts a spinning gold star (glow sprite + two crossed additive beam
 planes, drawn within 700 m of a camera, the star itself within 260 m) on the nearest open, dry,
 level ground to each point (a spiral search at build: a ray from 120 m up must land within 0.8 m
 of the terrain mesh, no water over it). Touching it (chest 1.2 m / hand 0.6 m, checked 20 times a
