@@ -142,6 +142,35 @@ export class Game {
     return p;
   }
 
+  // The dressing stage: a player who has just joined stands on their own podium high over the open
+  // sea, well outside the world and far from everyone, while they make their Wobbler (ui.js
+  // Customiser draws the card beside them); "Let's go!" drops them in at their spawn point.
+  stage(p) {
+    const S = this.stages ||= [];
+    let st = S[p.index];
+    if (!st) {
+      const x = -60 + p.index * 16, y = 300, z = 2150;
+      this.physics.cylinder(x, y - 1, z, 1.3, 2, { friction: 1 });
+      const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 40 }), ring = new THREE.MeshPhongMaterial({ color: 0xffd23f, shininess: 60 });
+      const g = new THREE.Group();
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.15, 2, 40), mat); top.position.y = -1; top.receiveShadow = true;
+      const band = new THREE.Mesh(new THREE.TorusGeometry(1.31, 0.07, 10, 48), ring); band.rotation.x = Math.PI / 2; band.position.y = -0.12;
+      g.add(top, band); g.position.set(x, y, z); g.name = 'stage' + p.index;
+      this.scene.add(g);
+      st = S[p.index] = { x, y, z };
+    }
+    p.staged = true;
+    p.teleport(st.x, st.y + 0.05, st.z, 0);
+    p.camera.yaw = Math.PI; p.camera.first = true;
+  }
+  unstage(p) {
+    if (!p.staged) return;
+    p.staged = false;
+    const sp = this.spawnPoint(p.index);
+    p.teleport(sp.x, sp.y + 1.3, sp.z, sp.yaw);               // dropped in from a little way up
+    p.camera.yaw = sp.yaw; p.camera.first = true;
+  }
+
   removePlayer(p) {
     p.destroy();
     this.players = this.players.filter((q) => q !== p);
@@ -513,7 +542,11 @@ export class Game {
       const d = this.input.get(p.deviceId);
       p.camera.update(d && !this.paused ? d.state : { lookX: 0, lookY: 0 }, dt);
       const cam = p.camera.cam;
-      cam.aspect = w / h; cam.updateProjectionMatrix();
+      cam.aspect = w / h;
+      // a side panel open (the customiser): shift the picture so the character stands beside it
+      if (p.viewShift) cam.setViewOffset(w, h, -p.viewShift * w, 0, w, h);
+      else if (cam.view?.enabled) cam.clearViewOffset();
+      cam.updateProjectionMatrix();
     });
     if (this.players.length) {
       const groups = this.shadowGroups(views);

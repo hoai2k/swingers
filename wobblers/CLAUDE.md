@@ -125,7 +125,14 @@ The repo-level `CLAUDE.md` rules (deploy switch, branches, commits) still apply.
   `OUTFIT_LIST` (append only; saved looks store indices): free ones, one per job (unlocked by
   finishing that job once, `JOB_OUTFITS`) and shop ones (`SHOP_COSMETICS`). Each player slot
   keeps its own saved look (`settings.devices.slot<N>`, `cosmetics.js` `saveLook` / `restoreLook`);
-  A on the join customiser plays straight away.
+  A on the join customiser plays straight away. Joining puts the new player on their own
+  dressing stage (`game.stage(p)`, `p.staged`: a podium per slot at y 300 over the open sea at
+  z 2150, out of the world and out of everyone's sight) while the customiser is open; "Let's go!"
+  (`Customiser.done`) calls `game.unstage(p)`, dropping them in at `spawnPoint` from 1.3 m up.
+  Staged players get no "P2" tags either way. While a customiser is open the view's picture is
+  shifted (`p.viewShift`, set by ui.js from the card's right edge; game.js applies it with
+  `cam.setViewOffset`) so the character stands in the open part of the view beside the card,
+  in split screen too.
 - Rendering (`src/sky.js`, `src/look.js`, `world/water.js`, `world/detail.js`, `game.render`):
   read `game.timeOfDay` (hours), `game.dayLight` (0..1), `game.nightLight` (0..1) and
   `game.isNight` for anything that should react to the day/night cycle (headlights, lit

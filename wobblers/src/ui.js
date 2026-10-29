@@ -207,6 +207,7 @@ class Customiser extends Panel {
     saveLook(this.p);
     this.ui.sfx('uiSelect');
     this.ui.closePanel(this.p);
+    if (this.p.staged) this.ui.game.unstage(this.p); // off the dressing stage, into the world
     if (this.first) this.ui.toast(`Player ${this.p.index + 1} is ready!`, this.p.color);
   }
   input(n) {
@@ -698,18 +699,24 @@ export class UI {
       const needMouse = p.deviceId === 'kb1' && !panel && !this.help && document.pointerLockElement !== g.canvas;
       ve.mouse.classList.toggle('hidden', !needMouse);
       if (needMouse) Object.assign(ve.mouse.style, { left: x + w / 2 + 'px', top: y + 14 + 'px' });
-      // customiser: swing the camera round to face the character
+      // customiser: swing the camera round to face the character, and shift the picture
+      // (game.js view offset) so they stand in the open part of the view beside the card
       if ((panel?.kind === 'custom' || panel?.faceCam) && p.camera) {
         const c = p.camera;
         c.yaw = p.yaw + Math.PI + 0.35; c.pitch = 0.1;
         if ('dist' in c) c.dist = 3.0;
-      }
+        const card = panel.el.querySelector('.card');
+        if (card && panel.kind === 'custom') {
+          const r = card.getBoundingClientRect(), right = Math.max(0, Math.min(w, r.right - x));
+          p.viewShift = Math.max(0, Math.min(0.4, ((right + w) / 2 - w / 2) / w));
+        } else p.viewShift = 0;
+      } else p.viewShift = 0;
       // every other player: a tag over their head when they're on screen (with the distance once
       // they're past 25 m), otherwise a badge at the edge of the view pointing toward them, so
       // players can always find each other
       const cam = p.camera.cam;
       for (const q of ps) {
-        if (q === p) continue;
+        if (q === p || q.staged || p.staged) continue; // still on the dressing stage: not in the world yet
         q.viewPos(hd, 'head');
         const dist = cam.position.distanceTo(hd);
         v3.set(hd.x, hd.y + 0.5, hd.z).project(cam);
@@ -862,6 +869,7 @@ export class UI {
     const d = inp.get(id); if (d) d.pressed = {};
     this.toast(`Player ${p.index + 1} joined! <small>${DEV_NAME(id)}</small>`, p.color);
     this.openCustomiser(p, true);
+    g.stage(p); // dressing stage: they drop into the world once they're done choosing
   }
 
   setPanel(p, panel) {
