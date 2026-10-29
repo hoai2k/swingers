@@ -3,6 +3,7 @@ import { FACTIONS, UNITS, UNIT_BY_ID, unitsOfFaction, rosterVersion } from './un
 import { TEAM_COLORS, TEAM_NAMES } from './visual.js';
 import { padLabel } from './input.js';
 import { hasAsset } from './assets.js';
+import { padNoteEl } from '../../src/padnote.js';
 
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -92,6 +93,9 @@ export class UI {
     L.appendChild(this.menu);
     this.menuHint = el('div', 'menuhint');
     L.appendChild(this.menuHint);
+    // "Xbox controller highly recommended" (main page only, until a pad connects)
+    this.padNote = padNoteEl('padnote');
+    L.appendChild(this.padNote);
     this.pads = el('div', 'pads');
     L.appendChild(this.pads);
     this.sound = el('div', 'soundnote');
@@ -109,6 +113,7 @@ export class UI {
     this.setText(this.menuHead, d.head || '');
     this.setText(this.menu, this.menuHtml(d.items, d.sel));
     this.setText(this.menuHint, d.hint || '');
+    this.padNote.classList.toggle('off', !d.main);
     this.setText(this.pads, this.padCards(d.pads));
     this.setText(this.sound, d.soundOff ? '🔇 press any button to enable sound' : '');
   }

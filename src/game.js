@@ -19,6 +19,7 @@ import { POWERS } from './powerups.js';
 import { sfx } from './audio.js';
 import { art } from './art.js';
 import { loadProgress } from './preload.js';
+import { drawPadNote } from './padnote.js';
 import { clamp, lerp, TAU, roundRectPath, FONT } from './util.js';
 
 const M = window.Matter;
@@ -1220,8 +1221,11 @@ export class Game {
       ctx.restore();
     };
     const logo = art('logo-arch') || art('logo');
-    const lw = Math.min(900, cw * 0.64);
-    const lh = logo ? lw * (logo.height / logo.width) : 140;
+    // on a short screen the logo shrinks so the block (down to the controller
+    // note under PRESS START) still clears the footer line
+    const ratio = logo ? logo.height / logo.width : 0;
+    const lw = Math.min(900, cw * 0.64, ratio ? Math.max(160, (ch - 252) / ratio) : Infinity);
+    const lh = logo ? lw * ratio : 140;
     const blockH = 30 + lh + 50 + 70;
     let y = Math.max(40, ch * 0.47 - blockH / 2);
     spaced('A ROUNDERS SPINOFF  •  1–4 PLAYER CLIMBING PARTY GAME', y + 16, Math.max(12, Math.min(16, cw * 0.013)), 'rgba(255,255,255,0.75)', 3);
@@ -1252,6 +1256,8 @@ export class Game {
     ctx.globalAlpha = 0.35 + 0.65 * pulse;
     spaced('PRESS START', y, Math.max(16, Math.min(26, cw * 0.02)), '#ffd94d', 11, 'rgba(255,190,60,0.6)');
     ctx.globalAlpha = 1;
+    const ns = Math.max(13, Math.min(16, cw * 0.012));
+    drawPadNote(ctx, cw / 2, y + 46, { font: `500 ${ns}px ${FONT}`, size: ns, color: 'rgba(245,242,255,0.62)', shadow: 'rgba(0,0,0,0.8)', shadowBlur: 10 });
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = `13px ${FONT}`;
     ctx.fillText('any controller button  •  a key  •  or a click', cw / 2, ch - 18);

@@ -972,6 +972,7 @@ export class Game {
     const startHint = this.titlePage === 'main' ? 'quick versus' : this.titlePage === 'options' ? '' : 'start';
     this.ui.updateTitle({
       head: heads[this.titlePage] || '',
+      main: this.titlePage === 'main',
       items, sel: this.titleSel,
       hint: `${btn('dpad')}/${btn('LS')} choose &nbsp; ${items.some((i) => i.value !== undefined) ? '←→ change &nbsp; ' : ''}${btn('A')} select${this.titlePage !== 'main' ? ` &nbsp; ${btn('B')} back` : ''}${startHint ? ` &nbsp; ${btn('Start')} ${startHint}` : ''}`,
       pads: [0, 1].map((p) => ({ name: I.padNames[p], standard: true })),

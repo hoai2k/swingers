@@ -15,6 +15,7 @@ import { PhonePanel } from './phone.js';
 import { ShopPanel } from './life/shops.js';
 import { life } from './life/state.js';
 import { gadgetName, cycleGadget, lockedGadgets } from './gadgets.js';
+import { padNoteEl } from '../../src/padnote.js';
 
 // Corner buttons (top right): fullscreen, sound on/off and the shared settings card.
 const svg = (body) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
@@ -476,6 +477,8 @@ export class UI {
       if (t && this.help) { this.help.tab = +t.dataset.tab; this.drawHelp(); }
       if (e.target.closest?.('[data-act="close"]')) this.closeHelp();
     });
+    // "Xbox controller highly recommended", under the join prompt until a pad connects
+    document.getElementById('press')?.appendChild(padNoteEl('sub padnote'));
     document.getElementById('press')?.addEventListener('click', () => this.tryJoin('kb1'));
     // clicking outside a menu card (the dimmed part of that view) closes it
     addEventListener('pointerdown', (e) => {

@@ -55,6 +55,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .pc-swap { align-self: center; text-align: center; font-weight: 800; font-size: 12px; line-height: 1.2; text-shadow: 0 1px 2px #000; }
 .soundnote { position: absolute; top: 10px; right: 14px; background: rgba(0,0,0,0.45); padding: 5px 12px; border-radius: 10px; font-weight: 800; font-size: 14px; }
 .soundnote:empty { display: none; }
+.padnote { margin-top: 6px; font-weight: 800; font-size: 14px; text-align: center; color: rgba(255,255,255,0.82); text-shadow: 0 1px 2px #000; }
+.padnote svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8)); }
+.padnote.off { display: none; }
+/* on a short landscape screen the menu runs down behind the pad cards: the note moves to the free top-left corner */
+@media (max-height: 560px) { .padnote { position: absolute; top: 12px; left: 12px; margin: 0; font-size: 12px; text-align: left; } }
 
 /* setup */
 .half { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }

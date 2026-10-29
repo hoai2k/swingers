@@ -13,6 +13,7 @@ import { CAST, drawBody, castAt } from './cast.js';
 import { TAU, mulberry, clamp, FONT, rgba } from './util.js';
 import { sfx } from './audio.js';
 import { optionalImage, ready } from './optional-art.js';
+import { drawPadNote } from '../../src/padnote.js';
 
 const LOGO = optionalImage('logo.png');
 const BG = optionalImage('title_bg.jpg');
@@ -438,5 +439,21 @@ export class Title {
     text(ctx, pads ? `${pads} controller${pads > 1 ? 's' : ''} connected · up to 8 players` : 'Plug in up to 8 controllers · keyboard + mouse plays too', W / 2, 880, { size: 22, color: 'rgba(220,225,255,0.7)', sw: 4 });
     ctx.restore();
     text(ctx, 'Starring the Rounders cast  ·  music from Rounders  ·  a swinging spider brawler', W / 2, H - 26, { size: 20, color: 'rgba(220,225,255,0.5)', sw: 4, stroke: 'rgba(0,0,0,0.4)' });
+  }
+
+  // "Xbox controller highly recommended", drawn in screen pixels (after the
+  // letterbox bars) so it stays readable however small the arena is scaled:
+  // in the band under the arena when the screen is tall enough (portrait),
+  // otherwise between the controller hints and the credits line.
+  drawOverlay(ctx, v) {
+    const ui = this.game.ui;
+    const k = easeOut((this.t - 1.1) * 2) * (this.leave >= 0 ? 1 - easeOut(this.leave / 0.25) : 1);
+    if (k <= 0 || (ui && ui.open)) return;
+    const size = Math.max(12, Math.min(20, 22 * v.s));
+    const y = v.oy > size * 3.5 ? v.oy + H * v.s + size * 2.2 : v.oy + 935 * v.s + size * 0.35;
+    ctx.save();
+    ctx.globalAlpha = k * 0.9;
+    drawPadNote(ctx, v.cw / 2, y, { font: `600 ${size}px ${FONT}`, size, color: 'rgba(220,225,255,0.72)', shadow: 'rgba(0,0,0,0.75)', shadowBlur: 6 });
+    ctx.restore();
   }
 }
