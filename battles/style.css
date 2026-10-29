@@ -58,8 +58,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #9cc6e8; fon
 .padnote { margin-top: 6px; font-weight: 800; font-size: 14px; text-align: center; color: rgba(255,255,255,0.82); text-shadow: 0 1px 2px #000; }
 .padnote svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8)); }
 .padnote.off { display: none; }
-/* on a short landscape screen the menu runs down behind the pad cards: the note moves to the free top-left corner */
-@media (max-height: 560px) { .padnote { position: absolute; top: 12px; left: 12px; margin: 0; font-size: 12px; text-align: left; } }
 
 /* setup */
 .half { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }
@@ -420,3 +418,27 @@ span.ficon svg { width: 100%; height: 100%; display: block; }
 .counts .cb.out { opacity: 0.45; }
 .mi.off { opacity: 0.45; }
 .mi.mi-s { padding-top: 1px; padding-bottom: 1px; } .mi.mi-s .ml.big { font-size: 17px; }
+
+/* main title page on a short landscape screen (phones): smaller logo, compact
+   menu rows without their sub-lines (the menu scrolls inside if it still
+   can't fit), compact P1/P2 cards in the bottom corners clear of the menu,
+   and the sound banner top-left, clear of the corner buttons */
+@media (max-height: 560px) {
+  .layer-title.main { padding-top: 1.5vh; }
+  .layer-title.main > * { flex-shrink: 0; }
+  .layer-title.main .logo .logoimg { max-height: 23vh; }
+  .layer-title.main .logo .lw { font-size: clamp(26px, 9vh, 60px); }
+  .layer-title.main .menu { flex-shrink: 1; min-height: 0; overflow-y: auto; margin-top: 0.8vh; padding: 0 14px 4px;
+    min-width: 0; width: min(430px, calc(100vw - 340px)); box-sizing: border-box; scrollbar-width: thin; }
+  .layer-title.main .mi { margin: 3px 0; padding: 3px 14px; }
+  .layer-title.main .mi .ml.big { font-size: clamp(16px, 4.6vh, 22px); }
+  .layer-title.main .mi .ml.big .mnote { display: none; }
+  .layer-title.main .menuhint { margin-top: 4px; font-size: 13px; }
+  .layer-title.main .padnote { margin-top: 3px; font-size: 13px; }
+  .layer-title.main .pads { left: 10px; right: 10px; bottom: 10px; transform: none; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+  .layer-title.main .padcard { width: 150px; padding: 4px 8px; border-width: 2px; border-left-width: 7px; border-radius: 10px; }
+  .layer-title.main .padcard .pc-top { font-size: 15px; } .layer-title.main .padcard .pc-team { font-size: 12px; }
+  .layer-title.main .padcard .pc-dev { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .layer-title.main .padcard .pc-dev small, .layer-title.main .pc-swap { display: none; }
+  .layer-title .soundnote { right: auto; left: 10px; font-size: 12px; padding: 4px 10px; }
+}

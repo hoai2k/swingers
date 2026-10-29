@@ -114,6 +114,14 @@ export class UI {
     this.setText(this.menu, this.menuHtml(d.items, d.sel));
     this.setText(this.menuHint, d.hint || '');
     this.padNote.classList.toggle('off', !d.main);
+    this.layers.title.classList.toggle('main', !!d.main);
+    // a menu that scrolls (short screens) keeps the selected row in view
+    const sel = this.menu.scrollHeight > this.menu.clientHeight && this.menu.querySelector('.mi.sel');
+    if (sel) {
+      const top = sel.offsetTop - this.menu.offsetTop, bot = top + sel.offsetHeight;
+      if (top < this.menu.scrollTop) this.menu.scrollTop = top - 4;
+      else if (bot > this.menu.scrollTop + this.menu.clientHeight) this.menu.scrollTop = bot - this.menu.clientHeight + 8;
+    }
     this.setText(this.pads, this.padCards(d.pads));
     this.setText(this.sound, d.soundOff ? '🔇 press any button to enable sound' : '');
   }
