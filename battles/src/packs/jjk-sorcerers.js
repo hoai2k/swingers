@@ -27,7 +27,7 @@ import { aimTarget, leapSkill } from '../skills.js';
 import { ATTACKS } from '../pose.js';
 import {
   THREE, clamp, rand, PART, EXPR, meleeThink, rangedThink, crossed, aimPoint, launchVel, addProjectile,
-  strike, handPos, torus, dome, tcol, tdark, chestShell, blast, lightning,
+  strike, handPos, torus, dome, lathe, tube, twoSided, tcol, tdark, chestShell, blast, lightning,
 } from './common.js';
 import { UPY, STANCE, setArmKey, refreshBeam, endBeam, hover } from './ges-core.js';
 import {
@@ -1082,7 +1082,7 @@ const units = [
     desc: 'A sorcerer from four hundred years ago with more cursed energy output than anyone. Mind the hair.',
   },
   {
-    id: 'jk_uro', name: 'Takako Uro', faction: 'jjk_sorcerers', side: SIDE, cost: 750, hp: 900, speed: 5.6,
+    id: 'jk_uro', name: 'Takako Uro', faction: 'jjk_sorcerers', side: SIDE, cost: 750, hp: 900, speed: 5.6, face: 2,
     build: { scale: 1.02, girth: 0.92, legs: 1.08 },
     weapon: {
       line: 'Sky Manipulation · Thin Ice Breaker folds the sky and flings enemies · bends shots back · kicks',
@@ -1123,7 +1123,7 @@ const units = [
     desc: 'A defence lawyer who gave up on the law. In his court, the verdict is final.',
   },
   {
-    id: 'jk_yuki', name: 'Yuki Tsukumo', faction: 'jjk_sorcerers', side: SIDE, cost: 1900, hp: 1300, speed: 5.4,
+    id: 'jk_yuki', name: 'Yuki Tsukumo', faction: 'jjk_sorcerers', side: SIDE, cost: 1900, hp: 1300, speed: 5.4, face: 2,
     build: { scale: 1.12, girth: 0.98, arms: 1.04, armThick: 1.1, legs: 1.08 },
     weapon: {
       line: 'Special grade · Star Rage: blows with virtual mass bowl over crowds · Garuda · last stand: Black Hole',
@@ -1137,7 +1137,7 @@ const units = [
     desc: '"What kind of man is your type?" One of the special grades. Hits like a falling star.',
   },
   {
-    id: 'jk_meimei', name: 'Mei Mei', faction: 'jjk_sorcerers', side: SIDE, cost: 850, hp: 650, speed: 4.9,
+    id: 'jk_meimei', name: 'Mei Mei', faction: 'jjk_sorcerers', side: SIDE, cost: 850, hp: 650, speed: 4.9, face: 2,
     build: { scale: 1.06, girth: 0.92, legs: 1.06 },
     weapon: {
       line: 'Battle-axe · Bird Strike: homing crows, and now and then one that flies in to die',
@@ -1231,6 +1231,26 @@ function lock(H, g, m, p, dir, rad, len) {
 }
 const onHead = (r, x, y, k = 1.0) => { const z = Math.sqrt(Math.max(0.02, 1 - x * x - y * y)); return [x * r * k, y * r * k, z * r * k]; };
 const ns = (m) => { m.castShadow = false; return m; };
+// a five-o'clock shadow round the jaw and chin
+function stubble(H, g, r, col = '#b8988a') {
+  const stub = H.mat(col, { spec: 0.05 });
+  H.mesh(H.geo('jksStub' + r.toFixed(3), () => new THREE.SphereGeometry(r * 1.015, 18, 8, Math.PI / 2 - 1.35, 2.7, Math.PI * 0.6, Math.PI * 0.3)), stub, 0, 0, 0, g);
+  H.mesh(H.sphere(r * 0.22, 10, 8), stub, 0, -r * 0.62, r * 0.75, g).scale.set(1.2, 0.5, 0.5);
+}
+// a part-cylinder (theta 0 = +z, the front); an open one is two-sided
+const partCyl = (H, rt, rb, h, n, t0, tl, open = false) => H.geo(`jksArc${[rt, rb, h, t0, tl].map((v) => v.toFixed(3)).join(':')}:${n}:${open}`, () => {
+  const c = new THREE.CylinderGeometry(rt, rb, h, n, 1, open, t0, tl);
+  return open ? twoSided(c) : c;
+});
+// a long fall of hair from the back of the head down the back (pts in head radii), flattened
+// front-to-back (kz) so it lies over the back instead of sinking into the chest; w widens it
+function hairFall(H, g, r, m, key, pts, r0, r1, w = 1.1, kz = 0.45) {
+  const t = H.mesh(tube(H, 'jks' + key + r.toFixed(3), pts.map(([x, y, z]) => [x * r, y * r, z * r / kz]), r0 * r, r1 * r, 12), m, 0, 0, 0, g);
+  t.scale.set(w, 1, kz);
+  const e = pts[pts.length - 1];
+  H.mesh(H.sphere(r1 * r, 12, 8), m, e[0] * r, e[1] * r, e[2] * r, g).scale.set(w, 0.45, kz); // close the end
+  return t;
+}
 
 function buildItem(name, s, team, g, H) {
   const { mesh, cyl, box, sphere, cone, mat, metal } = H;
@@ -1274,79 +1294,96 @@ function buildHat(kind, r, team, g, H) {
   const { mesh, cyl, box, sphere, cone, mat, glow, capsule } = H;
   const tc = tcol(H, team);
   switch (kind) {
-    case 'jk_ryu_hair': { // a towering black pompadour jutting out over the brow; sideburns
-      const hair = mat('#16141a', { spec: 0.45 });
-      hairCap(H, g, r, hair, 1.07, 0.42, -0.15);
-      const pomp = mesh(capsule(r * 0.5, r * 2.0), hair, 0, r * 0.98, r * 0.75, g); pomp.rotation.x = 1.3; pomp.scale.set(1.2, 1, 1);
-      mesh(sphere(r * 0.55, 12, 10), hair, 0, r * 1.02, r * 1.75, g).scale.set(1.15, 0.85, 0.9); // the curl at the front
-      mesh(sphere(r * 0.62, 12, 10), hair, 0, r * 0.75, -r * 0.2, g).scale.set(1.25, 0.9, 1.1);
-      for (let i = -2; i <= 2; i++) { const s = mesh(box(r * 0.06, r * 0.04, r * 1.5), mat('#3a3640', { spec: 0.6 }), i * r * 0.17, r * 1.5, r * 0.8, g); s.rotation.x = -0.25; } // comb lines
-      for (const sd of [-1, 1]) mesh(capsule(r * 0.1, r * 0.35), hair, sd * r * 0.93, -r * 0.05, -r * 0.2, g); // sideburns
-      mesh(box(r * 0.5, r * 0.05, r * 0.04), mat('#2a2228'), 0, r * 0.38, r * 0.97, g); // heavy brow line
+    case 'jk_ryu_hair': { // THE pompadour: a huge slick black roll jutting far out over his brow; short sides, sideburns
+      const hair = mat('#131118', { spec: 0.7 }), shine = mat('#3c3a4a', { spec: 0.9 });
+      hairCap(H, g, r, hair, 1.07, 0.45, -0.1);
+      mesh(sphere(r * 0.75, 12, 10), hair, 0, r * 0.82, -r * 0.05, g).scale.set(1.3, 0.8, 1.2); // volume over the crown
+      const pomp = mesh(capsule(r * 0.6, r * 2.9), hair, 0, r * 1.0, r * 1.3, g); pomp.rotation.x = 1.42; pomp.scale.set(1.65, 1, 1.0);
+      mesh(sphere(r * 0.66, 14, 10), hair, 0, r * 1.02, r * 2.95, g).scale.set(1.55, 0.95, 0.75); // the rounded front of the roll
+      for (const x of [-0.6, -0.2, 0.2, 0.6]) { const s = mesh(capsule(r * 0.06, r * 2.2), shine, x * r, r * 1.55, r * 1.6, g); s.rotation.x = 1.42; } // comb lines along the top
+      for (const sd of [-1, 1]) mesh(capsule(r * 0.13, r * 0.4), hair, sd * r * 0.94, -r * 0.08, -r * 0.1, g).rotation.z = -sd * 0.08; // sideburns
+      for (const sd of [-1, 1]) { const b = mesh(box(r * 0.36, r * 0.09, r * 0.06), hair, sd * r * 0.3, r * 0.5, r * 0.88, g); b.rotation.z = sd * -0.18; } // heavy brows
       return true;
     }
-    case 'jk_uro_hair': { // long straight black hair, blunt bangs, a gold hair ornament
-      const hair = mat('#141218', { spec: 0.35 });
+    case 'jk_uro_hair': { // a Heian noblewoman's hair: waist-long, straight and black, blunt bangs, long side locks (hime cut)
+      const hair = mat('#121016', { spec: 0.45 });
+      hairCap(H, g, r, hair, 1.09, 0.5, -0.12);
+      mesh(dome(H, r * 1.1, 0.5), hair, 0, 0, -r * 0.02, g).rotation.x = -Math.PI / 2; // the back of the head
+      hairFall(H, g, r, hair, 'uro', [[0, 0.55, -0.55], [0, -0.5, -1.2], [0, -1.8, -1.72], [0, -3.9, -1.85]], 0.85, 0.95, 1.3); // down to her waist
+      mesh(cyl(r * 0.5, r * 0.5, r * 0.22, 12), mat('#8fd0ff', { spec: 0.5, emit: 0.25 }), 0, -r * 2.9, -r * 1.83, g).scale.set(2.0, 1, 0.9); // a sky-blue tie
+      for (const sd of [-1, 1]) mesh(partCyl(H, r * 1.1, r * 1.12, r * 2.0, 10, sd * (Math.PI / 2 - 0.15) - 0.42, 0.84, true), hair, 0, -r * 0.55, 0, g); // long side locks framing the face, cut straight
+      mesh(partCyl(H, r * 1.1, r * 1.12, r * 0.44, 16, -1.0, 2.0), hair, 0, r * 0.68, 0, g); // blunt bangs, straight across the brow
+      mesh(sphere(r * 0.09, 8, 6), mat('#c8283a', { spec: 0.6 }), 0, -r * 0.42, r * 0.92, g).scale.set(1.5, 0.55, 0.5); // red lips
+      return true;
+    }
+    case 'jk_kashimo_hair': { // pale blue hair pulled up into a big spiky top-knot, loose strands over the brow
+      const hair = mat('#9fd3f0', { spec: 0.4 }), deep = mat('#6aa8d8', { spec: 0.4 });
       hairCap(H, g, r, hair, 1.08, 0.44, -0.2);
-      const back = mesh(capsule(r * 0.95, r * 1.7), hair, 0, -r * 0.75, -r * 0.42, g); back.scale.set(1.05, 1, 0.55);
-      for (const sd of [-1, 1]) { const s = mesh(capsule(r * 0.3, r * 1.5), hair, sd * r * 0.85, -r * 0.55, r * 0.15, g); s.scale.set(0.7, 1, 0.8); } // side locks
-      const fr = mesh(box(r * 1.5, r * 0.32, r * 0.25), hair, 0, r * 0.62, r * 0.76, g); fr.rotation.x = -0.3; // blunt bangs
-      mesh(cyl(r * 0.05, r * 0.05, r * 0.8, 6), mat('#d8b04a', { spec: 1 }), r * 0.55, r * 0.75, -r * 0.35, g).rotation.z = 1.0; // hairpin
-      mesh(sphere(r * 0.12, 8, 6), tc, r * 0.85, r * 0.92, -r * 0.4, g);
+      mesh(sphere(r * 0.45, 10, 8), hair, 0, r * 1.15, -r * 0.15, g).scale.set(1, 0.8, 1); // the knot
+      mesh(cyl(r * 0.36, r * 0.42, r * 0.18, 10), mat('#2a2a3a'), 0, r * 1.02, -r * 0.12, g); // its tie
+      for (let i = 0; i < 9; i++) { const a = i * 0.7; lock(H, g, i % 3 ? hair : deep, [0, r * 1.25, -r * 0.15], [Math.sin(a) * 0.55, 1, Math.cos(a) * 0.45 - 0.15], r * 0.2, r * (0.9 + (i % 3) * 0.3)); } // the spray of spikes
+      spikes(H, g, r, hair, 12, 0.42, 0.1, 2.1, 0.5);
+      for (const [x, a] of [[-0.42, 0.5], [-0.12, 0.15], [0.18, -0.2], [0.45, -0.5]]) lock(H, g, hair, onHead(r, x, 0.66, 1.03), [a, -0.85, 0.45], r * 0.14, r * 0.55);
+      for (const sd of [-1, 1]) lock(H, g, hair, [sd * r * 0.88, r * 0.35, r * 0.2], [sd * 0.1, -1, 0.15], r * 0.14, r * 0.75); // side strands
       return true;
     }
-    case 'jk_kashimo_hair': { // pale blue hair swept up into a tall top-knot
-      const hair = mat('#a8d8f0', { spec: 0.35 });
-      hairCap(H, g, r, hair, 1.07, 0.4, -0.25);
-      for (let i = 0; i < 5; i++) lock(H, g, hair, [0, r * 1.05, -r * 0.1], [Math.sin(i * 1.26) * 0.35, 1, Math.cos(i * 1.26) * 0.35 - 0.1], r * 0.16, r * (0.75 + (i % 2) * 0.25)); // the spiky top-knot
-      mesh(cyl(r * 0.3, r * 0.3, r * 0.14, 10), tc, 0, r * 1.05, -r * 0.1, g); // the tie
-      spikes(H, g, r, hair, 10, 0.4, 0.2, 2.1, 0.5);
-      for (const [x, a] of [[-0.35, 0.4], [0.0, 0], [0.35, -0.4]]) lock(H, g, hair, onHead(r, x, 0.62, 1.02), [a, -0.9, 0.5], r * 0.14, r * 0.45);
-      return true;
-    }
-    case 'jk_higuruma_hair': { // short black hair, a little messy; stubble on the chin; tired eyes
+    case 'jk_higuruma_hair': { // messy black hair falling over the brow; a five-o'clock shadow; tired, baggy eyes
       const hair = mat('#18161c', { spec: 0.25 });
-      hairCap(H, g, r, hair, 1.07, 0.4, -0.25);
-      spikes(H, g, r, hair, 12, 0.32, 0.0, 0.4, 0.5);
-      for (const [x, a] of [[-0.3, 0.3], [0.05, -0.1], [0.32, -0.4]]) lock(H, g, hair, onHead(r, x, 0.66, 1.02), [a, -0.8, 0.6], r * 0.13, r * 0.36);
-      const st = mat('#4a3a34', { transparent: true, opacity: 0.45 });
-      const p = onHead(r, 0, -0.62, 1.0);
-      mesh(sphere(r * 0.42, 10, 8), st, p[0], p[1], p[2] - r * 0.22, g).scale.set(1, 0.6, 0.5);
-      for (const sd of [-1, 1]) { const bag = mesh(box(r * 0.22, r * 0.04, r * 0.03), mat('#8a6a6a'), sd * r * 0.3, -r * 0.03, r * 0.96, g); bag.rotation.y = sd * 0.3; }
-      return true;
-    }
-    case 'jk_yuki_hair': { // long blonde hair down her back, a fringe swept to one side
-      const hair = mat('#f0d070', { spec: 0.35 });
       hairCap(H, g, r, hair, 1.08, 0.44, -0.2);
-      const back = mesh(capsule(r * 0.9, r * 2.1), hair, 0, -r * 1.0, -r * 0.5, g); back.scale.set(1.1, 1, 0.55);
-      for (const sd of [-1, 1]) lock(H, g, hair, [sd * r * 0.85, r * 0.3, r * 0.1], [sd * 0.15, -1, -0.05], r * 0.28, r * 1.6);
-      lock(H, g, hair, onHead(r, -0.25, 0.7, 1.03), [0.9, -0.55, 0.35], r * 0.24, r * 0.95);
-      lock(H, g, hair, onHead(r, 0.25, 0.72, 1.03), [0.55, -0.7, 0.4], r * 0.2, r * 0.7);
+      spikes(H, g, r, hair, 14, 0.36, 0.0, 0.4, 0.5);
+      for (const [x, a, L] of [[-0.42, 0.4, 0.5], [-0.15, 0.1, 0.62], [0.12, -0.15, 0.55], [0.4, -0.45, 0.45]]) lock(H, g, hair, onHead(r, x, 0.7, 1.03), [a, -0.85, 0.5], r * 0.15, r * L);
+      stubble(H, g, r);
+      for (const sd of [-1, 1]) { const bag = mesh(box(r * 0.24, r * 0.04, r * 0.03), mat('#9a7a72'), sd * r * 0.3, -r * 0.1, r * 0.96, g); bag.rotation.y = sd * 0.32; }
       return true;
     }
-    case 'jk_meimei_hair': { // long white hair in one thick braid over the right shoulder; bangs over one eye
-      const hair = mat('#ece8ee', { spec: 0.35 });
-      hairCap(H, g, r, hair, 1.08, 0.44, -0.25);
-      const fr = mesh(sphere(r * 0.5, 12, 8), hair, -r * 0.3, r * 0.3, r * 0.68, g); fr.scale.set(1.0, 1.3, 0.5); fr.rotation.z = -0.3; // over her right eye
-      for (let i = 0; i < 7; i++) mesh(sphere(r * (0.3 - i * 0.02), 10, 8), hair, -r * (0.75 + i * 0.05), -r * (0.3 + i * 0.36), r * (0.15 + i * 0.12), g).scale.set(1, 1.2, 1);
-      mesh(cyl(r * 0.16, r * 0.16, r * 0.1, 8), tc, -r * 1.1, -r * 2.85, r * 0.98, g);
+    case 'jk_yuki_hair': { // long, full blonde hair down to her waist; a side-swept fringe; strands over the shoulders
+      const hair = mat('#f2cf6a', { spec: 0.4 }), deep = mat('#d8ae48', { spec: 0.4 });
+      hairCap(H, g, r, hair, 1.1, 0.5, -0.15);
+      mesh(dome(H, r * 1.12, 0.5), hair, 0, 0, -r * 0.02, g).rotation.x = -Math.PI / 2;
+      hairFall(H, g, r, hair, 'yuki', [[0, 0.55, -0.6], [0, -0.5, -1.35], [0, -1.8, -1.85], [0, -3.3, -2.0]], 1.0, 0.95, 1.1);
+      for (let i = -2; i <= 2; i++) mesh(sphere(r * 0.3, 10, 8), i % 2 ? deep : hair, i * r * 0.36, -r * (3.3 + (i % 2 ? 0.1 : 0.25)), -r * 2.0, g).scale.set(1, 1.4, 0.7); // wavy ends
+      for (const sd of [-1, 1]) { // thick locks over the front of the shoulders
+        const l = mesh(capsule(r * 0.3, r * 1.6), hair, sd * r * 1.02, -r * 0.75, r * 0.15, g); l.rotation.z = sd * 0.12; l.rotation.x = -0.12;
+        lock(H, g, hair, [sd * r * 1.12, -r * 1.65, r * 0.25], [sd * 0.15, -1, 0.1], r * 0.26, r * 0.6);
+      }
+      for (const [x, a, L] of [[-0.5, -0.45, 0.75], [-0.22, -0.2, 0.6], [0.12, 0.3, 0.5], [0.42, 0.55, 0.7]]) lock(H, g, x < 0 ? hair : deep, onHead(r, x, 0.72, 1.04), [a, -0.9, 0.5], r * 0.17, r * L); // fringe parted off-centre
+      lock(H, g, deep, onHead(r, 0.05, 0.98, 1.0), [0.4, 1, -0.3], r * 0.08, r * 0.45); // an ahoge
       return true;
     }
-    case 'jk_kamo_hair': { // long black hair tied back, narrow eyes
-      const hair = mat('#16141a', { spec: 0.3 });
-      hairCap(H, g, r, hair, 1.07, 0.42, -0.3);
-      mesh(sphere(r * 0.3, 10, 8), hair, 0, r * 0.75, -r * 0.65, g);
-      const tail = mesh(capsule(r * 0.2, r * 1.4), hair, 0, -r * 0.1, -r * 1.0, g); tail.rotation.x = 0.15;
-      mesh(cyl(r * 0.22, r * 0.22, r * 0.12, 10), mat('#f2efe6'), 0, r * 0.62, -r * 0.88, g).rotation.x = 0.8;
-      for (const sd of [-1, 1]) lock(H, g, hair, onHead(r, sd * 0.55, 0.55, 1.02), [sd * 0.2, -1, 0.3], r * 0.13, r * 0.7); // side strands
+    case 'jk_meimei_hair': { // long white hair; bangs falling over one eye; the long braid itself hangs over her chest (decorate)
+      const hair = mat('#eceaf0', { spec: 0.4 });
+      hairCap(H, g, r, hair, 1.09, 0.48, -0.2);
+      mesh(dome(H, r * 1.1, 0.5), hair, 0, 0, -r * 0.02, g).rotation.x = -Math.PI / 2;
+      const fr = mesh(sphere(r * 0.5, 12, 8), hair, -r * 0.32, r * 0.25, r * 0.74, g); fr.scale.set(1.0, 1.35, 0.45); fr.rotation.z = -0.35; // over one eye
+      lock(H, g, hair, onHead(r, 0.25, 0.7, 1.04), [0.45, -0.9, 0.4], r * 0.16, r * 0.5);
+      const gath = mesh(capsule(r * 0.42, r * 0.7), hair, -r * 0.82, -r * 0.45, -r * 0.05, g); gath.rotation.set(0.4, 0, 0.35); // gathered to her right shoulder
       return true;
     }
-    case 'jk_naoya_hair': { // blond swept back with dark roots, pierced ears
-      const hair = mat('#e8d070', { spec: 0.35 }), root = mat('#2a2420');
-      hairCap(H, g, r, hair, 1.08, 0.4, -0.35);
-      mesh(dome(H, r * 1.075, 0.2), root, 0, r * 0.06, -r * 0.02, g).rotation.x = -0.45;
-      for (let i = -3; i <= 3; i++) lock(H, g, hair, onHead(r, i * 0.14, 0.68, 1.02), [i * 0.08, 0.35, -1], r * 0.14, r * 0.85); // swept back
-      for (const sd of [-1, 1]) for (const y of [0.0, -0.15]) mesh(torus(H, r * 0.07, r * 0.018, Math.PI * 2, 10), mat('#d8d8e0', { spec: 1 }), sd * r * 0.98, y * r, r * 0.05, g).rotation.y = Math.PI / 2;
+    case 'jk_kamo_hair': { // long black hair tied up behind; centre-parted bangs and two long locks framing the face
+      const hair = mat('#16141a', { spec: 0.35 });
+      hairCap(H, g, r, hair, 1.08, 0.46, -0.25);
+      mesh(dome(H, r * 1.09, 0.5), hair, 0, 0, -r * 0.02, g).rotation.x = -Math.PI / 2;
+      mesh(sphere(r * 0.38, 10, 8), hair, 0, r * 0.62, -r * 0.92, g); // the knot
+      mesh(cyl(r * 0.24, r * 0.24, r * 0.14, 10), mat('#f2efe6'), 0, r * 0.55, -r * 1.12, g).rotation.x = 1.0; // its white tie
+      hairFall(H, g, r, hair, 'kamo', [[0, 0.5, -1.05], [0, -0.3, -1.5], [0, -1.4, -1.75], [0, -2.5, -1.8]], 0.3, 0.16, 1, 1); // the tail down his back
+      for (const sd of [-1, 1]) {
+        lock(H, g, hair, onHead(r, sd * 0.08, 0.8, 1.04), [sd * 0.9, -0.6, 0.45], r * 0.2, r * 0.75); // bangs parted in the middle
+        const l = mesh(capsule(r * 0.13, r * 1.35), hair, sd * r * 0.82, -r * 0.4, r * 0.38, g); l.rotation.z = sd * 0.06; // long locks to the collarbone
+      }
+      return true;
+    }
+    case 'jk_naoya_hair': { // bleached blond on top, swept back, over a dark undercut; a row of piercings in each ear; fox eyes
+      const hair = mat('#ecd27a', { spec: 0.45 }), root = mat('#2a2420', { spec: 0.2 }), silver = mat('#e0e2ea', { spec: 1 });
+      mesh(H.geo('jksUndercut' + r.toFixed(3), () => new THREE.SphereGeometry(r * 1.035, 18, 8, Math.PI / 2 + 1.15, Math.PI * 2 - 2.3, Math.PI * 0.2, Math.PI * 0.42)), root, 0, 0, 0, g); // the dark shaved sides and back
+      hairCap(H, g, r, hair, 1.12, 0.36, -0.35);
+      mesh(sphere(r * 0.62, 12, 8), hair, 0, r * 0.75, -r * 0.1, g).scale.set(1.35, 0.7, 1.4); // volume on top
+      for (let i = -3; i <= 3; i++) lock(H, g, i % 2 ? hair : mat('#f6e4a0', { spec: 0.45 }), onHead(r, i * 0.13, 0.76, 1.06), [i * 0.1 + 0.2, 0.3, -1], r * 0.22, r * 1.05); // swept back
+      lock(H, g, hair, onHead(r, -0.3, 0.72, 1.04), [-0.6, -0.4, 0.6], r * 0.1, r * 0.55); // one loose strand
+      for (const sd of [-1, 1]) {
+        mesh(sphere(r * 0.18, 8, 6), mat('#f2d2bc', { spec: 0.18 }), sd * r * 0.98, r * 0.02, -r * 0.02, g).scale.set(0.45, 1, 0.75); // ear
+        for (const [y, z] of [[0.18, -0.05], [0.04, 0.08], [-0.12, 0.06]]) mesh(sphere(r * 0.045, 6, 5), silver, sd * r * 1.06, y * r, z * r, g);
+        mesh(torus(H, r * 0.08, r * 0.022, Math.PI * 2, 10), silver, sd * r * 1.05, -r * 0.24, r * 0.02, g).rotation.y = Math.PI / 2;
+      }
       return true;
     }
     case 'jk_mecha_head': { // a robot head: angular helmet, a dark visor with a red eye slit, an antenna
@@ -1363,13 +1400,14 @@ function buildHat(kind, r, team, g, H) {
       ns(mesh(sphere(r * 0.09, 8, 6), glow('#ff3a3a'), r * 0.55, r * 1.65, -r * 0.3, g));
       return true;
     }
-    case 'jk_kusakabe_hair': { // dark hair combed back, long sideburns and a short goatee
-      const hair = mat('#1e1a1c', { spec: 0.35 });
-      hairCap(H, g, r, hair, 1.07, 0.38, -0.4);
-      for (let i = -2; i <= 2; i++) lock(H, g, hair, onHead(r, i * 0.18, 0.66, 1.02), [i * 0.06, 0.25, -1], r * 0.14, r * 0.7);
-      for (const sd of [-1, 1]) mesh(capsule(r * 0.1, r * 0.4), hair, sd * r * 0.93, -r * 0.08, -r * 0.2, g);
-      const p = onHead(r, 0, -0.75, 1.0);
-      mesh(cone(r * 0.13, r * 0.28, 6), hair, p[0], p[1] - r * 0.08, p[2] - r * 0.05, g).rotation.x = Math.PI;
+    case 'jk_kusakabe_hair': { // dark hair slicked back with a few loose strands, sideburns, stubble: a tired teacher
+      const hair = mat('#1e1a1c', { spec: 0.45 });
+      hairCap(H, g, r, hair, 1.08, 0.46, -0.3);
+      mesh(dome(H, r * 1.08, 0.5), hair, 0, 0, -r * 0.02, g).rotation.x = -Math.PI / 2;
+      for (let i = -2; i <= 2; i++) lock(H, g, hair, onHead(r, i * 0.18, 0.68, 1.04), [i * 0.06, 0.3, -1], r * 0.16, r * 0.8); // combed back
+      for (const [x, a] of [[-0.2, -0.3], [0.15, 0.4]]) lock(H, g, hair, onHead(r, x, 0.72, 1.04), [a, -0.8, 0.6], r * 0.07, r * 0.45); // stray strands
+      for (const sd of [-1, 1]) mesh(capsule(r * 0.11, r * 0.42), hair, sd * r * 0.94, -r * 0.08, -r * 0.15, g);
+      stubble(H, g, r, '#b29684');
       return true;
     }
   }
@@ -1395,94 +1433,155 @@ function decorate(def, team, vis, H) {
   const belt = (m, y = -hh - r * 0.38, k = 1.12) => mesh(cyl(r * k, r * (k + 0.02), r * 0.2, 16), m, 0, y, 0, C);
   const collar = (m, h = 0.35) => mesh(cyl(r * 0.58, r * 0.66, r * h, 14), m, 0, hh + r * 0.55, 0, C);
   const longCoat = (m, len = 2.0) => { // a coat's skirt from the waist, open at the front
-    const cg = mesh(cyl(pel.r * 1.22, pel.r * 1.6, pel.r * len, 16, 1, true, 0.5, Math.PI * 2 - 1.0), m, 0, -pel.r * len * 0.4, 0, P);
-    cg.material.side = THREE.DoubleSide;
+    const cg = mesh(partCyl(H, pel.r * 1.22, pel.r * 1.6, pel.r * len, 16, 0.5, Math.PI * 2 - 1.0, true), m, 0, -pel.r * len * 0.4, 0, P);
     return cg;
   };
   const lapels = (m, w = 0.3) => { for (const sd of [-1, 1]) { const l = mesh(box(r * w, hh * 1.6 + r * 0.4, r * 0.06), m, sd * r * 0.4, hh * 0.35, r * 1.1, C); l.rotation.z = sd * 0.32; l.rotation.x = -0.1; } };
   const kimonoV = (m) => { for (const sd of [-1, 1]) { const l = mesh(box(r * 0.22, hh * 1.1 + r * 0.3, r * 0.05), m, -sd * r * 0.18, hh * 0.55, r * 1.02, C); l.rotation.z = sd * 0.4; l.rotation.x = -0.25; } };
 
-  if (id === 'jk_ryu') { // a long dark coat, open over a white shirt, team scarf
-    const coat = mat('#1e2030', { spec: 0.2 }), shirt = mat('#ecebe4');
-    chestShell(H, ch, coat, C);
-    const V = mesh(box(r * 0.65, hh * 1.5, r * 0.06), shirt, 0, hh * 0.45, r * 1.08, C); V.rotation.x = -0.12;
-    lapels(coat, 0.34);
-    collar(coat, 0.45);
+  if (id === 'jk_ryu') { // a long black coat with a tall stand collar, worn open over a white shirt
+    const coat = mat('#1c1d28', { spec: 0.3 }), shirt = mat('#ecebe4'), trim = mat('#4a4c5c', { spec: 0.4 });
+    chestShell(H, ch, shirt, C, 1.0);
+    const gap = 0.55, jy0 = -hh - r * 0.5, jy1 = hh;
+    mesh(H.geo('jksRyuCoat' + r.toFixed(3), () => twoSided(new THREE.CylinderGeometry(r * 1.22, r * 1.2, jy1 - jy0, 20, 1, true, gap, Math.PI * 2 - gap * 2))), coat, 0, (jy0 + jy1) / 2, 0, C).scale.set(1, 1, 0.95);
+    mesh(H.geo('jksRyuTop' + r.toFixed(3), () => twoSided(new THREE.SphereGeometry(r * 1.22, 20, 8, Math.PI / 2 + gap, Math.PI * 2 - gap * 2, 0, Math.PI / 2))), coat, 0, jy1, 0, C).scale.set(1, 0.85, 0.95);
+    for (const sd of [-1, 1]) mesh(box(r * 0.1, jy1 - jy0 + r * 0.3, r * 0.06), trim, sd * r * 1.22 * Math.sin(gap), (jy0 + jy1) / 2 + r * 0.1, r * 1.16 * Math.cos(gap), C); // the open edges
+    mesh(partCyl(H, r * 0.64, r * 0.74, r * 0.8, 14, 0.8, Math.PI * 2 - 1.6, true), coat, 0, hh + r * 0.62, -r * 0.04, C); // the stand collar, open at the front
+    for (const y of [0.45, 0.0, -0.45]) mesh(sphere(r * 0.06, 8, 6), mat('#9a9aa4', { spec: 0.6 }), 0, hh * y, r * 1.1, C); // shirt buttons
     sleeves(coat, 1.22);
-    mesh(torus(H, r * 0.62, r * 0.12, Math.PI * 2, 14), tc, 0, hh + r * 0.62, 0, C).rotation.x = Math.PI / 2;
-    const sc = mesh(box(r * 0.25, r * 0.9, r * 0.06), tc, r * 0.3, hh * 0.3, r * 1.14, C); sc.rotation.z = 0.15;
-    belt(mat('#3a2a1e'), -hh - r * 0.38, 1.14);
-    longCoat(coat, 2.5);
+    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.3, sp.r * 1.3, sp.r * 0.6, 10), trim, 0, -sp.hh * 0.55, 0, parts[p]); }
+    const ua = limb(PART.uarmL); mesh(cyl(ua.r * 1.32, ua.r * 1.32, ua.hh * 0.5, 10), tc, 0, ua.hh * 0.2, 0, parts[PART.uarmL]); // team armband
+    belt(mat('#141418'), -hh - r * 0.42, 1.1);
+    longCoat(coat, 2.9);
   }
-  if (id === 'jk_uro') { // a dark Heian-style robe: wide sleeves, a team obi, a pale under-collar, hakama
-    const robe = mat('#22243a', { spec: 0.2 }), pale = mat('#e8e2d4'), hak = mat('#1a1a22');
-    chestShell(H, ch, robe, C);
-    kimonoV(pale);
-    sleeves(robe, 1.25); wide(robe);
-    belt(tc, -hh - r * 0.3, 1.18);
-    mesh(box(r * 0.5, r * 0.3, r * 0.2), td, 0, -hh - r * 0.3, -r * 1.15, C); // the bow at the back
-    skirt(hak, 1.18, 1.7, 2.4);
+  if (id === 'jk_uro') { // a fitted black high-necked top, bare arms, a long split skirt; the sky draped round her like a shawl
+    const blk = mat('#24203a', { spec: 0.35 }), skyM = mat('#86ccf6', { spec: 0.6, emit: 0.3 }), cloud = mat('#ffffff', { emit: 0.3 });
+    chestShell(H, ch, blk, C, 1.0);
+    mesh(cyl(r * 0.42, r * 0.56, r * 0.6, 14), blk, 0, hh + r * 0.6, 0, C); // the high neck
+    mesh(cyl(r * 0.43, r * 0.43, r * 0.07, 14), mat('#d8b04a', { spec: 1 }), 0, hh + r * 0.82, 0, C); // gold trim
+    for (const p of ARMS) cover(p, skin, 1.08, isFore(p) ? 0.85 : 1, isFore(p) ? 0.15 : 0); // bare arms
+    for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.25, sp.r * 1.25, sp.r * 0.5, 10), tc, 0, -sp.hh * 0.3, 0, parts[p]); } // team armlets
+    belt(tc, -hh - r * 0.3, 1.16).scale.set(1, 0.7, 1);
+    const sk = lathe(H, 'uroSkirt' + pel.r.toFixed(3), [[1.8, -3.35], [1.75, -3.2], [1.4, -1.6], [1.15, -0.3], [1.05, 0.35]].map(([x, y]) => [x * pel.r, y * pel.r]), 18);
+    mesh(sk, blk, 0, 0, 0, P);
+    mesh(torus(H, pel.r * 1.78, pel.r * 0.06, Math.PI * 2, 20), mat('#d8b04a', { spec: 1 }), 0, -pel.r * 3.25, 0, P).rotation.x = Math.PI / 2; // gold hem
+    // the sky itself, peeled off and worn as a stole: two long blue panels from the shoulders, clouds caught in them
+    const capeH = hh * 2 + r * 2.6;
+    for (const sd of [-1, 1]) {
+      const t0 = Math.PI + (sd > 0 ? 0.4 : -1.4);
+      mesh(partCyl(H, r * 1.2, r * 1.6, capeH, 8, t0, 1.0, true), skyM, 0, hh + r * 0.45 - capeH / 2, -r * 0.05, C);
+      for (const [a, y] of [[0.3, -0.5], [0.7, -1.6], [0.45, -2.6]]) {
+        const th = t0 + a, R = r * (1.3 + (-y / 2.6) * 0.32);
+        ns(mesh(sphere(r * 0.18, 8, 6), cloud, Math.sin(th) * R, hh + y * r, Math.cos(th) * R - r * 0.05, C)).scale.set(1.8, 0.7, 0.8);
+      }
+      mesh(sphere(r * 0.2, 10, 8), skyM, sd * r * 0.9, hh + r * 0.5, -r * 0.2, C).scale.set(1.4, 0.6, 1.3); // where it drapes over the shoulder
+    }
   }
-  if (id === 'jk_kashimo') { // a pale robe open on the chest, dark hakama, team sash; a lightning glow
-    const robe = mat('#d8dce6', { spec: 0.1 }), hak = mat('#2a2a3a');
+  if (id === 'jk_kashimo') { // a pale kimono top open on the chest, wide sleeves, dark hakama, team sash; crackling with lightning
+    const robe = mat('#dfe3ea', { spec: 0.1 }), hak = mat('#262636'), bolt = H.glow('#bfe8ff');
     chestShell(H, ch, robe, C);
-    const V = mesh(cone(r * 0.45, r * 1.5, 3), skin, 0, hh - r * 0.1, r * 1.04, C); V.rotation.set(-0.12, 0, Math.PI); V.scale.set(1, 1, 0.25); // open on the chest
-    kimonoV(mat('#a8b0c0'));
+    const V = mesh(cone(r * 0.48, r * 1.6, 3), skin, 0, hh - r * 0.1, r * 1.05, C); V.rotation.set(-0.12, 0, Math.PI); V.scale.set(1, 1, 0.25); // open on the chest
+    kimonoV(mat('#8a94b0'));
     sleeves(robe, 1.22); wide(robe);
     belt(tc, -hh - r * 0.35, 1.16);
-    skirt(hak, 1.15, 1.7, 2.3);
+    mesh(box(r * 0.3, r * 0.5, r * 0.08), td, r * 0.5, -hh - r * 0.6, r * 1.1, C).rotation.z = 0.3; // the sash's tail
+    skirt(hak, 1.15, 1.75, 2.4);
+    for (const [x, y, a] of [[-0.9, 0.3, 0.6], [0.95, -0.1, -0.7], [0.4, 0.95, 1.2]]) ns(mesh(box(r * 0.04, r * 0.6, r * 0.04), bolt, x * r, y * r, r * 0.7, C)).rotation.z = a; // little sparks
   }
-  if (id === 'jk_higuruma') { // dark suit, white shirt, dark tie, the gold lawyer's badge
-    const suit = mat('#24262f', { spec: 0.2 }), shirt = mat('#ecebe4'), tie = mat('#2a2e44');
+  if (id === 'jk_higuruma') { // a charcoal suit, white shirt, loosened dark tie, the gold sunflower lawyer's badge on the lapel
+    const suit = mat('#30323e', { spec: 0.25 }), shirt = mat('#f0efe8'), tie = mat('#1c2038'), gold = mat('#e8b838', { spec: 1 });
     chestShell(H, ch, suit, C);
     sleeves(suit);
-    collar(shirt);
-    const V = mesh(box(r * 0.6, hh * 1.4, r * 0.06), shirt, 0, hh * 0.45, r * 1.08, C); V.rotation.x = -0.12;
-    lapels(suit);
-    const t = mesh(box(r * 0.2, hh * 1.5, r * 0.05), tie, 0, hh * 0.25, r * 1.16, C); t.rotation.x = -0.1;
-    mesh(cyl(r * 0.1, r * 0.1, r * 0.04, 12), mat('#e2b43a', { spec: 1 }), -r * 0.5, hh * 0.65, r * 1.12, C).rotation.x = Math.PI / 2; // badge
-    mesh(box(r * 0.22, r * 0.12, r * 0.04), tc, r * 0.55, hh * 0.55, r * 1.06, C); // pocket square
+    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.22, sp.r * 1.22, sp.r * 0.4, 10), shirt, 0, -sp.hh * 0.72, 0, parts[p]); } // shirt cuffs
+    collar(shirt, 0.32);
+    for (const sd of [-1, 1]) { const cp = mesh(box(r * 0.3, r * 0.22, r * 0.05), shirt, sd * r * 0.2, hh + r * 0.45, r * 0.62, C); cp.rotation.set(-0.5, 0, sd * 0.5); } // collar points
+    const V = mesh(box(r * 0.75, hh * 1.5, r * 0.06), shirt, 0, hh * 0.35, r * 1.1, C); V.rotation.x = -0.12;
+    lapels(suit, 0.34);
+    const t = mesh(box(r * 0.2, hh * 1.7, r * 0.05), tie, r * 0.03, hh * 0.15, r * 1.17, C); t.rotation.set(-0.12, 0, 0.06);
+    mesh(box(r * 0.24, r * 0.16, r * 0.08), tie, r * 0.0, hh + r * 0.18, r * 1.0, C); // its knot, pulled loose
+    // the bengoshi badge: a gold sunflower with the scales at its heart
+    const bx = -r * 0.55, by = hh * 0.7, bz = r * 1.13;
+    mesh(cyl(r * 0.13, r * 0.13, r * 0.04, 12), gold, bx, by, bz, C).rotation.x = Math.PI / 2;
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; mesh(sphere(r * 0.05, 6, 5), gold, bx + Math.cos(a) * r * 0.15, by + Math.sin(a) * r * 0.15, bz, C); }
+    mesh(cyl(r * 0.05, r * 0.05, r * 0.05, 8), mat('#8a6a1a', { spec: 0.6 }), bx, by, bz + r * 0.02, C).rotation.x = Math.PI / 2;
     belt(mat('#141418'), -hh - r * 0.38, 1.13);
-    const coat = mesh(cyl(pel.r * 1.12, pel.r * 1.25, pel.r * 1.2, 16), suit, 0, -pel.r * 0.35, -pel.r * 0.05, P); coat.scale.set(1, 1, 0.92);
+    const coat = mesh(cyl(pel.r * 1.12, pel.r * 1.28, pel.r * 1.3, 16), suit, 0, -pel.r * 0.4, -pel.r * 0.05, P); coat.scale.set(1, 1, 0.92);
+    mesh(box(pel.r * 0.05, pel.r * 1.2, pel.r * 0.05), mat('#1c1e26'), 0, -pel.r * 0.45, pel.r * 1.2, P); // the jacket's split
   }
-  if (id === 'jk_yuki') { // a black biker jacket over a white top, blue jeans, team scarf
-    const jacket = mat('#1a1a20', { spec: 0.45 }), top = mat('#f2f0ea');
-    chestShell(H, ch, jacket, C);
-    const V = mesh(box(r * 0.75, hh * 1.6, r * 0.06), top, 0, hh * 0.3, r * 1.08, C); V.rotation.x = -0.1;
-    lapels(jacket, 0.36);
+  if (id === 'jk_yuki') { // a cropped black leather biker jacket, open over a white top; blue jeans and boots
+    const jacket = mat('#1e1c22', { spec: 0.75 }), top = mat('#f4f2ec'), zip = mat('#d0d4dc', { spec: 1 });
+    chestShell(H, ch, top, C); // the white top
+    const gap = 0.62, jy0 = -hh - r * 0.5, jy1 = hh;
+    mesh(H.geo('jksJk' + r.toFixed(3), () => twoSided(new THREE.CylinderGeometry(r * 1.24, r * 1.2, jy1 - jy0, 20, 1, true, gap, Math.PI * 2 - gap * 2))), jacket, 0, (jy0 + jy1) / 2, 0, C).scale.set(1, 1, 0.97);
+    mesh(H.geo('jksJkTop' + r.toFixed(3), () => twoSided(new THREE.SphereGeometry(r * 1.24, 20, 8, Math.PI / 2 + gap, Math.PI * 2 - gap * 2, 0, Math.PI / 2))), jacket, 0, jy1, 0, C).scale.set(1, 0.85, 0.97);
+    for (const sd of [-1, 1]) {
+      const z = mesh(box(r * 0.05, jy1 - jy0, r * 0.05), zip, sd * r * 1.24 * Math.sin(gap), (jy0 + jy1) / 2 - r * 0.05, r * 1.2 * Math.cos(gap), C); void z; // zip edges
+    }
+    mesh(partCyl(H, r * 0.66, r * 0.72, r * 0.42, 14, 0.9, Math.PI * 2 - 1.8, true), jacket, 0, hh + r * 0.6, -r * 0.05, C); // the collar, turned up
+    mesh(cyl(r * 0.5, r * 0.56, r * 0.22, 12), top, 0, hh + r * 0.62, 0, C); // the top's neckline
     sleeves(jacket, 1.2);
-    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.3, sp.r * 1.3, sp.r * 0.5, 10), mat('#c8ccd4', { spec: 1 }), 0, -sp.hh * 0.6, 0, parts[p]); } // zip cuffs
-    mesh(torus(H, r * 0.6, r * 0.14, Math.PI * 2, 14), tc, 0, hh + r * 0.62, 0, C).rotation.x = Math.PI / 2;
-    belt(mat('#3a2a1e'), -hh - r * 0.38, 1.13);
-    mesh(box(r * 0.2, r * 0.14, r * 0.06), mat('#c8ccd4', { spec: 1 }), 0, -hh - r * 0.38, r * 1.13, C);
+    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.28, sp.r * 1.28, sp.r * 0.3, 10), zip, 0, -sp.hh * 0.62, 0, parts[p]); } // zipped cuffs
+    for (const p of [PART.uarmL, PART.uarmR]) { const sp = limb(p); mesh(cyl(sp.r * 1.3, sp.r * 1.3, sp.r * 0.4, 10), tc, 0, sp.hh * 0.1, 0, parts[p]); } // team bands
+    belt(mat('#5a3a22', { spec: 0.4 }), -hh - r * 0.42, 1.12);
+    mesh(box(r * 0.26, r * 0.18, r * 0.06), zip, 0, -hh - r * 0.42, r * 1.13, C);
+    for (const p of [PART.shinL, PART.shinR]) { const sp = limb(p); mesh(cyl(sp.r * 1.25, sp.r * 1.2, sp.hh * 1.0, 12), mat('#2a2024', { spec: 0.5 }), 0, -sp.hh * 0.5, 0, parts[p]); } // tall biker boots
   }
-  if (id === 'jk_meimei') { // a black dress with a long skirt, white collar, team ribbon
-    const dress = mat('#16161c', { spec: 0.3 });
+  if (id === 'jk_meimei') { // a black high-collared dress, long skirt; the white braid over her chest; one of her crows on her shoulder
+    const dress = mat('#16161c', { spec: 0.3 }), hair = mat('#eceaf0', { spec: 0.4 }), crow = mat('#101014', { spec: 0.5 });
     chestShell(H, ch, dress, C);
     sleeves(dress, 1.18);
-    mesh(torus(H, r * 0.6, r * 0.08, Math.PI * 2, 14), mat('#f2efe6'), 0, hh + r * 0.55, 0, C).rotation.x = Math.PI / 2;
+    mesh(cyl(r * 0.5, r * 0.6, r * 0.5, 14), dress, 0, hh + r * 0.6, 0, C);
+    mesh(torus(H, r * 0.5, r * 0.05, Math.PI * 2, 14), mat('#d8b04a', { spec: 1 }), 0, hh + r * 0.82, 0, C).rotation.x = Math.PI / 2;
     belt(tc, -hh - r * 0.38, 1.12).scale.set(1, 0.6, 1);
-    const sk = skirt(dress, 1.15, 1.75, 2.6); sk.scale.set(1, 1, 0.95);
+    const sk = skirt(dress, 1.12, 1.8, 3.0); sk.scale.set(1, 1, 0.95);
+    // the braid: from her right shoulder, over the chest, down past her waist
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8;
+      const b = mesh(sphere(r * (0.26 - t * 0.08), 10, 8), hair, -r * (0.45 - t * 0.12), hh + r * 0.55 - t * (hh * 2 + r * 1.6), r * (0.95 + Math.sin(t * Math.PI) * 0.28), C);
+      b.scale.set(1, 1.25, 0.8); b.rotation.z = (i % 2 ? 0.35 : -0.35);
+    }
+    mesh(cyl(r * 0.13, r * 0.13, r * 0.12, 8), tc, -r * 0.33, -hh - r * 1.0, r * 1.02, C);
+    lock(H, C, hair, [-r * 0.33, -hh - r * 1.05, r * 1.02], [0, -1, 0.05], r * 0.13, r * 0.4); // the tuft at the end
+    // one of her crows, perched on her left shoulder
+    const cx = r * 0.82, cy = hh + r * 0.6, k = 1.6;
+    mesh(sphere(r * 0.28 * k, 10, 8), crow, cx, cy + r * 0.15 * k, 0, C).scale.set(0.85, 0.85, 1.3);
+    mesh(sphere(r * 0.17 * k, 10, 8), crow, cx, cy + r * 0.45 * k, r * 0.25 * k, C);
+    mesh(cone(r * 0.06 * k, r * 0.24 * k, 5), mat('#3a3a40', { spec: 0.6 }), cx, cy + r * 0.42 * k, r * 0.5 * k, C).rotation.x = Math.PI / 2;
+    for (const sd of [-1, 1]) mesh(sphere(r * 0.035 * k, 6, 4), mat('#ffcc33', { emit: 0.6 }), cx + sd * r * 0.11 * k, cy + r * 0.5 * k, r * 0.34 * k, C);
+    for (const sd of [-1, 1]) { const w = mesh(sphere(r * 0.2 * k, 8, 6), crow, cx + sd * r * 0.2 * k, cy + r * 0.15 * k, -r * 0.05, C); w.scale.set(0.3, 0.8, 1.4); }
+    const tl = mesh(box(r * 0.22 * k, r * 0.05, r * 0.45 * k), crow, cx, cy + r * 0.05, -r * 0.55 * k, C); tl.rotation.x = -0.4;
   }
-  if (id === 'jk_kamo') { // the Kyoto school's dark uniform, worn like a robe; a white sash; a quiver
-    const uni = mat('#2a2a36', { spec: 0.2 }), wht = mat('#f2efe6');
+  if (id === 'jk_kamo') { // the Kamo heir's Kyoto uniform: a dark wide-sleeved kimono top, white under-collar, pale hakama; blood packs at the belt
+    const uni = mat('#24222e', { spec: 0.2 }), wht = mat('#f2efe6'), hak = mat('#c8c0ae', { spec: 0.1 });
+    const blood = mat('#b0101e', { spec: 0.8, transparent: true, opacity: 0.85 });
     chestShell(H, ch, uni, C);
     kimonoV(wht);
+    mesh(cyl(r * 0.5, r * 0.6, r * 0.42, 14), uni, 0, hh + r * 0.58, -r * 0.06, C); // high collar
     sleeves(uni, 1.22); wide(uni);
     belt(wht, -hh - r * 0.35, 1.15);
     mesh(box(r * 0.3, r * 0.18, r * 0.06), tc, 0, -hh - r * 0.35, r * 1.15, C);
-    skirt(mat('#3a3a44'), 1.15, 1.6, 2.2);
+    skirt(hak, 1.15, 1.65, 2.4);
+    for (const x of [-0.75, -0.3, 0.45, 0.85]) { // blood packs hanging from the belt
+      const a = Math.asin(x / 1.2);
+      mesh(box(r * 0.26, r * 0.36, r * 0.12), blood, Math.sin(a) * r * 1.22, -hh - r * 0.62, Math.cos(a) * r * 1.22, C).rotation.y = a;
+      mesh(cyl(r * 0.03, r * 0.03, r * 0.12, 6), wht, Math.sin(a) * r * 1.22, -hh - r * 0.4, Math.cos(a) * r * 1.22, C);
+    }
     const q = mesh(cyl(r * 0.22, r * 0.18, r * 2.2, 10), mat('#5a3a24'), r * 0.4, r * 0.3, -r * 1.15, C); q.rotation.z = -0.4; // quiver
     for (let i = 0; i < 3; i++) mesh(cone(r * 0.06, r * 0.25, 4), mat('#b01828', { emit: 0.3 }), r * (0.85 + i * 0.07), r * (1.35 + i * 0.03), -r * 1.15, C).rotation.z = -0.4;
+    for (const p of [PART.farmL, PART.farmR]) { const sp = limb(p); ns(mesh(torus(H, sp.r * 1.5, sp.r * 0.18, Math.PI * 2, 12), mat('#d01020', { emit: 0.5 }), 0, -sp.hh * 0.75, 0, parts[p])).rotation.x = Math.PI / 2; } // blood rings at the wrists
   }
-  if (id === 'jk_naoya') { // a dark kimono under a pale haori, team obi, hakama
-    const kim = mat('#1e2236', { spec: 0.2 }), haori = mat('#c8ccd4', { spec: 0.1 });
+  if (id === 'jk_naoya') { // the Zen'in heir at home: a dark kimono and hakama under a pale haori, team obi
+    const kim = mat('#1a1d2c', { spec: 0.2 }), haori = mat('#c4c8d0', { spec: 0.1 }), himo = mat('#f2efe6');
     chestShell(H, ch, haori, C);
-    const V = mesh(cone(r * 0.5, hh * 2 + r * 0.6, 3), kim, 0, hh * 0.05, r * 1.0, C); V.rotation.set(-0.08, 0, Math.PI); V.scale.set(1, 1, 0.3); // the kimono under the open haori
+    const V = mesh(cone(r * 0.55, hh * 2 + r * 0.6, 3), kim, 0, hh * 0.05, r * 1.0, C); V.rotation.set(-0.08, 0, Math.PI); V.scale.set(1, 1, 0.3); // the kimono under the open haori
     kimonoV(mat('#f2efe6'));
+    for (const sd of [-1, 1]) { const ed = mesh(box(r * 0.12, hh * 2 + r * 0.6, r * 0.05), kim, sd * r * 0.42, hh * 0.05, r * 1.07, C); ed.rotation.z = sd * 0.12; } // the haori's dark edging
+    mesh(sphere(r * 0.1, 8, 6), himo, 0, -hh * 0.2, r * 1.14, C).scale.set(1.4, 1, 0.6); // haori-himo tie
+    for (const sd of [-1, 1]) mesh(cyl(r * 0.03, r * 0.03, r * 0.3, 6), himo, sd * r * 0.1, -hh * 0.4, r * 1.14, C).rotation.z = sd * 0.4;
     sleeves(haori, 1.24); wide(haori);
     belt(tc, -hh - r * 0.32, 1.16);
-    skirt(mat('#24283a'), 1.15, 1.6, 2.3);
+    skirt(mat('#3a3e4e'), 1.15, 1.65, 2.4);
+    for (const x of [-0.6, -0.2, 0.2, 0.6]) mesh(box(pel.r * 0.03, pel.r * 2.0, pel.r * 0.02), mat('#2a2c38'), x * pel.r, -pel.r * 1.1, pel.r * (1.2 + Math.abs(x) * -0.1 + 0.25), P).rotation.x = -0.18; // hakama pleats
   }
   if (id === 'jk_mechamaru') { // armour plates: chest plate with a glowing core, shoulder pads, segmented limbs
     const plate = mat('#c8cdd6', { spec: 0.8 }), dark = mat('#3a3e46', { spec: 0.6 });
