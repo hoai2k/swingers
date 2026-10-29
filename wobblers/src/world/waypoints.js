@@ -8,21 +8,20 @@ import * as THREE from 'three';
 import { settings, saveSettings } from '../settings.js';
 import { chime, groundAt } from './common.js';
 import { confetti } from './presents.js';
-import { FUN_DX, FUN_DZ, SEA_LEVEL } from '../config.js';
+import { SEA_LEVEL } from '../config.js';
 
 // [id, name, x, z]: the star stands on the nearest open ground (sky above, dry, level) to (x, z)
 export const WAYPOINTS = [
-  ['town', 'Town', 0, 8, { start: true }],
-  ['beach', 'Beach', -40, 330], ['lighthouse', 'Lighthouse', 205, 228], ['pool', 'Swimming Pool', 88, 112],
-  ['playground', 'Playground', 105, -95], ['stunt', 'Stunt Park', -105, 95], ['karts', 'Kart Track', 242, 20],
-  ['farm', 'Farm', 200, -150], ['summit', 'Mountain Lookout', 60, -262], ['lake', 'Lake Camp', -140, -165],
-  ['factory', 'Wobble Works', -245, -115], ['berryfarm', 'Pooh Berry Farm', -240, 62], ['fair', 'Fall Fair', 0, 158],
-  ['funpark', 'Fun Park', -230 + FUN_DX, -10 + FUN_DZ],
-  ['bigtown', 'Central Plaza', 875, -14], ['stadium', 'Stadium', 840, -240], ['citypark', 'City Park', 1060, -215],
-  ['skivillage', 'Ski Village', 0, -790], ['frostpeak', 'Frostpeak Summit', -40, -1165],
-  ['dustville', 'Dustville', -960, -30], ['oasis', 'Oasis', -935, 205], ['pyramid', 'Old Pyramid', -1240, -75],
-  ['stiltvillage', 'Stilt Village', -405, 765], ['temple', 'Temple Ruins', -540, 680], ['volcano', 'Volcano Rim', -690, 868],
-  ['resort', 'Resort Isle', 605, 762], ['harbour', 'Harbour Isle', 470, 640],
+  ['town', 'Town', 0, 8, { start: true }],                       // the suburbs' fast-travel point (where everyone starts)
+  // one star per ecosystem, at its best-known landmark (ids kept where a spot stayed, so saved finds still count)
+  ['fair', 'Fall Fair', 0, 158],                                  // suburbs: the fairground's entrance arch
+  ['berryfarm', 'Pooh Berry Farm', -240, 62],                     // farmland: the farmyard by the corn maze
+  ['summit', 'Mountain Lookout', 60, -262],                      // the home mountain's top
+  ['bigtown', 'Bigtown Tower', 875, -92],                        // city: the foot of the 150 m tower
+  ['frostpeak', 'Frostpeak Summit', -40, -1165],                 // snow
+  ['pyramid', 'Old Pyramid', -1240, -68],                        // desert: at the foot of its south face
+  ['volcano', 'Volcano Rim', -690, 868],                         // jungle
+  ['covelight', 'Coconut Cove Lighthouse', 678, 596],            // tropical islands
 ];
 const SHOW_R = 260, BEAM_R = 700; // star drawn within SHOW_R of a camera, its light beam within BEAM_R
 
