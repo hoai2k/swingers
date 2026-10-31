@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<base href="../">
+<title>Spider gameplay regressions</title>
+<style>
+body{margin:24px;background:#111629;color:#edf4ff;font:16px system-ui}h1{font-size:25px}a{color:#7fe8ff}#summary{padding:14px;background:#202c44;border-radius:8px;font-size:20px}.pass{color:#8ef0ab}.fail{color:#ff889e}li{margin:6px 0}canvas{display:block;max-width:100%;border:1px solid #526481;border-radius:10px}p{max-width:1000px}
+</style>
+<h1>Spider Swingers — pounce and weapon regression checks</h1>
+<p id="summary">Running…</p>
+<canvas id="preview" width="1200" height="300"></canvas>
+<p>Fresh and worn melee blades: the hilt stays the same size while the plasma reach shortens. RT prepares on press and lunges only on release. <a href="./">Open the game</a></p>
+<ol id="results"></ol>
+<script type="module">
+import {runRegressions} from './tools/gameplay-regressions.mjs';
+import {Game} from './src/game.js';
+import {loadProgress} from './src/preload.js';
+const rows=runRegressions(),failed=rows.filter(r=>!r.pass);
+for(const r of rows){const li=document.createElement('li');li.className=r.pass?'pass':'fail';li.textContent=(r.pass?'PASS — ':'FAIL — ')+r.name;if(r.error){const pre=document.createElement('pre');pre.textContent=r.error;li.append(pre)}document.querySelector('#results').append(li)}
+const summary=document.querySelector('#summary');summary.textContent=`${rows.length-failed.length}/${rows.length} passed`;summary.className=failed.length?'fail':'pass';document.title=(failed.length?'FAIL':'PASS')+' — '+summary.textContent+' Spider gameplay checks';
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');
+const game=Object.assign(Object.create(Game.prototype),{pickups:[],blades:[],nextBlades:[],time:0,fx:new Proxy({},{get:()=>()=>{}})});
+const samples=[];
+for(const [i,id] of ['saber','twinsaber','glaive'].entries()){
+ for(const worn of [false,true]){
+  const w=game.createWeapon(id);w.on=1;if(worn)for(let j=0;j<5;j++)w.wearBlade();
+  w.x=150+i*385;w.y=worn?215:95;w.angle=0;w.av=0;
+  samples.push({w,id,worn});
+ }
+}
+function draw(){ctx.fillStyle='#182238';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.font='17px system-ui';ctx.fillStyle='#edf4ff';
+ for(const {w,id,worn} of samples){ctx.fillText(`${id} · ${worn?'3':'8'} hits left`,w.x-110,w.y-40);w.draw(ctx)}
+ if(loadProgress()<1)requestAnimationFrame(draw);
+}
+draw();
+</script>

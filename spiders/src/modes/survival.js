@@ -294,8 +294,7 @@ export class SurvivalMode {
     this.pending = [];
     this.spawnT = 0.4;
     // restock: a weapon at every empty spawn
-    const free = game.board.spawns.filter(([x, y]) => !game.pickups.some((p) => !p.spent && Math.hypot(p.x - x, p.y - (y - 40)) < 120));
-    this.drops.seedSpawns(free);
+    this.drops.seedSpawns(game.board.spawns);
     for (const sp of game.spiders) if (sp.alive) this.applyPerks(sp, true);
     // anyone still down (fell after the wave was cleared) comes back now
     if (this.lives > 0) for (const p of game.players) if (!(p.spider && p.spider.alive) && !this.respawns.some((r) => r.p === p)) this.revive(p);

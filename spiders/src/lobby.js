@@ -367,10 +367,7 @@ export class Lobby {
   }
 
   stock(x, y) {
-    const w = this.game.createWeapon(this.drops.nextId());
-    if (!w) return;
-    const p = this.game.spawnPickup(w, x, y, 0, 0);
-    p.spawnGlow = 1;
+    return this.drops.seedSpawns([[x, y]], 0)[0];
   }
 
   spawn(p) {
@@ -421,8 +418,7 @@ export class Lobby {
     }
     // weapon racks refill a few seconds after their weapon is taken
     RACKS.forEach(([x, y], i) => {
-      const near = game.pickups.some((q) => !q.removed && Math.hypot(q.x - x, q.y - y) < 90);
-      if (near || game.pickups.length > 9) { this.rackT[i] = 0; return; }
+      if (this.drops.hasSpawn(x, y) || game.pickups.length > 9) { this.rackT[i] = 0; return; }
       this.rackT[i] += dt;
       if (this.rackT[i] > 3) { this.rackT[i] = 0; this.stock(x, y); game.fx.ring(x, y, 40, '#ffcf4a', 0.4, 4); }
     });
@@ -984,8 +980,8 @@ export class Lobby {
       return x + w;
     };
     const y = LEGEND_Y;
-    const PAD = [['LB', 'jump · web', '#2f8f45'], ['RT', 'shoot'], ['RB', 'grab · throw'], ['X', 'swap'], ['Y/◀▶', 'spider']];
-    const KB = [['Space/RMB', 'jump · web'], ['LMB', 'shoot'], ['E', 'grab · throw'], ['F', 'swap'], ['Z/X', 'spider']];
+    const PAD = [['LB', 'jump · web', '#2f8f45'], ['RT', 'attack'], ['RB', 'grab · throw'], ['X', 'swap'], ['Y/◀▶', 'spider']];
+    const KB = [['Space/RMB', 'jump · web'], ['LMB', 'attack'], ['E', 'grab · throw'], ['F', 'swap'], ['Z/X', 'spider']];
     let x = 22;
     for (const c of PAD) x = chip(x, y, c);
     x = W - 22 - KB.reduce((s, c) => s + measure(c).w, 0) + 14;

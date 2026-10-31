@@ -130,11 +130,13 @@ export function drawCountdown(ctx, label, t, color = '#fff') {
   ctx.restore();
 }
 
-// ammo bar under a spider that holds a weapon with finite ammo
+// Ammo or remaining blade-hit pips under a spider's held weapon.
 export function drawAmmoBar(ctx, sp) {
   const w = sp.weapon;
-  if (!w || !Number.isFinite(w.maxAmmo) || !(w.maxAmmo > 0) || !Number.isFinite(w.ammo)) return;
-  const frac = clamp(w.ammo / w.maxAmmo, 0, 1);
+  if (!w) return;
+  const maxAmmo = w.maxBladeHits ?? w.maxAmmo, ammo = w.bladeHits ?? w.ammo;
+  if (!Number.isFinite(maxAmmo) || !(maxAmmo > 0) || !Number.isFinite(ammo)) return;
+  const frac = clamp(ammo / maxAmmo, 0, 1);
   // sized to the spider (they are small): a thin strip just under the body
   const bw = clamp(sp.r * 2, 30, 44), bh = 5;
   const x = sp.x - bw / 2, y = sp.y + sp.r + 9;
@@ -143,11 +145,11 @@ export function drawAmmoBar(ctx, sp) {
   ctx.beginPath(); ctx.roundRect(x - 2, y - 2, bw + 4, bh + 4, 4); ctx.fill();
   const low = frac <= 0.25;
   const col = low && Math.floor(sp.game.time * 6) % 2 ? '#ff5a6a' : (w.color || '#ffd23f');
-  if (w.maxAmmo <= 12) {
-    // one pip per shot
-    const n = w.maxAmmo, gap = 2, pw = (bw - gap * (n - 1)) / n;
+  if (maxAmmo <= 12) {
+    // one pip per shot / landed blade hit
+    const n = maxAmmo, gap = 2, pw = (bw - gap * (n - 1)) / n;
     for (let i = 0; i < n; i++) {
-      ctx.fillStyle = i < w.ammo ? col : 'rgba(255,255,255,0.14)';
+      ctx.fillStyle = i < ammo ? col : 'rgba(255,255,255,0.14)';
       ctx.beginPath(); ctx.roundRect(x + i * (pw + gap), y, pw, bh, 2); ctx.fill();
     }
   } else {

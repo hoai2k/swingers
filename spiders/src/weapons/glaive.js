@@ -1,11 +1,11 @@
 // Plasma Glaive: a long pole with a plasma head.
 //  - huge reach but heavy: it turns slower than a saber, and only the head
 //    is deadly (the pole is harmless)
-//  - RT lunges: the spider is flung along the aim and the head thrusts out
+//  - hold RT to prepare; release to lunge along the aim, the head thrusting out
 //    further for a moment (a gap-closer, or a mid-air dash)
-//  - RB / B hurls it like a javelin: it flies point-first in a shallow arc,
+//  - RB hurls it like a javelin: it flies point-first in a shallow arc,
 //    kills along its path and pins into walls, where anyone can pull it out
-//    (no recall). Glass shatters and it flies on.
+//    (no recall). Glass shatters and it flies on. B / Q simply discards it.
 //  - like every plasma blade it clashes with blades and bats shots back
 
 import { registerWeapon } from '../weapons.js';
@@ -23,7 +23,7 @@ export class Glaive extends Saber {
   static color = '#ffe066';
   static art = { hx: 66, hy: 31, s: 0.75 };   // the blade grows out of the golden fork
   static blades = [{ from: 74, to: 112 }];
-  static chargeThrow = false;      // RT is an instant lunge
+  static canRecall = false;       // thrown as a javelin; anyone can collect it
 
   hands() { return [{ x: this.x, y: this.y }, this.along(30, 1)]; }
 
@@ -40,28 +40,30 @@ export class Glaive extends Saber {
   segsAt(x, y, a) {
     const c = Math.cos(a), s = Math.sin(a);
     const b = this.constructor.blades[0];
-    const from = b.from + this.ext, to = b.from + (b.to - b.from) * this.on + this.ext;
+    if (this.bladeHits <= 0) return [];
+    const from = b.from + this.ext, to = b.from + (this.bladeEnd(b) - b.from) * this.on * (1 - 0.45 * (this.charging || 0)) + this.ext;
     return [{ x1: x + c * from, y1: y + s * from, x2: x + c * to, y2: y + s * to }];
   }
 
   update(dt, ctl) {
-    this.lungeT = Math.max(0, this.lungeT - dt);
     const target = this.lungeT > 0 ? 34 : 0;
     this.ext = lerp(this.ext, target, Math.min(1, dt * (this.lungeT > 0 ? 30 : 10)));
     this.turnRate = this.lungeT > 0 ? 3 : 13;
-    super.update(dt, ctl);   // Saber.update calls throwSaber() on RT: that's our lunge
+    super.update(dt, ctl);   // shared RT charge/release; lunge() supplies the thrust
   }
 
-  // RT: lunge
-  throwSaber(ctl) {
+  // RT release: charged lunge, retaining the glaive's extending head.
+  lunge(ctl, charge) {
     const o = this.owner;
-    if (!o || this.cool > 0) return;
+    if (!o || this.cool > 0 || this.bladeHits <= 0) return;
     this.angle = ctl.angle;
-    o.impulse(ctl.aimX * 950, ctl.aimY * 950 - 120, true);
-    this.lungeT = 0.26;
+    const speed = 420 + 1150 * charge;
+    o.impulse(ctl.aimX * speed, ctl.aimY * speed - 120 * charge, true);
+    this.lungeT = 0.18 + 0.22 * charge;
+    this.throwPower = 1 + 1.6 * charge;
     this.cool = 0.55;
     sfx.swoosh(2.2);
-    const t = this.along(this.length);
+    const t = this.along(this.reach + this.ext);
     this.game.fx.burst(t.x, t.y, { n: 8, speed: 300, color: this.bladeColor, life: 0.25, dir: this.angle, spread: 0.8 });
   }
 
@@ -148,14 +150,14 @@ export class Glaive extends Saber {
     if (p && this.mode === 'thrown') {
       const c = this.thrower ? this.thrower.color.main : this.color;
       const b = this.constructor.blades[0];
-      glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
+      glowLine(ctx, b.from, 0, this.bladeEnd(b), 0, c, 4.5);
       if (!this.drawArt(ctx)) this.drawPole(ctx);
       return;
     }
     if (!this.drawArt(ctx)) this.drawPole(ctx);      // pinned in a wall: the unlit pole
     ctx.fillStyle = this.color;
     ctx.globalAlpha *= 0.5;
-    ctx.beginPath(); ctx.moveTo(76, -2); ctx.lineTo(100, 0); ctx.lineTo(76, 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(76, -2); ctx.lineTo(76 + 24 * this.bladeRatio, 0); ctx.lineTo(76, 2); ctx.fill();
   }
 }
 

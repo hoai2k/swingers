@@ -8,7 +8,8 @@
 //  - A / LB jumps off the surface (along its normal, nudged by the stick).
 //  - LT shoots a web toward the right-stick aim; hold to swing, release to
 //    let go. Left stick pumps the swing (sideways) and reels (up/down).
-//  - RT uses the held weapon, RB / B throws it, X swaps with one nearby.
+//  - RT shoots (melee: charge then release to lunge); RB throws/grabs,
+//    B discards without recall, X swaps with a nearby weapon.
 //
 // Spiders die from one hit (game.killSpider). Ice can't be clung to; lava
 // kills.
@@ -230,9 +231,9 @@ export class Spider {
     if (this.weapon) this.weapon.update(dt, this.ctl);
     // RB (the original's grab button): holding something -> throw it; empty
     // -> grab: take a weapon within reach, else pull one to you from across
-    // the board (your thrown blade first). B throws too; X swaps.
+    // the board (closest first). B discards without recall; X swaps.
     if (inp && inp.pressed.rb) { if (hadWeapon && this.weapon) this.throwWeapon(); else if (!hadWeapon) this.recall(); }
-    else if (inp && this.weapon && inp.pressed.b) this.throwWeapon();
+    else if (inp && this.weapon && inp.pressed.b) this.throwWeapon(true);
     if (inp && inp.pressed.x) this.swapWeapon();
     // weapons you pulled are caught on arrival; walking over one only picks it
     // up with the auto-pickup setting
@@ -671,10 +672,10 @@ export class Spider {
     return this.game.spawnPickup(w, this.x, this.y, this.vx * 0.5 + vx, this.vy * 0.5 + vy, { from: this });
   }
 
-  throwWeapon() {
+  throwWeapon(discard = false) {
     const w = this.weapon;
     if (!w) return;
-    if (w.onThrow && w.onThrow(this.ctl) === true) return; // weapon handled it (e.g. saber throw)
+    if (!discard && w.onThrow && w.onThrow(this.ctl) === true) return; // weapon handled it (e.g. saber throw)
     const sp = 1300;
     this.flingT = 0.22; this.flingDir = { x: this.aim.x, y: this.aim.y };
     const p = this.dropWeapon(this.aim.x * sp, this.aim.y * sp);
@@ -683,22 +684,25 @@ export class Spider {
   }
 
   recall() {
-    if (this.recallable && this.recallable.pickup && !this.recallable.pickup.removed) { this.recallable.recall(this); return; }
-    // within reach: just take it
-    const near = this.game.pickupNear(this.x, this.y, this.r + 40, this, true);
-    if (near && !near.stuck) { this.game.takePickup(this, near); return; }
-    // otherwise pull the best one in range: favour the aim direction
+    // Compare the actual distance to loose weapons and your recallable blade.
+    // A just-discarded weapon cannot steal the next grab from its replacement.
     let p = null, best = Infinity;
     for (const q of this.game.pickups) {
-      if (!q.canTake) continue;
-      const dx = q.x - this.x, dy = q.y - this.y, d = Math.hypot(dx, dy);
-      if (d > SP.grabRange) continue;
-      const along = (dx * this.aim.x + dy * this.aim.y) / (d || 1);
-      const score = d * (1.6 - 0.8 * along);
-      if (score < best) { best = score; p = q; }
+      if (q.removed || q.spent) continue;
+      const ownBlade = q.weapon.constructor.canRecall && q.weapon.thrower === this && q.weapon.mode;
+      if (!q.canTake && !ownBlade) continue;
+      if (!ownBlade && q.from === this && q.age < 0.6) continue;
+      const d = Math.hypot(q.x - this.x, q.y - this.y);
+      if (!ownBlade && d > SP.grabRange) continue;
+      if (d < best) { best = d; p = q; }
     }
-    if (!p || p.stuck && !(p.weapon && p.weapon.recall)) return;
-    if (p.weapon && p.weapon.mode === 'stuck' && p.weapon.recall) { p.weapon.thrower = this; p.weapon.pickup = p; p.weapon.recall(this); return; }
+    if (!p) return;
+    if (p.canTake && best < this.r + 40) { this.game.takePickup(this, p); return; }
+    if (p.weapon.constructor.canRecall && p.weapon.mode) {
+      p.weapon.thrower = this; p.weapon.pickup = p; this.recallable = p.weapon;
+      p.weapon.recall(this); return;
+    }
+    if (p.weapon.mode === 'stuck' && p.weapon.toLoose) p.weapon.toLoose(p);
     const dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
     p.stuck = false;
     const sp = clamp(m * 2.4, 700, 1500);
@@ -708,7 +712,7 @@ export class Spider {
   }
 
   swapWeapon() {
-    const p = this.game.pickupNear(this.x, this.y, this.r + 40, this, true);
+    const p = this.game.pickupNear(this.x, this.y, this.r + 40, this);
     if (!p) return;
     if (this.weapon) this.dropWeapon(0, -200);
     this.game.takePickup(this, p);

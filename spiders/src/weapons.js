@@ -232,7 +232,7 @@ export class Pickup {
     this.spawnGlow = 0;
   }
 
-  get canTake() { return !this.spent && !this.removed && this.mode !== 'thrown' && this.mode !== 'recall'; }
+  get canTake() { return !this.spent && !this.removed && !(this.weapon.bladeHits <= 0) && this.mode !== 'thrown' && this.mode !== 'recall'; }
 
   update(dt) {
     const game = this.game;
@@ -340,6 +340,10 @@ export class DropSpawner {
     this.interval = DROP_RATES[rate] ?? 7;
     this.timer = this.interval * 0.8;
     this.recent = [];
+    this.slots = new Map();
+    // Stable fallback columns, rather than a new untrackable random point each drop.
+    this.points = board.dropPoints && board.dropPoints.length ? board.dropPoints :
+      [0.25, 0.5, 0.75].map((k) => [board.w * k, -30]);
   }
 
   nextId() {
@@ -348,14 +352,46 @@ export class DropSpawner {
     return id;
   }
 
-  // a weapon resting at every spawn location (call at round start)
-  seedSpawns(points) {
+  // Remember the actual unclaimed pickup, not just a momentary proximity test.
+  // Top-of-board drops are anchored at their expected landing surface: falling
+  // normally onto that surface must not immediately free their spawn column.
+  slot(key, x, y) {
+    if (!this.slots.has(key)) {
+      const hit = this.game.world.raycast(x, y, 0, 1, this.board.h * 2);
+      const anchor = hit ? { x: hit.x, y: hit.y - 13 } : { x, y };
+      const solid = hit && hit.solid;
+      this.slots.set(key, { x, y, anchor, solid,
+        local: solid ? solid.inv(anchor) : null, pickup: null });
+    }
+    return this.slots.get(key);
+  }
+
+  occupied(slot) {
+    const p = slot && slot.pickup;
+    if (!p || p.removed || p.spent) return false;
+    const anchor = slot.solid && !slot.solid.broken ? slot.solid.tx(slot.local) : slot.anchor;
+    if (Math.hypot(p.x - anchor.x, p.y - anchor.y) <= 200) return true;
+    // Give an incoming weapon time to settle; a knock far off its column still frees it.
+    return !p.grounded && p.age < 2 && Math.abs(p.x - slot.x) < 180;
+  }
+
+  hasSpawn(x, y) { return this.occupied(this.slots.get(`spawn:${x},${y}`)); }
+
+  // Used at round/wave start and by lobby racks. A taken pickup is removed,
+  // so used weapons returned by players don't count as the original stock.
+  seedSpawns(points, offset = 40) {
+    const spawned = [];
     for (const [x, y] of points) {
+      const slot = this.slot(`spawn:${x},${y}`, x, y - offset);
+      if (this.occupied(slot)) continue;
       const w = this.game.createWeapon(this.nextId());
       if (!w) continue;
-      const p = this.game.spawnPickup(w, x, y - 40, 0, 0);
+      const p = this.game.spawnPickup(w, x, y - offset, 0, 0);
       p.spawnGlow = 1;
+      slot.pickup = p;
+      spawned.push(p);
     }
+    return spawned;
   }
 
   update(dt) {
@@ -369,18 +405,17 @@ export class DropSpawner {
   }
 
   dropOne(x) {
-    const b = this.board;
-    const pts = b.dropPoints && b.dropPoints.length ? b.dropPoints : null;
-    let px = x, py = -30;
-    if (px === undefined) {
-      if (pts) { const p = pick(pts); px = p[0] + rand(-30, 30); py = p[1] ?? -30; }
-      else px = rand(160, b.w - 160);
-    }
+    const points = x === undefined ? this.points : [[x, -30]];
+    const free = points.map(([px, py = -30]) => this.slot(`drop:${px},${py}`, px, py))
+      .filter((slot) => !this.occupied(slot));
+    if (!free.length) return null;
+    const slot = pick(free), px = slot.x, py = slot.y;
     const w = this.game.createWeapon(this.nextId());
     if (!w) return null;
     const p = this.game.spawnPickup(w, px, py, rand(-40, 40), 120);
     p.spawnGlow = 1;
     p.dropping = true;
+    slot.pickup = p;
     sfx.crate();
     this.game.fx.ring(px, Math.max(20, py), 50, w.color, 0.4, 4);
     return p;

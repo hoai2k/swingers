@@ -300,7 +300,11 @@ export class Game {
   }
 
   damage(target, info = {}) {
-    if (!target || !target.alive) return false;
+    if (!target || !target.alive || (info.weapon && info.weapon.bladeHits <= 0)) return false;
+    const landed = () => {
+      if (info.melee && info.weapon && info.weapon.wearBlade) info.weapon.wearBlade();
+      return true;
+    };
     const from = info.from || null;
     if (from && from !== target && !this.canHurt(from, target) && !info.selfOk) return false;
     if (from === target && !info.selfOk) return false;
@@ -311,7 +315,7 @@ export class Game {
         target.stun = Math.max(target.stun, 0.45);
         target.flash = 1;
         sfx.hurt();
-        return true;
+        return landed();
       }
       if (target.shield > 0) {
         target.shield--;
@@ -319,12 +323,12 @@ export class Game {
         target.flash = 1;
         this.fx.ring(target.x, target.y, 40, '#7fe8ff', 0.3, 5);
         sfx.deflect();
-        return true;
+        return landed();
       }
       this.killSpider(target, info);
-      return true;
+      return landed();
     }
-    if (target.hurt) return target.hurt(info) !== false;
+    if (target.hurt) return target.hurt(info) !== false && landed();
     return false;
   }
 

@@ -1,11 +1,11 @@
 // Twin Saber: a double-ended plasma staff.
 //  - two blades, one on each end of a short staff held at its middle, so
 //    the back blade guards behind you (and bats shots coming from behind)
-//  - RT throws it spinning flat like a buzzsaw (faster spin than the
+//  - RB throws it spinning flat like a buzzsaw (faster spin than the
 //    saber); when it hits a wall it bites in and keeps grinding there for a
 //    few seconds, killing anything that touches it
-//  - RT again recalls it (it flies back through everything), like the saber
-//  - RB / B tosses it like any weapon
+//  - RB recalls it if it is the nearest weapon; RT charges a release lunge
+//  - B / Q discards it without recall
 
 import { registerWeapon } from '../weapons.js';
 import { Saber } from './saber.js';
@@ -109,10 +109,10 @@ export class TwinSaber extends Saber {
         ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha *= 0.18;
         ctx.fillStyle = c;
-        ctx.beginPath(); ctx.arc(0, 0, 54, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 54 * this.bladeRatio, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
-      for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
+      for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, this.bladeEnd(b), 0, c, 4.5);
       if (!this.drawArt(ctx)) this.drawHilt(ctx);
       return;
     }
@@ -120,8 +120,8 @@ export class TwinSaber extends Saber {
     if (!this.drawArt(ctx)) this.drawHilt(ctx);
     ctx.fillStyle = this.color;
     ctx.globalAlpha *= 0.5;
-    ctx.fillRect(13, -1.5, 16, 3);
-    ctx.fillRect(-29, -1.5, 16, 3);
+    ctx.fillRect(13, -1.5, 16 * this.bladeRatio, 3);
+    ctx.fillRect(-13 - 16 * this.bladeRatio, -1.5, 16 * this.bladeRatio, 3);
   }
 }
 

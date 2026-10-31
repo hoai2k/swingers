@@ -3,9 +3,10 @@
 //    so flicking the stick swings it; anything the blade touches dies
 //  - blades clash (both bounce, sparks) and bat projectiles back
 //  - it slices webs
-//  - RT throws it spinning; it kills along its path and sticks in walls;
-//    RT again recalls it to your hand (it flies back through everything)
-//  - RB / B tosses it like any weapon (no recall)
+//  - hold RT to prepare a lunge; release RT to launch it
+//  - RB throws it spinning; another RB grabs the closest weapon or recalls it
+//  - B / Q discards it without recall; X / F swaps with a nearby weapon
+//  - landed body hits and blade clashes shorten the plasma until it is used up
 
 import { Weapon, registerWeapon } from '../weapons.js';
 import { glowLine } from '../fx.js';
@@ -23,7 +24,8 @@ export class Saber extends Weapon {
   static art = { hx: 117, hy: 24, s: 0.24 };   // hilt only: the emitter collar ends where the blade starts
   static blades = [{ from: 4, to: 92 }];    // along the axis from the grip
   static throwSpeed = 1500;
-  static chargeThrow = true;               // hold RT to wind up the throw, release to let fly
+  static canRecall = true;
+  static bladeHits = 8;                    // landed hits / clashes before the plasma is spent
   static throwCenter = 46;                 // spin center along the axis when thrown
 
   constructor(game) {
@@ -36,15 +38,47 @@ export class Saber extends Weapon {
     this.prevSegs = null;
     this.trail = [];           // recent blade tips for the swing smear
     this.mode = null;          // when flying: 'thrown' | 'stuck' | 'recall'
+    this.maxBladeHits = this.constructor.bladeHits;
+    this.bladeHits = this.maxBladeHits;
   }
 
   get bladeColor() { return this.owner ? this.owner.color.main : this.color; }
+  get bladeRatio() { return this.bladeHits / this.maxBladeHits; }
+  bladeEnd(b) { return b.from + (b.to - b.from) * this.bladeRatio; }
+  get reach() { return Math.max(...this.constructor.blades.map((b) => Math.abs(this.bladeEnd(b)))); }
+
+  // Wear belongs to this weapon, including while dropped, thrown or recalled.
+  wearBlade() {
+    if (this.bladeHits <= 0) return;
+    this.bladeHits--;
+    this.trail.length = 0;
+    if (this.bladeHits > 0) return;
+    const thrower = this.thrower;
+    this.charging = 0; this.on = 0;
+    if (thrower && thrower.recallable === this) thrower.recallable = null;
+    this.mode = null; this.thrower = null; this.pickup = null;
+    for (const p of this.game.pickups) {
+      if (p.weapon !== this || p.removed) continue;
+      p.mode = null; p.stuck = false; p.spent = true; p.life = 0.35;
+    }
+    if (this.owner) this.empty();
+    // A used-up blade cannot keep hurting or deflecting from a cached segment.
+    this.game.blades = this.game.blades.filter((b) => b.weapon !== this);
+    this.game.nextBlades = this.game.nextBlades.filter((b) => b.weapon !== this);
+    sfx.drop();
+  }
+
+  onUnequip() { this.charging = 0; this.trail.length = 0; }
+
+  drawIcon(ctx, p) {
+    // The lit pickup artwork depicts a fresh blade; show the worn geometry instead.
+    return this.bladeRatio === 1 && super.drawIcon(ctx, p);
+  }
 
   onEquip(sp) {
     if (this.thrower && this.thrower.recallable === this) this.thrower.recallable = null;
     this.mode = null; this.thrower = null; this.pickup = null;
     this.on = 0; this.trail.length = 0; this.charging = 0; this.throwPower = 1;
-    sp.recallable = null;
     sfx.saberOn();
   }
 
@@ -52,8 +86,9 @@ export class Saber extends Weapon {
   segsAt(x, y, a) {
     const c = Math.cos(a), s = Math.sin(a);
     // charging draws the blade in (it snaps back out on release)
+    if (this.bladeHits <= 0) return [];
     const k = this.on * (1 - 0.45 * (this.charging || 0));
-    return this.constructor.blades.map((b) => ({ x1: x + c * b.from * k, y1: y + s * b.from * k, x2: x + c * b.to * k, y2: y + s * b.to * k }));
+    return this.constructor.blades.map((b) => ({ x1: x + c * b.from * k, y1: y + s * b.from * k, x2: x + c * this.bladeEnd(b) * k, y2: y + s * this.bladeEnd(b) * k }));
   }
 
   update(dt, ctl) {
@@ -67,32 +102,33 @@ export class Saber extends Weapon {
     else sfx.hum();
     this.cut(px, py, prevA, this.x, this.y, this.angle, this.owner);
     // swing smear
-    const tip = this.along(this.length * this.on);
+    if (this.bladeHits <= 0 || !this.owner) return;
+    const tip = this.along(this.reach * this.on);
     this.trail.push({ x: tip.x, y: tip.y, bx: this.x, by: this.y, t: 0 });
     if (this.trail.length > 6) this.trail.shift();
     for (const t of this.trail) t.t += dt;
-    if (!this.constructor.chargeThrow) { if (ctl.firePressed) this.throwSaber(ctl); return; }
-    // RT: a tap throws; holding winds it up (up to 0.7 s) for a faster,
-    // harder-hitting throw — the blade swells and crackles while it charges
+    // All melee weapons prepare on RT press and lunge only on its release.
+    // Losing input (stun, disconnect, unequip) cancels rather than launching.
     if (ctl.firePressed) this.charging = 0.001;
     if (this.charging > 0) {
-      if (ctl.fire) {
-        this.charging = Math.min(1, this.charging + dt / 0.7);
-        sfx.charge(this.charging);
-        if (this.charging >= 1 && Math.random() < 0.5) {
-          const t = this.along(this.length * Math.random());
-          this.game.fx.spark(t.x, t.y, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, this.bladeColor, 0.2, 1.5);
-        }
-      } else {
+      if (ctl.fireReleased) {
         const c = this.charging;
         this.charging = 0;
         this.lunge(ctl, c);
-      }
+      } else if (ctl.fire) {
+        this.charging = Math.min(1, this.charging + dt / 0.7);
+        sfx.charge(this.charging);
+        if (this.charging >= 1 && Math.random() < 0.5) {
+          const t = this.along(this.reach * Math.random());
+          this.game.fx.spark(t.x, t.y, (Math.random() - 0.5) * 300, (Math.random() - 0.5) * 300, this.bladeColor, 0.2, 1.5);
+        }
+      } else this.charging = 0;
     }
   }
 
   // kill / clash / deflect / cut webs along the swept blade
   cut(px, py, pa, x, y, a, owner) {
+    if (this.bladeHits <= 0) return;
     const game = this.game;
     const steps = Math.max(1, Math.ceil(Math.abs(angDiff(pa, a)) / 0.12));
     const segs = [];
@@ -125,6 +161,7 @@ export class Saber extends Weapon {
           if (game.damage(actor, { amount: 3, from: owner, cause: 'saber', x: c.x, y: c.y, ix: dx / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), iy: dy / m * 500 * (this.mode || this.lungeT > 0 ? this.throwPower || 1 : 1), weapon: this, melee: true })) {
             game.fx.burst(c.x, c.y, { n: 14, speed: 500, color: this.bladeColor, life: 0.3 });
             game.fx.hitSpark(c.x, c.y, 44);
+            if (this.bladeHits <= 0) return;
           }
           break;
         }
@@ -168,23 +205,26 @@ export class Saber extends Weapon {
     // a flying saber that clashes drops out of the air
     if (b.weapon && b.weapon.mode === 'thrown' && b.weapon.pickup) b.weapon.toLoose(b.weapon.pickup);
     if (this.mode === 'thrown' && this.pickup) this.toLoose(this.pickup);
+    this.wearBlade();
+    if (b.weapon && b.weapon.wearBlade) b.weapon.wearBlade();
   }
 
   // ---- throwing ---------------------------------------------------------
-  // LB / B: the spinning throw (RB recalls it)
+  // RB: spinning throw; another RB grabs the closest weapon or recalls it.
+  // B / Q bypasses this hook and discards it without recall.
   onThrow(ctl) { this.throwSaber(ctl, 0.35); return true; }
 
   // RT released: the blade snaps out and launches you along the aim; a full
   // charge is a long dash that hits extra hard
   lunge(ctl, c) {
     const o = this.owner;
-    if (!o) return;
+    if (!o || this.bladeHits <= 0) return;
     const sp = 420 + 1150 * c;
     o.impulse(ctl.aimX * sp, ctl.aimY * sp - 60 * c, true);
     this.lungeT = 0.18 + 0.22 * c;
     this.throwPower = 1 + 1.6 * c;
     sfx.swoosh(1 + 1.5 * c);
-    const t = this.along(this.length);
+    const t = this.along(this.reach);
     this.game.fx.burst(t.x, t.y, { n: 6 + Math.round(10 * c), speed: 300 + 300 * c, color: this.bladeColor, life: 0.25, dir: this.angle, spread: 0.9 });
   }
 
@@ -338,13 +378,14 @@ export class Saber extends Weapon {
     if (!img) return;
     const dir = Math.sign(this.av);
     const b = this.constructor.blades[0];
-    const r = b.from + (b.to - b.from) * 0.72;
+    const end = this.bladeEnd(b);
+    const r = b.from + (end - b.from) * 0.72;
     const back = this.angle - dir * 0.3;            // a little behind the blade
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = clamp((sp - 12) / 14, 0, 1) * 0.9;
     // its +x runs along the sweep, the bulge faces away from the grip
-    drawSprite(ctx, null, this.x + Math.cos(back) * r, this.y + Math.sin(back) * r, (b.to - b.from) * 1.1,
+    drawSprite(ctx, null, this.x + Math.cos(back) * r, this.y + Math.sin(back) * r, Math.abs(end - b.from) * 1.1,
       { canvas: img, rot: back + dir * Math.PI / 2, flipY: dir > 0 });
     ctx.restore();
   }
@@ -357,7 +398,7 @@ export class Saber extends Weapon {
       ctx.translate(this.length * 0.4, 0);
       const c = this.thrower ? this.thrower.color.main : this.color;
       ctx.translate(-this.constructor.throwCenter, 0);
-      for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, b.to, 0, c, 4.5);
+      for (const b of this.constructor.blades) glowLine(ctx, b.from, 0, this.bladeEnd(b), 0, c, 4.5);
       if (!this.drawArt(ctx)) this.drawHilt(ctx);
       return;
     }
@@ -365,7 +406,7 @@ export class Saber extends Weapon {
     // unlit stub of blade so it reads as a saber
     ctx.fillStyle = this.color;
     ctx.globalAlpha *= 0.5;
-    ctx.fillRect(6, -1.5, 20, 3);
+    ctx.fillRect(6, -1.5, 20 * this.bladeRatio, 3);
   }
 }
 
