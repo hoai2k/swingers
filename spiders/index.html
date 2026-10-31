@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; background: #05060d; overflow: hidden; }
+    /* Keep every scrollable game surface in the same palette. */
+    * { scrollbar-width: thin; scrollbar-color: #ff7596 #18112f; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: #18112f; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb { background: #ff7596; border: 2px solid #18112f; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #5ad1ff; }
     body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
     canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
 
@@ -55,12 +61,13 @@
     .ui-x { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(255,255,255,.08); color: #fff; cursor: pointer; padding: 8px; }
     .ui-x:hover { background: rgba(255,90,122,.8); }
     .ui-sub { color: #ffcf4a; font-size: clamp(14px, 2.2vmin, 19px); margin-bottom: 6px; }
-    .ui-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; margin: 8px -4px 0; padding: 4px; }
+    .ui-head, .ui-sub, .ui-hint { flex-shrink: 0; }
+    .ui-list { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-x: hidden; overflow-y: auto; margin: 8px -4px 0; padding: 4px; }
     .ui-row { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: clamp(40px, 5.6vmin, 52px);
       padding: 0 16px; border-radius: 14px; background: rgba(255,255,255,.05); border: 2px solid transparent;
-      font-size: clamp(16px, 2.5vmin, 22px); font-weight: 500; cursor: pointer; transition: background .1s, border-color .1s, transform .1s; }
+      font-size: clamp(16px, 2.5vmin, 22px); font-weight: 500; cursor: pointer; transition: background .1s, border-color .1s; }
     .ui-row.action { justify-content: center; font-weight: 600; }
-    .ui-row.focus { background: rgba(255,90,122,.2); border-color: var(--accent); transform: scale(1.02); }
+    .ui-row.focus { background: rgba(255,90,122,.2); border-color: var(--accent); }
     .ui-row.danger .lbl { color: #ff8fa3; }
     .ui-row.html { cursor: default; display: block; padding: 6px 4px; background: none; font-size: clamp(14px, 2.1vmin, 18px); font-weight: 400; }
     .ctl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
