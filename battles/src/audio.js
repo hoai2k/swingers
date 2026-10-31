@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from '../../src/debug.js';
+
 // Synthesised sound: impacts, weapons, explosions, unit voices and music.
 // Everything is generated with WebAudio at run time (no sample files).
 //
@@ -199,6 +201,7 @@ export class Audio {
   }
 
   unlock() {
+    if (SILENT_DEBUG) return;
     if (this.ctx) { if (!this.hidden && !this.offline) this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;

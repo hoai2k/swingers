@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from '../../src/debug.js';
+
 // Synthesized sound (no audio files): cute SFX, positional by the nearest
 // camera, per-vehicle engines, ride sounds, ambience (birds, waves, the fun
 // park crowd and organ, crickets at night) and the procedural music in
@@ -87,6 +89,7 @@ export class Audio {
   get volume() { return 1; }
 
   start() {
+    if (SILENT_DEBUG) return;
     if (this.ctx) {
       if (this.ctx.state === 'suspended' && this.audible()) this.ctx.resume?.().catch?.(() => {});
       return;

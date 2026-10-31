@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from './debug.js';
+
 // Tiny procedural sound effects (WebAudio). No assets needed.
 // Browsers require a user gesture before audio can start; game calls
 // sfx.ensure() from input handlers. Sound settings (game.js) switch it with
@@ -12,6 +14,7 @@ class Sfx {
   }
 
   ensure() {
+    if (SILENT_DEBUG) return;
     if (this.ctx) {
       if (this.ctx.state === 'suspended' && !this.away) this.ctx.resume().catch(() => {});
       return;

@@ -115,6 +115,14 @@ instruction in this file about deploying.
 - Its image requests live in `spiders/image-requests.md`; delivered files go
   in `spiders/assets/web/` and must be listed in its `manifest.json`.
 
+## Silent development / debug mode
+
+- Test with sound disabled by default unless the task needs audio. All four games
+  automatically use silent debug mode on localhost / loopback hosts. On other
+  hosts append `?debug=1`. This suppresses music and effects without changing
+  saved sound settings. For audio-specific checks, explicitly use `?audio=1`;
+  `?debug=0` disables the local debug default. Restore silent mode afterward.
+
 ## Tests and deploys
 
 Deploys (pushes to `deploy`) build and publish only; they run no tests. Tests

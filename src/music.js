@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from './debug.js';
+
 // Soundtrack, imported from Rounders (assets/music/, see
 // tools/import_rounders.mjs). Tracks stream through an <audio> element.
 //
@@ -124,7 +126,7 @@ export class Music {
     const el = this.el;
     if (!el) return;
     el.volume = Math.max(0, Math.min(1, this.volume * this.duck));
-    const want = this.enabled && !this.away;
+    const want = !SILENT_DEBUG && this.enabled && !this.away;
     if (want && el.paused) el.play().catch(() => { /* waits for a gesture */ });
     else if (!want && !el.paused) el.pause();
   }

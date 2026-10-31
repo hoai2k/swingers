@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from '../../src/debug.js';
+
 // Soundtrack: the Rounders tracks in ../assets/music (shared with Swingers).
 // Menu plays one looping track; matches shuffle through the rest. Paused
 // while the tab is hidden/unfocused and when music is off.
@@ -62,7 +64,7 @@ export class Music {
   }
   // one-shot stinger over the ducked music (win / lose)
   sting(name) {
-    if (!OWN.includes(name + '.mp3') || !this.enabled || this.away) return;
+    if (SILENT_DEBUG || !OWN.includes(name + '.mp3') || !this.enabled || this.away) return;
     const el = new Audio(url('own:' + name + '.mp3'));
     el.volume = Math.min(1, this.volume * 1.2);
     el.play().catch(() => {});
@@ -95,7 +97,7 @@ export class Music {
     const el = this.el;
     if (!el) return;
     el.volume = Math.max(0, Math.min(1, this.volume * this.duck));
-    const want = this.enabled && !this.away;
+    const want = !SILENT_DEBUG && this.enabled && !this.away;
     if (want && el.paused) el.play().catch(() => {});
     else if (!want && !el.paused) el.pause();
   }

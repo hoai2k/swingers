@@ -1,3 +1,5 @@
+import { SILENT_DEBUG } from '../../src/debug.js';
+
 // Procedural sound effects (WebAudio, no assets). sfx.ensure() is called on
 // the first user gesture. Silent while the tab is hidden/unfocused
 // (setAway) or when sound is switched off.
@@ -17,6 +19,7 @@ class Sfx {
   }
 
   ensure() {
+    if (SILENT_DEBUG) return;
     if (this.ctx) {
       if (this.ctx.state === 'suspended' && !this.away) this.ctx.resume().catch(() => {});
       return;
