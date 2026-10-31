@@ -9,7 +9,8 @@
 import { W, H } from './board.js';
 import { text } from './hud.js';
 import { loadProgress } from './preload.js';
-import { CAST, drawBody, castAt } from './cast.js';
+import { CAST, castAt } from './cast.js';
+import { drawSpiderPortrait } from './spider-art.js';
 import { TAU, mulberry, clamp, FONT, rgba } from './util.js';
 import { sfx } from './audio.js';
 import { optionalImage, ready } from './optional-art.js';
@@ -62,26 +63,13 @@ export function drawCobweb(ctx, cx, cy, R, a0, span, { spokes = 8, rings = 7, al
 }
 
 // a round spider hanging from (ax, ay): thread + curled legs + body
-export function drawDangler(ctx, ax, ay, x, y, r, castIndex, t, { legColor = '#140c26', thread = 'rgba(240,244,255,0.7)', facing = 1, wiggle = 1 } = {}) {
+export function drawDangler(ctx, ax, ay, x, y, r, castIndex, t, { thread = 'rgba(240,244,255,0.7)', facing = 1, wiggle = 1 } = {}) {
   ctx.save();
   ctx.strokeStyle = thread;
   ctx.lineWidth = Math.max(1.2, r * 0.05);
   ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(x, y - r * 0.7); ctx.stroke();
-  // legs: four a side, knees up, feet dangling
-  ctx.strokeStyle = legColor;
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  ctx.lineWidth = Math.max(2.5, r * 0.16);
-  for (let s = -1; s <= 1; s += 2) {
-    for (let i = 0; i < 4; i++) {
-      const a = -0.75 + i * 0.5 + Math.sin(t * 6 + i * 1.3 + s) * 0.12 * wiggle;
-      const bx = x + s * Math.cos(a) * r * 0.75, by = y + Math.sin(a) * r * 0.75;
-      const kx = x + s * Math.cos(a - 0.5) * r * 1.55, ky = y + Math.sin(a - 0.5) * r * 1.55 - r * 0.35;
-      const fx = kx + s * r * 0.35, fy = ky + r * (0.9 + i * 0.12) + Math.sin(t * 5 + i + s) * r * 0.08 * wiggle;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
-    }
-  }
   ctx.restore();
-  drawBody(ctx, x, y, r, castIndex, { facing });
+  drawSpiderPortrait(ctx, x, y, r, castIndex, t, { facing, wiggle });
 }
 
 // ---------------------------------------------------------------------------

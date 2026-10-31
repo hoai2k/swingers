@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<base href="../">
+<title>Render Sprocket spider favicon</title>
+<style>body{font:18px system-ui;background:#1c2437;color:white;padding:24px}canvas{margin:20px;image-rendering:auto;vertical-align:top;background:repeating-conic-gradient(#303b50 0% 25%,#202a3d 0% 50%) 50%/24px 24px}#favicon{width:256px;height:256px}#status{max-width:900px}</style>
+<h1>Sprocket spider favicon</h1>
+<p id="status">Loading the shared Sprocket character art…</p>
+<p><a id="download" download="favicon-sprocket.png">Save favicon PNG</a> · <a id="preview-download" download="sprocket-spider-preview.png">Save large preview</a></p>
+<canvas id="master" width="512" height="512" aria-label="Sprocket favicon master"></canvas>
+<canvas id="favicon" width="64" height="64" aria-label="Sprocket favicon"></canvas>
+<script type="module">
+import { CAST } from './src/cast.js';
+import { drawSpiderPortrait } from './src/spider-art.js';
+import { ready } from './src/preload.js';
+const index=CAST.findIndex(c=>c.id==='sprocket');
+if(index<0)throw Error('Sprocket is missing from the shared cast');
+const master=document.querySelector('#master'),ctx=master.getContext('2d');
+function render(){
+ if(!ready(CAST[index].img)){requestAnimationFrame(render);return}
+ // Reuse gameplay legs at a quieter scale so the character leads the icon.
+ // Fit the complete silhouette into the icon with a transparent margin.
+ const source=document.createElement('canvas');source.width=source.height=1536;
+ const paint=source.getContext('2d');
+ drawSpiderPortrait(paint,768,850,100,index,0,{facing:1,wiggle:0,legScale:0.55,legAlpha:0.8});
+ const pixels=paint.getImageData(0,0,1536,1536).data;
+ let x0=1536,y0=1536,x1=0,y1=0;
+ for(let y=0;y<1536;y++)for(let x=0;x<1536;x++)if(pixels[(y*1536+x)*4+3]>2){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+ const w=x1-x0+1,h=y1-y0+1,k=480/Math.max(w,h);
+ ctx.clearRect(0,0,512,512);ctx.imageSmoothingQuality='high';
+ ctx.drawImage(source,x0,y0,w,h,(512-w*k)/2,(512-h*k)/2,w*k,h*k);
+ const small=document.querySelector('#favicon').getContext('2d');
+ small.clearRect(0,0,64,64);small.imageSmoothingEnabled=true;small.imageSmoothingQuality='high';small.drawImage(master,0,0,64,64);
+ document.querySelector('#preview-download').href=master.toDataURL('image/png');
+ document.querySelector('#download').href=document.querySelector('#favicon').toDataURL('image/png');
+ document.querySelector('#status').textContent='Ready — Sprocket with eight continuous legs, transparent 64×64 PNG.';
+ document.title='Ready — Sprocket spider favicon';
+}
+render();
+</script>

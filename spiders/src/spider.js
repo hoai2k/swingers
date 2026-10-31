@@ -899,11 +899,7 @@ export class Spider {
         ctx.fillStyle = pass ? shin : outline;
         taper(ctx, kx, ky, fx, fy, 5 * w + o, 0.6 + o * 0.6);
       }
-      // joints
-      // joints: the base/thigh joint and the knee read as distinct bends
-      ctx.fillStyle = back ? shade(c.dark, 0.45) : c.accent;
-      ctx.beginPath(); ctx.arc(cx, cy, back ? 2.2 : 2.8, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.arc(kx, ky, back ? 2.2 : 2.8, 0, TAU); ctx.fill();
+      // Rounded segment caps form continuous bends; no contrasting joint dots.
     }
   }
 
